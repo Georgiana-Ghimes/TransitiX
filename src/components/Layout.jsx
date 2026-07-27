@@ -4,9 +4,10 @@ import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
-  UserCircle, Bell, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package, Smartphone
+  UserCircle, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package, Smartphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import NotificationBell from '@/components/NotificationBell';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -111,9 +112,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
-            <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
-              <Bell className="w-5 h-5 text-slate-600" />
-            </button>
+            <NotificationBell />
 
             <div className="relative">
               <button
@@ -132,6 +131,14 @@ export default function Layout() {
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-40">
+                    <Link
+                      to="/settings"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <UserCircle className="w-4 h-4" />
+                      Setări
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"

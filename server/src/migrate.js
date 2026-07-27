@@ -309,6 +309,44 @@ CREATE INDEX IF NOT EXISTS idx_gps_logs_current ON gps_logs(company_id, is_curre
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS office_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  type TEXT NOT NULL DEFAULT 'system'
+    CHECK (type IN (
+      'trip_status', 'trip_problem', 'trip_unassigned', 'cmr_pending',
+      'client_confirmed', 'client_damage', 'document_expiry', 'system'
+    )),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link TEXT,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  cmr_number TEXT,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_office_notifications_company ON office_notifications(company_id, is_read, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS office_notification_dismissals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  notification_key TEXT NOT NULL,
+  dismissed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, notification_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_office_notification_dismissals_company
+  ON office_notification_dismissals(company_id);
+
+ALTER TABLE office_notification_dismissals ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+ALTER TABLE office_notification_dismissals ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+UPDATE office_notification_dismissals
+SET read_at = COALESCE(read_at, dismissed_at)
+WHERE read_at IS NULL AND dismissed_at IS NOT NULL;
+UPDATE office_notification_dismissals SET deleted_at = NULL WHERE deleted_at IS NOT NULL;
 `;
 
 async function migrate() {

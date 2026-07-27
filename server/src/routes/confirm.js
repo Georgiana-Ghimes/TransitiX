@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
+import { notifyClientConfirmed } from '../lib/officeNotifications.js';
 
 const router = Router();
 
@@ -91,7 +92,21 @@ router.post('/:token', async (req, res) => {
         req.params.token,
       ]
     );
-    res.json(serializeRow(result.rows[0]));
+    const confirmation = serializeRow(result.rows[0]);
+
+    if (conf.rows[0].status !== 'confirmed') {
+      let trip = null;
+      if (confirmation.trip_id) {
+        const t = await query(`SELECT * FROM trips WHERE id = $1`, [confirmation.trip_id]);
+        trip = t.rows[0] || null;
+      }
+      await notifyClientConfirmed(conf.rows[0].company_id, trip, {
+        has_damage: has_damage ?? false,
+        confirmed_by_name,
+      });
+    }
+
+    res.json(confirmation);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Confirmation failed' });

@@ -7,6 +7,11 @@ import {
   serializeRow,
   pickWritable,
 } from '../entities.js';
+import {
+  notifyTripStatusChange,
+  notifyCmrPending,
+  dismissCmrPending,
+} from '../lib/officeNotifications.js';
 
 const router = Router();
 
@@ -157,7 +162,19 @@ router.post('/:entity', async (req, res) => {
        RETURNING *`,
       values
     );
-    res.status(201).json(serializeRow(result.rows[0]));
+    const row = serializeRow(result.rows[0]);
+
+    if (req.params.entity === 'TripDocument' && row.original_image_url && !row.is_confirmed && row.trip_id) {
+      const tripRes = await query(
+        `SELECT id, cmr_number FROM trips WHERE id = $1 AND company_id = $2`,
+        [row.trip_id, req.user.company_id]
+      );
+      if (tripRes.rows[0]) {
+        await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
+      }
+    }
+
+    res.status(201).json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Create failed' });
@@ -174,6 +191,15 @@ router.put('/:entity/:id', async (req, res) => {
     const keys = Object.keys(data);
     if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
 
+    let previous = null;
+    if (req.params.entity === 'Trip' && data.status !== undefined) {
+      const prev = await query(
+        `SELECT * FROM ${cfg.table} WHERE id = $1 AND company_id = $2`,
+        [req.params.id, req.user.company_id]
+      );
+      previous = prev.rows[0] || null;
+    }
+
     const sets = keys.map((k, idx) => `${k} = $${idx + 1}`);
     const values = [...Object.values(data), req.params.id, req.user.company_id];
 
@@ -185,7 +211,31 @@ router.put('/:entity/:id', async (req, res) => {
       values
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
-    res.json(serializeRow(result.rows[0]));
+    const row = serializeRow(result.rows[0]);
+
+    if (req.params.entity === 'Trip' && previous && data.status !== undefined) {
+      await notifyTripStatusChange(
+        req.user.company_id,
+        row,
+        previous.status,
+        row.status
+      );
+    }
+
+    if (req.params.entity === 'TripDocument') {
+      if (row.original_image_url && !row.is_confirmed && row.trip_id) {
+        const tripRes = await query(
+          `SELECT id, cmr_number FROM trips WHERE id = $1 AND company_id = $2`,
+          [row.trip_id, req.user.company_id]
+        );
+        if (tripRes.rows[0]) await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
+      }
+      if (row.is_confirmed && row.trip_id) {
+        await dismissCmrPending(req.user.company_id, row.trip_id);
+      }
+    }
+
+    res.json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Update failed' });

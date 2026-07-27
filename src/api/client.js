@@ -107,6 +107,20 @@ export const api = {
       });
     },
   },
+  notifications: {
+    inbox() {
+      return request('/notifications/inbox');
+    },
+    markRead(id) {
+      return request(`/notifications/${encodeURIComponent(id)}/read`, { method: 'PUT' });
+    },
+    markAllRead() {
+      return request('/notifications/read-all', { method: 'PUT' });
+    },
+    deleteRead() {
+      return request('/notifications/read', { method: 'DELETE' });
+    },
+  },
   auth: {
     async loginViaEmailPassword(email, password) {
       const data = await request('/auth/login', {

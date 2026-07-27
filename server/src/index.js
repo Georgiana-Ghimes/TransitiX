@@ -7,6 +7,7 @@ import entityRoutes from './routes/entities.js';
 import integrationRoutes from './routes/integrations.js';
 import confirmRoutes from './routes/confirm.js';
 import tripRoutes from './routes/trips.js';
+import notificationRoutes from './routes/notifications.js';
 import { uploadRoot } from './uploadPath.js';
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/entities', entityRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/confirm', confirmRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err?.type === 'entity.parse.failed') {
