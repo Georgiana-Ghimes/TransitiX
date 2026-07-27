@@ -1,0 +1,61 @@
+{
+  "name": "WarehouseProduct",
+  "type": "object",
+  "properties": {
+    "warehouse_name": {
+      "type": "string",
+      "default": "Depozit Central",
+      "title": "Depozit"
+    },
+    "sku": {
+      "type": "string",
+      "title": "SKU"
+    },
+    "name": {
+      "type": "string",
+      "title": "Denumire produs"
+    },
+    "description": {
+      "type": "string",
+      "title": "Descriere"
+    },
+    "quantity": {
+      "type": "integer",
+      "default": 0,
+      "title": "Cantitate"
+    },
+    "min_quantity": {
+      "type": "integer",
+      "default": 0,
+      "title": "Stoc minim"
+    },
+    "max_quantity": {
+      "type": "integer",
+      "default": 0,
+      "title": "Stoc maxim"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "kg",
+        "mc",
+        "piece",
+        "pallet"
+      ],
+      "default": "piece",
+      "title": "Unitate"
+    },
+    "location": {
+      "type": "string",
+      "title": "Loca\u021bie \u00een depozit"
+    },
+    "unit_price": {
+      "type": "number",
+      "title": "Pre\u021b unitar"
+    }
+  },
+  "required": [
+    "sku",
+    "name"
+  ]
+}

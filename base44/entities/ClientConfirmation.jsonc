@@ -1,0 +1,61 @@
+{
+  "name": "ClientConfirmation",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string",
+      "title": "Curs\u0103"
+    },
+    "cmr_number": {
+      "type": "string",
+      "title": "Num\u0103r CMR"
+    },
+    "token": {
+      "type": "string",
+      "title": "Token unic"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Client"
+    },
+    "client_email": {
+      "type": "string",
+      "title": "Email client"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "title": "Data confirm\u0103rii"
+    },
+    "confirmed_by_name": {
+      "type": "string",
+      "title": "Confirmat de"
+    },
+    "observations": {
+      "type": "string",
+      "title": "Observa\u021bii"
+    },
+    "has_damage": {
+      "type": "boolean",
+      "default": false,
+      "title": "Avarii"
+    },
+    "damage_description": {
+      "type": "string",
+      "title": "Descriere avarii"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "expired"
+      ],
+      "default": "pending",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "trip_id",
+    "token"
+  ]
+}

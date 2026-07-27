@@ -1,0 +1,49 @@
+{
+  "name": "GPSLog",
+  "type": "object",
+  "properties": {
+    "vehicle_id": {
+      "type": "string",
+      "title": "Vehicul"
+    },
+    "vehicle_plate": {
+      "type": "string",
+      "title": "Num\u0103r vehicul"
+    },
+    "trip_id": {
+      "type": "string",
+      "title": "Curs\u0103"
+    },
+    "latitude": {
+      "type": "number",
+      "title": "Latitudine"
+    },
+    "longitude": {
+      "type": "number",
+      "title": "Longitudine"
+    },
+    "speed": {
+      "type": "number",
+      "title": "Vitez\u0103 (km/h)"
+    },
+    "heading": {
+      "type": "number",
+      "title": "Direc\u021bie"
+    },
+    "ignition": {
+      "type": "boolean",
+      "default": true,
+      "title": "Motor pornit"
+    },
+    "is_current": {
+      "type": "boolean",
+      "default": false,
+      "title": "Pozi\u021bie curent\u0103"
+    }
+  },
+  "required": [
+    "vehicle_id",
+    "latitude",
+    "longitude"
+  ]
+}

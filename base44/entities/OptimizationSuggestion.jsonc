@@ -1,0 +1,57 @@
+{
+  "name": "OptimizationSuggestion",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "backhaul",
+        "vehicle_allocation",
+        "route",
+        "consolidation",
+        "fuel"
+      ],
+      "title": "Tip sugestie"
+    },
+    "title": {
+      "type": "string",
+      "title": "Titlu"
+    },
+    "suggestion": {
+      "type": "string",
+      "title": "Descriere"
+    },
+    "potential_savings_eur": {
+      "type": "number",
+      "title": "Economie estimat\u0103 (EUR)"
+    },
+    "potential_savings_km": {
+      "type": "number",
+      "title": "Km redu\u0219i"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "title": "Prioritate"
+    },
+    "is_applied": {
+      "type": "boolean",
+      "default": false,
+      "title": "Aplicat\u0103"
+    },
+    "trip_ids": {
+      "type": "string",
+      "title": "Curse asociate"
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "suggestion"
+  ]
+}

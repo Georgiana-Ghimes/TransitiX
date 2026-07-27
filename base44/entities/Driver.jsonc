@@ -1,0 +1,79 @@
+{
+  "name": "Driver",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nume complet"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Telefon"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Data angaj\u0103rii"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Data na\u0219terii"
+    },
+    "license_number": {
+      "type": "string",
+      "title": "Num\u0103r permis"
+    },
+    "license_category": {
+      "type": "string",
+      "title": "Categoria permis"
+    },
+    "license_expiry": {
+      "type": "string",
+      "format": "date",
+      "title": "Expirare permis"
+    },
+    "medical_certificate_number": {
+      "type": "string",
+      "title": "Num\u0103r certificat medical"
+    },
+    "medical_certificate_expiry": {
+      "type": "string",
+      "format": "date",
+      "title": "Expirare certificat medical"
+    },
+    "tachograph_card_number": {
+      "type": "string",
+      "title": "Num\u0103r card tahograf"
+    },
+    "tachograph_card_expiry": {
+      "type": "string",
+      "format": "date",
+      "title": "Expirare card tahograf"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "disponibil",
+        "in_cursa",
+        "in_concediu",
+        "indisponibil"
+      ],
+      "default": "disponibil",
+      "title": "Status"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "title": "Activ"
+    }
+  },
+  "required": [
+    "name",
+    "phone"
+  ]
+}

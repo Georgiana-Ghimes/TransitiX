@@ -1,0 +1,70 @@
+{
+  "name": "TripDocument",
+  "type": "object",
+  "properties": {
+    "trip_id": {
+      "type": "string",
+      "title": "Curs\u0103"
+    },
+    "cmr_number": {
+      "type": "string",
+      "title": "Num\u0103r CMR"
+    },
+    "original_image_url": {
+      "type": "string",
+      "title": "Imagine original\u0103"
+    },
+    "ocr_extracted_data": {
+      "type": "object",
+      "title": "Date OCR extrase",
+      "properties": {
+        "cmr_number": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "shipper": {
+          "type": "string"
+        },
+        "consignee": {
+          "type": "string"
+        },
+        "goods_description": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        },
+        "packages": {
+          "type": "string"
+        }
+      }
+    },
+    "ocr_verified_by": {
+      "type": "string",
+      "title": "Verificat de"
+    },
+    "ocr_verified_at": {
+      "type": "string",
+      "title": "Data verific\u0103rii"
+    },
+    "is_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Confirmat"
+    },
+    "ocr_edited_manually": {
+      "type": "boolean",
+      "default": false,
+      "title": "Editat manual"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Note"
+    }
+  },
+  "required": [
+    "trip_id"
+  ]
+}

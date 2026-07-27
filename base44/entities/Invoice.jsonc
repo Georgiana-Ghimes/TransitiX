@@ -1,0 +1,113 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "series": {
+      "type": "string",
+      "title": "Serie",
+      "default": "TRX"
+    },
+    "number": {
+      "type": "string",
+      "title": "Num\u0103r"
+    },
+    "trip_id": {
+      "type": "string",
+      "title": "Curs\u0103"
+    },
+    "cmr_number": {
+      "type": "string",
+      "title": "CMR"
+    },
+    "client_id": {
+      "type": "string",
+      "title": "Client"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Nume client"
+    },
+    "client_cui": {
+      "type": "string",
+      "title": "CUI client"
+    },
+    "client_address": {
+      "type": "string",
+      "title": "Adres\u0103 client"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Data emiterii"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Data scaden\u021bei"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Data pl\u0103\u021bii"
+    },
+    "description": {
+      "type": "string",
+      "title": "Descriere"
+    },
+    "subtotal": {
+      "type": "number",
+      "title": "Subtotal"
+    },
+    "vat_rate": {
+      "type": "number",
+      "default": 19,
+      "title": "Cot\u0103 TVA (%)"
+    },
+    "vat_amount": {
+      "type": "number",
+      "title": "TVA"
+    },
+    "total_amount": {
+      "type": "number",
+      "title": "Total"
+    },
+    "currency": {
+      "type": "string",
+      "default": "RON",
+      "title": "Moned\u0103"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled"
+      ],
+      "default": "draft",
+      "title": "Status"
+    },
+    "efactura_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "accepted",
+        "rejected",
+        "not_sent"
+      ],
+      "default": "not_sent",
+      "title": "Status e-Factura"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Note"
+    }
+  },
+  "required": [
+    "number",
+    "client_name",
+    "issue_date"
+  ]
+}

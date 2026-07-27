@@ -1,0 +1,42 @@
+{
+  "name": "DriverNotification",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Titlu"
+    },
+    "message": {
+      "type": "string",
+      "title": "Mesaj"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "trip_assigned",
+        "status_update",
+        "system",
+        "warning"
+      ],
+      "default": "system",
+      "title": "Tip"
+    },
+    "trip_id": {
+      "type": "string",
+      "title": "Curs\u0103"
+    },
+    "cmr_number": {
+      "type": "string",
+      "title": "Num\u0103r CMR"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "title": "Citit"
+    }
+  },
+  "required": [
+    "title",
+    "message"
+  ]
+}
