@@ -29,4 +29,5 @@ dist-ssr
 
 .env
 .vite
-base44/.app.jsonc
+server/uploads/
+server/node_modules/

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import TripForm from '@/components/TripForm';
 import { Plus, Search, Download, Route } from 'lucide-react';
@@ -28,7 +28,7 @@ export default function Trips() {
 
   const loadTrips = async () => {
     try {
-      const data = await base44.entities.Trip.list('-created_date', 200);
+      const data = await api.entities.Trip.list('-created_date', 200);
       setTrips(data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -42,7 +42,7 @@ export default function Trips() {
 
   const handleDelete = async (id) => {
     if (!confirm('Sigur doriți să ștergeți această cursă?')) return;
-    await base44.entities.Trip.delete(id);
+    await api.entities.Trip.delete(id);
     loadTrips();
   };
 

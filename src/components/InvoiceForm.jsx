@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
@@ -52,8 +52,8 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
         vat_amount: Number(form.vat_amount) || 0,
         total_amount: Number(form.total_amount) || 0,
       };
-      if (invoice?.id) await base44.entities.Invoice.update(invoice.id, data);
-      else await base44.entities.Invoice.create(data);
+      if (invoice?.id) await api.entities.Invoice.update(invoice.id, data);
+      else await api.entities.Invoice.create(data);
       onSave();
     } catch (e) { console.error(e); alert('Eroare: ' + (e.message || '')); }
     finally { setSaving(false); }

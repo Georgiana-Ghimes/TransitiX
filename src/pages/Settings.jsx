@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings as SettingsIcon, Building2, Bell, Save } from 'lucide-react';
+import { Building2, Bell, Save } from 'lucide-react';
 
 export default function Settings() {
   const inputCls = "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors";

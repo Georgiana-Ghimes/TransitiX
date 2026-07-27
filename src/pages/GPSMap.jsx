@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { api } from '@/api/client';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Truck, MapPin, Navigation, RefreshCw, Loader2 } from 'lucide-react';
+import { Truck, RefreshCw, Loader2 } from 'lucide-react';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -32,8 +32,8 @@ export default function GPSMap() {
   const loadData = async () => {
     try {
       const [vehs, logs] = await Promise.all([
-        base44.entities.Vehicle.list(),
-        base44.entities.GPSLog.filter({ is_current: true }),
+        api.entities.Vehicle.list(),
+        api.entities.GPSLog.filter({ is_current: true }),
       ]);
       setVehicles(vehs.filter(v => v.is_active));
       setGpsLogs(logs);
@@ -46,9 +46,9 @@ export default function GPSMap() {
     try {
       const activeVehicles = vehicles.filter(v => v.status === 'in_trip' || v.status === 'available');
       // Mark old current positions as not current
-      const oldLogs = await base44.entities.GPSLog.filter({ is_current: true });
+      const oldLogs = await api.entities.GPSLog.filter({ is_current: true });
       for (const log of oldLogs) {
-        await base44.entities.GPSLog.update(log.id, { is_current: false });
+        await api.entities.GPSLog.update(log.id, { is_current: false });
       }
       // Generate new positions
       const newLogs = activeVehicles.map(v => {
@@ -62,7 +62,7 @@ export default function GPSMap() {
           ignition: true, is_current: true,
         };
       });
-      await base44.entities.GPSLog.bulkCreate(newLogs);
+      await api.entities.GPSLog.bulkCreate(newLogs);
       await loadData();
     } catch (e) { console.error(e); }
     finally { setSimulating(false); }

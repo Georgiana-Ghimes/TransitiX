@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import WarehouseProductForm from '@/components/WarehouseProductForm';
-import { Plus, Search, Package, AlertTriangle, ArrowDown, ArrowUp, Boxes } from 'lucide-react';
+import { Plus, Search, AlertTriangle, ArrowDown, ArrowUp, Boxes } from 'lucide-react';
 
 const UNIT_LABELS = { kg: 'kg', mc: 'mc', piece: 'buc', pallet: 'palet' };
 
@@ -15,20 +15,20 @@ export default function Warehouse() {
   useEffect(() => { loadProducts(); }, []);
 
   const loadProducts = async () => {
-    try { setProducts(await base44.entities.WarehouseProduct.list()); }
+    try { setProducts(await api.entities.WarehouseProduct.list()); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Ștergeți acest produs?')) return;
-    await base44.entities.WarehouseProduct.delete(id);
+    await api.entities.WarehouseProduct.delete(id);
     loadProducts();
   };
 
   const adjustStock = async (product, delta) => {
     const newQty = Math.max(0, (product.quantity || 0) + delta);
-    await base44.entities.WarehouseProduct.update(product.id, { quantity: newQty });
+    await api.entities.WarehouseProduct.update(product.id, { quantity: newQty });
     loadProducts();
   };
 

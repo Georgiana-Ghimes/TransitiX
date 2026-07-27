@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function TripForm({ trip, onClose, onSave }) {
@@ -17,7 +17,7 @@ export default function TripForm({ trip, onClose, onSave }) {
   });
 
   useEffect(() => {
-    Promise.all([base44.entities.Driver.list(), base44.entities.Vehicle.list()]).then(([d, v]) => {
+    Promise.all([api.entities.Driver.list(), api.entities.Vehicle.list()]).then(([d, v]) => {
       setDrivers(d.filter(x => x.is_active));
       setVehicles(v.filter(x => x.is_active));
     });
@@ -57,7 +57,7 @@ export default function TripForm({ trip, onClose, onSave }) {
         distance_km: form.distance_km ? Number(form.distance_km) : null,
       };
       if (trip?.id) {
-        await base44.entities.Trip.update(trip.id, data);
+        await api.entities.Trip.update(trip.id, data);
       } else {
         if (!data.cmr_number) {
           const now = new Date();
@@ -67,7 +67,7 @@ export default function TripForm({ trip, onClose, onSave }) {
           const rand = String(Math.floor(Math.random() * 9000) + 1000);
           data.cmr_number = `CMR-${y}-${m}${d}-${rand}`;
         }
-        await base44.entities.Trip.create(data);
+        await api.entities.Trip.create(data);
       }
       onSave();
     } catch (e) {

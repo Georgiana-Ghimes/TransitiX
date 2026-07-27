@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import KpiCard from '@/components/KpiCard';
 import StatusBadge from '@/components/StatusBadge';
-import { Truck, Users, Route, AlertTriangle, TrendingUp, Clock, MapPin } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Truck, Users, Route, AlertTriangle, TrendingUp } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ vehicles: 0, drivers: 0, activeTrips: 0, alerts: 0 });
@@ -20,9 +20,9 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       const [vehicles, drivers, trips] = await Promise.all([
-        base44.entities.Vehicle.list(),
-        base44.entities.Driver.list(),
-        base44.entities.Trip.list('-created_date', 50),
+        api.entities.Vehicle.list(),
+        api.entities.Driver.list(),
+        api.entities.Trip.list('-created_date', 50),
       ]);
 
       const activeTrips = trips.filter(t => !['livrata', 'anulata'].includes(t.status));
@@ -48,7 +48,6 @@ export default function Dashboard() {
       vehicles.forEach(v => {
         ['itp', 'rca', 'rovinieta', 'casco'].forEach(doc => {
           const dateField = `${doc}_expiry`;
-          const numField = `${doc}_number`;
           const e = checkExpiry(v[dateField], doc.toUpperCase(), `${v.brand} ${v.model} (${v.plate})`, v.id);
           if (e) expiring.push(e);
         });

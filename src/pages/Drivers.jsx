@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import DriverForm from '@/components/DriverForm';
 import { Plus, Search, Users, Phone, Mail } from 'lucide-react';
@@ -14,14 +14,14 @@ export default function Drivers() {
   useEffect(() => { loadDrivers(); }, []);
 
   const loadDrivers = async () => {
-    try { setDrivers(await base44.entities.Driver.list()); }
+    try { setDrivers(await api.entities.Driver.list()); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Dezactivați acest șofer?')) return;
-    await base44.entities.Driver.update(id, { is_active: false, status: 'indisponibil' });
+    await api.entities.Driver.update(id, { is_active: false, status: 'indisponibil' });
     loadDrivers();
   };
 

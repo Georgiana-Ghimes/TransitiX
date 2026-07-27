@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function DriverForm({ driver, onClose, onSave }) {
@@ -19,8 +19,8 @@ export default function DriverForm({ driver, onClose, onSave }) {
     e.preventDefault();
     setSaving(true);
     try {
-      if (driver?.id) await base44.entities.Driver.update(driver.id, form);
-      else await base44.entities.Driver.create(form);
+      if (driver?.id) await api.entities.Driver.update(driver.id, form);
+      else await api.entities.Driver.create(form);
       onSave();
     } catch (e) {
       console.error(e);

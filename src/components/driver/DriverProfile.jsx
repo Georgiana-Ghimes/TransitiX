@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { User, Mail, Phone, LogOut, Truck, CheckCircle, Clock, Bell } from 'lucide-react';
+import { api } from '@/api/client';
+import { Mail, Phone, LogOut, Truck, CheckCircle, Clock, Bell } from 'lucide-react';
 
 export default function DriverProfile() {
   const [user, setUser] = useState(null);
@@ -9,8 +9,8 @@ export default function DriverProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => {});
-    base44.entities.Trip.list('-created_date', 100).then(trips => {
+    api.auth.me().then(u => setUser(u)).catch(() => {});
+    api.entities.Trip.list('-created_date', 100).then(trips => {
       setStats({
         total: trips.length,
         completed: trips.filter(t => t.status === 'livrata').length,
@@ -20,7 +20,7 @@ export default function DriverProfile() {
   }, []);
 
   const handleLogout = async () => {
-    await base44.auth.logout('/login');
+    await api.auth.logout('/login');
   };
 
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || user?.email?.[0]?.toUpperCase() || 'Ș';

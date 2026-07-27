@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import StatusBadge from '@/components/StatusBadge';
-import { Truck, CheckCircle, FileText, Download, Camera, Loader2, Package, MapPin } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { api } from '@/api/client';
+import { Truck, CheckCircle, FileText, Download, Loader2, Package, MapPin } from 'lucide-react';
 
 export default function ClientPortal() {
   const { token } = useParams();
@@ -19,17 +18,15 @@ export default function ClientPortal() {
 
   const loadData = async () => {
     try {
-      const confs = await base44.entities.ClientConfirmation.filter({ token });
-      if (confs.length > 0) {
-        const conf = confs[0];
+      const data = await api.confirm.get(token);
+      if (data?.confirmation) {
+        const conf = data.confirmation;
         setConfirmation(conf);
         setConfirmed(conf.status === 'confirmed');
         setObservations(conf.observations || '');
         setHasDamage(conf.has_damage || false);
         setDamageDesc(conf.damage_description || '');
-        if (conf.trip_id) {
-          try { setTrip(await base44.entities.Trip.get(conf.trip_id)); } catch (e) { }
-        }
+        if (data.trip) setTrip(data.trip);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -38,9 +35,7 @@ export default function ClientPortal() {
   const handleConfirm = async () => {
     setSubmitting(true);
     try {
-      await base44.entities.ClientConfirmation.update(confirmation.id, {
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString(),
+      await api.confirm.submit(token, {
         confirmed_by_name: trip?.consignee_name || 'Client',
         observations,
         has_damage: hasDamage,

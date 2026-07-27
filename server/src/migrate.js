@@ -1,0 +1,325 @@
+import { pool } from './db.js';
+
+const sql = `
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS companies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  cui TEXT UNIQUE,
+  vat_regime TEXT DEFAULT 'platitor',
+  address TEXT,
+  phone TEXT,
+  email TEXT,
+  website TEXT,
+  logo_url TEXT,
+  default_currency TEXT DEFAULT 'RON',
+  fiscal_code TEXT,
+  bank_account TEXT,
+  settings JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'admin'
+    CHECK (role IN ('admin', 'dispatcher', 'driver', 'finance')),
+  phone TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  last_login TIMESTAMPTZ,
+  two_factor_secret TEXT,
+  two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, email)
+);
+
+CREATE TABLE IF NOT EXISTS vehicles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  plate TEXT NOT NULL,
+  brand TEXT NOT NULL,
+  model TEXT NOT NULL,
+  year INT,
+  capacity_kg INT,
+  capacity_mc INT,
+  fuel_consumption NUMERIC(5,2),
+  fuel_type TEXT DEFAULT 'diesel'
+    CHECK (fuel_type IN ('diesel', 'gasoline', 'electric', 'hybrid')),
+  chassis_number TEXT,
+  engine_number TEXT,
+  mileage INT DEFAULT 0,
+  last_maintenance_mileage INT DEFAULT 0,
+  itp_number TEXT,
+  itp_expiry DATE,
+  rca_number TEXT,
+  rca_expiry DATE,
+  rovinieta_number TEXT,
+  rovinieta_expiry DATE,
+  casco_number TEXT,
+  casco_expiry DATE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  status TEXT DEFAULT 'available'
+    CHECK (status IN ('available', 'in_trip', 'maintenance', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, plate)
+);
+
+CREATE TABLE IF NOT EXISTS drivers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT NOT NULL,
+  hire_date DATE,
+  birth_date DATE,
+  license_number TEXT,
+  license_category TEXT,
+  license_expiry DATE,
+  medical_certificate_number TEXT,
+  medical_certificate_expiry DATE,
+  tachograph_card_number TEXT,
+  tachograph_card_expiry DATE,
+  status TEXT DEFAULT 'disponibil'
+    CHECK (status IN ('disponibil', 'in_cursa', 'in_concediu', 'indisponibil')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS clients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  cui TEXT,
+  address TEXT,
+  phone TEXT,
+  email TEXT,
+  contact_person TEXT,
+  notes TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS trips (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  driver_id UUID REFERENCES drivers(id) ON DELETE SET NULL,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  cmr_number TEXT NOT NULL,
+  driver_name TEXT,
+  vehicle_plate TEXT,
+  shipper_name TEXT NOT NULL,
+  shipper_address TEXT,
+  shipper_cui TEXT,
+  shipper_contact TEXT,
+  shipper_phone TEXT,
+  shipper_email TEXT,
+  consignee_name TEXT NOT NULL,
+  consignee_address TEXT,
+  consignee_cui TEXT,
+  consignee_contact TEXT,
+  consignee_phone TEXT,
+  consignee_email TEXT,
+  loading_date DATE NOT NULL,
+  loading_time TIME,
+  estimated_delivery_date DATE,
+  estimated_delivery_time TIME,
+  actual_delivery_date DATE,
+  goods_description TEXT,
+  weight_kg NUMERIC(10,2),
+  package_count INT,
+  volume_mc NUMERIC(10,2),
+  special_instructions TEXT,
+  internal_notes TEXT,
+  status TEXT NOT NULL DEFAULT 'planificata'
+    CHECK (status IN ('planificata', 'alocata', 'incarcata', 'in_tranzit', 'livrata', 'problema', 'anulata')),
+  distance_km INT,
+  estimated_fuel_consumption NUMERIC(10,2),
+  actual_fuel_consumption NUMERIC(10,2),
+  start_mileage INT,
+  end_mileage INT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, cmr_number)
+);
+
+CREATE TABLE IF NOT EXISTS trip_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  cmr_number TEXT,
+  original_image_url TEXT,
+  ocr_extracted_data JSONB,
+  ocr_verified_by TEXT,
+  ocr_verified_at TIMESTAMPTZ,
+  is_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+  ocr_edited_manually BOOLEAN NOT NULL DEFAULT FALSE,
+  final_pdf_url TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS client_confirmations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  cmr_number TEXT,
+  token TEXT NOT NULL UNIQUE,
+  client_name TEXT,
+  client_email TEXT,
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+  confirmed_at TIMESTAMPTZ,
+  confirmed_by_name TEXT,
+  confirmed_by_ip TEXT,
+  observations TEXT,
+  has_damage BOOLEAN NOT NULL DEFAULT FALSE,
+  damage_description TEXT,
+  damage_image_url TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'confirmed', 'expired')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  series TEXT DEFAULT 'TRX',
+  number TEXT NOT NULL,
+  cmr_number TEXT,
+  client_name TEXT NOT NULL,
+  client_cui TEXT,
+  client_address TEXT,
+  issue_date DATE NOT NULL,
+  due_date DATE,
+  payment_date DATE,
+  description TEXT,
+  subtotal NUMERIC(10,2),
+  vat_rate NUMERIC(5,2) DEFAULT 19,
+  vat_amount NUMERIC(10,2),
+  total_amount NUMERIC(10,2),
+  currency TEXT DEFAULT 'RON',
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'sent', 'paid', 'overdue', 'cancelled')),
+  efactura_status TEXT DEFAULT 'not_sent'
+    CHECK (efactura_status IN ('pending', 'sent', 'accepted', 'rejected', 'not_sent')),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS warehouse_products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  warehouse_name TEXT DEFAULT 'Depozit Central',
+  sku TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  quantity INT NOT NULL DEFAULT 0,
+  min_quantity INT DEFAULT 0,
+  max_quantity INT DEFAULT 0,
+  unit TEXT DEFAULT 'piece'
+    CHECK (unit IN ('kg', 'mc', 'piece', 'pallet')),
+  location TEXT,
+  unit_price NUMERIC(10,2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, sku)
+);
+
+CREATE TABLE IF NOT EXISTS gps_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  vehicle_plate TEXT,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  latitude NUMERIC(10,7) NOT NULL,
+  longitude NUMERIC(10,7) NOT NULL,
+  speed NUMERIC(8,2),
+  heading NUMERIC(8,2),
+  ignition BOOLEAN DEFAULT TRUE,
+  is_current BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  sender_role TEXT NOT NULL DEFAULT 'driver'
+    CHECK (sender_role IN ('driver', 'dispatcher')),
+  sender_name TEXT,
+  message TEXT NOT NULL,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS driver_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'system'
+    CHECK (type IN ('trip_assigned', 'status_update', 'system', 'warning')),
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  cmr_number TEXT,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS optimization_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  type TEXT NOT NULL
+    CHECK (type IN ('backhaul', 'vehicle_allocation', 'route', 'consolidation', 'fuel')),
+  title TEXT NOT NULL,
+  suggestion TEXT NOT NULL,
+  potential_savings_eur NUMERIC(10,2) DEFAULT 0,
+  potential_savings_km NUMERIC(10,2) DEFAULT 0,
+  priority TEXT DEFAULT 'medium'
+    CHECK (priority IN ('low', 'medium', 'high')),
+  is_applied BOOLEAN NOT NULL DEFAULT FALSE,
+  trip_ids TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_company ON vehicles(company_id);
+CREATE INDEX IF NOT EXISTS idx_drivers_company ON drivers(company_id);
+CREATE INDEX IF NOT EXISTS idx_trips_company ON trips(company_id);
+CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_client_confirmations_token ON client_confirmations(token);
+CREATE INDEX IF NOT EXISTS idx_gps_logs_current ON gps_logs(company_id, is_current);
+`;
+
+async function migrate() {
+  const client = await pool.connect();
+  try {
+    await client.query(sql);
+    console.log('Migration completed successfully.');
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+migrate().catch((err) => {
+  console.error('Migration failed:', err);
+  process.exit(1);
+});

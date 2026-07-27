@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function WarehouseProductForm({ product, onClose, onSave }) {
@@ -23,8 +23,8 @@ export default function WarehouseProductForm({ product, onClose, onSave }) {
         max_quantity: Number(form.max_quantity) || 0,
         unit_price: Number(form.unit_price) || 0,
       };
-      if (product?.id) await base44.entities.WarehouseProduct.update(product.id, data);
-      else await base44.entities.WarehouseProduct.create(data);
+      if (product?.id) await api.entities.WarehouseProduct.update(product.id, data);
+      else await api.entities.WarehouseProduct.create(data);
       onSave();
     } catch (e) { console.error(e); alert('Eroare: ' + (e.message || '')); }
     finally { setSaving(false); }

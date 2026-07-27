@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import ClientForm from '@/components/ClientForm';
 import { Plus, Search, Building2, Phone, Mail, MapPin } from 'lucide-react';
 
@@ -13,14 +13,14 @@ export default function Clients() {
   useEffect(() => { loadClients(); }, []);
 
   const loadClients = async () => {
-    try { setClients(await base44.entities.Client.list()); }
+    try { setClients(await api.entities.Client.list()); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Dezactivați acest client?')) return;
-    await base44.entities.Client.update(id, { is_active: false });
+    await api.entities.Client.update(id, { is_active: false });
     loadClients();
   };
 

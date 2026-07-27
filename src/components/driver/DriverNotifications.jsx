@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { Bell, CheckCircle, Truck, AlertTriangle, Info, CheckCheck, Loader2 } from 'lucide-react';
 
 const TYPE_CONFIG = {
@@ -17,16 +17,16 @@ export default function DriverNotifications({ onRead }) {
 
   const loadNotifications = async () => {
     try {
-      const data = await base44.entities.DriverNotification.list('-created_date', 50);
+      const data = await api.entities.DriverNotification.list('-created_date', 50);
       setNotifications(data);
       // Seed initial notifications if empty
       if (data.length === 0) {
-        await base44.entities.DriverNotification.bulkCreate([
+        await api.entities.DriverNotification.bulkCreate([
           { title: 'Curse noi disponibile', message: 'Ați primit 3 curse noi pentru săptămâna aceasta. Verificați fila Curse.', type: 'trip_assigned', is_read: false },
           { title: 'Document expirare', message: 'Permisul de conducere expiră în 30 de zile. Vă rugăm să îl reînnoiți.', type: 'warning', is_read: false },
           { title: 'Card tahograf', message: 'Cardul tahograf expiră pe 15 august 2026. Programați o vizită pentru reînnoire.', type: 'warning', is_read: true },
         ]);
-        const fresh = await base44.entities.DriverNotification.list('-created_date', 50);
+        const fresh = await api.entities.DriverNotification.list('-created_date', 50);
         setNotifications(fresh);
       }
     } catch (e) { console.error(e); }
@@ -34,7 +34,7 @@ export default function DriverNotifications({ onRead }) {
   };
 
   const markAsRead = async (id) => {
-    await base44.entities.DriverNotification.update(id, { is_read: true });
+    await api.entities.DriverNotification.update(id, { is_read: true });
     loadNotifications();
     if (onRead) onRead();
   };
@@ -42,7 +42,7 @@ export default function DriverNotifications({ onRead }) {
   const markAllRead = async () => {
     const unread = notifications.filter(n => !n.is_read);
     if (unread.length === 0) return;
-    await base44.entities.DriverNotification.bulkUpdate(unread.map(n => ({ id: n.id, is_read: true })));
+    await api.entities.DriverNotification.bulkUpdate(unread.map(n => ({ id: n.id, is_read: true })));
     loadNotifications();
     if (onRead) onRead();
   };

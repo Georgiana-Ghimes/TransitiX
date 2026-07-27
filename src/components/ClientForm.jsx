@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function ClientForm({ client, onClose, onSave }) {
@@ -15,8 +15,8 @@ export default function ClientForm({ client, onClose, onSave }) {
     e.preventDefault();
     setSaving(true);
     try {
-      if (client?.id) await base44.entities.Client.update(client.id, form);
-      else await base44.entities.Client.create(form);
+      if (client?.id) await api.entities.Client.update(client.id, form);
+      else await api.entities.Client.create(form);
       onSave();
     } catch (e) {
       console.error(e);

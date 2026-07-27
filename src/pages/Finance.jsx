@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import KpiCard from '@/components/KpiCard';
 import InvoiceForm from '@/components/InvoiceForm';
-import StatusBadge from '@/components/StatusBadge';
-import { Plus, FileText, Euro, Wallet, TrendingUp, Search, Download, Send, Send as SendIcon } from 'lucide-react';
+import { Plus, FileText, Euro, Wallet, TrendingUp, Search, Download } from 'lucide-react';
 
 const INVOICE_STATUS = {
   draft: { label: 'Ciornă', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -32,8 +31,8 @@ export default function Finance() {
   const loadData = async () => {
     try {
       const [inv, t] = await Promise.all([
-        base44.entities.Invoice.list('-created_date'),
-        base44.entities.Trip.list('-created_date', 50),
+        api.entities.Invoice.list('-created_date'),
+        api.entities.Trip.list('-created_date', 50),
       ]);
       setInvoices(inv);
       setTrips(t);
@@ -44,24 +43,24 @@ export default function Finance() {
   const handleSave = async () => { setShowForm(false); setEditInvoice(null); await loadData(); };
 
   const markPaid = async (inv) => {
-    await base44.entities.Invoice.update(inv.id, { status: 'paid', payment_date: new Date().toISOString().split('T')[0] });
+    await api.entities.Invoice.update(inv.id, { status: 'paid', payment_date: new Date().toISOString().split('T')[0] });
     loadData();
   };
 
   const sendToClient = async (inv) => {
     try {
-      await base44.integrations.Core.SendEmail({
+      await api.integrations.Core.SendEmail({
         to: 'client@exemplu.ro',
         subject: `Factura ${inv.series} ${inv.number} - Transitix`,
         body: `Factura ${inv.series} ${inv.number} în valoare de ${inv.total_amount} ${inv.currency} a fost emisă.\n\nClient: ${inv.client_name}\nScadență: ${inv.due_date}\n\nMultumim!`,
       });
-      await base44.entities.Invoice.update(inv.id, { status: 'sent' });
+      await api.entities.Invoice.update(inv.id, { status: 'sent' });
       loadData();
     } catch (e) { alert('Eroare: ' + (e.message || '')); }
   };
 
   const sendToEfactura = async (inv) => {
-    await base44.entities.Invoice.update(inv.id, { efactura_status: 'sent' });
+    await api.entities.Invoice.update(inv.id, { efactura_status: 'sent' });
     alert(`Factura ${inv.series} ${inv.number} a fost transmisă către e-Factura ANAF (simulare).`);
     loadData();
   };

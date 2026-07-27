@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import VehicleForm from '@/components/VehicleForm';
 import { Plus, Search, Truck } from 'lucide-react';
@@ -14,14 +14,14 @@ export default function Vehicles() {
   useEffect(() => { loadVehicles(); }, []);
 
   const loadVehicles = async () => {
-    try { setVehicles(await base44.entities.Vehicle.list()); }
+    try { setVehicles(await api.entities.Vehicle.list()); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Dezactivați acest vehicul?')) return;
-    await base44.entities.Vehicle.update(id, { is_active: false, status: 'inactive' });
+    await api.entities.Vehicle.update(id, { is_active: false, status: 'inactive' });
     loadVehicles();
   };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import DriverNotifications from '@/components/driver/DriverNotifications';
 import DriverChat from '@/components/driver/DriverChat';
@@ -26,14 +26,14 @@ export default function DriverApp() {
 
   const loadUnreadCount = async () => {
     try {
-      const notifs = await base44.entities.DriverNotification.filter({ is_read: false });
+      const notifs = await api.entities.DriverNotification.filter({ is_read: false });
       setUnreadCount(notifs.length);
     } catch (e) { console.error(e); }
   };
 
   const loadTrips = async () => {
     try {
-      const data = await base44.entities.Trip.list('-created_date', 50);
+      const data = await api.entities.Trip.list('-created_date', 50);
       setTrips(data.filter(t => ['alocata', 'incarcata', 'in_tranzit'].includes(t.status)));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -42,13 +42,13 @@ export default function DriverApp() {
   const updateStatus = async (trip, newStatus) => {
     setUpdating(true);
     try {
-      await base44.entities.Trip.update(trip.id, { status: newStatus });
+      await api.entities.Trip.update(trip.id, { status: newStatus });
       if (newStatus === 'livrata') {
-        await base44.entities.Trip.update(trip.id, { actual_delivery_date: new Date().toISOString().split('T')[0] });
+        await api.entities.Trip.update(trip.id, { actual_delivery_date: new Date().toISOString().split('T')[0] });
       }
       // Create notification for status change
       const statusLabels = { alocata: 'alocată', incarcata: 'încărcată', in_tranzit: 'în tranzit', livrata: 'livrată' };
-      await base44.entities.DriverNotification.create({
+      await api.entities.DriverNotification.create({
         title: `Cursă ${statusLabels[newStatus] || newStatus}`,
         message: `Cursa CMR ${trip.cmr_number || ''} a fost marcată ca ${statusLabels[newStatus] || newStatus}.`,
         type: 'status_update',
@@ -69,15 +69,15 @@ export default function DriverApp() {
     if (!file || !selectedTrip) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const docs = await base44.entities.TripDocument.filter({ trip_id: selectedTrip.id });
+      const { file_url } = await api.integrations.Core.UploadFile({ file });
+      const docs = await api.entities.TripDocument.filter({ trip_id: selectedTrip.id });
       if (docs.length > 0) {
-        await base44.entities.TripDocument.update(docs[0].id, { original_image_url: file_url });
+        await api.entities.TripDocument.update(docs[0].id, { original_image_url: file_url });
       } else {
-        await base44.entities.TripDocument.create({ trip_id: selectedTrip.id, cmr_number: selectedTrip.cmr_number, original_image_url: file_url, is_confirmed: false });
+        await api.entities.TripDocument.create({ trip_id: selectedTrip.id, cmr_number: selectedTrip.cmr_number, original_image_url: file_url, is_confirmed: false });
       }
       // Auto-run OCR
-      await base44.integrations.Core.InvokeLLM({
+      await api.integrations.Core.InvokeLLM({
         prompt: `Extract CMR document data from this image. Return JSON with: cmr_number, date, shipper, consignee, goods_description, weight, packages.`,
         file_urls: [file_url],
         response_json_schema: { type: 'object', properties: { cmr_number: { type: 'string' }, date: { type: 'string' }, shipper: { type: 'string' }, consignee: { type: 'string' }, goods_description: { type: 'string' }, weight: { type: 'string' }, packages: { type: 'string' } } }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 
 export default function VehicleForm({ vehicle, onClose, onSave }) {
@@ -27,8 +27,8 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
         fuel_consumption: form.fuel_consumption ? Number(form.fuel_consumption) : null,
         mileage: form.mileage ? Number(form.mileage) : 0,
       };
-      if (vehicle?.id) await base44.entities.Vehicle.update(vehicle.id, data);
-      else await base44.entities.Vehicle.create(data);
+      if (vehicle?.id) await api.entities.Vehicle.update(vehicle.id, data);
+      else await api.entities.Vehicle.create(data);
       onSave();
     } catch (e) {
       console.error(e);

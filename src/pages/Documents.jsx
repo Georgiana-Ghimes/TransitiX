@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { AlertTriangle, FileText, Truck, Users } from 'lucide-react';
 
 export default function Documents() {
@@ -11,8 +11,8 @@ export default function Documents() {
   const loadData = async () => {
     try {
       const [vehicles, drivers] = await Promise.all([
-        base44.entities.Vehicle.list(),
-        base44.entities.Driver.list(),
+        api.entities.Vehicle.list(),
+        api.entities.Driver.list(),
       ]);
       const now = new Date();
       const in30Days = new Date(); in30Days.setDate(now.getDate() + 30);

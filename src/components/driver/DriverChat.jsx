@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { Send, Loader2, MessageSquare } from 'lucide-react';
 
 export default function DriverChat() {
@@ -11,7 +11,7 @@ export default function DriverChat() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUserName(u?.full_name || u?.email || 'Șofer')).catch(() => {});
+    api.auth.me().then(u => setUserName(u?.full_name || u?.email || 'Șofer')).catch(() => {});
     loadMessages();
   }, []);
 
@@ -21,15 +21,15 @@ export default function DriverChat() {
 
   const loadMessages = async () => {
     try {
-      const data = await base44.entities.ChatMessage.list('-created_date', 50);
+      const data = await api.entities.ChatMessage.list('-created_date', 50);
       // Reverse to show oldest first
       setMessages(data.reverse());
       // Seed initial conversation if empty
       if (data.length === 0) {
-        await base44.entities.ChatMessage.bulkCreate([
+        await api.entities.ChatMessage.bulkCreate([
           { sender_role: 'dispatcher', sender_name: 'Dispecer', message: 'Bună ziua! Aici puteți trimite mesaje către dispecerat. Vă răspundem cât mai repede.', is_read: true },
         ]);
-        const fresh = await base44.entities.ChatMessage.list('-created_date', 50);
+        const fresh = await api.entities.ChatMessage.list('-created_date', 50);
         setMessages(fresh.reverse());
       }
     } catch (e) { console.error(e); }
@@ -43,7 +43,7 @@ export default function DriverChat() {
     setText('');
     setSending(true);
     try {
-      await base44.entities.ChatMessage.create({
+      await api.entities.ChatMessage.create({
         sender_role: 'driver', sender_name: userName, message: msgText,
       });
       await loadMessages();
@@ -58,7 +58,7 @@ export default function DriverChat() {
           'Recepționat. Aveți grijă pe drum!',
         ];
         const reply = replies[Math.floor(Math.random() * replies.length)];
-        await base44.entities.ChatMessage.create({
+        await api.entities.ChatMessage.create({
           sender_role: 'dispatcher', sender_name: 'Dispecer', message: reply,
         });
         loadMessages();

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, Bell, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package, Smartphone
@@ -27,7 +27,7 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await base44.auth.logout();
+    await api.auth.logout();
   };
 
   const isActive = (path) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);

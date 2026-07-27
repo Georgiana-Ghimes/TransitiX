@@ -1,19 +1,21 @@
 {
-  "name": "base44-app",
+  "name": "transitix",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "npm run dev --prefix server",
+    "dev:all": "npm run dev:server & npm run dev",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "npm run migrate --prefix server",
+    "db:seed": "npm run seed --prefix server"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.40",
-    "@base44/vite-plugin": "^1.0.30",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -74,7 +76,6 @@
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.171.0",
     "vaul": "^1.1.2",
     "zod": "^3.24.2"
   },

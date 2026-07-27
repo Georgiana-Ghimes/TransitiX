@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import { ArrowLeft, Upload, FileText, CheckCircle, Send, MapPin, Package, Truck, User, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -18,11 +18,11 @@ export default function TripDetail() {
 
   const loadData = async () => {
     try {
-      const t = await base44.entities.Trip.get(id);
+      const t = await api.entities.Trip.get(id);
       setTrip(t);
-      const docs = await base44.entities.TripDocument.filter({ trip_id: id });
+      const docs = await api.entities.TripDocument.filter({ trip_id: id });
       if (docs.length > 0) setDoc(docs[0]);
-      const confs = await base44.entities.ClientConfirmation.filter({ trip_id: id });
+      const confs = await api.entities.ClientConfirmation.filter({ trip_id: id });
       if (confs.length > 0) setConfirmation(confs[0]);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -33,15 +33,15 @@ export default function TripDetail() {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await api.integrations.Core.UploadFile({ file });
       let existing = doc;
       if (!existing) {
-        existing = await base44.entities.TripDocument.create({
+        existing = await api.entities.TripDocument.create({
           trip_id: id, cmr_number: trip.cmr_number, original_image_url: file_url, is_confirmed: false,
         });
         setDoc(existing);
       } else {
-        existing = await base44.entities.TripDocument.update(existing.id, { original_image_url: file_url });
+        existing = await api.entities.TripDocument.update(existing.id, { original_image_url: file_url });
         setDoc(existing);
       }
       await runOCR(existing.id, file_url);
@@ -52,7 +52,7 @@ export default function TripDetail() {
   const runOCR = async (docId, imageUrl) => {
     setOcrProcessing(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await api.integrations.Core.InvokeLLM({
         prompt: `You are an OCR system for CMR (international transport waybill) documents. Analyze this CMR image and extract the following fields as JSON: cmr_number, date, shipper (expeditor), consignee (destinatar), goods_description, weight (in kg), packages (count). Return ONLY valid JSON. If a field is not readable, use null.`,
         file_urls: [imageUrl],
         response_json_schema: {
@@ -64,15 +64,15 @@ export default function TripDetail() {
           }
         }
       });
-      const updated = await base44.entities.TripDocument.update(docId, { ocr_extracted_data: result });
+      const updated = await api.entities.TripDocument.update(docId, { ocr_extracted_data: result });
       setDoc(updated);
     } catch (e) { console.error(e); alert('Eroare OCR: ' + (e.message || '')); }
     finally { setOcrProcessing(false); }
   };
 
   const confirmOCR = async () => {
-    const user = await base44.auth.me();
-    await base44.entities.TripDocument.update(doc.id, {
+    const user = await api.auth.me();
+    await api.entities.TripDocument.update(doc.id, {
       is_confirmed: true, ocr_verified_by: user?.full_name || user?.email || 'Admin',
       ocr_verified_at: new Date().toISOString(),
     });
@@ -83,14 +83,14 @@ export default function TripDetail() {
     setSendingLink(true);
     try {
       const token = id + '-' + Math.random().toString(36).substring(2, 15);
-      const conf = await base44.entities.ClientConfirmation.create({
+      const conf = await api.entities.ClientConfirmation.create({
         trip_id: id, cmr_number: trip.cmr_number, token,
         client_name: trip.consignee_name, client_email: trip.consignee_phone || '',
         status: 'pending',
       });
       setConfirmation(conf);
       const link = `${window.location.origin}/confirm/${token}`;
-      await base44.integrations.Core.SendEmail({
+      await api.integrations.Core.SendEmail({
         to: 'client@exemplu.ro',
         subject: `Confirmare recepție marfă - CMR ${trip.cmr_number}`,
         body: `Pentru a confirma recepția mărfii pentru CMR ${trip.cmr_number}, accesați linkul: ${link}\n\nExpeditor: ${trip.shipper_name}\nDestinatar: ${trip.consignee_name}\nMarfă: ${trip.goods_description || '-'}\nGreutate: ${trip.weight_kg || '-'} kg`,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { Brain, Sparkles, TrendingDown, Truck, Route, Fuel, Loader2, Check, Zap } from 'lucide-react';
 
 const SUGGESTION_ICONS = {
@@ -24,9 +24,9 @@ export default function PlanningAI() {
   const loadData = async () => {
     try {
       const [s, t, v] = await Promise.all([
-        base44.entities.OptimizationSuggestion.list('-created_date'),
-        base44.entities.Trip.list('-created_date', 50),
-        base44.entities.Vehicle.list(),
+        api.entities.OptimizationSuggestion.list('-created_date'),
+        api.entities.Trip.list('-created_date', 50),
+        api.entities.Vehicle.list(),
       ]);
       setSuggestions(s);
       setTrips(t);
@@ -45,7 +45,7 @@ export default function PlanningAI() {
       }));
       const vehicleData = vehicles.map(v => ({ plate: v.plate, brand: v.brand, model: v.model, consumption: v.fuel_consumption, status: v.status, mileage: v.mileage }));
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await api.integrations.Core.InvokeLLM({
         prompt: `You are an AI transport optimization engine for a Romanian logistics company (Transitix). Analyze the following active trips and vehicles, and generate 3-5 actionable optimization suggestions. Focus on: reducing empty kilometers (deadhead), better vehicle allocation, fuel optimization, backhaul opportunities, and route consolidation. Return ONLY valid JSON array.
 
 ACTIVE TRIPS: ${JSON.stringify(tripData)}
@@ -78,7 +78,7 @@ Return an array of suggestions, each with: type (backhaul/vehicle_allocation/rou
       }));
 
       if (newSuggestions.length > 0) {
-        await base44.entities.OptimizationSuggestion.bulkCreate(newSuggestions);
+        await api.entities.OptimizationSuggestion.bulkCreate(newSuggestions);
       }
       await loadData();
     } catch (e) { console.error(e); alert('Eroare analiză AI: ' + (e.message || '')); }
@@ -86,12 +86,12 @@ Return an array of suggestions, each with: type (backhaul/vehicle_allocation/rou
   };
 
   const applySuggestion = async (id) => {
-    await base44.entities.OptimizationSuggestion.update(id, { is_applied: true });
+    await api.entities.OptimizationSuggestion.update(id, { is_applied: true });
     loadData();
   };
 
   const deleteSuggestion = async (id) => {
-    await base44.entities.OptimizationSuggestion.delete(id);
+    await api.entities.OptimizationSuggestion.delete(id);
     loadData();
   };
 
