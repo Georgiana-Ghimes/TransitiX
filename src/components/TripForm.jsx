@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
+import ModalShell from '@/components/ModalShell';
 
 export default function TripForm({ trip, onClose, onSave }) {
   const [drivers, setDrivers] = useState([]);
@@ -111,11 +112,10 @@ export default function TripForm({ trip, onClose, onSave }) {
   const labelCls = "block text-xs font-medium text-slate-600 mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="font-semibold text-[#0A2B4E]">{trip ? 'Editează cursă' : 'Cursă nouă'}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5 text-slate-500" /></button>
+    <ModalShell onClose={onClose} panelClassName="max-w-3xl" labelledBy="trip-form-title">
+      <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+          <h2 id="trip-form-title" className="font-semibold text-[#0A2B4E]">{trip ? 'Editează cursă' : 'Cursă nouă'}</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -216,7 +216,6 @@ export default function TripForm({ trip, onClose, onSave }) {
             <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Anulează</button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

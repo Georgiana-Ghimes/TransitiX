@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import TripForm from '@/components/TripForm';
+import SuggestSearch from '@/components/SuggestSearch';
 import { formatDate } from '@/lib/utils';
-import { Plus, Search, Download, Route } from 'lucide-react';
+import { Plus, Download, Route } from 'lucide-react';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Toate' },
@@ -18,6 +19,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function Trips() {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -91,14 +93,21 @@ export default function Trips() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Caută după CMR, șofer, vehicul, expeditor..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors"
-          />
-        </div>
+        <SuggestSearch
+          className="flex-1 min-w-[240px] max-w-md"
+          value={search}
+          onChange={setSearch}
+          items={trips}
+          placeholder="Caută după CMR, șofer, vehicul, expeditor..."
+          getItem={(t) => ({
+            id: t.id,
+            title: t.cmr_number || 'Fără CMR',
+            subtitle: [t.driver_name, t.vehicle_plate, t.shipper_name].filter(Boolean).join(' · '),
+            filterValue: t.cmr_number || t.driver_name || t.vehicle_plate || '',
+            searchText: [t.cmr_number, t.driver_name, t.vehicle_plate, t.shipper_name, t.consignee_name].join(' '),
+          })}
+          onSelect={(item) => navigate(`/trips/${item.id}`)}
+        />
         <div className="flex gap-1.5 flex-wrap">
           {STATUS_FILTERS.map(f => (
             <button

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import DriverForm from '@/components/DriverForm';
-import { Plus, Search, Users, Phone, Mail } from 'lucide-react';
+import SuggestSearch from '@/components/SuggestSearch';
+import { Plus, Users, Phone, Mail } from 'lucide-react';
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([]);
@@ -45,10 +46,20 @@ export default function Drivers() {
         </button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Caută după nume, telefon, email..." className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors" />
-      </div>
+      <SuggestSearch
+        className="max-w-md"
+        value={search}
+        onChange={setSearch}
+        items={drivers}
+        placeholder="Caută după nume, telefon, email..."
+        getItem={(d) => ({
+          id: d.id,
+          title: d.name || 'Șofer',
+          subtitle: [d.phone, d.email].filter(Boolean).join(' · '),
+          filterValue: d.name || '',
+          searchText: [d.name, d.phone, d.email].join(' '),
+        })}
+      />
 
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

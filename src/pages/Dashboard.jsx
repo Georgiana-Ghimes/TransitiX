@@ -62,11 +62,28 @@ export default function Dashboard() {
       setExpiringDocs(expiring);
       setStats(s => ({ ...s, alerts: expiring.length }));
 
-      // Chart data: trips by status
-      const statusCounts = {};
-      trips.forEach(t => { statusCounts[t.status] = (statusCounts[t.status] || 0) + 1; });
-      const statusLabels = { planificata: 'Planif.', alocata: 'Alocată', incarcata: 'Încărcată', in_tranzit: 'Tranzit', livrata: 'Livrată', problema: 'Problemă', anulata: 'Anulată' };
-      setChartData(Object.entries(statusCounts).map(([k, v]) => ({ name: statusLabels[k] || k, count: v })));
+      // Chart data: always show full status axis so a single bar doesn't stretch.
+      const statusOrder = ['planificata', 'alocata', 'incarcata', 'in_tranzit', 'livrata', 'problema', 'anulata'];
+      const statusLabels = {
+        planificata: 'Planif.',
+        alocata: 'Alocată',
+        incarcata: 'Încărcată',
+        in_tranzit: 'Tranzit',
+        livrata: 'Livrată',
+        problema: 'Problemă',
+        anulata: 'Anulată',
+      };
+      const statusCounts = Object.fromEntries(statusOrder.map((k) => [k, 0]));
+      trips.forEach((t) => {
+        if (t.status in statusCounts) statusCounts[t.status] += 1;
+        else statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+      });
+      setChartData(
+        Object.entries(statusCounts).map(([k, v]) => ({
+          name: statusLabels[k] || k,
+          count: v,
+        }))
+      );
     } catch (e) {
       console.error(e);
     } finally {
@@ -91,10 +108,10 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Truck} label="Vehicule" value={stats.vehicles} subtitle="Total în flotă" accent="primary" />
-        <KpiCard icon={Users} label="Șoferi" value={stats.drivers} subtitle="Activi" accent="secondary" />
-        <KpiCard icon={Route} label="Curse active" value={stats.activeTrips} subtitle="În desfășurare" accent="accent" />
-        <KpiCard icon={AlertTriangle} label="Alerte" value={stats.alerts} subtitle="Documente expirate" accent={stats.alerts > 0 ? 'danger' : 'success'} />
+        <KpiCard icon={Truck} label="Vehicule" value={stats.vehicles} subtitle="Total în flotă" accent="primary" to="/vehicles" />
+        <KpiCard icon={Users} label="Șoferi" value={stats.drivers} subtitle="Activi" accent="secondary" to="/drivers" />
+        <KpiCard icon={Route} label="Curse active" value={stats.activeTrips} subtitle="În desfășurare" accent="accent" to="/trips" />
+        <KpiCard icon={AlertTriangle} label="Alerte" value={stats.alerts} subtitle="Documente expirate" accent={stats.alerts > 0 ? 'danger' : 'success'} to="/documents" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -106,12 +123,12 @@ export default function Dashboard() {
           </div>
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={chartData}>
+              <BarChart data={chartData} barCategoryGap="18%" margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Bar dataKey="count" fill="#1D4E89" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="#1D4E89" radius={[6, 6, 0, 0]} maxBarSize={44} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

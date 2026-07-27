@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import KpiCard from '@/components/KpiCard';
 import InvoiceForm from '@/components/InvoiceForm';
-import { Plus, FileText, Euro, Wallet, TrendingUp, Search, Download } from 'lucide-react';
+import SuggestSearch from '@/components/SuggestSearch';
+import { Plus, FileText, Euro, Wallet, TrendingUp, Download } from 'lucide-react';
 
 const INVOICE_STATUS = {
   draft: { label: 'Ciornă', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -108,10 +109,20 @@ export default function Finance() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[240px] max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Caută factură..." className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89]" />
-        </div>
+        <SuggestSearch
+          className="flex-1 min-w-[240px] max-w-md"
+          value={search}
+          onChange={setSearch}
+          items={invoices}
+          placeholder="Caută factură..."
+          getItem={(i) => ({
+            id: i.id,
+            title: [i.series, i.number].filter(Boolean).join(' ') || 'Factură',
+            subtitle: [i.client_name, i.total_amount != null ? `${i.total_amount} ${i.currency || 'RON'}` : null].filter(Boolean).join(' · '),
+            filterValue: i.number || i.client_name || '',
+            searchText: [i.series, i.number, i.client_name].join(' '),
+          })}
+        />
         <div className="flex gap-1.5 flex-wrap">
           {['all', 'draft', 'sent', 'paid', 'overdue'].map(f => (
             <button key={f} onClick={() => setStatusFilter(f)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === f ? 'bg-[#0A2B4E] text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>

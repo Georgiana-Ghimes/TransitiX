@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import WarehouseProductForm from '@/components/WarehouseProductForm';
-import { Plus, Search, AlertTriangle, ArrowDown, ArrowUp, Boxes } from 'lucide-react';
+import SuggestSearch from '@/components/SuggestSearch';
+import { Plus, AlertTriangle, ArrowDown, ArrowUp, Boxes } from 'lucide-react';
 
 const UNIT_LABELS = { kg: 'kg', mc: 'mc', piece: 'buc', pallet: 'palet' };
 
@@ -58,10 +59,20 @@ export default function Warehouse() {
         </div>
       )}
 
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Caută după SKU sau denumire..." className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89]" />
-      </div>
+      <SuggestSearch
+        className="max-w-md"
+        value={search}
+        onChange={setSearch}
+        items={products}
+        placeholder="Caută după SKU sau denumire..."
+        getItem={(p) => ({
+          id: p.id,
+          title: p.name || 'Produs',
+          subtitle: [p.sku, p.location].filter(Boolean).join(' · '),
+          filterValue: p.name || p.sku || '',
+          searchText: [p.name, p.sku].join(' '),
+        })}
+      />
 
       {filtered.length > 0 ? (
         <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">

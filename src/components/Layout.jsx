@@ -4,12 +4,13 @@ import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
-  UserCircle, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package,
+  UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
 import NotificationBell from '@/components/NotificationBell';
+import GlobalSearch from '@/components/GlobalSearch';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -127,15 +128,25 @@ export default function Layout() {
             showIconsOnly ? 'justify-center px-2' : 'gap-2.5 px-4'
           )}
         >
-          <div className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center shrink-0">
-            <Truck className="w-5 h-5 text-[#0A2B4E]" />
-          </div>
-          {!showIconsOnly && (
-            <div className="min-w-0 flex-1">
-              <h1 className="font-bold text-lg tracking-tight leading-tight">Transitix</h1>
-              <p className="text-[10px] text-white/50">TMS Platform</p>
+          <Link
+            to="/"
+            title="Dashboard"
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              'flex items-center min-w-0',
+              showIconsOnly ? 'justify-center' : 'gap-2.5 flex-1'
+            )}
+          >
+            <div className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center shrink-0">
+              <Truck className="w-5 h-5 text-[#0A2B4E]" />
             </div>
-          )}
+            {!showIconsOnly && (
+              <div className="min-w-0">
+                <h1 className="font-bold text-lg tracking-tight leading-tight">Transitix</h1>
+                <p className="text-[10px] text-white/50">TMS Platform</p>
+              </div>
+            )}
+          </Link>
           {!isDesktop && (
             <button type="button" className="shrink-0 ml-auto" onClick={() => setMobileOpen(false)} aria-label="Închide meniul">
               <X className="w-5 h-5" />
@@ -184,66 +195,38 @@ export default function Layout() {
             <UserCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Setări</span>}
           </Link>
-
-          {isDesktop && (
-            <button
-              type="button"
-              onClick={() => setCollapsed((v) => !v)}
-              title={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
-              aria-label={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
-              aria-pressed={collapsed}
-              className={cn(
-                'flex w-full items-center rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
-                showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5'
-              )}
-            >
-              {collapsed ? (
-                <ChevronsRight className="w-5 h-5 shrink-0" />
-              ) : (
-                <>
-                  <ChevronsLeft className="w-5 h-5 shrink-0" />
-                  <span>Restrânge</span>
-                </>
-              )}
-            </button>
-          )}
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 flex items-center px-4 lg:px-6 gap-3">
-          {!isDesktop ? (
-            <button
-              type="button"
-              className="p-2 -ml-1 rounded-lg hover:bg-slate-100"
-              onClick={() => setMobileOpen(true)}
-              aria-label="Deschide meniul"
-            >
-              <Menu className="w-5 h-5 text-slate-600" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="p-2 -ml-1 rounded-lg hover:bg-slate-100 text-slate-600"
-              onClick={() => setCollapsed((v) => !v)}
-              title={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
-              aria-label={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
-              aria-pressed={collapsed}
-            >
-              {collapsed ? <ChevronsRight className="w-5 h-5" /> : <ChevronsLeft className="w-5 h-5" />}
-            </button>
-          )}
-
-          <div className="relative hidden md:block flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Caută cursă, vehicul, șofer..."
-              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-100 border border-transparent rounded-lg focus:outline-none focus:border-[#1D4E89] focus:bg-white transition-colors"
-            />
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 lg:px-6">
+          <div className="flex items-center justify-start min-w-0">
+            {!isDesktop ? (
+              <button
+                type="button"
+                className="p-2 -ml-1 rounded-lg hover:bg-slate-100"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Deschide meniul"
+              >
+                <Menu className="w-5 h-5 text-slate-600" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="p-2 -ml-1 rounded-lg hover:bg-slate-100 text-slate-600"
+                onClick={() => setCollapsed((v) => !v)}
+                title={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
+                aria-label={collapsed ? 'Extinde meniul' : 'Restrânge la iconițe'}
+                aria-pressed={collapsed}
+              >
+                {collapsed ? <ChevronsRight className="w-5 h-5" /> : <ChevronsLeft className="w-5 h-5" />}
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 ml-auto">
+          <GlobalSearch className="hidden md:block" />
+
+          <div className="flex items-center justify-end gap-3 min-w-0">
             <NotificationBell />
 
             <div className="relative">

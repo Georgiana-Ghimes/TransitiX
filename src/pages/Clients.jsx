@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import ClientForm from '@/components/ClientForm';
-import { Plus, Search, Building2, Phone, Mail, MapPin } from 'lucide-react';
+import SuggestSearch from '@/components/SuggestSearch';
+import { Plus, Building2, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
@@ -44,10 +45,20 @@ export default function Clients() {
         </button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Caută după denumire, CUI, contact..." className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors" />
-      </div>
+      <SuggestSearch
+        className="max-w-md"
+        value={search}
+        onChange={setSearch}
+        items={clients}
+        placeholder="Caută după denumire, CUI, contact..."
+        getItem={(c) => ({
+          id: c.id,
+          title: c.name || 'Client',
+          subtitle: [c.cui ? `CUI ${c.cui}` : null, c.contact_person].filter(Boolean).join(' · '),
+          filterValue: c.name || '',
+          searchText: [c.name, c.cui, c.contact_person].join(' '),
+        })}
+      />
 
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
