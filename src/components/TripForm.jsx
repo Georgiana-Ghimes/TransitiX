@@ -27,8 +27,13 @@ export default function TripForm({ trip, onClose, onSave }) {
 
   const onDriverChange = (id) => {
     const d = drivers.find(x => x.id === id);
-    set('driver_id', id);
-    set('driver_name', d?.name || '');
+    setForm(f => ({
+      ...f,
+      driver_id: id || '',
+      driver_name: d?.name || '',
+      // TMS rule: assigning a driver moves the trip into the active queue
+      status: id && ['planificata', 'alocata'].includes(f.status) ? 'alocata' : f.status,
+    }));
   };
   const onVehicleChange = (id) => {
     const v = vehicles.find(x => x.id === id);
@@ -51,13 +56,23 @@ export default function TripForm({ trip, onClose, onSave }) {
     try {
       const data = {
         ...form,
+        driver_id: form.driver_id || null,
+        vehicle_id: form.vehicle_id || null,
         weight_kg: form.weight_kg ? Number(form.weight_kg) : null,
         package_count: form.package_count ? Number(form.package_count) : null,
         volume_mc: form.volume_mc ? Number(form.volume_mc) : null,
         distance_km: form.distance_km ? Number(form.distance_km) : null,
       };
+      if (data.driver_id && ['planificata', ''].includes(data.status || 'planificata')) {
+        data.status = 'alocata';
+      }
+      if (!data.driver_id && data.status === 'alocata') {
+        data.status = 'planificata';
+      }
+
+      let saved;
       if (trip?.id) {
-        await api.entities.Trip.update(trip.id, data);
+        saved = await api.entities.Trip.update(trip.id, data);
       } else {
         if (!data.cmr_number) {
           const now = new Date();
@@ -67,7 +82,23 @@ export default function TripForm({ trip, onClose, onSave }) {
           const rand = String(Math.floor(Math.random() * 9000) + 1000);
           data.cmr_number = `CMR-${y}-${m}${d}-${rand}`;
         }
-        await api.entities.Trip.create(data);
+        saved = await api.entities.Trip.create(data);
+      }
+
+      // Notify driver queue when a trip is assigned
+      if (data.driver_id && data.status === 'alocata') {
+        try {
+          await api.entities.DriverNotification.create({
+            title: 'Cursă nouă alocată',
+            message: `Ai primit cursa ${data.cmr_number}: ${data.shipper_name} → ${data.consignee_name}.`,
+            type: 'trip_assigned',
+            trip_id: saved?.id || trip?.id,
+            cmr_number: data.cmr_number,
+            is_read: false,
+          });
+        } catch {
+          // non-blocking
+        }
       }
       onSave();
     } catch (e) {

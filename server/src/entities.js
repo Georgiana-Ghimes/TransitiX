@@ -120,14 +120,30 @@ export function serializeRow(row) {
   if (out.updated_at) {
     out.updated_date = out.updated_at;
   }
-  // numeric strings from pg
+
   for (const key of Object.keys(out)) {
-    if (typeof out[key] === 'string' && /^-?\d+(\.\d+)?$/.test(out[key]) &&
+    const val = out[key];
+    if (val instanceof Date) {
+      // Keep date-only fields as YYYY-MM-DD (avoid TZ shift in UI)
+      if (/(_date|_expiry)$/.test(key) || key === 'hire_date' || key === 'birth_date' || key === 'issue_date' || key === 'due_date' || key === 'payment_date') {
+        out[key] = val.toISOString().slice(0, 10);
+      } else if (/(_time)$/.test(key)) {
+        out[key] = val.toISOString().slice(11, 16);
+      } else {
+        out[key] = val.toISOString();
+      }
+      continue;
+    }
+    // pg may return DATE as string already
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val) && /(_date|_expiry)$/.test(key)) {
+      out[key] = val.slice(0, 10);
+    }
+    if (typeof val === 'string' && /^-?\d+(\.\d+)?$/.test(val) &&
         (key.includes('kg') || key.includes('amount') || key.includes('price') ||
          key.includes('cost') || key.includes('rate') || key.includes('consumption') ||
          key.includes('latitude') || key.includes('longitude') || key.includes('speed') ||
          key.includes('heading') || key.includes('savings') || key.includes('volume'))) {
-      out[key] = Number(out[key]);
+      out[key] = Number(val);
     }
   }
   return out;

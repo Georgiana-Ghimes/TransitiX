@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import TripForm from '@/components/TripForm';
+import { formatDate } from '@/lib/utils';
 import { Plus, Search, Download, Route } from 'lucide-react';
 
 const STATUS_FILTERS = [
@@ -136,7 +137,7 @@ export default function Trips() {
                     <td className="px-4 py-3 text-slate-600 max-w-xs">
                       <span className="line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{trip.loading_date ? new Date(trip.loading_date).toLocaleDateString('ro-RO') : '-'}</td>
+                    <td className="px-4 py-3 text-slate-500">{formatDate(trip.loading_date)}</td>
                     <td className="px-4 py-3"><StatusBadge status={trip.status} /></td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => { setEditTrip(trip); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs font-medium">Editează</button>
@@ -150,7 +151,11 @@ export default function Trips() {
         ) : (
           <div className="p-12 text-center text-slate-400">
             <Route className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">Nu există curse. Creează prima cursă.</p>
+            <p className="text-sm font-medium text-slate-600">Nu există curse</p>
+            <p className="text-xs mt-1 mb-4">Creează o cursă și alocă șofer + vehicul ca să apară în App Șofer.</p>
+            <button onClick={() => { setEditTrip(null); setShowForm(true); }} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89]">
+              <Plus className="w-4 h-4" /> Cursă nouă
+            </button>
           </div>
         )}
       </div>

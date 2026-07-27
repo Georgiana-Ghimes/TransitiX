@@ -108,10 +108,10 @@ export const api = {
       setToken(data.access_token);
       return data;
     },
-    async register({ email, password, name, company_name }) {
+    async register({ email, password, name, company_name } = {}) {
       const data = await request('/auth/register', {
         method: 'POST',
-        body: { email, password, name, company_name },
+        body: { email, password, name: name || undefined, company_name },
       });
       setToken(data.access_token);
       return data;

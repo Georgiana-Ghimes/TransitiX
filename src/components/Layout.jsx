@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { api } from '@/api/client';
+import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, Bell, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package, Smartphone
@@ -23,6 +24,7 @@ const NAV = [
 
 export default function Layout() {
   const location = useLocation();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -31,6 +33,10 @@ export default function Layout() {
   };
 
   const isActive = (path) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const displayName = user?.full_name || user?.name || user?.email || 'Utilizator';
+  const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+  const roleLabel = { admin: 'Admin', dispatcher: 'Dispecer', driver: 'Șofer', finance: 'Finance' }[user?.role] || user?.role || '';
+
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex">
@@ -107,7 +113,6 @@ export default function Layout() {
           <div className="flex items-center gap-3 ml-auto">
             <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <Bell className="w-5 h-5 text-slate-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#E74C3C] rounded-full" />
             </button>
 
             <div className="relative">
@@ -116,9 +121,12 @@ export default function Layout() {
                 className="flex items-center gap-2 p-1 pr-2 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-[#1D4E89] flex items-center justify-center text-white text-sm font-semibold">
-                  A
+                  {initials}
                 </div>
-                <span className="hidden sm:block text-sm font-medium text-slate-700">Admin</span>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium text-slate-700 leading-tight">{displayName}</p>
+                  {roleLabel && <p className="text-[11px] text-slate-400 leading-tight">{roleLabel}</p>}
+                </div>
               </button>
               {menuOpen && (
                 <>

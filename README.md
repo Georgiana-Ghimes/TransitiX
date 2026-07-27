@@ -33,8 +33,22 @@ npm run dev
 API: `http://localhost:3001`
 
 Cont seed:
-- Email: `admin@transitix.ro`
-- Parolă: `admin123`
+- Admin: `admin@transitix.ro` / `admin123`
+- Șofer: `sofer@transitix.ro` / `sofer123`
+
+Pentru date demo (vehicule, curse active):
+
+```bash
+cd server
+npm run seed:demo
+```
+
+### Cum testezi App Șofer
+
+1. Autentifică-te cu `sofer@transitix.ro` / `sofer123`
+2. Deschide **App Șofer** din meniu
+3. Vei vedea cursele **alocate** ție (Active / Istoric)
+4. Din dispecerat: creează cursă → selectează șofer → status devine automat `alocata` și apare în app
 
 ### 3. Frontend
 
