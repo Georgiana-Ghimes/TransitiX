@@ -520,37 +520,43 @@ export default function DriverApp() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-20 lg:max-w-md lg:left-1/2 lg:-translate-x-1/2">
-        {[
-          { key: 'trips', icon: Route, label: 'Curse' },
-          { key: 'notifications', icon: Bell, label: 'Notificări', badge: unreadCount },
-          { key: 'chat', icon: MessageSquare, label: 'Chat' },
-          { key: 'profile', icon: User, label: 'Profil' },
-        ].map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.key}
-              onClick={() => {
-                setTab(t.key);
-                if (t.key !== 'trips') setSelectedTrip(null);
-                if (t.key === 'notifications') loadUnreadCount();
-              }}
-              className={`relative flex flex-col items-center gap-1 px-4 py-1 min-w-[64px] ${
-                tab === t.key ? 'text-[#0A2B4E]' : 'text-slate-400'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              {t.badge > 0 && (
-                <span className="absolute top-0 right-2 w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
-                  {t.badge > 9 ? '9+' : t.badge}
+      <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-4">
+          {[
+            { key: 'trips', icon: Route, label: 'Curse' },
+            { key: 'notifications', icon: Bell, label: 'Notificări', badge: unreadCount },
+            { key: 'chat', icon: MessageSquare, label: 'Chat' },
+            { key: 'profile', icon: User, label: 'Profil' },
+          ].map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setTab(t.key);
+                  if (t.key !== 'trips') setSelectedTrip(null);
+                  if (t.key === 'notifications') loadUnreadCount();
+                }}
+                className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 ${
+                  active ? 'text-[#0A2B4E]' : 'text-slate-400'
+                }`}
+              >
+                <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.25 : 2} />
+                {t.badge > 0 && (
+                  <span className="absolute top-1.5 right-[18%] flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {t.badge > 9 ? '9+' : t.badge}
+                  </span>
+                )}
+                <span className="max-w-full truncate text-[10px] font-medium leading-tight">
+                  {t.label}
                 </span>
-              )}
-              <span className="text-xs font-medium">{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

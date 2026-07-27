@@ -80,10 +80,15 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
             </div>
           </div>
           <button
+            type="button"
+            role="switch"
+            aria-checked={notifEnabled}
             onClick={() => setNotifEnabled(!notifEnabled)}
-            className={`relative w-11 h-6 rounded-full transition-colors ${notifEnabled ? 'bg-[#27AE60]' : 'bg-slate-300'}`}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${notifEnabled ? 'bg-[#27AE60]' : 'bg-slate-300'}`}
           >
-            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            <span
+              className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow transition-transform ${notifEnabled ? 'translate-x-[1.375rem]' : 'translate-x-0.5'}`}
+            />
           </button>
         </div>
         <div className="flex items-center gap-3 p-4">

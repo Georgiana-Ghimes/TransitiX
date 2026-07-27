@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { authRequired } from '../middleware/auth.js';
+import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import {
   getComputedNotifications,
@@ -12,7 +12,7 @@ import {
 
 const router = Router();
 
-router.use(authRequired);
+router.use(authRequired, officeRequired);
 
 router.get('/inbox', async (req, res) => {
   try {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
@@ -7,6 +7,7 @@ import {
   UserCircle, LogOut, Menu, X, Building2, Search, MapPin, Brain, Package, Smartphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { homePathForRole, isDriverRole } from '@/lib/roles';
 import NotificationBell from '@/components/NotificationBell';
 
 const NAV = [
@@ -38,6 +39,19 @@ export default function Layout() {
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const roleLabel = { admin: 'Admin', dispatcher: 'Dispecer', driver: 'Șofer', finance: 'Finance' }[user?.role] || user?.role || '';
 
+  // Drivers only get the driver app — no office sidebar / notifications.
+  if (isDriverRole(user)) {
+    if (location.pathname !== '/driver-app') {
+      return <Navigate to={homePathForRole(user)} replace />;
+    }
+    return (
+      <div className="min-h-screen bg-[#F8F9FA]">
+        <main className="p-4 lg:p-6">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex">

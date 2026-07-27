@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from '@/api/client';
 import { Button } from "@/components/ui/button";
@@ -7,26 +7,40 @@ import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { postLoginPath } from "@/lib/roles";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [existingSession, setExistingSession] = useState(null);
   const returnTo = safeReturnTo();
+
+  useEffect(() => {
+    if (!api.auth.getToken()) return;
+    api.auth.me()
+      .then((u) => setExistingSession(u))
+      .catch(() => setExistingSession(null));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await api.auth.loginViaEmailPassword(email, password);
-      window.location.href = returnTo;
+      const data = await api.auth.loginViaEmailPassword(email, password);
+      window.location.href = postLoginPath(data?.user, returnTo);
     } catch (err) {
       setError(err.message || "Email sau parolă invalidă");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClearSession = async () => {
+    await api.auth.logout(false);
+    setExistingSession(null);
   };
 
   return (
@@ -46,6 +60,22 @@ export default function Login() {
         </>
       }
     >
+      {existingSession && (
+        <div className="mb-4 p-3 rounded-lg bg-slate-100 text-slate-700 text-sm flex items-center justify-between gap-3">
+          <span>
+            Ești conectat ca <strong>{existingSession.email}</strong>
+            {existingSession.role ? ` (${existingSession.role})` : ""}.
+          </span>
+          <button
+            type="button"
+            onClick={handleClearSession}
+            className="shrink-0 text-primary font-medium hover:underline"
+          >
+            Deconectează
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
           {error}

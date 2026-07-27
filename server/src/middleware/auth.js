@@ -64,3 +64,16 @@ export function optionalAuth(req, _res, next) {
   }
   next();
 }
+
+const OFFICE_ROLES = new Set(['admin', 'dispatcher', 'finance']);
+
+/** Office inbox / dispatcher tools — drivers stay on the driver app. */
+export function officeRequired(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  if (!OFFICE_ROLES.has(req.user.role)) {
+    return res.status(403).json({ message: 'Office access only' });
+  }
+  next();
+}
