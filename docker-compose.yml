@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-transitix}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - transitix_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-transitix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-transitix}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
+      UPLOAD_DIR: uploads
+      GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY:-}
+      SEED_ON_START: ${SEED_ON_START:-1}
+    volumes:
+      - transitix_uploads:/app/uploads
+    command: ["sh", "-c", "node src/migrate.js && if [ \"$$SEED_ON_START\" = \"1\" ]; then node src/seed.js || true; fi && node src/index.js"]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8082}:80"
+
+volumes:
+  transitix_pg:
+  transitix_uploads:
