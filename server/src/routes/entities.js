@@ -39,11 +39,12 @@ router.post('/:entity/filter', async (req, res) => {
     const order = parseOrder(req.body?.order || req.query.order);
     const limit = Math.min(Number(req.body?.limit || req.query.limit) || 200, 1000);
 
+    const allowedKeys = new Set(['id', ...cfg.writable]);
     const clauses = ['company_id = $1'];
     const params = [req.user.company_id];
     let i = 2;
     for (const [key, value] of Object.entries(filters)) {
-      if (!/^[a-z_]+$/i.test(key)) continue;
+      if (!allowedKeys.has(key)) continue;
       if (value === undefined) continue;
       clauses.push(`${key} = $${i++}`);
       params.push(value);

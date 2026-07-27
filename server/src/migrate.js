@@ -306,6 +306,9 @@ CREATE INDEX IF NOT EXISTS idx_trips_company ON trips(company_id);
 CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(company_id, status);
 CREATE INDEX IF NOT EXISTS idx_client_confirmations_token ON client_confirmations(token);
 CREATE INDEX IF NOT EXISTS idx_gps_logs_current ON gps_logs(company_id, is_current);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMPTZ;
 `;
 
 async function migrate() {

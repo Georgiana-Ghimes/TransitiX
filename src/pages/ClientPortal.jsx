@@ -53,7 +53,7 @@ export default function ClientPortal() {
       <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-red-50 flex items-center justify-center mb-4"><FileText className="w-8 h-8 text-red-400" /></div>
-          <h1 className="font-bold text-[#0A2B4E] text-lg mb-2">Link invalid</h1>
+          <h1 className="font-bold text-[#0A2B4E] text-lg mb-2">Link invalid sau expirat</h1>
           <p className="text-sm text-slate-500">Acest link de confirmare nu este valid sau a expirat. Contactați transportatorul pentru asistență.</p>
         </div>
       </div>

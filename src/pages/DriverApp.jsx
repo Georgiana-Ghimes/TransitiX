@@ -31,6 +31,7 @@ export default function DriverApp() {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [tripDoc, setTripDoc] = useState(null);
   const [tab, setTab] = useState('trips');
   const [listMode, setListMode] = useState('active'); // active | history
   const [unreadCount, setUnreadCount] = useState(0);
@@ -39,6 +40,23 @@ export default function DriverApp() {
   useEffect(() => {
     bootstrap();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTrip?.id) {
+      setTripDoc(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const docs = await api.entities.TripDocument.filter({ trip_id: selectedTrip.id });
+        if (!cancelled) setTripDoc(docs[0] || null);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedTrip?.id]);
 
   const bootstrap = async () => {
     setLoading(true);
@@ -136,24 +154,37 @@ export default function DriverApp() {
 
   const uploadCMR = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedTrip) return;
+    if (!file) return;
+    if (!selectedTrip) {
+      alert('Selectează o cursă înainte de a încărca CMR.');
+      e.target.value = '';
+      return;
+    }
     setUploading(true);
     try {
       const { file_url } = await api.integrations.Core.UploadFile({ file });
       const docs = await api.entities.TripDocument.filter({ trip_id: selectedTrip.id });
+      let docRow;
       if (docs.length > 0) {
-        await api.entities.TripDocument.update(docs[0].id, { original_image_url: file_url });
+        docRow = await api.entities.TripDocument.update(docs[0].id, {
+          original_image_url: file_url,
+          is_confirmed: false,
+          ocr_extracted_data: null,
+        });
       } else {
-        await api.entities.TripDocument.create({
+        docRow = await api.entities.TripDocument.create({
           trip_id: selectedTrip.id,
           cmr_number: selectedTrip.cmr_number,
           original_image_url: file_url,
           is_confirmed: false,
         });
       }
-      await api.integrations.Core.InvokeLLM({
+
+      const ocr = await api.integrations.Core.InvokeLLM({
         prompt: 'Extract CMR document data from this image.',
         file_urls: [file_url],
+        trip_id: selectedTrip.id,
+        trip_context: selectedTrip,
         response_json_schema: {
           type: 'object',
           properties: {
@@ -167,10 +198,13 @@ export default function DriverApp() {
           },
         },
       });
-      alert('CMR încărcat. OCR rulează (stub în MVP).');
+
+      docRow = await api.entities.TripDocument.update(docRow.id, { ocr_extracted_data: ocr });
+      setTripDoc(docRow);
+      alert('CMR încărcat și procesat. Dispecerul poate confirma datele OCR.');
     } catch (err) {
       console.error(err);
-      alert('Eroare: ' + (err.message || ''));
+      alert('Eroare: ' + (err.message || 'Upload eșuat'));
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -185,7 +219,7 @@ export default function DriverApp() {
     );
   }
 
-  const activeTrips = trips.filter((t) => isActiveTripStatus(t.status));
+  const activeTrips = trips.filter((t) => !['livrata', 'anulata'].includes(t.status));
   const historyTrips = trips.filter((t) => ['livrata', 'anulata'].includes(t.status));
   const visibleTrips = listMode === 'active' ? activeTrips : historyTrips;
   const currentFlowStep = STATUS_FLOW.findIndex((s) => s.key === selectedTrip?.status);
@@ -355,6 +389,22 @@ export default function DriverApp() {
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
               <h3 className="text-sm font-semibold text-[#0A2B4E] mb-3">Document CMR</h3>
+              {tripDoc?.original_image_url && !uploading && (
+                <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                  <div className="flex items-center gap-2 text-emerald-700 text-sm font-medium mb-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    CMR încărcat
+                    {tripDoc.ocr_extracted_data?._stub && (
+                      <span className="text-xs font-normal text-emerald-600">(OCR precompletat)</span>
+                    )}
+                  </div>
+                  <img
+                    src={tripDoc.original_image_url}
+                    alt="CMR"
+                    className="w-full max-h-48 object-contain rounded border border-slate-200 bg-white"
+                  />
+                </div>
+              )}
               <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl py-8 cursor-pointer hover:border-[#1D4E89] hover:bg-slate-50 transition-colors min-h-[100px]">
                 {uploading ? (
                   <>
@@ -364,13 +414,15 @@ export default function DriverApp() {
                 ) : (
                   <>
                     <Camera className="w-8 h-8 text-slate-400 mb-2" />
-                    <p className="text-sm text-slate-500 font-medium">Încarcă CMR</p>
+                    <p className="text-sm text-slate-500 font-medium">
+                      {tripDoc?.original_image_url ? 'Reîncarcă CMR' : 'Încarcă CMR'}
+                    </p>
                     <p className="text-xs text-slate-400 mt-1">Poză din cameră sau galerie</p>
                   </>
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,application/pdf"
                   capture="environment"
                   className="hidden"
                   onChange={uploadCMR}

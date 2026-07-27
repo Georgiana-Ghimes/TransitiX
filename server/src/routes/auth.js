@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { query } from '../db.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
@@ -89,13 +90,73 @@ router.post('/logout', (_req, res) => {
 });
 
 router.post('/reset-password-request', async (req, res) => {
-  // Stub for MVP — always succeed
-  console.log('[email stub] password reset requested for', req.body?.email);
-  res.json({ ok: true, message: 'If the email exists, a reset link was sent.' });
+  try {
+    const email = String(req.body?.email || '').trim();
+    const origin = req.body?.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+    // Always return ok to avoid email enumeration
+    const empty = { ok: true, message: 'If the email exists, a reset link was sent.' };
+    if (!email) return res.json(empty);
+
+    const result = await query(
+      `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE LIMIT 1`,
+      [email]
+    );
+    if (!result.rows[0]) return res.json(empty);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    await query(
+      `UPDATE users
+       SET reset_token = $1, reset_token_expires_at = NOW() + INTERVAL '1 hour', updated_at = NOW()
+       WHERE id = $2`,
+      [token, result.rows[0].id]
+    );
+
+    const reset_link = `${origin.replace(/\/$/, '')}/reset-password?token=${token}`;
+    console.log('[email stub] password reset link:', reset_link);
+
+    // MVP without mail provider: return link so UI can show it in local/dev.
+    res.json({ ...empty, reset_link });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Reset request failed' });
+  }
 });
 
 router.post('/reset-password', async (req, res) => {
-  res.status(501).json({ message: 'Password reset not configured yet' });
+  try {
+    const { resetToken, newPassword } = req.body || {};
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password required' });
+    }
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const result = await query(
+      `SELECT id FROM users
+       WHERE reset_token = $1
+         AND reset_token_expires_at IS NOT NULL
+         AND reset_token_expires_at > NOW()
+         AND is_active = TRUE
+       LIMIT 1`,
+      [resetToken]
+    );
+    if (!result.rows[0]) {
+      return res.status(400).json({ message: 'Invalid or expired reset link' });
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, 12);
+    await query(
+      `UPDATE users
+       SET password_hash = $1, reset_token = NULL, reset_token_expires_at = NULL, updated_at = NOW()
+       WHERE id = $2`,
+      [password_hash, result.rows[0].id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Password reset failed' });
+  }
 });
 
 export default router;

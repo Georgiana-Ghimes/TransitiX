@@ -4,6 +4,11 @@ import { serializeRow } from '../entities.js';
 
 const router = Router();
 
+function isExpired(row) {
+  if (!row?.expires_at) return false;
+  return new Date(row.expires_at).getTime() < Date.now();
+}
+
 router.get('/:token', async (req, res) => {
   try {
     const conf = await query(
@@ -12,7 +17,19 @@ router.get('/:token', async (req, res) => {
     );
     if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
 
-    const confirmation = serializeRow(conf.rows[0]);
+    const row = conf.rows[0];
+    if (isExpired(row) || row.status === 'expired') {
+      if (row.status !== 'expired') {
+        await query(
+          `UPDATE client_confirmations SET status = 'expired', updated_at = NOW() WHERE id = $1`,
+          [row.id]
+        );
+        row.status = 'expired';
+      }
+      return res.status(410).json({ message: 'Confirmation link has expired' });
+    }
+
+    const confirmation = serializeRow(row);
     let trip = null;
     if (confirmation.trip_id) {
       const t = await query(`SELECT * FROM trips WHERE id = $1`, [confirmation.trip_id]);
@@ -34,6 +51,13 @@ router.post('/:token', async (req, res) => {
     if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
     if (conf.rows[0].status === 'confirmed') {
       return res.json(serializeRow(conf.rows[0]));
+    }
+    if (isExpired(conf.rows[0]) || conf.rows[0].status === 'expired') {
+      await query(
+        `UPDATE client_confirmations SET status = 'expired', updated_at = NOW() WHERE id = $1`,
+        [conf.rows[0].id]
+      );
+      return res.status(410).json({ message: 'Confirmation link has expired' });
     }
 
     const {

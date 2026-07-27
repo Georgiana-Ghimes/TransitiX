@@ -99,6 +99,14 @@ export const api = {
       });
     },
   },
+  trips: {
+    createConfirmationLink(tripId, { origin, client_email } = {}) {
+      return request(`/trips/${tripId}/confirmation-link`, {
+        method: 'POST',
+        body: { origin: origin || window.location.origin, client_email },
+      });
+    },
+  },
   auth: {
     async loginViaEmailPassword(email, password) {
       const data = await request('/auth/login', {
@@ -139,7 +147,7 @@ export const api = {
     async resetPasswordRequest(email) {
       return request('/auth/reset-password-request', {
         method: 'POST',
-        body: { email },
+        body: { email, origin: window.location.origin },
       });
     },
     async resetPassword(payload) {

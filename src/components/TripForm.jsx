@@ -8,8 +8,8 @@ export default function TripForm({ trip, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     cmr_number: '', driver_id: '', driver_name: '', vehicle_id: '', vehicle_plate: '',
-    shipper_name: '', shipper_address: '', shipper_contact: '', shipper_phone: '',
-    consignee_name: '', consignee_address: '', consignee_contact: '', consignee_phone: '',
+    shipper_name: '', shipper_address: '', shipper_contact: '', shipper_phone: '', shipper_email: '',
+    consignee_name: '', consignee_address: '', consignee_contact: '', consignee_phone: '', consignee_email: '',
     loading_date: '', loading_time: '', estimated_delivery_date: '', estimated_delivery_time: '',
     goods_description: '', weight_kg: '', package_count: '', volume_mc: '',
     special_instructions: '', internal_notes: '', distance_km: '', status: 'planificata',
@@ -167,6 +167,7 @@ export default function TripForm({ trip, onClose, onSave }) {
               <div><label className={labelCls}>Contact</label><input className={inputCls} value={form.shipper_contact} onChange={e => set('shipper_contact', e.target.value)} /></div>
               <div className="sm:col-span-2"><label className={labelCls}>Adresă</label><input className={inputCls} value={form.shipper_address} onChange={e => set('shipper_address', e.target.value)} /></div>
               <div><label className={labelCls}>Telefon</label><input className={inputCls} value={form.shipper_phone} onChange={e => set('shipper_phone', e.target.value)} /></div>
+              <div><label className={labelCls}>Email</label><input type="email" className={inputCls} value={form.shipper_email || ''} onChange={e => set('shipper_email', e.target.value)} /></div>
             </div>
           </div>
 
@@ -178,6 +179,7 @@ export default function TripForm({ trip, onClose, onSave }) {
               <div><label className={labelCls}>Contact</label><input className={inputCls} value={form.consignee_contact} onChange={e => set('consignee_contact', e.target.value)} /></div>
               <div className="sm:col-span-2"><label className={labelCls}>Adresă</label><input className={inputCls} value={form.consignee_address} onChange={e => set('consignee_address', e.target.value)} /></div>
               <div><label className={labelCls}>Telefon</label><input className={inputCls} value={form.consignee_phone} onChange={e => set('consignee_phone', e.target.value)} /></div>
+              <div><label className={labelCls}>Email</label><input type="email" className={inputCls} value={form.consignee_email || ''} onChange={e => set('consignee_email', e.target.value)} /></div>
             </div>
           </div>
 
