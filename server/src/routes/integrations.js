@@ -4,6 +4,11 @@ import { authRequired } from '../middleware/auth.js';
 import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
+import {
+  extractCmrFromImage,
+  stubCmrFromTrip,
+  visionConfigured,
+} from '../lib/cmrOcr.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -39,16 +44,25 @@ router.post('/upload', authRequired, (req, res) => {
 });
 
 /**
- * OCR / LLM stub.
- * For CMR OCR requests, prefers trip_context (or loads trip by trip_id)
- * so the dispatcher flow works without Google Vision yet.
+ * OCR / LLM endpoint.
+ * CMR requests: Google Vision when GOOGLE_VISION_API_KEY is set; else trip prefill stub.
+ * Planning AI (suggestions schema): still stubbed.
  */
 router.post('/llm', authRequired, async (req, res) => {
   try {
-    const { prompt, response_json_schema, trip_context, trip_id } = req.body || {};
-    console.log('[llm/ocr stub]', {
+    const {
+      prompt,
+      response_json_schema,
+      trip_context,
+      trip_id,
+      file_urls,
+    } = req.body || {};
+
+    console.log('[llm/ocr]', {
       promptLength: prompt?.length || 0,
       trip_id: trip_id || trip_context?.id || null,
+      files: Array.isArray(file_urls) ? file_urls.length : 0,
+      vision: visionConfigured(),
     });
 
     if (response_json_schema?.properties?.suggestions) {
@@ -85,20 +99,28 @@ router.post('/llm', authRequired, async (req, res) => {
       if (result.rows[0]) trip = serializeRow(result.rows[0]);
     }
 
-    // MVP OCR: prefill from trip data so the confirmation flow is usable.
-    // Replace with Google Vision / Textract when ready.
-    res.json({
-      cmr_number: trip?.cmr_number || null,
-      date: trip?.loading_date || new Date().toISOString().slice(0, 10),
-      shipper: trip?.shipper_name || null,
-      consignee: trip?.consignee_name || null,
-      goods_description: trip?.goods_description || null,
-      weight: trip?.weight_kg != null ? String(trip.weight_kg) : null,
-      packages: trip?.package_count != null ? String(trip.package_count) : null,
-      _stub: true,
-      _note:
-        'OCR stub: date precompletate din cursă. Conectează Google Vision pentru extragere reală din imagine.',
-    });
+    const imageUrl = Array.isArray(file_urls) ? file_urls.find(Boolean) : null;
+
+    if (visionConfigured() && imageUrl) {
+      try {
+        const extracted = await extractCmrFromImage(imageUrl, trip);
+        return res.json(extracted);
+      } catch (ocrErr) {
+        console.error('[vision ocr]', ocrErr.message || ocrErr);
+        const fallback = stubCmrFromTrip(trip);
+        fallback._note = `OCR Vision a eșuat (${ocrErr.message}). Am folosit datele din cursă.`;
+        fallback._vision_error = ocrErr.message;
+        return res.json(fallback);
+      }
+    }
+
+    if (visionConfigured() && !imageUrl) {
+      const fallback = stubCmrFromTrip(trip);
+      fallback._note = 'Nicio imagine trimisă pentru OCR. Am folosit datele din cursă.';
+      return res.json(fallback);
+    }
+
+    res.json(stubCmrFromTrip(trip));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'OCR failed' });

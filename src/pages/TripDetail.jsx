@@ -317,7 +317,12 @@ export default function TripDetail() {
                     </h4>
                     {ocr._stub && (
                       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                        MVP stub: date precompletate din cursă. Poți confirma sau edita fluxul ca și cum OCR-ul ar fi real.
+                        {ocr._note || 'OCR stub: date precompletate din cursă.'}
+                      </p>
+                    )}
+                    {!ocr._stub && ocr._provider === 'google_vision' && (
+                      <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                        Extras cu Google Vision — verifică și confirmă datele.
                       </p>
                     )}
                     {[
