@@ -25,6 +25,7 @@ Transitix is a full-stack TMS (Transport Management System) app.
 - Prefer existing entity API patterns in `src/api/client.js` before adding new clients
 - Keep multi-tenant isolation via `company_id` on all company-scoped queries
 - Do not reintroduce Base44 SDK, plugins, or references
+- **Responsive:** office UI must work from ~360px (phone) through tablet to desktop. Prefer card layouts under `md`, tables from `md` up with `overflow-x-auto` + `min-w-*`. Do not hide critical actions only behind desktop-only UI.
 
 ## Documentation & versioning (mandatory for all agents)
 

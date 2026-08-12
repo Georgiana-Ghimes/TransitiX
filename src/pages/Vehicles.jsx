@@ -3,6 +3,8 @@ import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import VehicleForm from '@/components/VehicleForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { toast } from '@/components/ui/use-toast';
 import { Plus, Truck } from 'lucide-react';
 
 export default function Vehicles() {
@@ -11,6 +13,8 @@ export default function Vehicles() {
   const [showForm, setShowForm] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
   const [search, setSearch] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null); // { type, vehicle }
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadVehicles(); }, []);
 
@@ -20,32 +24,47 @@ export default function Vehicles() {
     finally { setLoading(false); }
   };
 
-  const handleDeactivate = async (id) => {
-    if (!confirm('Dezactivați acest vehicul? Va rămâne în flotă ca inactiv.')) return;
+  const closeConfirm = () => {
+    if (busy) return;
+    setConfirmAction(null);
+  };
+
+  const runConfirm = async () => {
+    if (!confirmAction?.vehicle) return;
+    const { type, vehicle } = confirmAction;
+    setBusy(true);
     try {
-      await api.entities.Vehicle.update(id, { is_active: false, status: 'inactive' });
+      if (type === 'deactivate') {
+        await api.entities.Vehicle.update(vehicle.id, { is_active: false, status: 'inactive' });
+        toast({ title: 'Vehicul dezactivat', description: `${vehicle.plate} rămâne în flotă ca inactiv.` });
+      } else if (type === 'remove') {
+        await api.entities.Vehicle.delete(vehicle.id);
+        toast({ title: 'Vehicul șters', description: `${vehicle.plate} a fost eliminat din flotă.` });
+      }
+      setConfirmAction(null);
       await loadVehicles();
     } catch (e) {
-      alert(e.message || 'Nu s-a putut dezactiva vehiculul.');
+      toast({
+        title: 'Acțiune eșuată',
+        description: e.message || 'Nu s-a putut actualiza vehiculul.',
+        variant: 'destructive',
+      });
+    } finally {
+      setBusy(false);
     }
   };
 
-  const handleReactivate = async (id) => {
+  const handleReactivate = async (vehicle) => {
     try {
-      await api.entities.Vehicle.update(id, { is_active: true, status: 'available' });
+      await api.entities.Vehicle.update(vehicle.id, { is_active: true, status: 'available' });
+      toast({ title: 'Vehicul reactivat', description: `${vehicle.plate} este din nou disponibil.` });
       await loadVehicles();
     } catch (e) {
-      alert(e.message || 'Nu s-a putut reactiva vehiculul.');
-    }
-  };
-
-  const handleRemove = async (id) => {
-    if (!confirm('Ștergeți definitiv acest vehicul din flotă? Acțiunea nu poate fi anulată.')) return;
-    try {
-      await api.entities.Vehicle.delete(id);
-      await loadVehicles();
-    } catch (e) {
-      alert(e.message || 'Nu s-a putut șterge vehiculul.');
+      toast({
+        title: 'Acțiune eșuată',
+        description: e.message || 'Nu s-a putut reactiva vehiculul.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -56,6 +75,21 @@ export default function Vehicles() {
   );
 
   if (loading) return <div className="flex items-center justify-center h-96"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;
+
+  const confirmCopy =
+    confirmAction?.type === 'remove'
+      ? {
+          title: 'Șterge vehiculul?',
+          description: `Ștergeți definitiv ${confirmAction.vehicle?.plate || 'acest vehicul'} din flotă? Acțiunea nu poate fi anulată.`,
+          confirmLabel: 'Șterge definitiv',
+          variant: 'danger',
+        }
+      : {
+          title: 'Dezactivează vehiculul?',
+          description: `${confirmAction?.vehicle?.plate || 'Vehiculul'} va rămâne în flotă ca inactiv. Îl poți reactiva sau șterge ulterior.`,
+          confirmLabel: 'Dezactivează',
+          variant: 'warning',
+        };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -106,14 +140,14 @@ export default function Vehicles() {
                 <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">ITP</p><p className={`font-medium ${v.itp_expiry && new Date(v.itp_expiry) < new Date() ? 'text-red-600' : 'text-slate-700'}`}>{v.itp_expiry ? new Date(v.itp_expiry).toLocaleDateString('ro-RO') : '-'}</p></div>
                 <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">RCA</p><p className={`font-medium ${v.rca_expiry && new Date(v.rca_expiry) < new Date() ? 'text-red-600' : 'text-slate-700'}`}>{v.rca_expiry ? new Date(v.rca_expiry).toLocaleDateString('ro-RO') : '-'}</p></div>
               </div>
-              <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                <button onClick={() => { setEditVehicle(v); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
+                <button onClick={() => { setEditVehicle(v); setShowForm(true); }} className="flex-1 min-w-[5.5rem] text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
                 {v.is_active !== false ? (
-                  <button onClick={() => handleDeactivate(v.id)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+                  <button onClick={() => setConfirmAction({ type: 'deactivate', vehicle: v })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
                 ) : (
                   <>
-                    <button onClick={() => handleReactivate(v.id)} className="flex-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
-                    <button onClick={() => handleRemove(v.id)} className="flex-1 text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
+                    <button onClick={() => handleReactivate(v)} className="flex-1 min-w-[5.5rem] text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
+                    <button onClick={() => setConfirmAction({ type: 'remove', vehicle: v })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
                   </>
                 )}
               </div>
@@ -128,6 +162,17 @@ export default function Vehicles() {
       )}
 
       {showForm && <VehicleForm vehicle={editVehicle} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadVehicles(); }} />}
+
+      <ConfirmDialog
+        open={Boolean(confirmAction)}
+        onClose={closeConfirm}
+        onConfirm={runConfirm}
+        busy={busy}
+        title={confirmCopy.title}
+        description={confirmCopy.description}
+        confirmLabel={confirmCopy.confirmLabel}
+        variant={confirmCopy.variant}
+      />
     </div>
   );
 }

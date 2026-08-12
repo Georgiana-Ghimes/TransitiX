@@ -94,7 +94,7 @@ export default function Trips() {
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <SuggestSearch
-          className="flex-1 min-w-[240px] max-w-md"
+          className="w-full min-w-0 sm:flex-1 sm:min-w-[240px] max-w-md"
           value={search}
           onChange={setSearch}
           items={trips}
@@ -108,7 +108,7 @@ export default function Trips() {
           })}
           onSelect={(item) => navigate(`/trips/${item.id}`)}
         />
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap w-full sm:w-auto">
           {STATUS_FILTERS.map(f => (
             <button
               key={f.value}
@@ -121,11 +121,38 @@ export default function Trips() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.length > 0 ? filtered.map((trip) => (
+          <div key={trip.id} className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <Link to={`/trips/${trip.id}`} className="font-semibold text-[#0A2B4E] hover:underline min-w-0 truncate">
+                {trip.cmr_number || '-'}
+              </Link>
+              <StatusBadge status={trip.status} />
+            </div>
+            <p className="text-sm text-slate-600 line-clamp-2">{trip.shipper_name} → {trip.consignee_name}</p>
+            <p className="text-xs text-slate-500 mt-2">
+              {[trip.driver_name, trip.vehicle_plate, formatDate(trip.loading_date)].filter(Boolean).join(' · ') || '—'}
+            </p>
+            <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
+              <button onClick={() => { setEditTrip(trip); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs font-medium">Editează</button>
+              <button onClick={() => handleDelete(trip.id)} className="text-red-500 hover:underline text-xs font-medium">Șterge</button>
+            </div>
+          </div>
+        )) : (
+          <div className="bg-white rounded-xl border border-slate-200/80 p-10 text-center text-slate-400 shadow-sm">
+            <Route className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm font-medium text-slate-600">Nu există curse</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         {filtered.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-500 text-xs">
                   <th className="text-left font-medium px-4 py-3">CMR</th>

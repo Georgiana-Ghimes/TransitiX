@@ -199,7 +199,7 @@ export default function Layout() {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 lg:px-6">
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-start min-w-0">
             {!isDesktop ? (
               <button
@@ -226,21 +226,21 @@ export default function Layout() {
 
           <GlobalSearch className="hidden md:block" />
 
-          <div className="flex items-center justify-end gap-3 min-w-0">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-0">
             <NotificationBell />
 
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 p-1 pr-2 rounded-lg hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-2 p-1 pr-1 sm:pr-2 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-[#1D4E89] flex items-center justify-center text-white text-sm font-semibold">
                   {initials}
                 </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-slate-700 leading-tight">{displayName}</p>
-                  {roleLabel && <p className="text-[11px] text-slate-400 leading-tight">{roleLabel}</p>}
+                <div className="hidden sm:block text-left max-w-[10rem]">
+                  <p className="text-sm font-medium text-slate-700 leading-tight truncate">{displayName}</p>
+                  {roleLabel && <p className="text-[11px] text-slate-400 leading-tight truncate">{roleLabel}</p>}
                 </div>
               </button>
               {menuOpen && (
@@ -270,7 +270,13 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6">
+        {!isDesktop && (
+          <div className="px-3 sm:px-4 py-2 bg-white border-b border-slate-200">
+            <GlobalSearch className="w-full max-w-none" />
+          </div>
+        )}
+
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

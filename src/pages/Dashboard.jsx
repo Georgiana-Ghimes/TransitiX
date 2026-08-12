@@ -116,23 +116,27 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/80 p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200/80 p-4 sm:p-6 shadow-sm min-w-0">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-[#0A2B4E]">Curse după status</h2>
             <TrendingUp className="w-4 h-4 text-slate-400" />
           </div>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={chartData} barCategoryGap="18%" margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }} />
-                <Bar dataKey="count" fill="#1D4E89" radius={[6, 6, 0, 0]} maxBarSize={44} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-[280px] h-[240px] sm:h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} barCategoryGap="18%" margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                    <Bar dataKey="count" fill="#1D4E89" radius={[6, 6, 0, 0]} maxBarSize={44} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           ) : (
-            <div className="h-[280px] flex items-center justify-center text-slate-400 text-sm">Nu există date</div>
+            <div className="h-[240px] sm:h-[280px] flex items-center justify-center text-slate-400 text-sm">Nu există date</div>
           )}
         </div>
 
@@ -176,32 +180,46 @@ export default function Dashboard() {
           <Link to="/trips" className="text-xs text-[#1D4E89] hover:underline">Vezi toate cursele</Link>
         </div>
         {recentTrips.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500 text-xs">
-                  <th className="text-left font-medium px-6 py-3">CMR</th>
-                  <th className="text-left font-medium px-6 py-3">Șofer</th>
-                  <th className="text-left font-medium px-6 py-3">Vehicul</th>
-                  <th className="text-left font-medium px-6 py-3">Traseu</th>
-                  <th className="text-left font-medium px-6 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTrips.map(trip => (
-                  <tr key={trip.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="px-6 py-3 font-medium text-[#0A2B4E]">{trip.cmr_number || '-'}</td>
-                    <td className="px-6 py-3 text-slate-600">{trip.driver_name || '-'}</td>
-                    <td className="px-6 py-3 text-slate-600">{trip.vehicle_plate || '-'}</td>
-                    <td className="px-6 py-3 text-slate-600 max-w-xs truncate">
-                      <span className="line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</span>
-                    </td>
-                    <td className="px-6 py-3"><StatusBadge status={trip.status} /></td>
+          <>
+            <div className="md:hidden divide-y divide-slate-100">
+              {recentTrips.map((trip) => (
+                <Link key={trip.id} to={`/trips/${trip.id}`} className="flex items-start justify-between gap-3 p-4 hover:bg-slate-50">
+                  <div className="min-w-0">
+                    <p className="font-medium text-[#0A2B4E] truncate">{trip.cmr_number || '-'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</p>
+                    <p className="text-xs text-slate-400 mt-1">{[trip.driver_name, trip.vehicle_plate].filter(Boolean).join(' · ') || '—'}</p>
+                  </div>
+                  <StatusBadge status={trip.status} />
+                </Link>
+              ))}
+            </div>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 text-xs">
+                    <th className="text-left font-medium px-6 py-3">CMR</th>
+                    <th className="text-left font-medium px-6 py-3">Șofer</th>
+                    <th className="text-left font-medium px-6 py-3">Vehicul</th>
+                    <th className="text-left font-medium px-6 py-3">Traseu</th>
+                    <th className="text-left font-medium px-6 py-3">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentTrips.map(trip => (
+                    <tr key={trip.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                      <td className="px-6 py-3 font-medium text-[#0A2B4E]"><Link to={`/trips/${trip.id}`} className="hover:underline">{trip.cmr_number || '-'}</Link></td>
+                      <td className="px-6 py-3 text-slate-600">{trip.driver_name || '-'}</td>
+                      <td className="px-6 py-3 text-slate-600">{trip.vehicle_plate || '-'}</td>
+                      <td className="px-6 py-3 text-slate-600 max-w-xs truncate">
+                        <span className="line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</span>
+                      </td>
+                      <td className="px-6 py-3"><StatusBadge status={trip.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="p-12 text-center text-slate-400">
             <Route className="w-10 h-10 mx-auto mb-3 opacity-40" />
