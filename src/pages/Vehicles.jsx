@@ -20,10 +20,33 @@ export default function Vehicles() {
     finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Dezactivați acest vehicul?')) return;
-    await api.entities.Vehicle.update(id, { is_active: false, status: 'inactive' });
-    loadVehicles();
+  const handleDeactivate = async (id) => {
+    if (!confirm('Dezactivați acest vehicul? Va rămâne în flotă ca inactiv.')) return;
+    try {
+      await api.entities.Vehicle.update(id, { is_active: false, status: 'inactive' });
+      await loadVehicles();
+    } catch (e) {
+      alert(e.message || 'Nu s-a putut dezactiva vehiculul.');
+    }
+  };
+
+  const handleReactivate = async (id) => {
+    try {
+      await api.entities.Vehicle.update(id, { is_active: true, status: 'available' });
+      await loadVehicles();
+    } catch (e) {
+      alert(e.message || 'Nu s-a putut reactiva vehiculul.');
+    }
+  };
+
+  const handleRemove = async (id) => {
+    if (!confirm('Ștergeți definitiv acest vehicul din flotă? Acțiunea nu poate fi anulată.')) return;
+    try {
+      await api.entities.Vehicle.delete(id);
+      await loadVehicles();
+    } catch (e) {
+      alert(e.message || 'Nu s-a putut șterge vehiculul.');
+    }
   };
 
   const filtered = vehicles.filter(v =>
@@ -85,7 +108,14 @@ export default function Vehicles() {
               </div>
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                 <button onClick={() => { setEditVehicle(v); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
-                <button onClick={() => handleDelete(v.id)} className="flex-1 text-xs font-medium text-red-500 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Dezactivează</button>
+                {v.is_active !== false ? (
+                  <button onClick={() => handleDeactivate(v.id)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+                ) : (
+                  <>
+                    <button onClick={() => handleReactivate(v.id)} className="flex-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
+                    <button onClick={() => handleRemove(v.id)} className="flex-1 text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
+                  </>
+                )}
               </div>
             </div>
           ))}

@@ -1,0 +1,7 @@
+# Local development overlay — publishes Postgres to the host so Vite/Express can connect.
+# Host port 5434 avoids clashes with other local Postgres containers (5432/5433).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+services:
+  db:
+    ports:
+      - "5434:5432"
