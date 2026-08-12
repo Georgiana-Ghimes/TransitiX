@@ -3,6 +3,7 @@ import { api } from '@/api/client';
 import KpiCard from '@/components/KpiCard';
 import InvoiceForm from '@/components/InvoiceForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, FileText, Euro, Wallet, TrendingUp, Download } from 'lucide-react';
 
 const INVOICE_STATUS = {
@@ -56,13 +57,16 @@ export default function Finance() {
         body: `Factura ${inv.series} ${inv.number} în valoare de ${inv.total_amount} ${inv.currency} a fost emisă.\n\nClient: ${inv.client_name}\nScadență: ${inv.due_date}\n\nMultumim!`,
       });
       await api.entities.Invoice.update(inv.id, { status: 'sent' });
+      notifySuccess('Factură trimisă', `${inv.series} ${inv.number} a fost marcată ca trimisă.`);
       loadData();
-    } catch (e) { alert('Eroare: ' + (e.message || '')); }
+    } catch (e) {
+      notifyError('Trimitere eșuată', e);
+    }
   };
 
   const sendToEfactura = async (inv) => {
     await api.entities.Invoice.update(inv.id, { efactura_status: 'sent' });
-    alert(`Factura ${inv.series} ${inv.number} a fost transmisă către e-Factura ANAF (simulare).`);
+    notifySuccess('e-Factura (simulare)', `Factura ${inv.series} ${inv.number} a fost marcată ca trimisă către ANAF.`);
     loadData();
   };
 

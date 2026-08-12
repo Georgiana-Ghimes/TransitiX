@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
+import { notifyError } from '@/lib/notify';
 
 export default function DriverForm({ driver, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
@@ -23,9 +24,9 @@ export default function DriverForm({ driver, onClose, onSave }) {
       if (driver?.id) await api.entities.Driver.update(driver.id, form);
       else await api.entities.Driver.create(form);
       onSave();
-    } catch (e) {
-      console.error(e);
-      alert('Eroare la salvare: ' + (e.message || 'unknown'));
+    } catch (err) {
+      console.error(err);
+      notifyError('Salvare eșuată', err);
     } finally { setSaving(false); }
   };
 

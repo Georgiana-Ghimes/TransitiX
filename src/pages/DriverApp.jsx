@@ -14,6 +14,7 @@ import {
   Route, Package, Truck, Camera, ChevronRight, Loader2, CheckCircle2,
   CircleDot, Navigation, MessageSquare, User, Bell, Phone,
 } from 'lucide-react';
+import { notifyError, notifySuccess } from '@/lib/notify';
 
 /** One primary action per status — TMS driver pattern */
 const STATUS_FLOW = [
@@ -146,7 +147,7 @@ export default function DriverApp() {
       loadUnreadCount();
     } catch (e) {
       console.error(e);
-      alert('Nu am putut actualiza statusul: ' + (e.message || ''));
+      notifyError('Actualizare status eșuată', e);
     } finally {
       setUpdating(false);
     }
@@ -156,7 +157,7 @@ export default function DriverApp() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!selectedTrip) {
-      alert('Selectează o cursă înainte de a încărca CMR.');
+      notifyError('Nicio cursă selectată', 'Selectează o cursă înainte de a încărca CMR.');
       e.target.value = '';
       return;
     }
@@ -201,10 +202,10 @@ export default function DriverApp() {
 
       docRow = await api.entities.TripDocument.update(docRow.id, { ocr_extracted_data: ocr });
       setTripDoc(docRow);
-      alert('CMR încărcat și procesat. Dispecerul poate confirma datele OCR.');
+      notifySuccess('CMR încărcat', 'Documentul a fost procesat. Dispecerul poate confirma datele OCR.');
     } catch (err) {
       console.error(err);
-      alert('Eroare: ' + (err.message || 'Upload eșuat'));
+      notifyError('Upload CMR eșuat', err);
     } finally {
       setUploading(false);
       e.target.value = '';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
+import { notifyError } from '@/lib/notify';
 
 export default function ClientForm({ client, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
@@ -19,9 +20,9 @@ export default function ClientForm({ client, onClose, onSave }) {
       if (client?.id) await api.entities.Client.update(client.id, form);
       else await api.entities.Client.create(form);
       onSave();
-    } catch (e) {
-      console.error(e);
-      alert('Eroare la salvare: ' + (e.message || 'unknown'));
+    } catch (err) {
+      console.error(err);
+      notifyError('Salvare eșuată', err);
     } finally { setSaving(false); }
   };
 

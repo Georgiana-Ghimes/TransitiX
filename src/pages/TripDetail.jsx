@@ -7,6 +7,7 @@ import {
   ArrowLeft, Upload, FileText, CheckCircle, Send, MapPin, Package, Truck, User,
   AlertTriangle, Loader2, Copy, ExternalLink,
 } from 'lucide-react';
+import { notifyError, notifySuccess } from '@/lib/notify';
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -67,7 +68,7 @@ export default function TripDetail() {
       await runOCR(existing.id, file_url);
     } catch (err) {
       console.error(err);
-      alert('Eroare la upload: ' + (err.message || ''));
+      notifyError('Upload eșuat', err);
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -103,7 +104,7 @@ export default function TripDetail() {
       setDoc(updated);
     } catch (err) {
       console.error(err);
-      alert('Eroare OCR: ' + (err.message || ''));
+      notifyError('OCR eșuat', err);
     } finally {
       setOcrProcessing(false);
     }
@@ -118,8 +119,9 @@ export default function TripDetail() {
         ocr_verified_at: new Date().toISOString(),
       });
       await loadData();
+      notifySuccess('OCR confirmat', 'Datele extrase au fost validate.');
     } catch (err) {
-      alert('Eroare la confirmare OCR: ' + (err.message || ''));
+      notifyError('Confirmare OCR eșuată', err);
     }
   };
 
@@ -144,7 +146,7 @@ export default function TripDetail() {
       }
     } catch (err) {
       console.error(err);
-      alert('Eroare la generare link: ' + (err.message || ''));
+      notifyError('Generare link eșuată', err);
     } finally {
       setSendingLink(false);
     }

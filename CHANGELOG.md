@@ -7,6 +7,13 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-13
+
+### Fixed
+
+- Replaced remaining native `alert()` calls with toast notifications across forms and workflows (vehicles, drivers, clients, trips, invoices, warehouse, driver app, OCR, planning, client portal)
+- Friendlier Romanian copy for common Postgres errors (numeric overflow, unique/duplicate)
+
 ## [1.1.0] - 2026-08-13
 
 ### Added

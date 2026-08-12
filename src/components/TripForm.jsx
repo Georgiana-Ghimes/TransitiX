@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
+import { notifyError } from '@/lib/notify';
 
 export default function TripForm({ trip, onClose, onSave }) {
   const [drivers, setDrivers] = useState([]);
@@ -102,9 +103,9 @@ export default function TripForm({ trip, onClose, onSave }) {
         }
       }
       onSave();
-    } catch (e) {
-      console.error(e);
-      alert('Eroare la salvare: ' + (e.message || 'unknown'));
+    } catch (err) {
+      console.error(err);
+      notifyError('Salvare eșuată', err);
     } finally { setSaving(false); }
   };
 

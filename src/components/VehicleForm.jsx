@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
+import { notifyError } from '@/lib/notify';
 
 export default function VehicleForm({ vehicle, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
@@ -31,9 +32,9 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
       if (vehicle?.id) await api.entities.Vehicle.update(vehicle.id, data);
       else await api.entities.Vehicle.create(data);
       onSave();
-    } catch (e) {
-      console.error(e);
-      alert('Eroare la salvare: ' + (e.message || 'unknown'));
+    } catch (err) {
+      console.error(err);
+      notifyError('Salvare eșuată', err);
     } finally { setSaving(false); }
   };
 
