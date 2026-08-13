@@ -3,6 +3,8 @@ import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import DriverForm from '@/components/DriverForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, Users, Phone, Mail } from 'lucide-react';
 
 export default function Drivers() {
@@ -11,6 +13,8 @@ export default function Drivers() {
   const [showForm, setShowForm] = useState(false);
   const [editDriver, setEditDriver] = useState(null);
   const [search, setSearch] = useState('');
+  const [confirmDriver, setConfirmDriver] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadDrivers(); }, []);
 
@@ -20,10 +24,19 @@ export default function Drivers() {
     finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Dezactivați acest șofer?')) return;
-    await api.entities.Driver.update(id, { is_active: false, status: 'indisponibil' });
-    loadDrivers();
+  const runDeactivate = async () => {
+    if (!confirmDriver) return;
+    setBusy(true);
+    try {
+      await api.entities.Driver.update(confirmDriver.id, { is_active: false, status: 'indisponibil' });
+      notifySuccess('Șofer dezactivat', `${confirmDriver.name || 'Șoferul'} a fost marcat indisponibil.`);
+      setConfirmDriver(null);
+      await loadDrivers();
+    } catch (e) {
+      notifyError('Dezactivare eșuată', e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const filtered = drivers.filter(d =>
@@ -87,7 +100,7 @@ export default function Drivers() {
               </div>
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                 <button onClick={() => { setEditDriver(d); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
-                <button onClick={() => handleDelete(d.id)} className="flex-1 text-xs font-medium text-red-500 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Dezactivează</button>
+                <button onClick={() => setConfirmDriver(d)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
               </div>
             </div>
           ))}
@@ -100,6 +113,17 @@ export default function Drivers() {
       )}
 
       {showForm && <DriverForm driver={editDriver} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadDrivers(); }} />}
+
+      <ConfirmDialog
+        open={Boolean(confirmDriver)}
+        onClose={() => { if (!busy) setConfirmDriver(null); }}
+        onConfirm={runDeactivate}
+        busy={busy}
+        variant="warning"
+        title="Dezactivează șoferul?"
+        description={`${confirmDriver?.name || 'Șoferul'} va rămâne în listă ca indisponibil.`}
+        confirmLabel="Dezactivează"
+      />
     </div>
   );
 }

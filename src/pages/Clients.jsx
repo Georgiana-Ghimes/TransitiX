@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import ClientForm from '@/components/ClientForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, Building2, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function Clients() {
@@ -10,6 +12,8 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [search, setSearch] = useState('');
+  const [confirmClient, setConfirmClient] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadClients(); }, []);
 
@@ -19,10 +23,19 @@ export default function Clients() {
     finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Dezactivați acest client?')) return;
-    await api.entities.Client.update(id, { is_active: false });
-    loadClients();
+  const runDeactivate = async () => {
+    if (!confirmClient) return;
+    setBusy(true);
+    try {
+      await api.entities.Client.update(confirmClient.id, { is_active: false });
+      notifySuccess('Client dezactivat', `${confirmClient.name || 'Clientul'} a fost dezactivat.`);
+      setConfirmClient(null);
+      await loadClients();
+    } catch (e) {
+      notifyError('Dezactivare eșuată', e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const filtered = clients.filter(c =>
@@ -81,7 +94,7 @@ export default function Clients() {
               </div>
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                 <button onClick={() => { setEditClient(c); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
-                <button onClick={() => handleDelete(c.id)} className="flex-1 text-xs font-medium text-red-500 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Dezactivează</button>
+                <button onClick={() => setConfirmClient(c)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
               </div>
             </div>
           ))}
@@ -94,6 +107,17 @@ export default function Clients() {
       )}
 
       {showForm && <ClientForm client={editClient} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadClients(); }} />}
+
+      <ConfirmDialog
+        open={Boolean(confirmClient)}
+        onClose={() => { if (!busy) setConfirmClient(null); }}
+        onConfirm={runDeactivate}
+        busy={busy}
+        variant="warning"
+        title="Dezactivează clientul?"
+        description={`${confirmClient?.name || 'Clientul'} va rămâne în listă ca inactiv.`}
+        confirmLabel="Dezactivează"
+      />
     </div>
   );
 }

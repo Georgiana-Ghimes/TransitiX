@@ -4,7 +4,9 @@ import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import TripForm from '@/components/TripForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { formatDate } from '@/lib/utils';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, Download, Route } from 'lucide-react';
 
 const STATUS_FILTERS = [
@@ -26,6 +28,8 @@ export default function Trips() {
   const [editTrip, setEditTrip] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [confirmTrip, setConfirmTrip] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadTrips(); }, []);
 
@@ -43,10 +47,19 @@ export default function Trips() {
     await loadTrips();
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Sigur doriți să ștergeți această cursă?')) return;
-    await api.entities.Trip.delete(id);
-    loadTrips();
+  const runDelete = async () => {
+    if (!confirmTrip) return;
+    setBusy(true);
+    try {
+      await api.entities.Trip.delete(confirmTrip.id);
+      notifySuccess('Cursă ștearsă', `${confirmTrip.cmr_number || 'Cursa'} a fost eliminată.`);
+      setConfirmTrip(null);
+      await loadTrips();
+    } catch (e) {
+      notifyError('Ștergere eșuată', e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const filtered = trips.filter(t => {
@@ -137,7 +150,7 @@ export default function Trips() {
             </p>
             <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
               <button onClick={() => { setEditTrip(trip); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs font-medium">Editează</button>
-              <button onClick={() => handleDelete(trip.id)} className="text-red-500 hover:underline text-xs font-medium">Șterge</button>
+              <button onClick={() => setConfirmTrip(trip)} className="text-red-500 hover:underline text-xs font-medium">Șterge</button>
             </div>
           </div>
         )) : (
@@ -177,7 +190,7 @@ export default function Trips() {
                     <td className="px-4 py-3"><StatusBadge status={trip.status} /></td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => { setEditTrip(trip); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs font-medium">Editează</button>
-                      <button onClick={() => handleDelete(trip.id)} className="text-red-500 hover:underline text-xs font-medium ml-3">Șterge</button>
+                      <button onClick={() => setConfirmTrip(trip)} className="text-red-500 hover:underline text-xs font-medium ml-3">Șterge</button>
                     </td>
                   </tr>
                 ))}
@@ -197,6 +210,17 @@ export default function Trips() {
       </div>
 
       {showForm && <TripForm trip={editTrip} onClose={() => setShowForm(false)} onSave={handleSave} />}
+
+      <ConfirmDialog
+        open={Boolean(confirmTrip)}
+        onClose={() => { if (!busy) setConfirmTrip(null); }}
+        onConfirm={runDelete}
+        busy={busy}
+        variant="danger"
+        title="Șterge cursa?"
+        description={`Ștergeți definitiv ${confirmTrip?.cmr_number || 'această cursă'}? Acțiunea nu poate fi anulată.`}
+        confirmLabel="Șterge definitiv"
+      />
     </div>
   );
 }

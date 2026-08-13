@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import WarehouseProductForm from '@/components/WarehouseProductForm';
 import SuggestSearch from '@/components/SuggestSearch';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, AlertTriangle, ArrowDown, ArrowUp, Boxes } from 'lucide-react';
 
 const UNIT_LABELS = { kg: 'kg', mc: 'mc', piece: 'buc', pallet: 'palet' };
@@ -12,6 +14,8 @@ export default function Warehouse() {
   const [showForm, setShowForm] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [search, setSearch] = useState('');
+  const [confirmProduct, setConfirmProduct] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadProducts(); }, []);
 
@@ -21,10 +25,19 @@ export default function Warehouse() {
     finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Ștergeți acest produs?')) return;
-    await api.entities.WarehouseProduct.delete(id);
-    loadProducts();
+  const runDelete = async () => {
+    if (!confirmProduct) return;
+    setBusy(true);
+    try {
+      await api.entities.WarehouseProduct.delete(confirmProduct.id);
+      notifySuccess('Produs șters', `${confirmProduct.name || confirmProduct.sku || 'Produsul'} a fost eliminat.`);
+      setConfirmProduct(null);
+      await loadProducts();
+    } catch (e) {
+      notifyError('Ștergere eșuată', e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const adjustStock = async (product, delta) => {
@@ -106,7 +119,7 @@ export default function Warehouse() {
                   </div>
                   <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
                     <button onClick={() => { setEditProduct(p); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
-                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline text-xs">Șterge</button>
+                    <button onClick={() => setConfirmProduct(p)} className="text-red-500 hover:underline text-xs">Șterge</button>
                   </div>
                 </div>
               );
@@ -148,7 +161,7 @@ export default function Warehouse() {
                         <td className="px-4 py-3 text-right font-medium text-slate-700">{((p.quantity || 0) * (p.unit_price || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON</td>
                         <td className="px-4 py-3 text-right">
                           <button onClick={() => { setEditProduct(p); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
-                          <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline text-xs ml-2">Șterge</button>
+                          <button onClick={() => setConfirmProduct(p)} className="text-red-500 hover:underline text-xs ml-2">Șterge</button>
                         </td>
                       </tr>
                     );
@@ -166,6 +179,17 @@ export default function Warehouse() {
       )}
 
       {showForm && <WarehouseProductForm product={editProduct} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadProducts(); }} />}
+
+      <ConfirmDialog
+        open={Boolean(confirmProduct)}
+        onClose={() => { if (!busy) setConfirmProduct(null); }}
+        onConfirm={runDelete}
+        busy={busy}
+        variant="danger"
+        title="Șterge produsul?"
+        description={`Ștergeți definitiv ${confirmProduct?.name || confirmProduct?.sku || 'acest produs'}? Acțiunea nu poate fi anulată.`}
+        confirmLabel="Șterge definitiv"
+      />
     </div>
   );
 }
