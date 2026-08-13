@@ -7,6 +7,12 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-08-13
+
+### Changed
+
+- Curse, Șoferi, Clienți, and Depozit: native `confirm()` replaced with shared `ConfirmDialog` (delete / deactivate)
+
 ## [1.1.3] - 2026-08-13
 
 ### Fixed
