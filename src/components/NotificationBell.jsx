@@ -121,10 +121,10 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+        <div className="fixed left-3 right-3 top-[4.25rem] z-[60] max-h-[min(28rem,calc(100dvh-5rem))] overflow-hidden bg-white rounded-xl shadow-xl border border-slate-200 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[min(22rem,calc(100vw-2rem))] sm:max-h-96">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
             <h3 className="font-semibold text-[#0A2B4E] text-sm shrink-0">Notificări</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end min-w-0">
               {readCount > 0 && (
                 <button
                   type="button"
@@ -148,7 +148,7 @@ export default function NotificationBell() {
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="overflow-y-auto max-h-[min(22rem,calc(100dvh-9rem))] sm:max-h-80">
             {loading ? (
               <div className="flex items-center justify-center py-10">
                 <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />

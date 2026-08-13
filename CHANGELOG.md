@@ -7,6 +7,13 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-08-13
+
+### Fixed
+
+- Notification inbox stays on-screen on phone (viewport-pinned panel instead of overflowing the bell)
+- Local Vite proxy uses `127.0.0.1` (avoids Windows IPv6 `localhost` ECONNREFUSED to the API)
+
 ## [1.1.2] - 2026-08-13
 
 ### Added
