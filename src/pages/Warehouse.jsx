@@ -60,7 +60,7 @@ export default function Warehouse() {
       )}
 
       <SuggestSearch
-        className="max-w-md"
+        className="w-full max-w-md"
         value={search}
         onChange={setSearch}
         items={products}
@@ -75,50 +75,89 @@ export default function Warehouse() {
       />
 
       {filtered.length > 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500 text-xs">
-                  <th className="text-left font-medium px-4 py-3">SKU</th>
-                  <th className="text-left font-medium px-4 py-3">Produs</th>
-                  <th className="text-left font-medium px-4 py-3">Locație</th>
-                  <th className="text-center font-medium px-4 py-3">Cantitate</th>
-                  <th className="text-center font-medium px-4 py-3">Stoc</th>
-                  <th className="text-right font-medium px-4 py-3">Valoare</th>
-                  <th className="text-right font-medium px-4 py-3">Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(p => {
-                  const isLow = (p.quantity || 0) <= (p.min_quantity || 0);
-                  return (
-                    <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-medium text-[#0A2B4E]">{p.sku}</td>
-                      <td className="px-4 py-3"><p className="font-medium text-slate-700">{p.name}</p>{p.description && <p className="text-xs text-slate-400 truncate max-w-xs">{p.description}</p>}</td>
-                      <td className="px-4 py-3 text-slate-500">{p.location || '-'}</td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => adjustStock(p, -1)} className="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"><ArrowDown className="w-3.5 h-3.5" /></button>
-                          <span className="w-16 text-center font-medium">{p.quantity || 0} {UNIT_LABELS[p.unit] || 'buc'}</span>
-                          <button onClick={() => adjustStock(p, 1)} className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center"><ArrowUp className="w-3.5 h-3.5" /></button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {isLow ? <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"><AlertTriangle className="w-3 h-3" /> Minim</span> : <span className="text-xs text-emerald-600">OK</span>}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-700">{((p.quantity || 0) * (p.unit_price || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON</td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => { setEditProduct(p); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
-                        <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline text-xs ml-2">Șterge</button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          <div className="md:hidden space-y-3">
+            {filtered.map((p) => {
+              const isLow = (p.quantity || 0) <= (p.min_quantity || 0);
+              return (
+                <div key={p.id} className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#0A2B4E] truncate">{p.name}</p>
+                      <p className="text-xs text-slate-500">{p.sku}{p.location ? ` · ${p.location}` : ''}</p>
+                    </div>
+                    {isLow ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 shrink-0">
+                        <AlertTriangle className="w-3 h-3" /> Minim
+                      </span>
+                    ) : (
+                      <span className="text-xs text-emerald-600 shrink-0">OK</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => adjustStock(p, -1)} className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"><ArrowDown className="w-3.5 h-3.5" /></button>
+                      <span className="w-16 text-center text-sm font-medium">{p.quantity || 0} {UNIT_LABELS[p.unit] || 'buc'}</span>
+                      <button onClick={() => adjustStock(p, 1)} className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center"><ArrowUp className="w-3.5 h-3.5" /></button>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700">
+                      {((p.quantity || 0) * (p.unit_price || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON
+                    </p>
+                  </div>
+                  <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
+                    <button onClick={() => { setEditProduct(p); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
+                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline text-xs">Șterge</button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[720px]">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 text-xs">
+                    <th className="text-left font-medium px-4 py-3">SKU</th>
+                    <th className="text-left font-medium px-4 py-3">Produs</th>
+                    <th className="text-left font-medium px-4 py-3">Locație</th>
+                    <th className="text-center font-medium px-4 py-3">Cantitate</th>
+                    <th className="text-center font-medium px-4 py-3">Stoc</th>
+                    <th className="text-right font-medium px-4 py-3">Valoare</th>
+                    <th className="text-right font-medium px-4 py-3">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(p => {
+                    const isLow = (p.quantity || 0) <= (p.min_quantity || 0);
+                    return (
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                        <td className="px-4 py-3 font-medium text-[#0A2B4E]">{p.sku}</td>
+                        <td className="px-4 py-3"><p className="font-medium text-slate-700">{p.name}</p>{p.description && <p className="text-xs text-slate-400 truncate max-w-xs">{p.description}</p>}</td>
+                        <td className="px-4 py-3 text-slate-500">{p.location || '-'}</td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => adjustStock(p, -1)} className="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"><ArrowDown className="w-3.5 h-3.5" /></button>
+                            <span className="w-16 text-center font-medium">{p.quantity || 0} {UNIT_LABELS[p.unit] || 'buc'}</span>
+                            <button onClick={() => adjustStock(p, 1)} className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center"><ArrowUp className="w-3.5 h-3.5" /></button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {isLow ? <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600"><AlertTriangle className="w-3 h-3" /> Minim</span> : <span className="text-xs text-emerald-600">OK</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-700">{((p.quantity || 0) * (p.unit_price || 0)).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON</td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => { setEditProduct(p); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
+                          <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:underline text-xs ml-2">Șterge</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm">
           <Boxes className="w-10 h-10 mx-auto mb-3 opacity-40" />

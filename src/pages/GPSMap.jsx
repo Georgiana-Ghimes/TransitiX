@@ -90,7 +90,7 @@ export default function GPSMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Vehicle list */}
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-3 space-y-2 max-h-[600px] overflow-y-auto">
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-3 space-y-2 max-h-56 lg:max-h-[600px] overflow-y-auto order-2 lg:order-1">
           {positions.length > 0 ? positions.map(({ vehicle, log }) => (
             <button
               key={vehicle.id}
@@ -114,8 +114,8 @@ export default function GPSMap() {
         </div>
 
         {/* Map */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <MapContainer center={BUCHAREST} zoom={6} style={{ height: '600px', width: '100%' }} className="z-0">
+        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden order-1 lg:order-2">
+          <MapContainer center={BUCHAREST} zoom={6} className="z-0 h-[50vh] min-h-[280px] max-h-[600px] w-full lg:h-[600px]">
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; OpenStreetMap'

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '@/api/client';
 import { Truck, CheckCircle, FileText, Download, Loader2, Package, MapPin } from 'lucide-react';
+import { notifyError } from '@/lib/notify';
 
 export default function ClientPortal() {
   const { token } = useParams();
@@ -42,8 +43,10 @@ export default function ClientPortal() {
         damage_description: hasDamage ? damageDesc : '',
       });
       setConfirmed(true);
-    } catch (e) { console.error(e); alert('Eroare: ' + (e.message || '')); }
-    finally { setSubmitting(false); }
+    } catch (e) {
+      console.error(e);
+      notifyError('Confirmare eșuată', e);
+    } finally { setSubmitting(false); }
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;

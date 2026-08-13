@@ -16,7 +16,7 @@ export default function ModalShell({
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape' && onClose) onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => {
@@ -29,7 +29,7 @@ export default function ModalShell({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
       role="presentation"
     >
       <div

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { Brain, Sparkles, TrendingDown, Truck, Route, Fuel, Loader2, Check, Zap } from 'lucide-react';
+import { notifyError } from '@/lib/notify';
 
 const SUGGESTION_ICONS = {
   backhaul: Route, vehicle_allocation: Truck, route: Route, consolidation: Zap, fuel: Fuel,
@@ -81,8 +82,10 @@ Return an array of suggestions, each with: type (backhaul/vehicle_allocation/rou
         await api.entities.OptimizationSuggestion.bulkCreate(newSuggestions);
       }
       await loadData();
-    } catch (e) { console.error(e); alert('Eroare analiză AI: ' + (e.message || '')); }
-    finally { setAnalyzing(false); }
+    } catch (e) {
+      console.error(e);
+      notifyError('Analiză AI eșuată', e);
+    } finally { setAnalyzing(false); }
   };
 
   const applySuggestion = async (id) => {

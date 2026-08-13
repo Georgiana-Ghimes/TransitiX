@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
+import { notifyError } from '@/lib/notify';
 
 export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
@@ -56,8 +57,10 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
       if (invoice?.id) await api.entities.Invoice.update(invoice.id, data);
       else await api.entities.Invoice.create(data);
       onSave();
-    } catch (e) { console.error(e); alert('Eroare: ' + (e.message || '')); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+      notifyError('Salvare eșuată', err);
+    } finally { setSaving(false); }
   };
 
   const inputCls = "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors";
