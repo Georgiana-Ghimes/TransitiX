@@ -7,6 +7,18 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-08-13
+
+### Added
+
+- Vehicle form: inline field errors + in-modal banner (numeric overflow, year, required fields)
+- Shared `FormFeedback` helpers for field/banner errors inside modals
+
+### Fixed
+
+- Toasts sit above modal overlays (`z-[200]`) so they are not hidden on mobile
+- Friendlier copy for Postgres `integer out of range`
+
 ## [1.1.1] - 2026-08-13
 
 ### Fixed

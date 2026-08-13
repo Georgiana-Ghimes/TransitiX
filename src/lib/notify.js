@@ -7,8 +7,11 @@ export function friendlyErrorMessage(errorOrMessage) {
       ? errorOrMessage
       : errorOrMessage?.message || errorOrMessage?.data?.message || 'Eroare necunoscută';
 
+  if (/out of range for type integer/i.test(msg)) {
+    return 'Un număr e prea mare pentru An, Capacitate (kg/mc) sau Kilometraj (max. 2.147.483.647).';
+  }
   if (/numeric field overflow/i.test(msg)) {
-    return 'Valoare numerică prea mare (ex. consum max 999.99, capacitate etc.). Verifică câmpurile numerice.';
+    return 'Valoare numerică prea mare (ex. consum max 999.99). Verifică câmpurile numerice.';
   }
   if (/duplicate key|unique constraint/i.test(msg)) {
     return 'Există deja o înregistrare cu aceste date (ex. număr înmatriculare duplicat).';
