@@ -53,8 +53,15 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadInbox();
-    const timer = setInterval(loadInbox, 60000);
-    return () => clearInterval(timer);
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') loadInbox();
+    };
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    const timer = setInterval(refreshIfVisible, 120000);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
   }, []);
 
   useEffect(() => {

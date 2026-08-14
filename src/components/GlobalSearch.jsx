@@ -1,55 +1,21 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { Search, Route, Truck, Users, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const MIN_CHARS = 1;
-const MAX_PER_GROUP = 5;
-
-function norm(value) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
-}
-
-function matches(query, ...fields) {
-  const q = norm(query);
-  if (!q) return false;
-  return fields.some((f) => norm(f).includes(q));
-}
+const MIN_CHARS = 2;
+const DEBOUNCE_MS = 300;
 
 export default function GlobalSearch({ className }) {
   const navigate = useNavigate();
   const rootRef = useRef(null);
+  const debounceRef = useRef(null);
+  const requestRef = useRef(0);
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [catalog, setCatalog] = useState({ trips: [], vehicles: [], drivers: [] });
-  const [loaded, setLoaded] = useState(false);
-
-  const loadCatalog = async () => {
-    if (loaded || loading) return;
-    setLoading(true);
-    try {
-      const [trips, vehicles, drivers] = await Promise.all([
-        api.entities.Trip.list('-created_date', 300),
-        api.entities.Vehicle.list('-created_date', 200),
-        api.entities.Driver.list('-created_date', 200),
-      ]);
-      setCatalog({
-        trips: Array.isArray(trips) ? trips : [],
-        vehicles: Array.isArray(vehicles) ? vehicles : [],
-        drivers: Array.isArray(drivers) ? drivers : [],
-      });
-      setLoaded(true);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [results, setResults] = useState({ trips: [], vehicles: [], drivers: [], total: 0 });
 
   useEffect(() => {
     const onClick = (e) => {
@@ -61,43 +27,45 @@ export default function GlobalSearch({ className }) {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  const results = useMemo(() => {
+  useEffect(() => {
     const q = query.trim();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
     if (q.length < MIN_CHARS) {
-      return { trips: [], vehicles: [], drivers: [], total: 0 };
+      setResults({ trips: [], vehicles: [], drivers: [], total: 0 });
+      setLoading(false);
+      return undefined;
     }
 
-    const trips = catalog.trips
-      .filter((t) =>
-        matches(
-          q,
-          t.cmr_number,
-          t.driver_name,
-          t.vehicle_plate,
-          t.shipper_name,
-          t.consignee_name,
-          t.status
-        )
-      )
-      .slice(0, MAX_PER_GROUP);
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      const reqId = ++requestRef.current;
+      try {
+        const data = await api.search(q);
+        if (reqId !== requestRef.current) return;
+        const trips = data.trips || [];
+        const vehicles = data.vehicles || [];
+        const drivers = data.drivers || [];
+        setResults({
+          trips,
+          vehicles,
+          drivers,
+          total: trips.length + vehicles.length + drivers.length,
+        });
+      } catch (e) {
+        console.error(e);
+        if (reqId === requestRef.current) {
+          setResults({ trips: [], vehicles: [], drivers: [], total: 0 });
+        }
+      } finally {
+        if (reqId === requestRef.current) setLoading(false);
+      }
+    }, DEBOUNCE_MS);
 
-    const vehicles = catalog.vehicles
-      .filter((v) =>
-        matches(q, v.plate, v.brand, v.model, v.chassis_number, v.status)
-      )
-      .slice(0, MAX_PER_GROUP);
-
-    const drivers = catalog.drivers
-      .filter((d) => matches(q, d.name, d.email, d.phone, d.license_number))
-      .slice(0, MAX_PER_GROUP);
-
-    return {
-      trips,
-      vehicles,
-      drivers,
-      total: trips.length + vehicles.length + drivers.length,
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, catalog]);
+  }, [query]);
 
   const showPanel = open && query.trim().length >= MIN_CHARS;
 
@@ -120,10 +88,7 @@ export default function GlobalSearch({ className }) {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => {
-          setOpen(true);
-          loadCatalog();
-        }}
+        onFocus={() => setOpen(true)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             setOpen(false);
@@ -147,10 +112,10 @@ export default function GlobalSearch({ className }) {
 
       {showPanel && (
         <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden max-h-[min(70vh,28rem)] overflow-y-auto">
-          {loading && !loaded ? (
+          {loading ? (
             <div className="flex items-center gap-2 px-4 py-6 text-sm text-slate-500 justify-center">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Se încarcă...
+              Se caută...
             </div>
           ) : results.total === 0 ? (
             <p className="px-4 py-6 text-sm text-slate-500 text-center">

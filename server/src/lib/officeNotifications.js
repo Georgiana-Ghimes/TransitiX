@@ -89,6 +89,14 @@ export async function notifyClientConfirmed(companyId, trip, { has_damage, confi
   });
 }
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const computedCache = new Map();
+
+export function invalidateComputedNotificationsCache(companyId) {
+  if (companyId) computedCache.delete(companyId);
+  else computedCache.clear();
+}
+
 function normalizeDateKey(dateStr) {
   if (!dateStr) return '';
   if (dateStr instanceof Date) return dateStr.toISOString().slice(0, 10);
@@ -153,9 +161,15 @@ export async function markNotificationRead(companyId, key) {
 
 export async function markAllComputedRead(companyId) {
   const items = await buildComputedNotifications(companyId);
-  for (const item of items) {
-    await markNotificationRead(companyId, item.id);
-  }
+  if (items.length === 0) return;
+  const keys = items.map((item) => item.id);
+  await query(
+    `INSERT INTO office_notification_dismissals (company_id, notification_key, read_at, dismissed_at)
+     SELECT $1, unnest($2::text[]), NOW(), NOW()
+     ON CONFLICT (company_id, notification_key)
+     DO UPDATE SET read_at = NOW(), deleted_at = NULL, dismissed_at = NOW()`,
+    [companyId, keys]
+  );
 }
 
 /** Hide read computed alerts from inbox (user explicitly cleared them) */
@@ -171,10 +185,36 @@ export async function deleteReadComputed(companyId) {
 }
 
 async function buildComputedNotifications(companyId) {
+  const cached = computedCache.get(companyId);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.items;
+  }
+
   const items = [];
   const [vehicles, drivers, trips] = await Promise.all([
-    query(`SELECT * FROM vehicles WHERE company_id = $1 AND is_active = TRUE`, [companyId]),
-    query(`SELECT * FROM drivers WHERE company_id = $1 AND is_active = TRUE`, [companyId]),
+    query(
+      `SELECT id, brand, model, plate, itp_expiry, rca_expiry, rovinieta_expiry, casco_expiry
+       FROM vehicles
+       WHERE company_id = $1 AND is_active = TRUE
+         AND (
+           itp_expiry <= CURRENT_DATE + 30
+           OR rca_expiry <= CURRENT_DATE + 30
+           OR rovinieta_expiry <= CURRENT_DATE + 30
+           OR casco_expiry <= CURRENT_DATE + 30
+         )`,
+      [companyId]
+    ),
+    query(
+      `SELECT id, name, license_expiry, medical_certificate_expiry, tachograph_card_expiry
+       FROM drivers
+       WHERE company_id = $1 AND is_active = TRUE
+         AND (
+           license_expiry <= CURRENT_DATE + 30
+           OR medical_certificate_expiry <= CURRENT_DATE + 30
+           OR tachograph_card_expiry <= CURRENT_DATE + 30
+         )`,
+      [companyId]
+    ),
     query(
       `SELECT id, cmr_number FROM trips
        WHERE company_id = $1 AND status = 'planificata' AND driver_id IS NULL
@@ -219,6 +259,7 @@ async function buildComputedNotifications(companyId) {
     });
   }
 
+  computedCache.set(companyId, { at: Date.now(), items });
   return items;
 }
 

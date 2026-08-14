@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
+import { useAuth } from '@/lib/AuthContext';
 import StatusBadge from '@/components/StatusBadge';
 import DriverNotifications from '@/components/driver/DriverNotifications';
 import DriverChat from '@/components/driver/DriverChat';
@@ -25,6 +26,7 @@ const STATUS_FLOW = [
 ];
 
 export default function DriverApp() {
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
   const [trips, setTrips] = useState([]);
@@ -62,7 +64,7 @@ export default function DriverApp() {
   const bootstrap = async () => {
     setLoading(true);
     try {
-      const me = await api.auth.me();
+      const me = authUser || await api.auth.me();
       setUser(me);
       const drivers = await api.entities.Driver.list();
       const myDriver = findDriverForUser(drivers, me);
@@ -90,13 +92,11 @@ export default function DriverApp() {
 
   const loadTrips = async (me = user, myDriver = driver, isOffice = previewMode) => {
     try {
-      const data = await api.entities.Trip.list('-created_date', 200);
-      let scoped = data;
-
+      let scoped;
       if (myDriver) {
-        scoped = data.filter((t) => t.driver_id === myDriver.id);
+        scoped = await api.entities.Trip.filter({ driver_id: myDriver.id }, '-created_date', 50);
       } else if (isOffice || (me && ['admin', 'dispatcher', 'finance'].includes(me.role))) {
-        // Office preview: all trips that are assigned or active
+        const data = await api.entities.Trip.list('-created_date', 50);
         scoped = data.filter((t) => t.driver_id || isActiveTripStatus(t.status) || t.status === 'livrata');
       } else {
         scoped = [];

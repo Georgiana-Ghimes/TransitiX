@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -12,19 +13,28 @@ import Trips from '@/pages/Trips';
 import Vehicles from '@/pages/Vehicles';
 import Drivers from '@/pages/Drivers';
 import Clients from '@/pages/Clients';
-import Documents from '@/pages/Documents';
-import Finance from '@/pages/Finance';
 import Settings from '@/pages/Settings';
-import TripDetail from '@/pages/TripDetail';
-import GPSMap from '@/pages/GPSMap';
-import PlanningAI from '@/pages/PlanningAI';
 import Warehouse from '@/pages/Warehouse';
-import DriverApp from '@/pages/DriverApp';
-import ClientPortal from '@/pages/ClientPortal';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+
+const TripDetail = lazy(() => import('@/pages/TripDetail'));
+const GPSMap = lazy(() => import('@/pages/GPSMap'));
+const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
+const Finance = lazy(() => import('@/pages/Finance'));
+const Documents = lazy(() => import('@/pages/Documents'));
+const DriverApp = lazy(() => import('@/pages/DriverApp'));
+const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-96">
+      <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function LoginRedirect() {
   const location = useLocation();
@@ -47,31 +57,33 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/confirm/:token" element={<ClientPortal />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/trips" element={<Trips />} />
-          <Route path="/trips/:id" element={<TripDetail />} />
-          <Route path="/vehicles" element={<Vehicles />} />
-          <Route path="/drivers" element={<Drivers />} />
-          <Route path="/gps" element={<GPSMap />} />
-          <Route path="/planning" element={<PlanningAI />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/finance" element={<Finance />} />
-          <Route path="/warehouse" element={<Warehouse />} />
-          <Route path="/documents" element={<Documents />} />
-          <Route path="/driver-app" element={<DriverApp />} />
-          <Route path="/settings" element={<Settings />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/confirm/:token" element={<ClientPortal />} />
+        <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/trips/:id" element={<TripDetail />} />
+            <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/drivers" element={<Drivers />} />
+            <Route path="/gps" element={<GPSMap />} />
+            <Route path="/planning" element={<PlanningAI />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/finance" element={<Finance />} />
+            <Route path="/warehouse" element={<Warehouse />} />
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/driver-app" element={<DriverApp />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
