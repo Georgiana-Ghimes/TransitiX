@@ -341,6 +341,19 @@ CREATE TABLE IF NOT EXISTS office_notification_dismissals (
 CREATE INDEX IF NOT EXISTS idx_office_notification_dismissals_company
   ON office_notification_dismissals(company_id);
 
+CREATE INDEX IF NOT EXISTS idx_trips_company_driver ON trips(company_id, driver_id);
+CREATE INDEX IF NOT EXISTS idx_trips_company_created ON trips(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trip_documents_company_trip ON trip_documents(company_id, trip_id);
+CREATE INDEX IF NOT EXISTS idx_clients_company ON clients(company_id);
+CREATE INDEX IF NOT EXISTS idx_clients_company_created ON clients(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_invoices_company_created ON invoices(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_warehouse_products_company ON warehouse_products(company_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_company_created ON chat_messages(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_driver_notifications_company_read ON driver_notifications(company_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_office_notifications_trip_pending
+  ON office_notifications(company_id, trip_id)
+  WHERE type = 'cmr_pending' AND is_read = FALSE;
+
 ALTER TABLE office_notification_dismissals ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
 ALTER TABLE office_notification_dismissals ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 UPDATE office_notification_dismissals

@@ -7,6 +7,23 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-08-14
+
+### Added
+
+- `/api/search` — server-side office search (no more prefetching 700+ rows in GlobalSearch)
+- DB indexes for trips, clients, invoices, chat, driver notifications, trip documents
+
+### Changed
+
+- Lazy-loaded heavy routes (GPS, Planning, Finance, DriverApp, etc.) — main JS bundle ~75% smaller
+- GlobalSearch: debounced API search instead of full catalog download
+- Notification inbox: SQL-filtered expiry queries, 5 min cache, batch mark-all-read
+- NotificationBell: polls every 2 min only when browser tab is visible
+- DriverApp: server-side trip filter by `driver_id` (50 rows max)
+- API: gzip compression, 1 MB default JSON limit, upload cache headers
+- Postgres pool tuning (`max`, idle/connection timeouts)
+
 ## [1.1.5] - 2026-08-14
 
 ### Added

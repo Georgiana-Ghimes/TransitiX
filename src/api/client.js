@@ -121,6 +121,10 @@ export const api = {
       return request('/notifications/read', { method: 'DELETE' });
     },
   },
+  search(q, limit = 5) {
+    const params = new URLSearchParams({ q, limit: String(limit) });
+    return request(`/search?${params.toString()}`);
+  },
   auth: {
     async loginViaEmailPassword(email, password) {
       const data = await request('/auth/login', {
