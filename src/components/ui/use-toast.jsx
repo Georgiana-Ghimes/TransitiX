@@ -1,8 +1,9 @@
 // Inspired by react-hot-toast library
 import { useState, useEffect } from "react";
 
-const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 550;
+const DEFAULT_DURATION = 3000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -19,6 +20,7 @@ function genId() {
 }
 
 const toastTimeouts = new Map();
+const autoDismissTimeouts = new Map();
 
 const addToRemoveQueue = (toastId) => {
   if (toastTimeouts.has(toastId)) {
@@ -36,12 +38,22 @@ const addToRemoveQueue = (toastId) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-const _clearFromRemoveQueue = (toastId) => {
-  const timeout = toastTimeouts.get(toastId);
+const clearAutoDismiss = (toastId) => {
+  const timeout = autoDismissTimeouts.get(toastId);
   if (timeout) {
     clearTimeout(timeout);
-    toastTimeouts.delete(toastId);
+    autoDismissTimeouts.delete(toastId);
   }
+};
+
+const scheduleAutoDismiss = (toastId, duration, dismiss) => {
+  clearAutoDismiss(toastId);
+  if (duration <= 0) return;
+  const timeout = setTimeout(() => {
+    autoDismissTimeouts.delete(toastId);
+    dismiss();
+  }, duration);
+  autoDismissTimeouts.set(toastId, timeout);
 };
 
 export const reducer = (state, action) => {
@@ -63,8 +75,6 @@ export const reducer = (state, action) => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -110,29 +120,36 @@ function dispatch(action) {
   });
 }
 
-function toast({ ...props }) {
+function toast({ duration = DEFAULT_DURATION, ...props }) {
   const id = genId();
 
-  const update = (props) =>
+  const update = (nextProps) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
-      toast: { ...props, id },
+      toast: { ...nextProps, id },
     });
 
-  const dismiss = () =>
+  const dismiss = () => {
+    clearAutoDismiss(id);
+    const existing = memoryState.toasts.find((t) => t.id === id);
+    if (existing && existing.open === false) return;
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id });
+  };
 
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
       id,
+      duration,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
+
+  scheduleAutoDismiss(id, duration, dismiss);
 
   return {
     id,
@@ -161,4 +178,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast }; 
+export { useToast, toast };

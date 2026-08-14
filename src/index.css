@@ -104,4 +104,25 @@
       font-size: 16px;
     }
   }
+
+  @keyframes toast-progress-bar {
+    from {
+      transform: scaleX(1);
+    }
+    to {
+      transform: scaleX(0);
+    }
+  }
+
+  .toast-progress-bar {
+    animation-name: toast-progress-bar;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+
+  /* Radix live-region announce must never flash on screen during dismiss */
+  [data-radix-toast-announce-exclude],
+  [data-radix-toast-announce-exclude] ~ [data-radix-focus-guard] {
+    clip: rect(0, 0, 0, 0) !important;
+  }
 }

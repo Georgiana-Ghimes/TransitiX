@@ -13,7 +13,7 @@ export default function Drivers() {
   const [showForm, setShowForm] = useState(false);
   const [editDriver, setEditDriver] = useState(null);
   const [search, setSearch] = useState('');
-  const [confirmDriver, setConfirmDriver] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null); // { type, driver }
   const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadDrivers(); }, []);
@@ -24,18 +24,39 @@ export default function Drivers() {
     finally { setLoading(false); }
   };
 
-  const runDeactivate = async () => {
-    if (!confirmDriver) return;
+  const closeConfirm = () => {
+    if (busy) return;
+    setConfirmAction(null);
+  };
+
+  const runConfirm = async () => {
+    if (!confirmAction?.driver) return;
+    const { type, driver } = confirmAction;
     setBusy(true);
     try {
-      await api.entities.Driver.update(confirmDriver.id, { is_active: false, status: 'indisponibil' });
-      notifySuccess('Șofer dezactivat', `${confirmDriver.name || 'Șoferul'} a fost marcat indisponibil.`);
-      setConfirmDriver(null);
+      if (type === 'deactivate') {
+        await api.entities.Driver.update(driver.id, { is_active: false, status: 'indisponibil' });
+        notifySuccess('Șofer dezactivat', `${driver.name || 'Șoferul'} a fost marcat indisponibil.`);
+      } else if (type === 'remove') {
+        await api.entities.Driver.delete(driver.id);
+        notifySuccess('Șofer șters', `${driver.name || 'Șoferul'} a fost eliminat.`);
+      }
+      setConfirmAction(null);
       await loadDrivers();
     } catch (e) {
-      notifyError('Dezactivare eșuată', e);
+      notifyError(type === 'remove' ? 'Ștergere eșuată' : 'Dezactivare eșuată', e);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleReactivate = async (driver) => {
+    try {
+      await api.entities.Driver.update(driver.id, { is_active: true, status: 'disponibil' });
+      notifySuccess('Șofer reactivat', `${driver.name || 'Șoferul'} este din nou disponibil.`);
+      await loadDrivers();
+    } catch (e) {
+      notifyError('Reactivare eșuată', e);
     }
   };
 
@@ -46,6 +67,21 @@ export default function Drivers() {
   );
 
   if (loading) return <div className="flex items-center justify-center h-96"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;
+
+  const confirmCopy =
+    confirmAction?.type === 'remove'
+      ? {
+          title: 'Șterge șoferul?',
+          description: `Ștergeți definitiv ${confirmAction.driver?.name || 'acest șofer'}? Acțiunea nu poate fi anulată.`,
+          confirmLabel: 'Șterge definitiv',
+          variant: 'danger',
+        }
+      : {
+          title: 'Dezactivează șoferul?',
+          description: `${confirmAction?.driver?.name || 'Șoferul'} va rămâne în listă ca indisponibil. Îl poți reactiva sau șterge ulterior.`,
+          confirmLabel: 'Dezactivează',
+          variant: 'warning',
+        };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -98,9 +134,16 @@ export default function Drivers() {
                 <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">Permis exp.</p><p className={`font-medium ${d.license_expiry && new Date(d.license_expiry) < new Date() ? 'text-red-600' : 'text-slate-700'}`}>{d.license_expiry ? new Date(d.license_expiry).toLocaleDateString('ro-RO') : '-'}</p></div>
                 <div className="bg-slate-50 rounded-lg p-2"><p className="text-slate-400">Medical exp.</p><p className={`font-medium ${d.medical_certificate_expiry && new Date(d.medical_certificate_expiry) < new Date() ? 'text-red-600' : 'text-slate-700'}`}>{d.medical_certificate_expiry ? new Date(d.medical_certificate_expiry).toLocaleDateString('ro-RO') : '-'}</p></div>
               </div>
-              <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                <button onClick={() => { setEditDriver(d); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
-                <button onClick={() => setConfirmDriver(d)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
+                <button onClick={() => { setEditDriver(d); setShowForm(true); }} className="flex-1 min-w-[5.5rem] text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
+                {d.is_active !== false ? (
+                  <button onClick={() => setConfirmAction({ type: 'deactivate', driver: d })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+                ) : (
+                  <>
+                    <button onClick={() => handleReactivate(d)} className="flex-1 min-w-[5.5rem] text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
+                    <button onClick={() => setConfirmAction({ type: 'remove', driver: d })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -115,14 +158,14 @@ export default function Drivers() {
       {showForm && <DriverForm driver={editDriver} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadDrivers(); }} />}
 
       <ConfirmDialog
-        open={Boolean(confirmDriver)}
-        onClose={() => { if (!busy) setConfirmDriver(null); }}
-        onConfirm={runDeactivate}
+        open={Boolean(confirmAction)}
+        onClose={closeConfirm}
+        onConfirm={runConfirm}
         busy={busy}
-        variant="warning"
-        title="Dezactivează șoferul?"
-        description={`${confirmDriver?.name || 'Șoferul'} va rămâne în listă ca indisponibil.`}
-        confirmLabel="Dezactivează"
+        title={confirmCopy.title}
+        description={confirmCopy.description}
+        confirmLabel={confirmCopy.confirmLabel}
+        variant={confirmCopy.variant}
       />
     </div>
   );
