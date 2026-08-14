@@ -7,6 +7,19 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-08-14
+
+### Added
+
+- Vitest unit tests for `notify`, `roles`, `utils`, toast reducer, `entities`, and JWT auth middleware
+- GitHub Actions CI on `main` PRs/pushes: lint, `npm test`, frontend build
+- `npm run db:seed:fleet` — incremental dummy data for Flotă, Șoferi, and Clienți
+
+### Fixed
+
+- Șoferi cards: inactive drivers show **Reactivează** / **Șterge** instead of always showing Dezactivează
+- Toasts: 3s auto-dismiss, visible progress bar, smooth fade-out, working close (X), max 3 visible
+
 ## [1.1.4] - 2026-08-13
 
 ### Changed
