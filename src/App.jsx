@@ -25,6 +25,7 @@ const GPSMap = lazy(() => import('@/pages/GPSMap'));
 const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
 const Finance = lazy(() => import('@/pages/Finance'));
 const Documents = lazy(() => import('@/pages/Documents'));
+const AvizeReports = lazy(() => import('@/pages/AvizeReports'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 
@@ -77,6 +78,7 @@ const AuthenticatedApp = () => {
             <Route path="/finance" element={<Finance />} />
             <Route path="/warehouse" element={<Warehouse />} />
             <Route path="/documents" element={<Documents />} />
+            <Route path="/avize" element={<AvizeReports />} />
             <Route path="/driver-app" element={<DriverApp />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

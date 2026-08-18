@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
-  ChevronsLeft, ChevronsRight,
+  ChevronsLeft, ChevronsRight, ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
@@ -23,6 +23,7 @@ const NAV = [
   { label: 'Financiar', path: '/finance', icon: Wallet },
   { label: 'Depozit', path: '/warehouse', icon: Package },
   { label: 'Documente', path: '/documents', icon: FileText },
+  { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';

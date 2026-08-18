@@ -360,6 +360,46 @@ UPDATE office_notification_dismissals
 SET read_at = COALESCE(read_at, dismissed_at)
 WHERE read_at IS NULL AND dismissed_at IS NOT NULL;
 UPDATE office_notification_dismissals SET deleted_at = NULL WHERE deleted_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS report_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  columns JSONB NOT NULL DEFAULT '[]'::jsonb,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_templates_company ON report_templates(company_id);
+
+CREATE TABLE IF NOT EXISTS aviz_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  file_url TEXT NOT NULL,
+  original_filename TEXT,
+  status TEXT NOT NULL DEFAULT 'uploaded'
+    CHECK (status IN ('uploaded', 'extracted', 'confirmed')),
+  extracted_data JSONB DEFAULT '{}'::jsonb,
+  numar_tpo TEXT,
+  data_efectuare_cursa DATE,
+  valoare_tpo NUMERIC(12,2) DEFAULT 0,
+  numar_auto TEXT,
+  ruta_transport TEXT,
+  tip_marfa TEXT,
+  cantitate_marfa NUMERIC(12,3),
+  numar_document_marfa TEXT,
+  numar_curse INT DEFAULT 1,
+  taxe_suplimentare NUMERIC(12,2) DEFAULT 0,
+  km_parcursi NUMERIC(10,2) DEFAULT 0,
+  tarif_km NUMERIC(10,4) DEFAULT 0,
+  observatii TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_company ON aviz_documents(company_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_status ON aviz_documents(company_id, status);
 `;
 
 async function migrate() {

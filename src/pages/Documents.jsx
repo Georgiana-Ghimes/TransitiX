@@ -4,18 +4,26 @@ import { AlertTriangle, FileText, Truck, Users } from 'lucide-react';
 
 export default function Documents() {
   const [expiring, setExpiring] = useState([]);
+  const [horizonDays, setHorizonDays] = useState(30);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
-      const [vehicles, drivers] = await Promise.all([
+      const [vehicles, drivers, company] = await Promise.all([
         api.entities.Vehicle.list(),
         api.entities.Driver.list(),
+        api.company.get().catch(() => null),
       ]);
       const now = new Date();
-      const in30Days = new Date(); in30Days.setDate(now.getDate() + 30);
+      const days = Array.isArray(company?.settings?.document_expiry_days)
+        ? company.settings.document_expiry_days
+        : [30];
+      const horizonDaysValue = days.length ? Math.max(...days) : 30;
+      setHorizonDays(horizonDaysValue);
+      const inHorizon = new Date();
+      inHorizon.setDate(now.getDate() + horizonDaysValue);
       const list = [];
 
       vehicles.forEach(v => {
@@ -26,7 +34,7 @@ export default function Documents() {
           { type: 'CASCO', number: v.casco_number, date: v.casco_expiry },
         ];
         docs.forEach(d => {
-          if (d.date && new Date(d.date) <= in30Days) {
+          if (d.date && new Date(d.date) <= inHorizon) {
             list.push({ entity: `${v.brand} ${v.model} (${v.plate})`, entityType: 'vehicle', ...d, expired: new Date(d.date) < now });
           }
         });
@@ -39,7 +47,7 @@ export default function Documents() {
           { type: 'Tahograf', number: d.tachograph_card_number, date: d.tachograph_card_expiry },
         ];
         docs.forEach(doc => {
-          if (doc.date && new Date(doc.date) <= in30Days) {
+          if (doc.date && new Date(doc.date) <= inHorizon) {
             list.push({ entity: d.name, entityType: 'driver', ...doc, expired: new Date(doc.date) < now });
           }
         });
@@ -60,7 +68,7 @@ export default function Documents() {
     <div className="space-y-5 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Documente</h1>
-        <p className="text-sm text-slate-500 mt-1">{expired.length} expirate · {upcoming.length} expiră în 30 zile</p>
+        <p className="text-sm text-slate-500 mt-1">{expired.length} expirate · {upcoming.length} expiră în {horizonDays} zile</p>
       </div>
 
       {expired.length > 0 && (

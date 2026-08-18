@@ -15,7 +15,7 @@ export function signAccessToken(user) {
 
 export function signRefreshToken(user) {
   return jwt.sign(
-    { sub: user.id, type: 'refresh' },
+    { sub: user.id, company_id: user.company_id, type: 'refresh' },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
   );
@@ -74,6 +74,17 @@ export function officeRequired(req, res, next) {
   }
   if (!OFFICE_ROLES.has(req.user.role)) {
     return res.status(403).json({ message: 'Office access only' });
+  }
+  next();
+}
+
+/** Company settings and other admin-only writes. */
+export function adminRequired(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access only' });
   }
   next();
 }

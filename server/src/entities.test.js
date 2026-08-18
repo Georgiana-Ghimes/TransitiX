@@ -57,5 +57,21 @@ describe('ENTITY_MAP', () => {
     expect(ENTITY_MAP.Vehicle.companyScoped).toBe(true);
     expect(ENTITY_MAP.Driver.companyScoped).toBe(true);
     expect(ENTITY_MAP.Client.companyScoped).toBe(true);
+    expect(ENTITY_MAP.AvizDocument.companyScoped).toBe(true);
+    expect(ENTITY_MAP.ReportTemplate.companyScoped).toBe(true);
+  });
+
+  it('lets office save annex fields on AvizDocument', () => {
+    expect(ENTITY_MAP.AvizDocument.writable).toEqual(expect.arrayContaining([
+      'numar_tpo',
+      'data_efectuare_cursa',
+      'numar_auto',
+      'ruta_transport',
+      'numar_document_marfa',
+      'taxe_suplimentare',
+      'km_parcursi',
+      'tarif_km',
+      'observatii',
+    ]));
   });
 });

@@ -4,6 +4,7 @@ import { authRequired } from '../middleware/auth.js';
 import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
+import { sendEmail } from '../lib/email.js';
 import {
   extractCmrFromImage,
   stubCmrFromTrip,
@@ -127,14 +128,22 @@ router.post('/llm', authRequired, async (req, res) => {
   }
 });
 
-router.post('/email', authRequired, (req, res) => {
-  const { to, subject, body } = req.body || {};
-  console.log('[email stub]', { to, subject, body: String(body || '').slice(0, 300) });
-  res.json({
-    ok: true,
-    stub: true,
-    message: 'Email logged on server (Resend not configured yet)',
-  });
+router.post('/email', authRequired, async (req, res) => {
+  try {
+    const { to, subject, body } = req.body || {};
+    const result = await sendEmail({
+      to,
+      subject,
+      text: body,
+    });
+    if (!result.ok) {
+      return res.status(400).json({ message: result.message || 'Email failed' });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Email failed' });
+  }
 });
 
 export default router;

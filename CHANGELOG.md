@@ -7,6 +7,55 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+### Added
+
+- ClickUp documentation pack (`docs/clickup/`): Romanian **Spec MVP V2** and **Avize stare + plan** (one H1 per file; previous multi-page HTML import collapsed in ClickUp)
+- CI runs lint, unit tests, and frontend build on **every push and pull request** (not only `main`)
+- Unit test that Editează form fields stay aligned with Anexa XLSX sources
+
+## [1.3.0] - 2026-08-18
+
+### Added
+
+- Office module **Avize / Rapoarte**: upload Baumit-style avize (PDF/photo), extract TPO/date/plate/route/qty, edit the Anexa Factura RAI table, manage XLSX templates, merge selected rows into one annex XLSX
+- Avize / Rapoarte action legend (Confirmă, Re-extrage, Editează, Șterge, Unește; Șabloane tab explains how templates apply to export)
+- Unit tests that build the Anexa XLSX (default 14 columns and custom Șablon nou: Taxă 100 / Tarif km 20)
+- Manual Avize / Rapoarte test checklist (`docs/changes/1.3.0-avize-manual-checklist.md`)
+
+### Fixed
+
+- Aviz parser: Numar TPO only accepts `TPO-…` (ignores product names like MPI / Adeziv and address lines)
+- Manual TPO on Editează is kept after reload (repair no longer wipes a typed TPO when the PDF has none)
+- Editează keeps date, auto, rută, and document number; reload no longer restores PDF values (use **Re-extrage** to take the file again)
+- Avize toolbar: template dropdown lines up with Încarcă / Foto / Unește (hint text no longer lifts the select)
+- Repeated uploads of the same BUILDTEST PDF no longer land as empty **Încărcat** rows (`pdf-parse` `bad XRef entry` is retried)
+- Ruta transport is Client address → Adresă de livrare (e.g. `Bucuresti/Aeroportului120-T-Bucuresti/Viilor52`), not Expeditor Site BOL/MIL; Site is only a fallback on TRO
+- Numar auto keeps tractor and trailer plates (`B-112-VFM / B-475-AGR`); unlabeled PDFs no longer dump the whole document into Auto
+- Custom Anexa templates keep their columns and Default values on export (Taxă 100 / Tarif km 20 were ignored: incomplete templates were replaced, and stored 0 blocked defaults)
+- Anexa XLSX headers match the client sheet (14 columns A–N, including km / tarif / observații)
+
+## [1.2.0] - 2026-08-18
+
+### Added
+
+- Company Settings API (`GET/PUT /api/company`) wired to Setări (profile + document-expiry thresholds)
+- Resend email when `RESEND_API_KEY` + `EMAIL_FROM` are set; console stub otherwise (invoices + password reset)
+- `POST /api/auth/refresh` (tied to `company_id`); client stores refresh token and retries once on 401
+- Login/register rate limit (20 / 15 min)
+- Expanded README: product map, stubs, Docker DB on 5434, seed accounts, Compose/VM notes
+
+### Changed
+
+- `/api/health` reports database connectivity
+- Entity delete is office-only (drivers cannot delete company records)
+- Company profile writes (`PUT /api/company`) are admin-only
+- Documente expiry horizon follows company settings
+- Compose/API env documents Resend; JWT_SECRET required at API start
+
+### Removed
+
+- Unused Stripe and drag-and-drop frontend packages
+
 ## [1.1.6] - 2026-08-14
 
 ### Added

@@ -96,6 +96,23 @@ export const ENTITY_MAP = {
       'priority', 'is_applied', 'trip_ids',
     ],
   },
+  ReportTemplate: {
+    table: 'report_templates',
+    companyScoped: true,
+    jsonFields: ['columns'],
+    writable: ['name', 'columns', 'is_default'],
+  },
+  AvizDocument: {
+    table: 'aviz_documents',
+    companyScoped: true,
+    jsonFields: ['extracted_data'],
+    writable: [
+      'file_url', 'original_filename', 'status', 'extracted_data',
+      'numar_tpo', 'data_efectuare_cursa', 'valoare_tpo', 'numar_auto',
+      'ruta_transport', 'tip_marfa', 'cantitate_marfa', 'numar_document_marfa',
+      'numar_curse', 'taxe_suplimentare', 'km_parcursi', 'tarif_km', 'observatii',
+    ],
+  },
 };
 
 /** Convert order string (-created_date) to SQL ORDER BY */
@@ -108,6 +125,24 @@ export function parseOrder(order) {
   // whitelist
   if (!/^[a-z_]+$/i.test(col)) return 'created_at DESC';
   return `${col} ${desc ? 'DESC' : 'ASC'}`;
+}
+
+function isDateOnlyField(key) {
+  return /(_date|_expiry)$/.test(key) || key === 'hire_date' || key === 'birth_date'
+    || key === 'issue_date' || key === 'due_date' || key === 'payment_date'
+    || key === 'data_efectuare_cursa';
+}
+
+function formatDateOnly(val) {
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) return val.slice(0, 10);
+  if (!(val instanceof Date) || Number.isNaN(val.getTime())) return val;
+  if (val.getUTCHours() === 0 && val.getUTCMinutes() === 0) {
+    return val.toISOString().slice(0, 10);
+  }
+  const y = val.getFullYear();
+  const m = String(val.getMonth() + 1).padStart(2, '0');
+  const d = String(val.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /** Serialize row for frontend (aliases created_date / updated_date) */
@@ -125,8 +160,8 @@ export function serializeRow(row) {
     const val = out[key];
     if (val instanceof Date) {
       // Keep date-only fields as YYYY-MM-DD (avoid TZ shift in UI)
-      if (/(_date|_expiry)$/.test(key) || key === 'hire_date' || key === 'birth_date' || key === 'issue_date' || key === 'due_date' || key === 'payment_date') {
-        out[key] = val.toISOString().slice(0, 10);
+      if (isDateOnlyField(key)) {
+        out[key] = formatDateOnly(val);
       } else if (/(_time)$/.test(key)) {
         out[key] = val.toISOString().slice(11, 16);
       } else {
@@ -135,14 +170,16 @@ export function serializeRow(row) {
       continue;
     }
     // pg may return DATE as string already
-    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val) && /(_date|_expiry)$/.test(key)) {
-      out[key] = val.slice(0, 10);
+    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val) && isDateOnlyField(key)) {
+      out[key] = formatDateOnly(val);
     }
     if (typeof val === 'string' && /^-?\d+(\.\d+)?$/.test(val) &&
         (key.includes('kg') || key.includes('amount') || key.includes('price') ||
          key.includes('cost') || key.includes('rate') || key.includes('consumption') ||
          key.includes('latitude') || key.includes('longitude') || key.includes('speed') ||
-         key.includes('heading') || key.includes('savings') || key.includes('volume'))) {
+         key.includes('heading') || key.includes('savings') || key.includes('volume') ||
+         key === 'valoare_tpo' || key === 'cantitate_marfa' || key === 'numar_curse' ||
+         key === 'taxe_suplimentare' || key === 'km_parcursi' || key === 'tarif_km')) {
       out[key] = Number(val);
     }
   }
@@ -154,7 +191,11 @@ export function pickWritable(entity, data) {
   const out = {};
   for (const [k, v] of Object.entries(data || {})) {
     if (allowed.has(k) && v !== undefined) {
-      out[k] = v === '' ? null : v;
+      if (entity.jsonFields?.includes(k) && v && typeof v === 'object') {
+        out[k] = JSON.stringify(v);
+      } else {
+        out[k] = v === '' ? null : v;
+      }
     }
   }
   return out;
