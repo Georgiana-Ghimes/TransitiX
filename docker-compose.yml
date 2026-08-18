@@ -31,6 +31,8 @@ services:
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
       UPLOAD_DIR: uploads
       GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       SEED_ON_START: ${SEED_ON_START:-1}
     volumes:
       - transitix_uploads:/app/uploads

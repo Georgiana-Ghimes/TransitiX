@@ -1,4 +1,5 @@
 const TOKEN_KEY = 'transitix_access_token';
+const REFRESH_KEY = 'transitix_refresh_token';
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -9,7 +10,47 @@ function setToken(token) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request(path, { method = 'GET', body, headers = {}, formData } = {}) {
+function setRefreshToken(token) {
+  if (token) localStorage.setItem(REFRESH_KEY, token);
+  else localStorage.removeItem(REFRESH_KEY);
+}
+
+function skipAuthRefresh(path) {
+  return /^\/auth\/(login|register|refresh|logout|reset-password)/.test(path);
+}
+
+let refreshInFlight = null;
+
+async function refreshAccessToken() {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    const refresh_token = localStorage.getItem(REFRESH_KEY);
+    if (!refresh_token) throw new Error('No refresh token');
+    const res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setToken(null);
+      setRefreshToken(null);
+      const err = new Error(data?.message || 'Refresh failed');
+      err.status = res.status;
+      throw err;
+    }
+    setToken(data.access_token);
+    setRefreshToken(data.refresh_token);
+    return data;
+  })();
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
+  }
+}
+
+async function request(path, { method = 'GET', body, headers = {}, formData } = {}, retried = false) {
   const opts = {
     method,
     headers: { ...headers },
@@ -31,6 +72,15 @@ async function request(path, { method = 'GET', body, headers = {}, formData } = 
     data = text ? JSON.parse(text) : null;
   } catch {
     data = text;
+  }
+
+  if (res.status === 401 && !retried && !skipAuthRefresh(path)) {
+    try {
+      await refreshAccessToken();
+      return request(path, { method, body, headers, formData }, true);
+    } catch {
+      // fall through to original 401
+    }
   }
 
   if (!res.ok) {
@@ -81,13 +131,21 @@ function createEntityApi(name) {
 const entityNames = [
   'Vehicle', 'Driver', 'Client', 'Trip', 'TripDocument', 'ClientConfirmation',
   'Invoice', 'WarehouseProduct', 'GPSLog', 'ChatMessage', 'DriverNotification',
-  'OptimizationSuggestion',
+  'OptimizationSuggestion', 'ReportTemplate', 'AvizDocument',
 ];
 
 const entities = Object.fromEntries(entityNames.map((n) => [n, createEntityApi(n)]));
 
 export const api = {
   entities,
+  company: {
+    get() {
+      return request('/company');
+    },
+    update(data) {
+      return request('/company', { method: 'PUT', body: data });
+    },
+  },
   confirm: {
     get(token) {
       return request(`/confirm/${encodeURIComponent(token)}`);
@@ -132,6 +190,7 @@ export const api = {
         body: { email, password },
       });
       setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
       return data;
     },
     async register({ email, password, name, company_name } = {}) {
@@ -140,7 +199,11 @@ export const api = {
         body: { email, password, name: name || undefined, company_name },
       });
       setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
       return data;
+    },
+    async refresh() {
+      return refreshAccessToken();
     },
     async me() {
       return request('/auth/me');
@@ -152,6 +215,7 @@ export const api = {
         // ignore
       }
       setToken(null);
+      setRefreshToken(null);
       if (redirectTo !== false) {
         window.location.href = typeof redirectTo === 'string' ? redirectTo : '/login';
       }
@@ -195,6 +259,54 @@ export const api = {
       async SendEmail(payload) {
         return request('/integrations/email', { method: 'POST', body: payload });
       },
+    },
+  },
+  avize: {
+    extract({ file_url, original_filename, id } = {}) {
+      return request('/avize/extract', {
+        method: 'POST',
+        body: { file_url, original_filename, id },
+      });
+    },
+    templates() {
+      return request('/avize/templates');
+    },
+    repair() {
+      return request('/avize/repair', { method: 'POST' });
+    },
+    createTemplate(data) {
+      return request('/avize/templates', { method: 'POST', body: data });
+    },
+    updateTemplate(id, data) {
+      return request(`/avize/templates/${encodeURIComponent(id)}`, { method: 'PUT', body: data });
+    },
+    deleteTemplate(id) {
+      return request(`/avize/templates/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
+    async exportXlsx({ template_id, aviz_ids }, retried = false) {
+      const token = getToken();
+      const res = await fetch('/api/avize/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ template_id, aviz_ids }),
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.avize.exportXlsx({ template_id, aviz_ids }, true);
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(data?.message || res.statusText || 'Export failed');
+        err.status = res.status;
+        throw err;
+      }
+      const blob = await res.blob();
+      const disp = res.headers.get('Content-Disposition') || '';
+      const match = disp.match(/filename="([^"]+)"/);
+      return { blob, filename: match?.[1] || 'anexa-factura.xlsx' };
     },
   },
 };

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
-import { authRequired } from '../middleware/auth.js';
+import { authRequired, officeRequired } from '../middleware/auth.js';
 import {
   ENTITY_MAP,
   parseOrder,
@@ -242,7 +242,7 @@ router.put('/:entity/:id', async (req, res) => {
   }
 });
 
-router.delete('/:entity/:id', async (req, res) => {
+router.delete('/:entity/:id', officeRequired, async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
     if (!cfg) return res.status(404).json({ message: 'Unknown entity' });

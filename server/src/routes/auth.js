@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { query } from '../db.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
+import { sendEmail, emailConfigured } from '../lib/email.js';
+import { rateLimit } from '../lib/rateLimit.js';
 
 const router = Router();
+const authAttemptLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 function publicUser(row) {
   return {
@@ -19,7 +23,7 @@ function publicUser(row) {
   };
 }
 
-router.post('/login', async (req, res) => {
+router.post('/login', authAttemptLimit, async (req, res) => {
   try {
     const { email, password } = req.body || {};
     if (!email || !password) {
@@ -43,7 +47,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', authAttemptLimit, async (req, res) => {
   try {
     const { email, password, name, company_name } = req.body || {};
     if (!email || !password) {
@@ -85,6 +89,39 @@ router.get('/me', authRequired, async (req, res) => {
   }
 });
 
+router.post('/refresh', async (req, res) => {
+  try {
+    const token = String(req.body?.refresh_token || '').trim();
+    if (!token) return res.status(400).json({ message: 'refresh_token required' });
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+    if (payload.type !== 'refresh' || !payload.sub) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+    const result = await query(
+      `SELECT * FROM users WHERE id = $1 AND is_active = TRUE LIMIT 1`,
+      [payload.sub]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(401).json({ message: 'User not found' });
+    if (payload.company_id && payload.company_id !== user.company_id) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+    res.json({
+      access_token: signAccessToken(user),
+      refresh_token: signRefreshToken(user),
+      user: publicUser(user),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Refresh failed' });
+  }
+});
+
 router.post('/logout', (_req, res) => {
   res.json({ ok: true });
 });
@@ -112,9 +149,22 @@ router.post('/reset-password-request', async (req, res) => {
     );
 
     const reset_link = `${origin.replace(/\/$/, '')}/reset-password?token=${token}`;
-    console.log('[email stub] password reset link:', reset_link);
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Resetare parolă Transitix',
+        text: `Resetează parola aici (expiră în 1 oră): ${reset_link}`,
+        html: `<p>Resetează parola aici (expiră în 1 oră):</p><p><a href="${reset_link}">${reset_link}</a></p>`,
+      });
+    } catch (mailErr) {
+      console.error('[reset email]', mailErr);
+      return res.status(500).json({ message: 'Reset email failed' });
+    }
 
-    // MVP without mail provider: return link so UI can show it in local/dev.
+    // Local/dev: return link when Resend is not configured so UI can show it.
+    if (emailConfigured()) {
+      return res.json(empty);
+    }
     res.json({ ...empty, reset_link });
   } catch (err) {
     console.error(err);
