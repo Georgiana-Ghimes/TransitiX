@@ -125,4 +125,13 @@
   [data-radix-toast-announce-exclude] ~ [data-radix-focus-guard] {
     clip: rect(0, 0, 0, 0) !important;
   }
+
+  .tour-content-highlight {
+    @apply relative z-[35] rounded-xl;
+    box-shadow: 0 0 0 3px #f5a623;
+  }
+
+  .tour-mobile-menu-highlight {
+    @apply relative z-[119] ring-2 ring-[#F5A623] ring-offset-2 ring-offset-white bg-white;
+  }
 }

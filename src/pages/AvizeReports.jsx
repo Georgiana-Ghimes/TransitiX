@@ -630,7 +630,7 @@ export default function AvizeReports() {
             </div>
           ) : (
             <>
-              <div className="md:hidden space-y-3">
+              <div className="lg:hidden space-y-3">
                 {rows.map((row) => (
                   <div key={row.id} className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4">
                     <div className="flex items-start gap-3">
@@ -669,29 +669,29 @@ export default function AvizeReports() {
                 ))}
               </div>
 
-              <div className="hidden md:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="hidden lg:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm table-fixed min-w-[860px]">
+                  <table className="text-sm table-fixed w-full min-w-[82rem]">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-500 text-xs">
-                        <th className="px-3 py-3 w-10">
+                        <th className="px-3 py-3 w-10 overflow-hidden">
                           <input type="checkbox" checked={rows.length > 0 && selected.size === rows.length} onChange={toggleAll} />
                         </th>
-                        <th className="text-left font-medium px-3 py-3 w-[9rem]">TPO</th>
-                        <th className="text-left font-medium px-3 py-3 w-[7rem]">Data</th>
-                        <th className="text-left font-medium px-3 py-3 w-[11rem]">Auto</th>
-                        <th className="text-left font-medium px-3 py-3">Rută</th>
-                        <th className="text-left font-medium px-3 py-3 w-[8rem]">Marfă</th>
-                        <th className="text-left font-medium px-3 py-3 w-[8rem]">Document</th>
-                        <th className="text-left font-medium px-3 py-3 w-[7rem]">Sursă</th>
-                        <th className="text-left font-medium px-3 py-3 w-[6rem]">Status</th>
-                        <th className="text-right font-medium px-3 py-3 w-[11rem]">Acțiuni</th>
+                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">TPO</th>
+                        <th className="text-left font-medium px-3 py-3 w-[7rem] overflow-hidden">Data</th>
+                        <th className="text-left font-medium px-3 py-3 w-[11rem] overflow-hidden">Auto</th>
+                        <th className="text-left font-medium px-3 py-3 w-[16rem] overflow-hidden">Rută</th>
+                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">Marfă</th>
+                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">Document</th>
+                        <th className="text-left font-medium px-3 py-3 w-[7rem] overflow-hidden">Sursă</th>
+                        <th className="text-left font-medium px-3 py-3 w-[6.5rem] overflow-hidden">Status</th>
+                        <th className="text-right font-medium px-3 py-3 w-[14rem] overflow-hidden">Acțiuni</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rows.map((row) => (
                         <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                          <td className="px-3 py-3">
+                          <td className="px-3 py-3 overflow-hidden">
                             <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} />
                           </td>
                           <td className={`px-3 py-3 font-medium truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
@@ -707,17 +707,19 @@ export default function AvizeReports() {
                             {row.cantitate_marfa ?? '—'} {row.tip_marfa || ''}
                           </td>
                           <td className="px-3 py-3 truncate" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
-                          <td className="px-3 py-3"><SourceBadge source={row.extraction_source} /></td>
+                          <td className="px-3 py-3 overflow-hidden"><SourceBadge source={row.extraction_source} /></td>
                           <td className="px-3 py-3 text-xs truncate">{STATUS_LABEL[row.status] || row.status}</td>
-                          <td className="px-3 py-3 text-right whitespace-nowrap">
-                            <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
-                            {row.status !== 'confirmed' && (
-                              <button type="button" className="text-emerald-700 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
-                            )}
-                            <button type="button" className="text-slate-600 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
-                              {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
-                            </button>
-                            <button type="button" className="text-red-500 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap justify-end gap-x-2 gap-y-1">
+                              <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
+                              {row.status !== 'confirmed' && (
+                                <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
+                              )}
+                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                                {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
+                              </button>
+                              <button type="button" className="text-red-500 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                            </div>
                           </td>
                         </tr>
                       ))}

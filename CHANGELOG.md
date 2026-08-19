@@ -7,6 +7,16 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-08-20
+
+### Added
+
+- Office intro tour (first visit) and a **Ghid** control in the sidebar to reopen it — desktop coach panel with sidebar spotlight; **mobile bottom sheet** with ☰ menu cues and shorter copy (unchanged on desktop)
+
+### Fixed
+
+- Avize list: Rută and Marfă headers no longer overlap on 13" laptops; the table keeps a real width for every column and scrolls horizontally, with cards until `lg`
+
 ## [1.8.2] - 2026-08-19
 
 ### Fixed

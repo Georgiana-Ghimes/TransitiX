@@ -102,7 +102,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div data-tour-dashboard className="space-y-6 max-w-7xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">Vedere de ansamblu asupra activității de transport</p>
