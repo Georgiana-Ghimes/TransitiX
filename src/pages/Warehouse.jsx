@@ -41,9 +41,12 @@ export default function Warehouse() {
   };
 
   const adjustStock = async (product, delta) => {
-    const newQty = Math.max(0, (product.quantity || 0) + delta);
-    await api.entities.WarehouseProduct.update(product.id, { quantity: newQty });
-    loadProducts();
+    try {
+      const updated = await api.entities.WarehouseProduct.adjust(product.id, delta);
+      setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    } catch (e) {
+      notifyError('Stocul nu s-a actualizat', e);
+    }
   };
 
   const filtered = products.filter(p =>

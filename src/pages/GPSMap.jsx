@@ -46,12 +46,6 @@ export default function GPSMap() {
     setSimulating(true);
     try {
       const activeVehicles = vehicles.filter(v => v.status === 'in_trip' || v.status === 'available');
-      // Mark old current positions as not current
-      const oldLogs = await api.entities.GPSLog.filter({ is_current: true });
-      for (const log of oldLogs) {
-        await api.entities.GPSLog.update(log.id, { is_current: false });
-      }
-      // Generate new positions
       const newLogs = activeVehicles.map(v => {
         const lat = BUCHAREST[0] + (Math.random() - 0.5) * 4;
         const lng = BUCHAREST[1] + (Math.random() - 0.5) * 6;
@@ -60,10 +54,9 @@ export default function GPSMap() {
           latitude: lat, longitude: lng,
           speed: Math.floor(Math.random() * 80) + 10,
           heading: Math.floor(Math.random() * 360),
-          ignition: true, is_current: true,
         };
       });
-      await api.entities.GPSLog.bulkCreate(newLogs);
+      await api.integrations.Core.SimulateGps(newLogs);
       await loadData();
     } catch (e) { console.error(e); }
     finally { setSimulating(false); }

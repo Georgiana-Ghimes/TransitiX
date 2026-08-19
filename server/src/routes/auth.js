@@ -2,7 +2,8 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query } from '../db.js';
+import { query, withTransaction } from '../db.js';
+import { isPgUniqueViolation } from '../lib/concurrency.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
 import { sendEmail, emailConfigured } from '../lib/email.js';
 import { rateLimit } from '../lib/rateLimit.js';
@@ -53,26 +54,36 @@ router.post('/register', authAttemptLimit, async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password required' });
     }
-    const existing = await query(`SELECT id FROM users WHERE LOWER(email) = LOWER($1)`, [email]);
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ message: 'Email already registered' });
-    }
 
-    const company = await query(
-      `INSERT INTO companies (name, email) VALUES ($1, $2) RETURNING id`,
-      [company_name || 'Compania mea', email]
-    );
     const password_hash = await bcrypt.hash(password, 12);
-    const userResult = await query(
-      `INSERT INTO users (company_id, name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4, 'admin') RETURNING *`,
-      [company.rows[0].id, name || email.split('@')[0], email, password_hash]
-    );
-    const user = userResult.rows[0];
+    const user = await withTransaction(async (client) => {
+      const existing = await client.query(
+        `SELECT id FROM users WHERE LOWER(email) = LOWER($1)`,
+        [email]
+      );
+      if (existing.rows.length > 0) {
+        const taken = new Error('EMAIL_TAKEN');
+        taken.code = 'EMAIL_TAKEN';
+        throw taken;
+      }
+      const company = await client.query(
+        `INSERT INTO companies (name, email) VALUES ($1, $2) RETURNING id`,
+        [company_name || 'Compania mea', email]
+      );
+      const userResult = await client.query(
+        `INSERT INTO users (company_id, name, email, password_hash, role)
+         VALUES ($1, $2, $3, $4, 'admin') RETURNING *`,
+        [company.rows[0].id, name || email.split('@')[0], email, password_hash]
+      );
+      return userResult.rows[0];
+    });
     const access_token = signAccessToken(user);
     const refresh_token = signRefreshToken(user);
     res.status(201).json({ access_token, refresh_token, user: publicUser(user) });
   } catch (err) {
+    if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
     console.error(err);
     res.status(500).json({ message: 'Registration failed' });
   }
@@ -182,26 +193,20 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
+    const password_hash = await bcrypt.hash(newPassword, 12);
     const result = await query(
-      `SELECT id FROM users
-       WHERE reset_token = $1
+      `UPDATE users
+       SET password_hash = $1, reset_token = NULL, reset_token_expires_at = NULL, updated_at = NOW()
+       WHERE reset_token = $2
          AND reset_token_expires_at IS NOT NULL
          AND reset_token_expires_at > NOW()
          AND is_active = TRUE
-       LIMIT 1`,
-      [resetToken]
+       RETURNING id`,
+      [password_hash, resetToken]
     );
     if (!result.rows[0]) {
       return res.status(400).json({ message: 'Invalid or expired reset link' });
     }
-
-    const password_hash = await bcrypt.hash(newPassword, 12);
-    await query(
-      `UPDATE users
-       SET password_hash = $1, reset_token = NULL, reset_token_expires_at = NULL, updated_at = NOW()
-       WHERE id = $2`,
-      [password_hash, result.rows[0].id]
-    );
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

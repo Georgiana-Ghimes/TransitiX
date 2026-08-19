@@ -400,6 +400,55 @@ CREATE TABLE IF NOT EXISTS aviz_documents (
 
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_company ON aviz_documents(company_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_status ON aviz_documents(company_id, status);
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uniq ON users (LOWER(email));
+
+UPDATE report_templates t SET is_default = FALSE
+WHERE t.is_default = TRUE
+  AND t.id NOT IN (
+    SELECT kept.id FROM (
+      SELECT DISTINCT ON (company_id) id
+      FROM report_templates
+      WHERE is_default = TRUE
+      ORDER BY company_id, created_at ASC
+    ) kept
+  );
+CREATE UNIQUE INDEX IF NOT EXISTS report_templates_one_default
+  ON report_templates (company_id) WHERE is_default;
+
+UPDATE gps_logs g SET is_current = FALSE
+WHERE g.is_current = TRUE
+  AND g.id NOT IN (
+    SELECT kept.id FROM (
+      SELECT DISTINCT ON (company_id, vehicle_id) id
+      FROM gps_logs
+      WHERE is_current = TRUE
+      ORDER BY company_id, vehicle_id, created_at DESC
+    ) kept
+  );
+CREATE UNIQUE INDEX IF NOT EXISTS gps_logs_one_current
+  ON gps_logs (company_id, vehicle_id) WHERE is_current;
+
+DELETE FROM client_confirmations a
+  USING client_confirmations b
+WHERE a.ctid < b.ctid
+  AND a.trip_id = b.trip_id
+  AND a.status = 'pending'
+  AND b.status = 'pending';
+CREATE UNIQUE INDEX IF NOT EXISTS client_confirmations_one_pending
+  ON client_confirmations (trip_id) WHERE status = 'pending';
+
+DELETE FROM office_notifications a
+  USING office_notifications b
+WHERE a.ctid < b.ctid
+  AND a.company_id = b.company_id
+  AND a.trip_id IS NOT NULL
+  AND a.trip_id = b.trip_id
+  AND a.type = 'cmr_pending' AND b.type = 'cmr_pending'
+  AND a.is_read = FALSE AND b.is_read = FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS office_notif_one_cmr_pending
+  ON office_notifications (company_id, trip_id)
+  WHERE type = 'cmr_pending' AND is_read = FALSE;
 `;
 
 async function migrate() {

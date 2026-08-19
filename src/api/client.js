@@ -119,6 +119,9 @@ function createEntityApi(name) {
     delete(id) {
       return request(`/entities/${name}/${id}`, { method: 'DELETE' });
     },
+    adjust(id, delta) {
+      return request(`/entities/${name}/${id}/adjust`, { method: 'POST', body: { delta } });
+    },
     bulkCreate(items) {
       return request(`/entities/${name}/bulk`, { method: 'POST', body: items });
     },
@@ -258,6 +261,9 @@ export const api = {
       },
       async SendEmail(payload) {
         return request('/integrations/email', { method: 'POST', body: payload });
+      },
+      async SimulateGps(logs) {
+        return request('/integrations/gps-simulate', { method: 'POST', body: { logs } });
       },
     },
   },

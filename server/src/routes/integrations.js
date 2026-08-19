@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { authRequired } from '../middleware/auth.js';
+import { authRequired, officeRequired } from '../middleware/auth.js';
 import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
-import { query } from '../db.js';
+import { query, withTransaction } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { sendEmail } from '../lib/email.js';
 import {
@@ -10,12 +10,12 @@ import {
   stubCmrFromTrip,
   visionConfigured,
 } from '../lib/cmrOcr.js';
+import { uniqueUploadFilename } from '../lib/concurrency.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (_req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    cb(null, `${Date.now()}-${safe}`);
+    cb(null, uniqueUploadFilename(file.originalname));
   },
 });
 
@@ -143,6 +143,46 @@ router.post('/email', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Email failed' });
+  }
+});
+
+router.post('/gps-simulate', authRequired, officeRequired, async (req, res) => {
+  try {
+    const items = Array.isArray(req.body?.logs) ? req.body.logs : [];
+    const created = await withTransaction(async (client) => {
+      await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      await client.query(
+        `UPDATE gps_logs SET is_current = FALSE, updated_at = NOW()
+         WHERE company_id = $1 AND is_current = TRUE`,
+        [req.user.company_id]
+      );
+      const rows = [];
+      for (const item of items) {
+        if (item?.vehicle_id == null || item?.latitude == null || item?.longitude == null) continue;
+        const result = await client.query(
+          `INSERT INTO gps_logs (
+             company_id, vehicle_id, vehicle_plate, latitude, longitude,
+             speed, heading, ignition, is_current
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, TRUE)
+           RETURNING *`,
+          [
+            req.user.company_id,
+            item.vehicle_id,
+            item.vehicle_plate || null,
+            item.latitude,
+            item.longitude,
+            item.speed ?? null,
+            item.heading ?? null,
+          ]
+        );
+        rows.push(serializeRow(result.rows[0]));
+      }
+      return rows;
+    });
+    res.status(201).json(created);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'GPS simulate failed' });
   }
 });
 

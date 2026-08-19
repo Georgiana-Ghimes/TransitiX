@@ -3,6 +3,7 @@ import { api } from '@/api/client';
 import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
 import { notifyError } from '@/lib/notify';
+import { tripStatusForOfficeSave } from '@/lib/tripSave';
 
 export default function TripForm({ trip, onClose, onSave }) {
   const [drivers, setDrivers] = useState([]);
@@ -70,6 +71,11 @@ export default function TripForm({ trip, onClose, onSave }) {
       }
       if (!data.driver_id && data.status === 'alocata') {
         data.status = 'planificata';
+      }
+      if (trip?.id) {
+        const nextStatus = tripStatusForOfficeSave(trip.status, data.status);
+        if (nextStatus === undefined) delete data.status;
+        else data.status = nextStatus;
       }
 
       let saved;

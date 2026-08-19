@@ -44,22 +44,19 @@ export async function notifyTripStatusChange(companyId, trip, oldStatus, newStat
 
 export async function notifyCmrPending(companyId, trip) {
   if (!trip?.id) return;
-  const existing = await query(
-    `SELECT id FROM office_notifications
-     WHERE company_id = $1 AND type = 'cmr_pending' AND trip_id = $2 AND is_read = FALSE
-     LIMIT 1`,
-    [companyId, trip.id]
+  await query(
+    `INSERT INTO office_notifications (company_id, type, title, message, link, trip_id, cmr_number)
+     VALUES ($1, 'cmr_pending', $2, $3, $4, $5, $6)
+     ON CONFLICT (company_id, trip_id) WHERE type = 'cmr_pending' AND is_read = FALSE DO NOTHING`,
+    [
+      companyId,
+      `CMR de confirmat — ${trip.cmr_number || 'Cursă'}`,
+      'Șoferul a încărcat documentul CMR. Verifică datele OCR.',
+      `/trips/${trip.id}`,
+      trip.id,
+      trip.cmr_number,
+    ]
   );
-  if (existing.rows[0]) return;
-  await createOfficeNotification({
-    company_id: companyId,
-    type: 'cmr_pending',
-    title: `CMR de confirmat — ${trip.cmr_number || 'Cursă'}`,
-    message: 'Șoferul a încărcat documentul CMR. Verifică datele OCR.',
-    link: `/trips/${trip.id}`,
-    trip_id: trip.id,
-    cmr_number: trip.cmr_number,
-  });
 }
 
 export async function dismissCmrPending(companyId, tripId) {

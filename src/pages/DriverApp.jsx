@@ -16,6 +16,7 @@ import {
   CircleDot, Navigation, MessageSquare, User, Bell, Phone,
 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { withAccessToken } from '@/lib/uploadUrl';
 
 /** One primary action per status — TMS driver pattern */
 const STATUS_FLOW = [
@@ -400,7 +401,7 @@ export default function DriverApp() {
                     )}
                   </div>
                   <img
-                    src={tripDoc.original_image_url}
+                    src={withAccessToken(tripDoc.original_image_url)}
                     alt="CMR"
                     className="w-full max-h-48 object-contain rounded border border-slate-200 bg-white"
                   />

@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 import authRoutes from './routes/auth.js';
 import entityRoutes from './routes/entities.js';
@@ -14,6 +16,8 @@ import companyRoutes from './routes/company.js';
 import avizeRoutes from './routes/avize.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
+import { authRequired } from './middleware/auth.js';
+import { applyBearerFromQuery, safeUploadBasename } from './lib/concurrency.js';
 
 dotenv.config();
 
@@ -31,7 +35,27 @@ app.use(cors({
 }));
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
-app.use('/uploads', express.static(uploadRoot, { maxAge: '7d' }));
+
+function bearerFromQuery(req, _res, next) {
+  if (!req.headers.authorization && req.query?.access_token) {
+    req.headers.authorization = applyBearerFromQuery(null, String(req.query.access_token));
+  }
+  next();
+}
+
+app.get('/uploads/:filename', bearerFromQuery, authRequired, (req, res) => {
+  const name = safeUploadBasename(req.params.filename);
+  if (!name) return res.status(400).json({ message: 'Invalid filename' });
+  const filePath = path.resolve(uploadRoot, name);
+  const root = path.resolve(uploadRoot);
+  if (filePath !== path.join(root, name)) {
+    return res.status(400).json({ message: 'Invalid filename' });
+  }
+  fs.access(filePath, fs.constants.R_OK, (err) => {
+    if (err) return res.status(404).json({ message: 'Not found' });
+    res.sendFile(filePath, { maxAge: '7d' });
+  });
+});
 
 app.get('/api/health', async (_req, res) => {
   try {

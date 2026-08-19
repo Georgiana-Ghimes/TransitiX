@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query } from '../db.js';
+import { query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import {
@@ -9,6 +9,12 @@ import {
 } from '../lib/avizTemplate.js';
 import { extractAvizFromFile, stubAvizFields, repairAvizFromStored } from '../lib/avizOcr.js';
 import { buildAnnexWorkbook } from '../lib/avizExport.js';
+import {
+  isPgUniqueViolation,
+  mergeReextractRow,
+  nextAvizStatusOnSave,
+  repairNeedsWrite,
+} from '../lib/concurrency.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -33,20 +39,46 @@ function rowFromExtracted(extracted) {
 }
 
 async function ensureDefaultTemplate(companyId) {
-  const existing = await query(
-    `SELECT * FROM report_templates WHERE company_id = $1 ORDER BY is_default DESC, created_at ASC`,
+  return withTransaction(async (client) => {
+    await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [companyId]);
+    const existing = await client.query(
+      `SELECT * FROM report_templates WHERE company_id = $1 ORDER BY is_default DESC, created_at ASC`,
+      [companyId]
+    );
+    if (existing.rows.length > 0) return existing.rows.map(serializeRow);
+    try {
+      const inserted = await client.query(
+        `INSERT INTO report_templates (company_id, name, columns, is_default)
+         VALUES ($1, $2, $3::jsonb, TRUE)
+         RETURNING *`,
+        [companyId, 'Anexa Factura RAI', JSON.stringify(DEFAULT_RAI_COLUMNS)]
+      );
+      return inserted.rows.map(serializeRow);
+    } catch (err) {
+      if (!isPgUniqueViolation(err)) throw err;
+      const again = await client.query(
+        `SELECT * FROM report_templates WHERE company_id = $1 ORDER BY is_default DESC, created_at ASC`,
+        [companyId]
+      );
+      return again.rows.map(serializeRow);
+    }
+  });
+}
+
+async function writeTemplateDefault(client, companyId, makeDefault, exceptId = null) {
+  if (!makeDefault) return;
+  if (exceptId) {
+    await client.query(
+      `UPDATE report_templates SET is_default = FALSE, updated_at = NOW()
+       WHERE company_id = $1 AND id <> $2`,
+      [companyId, exceptId]
+    );
+    return;
+  }
+  await client.query(
+    `UPDATE report_templates SET is_default = FALSE, updated_at = NOW() WHERE company_id = $1`,
     [companyId]
   );
-  if (existing.rows.length === 0) {
-    const inserted = await query(
-      `INSERT INTO report_templates (company_id, name, columns, is_default)
-       VALUES ($1, $2, $3::jsonb, TRUE)
-       RETURNING *`,
-      [companyId, 'Anexa Factura RAI', JSON.stringify(DEFAULT_RAI_COLUMNS)]
-    );
-    return inserted.rows.map(serializeRow);
-  }
-  return existing.rows.map(serializeRow);
 }
 
 function repairedUpdateValues(repaired) {
@@ -70,7 +102,12 @@ router.post('/repair', async (req, res) => {
     );
     const out = [];
     for (const row of docs.rows) {
-      const repaired = repairAvizFromStored(serializeRow(row));
+      const stored = serializeRow(row);
+      const repaired = repairAvizFromStored(stored);
+      if (!repairNeedsWrite(stored, repaired)) {
+        out.push(stored);
+        continue;
+      }
       const result = await query(
         `UPDATE aviz_documents SET
            numar_tpo = $1,
@@ -110,16 +147,18 @@ router.post('/templates', async (req, res) => {
     if (!name) return res.status(400).json({ message: 'Template name required' });
     const columns = normalizeTemplateColumns(req.body?.columns);
     const isDefault = Boolean(req.body?.is_default);
-    if (isDefault) {
-      await query(`UPDATE report_templates SET is_default = FALSE WHERE company_id = $1`, [req.user.company_id]);
-    }
-    const result = await query(
-      `INSERT INTO report_templates (company_id, name, columns, is_default)
-       VALUES ($1, $2, $3::jsonb, $4)
-       RETURNING *`,
-      [req.user.company_id, name, JSON.stringify(columns), isDefault]
-    );
-    res.status(201).json(serializeRow(result.rows[0]));
+    const row = await withTransaction(async (client) => {
+      await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      await writeTemplateDefault(client, req.user.company_id, isDefault);
+      const result = await client.query(
+        `INSERT INTO report_templates (company_id, name, columns, is_default)
+         VALUES ($1, $2, $3::jsonb, $4)
+         RETURNING *`,
+        [req.user.company_id, name, JSON.stringify(columns), isDefault]
+      );
+      return result.rows[0];
+    });
+    res.status(201).json(serializeRow(row));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to create template' });
@@ -132,18 +171,20 @@ router.put('/templates/:id', async (req, res) => {
     if (!name) return res.status(400).json({ message: 'Template name required' });
     const columns = normalizeTemplateColumns(req.body?.columns);
     const isDefault = Boolean(req.body?.is_default);
-    if (isDefault) {
-      await query(`UPDATE report_templates SET is_default = FALSE WHERE company_id = $1`, [req.user.company_id]);
-    }
-    const result = await query(
-      `UPDATE report_templates
-       SET name = $1, columns = $2::jsonb, is_default = $3, updated_at = NOW()
-       WHERE id = $4 AND company_id = $5
-       RETURNING *`,
-      [name, JSON.stringify(columns), isDefault, req.params.id, req.user.company_id]
-    );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Template not found' });
-    res.json(serializeRow(result.rows[0]));
+    const row = await withTransaction(async (client) => {
+      await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      await writeTemplateDefault(client, req.user.company_id, isDefault, req.params.id);
+      const result = await client.query(
+        `UPDATE report_templates
+         SET name = $1, columns = $2::jsonb, is_default = $3, updated_at = NOW()
+         WHERE id = $4 AND company_id = $5
+         RETURNING *`,
+        [name, JSON.stringify(columns), isDefault, req.params.id, req.user.company_id]
+      );
+      return result.rows[0];
+    });
+    if (!row) return res.status(404).json({ message: 'Template not found' });
+    res.json(serializeRow(row));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to save template' });
@@ -152,18 +193,26 @@ router.put('/templates/:id', async (req, res) => {
 
 router.delete('/templates/:id', async (req, res) => {
   try {
-    const count = await query(
-      `SELECT COUNT(*)::int AS c FROM report_templates WHERE company_id = $1`,
-      [req.user.company_id]
-    );
-    if (count.rows[0].c <= 1) {
+    const deleted = await withTransaction(async (client) => {
+      await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      const count = await client.query(
+        `SELECT COUNT(*)::int AS c FROM report_templates WHERE company_id = $1`,
+        [req.user.company_id]
+      );
+      if (count.rows[0].c <= 1) return { error: 'keep_one' };
+      const result = await client.query(
+        `DELETE FROM report_templates WHERE id = $1 AND company_id = $2 RETURNING id`,
+        [req.params.id, req.user.company_id]
+      );
+      if (!result.rows[0]) return { error: 'not_found' };
+      return { ok: true };
+    });
+    if (deleted.error === 'keep_one') {
       return res.status(400).json({ message: 'Păstrează cel puțin un șablon' });
     }
-    const result = await query(
-      `DELETE FROM report_templates WHERE id = $1 AND company_id = $2 RETURNING id`,
-      [req.params.id, req.user.company_id]
-    );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Template not found' });
+    if (deleted.error === 'not_found') {
+      return res.status(404).json({ message: 'Template not found' });
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
@@ -201,43 +250,53 @@ router.post('/extract', async (req, res) => {
       };
     }
 
-    const fields = rowFromExtracted(extracted);
+    const extractedFields = rowFromExtracted(extracted);
     const extractedJson = JSON.stringify(extracted.extracted_data || { parsed: extracted });
-    const status = extracted._stub ? 'uploaded' : 'extracted';
+    const extractStatus = extracted._stub ? 'uploaded' : 'extracted';
 
     let result;
     if (id) {
-      result = await query(
-        `UPDATE aviz_documents SET
-           original_filename = COALESCE($1, original_filename),
-           status = $2,
-           extracted_data = $3::jsonb,
-           numar_tpo = $4,
-           data_efectuare_cursa = $5,
-           valoare_tpo = $6,
-           numar_auto = $7,
-           ruta_transport = $8,
-           tip_marfa = $9,
-           cantitate_marfa = $10,
-           numar_document_marfa = $11,
-           numar_curse = $12,
-           taxe_suplimentare = $13,
-           km_parcursi = $14,
-           tarif_km = $15,
-           observatii = $16,
-           updated_at = NOW()
-         WHERE id = $17 AND company_id = $18
-         RETURNING *`,
-        [
-          original_filename, status, extractedJson,
-          fields.numar_tpo, fields.data_efectuare_cursa, fields.valoare_tpo,
-          fields.numar_auto, fields.ruta_transport, fields.tip_marfa,
-          fields.cantitate_marfa, fields.numar_document_marfa, fields.numar_curse,
-          fields.taxe_suplimentare, fields.km_parcursi, fields.tarif_km, fields.observatii,
-          id, req.user.company_id,
-        ]
-      );
-      if (!result.rows[0]) return res.status(404).json({ message: 'Aviz not found' });
+      result = await withTransaction(async (client) => {
+        const existing = await client.query(
+          `SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2 FOR UPDATE`,
+          [id, req.user.company_id]
+        );
+        if (!existing.rows[0]) return null;
+        const current = existing.rows[0];
+        const fields = mergeReextractRow(current, extractedFields);
+        const status = nextAvizStatusOnSave(current.status, extractStatus);
+        return client.query(
+          `UPDATE aviz_documents SET
+             original_filename = COALESCE($1, original_filename),
+             status = $2,
+             extracted_data = $3::jsonb,
+             numar_tpo = $4,
+             data_efectuare_cursa = $5,
+             valoare_tpo = $6,
+             numar_auto = $7,
+             ruta_transport = $8,
+             tip_marfa = $9,
+             cantitate_marfa = $10,
+             numar_document_marfa = $11,
+             numar_curse = $12,
+             taxe_suplimentare = $13,
+             km_parcursi = $14,
+             tarif_km = $15,
+             observatii = $16,
+             updated_at = NOW()
+           WHERE id = $17 AND company_id = $18
+           RETURNING *`,
+          [
+            original_filename, status, extractedJson,
+            fields.numar_tpo, fields.data_efectuare_cursa, fields.valoare_tpo,
+            fields.numar_auto, fields.ruta_transport, fields.tip_marfa,
+            fields.cantitate_marfa, fields.numar_document_marfa, fields.numar_curse,
+            fields.taxe_suplimentare, fields.km_parcursi, fields.tarif_km, fields.observatii,
+            id, req.user.company_id,
+          ]
+        );
+      });
+      if (!result?.rows[0]) return res.status(404).json({ message: 'Aviz not found' });
     } else {
       result = await query(
         `INSERT INTO aviz_documents (
@@ -252,11 +311,11 @@ router.post('/extract', async (req, res) => {
            $15, $16, $17, $18
          ) RETURNING *`,
         [
-          req.user.company_id, fileUrl, original_filename, status, extractedJson,
-          fields.numar_tpo, fields.data_efectuare_cursa, fields.valoare_tpo,
-          fields.numar_auto, fields.ruta_transport, fields.tip_marfa,
-          fields.cantitate_marfa, fields.numar_document_marfa, fields.numar_curse,
-          fields.taxe_suplimentare, fields.km_parcursi, fields.tarif_km, fields.observatii,
+          req.user.company_id, fileUrl, original_filename, extractStatus, extractedJson,
+          extractedFields.numar_tpo, extractedFields.data_efectuare_cursa, extractedFields.valoare_tpo,
+          extractedFields.numar_auto, extractedFields.ruta_transport, extractedFields.tip_marfa,
+          extractedFields.cantitate_marfa, extractedFields.numar_document_marfa, extractedFields.numar_curse,
+          extractedFields.taxe_suplimentare, extractedFields.km_parcursi, extractedFields.tarif_km, extractedFields.observatii,
         ]
       );
     }

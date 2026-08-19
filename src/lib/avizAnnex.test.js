@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL } from './avizAnnex.js';
+import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from './avizAnnex.js';
 import { ANNEX_SOURCE_KEYS } from '../../server/src/lib/avizTemplate.js';
 
 describe('avizAnnex field map', () => {
@@ -40,5 +40,11 @@ describe('avizAnnex field map', () => {
       extracted: 'Extras',
       confirmed: 'Confirmat',
     });
+  });
+
+  it('keeps Confirmat when Editează saves', () => {
+    expect(nextAvizStatusOnSave('uploaded')).toBe('extracted');
+    expect(nextAvizStatusOnSave('extracted')).toBe('extracted');
+    expect(nextAvizStatusOnSave('confirmed')).toBe('confirmed');
   });
 });

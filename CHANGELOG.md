@@ -13,6 +13,26 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 - CI runs lint, unit tests, and frontend build on **every push and pull request** (not only `main`)
 - Unit test that Editează form fields stay aligned with Anexa XLSX sources
 
+## [1.3.1] - 2026-08-19
+
+### Security
+
+- `/uploads/:filename` requires a JWT (Authorization header or `?access_token=` for `<img>`); aviz/CMR files are no longer world-readable
+- Drivers can no longer list or mutate office entities (Avize, invoices, vehicles, warehouse, GPS, templates). Trip updates are limited to status and mileage fields
+- Login email is globally unique (`LOWER(email)`); register runs in a transaction so a unique race cannot create two companies
+
+### Fixed
+
+- Re-extract keeps office km/taxe/observatii and does not demote Confirmat
+- Avize `load()` ignores stale responses; row actions disable while Re-extrage runs
+- Default report template, template delete, GPS `is_current`, warehouse +/- qty, password-reset token, client confirm, and CMR pending notification are atomic (unique indexes + transactions)
+- Dispatcher trip save omits unchanged status so it cannot roll back a driver `in_tranzit` update
+- Upload filenames include a UUID so two files at the same millisecond do not collide
+
+### Tests
+
+- Unit tests for merge-on-reextract, driver ACL, unique upload names, warehouse qty clamp, trip status omit, repair no-op, and authenticated upload URLs
+
 ## [1.3.0] - 2026-08-18
 
 ### Added

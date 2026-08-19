@@ -3,7 +3,7 @@ import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL } from '@/lib/avizAnnex';
+import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import {
   Camera, Check, ClipboardList, Download, FileSpreadsheet, HelpCircle, Loader2,
   Pencil, Plus, Trash2, Upload, X,
@@ -47,7 +47,7 @@ const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Re-extrage',
-    text: 'Citește din nou fișierul și rescrie TPO, dată, auto, rută, cantitate, document din PDF. Folosește-l doar dacă vrei valorile din aviz, nu cele din Editează. Completează km/taxe după.',
+    text: 'Citește din nou fișierul și rescrie TPO, dată, auto, rută, cantitate, document din PDF. Km, taxe, valoare TPO și observațiile deja completate rămân. Folosește-l doar dacă vrei valorile din aviz, nu cele din Editează.',
   },
   {
     name: 'Șterge',
@@ -107,17 +107,21 @@ export default function AvizeReports() {
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState(null);
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
+  const loadGen = useRef(0);
 
   const load = async () => {
+    const gen = ++loadGen.current;
     try {
       const [avize, tmpls] = await Promise.all([
         api.entities.AvizDocument.list('-created_date', 200),
         api.avize.templates(),
       ]);
+      if (gen !== loadGen.current) return;
       setRows(avize);
       setTemplates(tmpls);
       setTemplateId((prev) => {
@@ -125,9 +129,10 @@ export default function AvizeReports() {
         return tmpls.find((t) => t.is_default)?.id || tmpls[0]?.id || '';
       });
     } catch (e) {
+      if (gen !== loadGen.current) return;
       notifyError('Nu am putut încărca avizele', e);
     } finally {
-      setLoading(false);
+      if (gen === loadGen.current) setLoading(false);
     }
   };
 
@@ -191,7 +196,7 @@ export default function AvizeReports() {
     if (!editRow) return;
     setSaving(true);
     try {
-      const payload = { ...form, status: editRow.status === 'uploaded' ? 'extracted' : editRow.status };
+      const payload = { ...form, status: nextAvizStatusOnSave(editRow.status) };
       await api.entities.AvizDocument.update(editRow.id, payload);
       notifySuccess('Aviz salvat', 'Câmpurile au fost actualizate.');
       setEditRow(null);
@@ -204,22 +209,30 @@ export default function AvizeReports() {
   };
 
   const confirmRow = async (row) => {
+    if (busyId) return;
+    setBusyId(row.id);
     try {
       await api.entities.AvizDocument.update(row.id, { status: 'confirmed' });
       notifySuccess('Aviz confirmat', row.numar_tpo || row.original_filename || 'Rând marcat ca confirmat.');
       await load();
     } catch (e) {
       notifyError('Confirmare eșuată', e);
+    } finally {
+      setBusyId(null);
     }
   };
 
   const reextract = async (row) => {
+    if (busyId) return;
+    setBusyId(row.id);
     try {
       await api.avize.extract({ id: row.id, file_url: row.file_url, original_filename: row.original_filename });
-      notifySuccess('Re-extras', 'Câmpurile au fost reîncărcate din document.');
+      notifySuccess('Re-extras', 'TPO/auto/rută din document; km și taxele rămân.');
       await load();
     } catch (e) {
       notifyError('Extragere eșuată', e);
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -322,6 +335,8 @@ export default function AvizeReports() {
       columns: JSON.parse(JSON.stringify(base)),
     });
   };
+
+  const rowLocked = (id) => uploading || busyId === id;
 
   if (loading) {
     return (
@@ -442,12 +457,14 @@ export default function AvizeReports() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
-                      <button type="button" className="text-[#1D4E89]" title="Corectează câmpurile sau completează km / taxe" onClick={() => openEdit(row)}>Editează</button>
+                      <button type="button" className="text-[#1D4E89] disabled:opacity-40" title="Corectează câmpurile sau completează km / taxe" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                       {row.status !== 'confirmed' && (
-                        <button type="button" className="text-emerald-700" title="Marchează rândul ca verificat" onClick={() => confirmRow(row)}>Confirmă</button>
+                        <button type="button" className="text-emerald-700 disabled:opacity-40" title="Marchează rândul ca verificat" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
-                      <button type="button" className="text-slate-600" title="Citește din nou PDF-ul; suprascrie TPO, auto, rută" onClick={() => reextract(row)}>Re-extrage</button>
-                      <button type="button" className="text-red-500" title="Scoate avizul din listă" onClick={() => setDeleteRow(row)}>Șterge</button>
+                      <button type="button" className="text-slate-600 disabled:opacity-40" title="Citește din nou PDF-ul; păstrează km / taxe" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                        {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
+                      </button>
+                      <button type="button" className="text-red-500 disabled:opacity-40" title="Scoate avizul din listă" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                     </div>
                   </div>
                 ))}
@@ -491,12 +508,14 @@ export default function AvizeReports() {
                           <td className="px-3 py-3 truncate" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
                           <td className="px-3 py-3 text-xs truncate">{STATUS_LABEL[row.status] || row.status}</td>
                           <td className="px-3 py-3 text-right whitespace-nowrap">
-                            <button type="button" className="text-[#1D4E89] hover:underline text-xs" title="Corectează câmpurile sau completează km / taxe" onClick={() => openEdit(row)}>Editează</button>
+                            <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" title="Corectează câmpurile sau completează km / taxe" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                             {row.status !== 'confirmed' && (
-                              <button type="button" className="text-emerald-700 hover:underline text-xs ml-2" title="Marchează rândul ca verificat" onClick={() => confirmRow(row)}>Confirmă</button>
+                              <button type="button" className="text-emerald-700 hover:underline text-xs ml-2 disabled:opacity-40" title="Marchează rândul ca verificat" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                             )}
-                            <button type="button" className="text-slate-600 hover:underline text-xs ml-2" title="Citește din nou PDF-ul; suprascrie TPO, auto, rută" onClick={() => reextract(row)}>Re-extrage</button>
-                            <button type="button" className="text-red-500 hover:underline text-xs ml-2" title="Scoate avizul din listă" onClick={() => setDeleteRow(row)}>Șterge</button>
+                            <button type="button" className="text-slate-600 hover:underline text-xs ml-2 disabled:opacity-40" title="Citește din nou PDF-ul; păstrează km / taxe" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                              {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
+                            </button>
+                            <button type="button" className="text-red-500 hover:underline text-xs ml-2 disabled:opacity-40" title="Scoate avizul din listă" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                           </td>
                         </tr>
                       ))}

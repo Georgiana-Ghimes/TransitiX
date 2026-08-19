@@ -45,22 +45,6 @@ router.get('/:token', async (req, res) => {
 
 router.post('/:token', async (req, res) => {
   try {
-    const conf = await query(
-      `SELECT * FROM client_confirmations WHERE token = $1 LIMIT 1`,
-      [req.params.token]
-    );
-    if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
-    if (conf.rows[0].status === 'confirmed') {
-      return res.json(serializeRow(conf.rows[0]));
-    }
-    if (isExpired(conf.rows[0]) || conf.rows[0].status === 'expired') {
-      await query(
-        `UPDATE client_confirmations SET status = 'expired', updated_at = NOW() WHERE id = $1`,
-        [conf.rows[0].id]
-      );
-      return res.status(410).json({ message: 'Confirmation link has expired' });
-    }
-
     const {
       confirmed_by_name,
       observations,
@@ -81,6 +65,8 @@ router.post('/:token', async (req, res) => {
          damage_image_url = $6,
          updated_at = NOW()
        WHERE token = $7
+         AND status = 'pending'
+         AND (expires_at IS NULL OR expires_at > NOW())
        RETURNING *`,
       [
         confirmed_by_name || null,
@@ -92,19 +78,36 @@ router.post('/:token', async (req, res) => {
         req.params.token,
       ]
     );
-    const confirmation = serializeRow(result.rows[0]);
 
-    if (conf.rows[0].status !== 'confirmed') {
-      let trip = null;
-      if (confirmation.trip_id) {
-        const t = await query(`SELECT * FROM trips WHERE id = $1`, [confirmation.trip_id]);
-        trip = t.rows[0] || null;
+    if (!result.rows[0]) {
+      const conf = await query(
+        `SELECT * FROM client_confirmations WHERE token = $1 LIMIT 1`,
+        [req.params.token]
+      );
+      if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
+      if (conf.rows[0].status === 'confirmed') {
+        return res.json(serializeRow(conf.rows[0]));
       }
-      await notifyClientConfirmed(conf.rows[0].company_id, trip, {
-        has_damage: has_damage ?? false,
-        confirmed_by_name,
-      });
+      if (isExpired(conf.rows[0]) || conf.rows[0].status === 'expired') {
+        await query(
+          `UPDATE client_confirmations SET status = 'expired', updated_at = NOW() WHERE id = $1 AND status <> 'confirmed'`,
+          [conf.rows[0].id]
+        );
+        return res.status(410).json({ message: 'Confirmation link has expired' });
+      }
+      return res.status(409).json({ message: 'Confirmation already processed' });
     }
+
+    const confirmation = serializeRow(result.rows[0]);
+    let trip = null;
+    if (confirmation.trip_id) {
+      const t = await query(`SELECT * FROM trips WHERE id = $1`, [confirmation.trip_id]);
+      trip = t.rows[0] || null;
+    }
+    await notifyClientConfirmed(confirmation.company_id, trip, {
+      has_damage: has_damage ?? false,
+      confirmed_by_name,
+    });
 
     res.json(confirmation);
   } catch (err) {

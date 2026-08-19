@@ -24,3 +24,9 @@ export const STATUS_LABEL = {
   extracted: 'Extras',
   confirmed: 'Confirmat',
 };
+
+/** Salvează must not demote Confirmat; uploaded becomes extracted. */
+export function nextAvizStatusOnSave(current) {
+  if (current === 'uploaded') return 'extracted';
+  return current || 'extracted';
+}

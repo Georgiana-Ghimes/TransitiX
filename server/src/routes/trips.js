@@ -38,6 +38,7 @@ router.post('/:tripId/confirmation-link', authRequired, async (req, res) => {
            company_id, trip_id, cmr_number, token, client_name, client_email,
            status, expires_at
          ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW() + INTERVAL '30 days')
+         ON CONFLICT (trip_id) WHERE status = 'pending' DO NOTHING
          RETURNING *`,
         [
           req.user.company_id,
@@ -48,7 +49,17 @@ router.post('/:tripId/confirmation-link', authRequired, async (req, res) => {
           email,
         ]
       );
-      confirmation = serializeRow(inserted.rows[0]);
+      if (inserted.rows[0]) {
+        confirmation = serializeRow(inserted.rows[0]);
+      } else {
+        const again = await query(
+          `SELECT * FROM client_confirmations
+           WHERE trip_id = $1 AND company_id = $2 AND status = 'pending'
+           ORDER BY created_at DESC LIMIT 1`,
+          [tripId, req.user.company_id]
+        );
+        confirmation = serializeRow(again.rows[0]);
+      }
     }
 
     const origin = req.body?.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';

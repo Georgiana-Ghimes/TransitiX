@@ -22,7 +22,7 @@ No teammate secrets are required to log in locally. Invented Docker/JWT values a
 | Financiar | `/finance` | Invoices; e-Factura is a **simulation** |
 | Depozit | `/warehouse` | Stock products |
 | Documente | `/documents` | Expiry alerts (ITP, RCA, permis, …) |
-| Avize / Rapoarte | `/avize` | Upload avize → review table → Anexa Factura XLSX |
+| Avize / Rapoarte | `/avize` | Upload avize → review table → Anexa Factura XLSX. Files under `/uploads` need a login token. |
 | Setări | `/settings` | Company profile + document-alert thresholds |
 | App Șofer | `/driver-app` | Assigned trips, CMR photo, status flow |
 | Portal client | `/confirm/:token` | Delivery confirmation link |

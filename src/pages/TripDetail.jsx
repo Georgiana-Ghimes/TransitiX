@@ -8,6 +8,7 @@ import {
   AlertTriangle, Loader2, Copy, ExternalLink,
 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { withAccessToken } from '@/lib/uploadUrl';
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -297,7 +298,7 @@ export default function TripDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <img
-                  src={doc.original_image_url}
+                  src={withAccessToken(doc.original_image_url)}
                   alt="CMR"
                   className="w-full rounded-lg border border-slate-200 max-h-96 object-contain bg-slate-50"
                 />

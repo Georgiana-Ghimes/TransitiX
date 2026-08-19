@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENTITY_MAP, parseOrder, pickWritable, serializeRow } from './entities.js';
+import { DRIVER_TRIP_WRITABLE } from './lib/concurrency.js';
 
 describe('parseOrder', () => {
   it('defaults to created_at DESC', () => {
@@ -49,6 +50,19 @@ describe('pickWritable', () => {
     const cfg = ENTITY_MAP.Client;
     const out = pickWritable(cfg, { name: 'Acme', cui: '' });
     expect(out.cui).toBeNull();
+  });
+
+  it('limits driver trip writes to status and mileage fields', () => {
+    const out = pickWritable({ writable: DRIVER_TRIP_WRITABLE }, {
+      status: 'in_tranzit',
+      shipper_name: 'should-not-write',
+      start_mileage: 10,
+      rate: 99,
+    });
+    expect(out.status).toBe('in_tranzit');
+    expect(out.start_mileage).toBe(10);
+    expect(out.shipper_name).toBeUndefined();
+    expect(out.rate).toBeUndefined();
   });
 });
 
