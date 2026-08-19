@@ -34,6 +34,7 @@ describe('sendEmail stub', () => {
       to: 'a@test.ro',
       subject: 'Hello',
       text: 'Body',
+      attachments: [{ filename: 'anexa.xlsx', content: Buffer.from('x') }],
     });
     expect(result.ok).toBe(true);
     expect(result.stub).toBe(true);

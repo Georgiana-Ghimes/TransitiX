@@ -17,6 +17,7 @@ import {
   entityAllowedForRole,
   nextAvizStatusOnSave,
 } from '../lib/concurrency.js';
+import { tpoExistsForOther } from '../lib/avizQuery.js';
 
 const router = Router();
 
@@ -292,6 +293,14 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     });
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     const row = serializeRow(result.rows[0]);
+
+    if (req.params.entity === 'AvizDocument') {
+      row.duplicate_tpo = await tpoExistsForOther(query, {
+        companyId: req.user.company_id,
+        tpo: row.numar_tpo,
+        exceptId: row.id,
+      });
+    }
 
     if (req.params.entity === 'Trip' && previous && data.status !== undefined) {
       await notifyTripStatusChange(

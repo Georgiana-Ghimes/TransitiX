@@ -7,12 +7,11 @@ import path from 'path';
 import { createRequire } from 'module';
 import { resolveUploadPath } from './cmrOcr.js';
 import { annexFieldDefaults } from './avizTemplate.js';
+import { isTextPoor, visionAnnotateImage, visionAnnotatePdf, visionApiKey } from './avizVision.js';
+import { mapProviderToSource } from './avizQuery.js';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
-
-const VISION_IMAGES_URL = 'https://vision.googleapis.com/v1/images:annotate';
-const VISION_FILES_URL = 'https://vision.googleapis.com/v1/files:annotate';
 
 /** pdf-parse can throw `bad XRef entry` on otherwise valid PDFs; retry a copy of the buffer. */
 async function parsePdfTextLayer(buf) {
@@ -264,7 +263,7 @@ function parseDestBlock(section) {
   const skipLocality = /^(bolintin|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
   const streetStop = /^(nr|numar|sector|ro|rou|romania|bucuresti|domnesti|dobroesti|militari|fundeni|comanesti|popesti)$/;
   const typeMatch = folded.match(
-    /(?:strada|str\.?|sosea|sos\.?|bulevardul|bvd\.?|b-dul|bdul|bd\.?|calea)\s+([a-z]+)(?:\s+([a-z]+))?/
+    /(?:strada|str\.?|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+([a-z]+)(?:\s+([a-z]+))?/
   );
   const nrMatch = folded.match(/\bnr\.?\s*(\d+[a-z\-]*)/);
   let streetName = null;
@@ -452,6 +451,14 @@ export function repairAvizFromStored(row) {
   };
 }
 
+export function avizFieldConfidence(row) {
+  return {
+    numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
+    numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
+    ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
+  };
+}
+
 export function stubAvizFields() {
   return {
     ...annexFieldDefaults(),
@@ -459,49 +466,6 @@ export function stubAvizFields() {
     _stub: true,
     _note: 'OCR stub: completează manual. Configurează GOOGLE_VISION_API_KEY pentru imagini, sau încarcă un PDF cu text.',
   };
-}
-
-async function callVisionImage(base64Content, apiKey) {
-  const res = await fetch(`${VISION_IMAGES_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      requests: [{
-        image: { content: base64Content },
-        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-      }],
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.error?.message || res.statusText || 'Vision API error');
-  }
-  const response = data.responses?.[0];
-  if (response?.error) throw new Error(response.error.message || 'Vision annotation failed');
-  return response?.fullTextAnnotation?.text || response?.textAnnotations?.[0]?.description || '';
-}
-
-async function callVisionPdf(buffer, apiKey) {
-  const res = await fetch(`${VISION_FILES_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      requests: [{
-        inputConfig: {
-          content: buffer.toString('base64'),
-          mimeType: 'application/pdf',
-        },
-        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }],
-        pages: [1, 2, 3],
-      }],
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.error?.message || res.statusText || 'Vision PDF error');
-  }
-  const pages = data.responses?.[0]?.responses || [];
-  return pages.map((p) => p.fullTextAnnotation?.text || '').join('\n');
 }
 
 export async function extractAvizFromFile(fileUrl) {
@@ -514,21 +478,20 @@ export async function extractAvizFromFile(fileUrl) {
 
   const buf = await fs.readFile(localPath);
   const ext = path.extname(localPath).toLowerCase();
-  const apiKey = process.env.GOOGLE_VISION_API_KEY?.trim();
+  const apiKey = visionApiKey();
   let rawText = '';
   let provider = 'stub';
 
   if (ext === '.pdf') {
     try {
-      const parsed = await parsePdfTextLayer(buf);
-      rawText = parsed;
-      if (rawText.trim().length >= 40) provider = 'pdf_text';
+      rawText = await parsePdfTextLayer(buf);
+      if (!isTextPoor(rawText)) provider = 'pdf_text';
     } catch (err) {
       console.error('[aviz pdf-parse]', err.message || err);
     }
     if (provider !== 'pdf_text' && apiKey) {
       try {
-        rawText = await callVisionPdf(buf, apiKey);
+        rawText = await visionAnnotatePdf(buf, apiKey);
         provider = 'google_vision';
       } catch (err) {
         console.error('[aviz vision pdf]', err.message || err);
@@ -536,7 +499,7 @@ export async function extractAvizFromFile(fileUrl) {
     }
   } else if (apiKey) {
     try {
-      rawText = await callVisionImage(buf.toString('base64'), apiKey);
+      rawText = await visionAnnotateImage(buf.toString('base64'), apiKey);
       provider = 'google_vision';
     } catch (err) {
       console.error('[aviz vision image]', err.message || err);
@@ -544,17 +507,21 @@ export async function extractAvizFromFile(fileUrl) {
   }
 
   if (!rawText.trim()) {
+    const stub = stubAvizFields();
     return {
-      ...stubAvizFields(),
-      extracted_data: { raw_text: '', parsed: stubAvizFields(), provider: 'stub' },
+      ...stub,
+      extraction_source: 'stub',
+      extracted_data: { raw_text: '', parsed: stub, provider: 'stub' },
     };
   }
 
   const parsed = parseBaumitAviz(rawText);
   parsed._stub = false;
   parsed._provider = provider;
+  const extraction_source = mapProviderToSource(provider);
   return {
     ...parsed,
+    extraction_source,
     extracted_data: {
       raw_text: rawText.slice(0, 8000),
       parsed,

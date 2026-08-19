@@ -111,6 +111,7 @@ export const ENTITY_MAP = {
       'numar_tpo', 'data_efectuare_cursa', 'valoare_tpo', 'numar_auto',
       'ruta_transport', 'tip_marfa', 'cantitate_marfa', 'numar_document_marfa',
       'numar_curse', 'taxe_suplimentare', 'km_parcursi', 'tarif_km', 'observatii',
+      'ruta_display', 'trip_id',
     ],
   },
 };

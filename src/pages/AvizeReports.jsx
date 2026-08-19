@@ -4,9 +4,11 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
+import { datePresetRange, previewKind } from '@/lib/avizOps';
+import { withAccessToken } from '@/lib/uploadUrl';
 import {
-  Camera, Check, ClipboardList, Download, FileSpreadsheet, HelpCircle, Loader2,
-  Pencil, Plus, Trash2, Upload, X,
+  Archive, Camera, Check, ClipboardList, Download, FileSpreadsheet, HelpCircle, Loader2,
+  Mail, Pencil, Plus, Trash2, Upload, X,
 } from 'lucide-react';
 
 function LegendPanel({ title, items }) {
@@ -47,7 +49,7 @@ const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Re-extrage',
-    text: 'Citește din nou fișierul și rescrie TPO, dată, auto, rută, cantitate, document din PDF. Km, taxe, valoare TPO și observațiile deja completate rămân. Folosește-l doar dacă vrei valorile din aviz, nu cele din Editează.',
+    text: 'Citește din nou fișierul și rescrie TPO, dată, auto, rută, cantitate, document din PDF. Km, taxe, valoare TPO, observațiile și ruta de birou rămân. Folosește-l doar dacă vrei valorile din aviz, nu cele din Editează.',
   },
   {
     name: 'Șterge',
@@ -62,7 +64,7 @@ const AVIZ_ACTION_LEGEND = [
 const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Șablonul selectat în tab-ul Avize (lista de lângă Unește) este cel folosit la export. „Implicit” este preselectat la deschiderea paginii.',
+    text: 'Șablonul selectat în tab-ul Avize (lista de lângă Unește) este cel folosit la export. „Implicit” este preselectat la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie — duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',
@@ -74,14 +76,26 @@ const TEMPLATE_ACTION_LEGEND = [
   },
 ];
 
+const SOURCE_LABEL = {
+  'pdf-text': 'Text PDF',
+  vision: 'Vision',
+  stub: 'Stub',
+};
+
 const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors';
 const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
+
+function isLockedRai(t) {
+  return Boolean(t?.is_default) && String(t?.name || '').trim() === 'Anexa Factura RAI';
+}
 
 function emptyForm(row = {}) {
   const form = {};
   for (const f of AVIZ_FORM_FIELDS) {
-    form[f.key] = row[f.key] ?? (f.type === 'number' ? '' : '');
+    form[f.key] = row[f.key] ?? '';
   }
+  form.ruta_display = row.ruta_display ?? '';
+  form.trip_id = row.trip_id ?? '';
   return form;
 }
 
@@ -94,10 +108,34 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+function SourceBadge({ source }) {
+  const key = source || 'stub';
+  const tone = key === 'pdf-text'
+    ? 'bg-sky-50 text-sky-800'
+    : key === 'vision'
+      ? 'bg-violet-50 text-violet-800'
+      : 'bg-amber-50 text-amber-800';
+  return (
+    <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${tone}`}>
+      {SOURCE_LABEL[key] || key}
+    </span>
+  );
+}
+
+function displayRoute(row) {
+  return String(row?.ruta_display || '').trim() || row?.ruta_transport || '';
+}
+
+function lowField(row, key) {
+  return row?.field_confidence?.[key] === 'low';
+}
+
 export default function AvizeReports() {
   const [tab, setTab] = useState('avize');
   const [rows, setRows] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [obsCodes, setObsCodes] = useState([]);
+  const [reportData, setReportData] = useState({ by_plate: [], weekly: [], exports: [] });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
@@ -110,6 +148,11 @@ export default function AvizeReports() {
   const [busyId, setBusyId] = useState(null);
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
+  const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '' });
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState('');
+  const [trips, setTrips] = useState([]);
+  const [newCode, setNewCode] = useState('');
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const loadGen = useRef(0);
@@ -117,13 +160,15 @@ export default function AvizeReports() {
   const load = async () => {
     const gen = ++loadGen.current;
     try {
-      const [avize, tmpls] = await Promise.all([
-        api.entities.AvizDocument.list('-created_date', 200),
+      const [avize, tmpls, codes] = await Promise.all([
+        api.avize.list(filters),
         api.avize.templates(),
+        api.avize.observationCodes().catch(() => []),
       ]);
       if (gen !== loadGen.current) return;
       setRows(avize);
       setTemplates(tmpls);
+      setObsCodes(codes);
       setTemplateId((prev) => {
         if (prev && tmpls.some((t) => t.id === prev)) return prev;
         return tmpls.find((t) => t.is_default)?.id || tmpls[0]?.id || '';
@@ -136,28 +181,52 @@ export default function AvizeReports() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadReports = async () => {
+    try {
+      const data = await api.avize.reports({ from: filters.from, to: filters.to });
+      setReportData(data);
+    } catch (e) {
+      notifyError('Rapoartele nu s-au încărcat', e);
+    }
+  };
+
+  useEffect(() => { load(); }, [filters.from, filters.to, filters.status, filters.q]);
+  useEffect(() => {
+    if (tab === 'rapoarte') loadReports();
+  }, [tab, filters.from, filters.to]);
+
+  const applyPreset = (preset) => {
+    const range = datePresetRange(preset);
+    setFilters((prev) => ({ ...prev, ...range }));
+  };
 
   const uploadFiles = async (fileList) => {
     const files = Array.from(fileList || []);
     if (files.length === 0) return;
     setUploading(true);
     const failed = [];
+    let dup = 0;
     try {
       for (const file of files) {
         try {
           const uploaded = await api.integrations.Core.UploadFile({ file });
-          await api.avize.extract({
+          const row = await api.avize.extract({
             file_url: uploaded.file_url,
             original_filename: file.name,
           });
+          if (row?.duplicate_tpo) dup += 1;
         } catch (err) {
           failed.push(file.name);
           console.error('[aviz upload]', file.name, err);
         }
       }
       if (failed.length === 0) {
-        notifySuccess('Avize încărcate', `${files.length} fișier(e) procesate.`);
+        notifySuccess(
+          'Avize încărcate',
+          dup
+            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).`
+            : `${files.length} fișier(e) procesate.`
+        );
       } else if (failed.length < files.length) {
         notifyError('Unele fișiere nu s-au extras', failed.join(', '));
       } else {
@@ -187,9 +256,18 @@ export default function AvizeReports() {
     else setSelected(new Set(rows.map((r) => r.id)));
   };
 
-  const openEdit = (row) => {
+  const openEdit = async (row) => {
     setEditRow(row);
     setForm(emptyForm(row));
+    try {
+      const suggestions = await api.avize.tripSuggestions({
+        date: row.data_efectuare_cursa,
+        plate: row.numar_auto,
+      });
+      setTrips(suggestions);
+    } catch {
+      setTrips([]);
+    }
   };
 
   const saveEdit = async () => {
@@ -197,8 +275,14 @@ export default function AvizeReports() {
     setSaving(true);
     try {
       const payload = { ...form, status: nextAvizStatusOnSave(editRow.status) };
-      await api.entities.AvizDocument.update(editRow.id, payload);
-      notifySuccess('Aviz salvat', 'Câmpurile au fost actualizate.');
+      if (!payload.trip_id) payload.trip_id = null;
+      const saved = await api.entities.AvizDocument.update(editRow.id, payload);
+      notifySuccess(
+        'Aviz salvat',
+        saved?.duplicate_tpo
+          ? 'Atenție: există deja un aviz cu același TPO. Salvarea a rămas.'
+          : 'Câmpurile au fost actualizate.'
+      );
       setEditRow(null);
       await load();
     } catch (e) {
@@ -222,12 +306,30 @@ export default function AvizeReports() {
     }
   };
 
+  const bulkConfirm = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) {
+      notifyError('Nimic selectat', 'Bifează avizele de confirmat.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.avize.bulkConfirm(ids);
+      notifySuccess('Confirmate', `${ids.length} aviz(e) marcate ca confirmate.`);
+      await load();
+    } catch (e) {
+      notifyError('Confirmare eșuată', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reextract = async (row) => {
     if (busyId) return;
     setBusyId(row.id);
     try {
       await api.avize.extract({ id: row.id, file_url: row.file_url, original_filename: row.original_filename });
-      notifySuccess('Re-extras', 'TPO/auto/rută din document; km și taxele rămân.');
+      notifySuccess('Re-extras', 'TPO/auto/rută din document; km, taxe și ruta de birou rămân.');
       await load();
     } catch (e) {
       notifyError('Extragere eșuată', e);
@@ -275,11 +377,72 @@ export default function AvizeReports() {
     }
   };
 
+  const zipSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0 || !templateId) {
+      notifyError('Nimic selectat', 'Bifează avize și alege șablonul.');
+      return;
+    }
+    try {
+      const { blob, filename } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
+      downloadBlob(blob, filename);
+      notifySuccess('Zip gata', filename);
+    } catch (e) {
+      notifyError('Zip eșuat', e);
+    }
+  };
+
+  const sendAnnexEmail = async () => {
+    const ids = [...selected];
+    if (!emailTo.trim() || ids.length === 0 || !templateId) return;
+    setBusy(true);
+    try {
+      const result = await api.avize.emailAnnex({
+        to: emailTo.trim(),
+        template_id: templateId,
+        aviz_ids: ids,
+      });
+      if (result?.stub || result?.download) {
+        const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
+        downloadBlob(blob, filename);
+        notifySuccess('Email stub', 'Resend nu e configurat — anexa s-a descărcat.');
+      } else {
+        notifySuccess('Email trimis', result?.filename || emailTo);
+      }
+      setEmailOpen(false);
+    } catch (e) {
+      notifyError('Email eșuat', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const draftInvoice = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) {
+      notifyError('Nimic selectat', 'Bifează avize confirmate.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const inv = await api.avize.draftInvoice({ aviz_ids: ids, amount_rule: 'tpo' });
+      notifySuccess('Ciornă factură', `${inv.series || 'TRX'}-${inv.number} în Financiar. Fără e-Factura.`);
+    } catch (e) {
+      notifyError('Ciornă eșuată', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveTemplate = async () => {
     if (!editTemplate) return;
     const name = String(editTemplate.name || '').trim();
     if (!name) {
       notifyError('Nume obligatoriu', 'Completează numele șablonului.');
+      return;
+    }
+    if (isLockedRai(editTemplate)) {
+      notifyError('Șablon blocat', 'Anexa Factura RAI nu poate fi suprascrisă.');
       return;
     }
     setSaving(true);
@@ -322,12 +485,25 @@ export default function AvizeReports() {
     }
   };
 
+  const addObsCode = async () => {
+    const code = newCode.trim();
+    if (!code) return;
+    try {
+      await api.avize.createObservationCode({ code, label: code });
+      setNewCode('');
+      const codes = await api.avize.observationCodes();
+      setObsCodes(codes);
+    } catch (e) {
+      notifyError('Codul nu s-a salvat', e);
+    }
+  };
+
   const newTemplate = () => {
-    const base = templates[0]?.columns || AVIZ_SOURCE_OPTIONS.map((o, i) => ({
+    const base = templates[0]?.columns || AVIZ_SOURCE_OPTIONS.map((o) => ({
       key: o.value,
       header: o.label,
       source: o.value,
-      default_value: i === 0 ? '' : '',
+      default_value: '',
     }));
     setEditTemplate({
       name: 'Șablon nou',
@@ -336,7 +512,16 @@ export default function AvizeReports() {
     });
   };
 
+  const appendObs = (code) => {
+    setForm((prev) => {
+      const current = String(prev.observatii || '').trim();
+      if (current.includes(code)) return prev;
+      return { ...prev, observatii: current ? `${current} ${code}` : code };
+    });
+  };
+
   const rowLocked = (id) => uploading || busyId === id;
+  const selectedIds = [...selected];
 
   if (loading) {
     return (
@@ -346,6 +531,56 @@ export default function AvizeReports() {
     );
   }
 
+  const filterBar = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 bg-white rounded-xl border border-slate-200/80 p-3">
+      <div className="flex flex-wrap gap-1 lg:col-span-6">
+        {[['today', 'Azi'], ['week', 'Săptămâna asta'], ['month', 'Luna asta']].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => applyPreset(id)}
+            className="px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setFilters({ from: '', to: '', status: '', q: '' })}
+          className="px-2.5 py-1 text-xs rounded-full text-slate-500 hover:underline"
+        >
+          Resetează
+        </button>
+      </div>
+      <div>
+        <label className={labelCls}>De la</label>
+        <input className={inputCls} type="date" value={filters.from} onChange={(e) => setFilters((p) => ({ ...p, from: e.target.value }))} />
+      </div>
+      <div>
+        <label className={labelCls}>Până la</label>
+        <input className={inputCls} type="date" value={filters.to} onChange={(e) => setFilters((p) => ({ ...p, to: e.target.value }))} />
+      </div>
+      <div>
+        <label className={labelCls}>Status</label>
+        <select className={inputCls} value={filters.status} onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}>
+          <option value="">Toate</option>
+          <option value="uploaded">Încărcat</option>
+          <option value="extracted">Extras</option>
+          <option value="confirmed">Confirmat</option>
+        </select>
+      </div>
+      <div className="sm:col-span-2 lg:col-span-3">
+        <label className={labelCls}>Caută TPO / auto / document / fișier</label>
+        <input
+          className={inputCls}
+          value={filters.q}
+          onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))}
+          placeholder="TPO-00…"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -354,14 +589,14 @@ export default function AvizeReports() {
           <p className="text-sm text-slate-500 mt-1">Extrage câmpuri din avize și unește-le într-o Anexă Factură XLSX</p>
         </div>
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg self-start">
-          {['avize', 'sabloane'].map((id) => (
+          {[['avize', 'Avize'], ['sabloane', 'Șabloane'], ['rapoarte', 'Rapoarte']].map(([id, label]) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
               className={`px-3 py-1.5 text-sm rounded-md ${tab === id ? 'bg-white shadow text-[#0A2B4E] font-medium' : 'text-slate-500'}`}
             >
-              {id === 'avize' ? 'Avize' : 'Șabloane'}
+              {label}
             </button>
           ))}
         </div>
@@ -429,8 +664,41 @@ export default function AvizeReports() {
               <Download className="w-4 h-4" />
               Unește în Anexa XLSX ({selected.size})
             </button>
+            <button
+              type="button"
+              disabled={selected.size === 0 || busy}
+              onClick={bulkConfirm}
+              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-emerald-200 text-emerald-800 bg-white rounded-lg hover:bg-emerald-50 disabled:opacity-40"
+            >
+              Confirmă selectate
+            </button>
+            <button
+              type="button"
+              disabled={selected.size === 0 || !templateId}
+              onClick={() => setEmailOpen(true)}
+              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+            >
+              <Mail className="w-4 h-4" /> Email
+            </button>
+            <button
+              type="button"
+              disabled={selected.size === 0 || !templateId}
+              onClick={zipSelected}
+              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+            >
+              <Archive className="w-4 h-4" /> Zip
+            </button>
+            <button
+              type="button"
+              disabled={selected.size === 0 || busy}
+              onClick={draftInvoice}
+              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+            >
+              Ciornă factură
+            </button>
           </div>
 
+          {filterBar}
           <LegendPanel title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
 
           {rows.length === 0 ? (
@@ -446,25 +714,34 @@ export default function AvizeReports() {
                     <div className="flex items-start gap-3">
                       <input type="checkbox" className="mt-1" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} />
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-[#0A2B4E] truncate">{row.numar_tpo || 'Fără TPO'}</p>
+                        <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`}>
+                          {row.numar_tpo || 'Fără TPO'}
+                          {row.duplicate_tpo ? <span className="ml-2 text-[11px] font-normal text-amber-700">TPO duplicat</span> : null}
+                        </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
-                        <p className="text-xs text-slate-500 mt-1 truncate" title={[row.numar_auto, row.data_efectuare_cursa].filter(Boolean).join(' · ')}>
+                        <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
                           {row.numar_auto || '—'} · {row.data_efectuare_cursa || '—'}
                         </p>
-                        <span className="inline-block mt-2 text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                          {STATUS_LABEL[row.status] || row.status}
-                        </span>
+                        <p className={`text-xs truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
+                          {displayRoute(row) || '—'}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            {STATUS_LABEL[row.status] || row.status}
+                          </span>
+                          <SourceBadge source={row.extraction_source} />
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
-                      <button type="button" className="text-[#1D4E89] disabled:opacity-40" title="Corectează câmpurile sau completează km / taxe" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
+                      <button type="button" className="text-[#1D4E89] disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                       {row.status !== 'confirmed' && (
-                        <button type="button" className="text-emerald-700 disabled:opacity-40" title="Marchează rândul ca verificat" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
+                        <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
-                      <button type="button" className="text-slate-600 disabled:opacity-40" title="Citește din nou PDF-ul; păstrează km / taxe" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                      <button type="button" className="text-slate-600 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
                         {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
                       </button>
-                      <button type="button" className="text-red-500 disabled:opacity-40" title="Scoate avizul din listă" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                      <button type="button" className="text-red-500 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                     </div>
                   </div>
                 ))}
@@ -472,7 +749,7 @@ export default function AvizeReports() {
 
               <div className="hidden md:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm table-fixed min-w-[720px]">
+                  <table className="w-full text-sm table-fixed min-w-[860px]">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-500 text-xs">
                         <th className="px-3 py-3 w-10">
@@ -484,6 +761,7 @@ export default function AvizeReports() {
                         <th className="text-left font-medium px-3 py-3">Rută</th>
                         <th className="text-left font-medium px-3 py-3 w-[8rem]">Marfă</th>
                         <th className="text-left font-medium px-3 py-3 w-[8rem]">Document</th>
+                        <th className="text-left font-medium px-3 py-3 w-[7rem]">Sursă</th>
                         <th className="text-left font-medium px-3 py-3 w-[6rem]">Status</th>
                         <th className="text-right font-medium px-3 py-3 w-[11rem]">Acțiuni</th>
                       </tr>
@@ -494,28 +772,30 @@ export default function AvizeReports() {
                           <td className="px-3 py-3">
                             <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} />
                           </td>
-                          <td className="px-3 py-3 font-medium text-[#0A2B4E] truncate" title={row.numar_tpo || row.original_filename || ''}>
+                          <td className={`px-3 py-3 font-medium truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
                             {row.numar_tpo || (
                               <span className="font-normal text-slate-400">{row.original_filename || '—'}</span>
                             )}
+                            {row.duplicate_tpo ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
                           <td className="px-3 py-3 text-slate-600 truncate">{row.data_efectuare_cursa || '—'}</td>
-                          <td className="px-3 py-3 truncate" title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
-                          <td className="px-3 py-3 truncate" title={row.ruta_transport || ''}>{row.ruta_transport || '—'}</td>
+                          <td className={`px-3 py-3 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
+                          <td className={`px-3 py-3 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '—'}</td>
                           <td className="px-3 py-3 truncate" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || ''}`.trim()}>
                             {row.cantitate_marfa ?? '—'} {row.tip_marfa || ''}
                           </td>
                           <td className="px-3 py-3 truncate" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
+                          <td className="px-3 py-3"><SourceBadge source={row.extraction_source} /></td>
                           <td className="px-3 py-3 text-xs truncate">{STATUS_LABEL[row.status] || row.status}</td>
                           <td className="px-3 py-3 text-right whitespace-nowrap">
-                            <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" title="Corectează câmpurile sau completează km / taxe" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
+                            <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                             {row.status !== 'confirmed' && (
-                              <button type="button" className="text-emerald-700 hover:underline text-xs ml-2 disabled:opacity-40" title="Marchează rândul ca verificat" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
+                              <button type="button" className="text-emerald-700 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                             )}
-                            <button type="button" className="text-slate-600 hover:underline text-xs ml-2 disabled:opacity-40" title="Citește din nou PDF-ul; păstrează km / taxe" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                            <button type="button" className="text-slate-600 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
                               {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
                             </button>
-                            <button type="button" className="text-red-500 hover:underline text-xs ml-2 disabled:opacity-40" title="Scoate avizul din listă" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                            <button type="button" className="text-red-500 hover:underline text-xs ml-2 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                           </td>
                         </tr>
                       ))}
@@ -526,7 +806,7 @@ export default function AvizeReports() {
             </>
           )}
         </>
-      ) : (
+      ) : tab === 'sabloane' ? (
         <div className="space-y-4">
           <LegendPanel title="Legendă șabloane" items={TEMPLATE_ACTION_LEGEND} />
           <div className="flex justify-end">
@@ -547,40 +827,168 @@ export default function AvizeReports() {
                     <p className="text-xs text-slate-500 mt-1">
                       {Array.isArray(t.columns) ? t.columns.length : 0} coloane
                       {t.is_default ? ' · implicit' : ''}
+                      {isLockedRai(t) ? ' · blocat' : ''}
                     </p>
                   </div>
                   <FileSpreadsheet className="w-5 h-5 text-emerald-700" />
                 </div>
                 <div className="flex gap-3 mt-4 text-xs">
-                  <button type="button" className="text-[#1D4E89]" onClick={() => setEditTemplate({ ...t, columns: t.columns || [] })}>Editează</button>
+                  {isLockedRai(t) ? (
+                    <span className="text-slate-400">Nu se poate modifica</span>
+                  ) : (
+                    <button type="button" className="text-[#1D4E89]" onClick={() => setEditTemplate({ ...t, columns: t.columns || [] })}>Editează</button>
+                  )}
                   <button type="button" className="text-red-500" onClick={() => setDeleteTemplate(t)}>Șterge</button>
                 </div>
               </div>
             ))}
           </div>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4">
+            <p className="text-sm font-medium text-[#0A2B4E] mb-2">Coduri observații</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {obsCodes.map((c) => (
+                <span key={c.id} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-slate-100">
+                  {c.code}
+                  <button type="button" className="text-red-500" onClick={() => api.avize.deleteObservationCode(c.id).then(() => api.avize.observationCodes().then(setObsCodes)).catch((e) => notifyError('Ștergere eșuată', e))} aria-label={`Șterge ${c.code}`}>×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input className={inputCls} value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="ex. Z:B*" />
+              <button type="button" className="px-3 py-2 text-sm border rounded-lg" onClick={addObsCode}>Adaugă</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filterBar}
+          <p className="text-xs text-slate-500">
+            Rapoartele nu modifică șablonul Anexa Factura RAI. Unește rămâne pe tab-ul Avize.
+          </p>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
+              <h2 className="text-sm font-semibold text-[#0A2B4E] mb-3">Km / avize pe număr auto</h2>
+              <table className="w-full text-sm min-w-[280px]">
+                <thead>
+                  <tr className="text-xs text-slate-500 border-b">
+                    <th className="text-left py-2">Auto</th>
+                    <th className="text-right py-2">Avize</th>
+                    <th className="text-right py-2">Km</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(reportData.by_plate || []).map((row) => (
+                    <tr key={row.plate} className="border-b border-slate-50">
+                      <td className="py-2">{row.plate}</td>
+                      <td className="py-2 text-right">{row.count}</td>
+                      <td className="py-2 text-right">{row.km}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
+              <h2 className="text-sm font-semibold text-[#0A2B4E] mb-3">Avize pe săptămână</h2>
+              <table className="w-full text-sm min-w-[280px]">
+                <thead>
+                  <tr className="text-xs text-slate-500 border-b">
+                    <th className="text-left py-2">Săptămână</th>
+                    <th className="text-right py-2">Total</th>
+                    <th className="text-right py-2">Confirmate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(reportData.weekly || []).map((row) => (
+                    <tr key={row.week_start} className="border-b border-slate-50">
+                      <td className="py-2">{String(row.week_start).slice(0, 10)}</td>
+                      <td className="py-2 text-right">{row.count}</td>
+                      <td className="py-2 text-right">{row.confirmed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
+            <h2 className="text-sm font-semibold text-[#0A2B4E] mb-3">Istoric export</h2>
+            <table className="w-full text-sm min-w-[360px]">
+              <thead>
+                <tr className="text-xs text-slate-500 border-b">
+                  <th className="text-left py-2">Când</th>
+                  <th className="text-left py-2">Tip</th>
+                  <th className="text-left py-2">Fișier</th>
+                  <th className="text-right py-2">Avize</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reportData.exports || []).map((row) => (
+                  <tr key={row.id} className="border-b border-slate-50">
+                    <td className="py-2">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
+                    <td className="py-2">{row.kind}</td>
+                    <td className="py-2 truncate">{row.filename || '—'}</td>
+                    <td className="py-2 text-right">{row.aviz_count ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {editRow && (
-        <ModalShell onClose={() => setEditRow(null)} panelClassName="max-w-3xl" labelledBy="aviz-edit-title">
+        <ModalShell onClose={() => setEditRow(null)} panelClassName="max-w-5xl" labelledBy="aviz-edit-title">
           <div className="p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 id="aviz-edit-title" className="text-lg font-semibold text-[#0A2B4E]">Editează aviz</h2>
               <button type="button" onClick={() => setEditRow(null)} aria-label="Închide"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {AVIZ_FORM_FIELDS.map((f) => (
-                <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                  <label className={labelCls}>{f.label}</label>
-                  <input
-                    className={inputCls}
-                    type={f.type || 'text'}
-                    step={f.step}
-                    value={form[f.key] ?? ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 min-h-[220px]">
+                {previewKind(editRow.file_url) === 'pdf' ? (
+                  <iframe title="Previzualizare aviz" className="w-full h-[320px]" src={withAccessToken(editRow.file_url)} />
+                ) : previewKind(editRow.file_url) === 'image' ? (
+                  <img alt="Aviz" className="w-full max-h-[320px] object-contain" src={withAccessToken(editRow.file_url)} />
+                ) : (
+                  <p className="text-xs text-slate-500 p-4">Nu există preview pentru acest fișier.</p>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {AVIZ_FORM_FIELDS.map((f) => (
+                  <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
+                    <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică' : ''}</label>
+                    <input
+                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
+                      type={f.type || 'text'}
+                      step={f.step}
+                      value={form[f.key] ?? ''}
+                      onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>Rută birou (nu merge în Excel)</label>
+                  <input className={inputCls} value={form.ruta_display ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, ruta_display: e.target.value }))} />
                 </div>
-              ))}
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>Cursă (opțional)</label>
+                  <select className={inputCls} value={form.trip_id || ''} onChange={(e) => setForm((prev) => ({ ...prev, trip_id: e.target.value }))}>
+                    <option value="">Fără cursă</option>
+                    {trips.map((t) => (
+                      <option key={t.id} value={t.id}>{t.cmr_number} · {t.vehicle_plate || '—'} · {t.loading_date || ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-slate-500 mb-1">Coduri observații (textul rămâne editabil)</p>
+                  <div className="flex flex-wrap gap-1">
+                    {obsCodes.map((c) => (
+                      <button key={c.id} type="button" className="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50" onClick={() => appendObs(c.code)}>
+                        {c.code}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-2 mt-5">
               <button type="button" className="px-4 py-2 text-sm border rounded-lg" onClick={() => setEditRow(null)}>Anulează</button>
@@ -592,6 +1000,23 @@ export default function AvizeReports() {
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                 Salvează
+              </button>
+            </div>
+          </div>
+        </ModalShell>
+      )}
+
+      {emailOpen && (
+        <ModalShell onClose={() => setEmailOpen(false)} panelClassName="max-w-md" labelledBy="aviz-email-title">
+          <div className="p-5">
+            <h2 id="aviz-email-title" className="text-lg font-semibold text-[#0A2B4E] mb-3">Trimite anexa</h2>
+            <label className={labelCls}>Email destinatar</label>
+            <input className={inputCls} type="email" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} placeholder="office@firma.ro" />
+            <p className="text-xs text-slate-500 mt-2">{selectedIds.length} aviz(e). Dacă Resend lipsește, anexa se descarcă.</p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button type="button" className="px-4 py-2 text-sm border rounded-lg" onClick={() => setEmailOpen(false)}>Anulează</button>
+              <button type="button" disabled={busy || !emailTo.trim()} className="px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60" onClick={sendAnnexEmail}>
+                Trimite
               </button>
             </div>
           </div>

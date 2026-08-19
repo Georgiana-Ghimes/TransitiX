@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { Router } from 'express';
 import { query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
@@ -7,7 +9,12 @@ import {
   annexFieldDefaults,
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
-import { extractAvizFromFile, stubAvizFields, repairAvizFromStored } from '../lib/avizOcr.js';
+import {
+  avizFieldConfidence,
+  extractAvizFromFile,
+  repairAvizFromStored,
+  stubAvizFields,
+} from '../lib/avizOcr.js';
 import { buildAnnexWorkbook } from '../lib/avizExport.js';
 import {
   isPgUniqueViolation,
@@ -15,6 +22,17 @@ import {
   nextAvizStatusOnSave,
   repairNeedsWrite,
 } from '../lib/concurrency.js';
+import { resolveUploadPath } from '../lib/cmrOcr.js';
+import { sendEmail } from '../lib/email.js';
+import { zipStore } from '../lib/zipStore.js';
+import {
+  annexDraftAmount,
+  buildAvizListQuery,
+  flagDuplicateTpos,
+  isLockedRaiTemplate,
+  mapProviderToSource,
+  tpoExistsForOther,
+} from '../lib/avizQuery.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -93,6 +111,104 @@ function repairedUpdateValues(repaired) {
     repaired.id,
   ];
 }
+
+const DEFAULT_OBS_CODES = [
+  { code: 'Z:B*', label: 'Zona B', sort_order: 1 },
+  { code: 'IF*', label: 'Ilfov', sort_order: 2 },
+  { code: 'Așteptare', label: 'Așteptare', sort_order: 3 },
+];
+
+function decorateAviz(row) {
+  const serialized = serializeRow(row);
+  const source = serialized.extraction_source
+    || mapProviderToSource(serialized.extracted_data?.provider);
+  return {
+    ...serialized,
+    extraction_source: source,
+    field_confidence: avizFieldConfidence(serialized),
+  };
+}
+
+async function logAvizExport(companyId, { kind, templateId, avizIds, filename }) {
+  await query(
+    `INSERT INTO aviz_export_log (company_id, kind, template_id, aviz_ids, filename)
+     VALUES ($1, $2, $3, $4::uuid[], $5)`,
+    [companyId, kind || 'xlsx', templateId || null, avizIds || [], filename || null]
+  );
+}
+
+async function loadAvizeByIds(companyId, avizIds) {
+  const docs = await query(
+    `SELECT * FROM aviz_documents
+     WHERE company_id = $1 AND id = ANY($2::uuid[])
+     ORDER BY created_at ASC`,
+    [companyId, avizIds]
+  );
+  return docs.rows.map((row) => repairAvizFromStored(serializeRow(row)));
+}
+
+async function buildAnnexBuffer(companyId, templateId, avizIds) {
+  const tmpl = await query(
+    `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
+    [templateId, companyId]
+  );
+  if (!tmpl.rows[0]) {
+    const err = new Error('Template not found');
+    err.status = 404;
+    throw err;
+  }
+  const avize = await loadAvizeByIds(companyId, avizIds);
+  if (avize.length === 0) {
+    const err = new Error('Niciun aviz găsit pentru export');
+    err.status = 400;
+    throw err;
+  }
+  const template = serializeRow(tmpl.rows[0]);
+  const workbook = await buildAnnexWorkbook(template, avize);
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+  const stamp = new Date().toISOString().slice(0, 10);
+  const safeName = String(tmpl.rows[0].name || 'Anexa').replace(/[^\w\-]+/g, '_').slice(0, 40);
+  return { buffer, filename: `${safeName}-${stamp}.xlsx`, template, avize };
+}
+
+async function ensureObservationCodes(companyId) {
+  const existing = await query(
+    `SELECT * FROM aviz_observation_codes WHERE company_id = $1 ORDER BY sort_order ASC, code ASC`,
+    [companyId]
+  );
+  if (existing.rows.length > 0) return existing.rows.map(serializeRow);
+  for (const row of DEFAULT_OBS_CODES) {
+    await query(
+      `INSERT INTO aviz_observation_codes (company_id, code, label, sort_order)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (company_id, code) DO NOTHING`,
+      [companyId, row.code, row.label, row.sort_order]
+    );
+  }
+  const again = await query(
+    `SELECT * FROM aviz_observation_codes WHERE company_id = $1 ORDER BY sort_order ASC, code ASC`,
+    [companyId]
+  );
+  return again.rows.map(serializeRow);
+}
+
+router.get('/', async (req, res) => {
+  try {
+    const { sql, params } = buildAvizListQuery({
+      companyId: req.user.company_id,
+      from: req.query.from,
+      to: req.query.to,
+      status: req.query.status,
+      q: req.query.q,
+    });
+    const result = await query(sql, params);
+    const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to list avize' });
+  }
+});
 
 router.post('/repair', async (req, res) => {
   try {
@@ -173,6 +289,16 @@ router.put('/templates/:id', async (req, res) => {
     const isDefault = Boolean(req.body?.is_default);
     const row = await withTransaction(async (client) => {
       await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      const existing = await client.query(
+        `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
+        [req.params.id, req.user.company_id]
+      );
+      if (!existing.rows[0]) return null;
+      if (isLockedRaiTemplate(existing.rows[0])) {
+        const err = new Error('Anexa Factura RAI nu poate fi suprascrisă. Duplică-l ca șablon nou.');
+        err.status = 400;
+        throw err;
+      }
       await writeTemplateDefault(client, req.user.company_id, isDefault, req.params.id);
       const result = await client.query(
         `UPDATE report_templates
@@ -187,7 +313,7 @@ router.put('/templates/:id', async (req, res) => {
     res.json(serializeRow(row));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: err.message || 'Failed to save template' });
+    res.status(err.status || 500).json({ message: err.message || 'Failed to save template' });
   }
 });
 
@@ -200,6 +326,11 @@ router.delete('/templates/:id', async (req, res) => {
         [req.user.company_id]
       );
       if (count.rows[0].c <= 1) return { error: 'keep_one' };
+      const existing = await client.query(
+        `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
+        [req.params.id, req.user.company_id]
+      );
+      if (isLockedRaiTemplate(existing.rows[0])) return { error: 'locked_rai' };
       const result = await client.query(
         `DELETE FROM report_templates WHERE id = $1 AND company_id = $2 RETURNING id`,
         [req.params.id, req.user.company_id]
@@ -209,6 +340,9 @@ router.delete('/templates/:id', async (req, res) => {
     });
     if (deleted.error === 'keep_one') {
       return res.status(400).json({ message: 'Păstrează cel puțin un șablon' });
+    }
+    if (deleted.error === 'locked_rai') {
+      return res.status(400).json({ message: 'Anexa Factura RAI nu poate fi ștearsă' });
     }
     if (deleted.error === 'not_found') {
       return res.status(404).json({ message: 'Template not found' });
@@ -246,6 +380,7 @@ router.post('/extract', async (req, res) => {
       console.error('[aviz extract]', ocrErr);
       extracted = {
         ...stubAvizFields(),
+        extraction_source: 'stub',
         extracted_data: { raw_text: '', parsed: stubAvizFields(), provider: 'stub', error: ocrErr.message },
       };
     }
@@ -270,24 +405,26 @@ router.post('/extract', async (req, res) => {
              original_filename = COALESCE($1, original_filename),
              status = $2,
              extracted_data = $3::jsonb,
-             numar_tpo = $4,
-             data_efectuare_cursa = $5,
-             valoare_tpo = $6,
-             numar_auto = $7,
-             ruta_transport = $8,
-             tip_marfa = $9,
-             cantitate_marfa = $10,
-             numar_document_marfa = $11,
-             numar_curse = $12,
-             taxe_suplimentare = $13,
-             km_parcursi = $14,
-             tarif_km = $15,
-             observatii = $16,
+             extraction_source = $4,
+             numar_tpo = $5,
+             data_efectuare_cursa = $6,
+             valoare_tpo = $7,
+             numar_auto = $8,
+             ruta_transport = $9,
+             tip_marfa = $10,
+             cantitate_marfa = $11,
+             numar_document_marfa = $12,
+             numar_curse = $13,
+             taxe_suplimentare = $14,
+             km_parcursi = $15,
+             tarif_km = $16,
+             observatii = $17,
              updated_at = NOW()
-           WHERE id = $17 AND company_id = $18
+           WHERE id = $18 AND company_id = $19
            RETURNING *`,
           [
             original_filename, status, extractedJson,
+            extracted.extraction_source || mapProviderToSource(extracted.extracted_data?.provider),
             fields.numar_tpo, fields.data_efectuare_cursa, fields.valoare_tpo,
             fields.numar_auto, fields.ruta_transport, fields.tip_marfa,
             fields.cantitate_marfa, fields.numar_document_marfa, fields.numar_curse,
@@ -300,18 +437,19 @@ router.post('/extract', async (req, res) => {
     } else {
       result = await query(
         `INSERT INTO aviz_documents (
-           company_id, file_url, original_filename, status, extracted_data,
+           company_id, file_url, original_filename, status, extracted_data, extraction_source,
            numar_tpo, data_efectuare_cursa, valoare_tpo, numar_auto, ruta_transport,
            tip_marfa, cantitate_marfa, numar_document_marfa, numar_curse,
            taxe_suplimentare, km_parcursi, tarif_km, observatii
          ) VALUES (
-           $1, $2, $3, $4, $5::jsonb,
-           $6, $7, $8, $9, $10,
-           $11, $12, $13, $14,
-           $15, $16, $17, $18
+           $1, $2, $3, $4, $5::jsonb, $6,
+           $7, $8, $9, $10, $11,
+           $12, $13, $14, $15,
+           $16, $17, $18, $19
          ) RETURNING *`,
         [
           req.user.company_id, fileUrl, original_filename, extractStatus, extractedJson,
+          extracted.extraction_source || mapProviderToSource(extracted.extracted_data?.provider),
           extractedFields.numar_tpo, extractedFields.data_efectuare_cursa, extractedFields.valoare_tpo,
           extractedFields.numar_auto, extractedFields.ruta_transport, extractedFields.tip_marfa,
           extractedFields.cantitate_marfa, extractedFields.numar_document_marfa, extractedFields.numar_curse,
@@ -320,7 +458,13 @@ router.post('/extract', async (req, res) => {
       );
     }
 
-    res.json(serializeRow(result.rows[0]));
+    const row = decorateAviz(result.rows[0]);
+    row.duplicate_tpo = await tpoExistsForOther(query, {
+      companyId: req.user.company_id,
+      tpo: row.numar_tpo,
+      exceptId: row.id,
+    });
+    res.json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Extract failed' });
@@ -334,36 +478,295 @@ router.post('/export', async (req, res) => {
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
-    const tmpl = await query(
-      `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
-      [templateId, req.user.company_id]
-    );
-    if (!tmpl.rows[0]) return res.status(404).json({ message: 'Template not found' });
-
-    const docs = await query(
-      `SELECT * FROM aviz_documents
-       WHERE company_id = $1 AND id = ANY($2::uuid[])
-       ORDER BY created_at ASC`,
-      [req.user.company_id, avizIds]
-    );
-    if (docs.rows.length === 0) {
-      return res.status(400).json({ message: 'Niciun aviz găsit pentru export' });
-    }
-
-    const template = serializeRow(tmpl.rows[0]);
-    const avize = docs.rows.map((row) => repairAvizFromStored(serializeRow(row)));
-    const workbook = await buildAnnexWorkbook(template, avize);
-    const buffer = await workbook.xlsx.writeBuffer();
-    const stamp = new Date().toISOString().slice(0, 10);
-    const safeName = String(tmpl.rows[0].name || 'Anexa').replace(/[^\w\-]+/g, '_').slice(0, 40);
-    const filename = `${safeName}-${stamp}.xlsx`;
-
+    const { buffer, filename } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    await logAvizExport(req.user.company_id, {
+      kind: 'xlsx',
+      templateId,
+      avizIds,
+      filename,
+    });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(Buffer.from(buffer));
+    res.send(buffer);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: err.message || 'Export failed' });
+    res.status(err.status || 500).json({ message: err.message || 'Export failed' });
+  }
+});
+
+router.post('/bulk-confirm', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
+    if (ids.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+    const result = await withTransaction(async (client) => {
+      return client.query(
+        `UPDATE aviz_documents
+         SET status = 'confirmed', updated_at = NOW()
+         WHERE company_id = $1 AND id = ANY($2::uuid[])
+         RETURNING *`,
+        [req.user.company_id, ids]
+      );
+    });
+    res.json(flagDuplicateTpos(result.rows.map(decorateAviz)));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Bulk confirm failed' });
+  }
+});
+
+router.get('/observation-codes', async (req, res) => {
+  try {
+    const codes = await ensureObservationCodes(req.user.company_id);
+    res.json(codes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to load codes' });
+  }
+});
+
+router.post('/observation-codes', async (req, res) => {
+  try {
+    const code = String(req.body?.code || '').trim();
+    if (!code) return res.status(400).json({ message: 'code required' });
+    const label = String(req.body?.label || code).trim();
+    const result = await query(
+      `INSERT INTO aviz_observation_codes (company_id, code, label, sort_order)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (company_id, code) DO UPDATE SET label = EXCLUDED.label
+       RETURNING *`,
+      [req.user.company_id, code, label, Number(req.body?.sort_order) || 0]
+    );
+    res.status(201).json(serializeRow(result.rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to save code' });
+  }
+});
+
+router.delete('/observation-codes/:id', async (req, res) => {
+  try {
+    const result = await query(
+      `DELETE FROM aviz_observation_codes WHERE id = $1 AND company_id = $2 RETURNING id`,
+      [req.params.id, req.user.company_id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ message: 'Code not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to delete code' });
+  }
+});
+
+router.post('/email', async (req, res) => {
+  try {
+    const to = String(req.body?.to || '').trim();
+    const templateId = req.body?.template_id;
+    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    if (!to) return res.status(400).json({ message: 'to required' });
+    if (!templateId) return res.status(400).json({ message: 'template_id required' });
+    if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+
+    const { buffer, filename } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const sent = await sendEmail({
+      to,
+      subject: `Anexa Factura ${filename}`,
+      text: `Anexa cu ${avizIds.length} aviz(e) este atașată.`,
+      attachments: [{ filename, content: buffer }],
+    });
+    await logAvizExport(req.user.company_id, {
+      kind: sent.stub ? 'email-stub' : 'email',
+      templateId,
+      avizIds,
+      filename,
+    });
+    res.json({
+      ...sent,
+      filename,
+      download: Boolean(sent.stub),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(err.status || 500).json({ message: err.message || 'Email failed' });
+  }
+});
+
+router.post('/zip', async (req, res) => {
+  try {
+    const templateId = req.body?.template_id;
+    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    if (!templateId) return res.status(400).json({ message: 'template_id required' });
+    if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+
+    const { buffer, filename, avize } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const files = [{ name: filename, data: buffer }];
+    for (const aviz of avize) {
+      const localPath = resolveUploadPath(aviz.file_url);
+      if (!localPath) continue;
+      try {
+        const data = await fs.readFile(localPath);
+        const orig = path.basename(aviz.original_filename || localPath);
+        files.push({ name: `originale/${orig}`, data });
+      } catch (err) {
+        console.error('[aviz zip file]', err.message || err);
+      }
+    }
+    const zip = zipStore(files);
+    const zipName = filename.replace(/\.xlsx$/i, '.zip');
+    await logAvizExport(req.user.company_id, {
+      kind: 'zip',
+      templateId,
+      avizIds,
+      filename: zipName,
+    });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+    res.send(zip);
+  } catch (err) {
+    console.error(err);
+    res.status(err.status || 500).json({ message: err.message || 'Zip failed' });
+  }
+});
+
+router.get('/trip-suggestions', async (req, res) => {
+  try {
+    const date = String(req.query.date || '').slice(0, 10);
+    const plate = String(req.query.plate || '').trim();
+    const params = [req.user.company_id];
+    const where = ['company_id = $1'];
+    let i = 2;
+    if (date) {
+      where.push(`loading_date = $${i}`);
+      params.push(date);
+      i += 1;
+    }
+    if (plate) {
+      where.push(`COALESCE(vehicle_plate, '') ILIKE $${i}`);
+      params.push(`%${plate}%`);
+      i += 1;
+    }
+    params.push(20);
+    const result = await query(
+      `SELECT id, cmr_number, vehicle_plate, loading_date, consignee_name, status
+       FROM trips
+       WHERE ${where.join(' AND ')}
+       ORDER BY loading_date DESC
+       LIMIT $${i}`,
+      params
+    );
+    res.json(result.rows.map(serializeRow));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Trip suggestions failed' });
+  }
+});
+
+router.post('/draft-invoice', async (req, res) => {
+  try {
+    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    const rule = req.body?.amount_rule === 'km_tarif' ? 'km_tarif' : 'tpo';
+    if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+    const avize = await loadAvizeByIds(req.user.company_id, avizIds);
+    const confirmed = avize.filter((row) => row.status === 'confirmed');
+    if (confirmed.length === 0) {
+      return res.status(400).json({ message: 'Selectează avize confirmate pentru ciornă' });
+    }
+    const subtotal = confirmed.reduce((sum, row) => sum + annexDraftAmount(row, rule), 0);
+    const vatRate = 19;
+    const vatAmount = Math.round(subtotal * vatRate) / 100;
+    const total = Math.round((subtotal + vatAmount) * 100) / 100;
+    const tpos = confirmed.map((row) => row.numar_tpo).filter(Boolean).join(', ');
+    const count = await query(
+      `SELECT COUNT(*)::int AS c FROM invoices WHERE company_id = $1`,
+      [req.user.company_id]
+    );
+    const number = String((count.rows[0]?.c || 0) + 1).padStart(4, '0');
+    const tripId = confirmed.find((row) => row.trip_id)?.trip_id || null;
+    const result = await query(
+      `INSERT INTO invoices (
+         company_id, trip_id, series, number, client_name, issue_date,
+         description, subtotal, vat_rate, vat_amount, total_amount,
+         currency, status, efactura_status, notes
+       ) VALUES (
+         $1, $2, 'TRX', $3, $4, CURRENT_DATE,
+         $5, $6, $7, $8, $9,
+         'RON', 'draft', 'not_sent', $10
+       ) RETURNING *`,
+      [
+        req.user.company_id,
+        tripId,
+        number,
+        String(req.body?.client_name || 'Client avize').trim() || 'Client avize',
+        `Servicii transport — avize ${tpos || confirmed.length}`,
+        subtotal,
+        vatRate,
+        vatAmount,
+        total,
+        `Avize: ${tpos || confirmed.map((r) => r.id).join(', ')}. Regulă sumă: ${rule}. Fără e-Factura ANAF.`,
+      ]
+    );
+    res.status(201).json(serializeRow(result.rows[0]));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Draft invoice failed' });
+  }
+});
+
+router.get('/reports', async (req, res) => {
+  try {
+    const from = String(req.query.from || '').slice(0, 10) || null;
+    const to = String(req.query.to || '').slice(0, 10) || null;
+    const dateWhere = [];
+    const params = [req.user.company_id];
+    let i = 2;
+    if (from) {
+      dateWhere.push(`data_efectuare_cursa >= $${i}`);
+      params.push(from);
+      i += 1;
+    }
+    if (to) {
+      dateWhere.push(`data_efectuare_cursa <= $${i}`);
+      params.push(to);
+      i += 1;
+    }
+    const filter = dateWhere.length ? `AND ${dateWhere.join(' AND ')}` : '';
+    const byPlate = await query(
+      `SELECT COALESCE(NULLIF(numar_auto, ''), '—') AS plate,
+              COUNT(*)::int AS count,
+              COALESCE(SUM(km_parcursi), 0)::float AS km
+       FROM aviz_documents
+       WHERE company_id = $1 ${filter}
+       GROUP BY 1
+       ORDER BY km DESC, count DESC
+       LIMIT 50`,
+      params
+    );
+    const weekly = await query(
+      `SELECT date_trunc('week', data_efectuare_cursa)::date AS week_start,
+              COUNT(*)::int AS count,
+              COUNT(*) FILTER (WHERE status = 'confirmed')::int AS confirmed
+       FROM aviz_documents
+       WHERE company_id = $1 AND data_efectuare_cursa IS NOT NULL ${filter}
+       GROUP BY 1
+       ORDER BY 1 DESC
+       LIMIT 12`,
+      params
+    );
+    const exports = await query(
+      `SELECT id, kind, filename, created_at, cardinality(aviz_ids) AS aviz_count
+       FROM aviz_export_log
+       WHERE company_id = $1
+       ORDER BY created_at DESC
+       LIMIT 30`,
+      [req.user.company_id]
+    );
+    res.json({
+      by_plate: byPlate.rows,
+      weekly: weekly.rows,
+      exports: exports.rows.map(serializeRow),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Reports failed' });
   }
 });
 

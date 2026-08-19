@@ -8,7 +8,17 @@ export function emailConfigured() {
  * Send email via Resend when configured; otherwise log to console (local/dev).
  * Never throws on stub path. Returns { ok, stub?, id? }.
  */
-export async function sendEmail({ to, subject, text, html }) {
+function resendAttachments(attachments) {
+  if (!Array.isArray(attachments) || attachments.length === 0) return undefined;
+  return attachments.map((file) => ({
+    filename: file.filename || 'attachment',
+    content: Buffer.isBuffer(file.content)
+      ? file.content.toString('base64')
+      : String(file.content || ''),
+  }));
+}
+
+export async function sendEmail({ to, subject, text, html, attachments } = {}) {
   const recipient = String(to || '').trim();
   if (!recipient || !subject) {
     return { ok: false, message: 'to and subject required' };
@@ -19,6 +29,7 @@ export async function sendEmail({ to, subject, text, html }) {
       to: recipient,
       subject,
       body: String(text || html || '').slice(0, 300),
+      attachments: Array.isArray(attachments) ? attachments.map((a) => a.filename) : [],
     });
     return { ok: true, stub: true, message: 'Email logged on server (Resend not configured)' };
   }
@@ -35,6 +46,7 @@ export async function sendEmail({ to, subject, text, html }) {
       subject,
       text: text || undefined,
       html: html || undefined,
+      attachments: resendAttachments(attachments),
     }),
   });
 

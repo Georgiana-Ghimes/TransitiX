@@ -42,6 +42,16 @@ describe('mergeReextractRow', () => {
     expect(merged.observatii).toBe('Z:B*');
     expect(merged.valoare_tpo).toBe(50);
     expect(merged.numar_curse).toBe(2);
+    expect(merged.ruta_display).toBeUndefined();
+  });
+
+  it('keeps ruta_display on re-extract', () => {
+    const merged = mergeReextractRow(
+      { ruta_display: 'Bucuresti-Militari', km_parcursi: 10 },
+      { numar_tpo: 'TPO-9', ruta_display: null, km_parcursi: 0 }
+    );
+    expect(merged.ruta_display).toBe('Bucuresti-Militari');
+    expect(merged.km_parcursi).toBe(10);
   });
 
   it('fills office fields from extract when they were empty', () => {

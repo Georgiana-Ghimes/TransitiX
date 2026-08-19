@@ -86,6 +86,8 @@ describe('ENTITY_MAP', () => {
       'km_parcursi',
       'tarif_km',
       'observatii',
+      'ruta_display',
+      'trip_id',
     ]));
   });
 });

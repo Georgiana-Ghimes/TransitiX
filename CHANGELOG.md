@@ -7,11 +7,31 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-19
+
 ### Added
 
-- ClickUp documentation pack (`docs/clickup/`): Romanian **Spec MVP V2** and **Avize stare + plan** (one H1 per file; previous multi-page HTML import collapsed in ClickUp)
+- Avize list filters (`from` / `to` / `status` / `q`, max 200) with Azi / Săptămâna asta / Luna asta (`Europe/Bucharest`)
+- `extraction_source` badge (`pdf-text` | `vision` | `stub`) and field-confidence highlight on TPO / auto / rută
+- Duplicate TPO warning on save/upload (same company); save stays allowed, no UNIQUE index
+- File preview in Editează (JWT upload URL); optional office `ruta_display` (Excel route unchanged)
+- Bulk confirm, observation-code chips, email annex (Resend or stub + download), zip of XLSX + original files
+- Optional `trip_id` with plate/date suggestions; draft invoice from confirmed avize (no e-Factura ANAF)
+- Rapoarte tab: km per plate, weekly counts, export history; default Anexa Factura RAI cannot be overwritten
+- Google Vision module `avizVision.js` and VM runbook `docs/ops-google-vision.md` (no secrets in git)
+- ClickUp documentation pack (`docs/clickup/`): Romanian **Spec MVP V2** and **Avize stare + plan**
 - CI runs lint, unit tests, and frontend build on **every push and pull request** (not only `main`)
 - Unit test that Editează form fields stay aligned with Anexa XLSX sources
+- Avize / Rapoarte implementation checklist (`docs/avize-planning-checklist.md`)
+
+### Changed
+
+- Street parser also accepts Blvd / Bld / Aleea / Al. / Pța / Piata / Pta
+- Re-extract keeps office km/taxe/observatii and `ruta_display`
+
+### Tests
+
+- Parser street aliases, list-query filters, duplicate TPO flags, zip store, date presets, Vision text-poor, locked RAI template
 
 ## [1.3.2] - 2026-08-19
 

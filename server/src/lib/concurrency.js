@@ -9,6 +9,7 @@ export const OFFICE_AVIZ_FIELDS = [
   'km_parcursi',
   'tarif_km',
   'observatii',
+  'ruta_display',
 ];
 
 export const OCR_AVIZ_FIELDS = [

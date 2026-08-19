@@ -213,6 +213,33 @@ PSL-0044362
     expect(parsed.numar_auto).toBe('B-330-SRS');
   });
 
+  it('parses Blvd, Aleea and Piata street types into Client to Livrare route', () => {
+    const raw = `
+Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal
+Aviz de expeditie: PSL-26080101
+Adresa de livrare CS-DEMO Aleea Teilor nr. 5 Domnesti RO 077000
+Client: C23000014 AP-DEMO Blvd Unirii nr. 10 Bucuresti Sector 3 RO 030000
+Placuta de inmatriculare B 111 ABC
+TPO-00110011
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Unirii/i);
+    expect(parsed.ruta_transport).toMatch(/Teilor/i);
+    expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
+  });
+
+  it('parses Pta / Piata abbreviations', () => {
+    const raw = `
+Aviz de expeditie: PSL-26080201
+Adresa de livrare CS-DEMO Pta Unirii nr. 1 Bucuresti Sector 4 RO 040000
+Client: C23000015 AP-DEMO Piata Victoriei nr. 2 Bucuresti Sector 1 RO 010000
+Placuta de inmatriculare B 222 DEF
+TPO-00110022
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Victoriei|Unirii/i);
+  });
+
   it('reads two plates including glued trailer B 475AGR', () => {
     const raw = `
 Expeditor Site Depozit MIL MMMARFA

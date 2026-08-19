@@ -268,6 +268,15 @@ export const api = {
     },
   },
   avize: {
+    list({ from, to, status, q } = {}) {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (status) params.set('status', status);
+      if (q) params.set('q', q);
+      const qs = params.toString();
+      return request(`/avize${qs ? `?${qs}` : ''}`);
+    },
     extract({ file_url, original_filename, id } = {}) {
       return request('/avize/extract', {
         method: 'POST',
@@ -313,6 +322,63 @@ export const api = {
       const disp = res.headers.get('Content-Disposition') || '';
       const match = disp.match(/filename="([^"]+)"/);
       return { blob, filename: match?.[1] || 'anexa-factura.xlsx' };
+    },
+    bulkConfirm(ids) {
+      return request('/avize/bulk-confirm', { method: 'POST', body: { ids } });
+    },
+    observationCodes() {
+      return request('/avize/observation-codes');
+    },
+    createObservationCode(data) {
+      return request('/avize/observation-codes', { method: 'POST', body: data });
+    },
+    deleteObservationCode(id) {
+      return request(`/avize/observation-codes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
+    emailAnnex(data) {
+      return request('/avize/email', { method: 'POST', body: data });
+    },
+    async zipExport({ template_id, aviz_ids }, retried = false) {
+      const token = getToken();
+      const res = await fetch('/api/avize/zip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ template_id, aviz_ids }),
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.avize.zipExport({ template_id, aviz_ids }, true);
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(data?.message || res.statusText || 'Zip failed');
+        err.status = res.status;
+        throw err;
+      }
+      const blob = await res.blob();
+      const disp = res.headers.get('Content-Disposition') || '';
+      const match = disp.match(/filename="([^"]+)"/);
+      return { blob, filename: match?.[1] || 'anexa.zip' };
+    },
+    tripSuggestions({ date, plate } = {}) {
+      const params = new URLSearchParams();
+      if (date) params.set('date', date);
+      if (plate) params.set('plate', plate);
+      const qs = params.toString();
+      return request(`/avize/trip-suggestions${qs ? `?${qs}` : ''}`);
+    },
+    draftInvoice(data) {
+      return request('/avize/draft-invoice', { method: 'POST', body: data });
+    },
+    reports({ from, to } = {}) {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const qs = params.toString();
+      return request(`/avize/reports${qs ? `?${qs}` : ''}`);
     },
   },
 };

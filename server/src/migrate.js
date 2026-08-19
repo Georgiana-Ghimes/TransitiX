@@ -401,6 +401,33 @@ CREATE TABLE IF NOT EXISTS aviz_documents (
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_company ON aviz_documents(company_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_status ON aviz_documents(company_id, status);
 
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS extraction_source TEXT DEFAULT 'stub';
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS ruta_display TEXT;
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS trip_id UUID REFERENCES trips(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_tpo ON aviz_documents(company_id, numar_tpo);
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_date ON aviz_documents(company_id, data_efectuare_cursa);
+
+CREATE TABLE IF NOT EXISTS aviz_observation_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  label TEXT,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, code)
+);
+
+CREATE TABLE IF NOT EXISTS aviz_export_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'xlsx',
+  template_id UUID REFERENCES report_templates(id) ON DELETE SET NULL,
+  aviz_ids UUID[] DEFAULT '{}',
+  filename TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_aviz_export_log_company ON aviz_export_log(company_id, created_at DESC);
+
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uniq ON users (LOWER(email));
 
 UPDATE report_templates t SET is_default = FALSE
