@@ -7,6 +7,15 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-08-19
+
+### Fixed
+
+- Avize bulk confirm no longer spams duplicate requests; button disables when all selected rows are already confirmed
+- Avize export (Unește) and Zip buttons disable while a request is in flight
+- Date preset buttons (Azi / Săptămâna asta / Luna asta) show active styling; Resetează clears preset state
+- PDF/image preview in Editează fills more of the modal on desktop
+
 ## [1.8.1] - 2026-08-19
 
 ### Added

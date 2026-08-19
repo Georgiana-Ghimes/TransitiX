@@ -42,6 +42,7 @@ export default function AvizeReports() {
   const [deleteRow, setDeleteRow] = useState(null);
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [activePreset, setActivePreset] = useState('');
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
   const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '' });
@@ -55,6 +56,11 @@ export default function AvizeReports() {
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const loadGen = useRef(0);
+  const bulkConfirmLock = useRef(false);
+
+  const confirmableSelectedIds = rows
+    .filter((r) => selected.has(r.id) && r.status !== 'confirmed')
+    .map((r) => r.id);
 
   const load = async () => {
     const gen = ++loadGen.current;
@@ -115,7 +121,14 @@ export default function AvizeReports() {
 
   const applyPreset = (preset) => {
     const range = datePresetRange(preset);
+    setActivePreset(preset);
     setFilters((prev) => ({ ...prev, ...range }));
+  };
+
+  const resetAvizFilters = () => {
+    setActivePreset('');
+    setFilters({ from: '', to: '', status: '', q: '' });
+    setQInput('');
   };
 
   const uploadFiles = async (fileList) => {
@@ -225,11 +238,13 @@ export default function AvizeReports() {
   };
 
   const bulkConfirm = async () => {
-    const ids = [...selected];
+    const ids = confirmableSelectedIds;
     if (ids.length === 0) {
-      notifyError('Nimic selectat', 'Bifează avizele de confirmat.');
+      notifyError('Nimic de confirmat', 'Selectează rânduri care nu sunt încă Confirmat.');
       return;
     }
+    if (bulkConfirmLock.current) return;
+    bulkConfirmLock.current = true;
     setBusy(true);
     try {
       const updated = await api.avize.bulkConfirm(ids);
@@ -244,6 +259,7 @@ export default function AvizeReports() {
       notifyError('Confirmare eșuată', e);
     } finally {
       setBusy(false);
+      bulkConfirmLock.current = false;
     }
   };
 
@@ -291,12 +307,15 @@ export default function AvizeReports() {
       notifyError('Fără șablon', 'Alege un șablon XLSX.');
       return;
     }
+    setBusy(true);
     try {
       const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
       notifySuccess('Export gata', filename);
     } catch (e) {
       notifyError('Export eșuat', e);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -306,12 +325,15 @@ export default function AvizeReports() {
       notifyError('Nimic selectat', 'Bifează avize și alege șablonul.');
       return;
     }
+    setBusy(true);
     try {
       const { blob, filename, missing } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
       notifySuccess('Zip gata', missing ? `${filename} (${missing} originale lipsă de pe disk)` : filename);
     } catch (e) {
       notifyError('Zip eșuat', e);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -466,6 +488,8 @@ export default function AvizeReports() {
       qInput={qInput}
       setQInput={setQInput}
       onPreset={applyPreset}
+      onReset={resetAvizFilters}
+      activePreset={activePreset}
       refreshing={refreshing}
     />
   );
@@ -545,7 +569,7 @@ export default function AvizeReports() {
             </div>
             <button
               type="button"
-              disabled={selected.size === 0 || !templateId}
+              disabled={selected.size === 0 || !templateId || busy}
               onClick={exportSelected}
               title={selected.size === 0 ? 'Bifează avizele din tabel, apoi apasă aici' : 'Unește rândurile selectate într-un fișier Anexa Factură'}
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium text-white bg-[#0A7A3E] rounded-lg hover:bg-[#096c37] disabled:opacity-40 disabled:cursor-not-allowed"
@@ -555,7 +579,7 @@ export default function AvizeReports() {
             </button>
             <button
               type="button"
-              disabled={selected.size === 0 || busy}
+              disabled={confirmableSelectedIds.length === 0 || busy}
               onClick={bulkConfirm}
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-emerald-200 text-emerald-800 bg-white rounded-lg hover:bg-emerald-50 disabled:opacity-40"
             >
@@ -571,7 +595,7 @@ export default function AvizeReports() {
             </button>
             <button
               type="button"
-              disabled={selected.size === 0 || !templateId}
+              disabled={selected.size === 0 || !templateId || busy}
               onClick={zipSelected}
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
             >

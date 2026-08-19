@@ -33,3 +33,6 @@ dist-ssr
 .vite
 server/uploads/
 server/node_modules/
+
+# Local manual test PDF exports (markdown source stays in git)
+docs/test-reports/*.pdf
