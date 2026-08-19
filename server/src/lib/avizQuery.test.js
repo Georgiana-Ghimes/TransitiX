@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   annexDraftAmount,
   buildAvizListQuery,
+  capAvizIds,
   flagDuplicateTpos,
   isLockedRaiTemplate,
   mapProviderToSource,
+  uniqueZipEntry,
 } from './avizQuery.js';
 
 describe('avizQuery', () => {
@@ -22,10 +24,18 @@ describe('avizQuery', () => {
       q: 'TPO-1',
     });
     expect(sql).toMatch(/data_efectuare_cursa >=/);
-    expect(sql).toMatch(/ILIKE/);
+    expect(sql).toMatch(/strpos\(lower/);
     expect(params[0]).toBe('co');
     expect(params).toContain('2026-08-01');
-    expect(params).toContain('%TPO-1%');
+    expect(params).toContain('TPO-1');
+    expect(params).not.toContain('%TPO-1%');
+  });
+
+  it('caps id lists at 200 and unique zip names', () => {
+    expect(capAvizIds(['a', 'a', 'b'].concat(Array.from({ length: 250 }, (_, i) => String(i))))).toHaveLength(200);
+    const used = new Set();
+    expect(uniqueZipEntry('originale/a.pdf', used)).toBe('originale/a.pdf');
+    expect(uniqueZipEntry('originale/a.pdf', used)).toBe('originale/a-1.pdf');
   });
 
   it('flags duplicate TPO in a list without UNIQUE', () => {

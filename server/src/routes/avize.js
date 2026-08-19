@@ -28,14 +28,19 @@ import { zipStore } from '../lib/zipStore.js';
 import {
   annexDraftAmount,
   buildAvizListQuery,
+  capAvizIds,
   flagDuplicateTpos,
   isLockedRaiTemplate,
   mapProviderToSource,
   tpoExistsForOther,
+  uniqueZipEntry,
 } from '../lib/avizQuery.js';
+import { hitRateLimit } from '../lib/rateLimit.js';
+import { allocateInvoiceNumber } from '../lib/invoiceNumber.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
+const extractHits = new Map();
 
 const ANNEX_COLUMNS = [
   'numar_tpo', 'data_efectuare_cursa', 'valoare_tpo', 'numar_auto',
@@ -356,6 +361,10 @@ router.delete('/templates/:id', async (req, res) => {
 
 router.post('/extract', async (req, res) => {
   try {
+    const limit = hitRateLimit(extractHits, req.user.company_id, { max: 30, windowMs: 60_000 });
+    if (!limit.ok) {
+      return res.status(429).json({ message: 'Prea multe extrageri. Reîncearcă într-un minut.' });
+    }
     const file_url = String(req.body?.file_url || '').trim();
     const original_filename = String(req.body?.original_filename || '').trim() || null;
     const id = req.body?.id || null;
@@ -474,7 +483,7 @@ router.post('/extract', async (req, res) => {
 router.post('/export', async (req, res) => {
   try {
     const templateId = req.body?.template_id;
-    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    const avizIds = capAvizIds(req.body?.aviz_ids);
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
@@ -496,13 +505,13 @@ router.post('/export', async (req, res) => {
 
 router.post('/bulk-confirm', async (req, res) => {
   try {
-    const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
+    const ids = capAvizIds(req.body?.ids);
     if (ids.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
     const result = await withTransaction(async (client) => {
       return client.query(
         `UPDATE aviz_documents
          SET status = 'confirmed', updated_at = NOW()
-         WHERE company_id = $1 AND id = ANY($2::uuid[])
+         WHERE company_id = $1 AND id = ANY($2::uuid[]) AND status <> 'confirmed'
          RETURNING *`,
         [req.user.company_id, ids]
       );
@@ -561,7 +570,7 @@ router.post('/email', async (req, res) => {
   try {
     const to = String(req.body?.to || '').trim();
     const templateId = req.body?.template_id;
-    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    const avizIds = capAvizIds(req.body?.aviz_ids);
     if (!to) return res.status(400).json({ message: 'to required' });
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
@@ -583,6 +592,7 @@ router.post('/email', async (req, res) => {
       ...sent,
       filename,
       download: Boolean(sent.stub),
+      content_base64: sent.stub ? buffer.toString('base64') : undefined,
     });
   } catch (err) {
     console.error(err);
@@ -593,20 +603,26 @@ router.post('/email', async (req, res) => {
 router.post('/zip', async (req, res) => {
   try {
     const templateId = req.body?.template_id;
-    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    const avizIds = capAvizIds(req.body?.aviz_ids);
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
     const { buffer, filename, avize } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
     const files = [{ name: filename, data: buffer }];
+    const used = new Set([filename]);
+    let missing = 0;
     for (const aviz of avize) {
       const localPath = resolveUploadPath(aviz.file_url);
-      if (!localPath) continue;
+      if (!localPath) {
+        missing += 1;
+        continue;
+      }
       try {
         const data = await fs.readFile(localPath);
         const orig = path.basename(aviz.original_filename || localPath);
-        files.push({ name: `originale/${orig}`, data });
+        files.push({ name: uniqueZipEntry(`originale/${orig}`, used), data });
       } catch (err) {
+        missing += 1;
         console.error('[aviz zip file]', err.message || err);
       }
     }
@@ -620,6 +636,7 @@ router.post('/zip', async (req, res) => {
     });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+    res.setHeader('X-Aviz-Missing-Files', String(missing));
     res.send(zip);
   } catch (err) {
     console.error(err);
@@ -662,7 +679,7 @@ router.get('/trip-suggestions', async (req, res) => {
 
 router.post('/draft-invoice', async (req, res) => {
   try {
-    const avizIds = Array.isArray(req.body?.aviz_ids) ? req.body.aviz_ids.filter(Boolean) : [];
+    const avizIds = capAvizIds(req.body?.aviz_ids);
     const rule = req.body?.amount_rule === 'km_tarif' ? 'km_tarif' : 'tpo';
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
     const avize = await loadAvizeByIds(req.user.company_id, avizIds);
@@ -675,37 +692,48 @@ router.post('/draft-invoice', async (req, res) => {
     const vatAmount = Math.round(subtotal * vatRate) / 100;
     const total = Math.round((subtotal + vatAmount) * 100) / 100;
     const tpos = confirmed.map((row) => row.numar_tpo).filter(Boolean).join(', ');
-    const count = await query(
-      `SELECT COUNT(*)::int AS c FROM invoices WHERE company_id = $1`,
-      [req.user.company_id]
-    );
-    const number = String((count.rows[0]?.c || 0) + 1).padStart(4, '0');
     const tripId = confirmed.find((row) => row.trip_id)?.trip_id || null;
-    const result = await query(
-      `INSERT INTO invoices (
-         company_id, trip_id, series, number, client_name, issue_date,
-         description, subtotal, vat_rate, vat_amount, total_amount,
-         currency, status, efactura_status, notes
-       ) VALUES (
-         $1, $2, 'TRX', $3, $4, CURRENT_DATE,
-         $5, $6, $7, $8, $9,
-         'RON', 'draft', 'not_sent', $10
-       ) RETURNING *`,
-      [
-        req.user.company_id,
-        tripId,
-        number,
-        String(req.body?.client_name || 'Client avize').trim() || 'Client avize',
-        `Servicii transport — avize ${tpos || confirmed.length}`,
-        subtotal,
-        vatRate,
-        vatAmount,
-        total,
-        `Avize: ${tpos || confirmed.map((r) => r.id).join(', ')}. Regulă sumă: ${rule}. Fără e-Factura ANAF.`,
-      ]
-    );
-    res.status(201).json(serializeRow(result.rows[0]));
+    let clientName = String(req.body?.client_name || '').trim();
+    if (!clientName && tripId) {
+      const trip = await query(
+        `SELECT consignee_name FROM trips WHERE id = $1 AND company_id = $2`,
+        [tripId, req.user.company_id]
+      );
+      clientName = String(trip.rows[0]?.consignee_name || '').trim();
+    }
+    if (!clientName) clientName = 'Client avize';
+    const row = await withTransaction(async (client) => {
+      const number = await allocateInvoiceNumber(client, req.user.company_id, 'TRX');
+      const result = await client.query(
+        `INSERT INTO invoices (
+           company_id, trip_id, series, number, client_name, issue_date,
+           description, subtotal, vat_rate, vat_amount, total_amount,
+           currency, status, efactura_status, notes
+         ) VALUES (
+           $1, $2, 'TRX', $3, $4, CURRENT_DATE,
+           $5, $6, $7, $8, $9,
+           'RON', 'draft', 'not_sent', $10
+         ) RETURNING *`,
+        [
+          req.user.company_id,
+          tripId,
+          number,
+          clientName,
+          `Servicii transport — avize ${tpos || confirmed.length}`,
+          subtotal,
+          vatRate,
+          vatAmount,
+          total,
+          `Avize: ${tpos || confirmed.map((r) => r.id).join(', ')}. Regulă sumă: ${rule}. Fără e-Factura ANAF.`,
+        ]
+      );
+      return result.rows[0];
+    });
+    res.status(201).json(serializeRow(row));
   } catch (err) {
+    if (isPgUniqueViolation(err)) {
+      return res.status(409).json({ message: 'Numărul de factură există deja în această serie' });
+    }
     console.error(err);
     res.status(500).json({ message: err.message || 'Draft invoice failed' });
   }

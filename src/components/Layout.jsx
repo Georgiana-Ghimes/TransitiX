@@ -18,8 +18,8 @@ const NAV = [
   { label: 'Curse', path: '/trips', icon: Route },
   { label: 'Flotă', path: '/vehicles', icon: Truck },
   { label: 'Șoferi', path: '/drivers', icon: Users },
-  { label: 'Tracking GPS', path: '/gps', icon: MapPin },
-  { label: 'Planning AI', path: '/planning', icon: Brain },
+  { label: 'Tracking GPS', path: '/gps', icon: MapPin, demo: true },
+  { label: 'Planning AI', path: '/planning', icon: Brain, demo: true },
   { label: 'Clienți', path: '/clients', icon: Building2 },
   { label: 'Financiar', path: '/finance', icon: Wallet },
   { label: 'Depozit', path: '/warehouse', icon: Package },
@@ -165,7 +165,7 @@ export default function Layout() {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    title={item.label}
+                    title={item.demo ? `${item.label} (demo)` : item.label}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
                       'flex items-center rounded-lg text-sm font-medium transition-colors',
@@ -176,7 +176,10 @@ export default function Layout() {
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
-                    {!showIconsOnly && <span className="truncate">{item.label}</span>}
+                    {!showIconsOnly && <span className="truncate flex-1">{item.label}</span>}
+                    {!showIconsOnly && item.demo && (
+                      <span className="text-[9px] uppercase tracking-wide text-amber-300/90 shrink-0">demo</span>
+                    )}
                   </Link>
                 </li>
               );

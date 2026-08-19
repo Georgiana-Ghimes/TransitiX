@@ -1,34 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { rateLimit } from './rateLimit.js';
+import { hitRateLimit } from './rateLimit.js';
 
-function mock(ip = '1.1.1.1') {
-  const req = { ip };
-  const res = {
-    statusCode: 200,
-    body: null,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(payload) {
-      this.body = payload;
-      return this;
-    },
-  };
-  let nextCalled = 0;
-  const next = () => { nextCalled += 1; };
-  return { req, res, next, nextCount: () => nextCalled };
-}
+describe('hitRateLimit', () => {
+  it('allows up to max hits in the window then blocks', () => {
+    const store = new Map();
+    expect(hitRateLimit(store, 'co', { max: 2, now: 1000 }).ok).toBe(true);
+    expect(hitRateLimit(store, 'co', { max: 2, now: 1001 }).ok).toBe(true);
+    const blocked = hitRateLimit(store, 'co', { max: 2, now: 1002 });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.retryAfterMs).toBeGreaterThan(0);
+  });
 
-describe('rateLimit', () => {
-  it('allows up to max then returns 429', () => {
-    const limiter = rateLimit({ windowMs: 60_000, max: 2 });
-    const a = mock();
-    limiter(a.req, a.res, a.next);
-    limiter(a.req, a.res, a.next);
-    expect(a.nextCount()).toBe(2);
-    limiter(a.req, a.res, a.next);
-    expect(a.res.statusCode).toBe(429);
-    expect(a.nextCount()).toBe(2);
+  it('resets after the window', () => {
+    const store = new Map();
+    hitRateLimit(store, 'co', { max: 1, windowMs: 100, now: 0 });
+    expect(hitRateLimit(store, 'co', { max: 1, windowMs: 100, now: 99 }).ok).toBe(false);
+    expect(hitRateLimit(store, 'co', { max: 1, windowMs: 100, now: 100 }).ok).toBe(true);
   });
 });

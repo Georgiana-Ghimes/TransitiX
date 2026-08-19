@@ -17,7 +17,9 @@ import avizeRoutes from './routes/avize.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
-import { applyBearerFromQuery, safeUploadBasename } from './lib/concurrency.js';
+import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
+import { emailConfigured } from './lib/email.js';
+import { visionConfigured } from './lib/cmrOcr.js';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -48,7 +50,7 @@ function bearerFromQuery(req, _res, next) {
   next();
 }
 
-app.get('/uploads/:filename', bearerFromQuery, authRequired, (req, res) => {
+app.get('/uploads/:filename', bearerFromQuery, authRequired, async (req, res) => {
   const name = safeUploadBasename(req.params.filename);
   if (!name) return res.status(400).json({ message: 'Invalid filename' });
   const filePath = path.resolve(uploadRoot, name);
@@ -56,19 +58,38 @@ app.get('/uploads/:filename', bearerFromQuery, authRequired, (req, res) => {
   if (filePath !== path.join(root, name)) {
     return res.status(400).json({ message: 'Invalid filename' });
   }
+  try {
+    const allowed = await canReadUpload(query, req.user.company_id, name);
+    if (!allowed) return res.status(404).json({ message: 'Not found' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Upload access check failed' });
+  }
   fs.access(filePath, fs.constants.R_OK, (err) => {
     if (err) return res.status(404).json({ message: 'Not found' });
     res.sendFile(filePath, { maxAge: '7d' });
   });
 });
 
+function healthCapabilities() {
+  return {
+    gps: 'simulate',
+    planning: 'stub',
+    efactura: false,
+    etransport: 'manual_uit',
+    vision: visionConfigured(),
+    email: emailConfigured(),
+  };
+}
+
 app.get('/api/health', async (_req, res) => {
+  const capabilities = healthCapabilities();
   try {
     await query('SELECT 1');
-    res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION });
+    res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION, capabilities });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ ok: false, service: 'transitix-api', db: false, version: APP_VERSION });
+    res.status(503).json({ ok: false, service: 'transitix-api', db: false, version: APP_VERSION, capabilities });
   }
 });
 

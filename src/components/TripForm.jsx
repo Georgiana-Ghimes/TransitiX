@@ -11,11 +11,12 @@ export default function TripForm({ trip, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     cmr_number: '', driver_id: '', driver_name: '', vehicle_id: '', vehicle_plate: '',
-    shipper_name: '', shipper_address: '', shipper_contact: '', shipper_phone: '', shipper_email: '',
-    consignee_name: '', consignee_address: '', consignee_contact: '', consignee_phone: '', consignee_email: '',
+    shipper_name: '', shipper_address: '', shipper_cui: '', shipper_contact: '', shipper_phone: '', shipper_email: '',
+    consignee_name: '', consignee_address: '', consignee_cui: '', consignee_contact: '', consignee_phone: '', consignee_email: '',
     loading_date: '', loading_time: '', estimated_delivery_date: '', estimated_delivery_time: '',
     goods_description: '', weight_kg: '', package_count: '', volume_mc: '',
     special_instructions: '', internal_notes: '', distance_km: '', status: 'planificata',
+    uit_code: '', agreed_revenue: '', estimated_cost: '',
     ...trip,
   });
 
@@ -65,6 +66,9 @@ export default function TripForm({ trip, onClose, onSave }) {
         package_count: form.package_count ? Number(form.package_count) : null,
         volume_mc: form.volume_mc ? Number(form.volume_mc) : null,
         distance_km: form.distance_km ? Number(form.distance_km) : null,
+        agreed_revenue: form.agreed_revenue !== '' && form.agreed_revenue != null ? Number(form.agreed_revenue) : null,
+        estimated_cost: form.estimated_cost !== '' && form.estimated_cost != null ? Number(form.estimated_cost) : null,
+        uit_code: form.uit_code || null,
       };
       if (data.driver_id && ['planificata', ''].includes(data.status || 'planificata')) {
         data.status = 'alocata';
@@ -171,6 +175,7 @@ export default function TripForm({ trip, onClose, onSave }) {
             <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-[#F5A623] pl-2">Expeditor</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><label className={labelCls}>Nume expeditor *</label><input required className={inputCls} value={form.shipper_name} onChange={e => set('shipper_name', e.target.value)} /></div>
+              <div><label className={labelCls}>CUI expeditor</label><input className={inputCls} value={form.shipper_cui || ''} onChange={e => set('shipper_cui', e.target.value)} /></div>
               <div><label className={labelCls}>Contact</label><input className={inputCls} value={form.shipper_contact} onChange={e => set('shipper_contact', e.target.value)} /></div>
               <div className="sm:col-span-2"><label className={labelCls}>Adresă</label><input className={inputCls} value={form.shipper_address} onChange={e => set('shipper_address', e.target.value)} /></div>
               <div><label className={labelCls}>Telefon</label><input className={inputCls} value={form.shipper_phone} onChange={e => set('shipper_phone', e.target.value)} /></div>
@@ -183,6 +188,7 @@ export default function TripForm({ trip, onClose, onSave }) {
             <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-[#27AE60] pl-2">Destinatar</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><label className={labelCls}>Nume destinatar *</label><input required className={inputCls} value={form.consignee_name} onChange={e => set('consignee_name', e.target.value)} /></div>
+              <div><label className={labelCls}>CUI destinatar</label><input className={inputCls} value={form.consignee_cui || ''} onChange={e => set('consignee_cui', e.target.value)} /></div>
               <div><label className={labelCls}>Contact</label><input className={inputCls} value={form.consignee_contact} onChange={e => set('consignee_contact', e.target.value)} /></div>
               <div className="sm:col-span-2"><label className={labelCls}>Adresă</label><input className={inputCls} value={form.consignee_address} onChange={e => set('consignee_address', e.target.value)} /></div>
               <div><label className={labelCls}>Telefon</label><input className={inputCls} value={form.consignee_phone} onChange={e => set('consignee_phone', e.target.value)} /></div>
@@ -208,6 +214,16 @@ export default function TripForm({ trip, onClose, onSave }) {
               <div><label className={labelCls}>Distanță (km)</label><input type="number" className={inputCls} value={form.distance_km} onChange={e => set('distance_km', e.target.value)} /></div>
             </div>
             <div><label className={labelCls}>Descriere marfă</label><textarea rows={2} className={inputCls} value={form.goods_description} onChange={e => set('goods_description', e.target.value)} /></div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-amber-500 pl-2">e-Transport și marjă</h3>
+            <p className="text-xs text-slate-500">Cod UIT din SPV ANAF — Transitix nu îl generează încă. Venit/cost sunt pentru marja pe cursă, nu factură ANAF.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div><label className={labelCls}>Cod UIT</label><input className={inputCls} value={form.uit_code || ''} onChange={e => set('uit_code', e.target.value)} placeholder="Din e-Transport" maxLength={36} /></div>
+              <div><label className={labelCls}>Venit agreat (RON)</label><input type="number" step="0.01" className={inputCls} value={form.agreed_revenue ?? ''} onChange={e => set('agreed_revenue', e.target.value)} /></div>
+              <div><label className={labelCls}>Cost estimat (RON)</label><input type="number" step="0.01" className={inputCls} value={form.estimated_cost ?? ''} onChange={e => set('estimated_cost', e.target.value)} /></div>
+            </div>
           </div>
 
           {/* Notes */}

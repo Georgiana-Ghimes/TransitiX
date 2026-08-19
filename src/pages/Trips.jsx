@@ -7,6 +7,7 @@ import SuggestSearch from '@/components/SuggestSearch';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { formatDate } from '@/lib/utils';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { formatRon, tripMargin } from '@/lib/tripOps';
 import { Plus, Download, Route } from 'lucide-react';
 
 const STATUS_FILTERS = [
@@ -68,14 +69,18 @@ export default function Trips() {
       t.driver_name?.toLowerCase().includes(search.toLowerCase()) ||
       t.vehicle_plate?.toLowerCase().includes(search.toLowerCase()) ||
       t.shipper_name?.toLowerCase().includes(search.toLowerCase()) ||
-      t.consignee_name?.toLowerCase().includes(search.toLowerCase());
+      t.consignee_name?.toLowerCase().includes(search.toLowerCase()) ||
+      t.uit_code?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const exportCSV = () => {
-    const headers = ['CMR', 'Șofer', 'Vehicul', 'Expeditor', 'Destinatar', 'Status', 'Data încărcării', 'Greutate', 'Colete'];
-    const rows = filtered.map(t => [t.cmr_number, t.driver_name, t.vehicle_plate, t.shipper_name, t.consignee_name, t.status, t.loading_date, t.weight_kg, t.package_count]);
+    const headers = ['CMR', 'UIT', 'Șofer', 'Vehicul', 'Expeditor', 'Destinatar', 'Status', 'Data încărcării', 'Venit', 'Cost', 'Marjă'];
+    const rows = filtered.map(t => [
+      t.cmr_number, t.uit_code, t.driver_name, t.vehicle_plate, t.shipper_name, t.consignee_name, t.status, t.loading_date,
+      t.agreed_revenue, t.estimated_cost, tripMargin(t.agreed_revenue, t.estimated_cost),
+    ]);
     const csv = [headers, ...rows].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -148,6 +153,15 @@ export default function Trips() {
             <p className="text-xs text-slate-500 mt-2">
               {[trip.driver_name, trip.vehicle_plate, formatDate(trip.loading_date)].filter(Boolean).join(' · ') || '—'}
             </p>
+            {(trip.uit_code || tripMargin(trip.agreed_revenue, trip.estimated_cost) != null) && (
+              <p className="text-xs text-slate-500 mt-1">
+                {trip.uit_code ? `UIT ${trip.uit_code}` : ''}
+                {trip.uit_code && tripMargin(trip.agreed_revenue, trip.estimated_cost) != null ? ' · ' : ''}
+                {tripMargin(trip.agreed_revenue, trip.estimated_cost) != null
+                  ? `Marjă ${formatRon(tripMargin(trip.agreed_revenue, trip.estimated_cost))}`
+                  : ''}
+              </p>
+            )}
             <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
               <button onClick={() => { setEditTrip(trip); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs font-medium">Editează</button>
               <button onClick={() => setConfirmTrip(trip)} className="text-red-500 hover:underline text-xs font-medium">Șterge</button>
@@ -165,13 +179,15 @@ export default function Trips() {
       <div className="hidden md:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         {filtered.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
+            <table className="w-full text-sm min-w-[900px]">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-500 text-xs">
                   <th className="text-left font-medium px-4 py-3">CMR</th>
                   <th className="text-left font-medium px-4 py-3">Șofer</th>
                   <th className="text-left font-medium px-4 py-3">Vehicul</th>
                   <th className="text-left font-medium px-4 py-3">Expeditor → Destinatar</th>
+                  <th className="text-left font-medium px-4 py-3">UIT</th>
+                  <th className="text-right font-medium px-4 py-3">Marjă</th>
                   <th className="text-left font-medium px-4 py-3">Încărcare</th>
                   <th className="text-left font-medium px-4 py-3">Status</th>
                   <th className="text-right font-medium px-4 py-3">Acțiuni</th>
@@ -185,6 +201,10 @@ export default function Trips() {
                     <td className="px-4 py-3 text-slate-600">{trip.vehicle_plate || '-'}</td>
                     <td className="px-4 py-3 text-slate-600 max-w-xs">
                       <span className="line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{trip.uit_code || '—'}</td>
+                    <td className="px-4 py-3 text-right text-slate-600 tabular-nums">
+                      {formatRon(tripMargin(trip.agreed_revenue, trip.estimated_cost))}
                     </td>
                     <td className="px-4 py-3 text-slate-500">{formatDate(trip.loading_date)}</td>
                     <td className="px-4 py-3"><StatusBadge status={trip.status} /></td>

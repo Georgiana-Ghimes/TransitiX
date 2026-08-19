@@ -42,6 +42,29 @@ export async function tpoExistsForOther(queryFn, { companyId, tpo, exceptId }) {
   return Boolean(result.rows[0]);
 }
 
+export const AVIZ_ID_CAP = 200;
+
+export function capAvizIds(ids) {
+  return [...new Set((Array.isArray(ids) ? ids : []).filter(Boolean))].slice(0, AVIZ_ID_CAP);
+}
+
+export function uniqueZipEntry(name, used) {
+  const raw = String(name || 'file').replace(/\\/g, '/');
+  const base = raw.replace(/^.*\//, '') || 'file';
+  const dir = raw.includes('/') ? raw.slice(0, raw.lastIndexOf('/') + 1) : '';
+  const dot = base.lastIndexOf('.');
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  const ext = dot > 0 ? base.slice(dot) : '';
+  let candidate = `${dir}${base}`;
+  let n = 1;
+  while (used.has(candidate)) {
+    candidate = `${dir}${stem}-${n}${ext}`;
+    n += 1;
+  }
+  used.add(candidate);
+  return candidate;
+}
+
 export function buildAvizListQuery({ companyId, from, to, status, q, limit = 200 }) {
   const where = ['company_id = $1'];
   const params = [companyId];
@@ -64,15 +87,15 @@ export function buildAvizListQuery({ companyId, from, to, status, q, limit = 200
   const term = String(q || '').trim();
   if (term) {
     where.push(`(
-      COALESCE(numar_tpo, '') ILIKE $${i}
-      OR COALESCE(numar_auto, '') ILIKE $${i}
-      OR COALESCE(numar_document_marfa, '') ILIKE $${i}
-      OR COALESCE(original_filename, '') ILIKE $${i}
+      strpos(lower(COALESCE(numar_tpo, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(numar_auto, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(numar_document_marfa, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(original_filename, '')), lower($${i})) > 0
     )`);
-    params.push(`%${term}%`);
+    params.push(term);
     i += 1;
   }
-  const cap = Math.min(Math.max(Number(limit) || 200, 1), 200);
+  const cap = Math.min(Math.max(Number(limit) || 200, 1), AVIZ_ID_CAP);
   params.push(cap);
   const sql = `SELECT * FROM aviz_documents WHERE ${where.join(' AND ')}
     ORDER BY created_at DESC

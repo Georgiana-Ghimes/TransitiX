@@ -43,10 +43,6 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
     e.preventDefault();
     setSaving(true);
     try {
-      if (!form.number) {
-        const count = trips.length + Math.floor(Math.random() * 100) + 1;
-        form.number = String(count).padStart(4, '0');
-      }
       const data = {
         ...form,
         subtotal: Number(form.subtotal) || 0,
@@ -54,6 +50,9 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
         vat_amount: Number(form.vat_amount) || 0,
         total_amount: Number(form.total_amount) || 0,
       };
+      if (!String(data.number || '').trim()) {
+        data.number = invoice?.id ? invoice.number : null;
+      }
       if (invoice?.id) await api.entities.Invoice.update(invoice.id, data);
       else await api.entities.Invoice.create(data);
       onSave();
@@ -75,7 +74,7 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div><label className={labelCls}>Serie</label><input className={inputCls} value={form.series} onChange={e => set('series', e.target.value)} /></div>
-            <div><label className={labelCls}>Număr</label><input className={inputCls} value={form.number} onChange={e => set('number', e.target.value)} placeholder="Auto" /></div>
+            <div><label className={labelCls}>Număr</label><input className={inputCls} value={form.number} onChange={e => set('number', e.target.value)} placeholder="Următorul din serie, dacă e gol" /></div>
             <div><label className={labelCls}>Status</label><select className={inputCls} value={form.status} onChange={e => set('status', e.target.value)}><option value="draft">Ciornă</option><option value="sent">Trimisă</option><option value="paid">Plătită</option><option value="overdue">Restantă</option><option value="cancelled">Anulată</option></select></div>
           </div>
 

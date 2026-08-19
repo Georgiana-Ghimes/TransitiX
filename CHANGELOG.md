@@ -7,6 +7,26 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-08-19
+
+### Added
+
+- Production foundation vs Romanian TMS market: plan in `docs/romania-tms-production.plan.md`
+- Câmp UIT (manual), CUI expeditor/destinatar, venit/cost și marjă pe cursă
+- Numere de factură secvențiale per serie (`invoice_counters`), folosite și la ciorna din avize
+- `GET /api/health` raportează capabilități reale (`gps: simulate`, `efactura: false`, Vision, email)
+- Banner **demo** pe GPS, Planning AI și e-Factura; meniul marchează GPS/Planning ca demo
+
+### Security
+
+- Upload-urile noi sunt prefixate `c-{company_id}-…`; `GET /uploads` refuză fișierele altei firme (legacy: doar dacă rândul e în DB)
+
+### Changed
+
+- Avize search is debounced and does not treat `%` / `_` as wildcards; bulk confirm skips already-confirmed rows; email stub downloads the annex from one response; preview uses Authorization (no JWT in the iframe URL); locked Anexa Factura RAI cannot be deleted from the UI
+- Financiar nu mai marchează facturi ca trimise la ANAF; emailul de factură cere adresa de pe cursă (nu `client@exemplu.ro`)
+- `POST /api/avize/extract` e limitat la 30 cereri / minut / firmă
+
 ## [1.7.1] - 2026-08-19
 
 ### Changed

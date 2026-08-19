@@ -5,6 +5,7 @@ import InvoiceForm from '@/components/InvoiceForm';
 import SuggestSearch from '@/components/SuggestSearch';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { Plus, FileText, Euro, Wallet, TrendingUp, Download } from 'lucide-react';
+import DemoBanner from '@/components/DemoBanner';
 
 const INVOICE_STATUS = {
   draft: { label: 'Ciornă', className: 'bg-slate-100 text-slate-600 border-slate-200' },
@@ -50,24 +51,31 @@ export default function Finance() {
   };
 
   const sendToClient = async (inv) => {
+    const trip = inv.trip_id ? trips.find((t) => t.id === inv.trip_id) : null;
+    const to = trip?.consignee_email || trip?.shipper_email || '';
+    if (!to) {
+      notifyError('Email lipsă', 'Adaugă email pe cursă. Nu trimitem către adrese fictive.');
+      return;
+    }
     try {
       await api.integrations.Core.SendEmail({
-        to: 'client@exemplu.ro',
+        to,
         subject: `Factura ${inv.series} ${inv.number} - Transitix`,
         body: `Factura ${inv.series} ${inv.number} în valoare de ${inv.total_amount} ${inv.currency} a fost emisă.\n\nClient: ${inv.client_name}\nScadență: ${inv.due_date}\n\nMultumim!`,
       });
       await api.entities.Invoice.update(inv.id, { status: 'sent' });
-      notifySuccess('Factură trimisă', `${inv.series} ${inv.number} a fost marcată ca trimisă.`);
+      notifySuccess('Factură marcată trimisă', `${inv.series} ${inv.number} către ${to}. Dacă Resend nu e configurat, mesajul e doar în logul API.`);
       loadData();
     } catch (e) {
       notifyError('Trimitere eșuată', e);
     }
   };
 
-  const sendToEfactura = async (inv) => {
-    await api.entities.Invoice.update(inv.id, { efactura_status: 'sent' });
-    notifySuccess('e-Factura (simulare)', `Factura ${inv.series} ${inv.number} a fost marcată ca trimisă către ANAF.`);
-    loadData();
+  const sendToEfactura = () => {
+    notifyError(
+      'e-Factura ANAF nu e conectată',
+      'Nu marcăm factura ca trimisă către SPV. Integrarea legală e pe roadmap — vezi docs/romania-tms-production.plan.md.'
+    );
   };
 
   const exportCSV = () => {
@@ -96,7 +104,7 @@ export default function Finance() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Financiar</h1>
-          <p className="text-sm text-slate-500 mt-1">Facturare, încasări și integrare e-Factura ANAF</p>
+          <p className="text-sm text-slate-500 mt-1">Facturi locale, încasări și ciorne din avize — fără SPV ANAF</p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><Download className="w-4 h-4" /> Export</button>
@@ -104,11 +112,15 @@ export default function Finance() {
         </div>
       </div>
 
+      <DemoBanner title="e-Factura ANAF nu e conectată">
+        Butonul e-Factura nu trimite XML către SPV. Statusul rămâne local. QuickCargo și Routena au această integrare; Transitix o va avea după certificat SPV, nu prin simulare.
+      </DemoBanner>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard icon={FileText} label="Facturi emise" value={invoices.length} subtitle={`${totalIssued.toLocaleString('ro-RO')} RON`} accent="primary" />
         <KpiCard icon={Euro} label="Încasat" value={totalPaid.toLocaleString('ro-RO')} subtitle="RON · luna curentă" accent="success" />
         <KpiCard icon={Wallet} label="Neplătite" value={unpaid} subtitle="Facturi restante" accent="danger" />
-        <KpiCard icon={TrendingUp} label="e-Factura" value={invoices.filter(i => i.efactura_status === 'sent' || i.efactura_status === 'accepted').length} subtitle="Trimise ANAF" accent="accent" />
+        <KpiCard icon={TrendingUp} label="e-Factura" value="—" subtitle="SPV neconectat" accent="accent" />
       </div>
 
       {/* Filters */}
@@ -199,7 +211,7 @@ export default function Finance() {
                       {inv.efactura_status === 'sent' ? <span className="text-xs text-blue-600">Trimisă</span> :
                        inv.efactura_status === 'accepted' ? <span className="text-xs text-emerald-600">Acceptată</span> :
                        inv.efactura_status === 'rejected' ? <span className="text-xs text-red-600">Respinsă</span> :
-                       <span className="text-xs text-slate-400">Netrimisă</span>}
+                       <span className="text-xs text-slate-400">Neconectat SPV</span>}
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
                       <button onClick={() => { setEditInvoice(inv); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>

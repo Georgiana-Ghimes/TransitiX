@@ -34,6 +34,7 @@ export const ENTITY_MAP = {
       'loading_date', 'loading_time', 'estimated_delivery_date', 'estimated_delivery_time', 'actual_delivery_date',
       'goods_description', 'weight_kg', 'package_count', 'volume_mc', 'special_instructions', 'internal_notes',
       'status', 'distance_km', 'estimated_fuel_consumption', 'actual_fuel_consumption', 'start_mileage', 'end_mileage',
+      'uit_code', 'agreed_revenue', 'estimated_cost',
     ],
   },
   TripDocument: {
@@ -176,7 +177,7 @@ export function serializeRow(row) {
     }
     if (typeof val === 'string' && /^-?\d+(\.\d+)?$/.test(val) &&
         (key.includes('kg') || key.includes('amount') || key.includes('price') ||
-         key.includes('cost') || key.includes('rate') || key.includes('consumption') ||
+         key.includes('cost') || key.includes('rate') || key.includes('revenue') || key.includes('consumption') ||
          key.includes('latitude') || key.includes('longitude') || key.includes('speed') ||
          key.includes('heading') || key.includes('savings') || key.includes('volume') ||
          key === 'valoare_tpo' || key === 'cantitate_marfa' || key === 'numar_curse' ||

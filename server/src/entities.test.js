@@ -90,4 +90,14 @@ describe('ENTITY_MAP', () => {
       'trip_id',
     ]));
   });
+
+  it('lets office save UIT and trip margin fields', () => {
+    expect(ENTITY_MAP.Trip.writable).toEqual(expect.arrayContaining([
+      'uit_code',
+      'agreed_revenue',
+      'estimated_cost',
+      'shipper_cui',
+      'consignee_cui',
+    ]));
+  });
 });

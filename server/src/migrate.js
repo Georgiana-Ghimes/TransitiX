@@ -476,7 +476,34 @@ WHERE a.ctid < b.ctid
 CREATE UNIQUE INDEX IF NOT EXISTS office_notif_one_cmr_pending
   ON office_notifications (company_id, trip_id)
   WHERE type = 'cmr_pending' AND is_read = FALSE;
-`;
+
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS uit_code TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS agreed_revenue NUMERIC(12,2);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS estimated_cost NUMERIC(12,2);
+
+CREATE TABLE IF NOT EXISTS invoice_counters (
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  series TEXT NOT NULL DEFAULT 'TRX',
+  last_number INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (company_id, series)
+);
+
+DELETE FROM invoices a
+  USING invoices b
+WHERE a.ctid < b.ctid
+  AND a.company_id = b.company_id
+  AND a.series IS NOT DISTINCT FROM b.series
+  AND a.number = b.number;
+CREATE UNIQUE INDEX IF NOT EXISTS invoices_company_series_number
+  ON invoices (company_id, series, number);
+
+INSERT INTO invoice_counters (company_id, series, last_number)
+SELECT company_id, COALESCE(NULLIF(TRIM(series), ''), 'TRX'),
+  COALESCE(MAX(CASE WHEN number ~ '^[0-9]+$' THEN number::int ELSE 0 END), 0)
+FROM invoices
+GROUP BY 1, 2
+ON CONFLICT (company_id, series) DO NOTHING;
+`
 
 async function migrate() {
   const client = await pool.connect();

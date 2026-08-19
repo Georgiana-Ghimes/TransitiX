@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { Brain, Sparkles, TrendingDown, Truck, Route, Fuel, Loader2, Check, Zap } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
+import DemoBanner from '@/components/DemoBanner';
 
 const SUGGESTION_ICONS = {
   backhaul: Route, vehicle_allocation: Truck, route: Route, consolidation: Zap, fuel: Fuel,
@@ -109,12 +110,16 @@ Return an array of suggestions, each with: type (backhaul/vehicle_allocation/rou
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight flex items-center gap-2">
             <Brain className="w-6 h-6 text-[#F5A623]" /> Planning AI
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Optimizare rute și resurse cu inteligență artificială</p>
+          <p className="text-sm text-slate-500 mt-1">Sugestii de dispecerat (stub) — nu un optimizer live</p>
         </div>
         <button onClick={runAnalysis} disabled={analyzing} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-50 transition-colors">
           {analyzing ? <><Loader2 className="w-4 h-4 animate-spin" /> Analizez...</> : <><Sparkles className="w-4 h-4" /> Rulează analiză AI</>}
         </button>
       </div>
+
+      <DemoBanner title="Planning AI e un stub">
+        Analiza scrie sugestii fixe în baza de date. Nu calculează rute reale și nu e un optimizer de producție.
+      </DemoBanner>
 
       {totalSavings > 0 && (
         <div className="bg-gradient-to-r from-[#0A2B4E] to-[#1D4E89] rounded-xl p-6 text-white shadow-lg">

@@ -5,7 +5,7 @@ import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, previewKind } from '@/lib/avizOps';
-import { withAccessToken } from '@/lib/uploadUrl';
+import { fetchUploadBlob } from '@/lib/uploadUrl';
 import {
   Archive, Camera, Check, ClipboardList, Download, FileSpreadsheet, HelpCircle, Loader2,
   Mail, Pencil, Plus, Trash2, Upload, X,
@@ -122,6 +122,37 @@ function SourceBadge({ source }) {
   );
 }
 
+function AvizFilePreview({ fileUrl }) {
+  const [src, setSrc] = useState('');
+  const kind = previewKind(fileUrl);
+
+  useEffect(() => {
+    let objectUrl = '';
+    let cancelled = false;
+    (async () => {
+      const blob = await fetchUploadBlob(fileUrl);
+      if (cancelled || !blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setSrc(objectUrl);
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [fileUrl]);
+
+  if (!src) {
+    return <p className="text-xs text-slate-500 p-4">Se încarcă preview…</p>;
+  }
+  if (kind === 'pdf') {
+    return <iframe title="Previzualizare aviz" className="w-full h-[320px]" src={src} />;
+  }
+  if (kind === 'image') {
+    return <img alt="Aviz" className="w-full max-h-[320px] object-contain" src={src} />;
+  }
+  return <p className="text-xs text-slate-500 p-4">Nu există preview pentru acest fișier.</p>;
+}
+
 function displayRoute(row) {
   return String(row?.ruta_display || '').trim() || row?.ruta_transport || '';
 }
@@ -149,6 +180,9 @@ export default function AvizeReports() {
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
   const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '' });
+  const [qInput, setQInput] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [amountRule, setAmountRule] = useState('tpo');
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
   const [trips, setTrips] = useState([]);
@@ -167,6 +201,11 @@ export default function AvizeReports() {
       ]);
       if (gen !== loadGen.current) return;
       setRows(avize);
+      setSelected((prev) => {
+        const visible = new Set(avize.map((r) => r.id));
+        const next = new Set([...prev].filter((id) => visible.has(id)));
+        return next;
+      });
       setTemplates(tmpls);
       setObsCodes(codes);
       setTemplateId((prev) => {
@@ -177,9 +216,24 @@ export default function AvizeReports() {
       if (gen !== loadGen.current) return;
       notifyError('Nu am putut încărca avizele', e);
     } finally {
-      if (gen === loadGen.current) setLoading(false);
+      if (gen === loadGen.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters((prev) => (prev.q === qInput ? prev : { ...prev, q: qInput }));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [qInput]);
+
+  useEffect(() => {
+    if (!loading) setRefreshing(true);
+    load();
+  }, [filters.from, filters.to, filters.status, filters.q]);
 
   const loadReports = async () => {
     try {
@@ -190,7 +244,6 @@ export default function AvizeReports() {
     }
   };
 
-  useEffect(() => { load(); }, [filters.from, filters.to, filters.status, filters.q]);
   useEffect(() => {
     if (tab === 'rapoarte') loadReports();
   }, [tab, filters.from, filters.to]);
@@ -314,8 +367,13 @@ export default function AvizeReports() {
     }
     setBusy(true);
     try {
-      await api.avize.bulkConfirm(ids);
-      notifySuccess('Confirmate', `${ids.length} aviz(e) marcate ca confirmate.`);
+      const updated = await api.avize.bulkConfirm(ids);
+      notifySuccess(
+        'Confirmate',
+        updated.length
+          ? `${updated.length} aviz(e) marcate ca confirmate.`
+          : 'Rândurile selectate erau deja confirmate.'
+      );
       await load();
     } catch (e) {
       notifyError('Confirmare eșuată', e);
@@ -384,9 +442,9 @@ export default function AvizeReports() {
       return;
     }
     try {
-      const { blob, filename } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
+      const { blob, filename, missing } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
-      notifySuccess('Zip gata', filename);
+      notifySuccess('Zip gata', missing ? `${filename} (${missing} originale lipsă de pe disk)` : filename);
     } catch (e) {
       notifyError('Zip eșuat', e);
     }
@@ -402,10 +460,12 @@ export default function AvizeReports() {
         template_id: templateId,
         aviz_ids: ids,
       });
-      if (result?.stub || result?.download) {
-        const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
-        downloadBlob(blob, filename);
+      if (result?.content_base64) {
+        const bin = Uint8Array.from(atob(result.content_base64), (c) => c.charCodeAt(0));
+        downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
         notifySuccess('Email stub', 'Resend nu e configurat — anexa s-a descărcat.');
+      } else if (result?.stub || result?.download) {
+        notifySuccess('Email stub', 'Resend nu e configurat. Descarcă anexa cu Unește.');
       } else {
         notifySuccess('Email trimis', result?.filename || emailTo);
       }
@@ -425,8 +485,11 @@ export default function AvizeReports() {
     }
     setBusy(true);
     try {
-      const inv = await api.avize.draftInvoice({ aviz_ids: ids, amount_rule: 'tpo' });
-      notifySuccess('Ciornă factură', `${inv.series || 'TRX'}-${inv.number} în Financiar. Fără e-Factura.`);
+      const inv = await api.avize.draftInvoice({ aviz_ids: ids, amount_rule: amountRule });
+      notifySuccess(
+        'Ciornă factură',
+        `${inv.series || 'TRX'}-${inv.number} — deschide Financiar. Fără e-Factura.`
+      );
     } catch (e) {
       notifyError('Ciornă eșuată', e);
     } finally {
@@ -546,11 +609,12 @@ export default function AvizeReports() {
         ))}
         <button
           type="button"
-          onClick={() => setFilters({ from: '', to: '', status: '', q: '' })}
+          onClick={() => { setFilters({ from: '', to: '', status: '', q: '' }); setQInput(''); }}
           className="px-2.5 py-1 text-xs rounded-full text-slate-500 hover:underline"
         >
           Resetează
         </button>
+        {refreshing && <span className="text-xs text-slate-500 self-center">Se actualizează lista…</span>}
       </div>
       <div>
         <label className={labelCls}>De la</label>
@@ -573,8 +637,8 @@ export default function AvizeReports() {
         <label className={labelCls}>Caută TPO / auto / document / fișier</label>
         <input
           className={inputCls}
-          value={filters.q}
-          onChange={(e) => setFilters((p) => ({ ...p, q: e.target.value }))}
+          value={qInput}
+          onChange={(e) => setQInput(e.target.value)}
           placeholder="TPO-00…"
         />
       </div>
@@ -688,6 +752,15 @@ export default function AvizeReports() {
             >
               <Archive className="w-4 h-4" /> Zip
             </button>
+            <select
+              className={`${inputCls} h-10 py-0 w-full sm:w-44`}
+              value={amountRule}
+              onChange={(e) => setAmountRule(e.target.value)}
+              aria-label="Regulă sumă ciornă"
+            >
+              <option value="tpo">Ciornă: valoare TPO</option>
+              <option value="km_tarif">Ciornă: km × tarif</option>
+            </select>
             <button
               type="button"
               disabled={selected.size === 0 || busy}
@@ -836,9 +909,11 @@ export default function AvizeReports() {
                   {isLockedRai(t) ? (
                     <span className="text-slate-400">Nu se poate modifica</span>
                   ) : (
-                    <button type="button" className="text-[#1D4E89]" onClick={() => setEditTemplate({ ...t, columns: t.columns || [] })}>Editează</button>
+                    <>
+                      <button type="button" className="text-[#1D4E89]" onClick={() => setEditTemplate({ ...t, columns: t.columns || [] })}>Editează</button>
+                      <button type="button" className="text-red-500" onClick={() => setDeleteTemplate(t)}>Șterge</button>
+                    </>
                   )}
-                  <button type="button" className="text-red-500" onClick={() => setDeleteTemplate(t)}>Șterge</button>
                 </div>
               </div>
             ))}
@@ -877,7 +952,9 @@ export default function AvizeReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(reportData.by_plate || []).map((row) => (
+                  {(reportData.by_plate || []).length === 0 ? (
+                    <tr><td colSpan={3} className="py-3 text-slate-400 text-sm">Niciun aviz în interval.</td></tr>
+                  ) : (reportData.by_plate || []).map((row) => (
                     <tr key={row.plate} className="border-b border-slate-50">
                       <td className="py-2">{row.plate}</td>
                       <td className="py-2 text-right">{row.count}</td>
@@ -898,7 +975,9 @@ export default function AvizeReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(reportData.weekly || []).map((row) => (
+                  {(reportData.weekly || []).length === 0 ? (
+                    <tr><td colSpan={3} className="py-3 text-slate-400 text-sm">Nicio săptămână în interval.</td></tr>
+                  ) : (reportData.weekly || []).map((row) => (
                     <tr key={row.week_start} className="border-b border-slate-50">
                       <td className="py-2">{String(row.week_start).slice(0, 10)}</td>
                       <td className="py-2 text-right">{row.count}</td>
@@ -920,16 +999,18 @@ export default function AvizeReports() {
                   <th className="text-right py-2">Avize</th>
                 </tr>
               </thead>
-              <tbody>
-                {(reportData.exports || []).map((row) => (
-                  <tr key={row.id} className="border-b border-slate-50">
-                    <td className="py-2">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
-                    <td className="py-2">{row.kind}</td>
-                    <td className="py-2 truncate">{row.filename || '—'}</td>
-                    <td className="py-2 text-right">{row.aviz_count ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
+                <tbody>
+                  {(reportData.exports || []).length === 0 ? (
+                    <tr><td colSpan={4} className="py-3 text-slate-400 text-sm">Niciun export încă.</td></tr>
+                  ) : (reportData.exports || []).map((row) => (
+                    <tr key={row.id} className="border-b border-slate-50">
+                      <td className="py-2">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
+                      <td className="py-2">{row.kind}</td>
+                      <td className="py-2 truncate">{row.filename || '—'}</td>
+                      <td className="py-2 text-right">{row.aviz_count ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
             </table>
           </div>
         </div>
@@ -944,18 +1025,12 @@ export default function AvizeReports() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 min-h-[220px]">
-                {previewKind(editRow.file_url) === 'pdf' ? (
-                  <iframe title="Previzualizare aviz" className="w-full h-[320px]" src={withAccessToken(editRow.file_url)} />
-                ) : previewKind(editRow.file_url) === 'image' ? (
-                  <img alt="Aviz" className="w-full max-h-[320px] object-contain" src={withAccessToken(editRow.file_url)} />
-                ) : (
-                  <p className="text-xs text-slate-500 p-4">Nu există preview pentru acest fișier.</p>
-                )}
+                <AvizFilePreview fileUrl={editRow.file_url} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {AVIZ_FORM_FIELDS.map((f) => (
                   <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                    <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică' : ''}</label>
+                    <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică (parser nesigur)' : ''}</label>
                     <input
                       className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
                       type={f.type || 'text'}
@@ -977,6 +1052,9 @@ export default function AvizeReports() {
                       <option key={t.id} value={t.id}>{t.cmr_number} · {t.vehicle_plate || '—'} · {t.loading_date || ''}</option>
                     ))}
                   </select>
+                  {trips.length === 0 && (
+                    <p className="text-[11px] text-slate-500 mt-1">Nicio cursă pe auto + zi. Poți salva fără cursă.</p>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <p className="text-xs text-slate-500 mb-1">Coduri observații (textul rămâne editabil)</p>

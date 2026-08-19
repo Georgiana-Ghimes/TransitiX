@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Truck, RefreshCw, Loader2 } from 'lucide-react';
+import DemoBanner from '@/components/DemoBanner';
 
 // Fix default marker icons when bundling Leaflet with Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -73,13 +74,17 @@ export default function GPSMap() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Tracking GPS</h1>
-          <p className="text-sm text-slate-500 mt-1">{positions.length} vehicule pe hartă</p>
+          <p className="text-sm text-slate-500 mt-1">{positions.length} poziții simulate pe hartă</p>
         </div>
         <button onClick={simulateMovement} disabled={simulating} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-50 transition-colors">
           {simulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          {simulating ? 'Actualizez...' : 'Actualizează poziții'}
+          {simulating ? 'Simulez...' : 'Simulează poziții (demo)'}
         </button>
       </div>
+
+      <DemoBanner title="Hartă demo, nu telematică live">
+        Pozițiile sunt generate în jurul Bucureștiului. Routena și QuickCargo se leagă de Acron / CargoTrack. Transitix va primi webhook de la furnizorul vostru, nu un tracker propriu.
+      </DemoBanner>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Vehicle list */}

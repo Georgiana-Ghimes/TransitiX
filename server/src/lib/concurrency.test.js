@@ -12,6 +12,9 @@ import {
   safeUploadBasename,
   tripStatusForOfficeSave,
   uniqueUploadFilename,
+  filenameHasCompanyPrefix,
+  filenameOwnedByCompany,
+  canReadUpload,
 } from './concurrency.js';
 
 describe('mergeReextractRow', () => {
@@ -126,6 +129,30 @@ describe('uniqueUploadFilename', () => {
   it('includes a uuid so parallel uploads at the same millisecond stay unique', () => {
     const names = new Set(Array.from({ length: 20 }, () => uniqueUploadFilename('Aviz.pdf', { now: 1 })));
     expect(names.size).toBe(20);
+  });
+
+  it('prefixes filenames with the company id', () => {
+    const cid = '550e8400-e29b-41d4-a716-446655440000';
+    const name = uniqueUploadFilename('Aviz.pdf', { now: 1, id: 'aaa', companyId: cid });
+    expect(name).toBe(`c-${cid}-1-aaa-Aviz.pdf`);
+    expect(filenameOwnedByCompany(name, cid)).toBe(true);
+    expect(filenameOwnedByCompany(name, '11111111-1111-1111-1111-111111111111')).toBe(false);
+    expect(filenameHasCompanyPrefix(name)).toBe(true);
+    expect(filenameHasCompanyPrefix('1-aaa-Aviz.pdf')).toBe(false);
+  });
+
+  it('allows prefixed files for the owner without a DB lookup', async () => {
+    const cid = '550e8400-e29b-41d4-a716-446655440000';
+    const name = uniqueUploadFilename('Aviz.pdf', { now: 1, id: 'aaa', companyId: cid });
+    await expect(canReadUpload(async () => { throw new Error('db'); }, cid, name)).resolves.toBe(true);
+    await expect(canReadUpload(async () => ({ rows: [] }), '11111111-1111-1111-1111-111111111111', name)).resolves.toBe(false);
+  });
+
+  it('checks the database for legacy unprefixed files', async () => {
+    const miss = async () => ({ rows: [] });
+    const hit = async () => ({ rows: [{}] });
+    await expect(canReadUpload(miss, 'co-id', 'old.pdf')).resolves.toBe(false);
+    await expect(canReadUpload(hit, 'co-id', 'old.pdf')).resolves.toBe(true);
   });
 });
 

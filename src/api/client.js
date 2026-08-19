@@ -361,7 +361,7 @@ export const api = {
       const blob = await res.blob();
       const disp = res.headers.get('Content-Disposition') || '';
       const match = disp.match(/filename="([^"]+)"/);
-      return { blob, filename: match?.[1] || 'anexa.zip' };
+      return { blob, filename: match?.[1] || 'anexa.zip', missing: Number(res.headers.get('X-Aviz-Missing-Files') || 0) };
     },
     tripSuggestions({ date, plate } = {}) {
       const params = new URLSearchParams();

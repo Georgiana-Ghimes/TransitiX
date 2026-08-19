@@ -14,8 +14,8 @@ import { uniqueUploadFilename } from '../lib/concurrency.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
-  filename: (_req, file, cb) => {
-    cb(null, uniqueUploadFilename(file.originalname));
+  filename: (req, file, cb) => {
+    cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id }));
   },
 });
 

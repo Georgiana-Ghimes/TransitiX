@@ -8,6 +8,7 @@ import {
   AlertTriangle, Loader2, Copy, ExternalLink,
 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { formatRon, tripMargin } from '@/lib/tripOps';
 import { withAccessToken } from '@/lib/uploadUrl';
 
 export default function TripDetail() {
@@ -265,6 +266,28 @@ export default function TripDetail() {
           <p className="text-sm font-medium text-slate-700">{formatDate(trip.loading_date)}</p>
         </div>
       </div>
+
+      {(trip.uit_code || trip.agreed_revenue != null || trip.estimated_cost != null) && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
+            <p className="text-xs text-slate-400">Cod UIT (e-Transport)</p>
+            <p className="text-sm font-medium text-slate-800 mt-1 break-all">{trip.uit_code || '—'}</p>
+            <p className="text-xs text-slate-400 mt-1">Introdus manual — nu e generat de ANAF</p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
+            <p className="text-xs text-slate-400">Venit / cost</p>
+            <p className="text-sm font-medium text-slate-800 mt-1">
+              {formatRon(trip.agreed_revenue)} / {formatRon(trip.estimated_cost)}
+            </p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
+            <p className="text-xs text-slate-400">Marjă estimată</p>
+            <p className="text-sm font-medium text-slate-800 mt-1">
+              {formatRon(tripMargin(trip.agreed_revenue, trip.estimated_cost))}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* OCR / Document */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">

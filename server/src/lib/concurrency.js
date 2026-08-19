@@ -71,18 +71,58 @@ export function nextWarehouseQty(current, delta) {
   return Math.max(0, n + d);
 }
 
-export function uniqueUploadFilename(originalname, { now = Date.now(), id } = {}) {
+const COMPANY_PREFIX_RE = /^c-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}-/;
+
+export function uniqueUploadFilename(originalname, { now = Date.now(), id, companyId } = {}) {
   const safe = String(originalname || 'file').replace(/[^a-zA-Z0-9._-]/g, '_');
   const ext = path.extname(safe).slice(0, 12);
   const base = path.basename(safe, path.extname(safe)).slice(0, 40) || 'file';
   const rand = id || crypto.randomUUID();
-  return `${now}-${rand}-${base}${ext}`;
+  const rest = `${now}-${rand}-${base}${ext}`;
+  const cid = String(companyId || '').trim();
+  if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cid)) {
+    return `c-${cid}-${rest}`;
+  }
+  return rest;
 }
 
 export function safeUploadBasename(filename) {
   const name = path.basename(String(filename || ''));
   if (!name || name === '.' || name === '..' || name.includes('..')) return null;
   return name;
+}
+
+export function filenameHasCompanyPrefix(filename) {
+  const name = safeUploadBasename(filename) || '';
+  return COMPANY_PREFIX_RE.test(name);
+}
+
+export function filenameOwnedByCompany(filename, companyId) {
+  const name = safeUploadBasename(filename);
+  const cid = String(companyId || '').trim();
+  if (!name || !cid) return false;
+  return name.startsWith(`c-${cid}-`);
+}
+
+/** Tenant-scoped read: prefixed files must match company; legacy files need a DB row. */
+export async function canReadUpload(queryFn, companyId, filename) {
+  const name = safeUploadBasename(filename);
+  if (!name || !companyId) return false;
+  if (filenameOwnedByCompany(name, companyId)) return true;
+  if (filenameHasCompanyPrefix(name)) return false;
+  const needle = `%${name}`;
+  const result = await queryFn(
+    `SELECT 1 FROM aviz_documents WHERE company_id = $1 AND file_url LIKE $2
+     UNION ALL
+     SELECT 1 FROM trip_documents WHERE company_id = $1 AND (original_image_url LIKE $2 OR final_pdf_url LIKE $2)
+     UNION ALL
+     SELECT 1 FROM client_confirmations WHERE company_id = $1 AND damage_image_url LIKE $2
+     UNION ALL
+     SELECT 1 FROM companies WHERE id = $1 AND logo_url LIKE $2
+     LIMIT 1`,
+    [companyId, needle]
+  );
+  return Boolean(result.rows?.[0]);
 }
 
 /** Driver-accessible entity actions. Everything else is office-only. */

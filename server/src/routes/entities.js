@@ -15,9 +15,12 @@ import {
 import {
   DRIVER_TRIP_WRITABLE,
   entityAllowedForRole,
+  isPgUniqueViolation,
   nextAvizStatusOnSave,
 } from '../lib/concurrency.js';
 import { tpoExistsForOther } from '../lib/avizQuery.js';
+import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
+import { normalizeUitCode } from '../lib/tripOps.js';
 
 const router = Router();
 
@@ -52,6 +55,17 @@ async function insertEntity(client, cfg, data) {
   return result.rows[0];
 }
 
+async function applyTripUit(data) {
+  if (!Object.prototype.hasOwnProperty.call(data, 'uit_code')) return;
+  const parsed = normalizeUitCode(data.uit_code);
+  if (parsed.error) {
+    const err = new Error(parsed.error);
+    err.status = 400;
+    throw err;
+  }
+  data.uit_code = parsed.value;
+}
+
 async function insertWithGpsGuard(client, companyId, entity, item) {
   const cfg = ENTITY_MAP[entity];
   const data = pickWritable(cfg, item);
@@ -63,6 +77,15 @@ async function insertWithGpsGuard(client, companyId, entity, item) {
       [companyId, data.vehicle_id]
     );
   }
+  if (entity === 'Invoice') {
+    data.series = normalizeInvoiceSeries(data.series);
+    if (data.number == null || data.number === '') {
+      data.number = await allocateInvoiceNumber(client, companyId, data.series);
+    } else {
+      data.number = String(data.number).trim();
+    }
+  }
+  if (entity === 'Trip') await applyTripUit(data);
   return insertEntity(client, cfg, data);
 }
 
@@ -231,6 +254,10 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
 
     res.status(201).json(row);
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ message: err.message });
+    if (isPgUniqueViolation(err)) {
+      return res.status(409).json({ message: 'Înregistrare duplicată' });
+    }
     console.error(err);
     res.status(500).json({ message: err.message || 'Create failed' });
   }
@@ -242,6 +269,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
 
     const data = writableForRequest(req, cfg);
+    if (req.params.entity === 'Trip') await applyTripUit(data);
     data.updated_at = new Date().toISOString();
     const keys = Object.keys(data);
     if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
@@ -326,6 +354,10 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
 
     res.json(row);
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ message: err.message });
+    if (isPgUniqueViolation(err)) {
+      return res.status(409).json({ message: 'Înregistrare duplicată' });
+    }
     console.error(err);
     res.status(500).json({ message: err.message || 'Update failed' });
   }
