@@ -1,4 +1,6 @@
-export const APP_VERSION = __APP_VERSION__;
+import pkg from '../../package.json';
+
+export const APP_VERSION = pkg.version;
 
 export function formatAppVersion(version = APP_VERSION) {
   const raw = String(version || '').trim();

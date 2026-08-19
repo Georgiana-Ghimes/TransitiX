@@ -18,8 +18,13 @@ import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
 import { applyBearerFromQuery, safeUploadBasename } from './lib/concurrency.js';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
+
+const APP_VERSION = JSON.parse(
+  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')
+).version;
 
 if (!process.env.JWT_SECRET) {
   console.error('JWT_SECRET is required. Copy server/.env.example to server/.env');
@@ -60,10 +65,10 @@ app.get('/uploads/:filename', bearerFromQuery, authRequired, (req, res) => {
 app.get('/api/health', async (_req, res) => {
   try {
     await query('SELECT 1');
-    res.json({ ok: true, service: 'transitix-api', db: true });
+    res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION });
   } catch (err) {
     console.error(err);
-    res.status(503).json({ ok: false, service: 'transitix-api', db: false });
+    res.status(503).json({ ok: false, service: 'transitix-api', db: false, version: APP_VERSION });
   }
 });
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
 import { isActiveTripStatus } from '@/lib/utils';
-import { Mail, Phone, LogOut, Truck, CheckCircle, Clock, Bell } from 'lucide-react';
+import { formatAppVersion } from '@/lib/appVersion';
 
 export default function DriverProfile({ driver: driverProp, trips: tripsProp }) {
   const [user, setUser] = useState(null);
@@ -108,7 +108,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
         <LogOut className="w-5 h-5" /> Deconectare
       </button>
 
-      <p className="text-center text-xs text-slate-400 pt-2">Transitix Driver App v1.0</p>
+      <p className="text-center text-xs text-slate-400 pt-2">Transitix Driver App {formatAppVersion()}</p>
     </div>
   );
 }

@@ -7,6 +7,12 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-08-19
+
+### Changed
+
+- Office sidebar, login, driver app footer, tab title, and `/api/health` read the version from `package.json`, so a stale Vite inject can no longer keep showing an old number
+
 ## [1.7.0] - 2026-08-19
 
 ### Added

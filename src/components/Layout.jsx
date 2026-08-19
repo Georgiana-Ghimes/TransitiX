@@ -200,7 +200,7 @@ export default function Layout() {
           <p
             title={`Transitix ${formatAppVersion()}`}
             className={cn(
-              'text-white/40 tabular-nums select-none',
+              'text-white/70 tabular-nums select-none',
               showIconsOnly ? 'text-center text-[10px] pt-1' : 'px-3 pt-2 text-xs'
             )}
           >
