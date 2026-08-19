@@ -23,6 +23,10 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 - Reguli API Avize: ciornă doar din `confirmed`, lock Anexa Factura RAI la delete/update
 
+### Fixed
+
+- Login/register pornesc din nou: middleware `rateLimit` reexportat lângă `hitRateLimit`
+
 ## [1.8.0] - 2026-08-19
 
 ### Added
