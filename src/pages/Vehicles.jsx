@@ -20,7 +20,10 @@ export default function Vehicles() {
 
   const loadVehicles = async () => {
     try { setVehicles(await api.entities.Vehicle.list()); }
-    catch (e) { console.error(e); }
+    catch (e) {
+      console.error(e);
+      toast({ title: 'Nu am putut încărca flota', description: e?.message || 'Reîncearcă.' });
+    }
     finally { setLoading(false); }
   };
 

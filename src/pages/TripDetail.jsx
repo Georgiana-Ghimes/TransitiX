@@ -22,6 +22,7 @@ export default function TripDetail() {
   const [confirmation, setConfirmation] = useState(null);
   const [clientLink, setClientLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [tripAvize, setTripAvize] = useState([]);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -38,8 +39,11 @@ export default function TripDetail() {
         setConfirmation(conf);
         setClientLink(`${window.location.origin}/confirm/${conf.token}`);
       }
+      const linked = await api.entities.AvizDocument.filter({ trip_id: id }).catch(() => []);
+      setTripAvize(Array.isArray(linked) ? linked : []);
     } catch (e) {
       console.error(e);
+      notifyError('Cursa nu s-a încărcat', e);
     } finally {
       setLoading(false);
     }
@@ -286,6 +290,22 @@ export default function TripDetail() {
               {formatRon(tripMargin(trip.agreed_revenue, trip.estimated_cost))}
             </p>
           </div>
+        </div>
+      )}
+
+      {tripAvize.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-[#0A2B4E] mb-3">Avize legate</h3>
+          <ul className="space-y-2 text-sm">
+            {tripAvize.map((aviz) => (
+              <li key={aviz.id} className="flex items-center justify-between gap-3">
+                <Link to="/avize" className="text-[#1D4E89] hover:underline truncate">
+                  {aviz.numar_tpo || aviz.original_filename || 'Aviz'}
+                </Link>
+                <span className="text-xs text-slate-500 shrink-0">{aviz.status || ''}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

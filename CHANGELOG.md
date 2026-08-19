@@ -7,6 +7,22 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-08-19
+
+### Added
+
+- Rapoarte Avize arată cine a exportat (`user_id` / nume / email) pe istoricul de anexă
+- Avize legate pe detaliul cursei; toast când lista de flotă / șoferi / clienți / documente / dashboard eșuează
+- Pagină Avize spartă în componente (`src/pages/avize/`) fără schimbare de flux
+
+### Security
+
+- Limită 60 upload-uri / minut / firmă pe `POST /api/integrations/upload`
+
+### Tests
+
+- Reguli API Avize: ciornă doar din `confirmed`, lock Anexa Factura RAI la delete/update
+
 ## [1.8.0] - 2026-08-19
 
 ### Added

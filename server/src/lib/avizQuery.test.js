@@ -6,6 +6,9 @@ import {
   flagDuplicateTpos,
   isLockedRaiTemplate,
   mapProviderToSource,
+  pickConfirmedAvize,
+  templateDeleteDecision,
+  templateUpdateDecision,
   uniqueZipEntry,
 } from './avizQuery.js';
 
@@ -58,5 +61,22 @@ describe('avizQuery', () => {
     const row = { valoare_tpo: 80, km_parcursi: 10, tarif_km: 3 };
     expect(annexDraftAmount(row, 'tpo')).toBe(80);
     expect(annexDraftAmount(row, 'km_tarif')).toBe(30);
+  });
+
+  it('only drafts invoices from confirmed avize', () => {
+    expect(pickConfirmedAvize([
+      { id: '1', status: 'extracted' },
+      { id: '2', status: 'confirmed' },
+    ]).map((r) => r.id)).toEqual(['2']);
+  });
+
+  it('blocks deleting or overwriting locked Anexa Factura RAI', () => {
+    const locked = { is_default: true, name: 'Anexa Factura RAI' };
+    expect(templateDeleteDecision({ count: 3, existing: locked })).toBe('locked_rai');
+    expect(templateDeleteDecision({ count: 1, existing: { name: 'Altul' } })).toBe('keep_one');
+    expect(templateDeleteDecision({ count: 2, existing: null })).toBe('not_found');
+    expect(templateDeleteDecision({ count: 2, existing: { name: 'Altul' } })).toBe('ok');
+    expect(templateUpdateDecision(locked)).toBe('locked_rai');
+    expect(templateUpdateDecision({ name: 'Custom' })).toBe('ok');
   });
 });

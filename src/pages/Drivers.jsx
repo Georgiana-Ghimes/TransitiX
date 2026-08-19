@@ -20,7 +20,10 @@ export default function Drivers() {
 
   const loadDrivers = async () => {
     try { setDrivers(await api.entities.Driver.list()); }
-    catch (e) { console.error(e); }
+    catch (e) {
+      console.error(e);
+      notifyError('Nu am putut încărca șoferii', e);
+    }
     finally { setLoading(false); }
   };
 

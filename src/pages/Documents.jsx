@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { AlertTriangle, FileText, Truck, Users } from 'lucide-react';
+import { notifyError } from '@/lib/notify';
 
 export default function Documents() {
   const [expiring, setExpiring] = useState([]);
@@ -55,7 +56,10 @@ export default function Documents() {
 
       list.sort((a, b) => new Date(a.date) - new Date(b.date));
       setExpiring(list);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      notifyError('Nu am putut încărca documentele', e);
+    }
     finally { setLoading(false); }
   };
 

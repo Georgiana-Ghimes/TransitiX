@@ -426,7 +426,8 @@ CREATE TABLE IF NOT EXISTS aviz_export_log (
   filename TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_aviz_export_log_company ON aviz_export_log(company_id, created_at DESC);
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_aviz_export_log_user ON aviz_export_log(company_id, user_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uniq ON users (LOWER(email));
 

@@ -11,6 +11,7 @@ import {
   visionConfigured,
 } from '../lib/cmrOcr.js';
 import { uniqueUploadFilename } from '../lib/concurrency.js';
+import { hitRateLimit } from '../lib/rateLimit.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -31,8 +32,13 @@ const upload = multer({
 });
 
 const router = Router();
+const uploadHits = new Map();
 
 router.post('/upload', authRequired, (req, res) => {
+  const limit = hitRateLimit(uploadHits, req.user.company_id, { max: 60, windowMs: 60_000 });
+  if (!limit.ok) {
+    return res.status(429).json({ message: 'Prea multe upload-uri. Reîncearcă într-un minut.' });
+  }
   upload.single('file')(req, res, (err) => {
     if (err) {
       console.error('[upload]', err);

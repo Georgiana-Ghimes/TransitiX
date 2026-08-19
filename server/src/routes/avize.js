@@ -30,8 +30,10 @@ import {
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
-  isLockedRaiTemplate,
   mapProviderToSource,
+  pickConfirmedAvize,
+  templateDeleteDecision,
+  templateUpdateDecision,
   tpoExistsForOther,
   uniqueZipEntry,
 } from '../lib/avizQuery.js';
@@ -134,11 +136,11 @@ function decorateAviz(row) {
   };
 }
 
-async function logAvizExport(companyId, { kind, templateId, avizIds, filename }) {
+async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename }) {
   await query(
-    `INSERT INTO aviz_export_log (company_id, kind, template_id, aviz_ids, filename)
-     VALUES ($1, $2, $3, $4::uuid[], $5)`,
-    [companyId, kind || 'xlsx', templateId || null, avizIds || [], filename || null]
+    `INSERT INTO aviz_export_log (company_id, user_id, kind, template_id, aviz_ids, filename)
+     VALUES ($1, $2, $3, $4, $5::uuid[], $6)`,
+    [companyId, userId || null, kind || 'xlsx', templateId || null, avizIds || [], filename || null]
   );
 }
 
@@ -299,7 +301,7 @@ router.put('/templates/:id', async (req, res) => {
         [req.params.id, req.user.company_id]
       );
       if (!existing.rows[0]) return null;
-      if (isLockedRaiTemplate(existing.rows[0])) {
+      if (templateUpdateDecision(existing.rows[0]) === 'locked_rai') {
         const err = new Error('Anexa Factura RAI nu poate fi suprascrisă. Duplică-l ca șablon nou.');
         err.status = 400;
         throw err;
@@ -335,7 +337,11 @@ router.delete('/templates/:id', async (req, res) => {
         `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
       );
-      if (isLockedRaiTemplate(existing.rows[0])) return { error: 'locked_rai' };
+      const decision = templateDeleteDecision({
+        count: count.rows[0].c,
+        existing: existing.rows[0],
+      });
+      if (decision !== 'ok') return { error: decision };
       const result = await client.query(
         `DELETE FROM report_templates WHERE id = $1 AND company_id = $2 RETURNING id`,
         [req.params.id, req.user.company_id]
@@ -488,7 +494,7 @@ router.post('/export', async (req, res) => {
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
     const { buffer, filename } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
-    await logAvizExport(req.user.company_id, {
+    await logAvizExport(req.user.company_id, req.user.id, {
       kind: 'xlsx',
       templateId,
       avizIds,
@@ -582,7 +588,7 @@ router.post('/email', async (req, res) => {
       text: `Anexa cu ${avizIds.length} aviz(e) este atașată.`,
       attachments: [{ filename, content: buffer }],
     });
-    await logAvizExport(req.user.company_id, {
+    await logAvizExport(req.user.company_id, req.user.id, {
       kind: sent.stub ? 'email-stub' : 'email',
       templateId,
       avizIds,
@@ -628,7 +634,7 @@ router.post('/zip', async (req, res) => {
     }
     const zip = zipStore(files);
     const zipName = filename.replace(/\.xlsx$/i, '.zip');
-    await logAvizExport(req.user.company_id, {
+    await logAvizExport(req.user.company_id, req.user.id, {
       kind: 'zip',
       templateId,
       avizIds,
@@ -683,7 +689,7 @@ router.post('/draft-invoice', async (req, res) => {
     const rule = req.body?.amount_rule === 'km_tarif' ? 'km_tarif' : 'tpo';
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
     const avize = await loadAvizeByIds(req.user.company_id, avizIds);
-    const confirmed = avize.filter((row) => row.status === 'confirmed');
+    const confirmed = pickConfirmedAvize(avize);
     if (confirmed.length === 0) {
       return res.status(400).json({ message: 'Selectează avize confirmate pentru ciornă' });
     }
@@ -780,10 +786,12 @@ router.get('/reports', async (req, res) => {
       params
     );
     const exports = await query(
-      `SELECT id, kind, filename, created_at, cardinality(aviz_ids) AS aviz_count
-       FROM aviz_export_log
-       WHERE company_id = $1
-       ORDER BY created_at DESC
+      `SELECT l.id, l.kind, l.filename, l.created_at, cardinality(l.aviz_ids) AS aviz_count,
+              l.user_id, u.email AS user_email, u.name AS user_name
+       FROM aviz_export_log l
+       LEFT JOIN users u ON u.id = l.user_id
+       WHERE l.company_id = $1
+       ORDER BY l.created_at DESC
        LIMIT 30`,
       [req.user.company_id]
     );

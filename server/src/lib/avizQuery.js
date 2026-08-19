@@ -48,6 +48,23 @@ export function capAvizIds(ids) {
   return [...new Set((Array.isArray(ids) ? ids : []).filter(Boolean))].slice(0, AVIZ_ID_CAP);
 }
 
+export function pickConfirmedAvize(rows) {
+  return (Array.isArray(rows) ? rows : []).filter((row) => row.status === 'confirmed');
+}
+
+export function templateDeleteDecision({ count, existing }) {
+  if (Number(count) <= 1) return 'keep_one';
+  if (!existing) return 'not_found';
+  if (isLockedRaiTemplate(existing)) return 'locked_rai';
+  return 'ok';
+}
+
+export function templateUpdateDecision(existing) {
+  if (!existing) return 'not_found';
+  if (isLockedRaiTemplate(existing)) return 'locked_rai';
+  return 'ok';
+}
+
 export function uniqueZipEntry(name, used) {
   const raw = String(name || 'file').replace(/\\/g, '/');
   const base = raw.replace(/^.*\//, '') || 'file';

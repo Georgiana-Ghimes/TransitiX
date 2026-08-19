@@ -5,6 +5,7 @@ import KpiCard from '@/components/KpiCard';
 import StatusBadge from '@/components/StatusBadge';
 import { Truck, Users, Route, AlertTriangle, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { notifyError } from '@/lib/notify';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ vehicles: 0, drivers: 0, activeTrips: 0, alerts: 0 });
@@ -86,6 +87,7 @@ export default function Dashboard() {
       );
     } catch (e) {
       console.error(e);
+      notifyError('Dashboard-ul nu s-a încărcat', e);
     } finally {
       setLoading(false);
     }

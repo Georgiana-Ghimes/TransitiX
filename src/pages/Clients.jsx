@@ -19,7 +19,10 @@ export default function Clients() {
 
   const loadClients = async () => {
     try { setClients(await api.entities.Client.list()); }
-    catch (e) { console.error(e); }
+    catch (e) {
+      console.error(e);
+      notifyError('Nu am putut încărca clienții', e);
+    }
     finally { setLoading(false); }
   };
 
