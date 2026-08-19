@@ -1,4 +1,5 @@
 import React from "react";
+import { formatAppVersion } from "@/lib/appVersion";
 
 export default function AuthLayout({ icon: Icon, title, subtitle, footer = null, children }) {
   return (
@@ -17,6 +18,9 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer = null,
         {footer && (
           <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
         )}
+        <p className="text-center text-xs text-muted-foreground/80 mt-4 tabular-nums" title="Versiune aplicație">
+          {formatAppVersion()}
+        </p>
       </div>
     </div>
   );

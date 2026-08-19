@@ -1,0 +1,9 @@
+#!/bin/sh
+# Auto-bump package.json versions after each commit (semver from commit message).
+# Installed into .git/hooks by `npm run prepare` / `node scripts/install-git-hooks.js`.
+root="$(git rev-parse --show-toplevel)"
+cd "$root" || exit 0
+if [ ! -f scripts/semver-post-commit.js ]; then
+  exit 0
+fi
+node scripts/semver-post-commit.js

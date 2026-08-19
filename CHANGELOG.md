@@ -13,6 +13,13 @@ Versioning follows [SemVer](https://semver.org/). Root and `server/package.json`
 - CI runs lint, unit tests, and frontend build on **every push and pull request** (not only `main`)
 - Unit test that Editează form fields stay aligned with Anexa XLSX sources
 
+## [1.3.2] - 2026-08-19
+
+### Added
+
+- App version (`vX.Y.Z`) in the office sidebar footer and on auth pages (login / register / password reset)
+- Git `post-commit` hook bumps aligned `package.json` versions from the commit message (`feat:` minor, breaking major, otherwise patch). Skip with `[skip version]`
+
 ## [1.3.1] - 2026-08-19
 
 ### Security

@@ -8,6 +8,7 @@ import {
   ChevronsLeft, ChevronsRight, ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatAppVersion } from '@/lib/appVersion';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
 import NotificationBell from '@/components/NotificationBell';
 import GlobalSearch from '@/components/GlobalSearch';
@@ -196,6 +197,15 @@ export default function Layout() {
             <UserCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Setări</span>}
           </Link>
+          <p
+            title={`Transitix ${formatAppVersion()}`}
+            className={cn(
+              'text-white/40 tabular-nums select-none',
+              showIconsOnly ? 'text-center text-[10px] pt-1' : 'px-3 pt-2 text-xs'
+            )}
+          >
+            {formatAppVersion()}
+          </p>
         </div>
       </aside>
 
