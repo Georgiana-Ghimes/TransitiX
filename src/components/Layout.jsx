@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
-  ChevronsLeft, ChevronsRight, ClipboardList,
+  ChevronsLeft, ChevronsRight, ClipboardList, HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
+import {
+  OFFICE_TOUR_STEPS,
+  clampTourStep,
+  hasSeenOfficeTour,
+  markOfficeTourSeen,
+  tourNavHighlightPath,
+  tourMobileHighlightMenuButton,
+} from '@/lib/officeTour';
 import NotificationBell from '@/components/NotificationBell';
 import GlobalSearch from '@/components/GlobalSearch';
+import OfficeTour from '@/components/OfficeTour';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -31,6 +40,8 @@ const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
 const SIDEBAR_EXPANDED = 256;
 const SIDEBAR_RAIL = 72;
 
+const TOUR_NAV_HIGHLIGHT = 'ring-2 ring-[#F5A623] ring-offset-2 ring-offset-[#0A2B4E] bg-white/10 text-white relative z-10';
+
 function useDesktop() {
   const [desktop, setDesktop] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true
@@ -47,8 +58,15 @@ function useDesktop() {
   return desktop;
 }
 
+function tourAtPath(pathname, tourPath) {
+  if (!tourPath) return false;
+  if (tourPath === '/') return pathname === '/';
+  return pathname === tourPath || pathname.startsWith(`${tourPath}/`);
+}
+
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,6 +78,84 @@ export default function Layout() {
       return false;
     }
   });
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
+  const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
+  const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
+  const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
+
+  useEffect(() => {
+    if (!hasSeenOfficeTour()) {
+      setTourStep(0);
+      setTourOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!tourOpen) return;
+    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    if (current.path && !tourAtPath(location.pathname, current.path)) {
+      navigate(current.path);
+    }
+  }, [tourOpen, tourStep, location.pathname, navigate]);
+
+  // Desktop: open drawer for nav steps; mobile keeps drawer closed (sheet explains ☰).
+  useEffect(() => {
+    if (!tourOpen || !isDesktop) return;
+    if (tourHighlightDashboard) setMobileOpen(false);
+    else if (tourNavPath || tourHighlightGhid) setMobileOpen(true);
+  }, [tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
+
+  useEffect(() => {
+    if (!tourOpen || isDesktop) return;
+    setMobileOpen(false);
+  }, [tourOpen, tourStep, isDesktop]);
+
+  // Desktop-only spotlight on sidebar nav or dashboard content.
+  useEffect(() => {
+    if (!tourOpen || !isDesktop) return;
+    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    const id = requestAnimationFrame(() => {
+      document.querySelectorAll('[data-tour-dashboard]').forEach((el) => {
+        el.classList.toggle('tour-content-highlight', current.highlightTarget === 'dashboard');
+      });
+      if (current.highlightTarget === 'ghid') {
+        document.querySelector('[data-tour-ghid]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } else if (current.highlightTarget === 'dashboard') {
+        document.querySelector('[data-tour-dashboard]')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      } else if (tourNavHighlightPath(current)) {
+        document.querySelector(`[data-tour-nav="${current.path}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+    return () => {
+      cancelAnimationFrame(id);
+      document.querySelectorAll('[data-tour-dashboard]').forEach((el) => {
+        el.classList.remove('tour-content-highlight');
+      });
+    };
+  }, [tourOpen, tourStep, isDesktop]);
+
+  // Mobile: ring the ☰ button when the step refers to the menu.
+  useEffect(() => {
+    if (!tourOpen || isDesktop) return;
+    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    const btn = document.querySelector('[data-tour-mobile-menu]');
+    if (!btn) return;
+    btn.classList.toggle('tour-mobile-menu-highlight', tourMobileHighlightMenuButton(current));
+    return () => btn.classList.remove('tour-mobile-menu-highlight');
+  }, [tourOpen, tourStep, isDesktop]);
+
+  const closeTour = () => {
+    markOfficeTourSeen();
+    setTourOpen(false);
+  };
+
+  const openTour = () => {
+    setTourStep(0);
+    setTourOpen(true);
+  };
 
   useEffect(() => {
     try {
@@ -78,13 +174,11 @@ export default function Layout() {
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const roleLabel = { admin: 'Admin', dispatcher: 'Dispecer', driver: 'Șofer', finance: 'Finance' }[user?.role] || user?.role || '';
 
-  // Icon-only rail only on desktop. Mobile drawer always shows labels.
   const showIconsOnly = isDesktop && collapsed;
   const sidebarWidth = isDesktop
     ? (collapsed ? SIDEBAR_RAIL : SIDEBAR_EXPANDED)
     : SIDEBAR_EXPANDED;
 
-  // Drivers only get the driver app — no office sidebar / notifications.
   if (isDriverRole(user)) {
     if (location.pathname !== '/driver-app') {
       return <Navigate to={homePathForRole(user)} replace />;
@@ -98,24 +192,26 @@ export default function Layout() {
     );
   }
 
-  // Office users should not access the driver app.
   if (location.pathname === '/driver-app' || location.pathname.startsWith('/driver-app/')) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex">
-      {/* Mobile overlay */}
-      {!isDesktop && mobileOpen && (
+      {!isDesktop && mobileOpen && !tourOpen && (
         <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar — desktop stays visible; only width changes on collapse */}
+      {!isDesktop && tourOpen && mobileOpen && (
+        <div className="fixed inset-0 bg-black/40 z-[114]" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+      )}
+
       <aside
         style={{ width: sidebarWidth }}
         className={cn(
-          'z-40 h-screen bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
+          'h-screen bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
           'transition-[width,transform] duration-300 ease-in-out',
+          tourOpen ? 'z-50' : 'z-40',
           isDesktop
             ? 'sticky top-0 translate-x-0'
             : cn(
@@ -133,7 +229,7 @@ export default function Layout() {
           <Link
             to="/"
             title="Dashboard"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center min-w-0',
               showIconsOnly ? 'justify-center' : 'gap-2.5 flex-1'
@@ -161,18 +257,21 @@ export default function Layout() {
             {NAV.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
+              const highlighted = isDesktop && tourOpen && tourNavPath === item.path;
               return (
                 <li key={item.path}>
                   <Link
                     to={item.path}
+                    data-tour-nav={item.path}
                     title={item.demo ? `${item.label} (demo)` : item.label}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => { if (!tourOpen) setMobileOpen(false); }}
                     className={cn(
                       'flex items-center rounded-lg text-sm font-medium transition-colors',
                       showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
                       active
                         ? 'bg-[#1D4E89] text-white'
-                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                        : 'text-white/70 hover:text-white hover:bg-white/5',
+                      highlighted && TOUR_NAV_HIGHLIGHT
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
@@ -188,10 +287,24 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
+          <button
+            type="button"
+            data-tour-ghid
+            title="Ghid platformă"
+            onClick={openTour}
+            className={cn(
+              'flex items-center w-full rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
+              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+              tourHighlightGhid && isDesktop && TOUR_NAV_HIGHLIGHT
+            )}
+          >
+            <HelpCircle className="w-5 h-5 shrink-0" />
+            {!showIconsOnly && <span>Ghid</span>}
+          </button>
           <Link
             to="/settings"
             title="Setări"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
               showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5'
@@ -212,12 +325,24 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        {tourOpen && isDesktop && (
+          <div
+            className="absolute inset-0 z-30 bg-black/40 pointer-events-auto"
+            aria-hidden="true"
+            onClick={closeTour}
+          />
+        )}
+
+        <header className={cn(
+          'sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6',
+          !isDesktop && tourOpen && 'z-[118]'
+        )}>
           <div className="flex items-center justify-start min-w-0">
             {!isDesktop ? (
               <button
                 type="button"
+                data-tour-mobile-menu
                 className="p-2 -ml-1 rounded-lg hover:bg-slate-100"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Deschide meniul"
@@ -293,6 +418,15 @@ export default function Layout() {
         <main className="flex-1 p-3 sm:p-4 lg:p-6 min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
+
+        {tourOpen && (
+          <OfficeTour
+            isDesktop={isDesktop}
+            step={tourStep}
+            onStepChange={setTourStep}
+            onClose={closeTour}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,22 @@
 import React from 'react';
 import { inputCls, labelCls } from './avizeUi';
 
-export default function AvizFilterBar({ filters, setFilters, qInput, setQInput, onPreset, refreshing }) {
+export default function AvizFilterBar({
+  filters,
+  setFilters,
+  qInput,
+  setQInput,
+  onPreset,
+  onReset,
+  activePreset,
+  refreshing,
+}) {
+  const presetBtnClass = (id) => {
+    const isActive = Boolean(activePreset) && activePreset === id;
+    if (isActive) return 'px-2.5 py-1 text-xs rounded-full border border-[#0A2B4E] bg-[#0A2B4E] text-white';
+    return 'px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700';
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 bg-white rounded-xl border border-slate-200/80 p-3">
       <div className="flex flex-wrap gap-1 lg:col-span-6">
@@ -10,14 +25,14 @@ export default function AvizFilterBar({ filters, setFilters, qInput, setQInput, 
             key={id}
             type="button"
             onClick={() => onPreset(id)}
-            className="px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700"
+            className={presetBtnClass(id)}
           >
             {label}
           </button>
         ))}
         <button
           type="button"
-          onClick={() => { setFilters({ from: '', to: '', status: '', q: '' }); setQInput(''); }}
+          onClick={() => onReset?.()}
           className="px-2.5 py-1 text-xs rounded-full text-slate-500 hover:underline"
         >
           Resetează

@@ -52,6 +52,7 @@ Primary actions are **buttons with icon + label**, not icon-only, so phone users
 
 - **&lt; md:** stacked cards; keep Editează / Confirmă / Șterge visible.
 - **md+:** tables with `overflow-x-auto` and `min-w-*` / `table-fixed` + `truncate` + `title` tooltip for long Auto/Rută.
+- **Avize list:** cards until `lg`; table columns all have explicit widths (`min-w-[82rem]`) so Rută/Marfă cannot collapse on 13" laptops.
 - Toolbar: `flex-wrap items-start`; controls share **height 40px (`h-10`)** so a hint under a select does not lift the dropdown.
 
 ## Density

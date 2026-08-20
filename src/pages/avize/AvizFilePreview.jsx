@@ -45,10 +45,11 @@ export default function AvizFilePreview({ fileUrl }) {
     return <p className="text-xs text-slate-500 p-4">Se încarcă preview…</p>;
   }
   if (kind === 'pdf') {
-    return <iframe title="Previzualizare aviz" className="w-full h-[320px]" src={src} />;
+    // Let the preview fill most of the modal area on desktop (the modal itself is scrollable).
+    return <iframe title="Previzualizare aviz" className="w-full border-0 bg-white min-h-[320px] h-[42vh] sm:h-[48vh] lg:h-[74vh]" src={src} />;
   }
   if (kind === 'image') {
-    return <img alt="Aviz" className="w-full max-h-[320px] object-contain" src={src} />;
+    return <img alt="Aviz" className="w-full min-h-[320px] h-[42vh] sm:h-[48vh] lg:h-[74vh] bg-white object-contain" src={src} />;
   }
   return <p className="text-xs text-slate-500 p-4">Nu există preview pentru acest fișier.</p>;
 }
