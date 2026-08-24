@@ -32,7 +32,7 @@ Transitix is a full-stack TMS (Transport Management System) app.
 Until a better permanent location is chosen, document **every meaningful change locally** before considering work done.
 
 1. **`CHANGELOG.md`** — Keep a Changelog format. Put work under `[Unreleased]` while in progress; move to a dated `## [x.y.z] - YYYY-MM-DD` section when closing an increment.
-2. **`docs/changes/`** — Add a short note per increment (e.g. `docs/changes/1.0.1-local-bootstrap.md`) describing what changed and how to verify.
+2. **`docs/changes/`** — Add a short note per increment (e.g. `docs/changes/1.0.1-local-bootstrap.md`) describing what changed and how to verify. The whole `docs/` tree is gitignored (local only).
 3. **Semver** — Keep root `package.json` and `server/package.json` versions aligned. A `post-commit` hook (`scripts/semver-post-commit.js`, installed via `npm run prepare`) bumps both from the commit message: `feat:` → minor, `feat!:` / `BREAKING CHANGE` → major, otherwise patch. Add `[skip version]` to skip. The UI reads this version (`src/lib/appVersion.js`).
  - **patch** — fixes, docs, tooling
  - **minor** — user-visible features

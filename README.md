@@ -124,4 +124,4 @@ Serves the packaged app at `http://localhost:8082` (API + web + DB, seed on star
 
 ## Docs & versioning
 
-See [AGENTS.md](AGENTS.md), [CHANGELOG.md](CHANGELOG.md), [docs/changes/](docs/changes/), and the ClickUp import pack in [docs/clickup/](docs/clickup/). Root and `server/package.json` versions stay aligned.
+See [AGENTS.md](AGENTS.md) and [CHANGELOG.md](CHANGELOG.md). Root and `server/package.json` versions stay aligned. The `docs/` folder is local-only (gitignored).
