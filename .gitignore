@@ -36,3 +36,5 @@ server/node_modules/
 
 # Local notes (kept on disk, not published)
 /docs/
+/AGENTS.md
+/CLAUDE.md
