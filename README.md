@@ -124,4 +124,4 @@ Serves the packaged app at `http://localhost:8082` (API + web + DB, seed on star
 
 ## Docs & versioning
 
-See [CHANGELOG.md](CHANGELOG.md). Root and `server/package.json` versions stay aligned. Local notes (`docs/`, `AGENTS.md`, `CLAUDE.md`) are gitignored.
+Root and `server/package.json` versions stay aligned. Local notes (`docs/`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`) are gitignored.
