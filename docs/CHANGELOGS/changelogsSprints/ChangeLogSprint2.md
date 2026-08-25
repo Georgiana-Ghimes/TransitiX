@@ -412,6 +412,12 @@ Tab-ul **Profil** din app-ul de șofer nu mai rămâne pagină albă (lipseau ic
 statistici și te poți deconecta. Când șoferul încarcă un CMR, biroul primește notificare
 „CMR de confirmat”, iar pe **Documente** apare lista CMR-urilor neconfirmate cu link la cursă.
 
+### BUGFIX — ecran alb la login șofer
+
+Turul de birou (ghidul Dashboard) se deschidea și pentru șofer și îl trimitea pe `/`, în timp
+ce layout-ul de șofer îl trimitea înapoi pe `/driver-app` — buclă / ecran alb. Turul e acum
+doar pentru rolurile de birou.
+
 ## BUGFIX
 
 - `serializeRow` întorcea `geocode_confidence`, `max_vehicle_length_m` și

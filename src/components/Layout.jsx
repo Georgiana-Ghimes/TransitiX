@@ -71,6 +71,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isDriver = isDriverRole(user);
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,36 +90,41 @@ export default function Layout() {
   const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
   const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
+  // Office tour is for the sidebar app only — never for the driver shell.
   useEffect(() => {
+    if (isDriver) {
+      setTourOpen(false);
+      return;
+    }
     if (!hasSeenOfficeTour()) {
       setTourStep(0);
       setTourOpen(true);
     }
-  }, []);
+  }, [isDriver]);
 
   useEffect(() => {
-    if (!tourOpen) return;
+    if (isDriver || !tourOpen) return;
     const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
     if (current.path && !tourAtPath(location.pathname, current.path)) {
       navigate(current.path);
     }
-  }, [tourOpen, tourStep, location.pathname, navigate]);
+  }, [isDriver, tourOpen, tourStep, location.pathname, navigate]);
 
   // Desktop: open drawer for nav steps; mobile keeps drawer closed (sheet explains ☰).
   useEffect(() => {
-    if (!tourOpen || !isDesktop) return;
+    if (isDriver || !tourOpen || !isDesktop) return;
     if (tourHighlightDashboard) setMobileOpen(false);
     else if (tourNavPath || tourHighlightGhid) setMobileOpen(true);
-  }, [tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
+  }, [isDriver, tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
 
   useEffect(() => {
-    if (!tourOpen || isDesktop) return;
+    if (isDriver || !tourOpen || isDesktop) return;
     setMobileOpen(false);
-  }, [tourOpen, tourStep, isDesktop]);
+  }, [isDriver, tourOpen, tourStep, isDesktop]);
 
   // Desktop-only spotlight on sidebar nav or dashboard content.
   useEffect(() => {
-    if (!tourOpen || !isDesktop) return;
+    if (isDriver || !tourOpen || !isDesktop) return;
     const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
     const id = requestAnimationFrame(() => {
       document.querySelectorAll('[data-tour-dashboard]').forEach((el) => {
@@ -138,17 +144,17 @@ export default function Layout() {
         el.classList.remove('tour-content-highlight');
       });
     };
-  }, [tourOpen, tourStep, isDesktop]);
+  }, [isDriver, tourOpen, tourStep, isDesktop]);
 
   // Mobile: ring the ☰ button when the step refers to the menu.
   useEffect(() => {
-    if (!tourOpen || isDesktop) return;
+    if (isDriver || !tourOpen || isDesktop) return;
     const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
     const btn = document.querySelector('[data-tour-mobile-menu]');
     if (!btn) return;
     btn.classList.toggle('tour-mobile-menu-highlight', tourMobileHighlightMenuButton(current));
     return () => btn.classList.remove('tour-mobile-menu-highlight');
-  }, [tourOpen, tourStep, isDesktop]);
+  }, [isDriver, tourOpen, tourStep, isDesktop]);
 
   const closeTour = () => {
     markOfficeTourSeen();
@@ -182,7 +188,7 @@ export default function Layout() {
     ? (collapsed ? SIDEBAR_RAIL : SIDEBAR_EXPANDED)
     : SIDEBAR_EXPANDED;
 
-  if (isDriverRole(user)) {
+  if (isDriver) {
     if (location.pathname !== '/driver-app') {
       return <Navigate to={homePathForRole(user)} replace />;
     }
