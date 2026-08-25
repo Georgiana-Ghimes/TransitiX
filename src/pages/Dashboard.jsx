@@ -3,12 +3,23 @@ import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
 import KpiCard from '@/components/KpiCard';
 import StatusBadge from '@/components/StatusBadge';
-import { Truck, Users, Route, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Truck, Users, Route, AlertTriangle, TrendingUp, Clock, Coins, MapPinned } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { notifyError } from '@/lib/notify';
 
+function fmtPct(v) {
+  if (v == null) return '—';
+  return `${Number(v).toLocaleString('ro-RO', { maximumFractionDigits: 1 })}%`;
+}
+
+function fmtNum(v, suffix = '') {
+  if (v == null) return '—';
+  return `${Number(v).toLocaleString('ro-RO', { maximumFractionDigits: 1 })}${suffix}`;
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState({ vehicles: 0, drivers: 0, activeTrips: 0, alerts: 0 });
+  const [cockpit, setCockpit] = useState(null);
   const [recentTrips, setRecentTrips] = useState([]);
   const [expiringDocs, setExpiringDocs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,11 +31,13 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [vehicles, drivers, trips] = await Promise.all([
+      const [vehicles, drivers, trips, cockpitRes] = await Promise.all([
         api.entities.Vehicle.list(),
         api.entities.Driver.list(),
         api.entities.Trip.list('-created_date', 50),
+        api.analytics.cockpit().catch(() => null),
       ]);
+      setCockpit(cockpitRes);
 
       const activeTrips = trips.filter(t => !['livrata', 'anulata'].includes(t.status));
       setStats({
@@ -115,6 +128,59 @@ export default function Dashboard() {
         <KpiCard icon={Route} label="Curse active" value={stats.activeTrips} subtitle="În desfășurare" accent="accent" to="/trips" />
         <KpiCard icon={AlertTriangle} label="Alerte" value={stats.alerts} subtitle="Documente expirate" accent={stats.alerts > 0 ? 'danger' : 'success'} to="/documents" />
       </div>
+
+      {cockpit?.kpis && (
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2 flex-wrap">
+            <h2 className="text-sm font-semibold text-[#0A2B4E]">Cockpit operațional</h2>
+            <p className="text-xs text-slate-400">
+              {cockpit.from} → {cockpit.to}
+              {cockpit.kpis.routes != null ? ` · ${cockpit.kpis.routes} rute` : ''}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              icon={Clock}
+              label="Punctualitate"
+              value={fmtPct(cockpit.kpis.punctuality_pct)}
+              subtitle={
+                cockpit.kpis.punctuality_sample
+                  ? `${cockpit.kpis.punctuality_sample} opriri măsurate`
+                  : 'Fără sosiri reale încă'
+              }
+              accent="success"
+            />
+            <KpiCard
+              icon={MapPinned}
+              label="Km plan vs real"
+              value={fmtNum(cockpit.kpis.actual_km, ' km')}
+              subtitle={`Plan ${fmtNum(cockpit.kpis.planned_km)} · Δ ${fmtNum(cockpit.kpis.delta_km)}`}
+              accent="primary"
+              to="/dispatch"
+            />
+            <KpiCard
+              icon={Coins}
+              label="Cost estimat"
+              value={cockpit.kpis.cost_total != null ? `${fmtNum(cockpit.kpis.cost_total)} lei` : '—'}
+              subtitle={
+                cockpit.kpis.cost_per_route != null
+                  ? `~${fmtNum(cockpit.kpis.cost_per_route)} lei / rută`
+                  : 'Completează costurile pe vehicul'
+              }
+              accent="accent"
+              to="/vehicles"
+            />
+            <KpiCard
+              icon={TrendingUp}
+              label="Comenzi"
+              value={cockpit.kpis.orders_delivered ?? 0}
+              subtitle={`${cockpit.kpis.orders_open ?? 0} deschise în perioadă`}
+              accent="secondary"
+              to="/dispatch"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}

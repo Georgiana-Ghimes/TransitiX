@@ -37,6 +37,17 @@ export default defineConfig({
       '/api': {
         target: `http://127.0.0.1:${apiPort}`,
         changeOrigin: true,
+        // SSE (/telematics/stream) must not be timed out or buffered by the proxy.
+        timeout: 0,
+        proxyTimeout: 0,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes, req) => {
+            if (req.url?.includes('/telematics/stream')) {
+              proxyRes.headers['cache-control'] = 'no-cache, no-transform';
+              proxyRes.headers['x-accel-buffering'] = 'no';
+            }
+          });
+        },
       },
       '/uploads': {
         target: `http://127.0.0.1:${apiPort}`,

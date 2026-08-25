@@ -134,7 +134,7 @@ function createEntityApi(name) {
 const entityNames = [
   'Vehicle', 'Driver', 'Client', 'Location', 'Order', 'Route', 'RouteStop',
   'Trip', 'TripDocument', 'ClientConfirmation',
-  'Invoice', 'WarehouseProduct', 'GPSLog', 'ChatMessage', 'DriverNotification',
+  'Invoice', 'WarehouseProduct', 'Territory', 'GPSLog', 'ChatMessage', 'DriverNotification',
   'OptimizationSuggestion', 'ReportTemplate', 'AvizDocument',
 ];
 
@@ -201,9 +201,235 @@ export const api = {
       return request('/geo/nearest', { method: 'POST', body: { point, number } });
     },
   },
+  orders: {
+    /** Dry run returns the same plan the apply run would use, line by line. */
+    import(file, { dryRun = true, defaultDate } = {}) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('dry_run', dryRun ? 'true' : 'false');
+      if (defaultDate) formData.append('default_date', defaultDate);
+      return request('/orders/import', { method: 'POST', formData });
+    },
+  },
+  planning: {
+    health() {
+      return request('/planning/health');
+    },
+    /** Optimize one calendar day. Returns the stored scenario. */
+    solve({
+      routeDate, name, orderIds, vehicleIds, depotLocationId, timeLimitSec,
+    } = {}) {
+      return request('/planning/solve', {
+        method: 'POST',
+        body: {
+          route_date: routeDate,
+          name,
+          order_ids: orderIds,
+          vehicle_ids: vehicleIds,
+          depot_location_id: depotLocationId,
+          time_limit_sec: timeLimitSec,
+        },
+      });
+    },
+    scenarios(date, { includeSolution = false } = {}) {
+      const qs = new URLSearchParams({ date });
+      if (includeSolution) qs.set('include', 'solution');
+      return request(`/planning/scenarios?${qs}`);
+    },
+    scenario(id) {
+      return request(`/planning/scenarios/${encodeURIComponent(id)}`);
+    },
+    /** Replace the day's draft routes with this scenario. */
+    promote(id) {
+      return request(`/planning/scenarios/${encodeURIComponent(id)}/promote`, { method: 'POST' });
+    },
+    deleteScenario(id) {
+      return request(`/planning/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
+  },
+  loading: {
+    /** Pack a route into its vehicle bay (lifo | warehouse). */
+    packRoute(routeId, { strategy = 'lifo' } = {}) {
+      return request(`/loading/routes/${encodeURIComponent(routeId)}/pack`, {
+        method: 'POST',
+        body: { strategy },
+      });
+    },
+  },
+  territories: {
+    list() {
+      return request('/territories');
+    },
+    balance() {
+      return request('/territories/balance');
+    },
+    generate({ k = 5, apply = true } = {}) {
+      return request('/territories/generate', { method: 'POST', body: { k, apply } });
+    },
+    update(id, patch) {
+      return request(`/territories/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch });
+    },
+    assign(id, locationIds) {
+      return request(`/territories/${encodeURIComponent(id)}/assign`, {
+        method: 'POST',
+        body: { location_ids: locationIds },
+      });
+    },
+    clearAssignments() {
+      return request('/territories/clear-assignments', { method: 'POST' });
+    },
+  },
+  analytics: {
+    cockpit({ from, to } = {}) {
+      const qs = new URLSearchParams();
+      if (from) qs.set('from', from);
+      if (to) qs.set('to', to);
+      const q = qs.toString();
+      return request(`/analytics/cockpit${q ? `?${q}` : ''}`);
+    },
+  },
+  invoices: {
+    /** Local UBL XML — never claims SPV send. */
+    async downloadUbl(id, retried = false) {
+      const token = getToken();
+      const res = await fetch(`/api/invoices/${encodeURIComponent(id)}/ubl`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.invoices.downloadUbl(id, true);
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(data?.message || res.statusText || 'Export UBL eșuat');
+        err.status = res.status;
+        err.errors = data?.errors;
+        throw err;
+      }
+      const blob = await res.blob();
+      const disp = res.headers.get('Content-Disposition') || '';
+      const match = disp.match(/filename="([^"]+)"/);
+      return { blob, filename: match?.[1] || 'efactura.xml' };
+    },
+  },
+  tachograph: {
+    listImports(limit = 50) {
+      return request(`/tachograph/imports?limit=${encodeURIComponent(limit)}`);
+    },
+    getImport(id) {
+      return request(`/tachograph/imports/${encodeURIComponent(id)}`);
+    },
+    async importFile({ file, driver_id, vehicle_id }, retried = false) {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append('file', file);
+      if (driver_id) fd.append('driver_id', driver_id);
+      if (vehicle_id) fd.append('vehicle_id', vehicle_id);
+      const res = await fetch('/api/tachograph/import', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.tachograph.importFile({ file, driver_id, vehicle_id }, true);
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data?.message || res.statusText || 'Import tahograf eșuat');
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    },
+  },
+  telematics: {
+    /** Current positions for the map (gps_logs projection + latest source). */
+    live() {
+      return request('/telematics/live');
+    },
+    trail(vehicleId, { from, to } = {}) {
+      const qs = new URLSearchParams();
+      if (from) qs.set('from', from);
+      if (to) qs.set('to', to);
+      const q = qs.toString();
+      return request(`/telematics/trail/${encodeURIComponent(vehicleId)}${q ? `?${q}` : ''}`);
+    },
+    /** Driver / office phone position. */
+    reportPosition(sample) {
+      return request('/telematics/position', { method: 'POST', body: sample });
+    },
+    /** Admin: rotate webhook key — plaintext returned once. */
+    rotateKey() {
+      return request('/telematics/key', { method: 'POST' });
+    },
+    /** Open exceptions for the live board (open=1 by default). */
+    exceptions({ open = true, route_id, limit } = {}) {
+      const qs = new URLSearchParams();
+      if (open === false) qs.set('open', '0');
+      if (route_id) qs.set('route_id', route_id);
+      if (limit) qs.set('limit', String(limit));
+      const q = qs.toString();
+      return request(`/telematics/exceptions${q ? `?${q}` : ''}`);
+    },
+    ackException(id) {
+      return request(`/telematics/exceptions/${encodeURIComponent(id)}/ack`, { method: 'POST' });
+    },
+    resolveException(id) {
+      return request(`/telematics/exceptions/${encodeURIComponent(id)}/resolve`, { method: 'POST' });
+    },
+    /** Routes with a vehicle on a day — for the replay picker. */
+    replayList(date) {
+      return request(`/telematics/replay?date=${encodeURIComponent(date)}`);
+    },
+    /** Planned geometry + realized trail for one route. */
+    replay(routeId) {
+      return request(`/telematics/replay/${encodeURIComponent(routeId)}`);
+    },
+    /**
+     * Absolute EventSource URL (token in query — browsers cannot set Authorization on SSE).
+     */
+    streamUrl() {
+      const token = getToken();
+      const qs = token ? `?access_token=${encodeURIComponent(token)}` : '';
+      return `/api/telematics/stream${qs}`;
+    },
+  },
   routes: {
     plan(routeId) {
       return request(`/routes/${encodeURIComponent(routeId)}/plan`);
+    },
+    /** One CMR per delivery stop. Stops that already have one are skipped. */
+    generateTrips(routeId) {
+      return request(`/routes/${encodeURIComponent(routeId)}/trips`, { method: 'POST' });
+    },
+    /** Launch route (lansata) + request UIT. */
+    launch(routeId) {
+      return request(`/routes/${encodeURIComponent(routeId)}/launch`, { method: 'POST' });
+    },
+    /** Today's routes for the signed-in driver. */
+    mine(date) {
+      const qs = date ? `?date=${encodeURIComponent(date)}` : '';
+      return request(`/routes/mine${qs}`);
+    },
+    /** Driver marks a stop arrived / done / failed. */
+    setStopStatus(routeId, stopId, status) {
+      return request(
+        `/routes/${encodeURIComponent(routeId)}/stops/${encodeURIComponent(stopId)}/status`,
+        { method: 'PUT', body: { status } }
+      );
+    },
+    /** ePOD — closes the stop with signature / photos / refusal. */
+    submitPod(routeId, stopId, body) {
+      return request(
+        `/routes/${encodeURIComponent(routeId)}/stops/${encodeURIComponent(stopId)}/pod`,
+        { method: 'POST', body }
+      );
+    },
+    getPod(routeId, stopId) {
+      return request(
+        `/routes/${encodeURIComponent(routeId)}/stops/${encodeURIComponent(stopId)}/pod`
+      );
     },
     addStop(routeId, { order_id, at_index } = {}) {
       return request(`/routes/${encodeURIComponent(routeId)}/stops`, {

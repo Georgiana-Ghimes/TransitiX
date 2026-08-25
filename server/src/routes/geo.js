@@ -10,6 +10,7 @@ import {
   osrmRoute,
   osrmTable,
 } from '../lib/geo/osrm.js';
+import { cachedMatrix } from '../lib/geo/matrixCache.js';
 import { applyToLocation, geocodeAddress } from '../lib/geo/geocode.js';
 import { photonPing } from '../lib/geo/photon.js';
 import {
@@ -134,7 +135,13 @@ router.post('/route', async (req, res) => {
 router.post('/matrix', async (req, res) => {
   try {
     const { points, sources, destinations } = req.body || {};
-    res.json(await osrmTable(points, { sources, destinations }));
+    // The cache stores whole pairs, so it only answers whole-matrix questions. An explicit
+    // sub-matrix request is rare and goes straight to OSRM.
+    if (sources || destinations) {
+      res.json(await osrmTable(points, { sources, destinations }));
+      return;
+    }
+    res.json(await cachedMatrix(pool, req.user.company_id, points));
   } catch (err) {
     sendError(res, err, 'Calculul matricei a eșuat');
   }

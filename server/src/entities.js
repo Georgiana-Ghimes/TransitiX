@@ -8,6 +8,10 @@ export const ENTITY_MAP = {
       'fuel_type', 'chassis_number', 'engine_number', 'mileage', 'last_maintenance_mileage',
       'itp_number', 'itp_expiry', 'rca_number', 'rca_expiry', 'rovinieta_number', 'rovinieta_expiry',
       'casco_number', 'casco_expiry', 'is_active', 'status',
+      'capacity_pallets', 'capabilities', 'home_location_id', 'cost_per_km', 'cost_per_hour',
+      'cargo_length_m', 'cargo_width_m', 'cargo_height_m',
+      'axle_front_m', 'axle_rear_m', 'axle_front_max_kg', 'axle_rear_max_kg',
+      'fuel_price_per_l', 'wage_per_hour', 'toll_per_km', 'depreciation_per_km', 'maintenance_per_km',
     ],
   },
   Driver: {
@@ -17,6 +21,7 @@ export const ENTITY_MAP = {
       'name', 'email', 'phone', 'hire_date', 'birth_date', 'license_number', 'license_category',
       'license_expiry', 'medical_certificate_number', 'medical_certificate_expiry',
       'tachograph_card_number', 'tachograph_card_expiry', 'status', 'is_active', 'user_id',
+      'shift_start', 'shift_end',
     ],
   },
   Client: {
@@ -32,7 +37,7 @@ export const ENTITY_MAP = {
       'address_key', 'latitude', 'longitude', 'geocode_source', 'geocode_confidence',
       'geocode_verified', 'geocoded_at', 'default_service_time_min', 'window_start', 'window_end',
       'max_vehicle_length_m', 'max_vehicle_weight_t', 'access_notes', 'contact_person',
-      'phone', 'is_active',
+      'phone', 'is_active', 'territory_id',
     ],
   },
   Order: {
@@ -41,7 +46,7 @@ export const ENTITY_MAP = {
     writable: [
       'client_id', 'location_id', 'order_number', 'type', 'requested_date',
       'window_start', 'window_end', 'service_time_min', 'weight_kg', 'volume_mc', 'pallets',
-      'requires', 'goods_description', 'notes', 'status',
+      'requires', 'goods_description', 'notes', 'status', 'product_id',
     ],
   },
   Route: {
@@ -49,7 +54,7 @@ export const ENTITY_MAP = {
     companyScoped: true,
     writable: [
       'route_date', 'code', 'vehicle_id', 'driver_id', 'depot_location_id', 'starts_at',
-      'status', 'notes',
+      'status', 'notes', 'uit_code',
     ],
   },
   RouteStop: {
@@ -105,7 +110,14 @@ export const ENTITY_MAP = {
     writable: [
       'warehouse_name', 'sku', 'name', 'description', 'quantity', 'min_quantity', 'max_quantity',
       'unit', 'location', 'unit_price',
+      'length_m', 'width_m', 'height_m', 'unit_weight_kg', 'stackable',
+      'adr_class', 'pallet_type', 'picking_zone',
     ],
+  },
+  Territory: {
+    table: 'territories',
+    companyScoped: true,
+    writable: ['name', 'color', 'polygon', 'sort_order', 'is_active'],
   },
   GPSLog: {
     table: 'gps_logs',

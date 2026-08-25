@@ -14,6 +14,7 @@ const TYPE_CONFIG = {
   client_confirmed: { icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600' },
   client_damage: { icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
   document_expiry: { icon: AlertTriangle, color: 'bg-amber-50 text-amber-600' },
+  route_exception: { icon: AlertTriangle, color: 'bg-orange-50 text-orange-600' },
   system: { icon: Info, color: 'bg-slate-50 text-slate-500' },
 };
 

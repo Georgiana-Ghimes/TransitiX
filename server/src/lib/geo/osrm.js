@@ -138,12 +138,24 @@ function scaleMatrix(rows, divisor, decimals) {
   return rows.map((row) => (row || []).map((v) => (v == null ? null : round(v / divisor, decimals))));
 }
 
+/** Where OSRM actually put a point on the road graph. This is what the matrix cache keys on. */
+function snappedWaypoints(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map((wp) => ({
+    latitude: wp?.location?.[1] ?? null,
+    longitude: wp?.location?.[0] ?? null,
+    snap_distance_m: wp?.distance == null ? null : round(wp.distance, 1),
+  }));
+}
+
 export function parseTableResponse(json) {
   const problem = osrmMessage(json);
   if (problem) throw httpError(problem, 422);
   return {
     distances_km: scaleMatrix(json?.distances, 1000, 3),
     durations_min: scaleMatrix(json?.durations, 60, 2),
+    sources: snappedWaypoints(json?.sources),
+    destinations: snappedWaypoints(json?.destinations),
   };
 }
 

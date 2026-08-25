@@ -161,8 +161,250 @@ opriri readuce comanda în starea `nou`.
 mutată pe poziția 2, renumerotare corectă), scoatere de pe rută cu revenirea comenzii în lista
 neplanificate, fără scroll orizontal la 360px și fără erori în consolă.
 
-**Rămas din P1:** importul de comenzi din XLSX/CSV, generarea CMR-urilor dintr-o rută, foaia de
-parcurs PDF și afișarea rutei ca listă de opriri în aplicația de șofer. Crearea din UI e gata.
+### P1 — partea 3: import, CMR-uri, foaie de parcurs, ruta la șofer
+
+**Import comenzi din XLSX / CSV**
+
+- Buton **Import** pe board-ul de dispecerat. Se acceptă `.xlsx` și `.csv`, iar capul de tabel
+  e recunoscut după denumirile uzuale — „Număr comandă", „Locație", „Data", „Greutate",
+  „Paleți" — cu sau fără diacritice. Coloanele pe care nu le recunoaștem sunt **raportate**,
+  nu ignorate în tăcere: un cap de tabel scris greșit e cel mai frecvent motiv pentru care un
+  import „pierde" date.
+- Fișierul se **previzualizează întâi**, linie cu linie: ce se importă, ce nu și de ce.
+  Serverul rulează exact același plan la previzualizare și la import, deci ce aprobă
+  dispecerul e exact ce se scrie. Scrierea se face într-o singură tranzacție — un fișier pe
+  jumătate stricat nu lasă niciodată un import pe jumătate făcut.
+- Cifrele românești sunt citite corect: `1.234,56`, `1234,56` și `1234.56` dau toate același
+  număr, iar `1.500` e o mie cinci sute, nu unu virgulă cinci. Datele sunt zi-întâi
+  (`03.04.2026` = 3 aprilie), se acceptă și celulele de tip dată din Excel.
+- **Locația trebuie să existe deja** — se potrivește după nume sau după aceeași cheie de
+  adresă folosită de restul aplicației, deci o adresă scrisă puțin altfel ajunge tot pe pinul
+  corect. O linie fără locație nu se importă: o comandă fără locație n-ar putea intra
+  niciodată pe o rută. Un nume purtat de două locații e refuzat explicit, nu ghicit.
+- Numerele duplicate sunt prinse și față de baza de date, și **în interiorul fișierului**.
+  Există un șablon descărcabil, ca dispecerul să nu ghicească formatul.
+
+**CMR-uri dintr-o rută**
+
+- Buton pe cardul rutei care emite **câte un CMR pentru fiecare oprire cu comandă**.
+  Sensul documentului urmează tipul opririi: la livrare firma e expeditor și locația e
+  destinatar, la ridicare invers. Numerotare secvențială pe zi (`CMR-2026-0827-01`).
+- **Se poate apăsa de câte ori e nevoie.** Opririle care au deja document sunt sărite, deci o
+  rută care primește o oprire nouă produce doar CMR-ul care lipsea, nu încă un set complet
+  peste cele deja tipărite și date șoferului.
+- Adresa de pe document se recompune din stradă + localitate + județ. Locațiile țin orașul
+  într-o coloană separată, iar un CMR cu stradă și fără oraș nu e o adresă de livrare.
+- Cursele preiau șoferul, vehiculul, ora estimată de sosire, marfa și cantitățile din plan.
+  O rută fără șofer produce curse `planificată`; cu șofer, `alocată`.
+
+**Foaie de parcurs (PDF)**
+
+- Buton pe cardul rutei care descarcă foaia de parcurs în format A4 landscape: antetul
+  firmei, ruta, șoferul, vehiculul, ora de plecare, distanța și durata, apoi tabelul
+  opririlor cu oră estimată, client, adresă, comandă, cantități și interval.
+- Fiecare oprire are **două căsuțe goale** — ora reală și semnătura — pentru că e un document
+  de lucru, completat pe teren. La final, câmpuri pentru km la plecare/sosire, alimentare și
+  semnăturile dispecerului și șoferului.
+- Avertismentele rutei (întârzieri, depășire de capacitate, estimări incomplete) se
+  **tipăresc**, ca șoferul să plece știind de ele.
+- Se paginează la 12 opriri pe pagină, cu antet pe fiecare pagină și semnături doar pe
+  ultima. O oprire nu e niciodată tăiată între două pagini — o oprire tăiată în două e o
+  oprire pe care n-o semnează nimeni.
+- Unde nu apare o oră estimată, căsuța rămâne **goală**, nu cu linie: o estimare inventată pe
+  un document semnat e mai rea decât nicio estimare.
+
+**Ruta ca listă de opriri în aplicația de șofer**
+
+- Tab nou **Rută** în aplicația de șofer, cu navigare pe zile (ieri / azi / mâine).
+  Fiecare oprire e un card: numărul de ordine, client, adresă completă, ora estimată,
+  intervalul de livrare, cantitatea și notele de acces.
+- **Un singur buton principal pe oprire:** „Am ajuns", apoi „Gata" sau „Nu s-a putut".
+  Pe o oprire închisă nu mai apare nimic — anularea e treaba dispeceratului, nu ceva peste
+  care șoferul dă din greșeală în timp ce parchează. Toate butoanele au minim 44px.
+- Ora de sosire e pusă **de server**, nu trimisă de telefon: un ceas dat cu o oră greșit ar
+  ajunge altfel în dovada de livrare.
+- Bifarea unei opriri mută și comanda (`pe rută` → `livrat` / `eșuat`) și starea rutei
+  (`în execuție` → `finalizată`), fără ca cineva să trebuiască să-și amintească.
+- Navigare către adresă și apel direct către persoana de contact a locației, cu revenire la
+  telefonul clientului dacă locația nu are unul.
+
+**Verificat pe date reale:** import CSV cu punct-și-virgulă și import XLSX cu celule de dată
+reale (2 linii bune, 1 locație inexistentă, 1 număr duplicat — exact ce a raportat
+previzualizarea); două CMR-uri emise dintr-o rută, a doua apăsare n-a mai creat nimic;
+șoferul a văzut ruta zilei, a bifat o oprire, iar comanda și ruta și-au schimbat starea
+singure.
+
+**P1 este încheiat.**
+
+### Distanțele măsurate o dată rămân măsurate
+
+Aplicația își amintește distanțele rutiere pe care le-a calculat deja. Până acum, fiecare
+recalcul de rută întreba din nou motorul de rutare aceleași lucruri: distanța dintre depozit
+și fiecare client se măsura de la zero în fiecare dimineață, deși drumurile nu se schimbaseră
+peste noapte.
+
+- Un plan care conține doar opriri deja cunoscute nu mai are nevoie deloc de motorul de
+  rutare — răspunde instant, din ce s-a măsurat înainte.
+- Când apare o comandă la o adresă nouă, se măsoară doar drumurile către și dinspre ea, nu
+  întreaga rețea. La un plan de 200 de opriri cu 5 adrese noi, asta înseamnă sub 5% din
+  munca de dinainte.
+- Un client re-geocodificat, al cărui pin s-a mutat cu câțiva metri pe aceeași stradă, își
+  păstrează distanțele. Ele sunt reținute pe punctul de pe drum, nu pe coordonata exactă.
+- Valorile expiră după 30 de zile (configurabil), ca o rută ocolită de un drum nou să nu
+  rămână greșită la nesfârșit.
+- Dacă memoria asta nu poate fi citită sau scrisă dintr-un motiv oarecare, planificarea merge
+  mai departe și măsoară normal. Nu se poate transforma într-o pană.
+
+Nu e o funcție vizibilă în interfață — e pregătirea pentru optimizatorul din faza următoare,
+care cere aceeași matrice de distanțe la fiecare rulare.
+
+### Început de P2: temelia optimizatorului
+
+Prima bucată din faza de optimizare. Încă nu există un buton „optimizează" — se pun la loc
+datele fără de care optimizatorul n-ar avea ce compara.
+
+**Pe fișa vehiculului** apar câmpuri noi, pe care le poate completa oricine cu acces la flotă:
+
+- Capacitate în **paleți**, alături de kg și mc. E a treia dimensiune pe care se planifică
+  efectiv, și nu se poate deduce din celelalte două.
+- **Dotări** (ADR, frigo, lift hidraulic, …) — perechea cerințelor pe care le poartă deja
+  comanda. O comandă ajunge doar la un vehicul care are tot ce cere ea.
+- **Depozitul de bază**, de unde pleacă și unde se întoarce vehiculul dacă planul nu spune
+  altceva.
+- **Cost pe km și pe oră**, opționale. Dacă nu le completează nimeni, optimizatorul lucrează
+  pe timp și nu raportează niciun cost — nu inventează un preț ca să pară că a socotit.
+
+**Pe fișa șoferului** se pot seta ora de început și ora de sfârșit ale turei. Ruta lui nu va
+depăși intervalul, indiferent de ce vehicul conduce.
+
+O capacitate necompletată nu blochează nimic: se citește ca „nu s-a notat", nu ca „zero", deci
+vehiculul rămâne folosibil.
+
+### Optimizatorul poate rula o zi și propune un plan
+
+Dispecerul poate cere optimizarea comenzilor deschise ale unei zile. Rezultatul se salvează
+ca **scenariu** — o propunere, nu o decizie. Se pot rula mai multe scenarii pe aceeași dată
+(de exemplu cu flote diferite) și se compară pe km, ore, cost și comenzi rămase nealocate.
+
+- Un scenariu se **promovează** în planul zilei: înlocuiește doar rutele încă în draft /
+  planificate. Dacă există deja o rută lansată sau în execuție, promovarea e refuzată — 
+  optimizatorul nu scoate un camion de pe drum.
+- Comenzile din rutele înlocuite revin la „nou", apoi cele din noul plan trec la „planificat".
+- Șoferii preferați (deja pe rutele zilei) rămân pe aceleași vehicule; restul se împerechează
+  în ordinea din listă.
+- Dacă motorul de rutare sau optimizatorul nu sunt porniți, cererea e refuzată clar (nu se
+  inventează un plan).
+
+Interfața dedicată (înlocuirea stub-ului Planning AI) urmează; API-ul e gata.
+
+### Reg. 561/2006 în plan, nu doar în raport
+
+După ce optimizatorul propune rutele, sistemul le trece prin regulile de timp de
+conducere: pauză de 45 de minute după 4 ore și 30 de minute de condus, și repaus
+zilnic de 11 ore după 9 ore de condus. Pauzele și repausurile apar ca opriri reale
+în rută (nu ca avertismente la final), iar un drum mai lung decât limita e împărțit —
+șoferul oprește, apoi continuă.
+
+Dacă o pauză împinge o livrare în afara ferestrei clientului, încălcarea e raportată
+în scenariu, ca dispecerul să vadă costul respectării legii.
+
+### Planning AI e optimizatorul real
+
+Pagina Planning AI nu mai e un stub cu sugestii inventate. Pe dată, poți:
+
+- vedea dacă rutarea și optimizatorul sunt disponibile;
+- rula un scenariu pe comenzile deschise ale zilei;
+- compara scenariile pe km, ore, cost, comenzi nealocate și pauze 561/2006;
+- promova un scenariu în planul de dispecerat sau șterge unul nepromovat.
+
+Fișele de vehicul și șofer au câmpurile de care optimizatorul are nevoie: paleți,
+dotări, cost pe km/oră, tură.
+
+### Telematică reală (început P3)
+
+Pozițiile vehiculelor nu mai trăiesc doar din butonul „Simulează".
+
+- App-ul de șofer trimite GPS-ul telefonului cât timp are o rută alocată (cu acordul
+  sistemului de locație al telefonului).
+- Furnizorii externi (Webfleet, Frotcom, Teltonika sau orice webhook) pot posta pe
+  `/api/telematics/ingest` cu o cheie pe firmă — administratorul o generează din pagina GPS.
+- Harta Tracking GPS se reîmprospătează la 30 de secunde, arată sursa fiecărei poziții și
+  păstrează simularea doar ca demo.
+- Istoricul e păstrat separat; pe hartă rămâne „ultima poziție cunoscută", ca înainte.
+
+### Excepții live pe rută
+
+Când o poziție GPS ajunge pe o rută lansată azi, sistemul verifică planul și poate
+deschide o excepție: întârziere, sosire prea devreme, abatere de traseu, staționare
+sau viteză. Excepțiile apar pe Dispecerat și pe Tracking GPS; dispecerul le poate
+confirma sau închide. Clopoțelul biroului anunță fiecare excepție nouă.
+
+La o întârziere nouă, ETA-urile opririlor rămase pe rută se mută înainte cu același
+decalaj, iar clienții cu email pe acele opriri primesc un mesaj de actualizare
+(dacă email-ul e configurat pe server).
+
+### Board live (SSE)
+
+Dispeceratul și Tracking GPS primesc actualizări pe flux (poziții, excepții, ePOD)
+fără să aștepte poll-ul. Când fluxul e activ, pe hartă marker-ele se colorează după
+severitatea excepției, iar pe fiecare rută din board apare o bară plan vs. realizat.
+Dacă conexiunea pică, rămâne reîmprospătarea periodică.
+
+### ePOD în app-ul de șofer
+
+La **Gata** sau **Nu s-a putut** pe o oprire de livrare/ridicare, șoferul completează
+dovada: nume destinatar + semnătură pe ecran (sau motiv de refuz), opțional o poză.
+Oprirea se închide odată cu salvarea; biroul e anunțat la clopoțel.
+
+### Reluare istorică pe hartă
+
+Pe Tracking GPS, **Reluare** lasă dispecerul să aleagă o zi și o rută: traseul planificat
+(pe rețeaua rutieră) apare albastru, iar firul GPS realizat apare portocaliu punctat.
+Sub hartă vezi kilometrii planificați vs. realizați, diferența și câte opriri s-au închis.
+Fără date GPS în ziua respectivă, rămâne doar planul (dacă rutarea e disponibilă).
+
+### Plan de încărcare (început P4)
+
+Pe Dispecerat, fiecare rută cu vehicul are un buton de **plan de încărcare**: sistemul așază
+paleții în remorcă (LIFO — ultima livrare aproape de cabină, aproape de ușă e prima oprire)
+și arată profilul lateral, procentul de umplere și sarcina pe axe. Dacă o axă trece de
+limită, apare avertisment. Dimensiunile remorcii se completează pe fișa vehiculului; goale,
+se folosește un standard EU 13,6 m. Produsele din depozit pot avea lungime/lățime/înălțime,
+greutate unitară și zonă de picking.
+
+### Teritorii
+
+Pagina **Teritorii** grupează locațiile geocodate în N zone (implicit 5), ponderat pe volum,
+kg și comenzi deschise. Poligoanele apar pe hartă; tabelul de echilibru arată abaterea față
+de medie (țintă ≤ 15%). „Generează & aplică” scrie teritoriile și leagă locațiile; poți
+previzualiza înainte.
+
+### Cockpit + costuri + UIT (început P5)
+
+Dashboard-ul arată un **cockpit operațional** pe ultimele 30 de zile: punctualitate
+(opriri cu sosire reală), km plan vs. reali, cost estimat pe rute și comenzi livrate vs.
+deschise. Costul se calculează din consum + preț combustibil, salariu, taxe, amortizare
+și întreținere pe vehicul (sau default-urile firmei); dacă nu e completat nimic, totalul
+rămâne gol — nu inventăm lei.
+
+Pe Dispecerat, **Lansează** trece ruta în „lansată” și cere un UIT e-Transport. Până la
+conectarea ANAF, UIT-ul e un stub local (cod `RO…` stabil pe rută); pe card apare badge-ul
+UIT. Poți dezactiva cu `ETRANSPORT_MODE=off`. e-Factura SPV și importul tahograf rămân
+neconectate — Finance spune asta onest.
+
+### e-Factura UBL (local)
+
+Pe Financiar, fiecare factură are **Descarcă UBL**: XML UBL 2.1 cu marcaj CIUS-RO,
+gata de încărcat manual sau de legat mai târziu la SPV. Dacă lipsește CUI-ul firmei din
+Setări, exportul refuză clar. Butonul „e-Factura SPV” tot explică că ANAF nu e conectat —
+nu marcăm factura ca trimisă sau acceptată fără certificat.
+
+### Import tahograf (.ddd)
+
+Pe **Documente** poți încărca download-uri VU/card (`.ddd`, `.tgd`, `.c1b`, `.v1b`),
+opțional legate de șofer și vehicul. Fișierul e arhivat cu hash; sistemul detectează tipul
+(TLV) și poate ghici plăcuțe din textul ASCII. Nu calculează încă ore de conducere /
+încălcări 561 — asta vine când avem decode complet de activități.
 
 ## BUGFIX
 

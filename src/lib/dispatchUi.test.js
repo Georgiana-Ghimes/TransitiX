@@ -10,6 +10,7 @@ import {
   orderLocationOptions,
   parseDragPayload,
   previewFit,
+  routeExecutionProgress,
   routeStatusMeta,
   routeWarnings,
   stopMarkerColor,
@@ -64,6 +65,20 @@ describe('formatKm', () => {
 
   it('shows a dash for nothing usable', () => {
     expect(formatKm(null)).toBe('—');
+  });
+});
+
+describe('routeExecutionProgress', () => {
+  it('ignores depots and breaks', () => {
+    const { done, total, percent } = routeExecutionProgress([
+      { kind: 'depot_start', status: 'finalizat' },
+      { kind: 'livrare', status: 'finalizat' },
+      { kind: 'livrare', status: 'planificat' },
+      { kind: 'pauza', status: 'planificat' },
+    ]);
+    expect(total).toBe(2);
+    expect(done).toBe(1);
+    expect(percent).toBe(50);
   });
 });
 

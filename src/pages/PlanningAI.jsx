@@ -1,190 +1,415 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Brain, Check, Loader2, Play, Trash2, Upload, AlertTriangle, Coffee, Moon,
+} from 'lucide-react';
 import { api } from '@/api/client';
-import { Brain, Sparkles, TrendingDown, Truck, Route, Fuel, Loader2, Check, Zap } from 'lucide-react';
-import { notifyError } from '@/lib/notify';
-import DemoBanner from '@/components/DemoBanner';
+import { notifyError, notifySuccess } from '@/lib/notify';
+import {
+  compareScenarioKpis,
+  formatHours,
+  formatKm,
+  formatLei,
+  scenarioStatusLabel,
+  todayIso,
+} from '@/lib/planningUi';
 
-const SUGGESTION_ICONS = {
-  backhaul: Route, vehicle_allocation: Truck, route: Route, consolidation: Zap, fuel: Fuel,
-};
-
-const PRIORITY_STYLES = {
-  high: 'bg-red-50 text-red-700 border-red-200',
-  medium: 'bg-amber-50 text-amber-700 border-amber-200',
-  low: 'bg-slate-50 text-slate-600 border-slate-200',
-};
+function HealthPill({ label, ok, configured, message }) {
+  const tone = !configured ? 'slate' : ok ? 'emerald' : 'amber';
+  const colors = {
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    amber: 'bg-amber-50 text-amber-800 border-amber-200',
+    slate: 'bg-slate-50 text-slate-600 border-slate-200',
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border ${colors[tone]}`}
+      title={message || undefined}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-500' : configured ? 'bg-amber-500' : 'bg-slate-400'}`} />
+      {label}
+      {!configured ? ' — neconfigurat' : ok ? ' — ok' : ' — indisponibil'}
+    </span>
+  );
+}
 
 export default function PlanningAI() {
-  const [suggestions, setSuggestions] = useState([]);
-  const [trips, setTrips] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
+  const [date, setDate] = useState(todayIso);
+  const [health, setHealth] = useState(null);
+  const [scenarios, setScenarios] = useState([]);
+  const [ordersCount, setOrdersCount] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [busy, setBusy] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [detail, setDetail] = useState(null);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const load = useCallback(async (forDate = date) => {
+    setLoading(true);
     try {
-      const [s, t, v] = await Promise.all([
-        api.entities.OptimizationSuggestion.list('-created_date'),
-        api.entities.Trip.list('-created_date', 50),
-        api.entities.Vehicle.list(),
+      const [h, list, orders] = await Promise.all([
+        api.planning.health().catch(() => null),
+        api.planning.scenarios(forDate).catch(() => []),
+        api.entities.Order.filter({ requested_date: forDate }, '-created_date', 500)
+          .then((rows) => rows.filter((o) => ['nou', 'planificat'].includes(o.status)))
+          .catch(() => []),
       ]);
-      setSuggestions(s);
-      setTrips(t);
-      setVehicles(v);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
+      setHealth(h);
+      setScenarios(list);
+      setOrdersCount(Array.isArray(orders) ? orders.length : null);
+    } catch (err) {
+      notifyError('Nu am putut încărca scenariile', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [date]);
 
-  const runAnalysis = async () => {
-    setAnalyzing(true);
-    try {
-      const activeTrips = trips.filter(t => !['livrata', 'anulata'].includes(t.status));
-      const tripData = activeTrips.map(t => ({
-        cmr: t.cmr_number, shipper: t.shipper_name, consignee: t.consignee_name,
-        distance: t.distance_km, weight: t.weight_kg, vehicle: t.vehicle_plate, driver: t.driver_name, status: t.status,
-      }));
-      const vehicleData = vehicles.map(v => ({ plate: v.plate, brand: v.brand, model: v.model, consumption: v.fuel_consumption, status: v.status, mileage: v.mileage }));
+  useEffect(() => { load(date); }, [date, load]);
 
-      const result = await api.integrations.Core.InvokeLLM({
-        prompt: `You are an AI transport optimization engine for a Romanian logistics company (Transitix). Analyze the following active trips and vehicles, and generate 3-5 actionable optimization suggestions. Focus on: reducing empty kilometers (deadhead), better vehicle allocation, fuel optimization, backhaul opportunities, and route consolidation. Return ONLY valid JSON array.
-
-ACTIVE TRIPS: ${JSON.stringify(tripData)}
-VEHICLES: ${JSON.stringify(vehicleData)}
-
-Return an array of suggestions, each with: type (backhaul/vehicle_allocation/route/consolidation/fuel), title, suggestion (detailed text), potential_savings_eur (number), potential_savings_km (number or 0), priority (high/medium/low).`,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            suggestions: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  type: { type: 'string' }, title: { type: 'string' }, suggestion: { type: 'string' },
-                  potential_savings_eur: { type: 'number' }, potential_savings_km: { type: 'number' },
-                  priority: { type: 'string' },
-                }
-              }
-            }
-          }
-        }
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null);
+      return;
+    }
+    let cancelled = false;
+    api.planning.scenario(selectedId)
+      .then((row) => { if (!cancelled) setDetail(row); })
+      .catch((err) => {
+        if (!cancelled) notifyError('Nu am putut încărca scenariul', err);
       });
+    return () => { cancelled = true; };
+  }, [selectedId]);
 
-      const newSuggestions = (result.suggestions || []).map(s => ({
-        type: s.type || 'route', title: s.title, suggestion: s.suggestion,
-        potential_savings_eur: s.potential_savings_eur || 0,
-        potential_savings_km: s.potential_savings_km || 0,
-        priority: s.priority || 'medium', is_applied: false,
-      }));
-
-      if (newSuggestions.length > 0) {
-        await api.entities.OptimizationSuggestion.bulkCreate(newSuggestions);
-      }
-      await loadData();
-    } catch (e) {
-      console.error(e);
-      notifyError('Analiză AI eșuată', e);
-    } finally { setAnalyzing(false); }
+  const run = async () => {
+    setBusy('solve');
+    try {
+      const row = await api.planning.solve({ routeDate: date });
+      notifySuccess(
+        row.status === 'rulat' ? 'Scenariu rulat' : 'Scenariu salvat',
+        row.status === 'esuat'
+          ? row.error_message
+          : `${row.kpis?.routes ?? 0} rute · ${formatKm(row.kpis?.distance_km)}`
+      );
+      setSelectedId(row.id);
+      await load(date);
+    } catch (err) {
+      notifyError('Optimizarea a eșuat', err);
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const applySuggestion = async (id) => {
-    await api.entities.OptimizationSuggestion.update(id, { is_applied: true });
-    loadData();
+  const promote = async (id) => {
+    setBusy(`promote-${id}`);
+    try {
+      const result = await api.planning.promote(id);
+      notifySuccess(
+        'Scenariu promovat în plan',
+        `${result.routes?.length ?? 0} rute pe ${result.route_date}`
+      );
+      await load(date);
+      setSelectedId(id);
+    } catch (err) {
+      notifyError('Promovarea a eșuat', err);
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const deleteSuggestion = async (id) => {
-    await api.entities.OptimizationSuggestion.delete(id);
-    loadData();
+  const remove = async (id) => {
+    setBusy(`del-${id}`);
+    try {
+      await api.planning.deleteScenario(id);
+      if (selectedId === id) setSelectedId(null);
+      await load(date);
+    } catch (err) {
+      notifyError('Ștergerea a eșuat', err);
+    } finally {
+      setBusy(null);
+    }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-96"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;
-
-  const totalSavings = suggestions.filter(s => !s.is_applied).reduce((sum, s) => sum + (s.potential_savings_eur || 0), 0);
+  const comparison = compareScenarioKpis(scenarios.filter((s) => s.status === 'rulat' || s.status === 'promovat'));
+  const ready = health?.configured && health?.ok;
 
   return (
-    <div className="space-y-5 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-5 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight flex items-center gap-2">
-            <Brain className="w-6 h-6 text-[#F5A623]" /> Planning AI
+            <Brain className="w-6 h-6 text-[#F5A623]" /> Optimizare rute
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Sugestii de dispecerat (stub) — nu un optimizer live</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Rulează scenarii pe comenzile zilei, compară-le, apoi promovează unul în planul de dispecerat.
+          </p>
         </div>
-        <button onClick={runAnalysis} disabled={analyzing} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-50 transition-colors">
-          {analyzing ? <><Loader2 className="w-4 h-4 animate-spin" /> Analizez...</> : <><Sparkles className="w-4 h-4" /> Rulează analiză AI</>}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89]"
+          />
+          <button
+            type="button"
+            onClick={run}
+            disabled={Boolean(busy) || !ready}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-50"
+          >
+            {busy === 'solve'
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Optimizez…</>
+              : <><Play className="w-4 h-4" /> Rulează scenariu</>}
+          </button>
+        </div>
       </div>
 
-      <DemoBanner title="Planning AI e un stub">
-        Analiza scrie sugestii fixe în baza de date. Nu calculează rute reale și nu e un optimizer de producție.
-      </DemoBanner>
+      <div className="flex flex-wrap gap-2">
+        <HealthPill
+          label="Rutare"
+          configured={health?.routing?.configured}
+          ok={health?.routing?.ok}
+          message={health?.routing?.message}
+        />
+        <HealthPill
+          label="Optimizator"
+          configured={health?.solver?.configured}
+          ok={health?.solver?.ok}
+          message={health?.solver?.message}
+        />
+        {ordersCount != null && (
+          <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-600">
+            {ordersCount} comenzi deschise
+          </span>
+        )}
+        <Link
+          to="/dispatch"
+          className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 bg-white text-[#1D4E89] hover:bg-slate-50"
+        >
+          Deschide dispeceratul
+        </Link>
+      </div>
 
-      {totalSavings > 0 && (
-        <div className="bg-gradient-to-r from-[#0A2B4E] to-[#1D4E89] rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center"><TrendingDown className="w-7 h-7" /></div>
-            <div>
-              <p className="text-sm text-white/70">Economie potențială totală</p>
-              <p className="text-3xl font-bold">{totalSavings.toLocaleString('ro-RO')} EUR</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-sm text-white/70">Sugestii active</p>
-              <p className="text-2xl font-bold">{suggestions.filter(s => !s.is_applied).length}</p>
-            </div>
+      {!ready && (
+        <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Optimizatorul nu e gata de rulare</p>
+            <p className="text-amber-800/90 mt-0.5">
+              Pornește OSRM și VROOM (vezi <code className="text-xs">docker-compose.osrm.yml</code> și
+              {' '}<code className="text-xs">docker-compose.vroom.yml</code>), apoi setează
+              {' '}<code className="text-xs">OSRM_URL</code> și <code className="text-xs">VROOM_URL</code> în
+              {' '}<code className="text-xs">server/.env</code>.
+            </p>
           </div>
         </div>
       )}
 
-      {analyzing && (
-        <div className="bg-white rounded-xl border border-slate-200/80 p-8 shadow-sm text-center">
-          <Loader2 className="w-10 h-10 text-[#0A2B4E] animate-spin mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-700">Analizez cursele active și vehiculele...</p>
-          <p className="text-xs text-slate-400 mt-1">Identific oportunități de optimizare, curse de retur și reducere km goi</p>
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="w-8 h-8 text-[#0A2B4E] animate-spin" />
         </div>
-      )}
-
-      <div className="space-y-3">
-        {suggestions.length > 0 ? suggestions.map(s => {
-          const Icon = SUGGESTION_ICONS[s.type] || Sparkles;
-          return (
-            <div key={s.id} className={`bg-white rounded-xl border shadow-sm p-5 transition-opacity ${s.is_applied ? 'opacity-60' : ''}`}>
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-lg bg-[#0A2B4E] flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="font-semibold text-[#0A2B4E]">{s.title}</h3>
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${PRIORITY_STYLES[s.priority] || PRIORITY_STYLES.medium}`}>
-                      {s.priority === 'high' ? 'Prioritate mare' : s.priority === 'medium' ? 'Prioritate medie' : 'Prioritate mică'}
-                    </span>
-                    {s.is_applied && <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><Check className="w-3 h-3" /> Aplicată</span>}
-                  </div>
-                  <p className="text-sm text-slate-600 mb-2">{s.suggestion}</p>
-                  <div className="flex gap-4 flex-wrap text-xs">
-                    {s.potential_savings_eur > 0 && <span className="flex items-center gap-1 text-emerald-600 font-medium"><TrendingDown className="w-3.5 h-3.5" /> {s.potential_savings_eur} EUR economie</span>}
-                    {s.potential_savings_km > 0 && <span className="flex items-center gap-1 text-[#1D4E89] font-medium"><Route className="w-3.5 h-3.5" /> {s.potential_savings_km} km reduși</span>}
-                  </div>
-                </div>
-                {!s.is_applied && (
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <button onClick={() => applySuggestion(s.id)} className="px-3 py-1.5 text-xs font-medium text-white bg-[#27AE60] rounded-lg hover:bg-emerald-600">Aplică</button>
-                    <button onClick={() => deleteSuggestion(s.id)} className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-50 rounded-lg hover:bg-red-100">Respinge</button>
-                  </div>
-                )}
+      ) : (
+        <>
+          {comparison.length > 1 && (
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <h2 className="text-sm font-semibold text-[#0A2B4E]">Comparație scenarii</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-[640px] w-full text-sm">
+                  <thead className="bg-slate-50 text-left text-xs text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Scenariu</th>
+                      <th className="px-4 py-2 font-medium">Rute</th>
+                      <th className="px-4 py-2 font-medium">Distanță</th>
+                      <th className="px-4 py-2 font-medium">Durată</th>
+                      <th className="px-4 py-2 font-medium">Cost</th>
+                      <th className="px-4 py-2 font-medium">Nealocate</th>
+                      <th className="px-4 py-2 font-medium">561/2006</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.map((row) => (
+                      <tr
+                        key={row.id}
+                        className={`border-t border-slate-100 ${row.is_committed ? 'bg-emerald-50/40' : ''}`}
+                      >
+                        <td className="px-4 py-2.5 font-medium text-[#0A2B4E]">
+                          {row.name}
+                          {row.is_committed && (
+                            <span className="ml-2 text-xs text-emerald-700">în plan</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">{row.routes ?? '—'}</td>
+                        <td className="px-4 py-2.5">{formatKm(row.distance_km)}</td>
+                        <td className="px-4 py-2.5">{formatHours(row.duration_min)}</td>
+                        <td className="px-4 py-2.5">{formatLei(row.cost)}</td>
+                        <td className="px-4 py-2.5">{row.unassigned ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-xs text-slate-600">
+                          {(row.breaks_inserted || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 mr-2">
+                              <Coffee className="w-3.5 h-3.5" /> {row.breaks_inserted} pauze
+                            </span>
+                          )}
+                          {(row.rests_inserted || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1">
+                              <Moon className="w-3.5 h-3.5" /> {row.rests_inserted} repaus
+                            </span>
+                          )}
+                          {!row.breaks_inserted && !row.rests_inserted && '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          );
-        }) : !analyzing && (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm">
-            <Brain className="w-10 h-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm font-medium text-slate-500 mb-1">Nu există sugestii de optimizare</p>
-            <p className="text-xs text-slate-400">Apasă „Rulează analiză AI" pentru a genera sugestii personalizate</p>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2 space-y-3">
+              <h2 className="text-sm font-semibold text-[#0A2B4E]">Scenarii · {date}</h2>
+              {scenarios.length === 0 ? (
+                <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-slate-400 shadow-sm">
+                  <Brain className="w-9 h-9 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm text-slate-500">Niciun scenariu pentru această zi</p>
+                  <p className="text-xs mt-1">Rulează unul pe comenzile deschise</p>
+                </div>
+              ) : scenarios.map((s) => (
+                <button
+                  type="button"
+                  key={s.id}
+                  onClick={() => setSelectedId(s.id)}
+                  className={`w-full text-left bg-white rounded-xl border shadow-sm p-4 transition-colors ${
+                    selectedId === s.id ? 'border-[#1D4E89] ring-1 ring-[#1D4E89]/40' : 'border-slate-200/80 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[#0A2B4E] truncate">{s.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {scenarioStatusLabel(s.status)}
+                        {s.kpis?.routes != null && ` · ${s.kpis.routes} rute`}
+                        {s.kpis?.distance_km != null && ` · ${formatKm(s.kpis.distance_km)}`}
+                      </p>
+                    </div>
+                    {s.is_committed && (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <Check className="w-3 h-3" /> Plan
+                      </span>
+                    )}
+                  </div>
+                  {s.status === 'esuat' && s.error_message && (
+                    <p className="text-xs text-red-600 mt-2 line-clamp-2">{s.error_message}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="lg:col-span-3">
+              {!selectedId || !detail ? (
+                <div className="bg-white rounded-xl border border-slate-200/80 p-10 text-center text-slate-400 shadow-sm h-full min-h-[220px] flex flex-col items-center justify-center">
+                  <p className="text-sm text-slate-500">Selectează un scenariu pentru detalii</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-sm font-semibold text-[#0A2B4E]">{detail.name}</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">{scenarioStatusLabel(detail.status)}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(detail.status === 'rulat' || detail.status === 'promovat') && !detail.is_committed && (
+                        <button
+                          type="button"
+                          onClick={() => promote(detail.id)}
+                          disabled={Boolean(busy)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#27AE60] rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+                        >
+                          {busy === `promote-${detail.id}`
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Upload className="w-3.5 h-3.5" />}
+                          Promovează în plan
+                        </button>
+                      )}
+                      {!detail.is_committed && (
+                        <button
+                          type="button"
+                          onClick={() => remove(detail.id)}
+                          disabled={Boolean(busy)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                        >
+                          {busy === `del-${detail.id}`
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Trash2 className="w-3.5 h-3.5" />}
+                          Șterge
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border-b border-slate-100">
+                    {[
+                      { label: 'Rute', value: detail.kpis?.routes ?? '—' },
+                      { label: 'Distanță', value: formatKm(detail.kpis?.distance_km) },
+                      { label: 'Durată', value: formatHours(detail.kpis?.duration_min) },
+                      { label: 'Nealocate', value: detail.kpis?.unassigned ?? '—' },
+                      { label: 'Cost', value: formatLei(detail.kpis?.cost) },
+                      { label: 'Pauze 45′', value: detail.kpis?.breaks_inserted ?? 0 },
+                      { label: 'Repaus zilnic', value: detail.kpis?.rests_inserted ?? 0 },
+                      { label: 'Ferestre încălcate', value: detail.kpis?.window_violations ?? 0 },
+                    ].map((kpi) => (
+                      <div key={kpi.label} className="rounded-lg bg-slate-50 px-3 py-2">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500">{kpi.label}</p>
+                        <p className="text-sm font-semibold text-[#0A2B4E] mt-0.5">{kpi.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-4 space-y-3 max-h-[420px] overflow-y-auto">
+                    {(detail.solution?.routes || []).length === 0 ? (
+                      <p className="text-sm text-slate-500">Nicio rută în acest scenariu.</p>
+                    ) : detail.solution.routes.map((route, idx) => (
+                      <div key={`${route.vehicle_id}-${idx}`} className="rounded-lg border border-slate-100 p-3">
+                        <p className="text-sm font-medium text-[#0A2B4E]">
+                          Rută {idx + 1}
+                          <span className="text-slate-500 font-normal">
+                            {' · '}{formatKm(route.distance_km)} · {formatHours(route.duration_min)}
+                            {(route.breaks_inserted || 0) > 0 && ` · ${route.breaks_inserted} pauze`}
+                            {(route.rests_inserted || 0) > 0 && ` · ${route.rests_inserted} repaus`}
+                          </span>
+                        </p>
+                        <ol className="mt-2 space-y-1 text-xs text-slate-600">
+                          {(route.stops || []).map((stop) => (
+                            <li key={stop.seq} className="flex gap-2">
+                              <span className="text-slate-400 w-5 shrink-0">{stop.seq}.</span>
+                              <span className="capitalize">{stop.kind.replace('_', ' ')}</span>
+                              {stop.kind === 'pauza' && <Coffee className="w-3.5 h-3.5 text-amber-600" />}
+                              {stop.kind === 'repaus' && <Moon className="w-3.5 h-3.5 text-indigo-600" />}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ))}
+
+                    {(detail.solution?.unassigned || []).length > 0 && (
+                      <div className="rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+                        <p className="text-xs font-medium text-amber-900 mb-1">Nealocate</p>
+                        <ul className="text-xs text-amber-800 space-y-0.5">
+                          {detail.solution.unassigned.map((u, i) => (
+                            <li key={u.order_id || i}>
+                              {u.order_number || u.order_id || 'comandă'} — {u.reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }

@@ -16,6 +16,14 @@ import companyRoutes from './routes/company.js';
 import avizeRoutes from './routes/avize.js';
 import geoRoutes from './routes/geo.js';
 import routePlanRoutes from './routes/routes.js';
+import orderRoutes from './routes/orders.js';
+import planningRoutes from './routes/planning.js';
+import telematicsRoutes from './routes/telematics.js';
+import loadingRoutes from './routes/loading.js';
+import territoryRoutes from './routes/territories.js';
+import analyticsRoutes from './routes/analytics.js';
+import invoiceRoutes from './routes/invoices.js';
+import tachographRoutes from './routes/tachograph.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
@@ -24,6 +32,9 @@ import { emailConfigured } from './lib/email.js';
 import { visionConfigured } from './lib/cmrOcr.js';
 import { osrmConfigured } from './lib/geo/osrm.js';
 import { photonConfigured } from './lib/geo/photon.js';
+import { vroomConfigured } from './lib/planning/vroom.js';
+import { etransportConfigured, etransportMode } from './lib/compliance/etransport.js';
+import { efacturaCapability } from './lib/compliance/efactura.js';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -44,7 +55,14 @@ app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(compression());
+app.use(compression({
+  filter(req, res) {
+    if (req.path?.includes('/telematics/stream') || req.headers.accept === 'text/event-stream') {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+}));
 app.use(express.json({ limit: '1mb' }));
 
 function bearerFromQuery(req, _res, next) {
@@ -77,10 +95,11 @@ app.get('/uploads/:filename', bearerFromQuery, authRequired, async (req, res) =>
 
 function healthCapabilities() {
   return {
-    gps: 'simulate',
-    planning: 'stub',
-    efactura: false,
-    etransport: 'manual_uit',
+    gps: 'telematics',
+    planning: vroomConfigured() ? 'vroom' : 'stub',
+    efactura: efacturaCapability(),
+    etransport: etransportConfigured() ? etransportMode() : false,
+    tachograph: 'archive',
     routing: osrmConfigured() ? 'osrm' : false,
     geocoding: photonConfigured() ? 'photon' : false,
     vision: visionConfigured(),
@@ -110,6 +129,14 @@ app.use('/api/search', searchRoutes);
 app.use('/api/avize', avizeRoutes);
 app.use('/api/geo', geoRoutes);
 app.use('/api/routes', routePlanRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/planning', planningRoutes);
+app.use('/api/telematics', telematicsRoutes);
+app.use('/api/loading', loadingRoutes);
+app.use('/api/territories', territoryRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/tachograph', tachographRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err?.type === 'entity.parse.failed') {

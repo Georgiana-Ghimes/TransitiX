@@ -55,6 +55,23 @@ export function formatKm(value) {
   return `${num.toLocaleString('ro-RO', { maximumFractionDigits: 1 })} km`;
 }
 
+/**
+ * Plan vs realized for a route's stops: closed / total.
+ * Used as the live progress bar on the dispatch board.
+ */
+export function routeExecutionProgress(stops = []) {
+  const countable = (stops || []).filter(
+    (s) => s && !['depot_start', 'depot_end', 'pauza', 'repaus'].includes(s.kind)
+  );
+  const total = countable.length;
+  const done = countable.filter((s) => ['finalizat', 'esuat', 'sarit'].includes(s.status)).length;
+  return {
+    done,
+    total,
+    percent: total ? Math.round((done / total) * 100) : 0,
+  };
+}
+
 /** Next free route code for a day: R-01, R-02, … */
 export function nextRouteCode(existingCodes = []) {
   let max = 0;

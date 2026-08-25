@@ -3,12 +3,18 @@ import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from 'reac
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
-  ArrowDown, ArrowUp, ChevronDown, ChevronRight, Clock, Loader2, Package,
-  Pencil, Plus, RefreshCw, Route as RouteIcon, Search, Trash2, TriangleAlert, Truck, X,
+  ArrowDown, ArrowUp, ChevronDown, ChevronRight, Clock, FileSpreadsheet, FileText,
+  Loader2, Package, Pencil, Plus, RefreshCw, Route as RouteIcon, Search, Trash2,
+  TriangleAlert, Truck, Upload, X, Boxes, Rocket,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import OrderForm from '@/components/OrderForm';
+import OrderImportModal from '@/components/OrderImportModal';
+import RouteExceptionsPanel from '@/components/RouteExceptionsPanel';
+import LoadingSideView from '@/components/LoadingSideView';
+import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { buildRouteSheet } from '@/lib/routeSheet';
 import {
   canDropOnRoute,
   dayTotals,
@@ -18,6 +24,7 @@ import {
   nextRouteCode,
   parseDragPayload,
   previewFit,
+  routeExecutionProgress,
   routeStatusMeta,
   routeWarnings,
   stopMarkerColor,
@@ -75,6 +82,9 @@ export default function Dispatch() {
   const [locations, setLocations] = useState([]);
   const [orderFormOpen, setOrderFormOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [company, setCompany] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(null); // pack API result
 
   const loadPlans = useCallback(async (routeList) => {
     const entries = await Promise.all(routeList.map(async (route) => {
@@ -118,6 +128,8 @@ export default function Dispatch() {
     api.geo.health()
       .then((h) => setRoutingReady(Boolean(h?.configured && h?.ok)))
       .catch(() => setRoutingReady(false));
+    // The company is the shipper on every generated CMR and the letterhead on the road sheet.
+    api.company.get().then(setCompany).catch(() => setCompany(null));
   }, []);
 
   const pending = useMemo(() => unplannedOrders(orders, { date, search }), [orders, date, search]);
@@ -208,6 +220,53 @@ export default function Dispatch() {
     if (selectedRouteId === routeId) setSelectedRouteId(null);
   });
 
+  const generateTrips = (routeId) => run(`cmr-${routeId}`, async () => {
+    const result = await api.routes.generateTrips(routeId);
+    const created = result.created?.length || 0;
+    if (created) {
+      notifySuccess(
+        created === 1 ? 'CMR emis' : `${created} CMR-uri emise`,
+        result.created.map((t) => t.cmr_number).join(', ')
+      );
+    } else {
+      notifySuccess('Nimic de emis', result.message || 'Toate opririle au deja CMR');
+    }
+  }, { reloadOrders: false });
+
+  /**
+   * The sheet is built from the plan already on screen, so it prints what the dispatcher
+   * sees. The PDF renderer is loaded on demand — it is the heaviest thing on this page and
+   * most sessions never press the button.
+   */
+  const printRouteSheet = (route) => run(`sheet-${route.id}`, async () => {
+    const plan = plans[route.id] || await api.routes.plan(route.id);
+    const { downloadRouteSheet } = await import('@/lib/routeSheetPdf');
+    await downloadRouteSheet(buildRouteSheet(plan, { company, date }));
+  }, { reloadOrders: false });
+
+  const packRoute = (routeId, strategy = 'lifo') => run(`pack-${routeId}`, async () => {
+    const result = await api.loading.packRoute(routeId, { strategy });
+    setLoadingPlan(result);
+    notifySuccess(
+      `Umplere ${result.fill?.volume_pct ?? 0}%`,
+      result.unplaced?.length
+        ? `${result.unplaced.length} unități nu au încăput`
+        : `${result.fill?.placed_count || 0} unități plasate`
+    );
+  }, { reloadOrders: false });
+
+  const launchRoute = (routeId) => run(`launch-${routeId}`, async () => {
+    const result = await api.routes.launch(routeId);
+    setRoutes((prev) => prev.map((r) => (r.id === routeId ? { ...r, ...result.route } : r)));
+    const uit = result.uit?.uit_code;
+    notifySuccess(
+      'Rută lansată',
+      uit
+        ? `UIT ${uit}${result.uit?.stub ? ' (stub)' : ''}`
+        : (result.uit?.message || 'Fără UIT')
+    );
+  }, { reloadOrders: false });
+
   const closeOrderForm = () => { setOrderFormOpen(false); setEditingOrder(null); };
 
   const afterOrderSaved = async () => {
@@ -281,6 +340,12 @@ export default function Dispatch() {
             className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89]"
           />
           <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#0A2B4E] bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+          >
+            <Upload className="w-4 h-4" /> Import
+          </button>
+          <button
             onClick={() => { setEditingOrder(null); setOrderFormOpen(true); }}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#0A2B4E] bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
           >
@@ -308,6 +373,8 @@ export default function Dispatch() {
           </p>
         </div>
       )}
+
+      <RouteExceptionsPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Unplanned orders */}
@@ -418,6 +485,7 @@ export default function Dispatch() {
             const meta = routeStatusMeta(route.status);
             const open = expanded[route.id] !== false;
             const isSelected = selectedRouteId === route.id;
+            const progress = routeExecutionProgress(stops);
 
             return (
               <article
@@ -443,10 +511,41 @@ export default function Dispatch() {
                     <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${meta.badge}`}>
                       {meta.label}
                     </span>
+                    {route.uit_code && (
+                      <span
+                        className="px-2 py-0.5 text-[11px] font-medium rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800"
+                        title={route.uit_status ? `UIT · ${route.uit_status}` : 'UIT'}
+                      >
+                        UIT {route.uit_code}
+                      </span>
+                    )}
+                    {!route.uit_code && route.uit_status === 'failed' && (
+                      <span
+                        className="px-2 py-0.5 text-[11px] font-medium rounded-full border border-red-200 bg-red-50 text-red-700"
+                        title={route.uit_error || 'UIT eșuat'}
+                      >
+                        UIT eșuat
+                      </span>
+                    )}
                     <span className="ml-auto text-xs text-slate-400 tabular-nums">
                       {stops.length} opriri · {formatKm(plan?.totals?.distance_km)} · {formatDuration(plan?.totals?.duration_min)}
                     </span>
                   </div>
+
+                  {progress.total > 0 && (
+                    <div className="mt-2" title={`Plan vs realizat: ${progress.done}/${progress.total}`}>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
+                        <span>Plan vs realizat</span>
+                        <span className="tabular-nums">{progress.done}/{progress.total} · {progress.percent}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#27AE60] transition-all"
+                          style={{ width: `${progress.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                     <select
@@ -488,6 +587,49 @@ export default function Dispatch() {
                       {busy === `recompute-${route.id}`
                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         : <RefreshCw className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); launchRoute(route.id); }}
+                      disabled={
+                        busy === `launch-${route.id}`
+                        || ['lansata', 'in_executie', 'finalizata', 'anulata'].includes(route.status)
+                      }
+                      title="Lansează ruta + UIT"
+                      className="p-1.5 text-slate-400 hover:text-emerald-600 disabled:opacity-30"
+                    >
+                      {busy === `launch-${route.id}`
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Rocket className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); packRoute(route.id); }}
+                      disabled={busy === `pack-${route.id}` || !route.vehicle_id || !stops.length}
+                      title="Plan de încărcare (profil remorcă)"
+                      className="p-1.5 text-slate-400 hover:text-[#1D4E89] disabled:opacity-30"
+                    >
+                      {busy === `pack-${route.id}`
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Boxes className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); printRouteSheet(route); }}
+                      disabled={busy === `sheet-${route.id}` || !stops.length}
+                      title="Foaie de parcurs (PDF)"
+                      className="p-1.5 text-slate-400 hover:text-[#1D4E89] disabled:opacity-30"
+                    >
+                      {busy === `sheet-${route.id}`
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <FileText className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); generateTrips(route.id); }}
+                      disabled={busy === `cmr-${route.id}` || !stops.length}
+                      title="Emite CMR-urile rutei"
+                      className="p-1.5 text-slate-400 hover:text-[#1D4E89] disabled:opacity-30"
+                    >
+                      {busy === `cmr-${route.id}`
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <FileSpreadsheet className="w-3.5 h-3.5" />}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteRoute(route.id); }}
@@ -620,6 +762,17 @@ export default function Dispatch() {
         </section>
       </div>
 
+      {importOpen && (
+        <OrderImportModal
+          date={date}
+          onClose={() => setImportOpen(false)}
+          onImported={async () => {
+            setImportOpen(false);
+            setOrders(await api.entities.Order.list('-created_date', 500));
+          }}
+        />
+      )}
+
       {orderFormOpen && (
         <OrderForm
           order={editingOrder}
@@ -630,6 +783,76 @@ export default function Dispatch() {
           onClose={closeOrderForm}
           onSave={afterOrderSaved}
         />
+      )}
+
+      {loadingPlan && (
+        <ModalShell onClose={() => setLoadingPlan(null)} panelClassName="max-w-2xl" labelledBy="loading-plan-title">
+          <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-3 flex items-center justify-between z-10">
+            <div>
+              <h2 id="loading-plan-title" className="font-semibold text-[#0A2B4E]">
+                Plan încărcare · {loadingPlan.route?.code || 'Rută'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {loadingPlan.route?.vehicle_plate || '—'}
+                {' · '}
+                {loadingPlan.strategy === 'warehouse' ? 'depozit' : 'LIFO (șofer)'}
+                {loadingPlan.bay?.assumed ? ' · dimensiuni EU standard' : ''}
+              </p>
+            </div>
+            <button type="button" onClick={() => setLoadingPlan(null)} className="p-1.5 rounded-lg hover:bg-slate-100">
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Umplere</p>
+                <p className="font-semibold text-slate-800 tabular-nums">{loadingPlan.fill?.volume_pct ?? 0}%</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Unități</p>
+                <p className="font-semibold text-slate-800 tabular-nums">
+                  {loadingPlan.fill?.placed_count || 0}
+                  {loadingPlan.fill?.unplaced_count ? ` (+${loadingPlan.fill.unplaced_count} afară)` : ''}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Axa față</p>
+                <p className="font-semibold text-slate-800 tabular-nums">
+                  {loadingPlan.axle?.front_kg != null ? `${loadingPlan.axle.front_kg} kg` : '—'}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <p className="text-slate-400">Axa spate</p>
+                <p className="font-semibold text-slate-800 tabular-nums">
+                  {loadingPlan.axle?.rear_kg != null ? `${loadingPlan.axle.rear_kg} kg` : '—'}
+                </p>
+              </div>
+            </div>
+            {(loadingPlan.axle?.warnings || []).map((w) => (
+              <p key={w} className="text-xs text-red-600 flex items-start gap-1.5">
+                <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {w}
+              </p>
+            ))}
+            <LoadingSideView bay={loadingPlan.bay} sideView={loadingPlan.side_view || []} />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => packRoute(loadingPlan.route.id, 'lifo')}
+                className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50"
+              >
+                Recalculează LIFO
+              </button>
+              <button
+                type="button"
+                onClick={() => packRoute(loadingPlan.route.id, 'warehouse')}
+                className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50"
+              >
+                Strategie depozit
+              </button>
+            </div>
+          </div>
+        </ModalShell>
       )}
     </div>
   );

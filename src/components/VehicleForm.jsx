@@ -4,6 +4,7 @@ import { X, Save } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
 import { FieldError, FormErrorBanner, fieldInputClass } from '@/components/FormFeedback';
 import { friendlyErrorMessage } from '@/lib/notify';
+import { formatCapabilities, parseCapabilities } from '@/lib/planningUi';
 
 const INT_MAX = 2_147_483_647;
 const YEAR_MIN = 1950;
@@ -20,6 +21,9 @@ function validateVehicle(form) {
   const year = parseOptionalNumber(form.year);
   const capacityKg = parseOptionalNumber(form.capacity_kg);
   const capacityMc = parseOptionalNumber(form.capacity_mc);
+  const capacityPallets = parseOptionalNumber(form.capacity_pallets);
+  const costPerKm = parseOptionalNumber(form.cost_per_km);
+  const costPerHour = parseOptionalNumber(form.cost_per_hour);
   const consumption = parseOptionalNumber(form.fuel_consumption);
   const mileage = parseOptionalNumber(form.mileage);
 
@@ -42,6 +46,19 @@ function validateVehicle(form) {
     else if (capacityMc > INT_MAX) errors.capacity_mc = `Prea mare (max. ${INT_MAX.toLocaleString('ro-RO')} mc).`;
   }
 
+  if (form.capacity_pallets !== '' && form.capacity_pallets != null) {
+    if (!Number.isFinite(capacityPallets) || capacityPallets < 0 || !Number.isInteger(capacityPallets)) {
+      errors.capacity_pallets = 'Număr invalid de paleți (min. 0).';
+    }
+  }
+
+  if (form.cost_per_km !== '' && form.cost_per_km != null) {
+    if (!Number.isFinite(costPerKm) || costPerKm < 0) errors.cost_per_km = 'Cost invalid (min. 0).';
+  }
+  if (form.cost_per_hour !== '' && form.cost_per_hour != null) {
+    if (!Number.isFinite(costPerHour) || costPerHour < 0) errors.cost_per_hour = 'Cost invalid (min. 0).';
+  }
+
   if (form.fuel_consumption !== '' && form.fuel_consumption != null) {
     if (!Number.isFinite(consumption) || consumption < 0) errors.fuel_consumption = 'Consum invalid (min. 0).';
     else if (consumption > 999.99) errors.fuel_consumption = 'Consum max. 999.99 l/100km.';
@@ -61,11 +78,17 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
   const [formError, setFormError] = useState('');
   const [form, setForm] = useState({
     plate: '', brand: '', model: '', year: '', capacity_kg: '', capacity_mc: '',
+    capacity_pallets: '', capabilities: '', cost_per_km: '', cost_per_hour: '',
+    cargo_length_m: '', cargo_width_m: '', cargo_height_m: '',
+    axle_front_m: '', axle_rear_m: '', axle_front_max_kg: '', axle_rear_max_kg: '',
+    fuel_price_per_l: '', wage_per_hour: '', toll_per_km: '',
+    depreciation_per_km: '', maintenance_per_km: '',
     fuel_consumption: '', fuel_type: 'diesel', chassis_number: '', engine_number: '',
     mileage: '', itp_number: '', itp_expiry: '', rca_number: '', rca_expiry: '',
     rovinieta_number: '', rovinieta_expiry: '', casco_number: '', casco_expiry: '',
     status: 'available', is_active: true,
     ...vehicle,
+    capabilities: formatCapabilities(vehicle?.capabilities) || '',
   });
 
   const set = (k, val) => {
@@ -93,6 +116,22 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
         year: parseOptionalNumber(form.year),
         capacity_kg: parseOptionalNumber(form.capacity_kg),
         capacity_mc: parseOptionalNumber(form.capacity_mc),
+        capacity_pallets: parseOptionalNumber(form.capacity_pallets),
+        cost_per_km: parseOptionalNumber(form.cost_per_km),
+        cost_per_hour: parseOptionalNumber(form.cost_per_hour),
+        cargo_length_m: parseOptionalNumber(form.cargo_length_m),
+        cargo_width_m: parseOptionalNumber(form.cargo_width_m),
+        cargo_height_m: parseOptionalNumber(form.cargo_height_m),
+        axle_front_m: parseOptionalNumber(form.axle_front_m),
+        axle_rear_m: parseOptionalNumber(form.axle_rear_m),
+        axle_front_max_kg: parseOptionalNumber(form.axle_front_max_kg),
+        axle_rear_max_kg: parseOptionalNumber(form.axle_rear_max_kg),
+        fuel_price_per_l: parseOptionalNumber(form.fuel_price_per_l),
+        wage_per_hour: parseOptionalNumber(form.wage_per_hour),
+        toll_per_km: parseOptionalNumber(form.toll_per_km),
+        depreciation_per_km: parseOptionalNumber(form.depreciation_per_km),
+        maintenance_per_km: parseOptionalNumber(form.maintenance_per_km),
+        capabilities: parseCapabilities(form.capabilities),
         fuel_consumption: parseOptionalNumber(form.fuel_consumption),
         mileage: parseOptionalNumber(form.mileage) ?? 0,
       };
@@ -183,9 +222,93 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
             <FieldError id="vehicle-capacity_mc-error" message={errors.capacity_mc} />
           </div>
           <div>
+            <label className={labelCls} htmlFor="vehicle-capacity_pallets">Capacitate (paleți)</label>
+            {field('capacity_pallets', { type: 'number', min: 0, value: form.capacity_pallets ?? '', onChange: (e) => set('capacity_pallets', e.target.value) })}
+            <FieldError id="vehicle-capacity_pallets-error" message={errors.capacity_pallets} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelCls} htmlFor="vehicle-capabilities">Dotări (ADR, frigo, lift…)</label>
+            {field('capabilities', {
+              value: form.capabilities ?? '',
+              onChange: (e) => set('capabilities', e.target.value),
+              placeholder: 'ADR, frigo, lift-hidraulic',
+            })}
+            <p className="text-[11px] text-slate-400 mt-1">Separate prin virgulă — trebuie să acopere cerințele comenzilor.</p>
+          </div>
+          <div className="sm:col-span-2 border-t border-slate-100 pt-3">
+            <p className="text-xs font-medium text-slate-500 mb-2">Spațiu marfă (plan încărcare)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls} htmlFor="vehicle-cargo_length_m">Lungime (m)</label>
+                {field('cargo_length_m', { type: 'number', min: 0, step: '0.01', value: form.cargo_length_m ?? '', onChange: (e) => set('cargo_length_m', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-cargo_width_m">Lățime (m)</label>
+                {field('cargo_width_m', { type: 'number', min: 0, step: '0.01', value: form.cargo_width_m ?? '', onChange: (e) => set('cargo_width_m', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-cargo_height_m">Înălțime (m)</label>
+                {field('cargo_height_m', { type: 'number', min: 0, step: '0.01', value: form.cargo_height_m ?? '', onChange: (e) => set('cargo_height_m', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-axle_front_m">Axa față (m de la nas)</label>
+                {field('axle_front_m', { type: 'number', min: 0, step: '0.01', value: form.axle_front_m ?? '', onChange: (e) => set('axle_front_m', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-axle_rear_m">Axa spate (m)</label>
+                {field('axle_rear_m', { type: 'number', min: 0, step: '0.01', value: form.axle_rear_m ?? '', onChange: (e) => set('axle_rear_m', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-axle_front_max_kg">Limită față (kg)</label>
+                {field('axle_front_max_kg', { type: 'number', min: 0, value: form.axle_front_max_kg ?? '', onChange: (e) => set('axle_front_max_kg', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-axle_rear_max_kg">Limită spate (kg)</label>
+                {field('axle_rear_max_kg', { type: 'number', min: 0, value: form.axle_rear_max_kg ?? '', onChange: (e) => set('axle_rear_max_kg', e.target.value) })}
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">Gol = remorcă EU standard 13,6 × 2,45 × 2,7 m.</p>
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="vehicle-cost_per_km">Cost pe km (lei)</label>
+            {field('cost_per_km', { type: 'number', min: 0, step: '0.01', value: form.cost_per_km ?? '', onChange: (e) => set('cost_per_km', e.target.value) })}
+            <FieldError id="vehicle-cost_per_km-error" message={errors.cost_per_km} />
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="vehicle-cost_per_hour">Cost pe oră (lei)</label>
+            {field('cost_per_hour', { type: 'number', min: 0, step: '0.01', value: form.cost_per_hour ?? '', onChange: (e) => set('cost_per_hour', e.target.value) })}
+            <FieldError id="vehicle-cost_per_hour-error" message={errors.cost_per_hour} />
+          </div>
+          <div>
             <label className={labelCls} htmlFor="vehicle-fuel_consumption">Consum (l/100km)</label>
             {field('fuel_consumption', { type: 'number', step: '0.01', min: 0, max: 999.99, value: form.fuel_consumption, onChange: (e) => set('fuel_consumption', e.target.value) })}
             <FieldError id="vehicle-fuel_consumption-error" message={errors.fuel_consumption} />
+          </div>
+          <div className="sm:col-span-2">
+            <h4 className="text-xs font-semibold text-slate-500 mb-2">Cost detaliat (cockpit)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div>
+                <label className={labelCls} htmlFor="vehicle-fuel_price_per_l">Preț combustibil (lei/l)</label>
+                {field('fuel_price_per_l', { type: 'number', min: 0, step: '0.01', value: form.fuel_price_per_l ?? '', onChange: (e) => set('fuel_price_per_l', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-wage_per_hour">Salariu șofer (lei/h)</label>
+                {field('wage_per_hour', { type: 'number', min: 0, step: '0.01', value: form.wage_per_hour ?? '', onChange: (e) => set('wage_per_hour', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-toll_per_km">Taxe drum (lei/km)</label>
+                {field('toll_per_km', { type: 'number', min: 0, step: '0.01', value: form.toll_per_km ?? '', onChange: (e) => set('toll_per_km', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-depreciation_per_km">Amortizare (lei/km)</label>
+                {field('depreciation_per_km', { type: 'number', min: 0, step: '0.01', value: form.depreciation_per_km ?? '', onChange: (e) => set('depreciation_per_km', e.target.value) })}
+              </div>
+              <div>
+                <label className={labelCls} htmlFor="vehicle-maintenance_per_km">Întreținere (lei/km)</label>
+                {field('maintenance_per_km', { type: 'number', min: 0, step: '0.01', value: form.maintenance_per_km ?? '', onChange: (e) => set('maintenance_per_km', e.target.value) })}
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">Gol = folosește default-urile firmei. Fără costuri, cockpit-ul lasă totalul gol (nu inventează).</p>
           </div>
           <div>
             <label className={labelCls} htmlFor="vehicle-mileage">Kilometraj</label>

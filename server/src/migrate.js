@@ -690,6 +690,313 @@ CREATE UNIQUE INDEX IF NOT EXISTS route_stops_one_per_order
 
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS route_id UUID REFERENCES routes(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_trips_route ON trips(company_id, route_id);
+
+-- Which stop a generated CMR came from. This is what makes regeneration safe: a route that
+-- gains a stop produces only the missing document instead of a second copy of every one
+-- already printed. Server-controlled, so it is not in the Trip writable list.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS route_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS trips_one_per_route_stop
+  ON trips (route_stop_id) WHERE route_stop_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Road-network distance cache.
+--
+-- Keyed on the pair of SNAPPED graph nodes, not on the coordinates we asked about: two
+-- pins a few metres apart on the same street snap to the same node and share one row.
+-- Without this the optimizer in P2 re-measures the same city every morning.
+--
+-- Company-scoped for the same reason geocode_cache is: the set of point pairs a tenant
+-- measures is its delivery network.
+-- ---------------------------------------------------------------------------
+
+-- Which graph node a requested coordinate lands on. Filled from the table responses we
+-- already make, so resolving a snap never costs an extra call.
+CREATE TABLE IF NOT EXISTS geo_snap_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  profile TEXT NOT NULL DEFAULT 'driving',
+  point_key TEXT NOT NULL,
+  node_key TEXT NOT NULL,
+  snap_distance_m NUMERIC(10,1),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (company_id, profile, point_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_geo_snap_cache_expiry ON geo_snap_cache(expires_at);
+
+CREATE TABLE IF NOT EXISTS route_matrix_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  profile TEXT NOT NULL DEFAULT 'driving',
+  from_key TEXT NOT NULL,
+  to_key TEXT NOT NULL,
+  distance_km NUMERIC(10,3),
+  duration_min NUMERIC(10,2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (company_id, profile, from_key, to_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_route_matrix_cache_lookup
+  ON route_matrix_cache(company_id, profile, from_key);
+CREATE INDEX IF NOT EXISTS idx_route_matrix_cache_expiry ON route_matrix_cache(expires_at);
+
+-- ---------------------------------------------------------------------------
+-- P2: what the optimizer needs to know before it can optimize anything.
+--
+-- The solver matches an order against a vehicle on three numbers and a set of words.
+-- P1 put all four on orders; this puts the other side of each comparison on vehicles.
+-- ---------------------------------------------------------------------------
+
+-- capacity_kg and capacity_mc already exist. Pallets is the third dimension a Romanian
+-- dispatcher actually plans on, and it is not derivable from the other two.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS capacity_pallets INT;
+
+-- The other side of orders.requires. A vehicle can serve an order only if its capabilities
+-- cover everything the order asks for.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS capabilities TEXT[] NOT NULL DEFAULT '{}';
+
+-- Where this vehicle starts and ends its day when the plan does not say otherwise.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS home_location_id UUID REFERENCES locations(id) ON DELETE SET NULL;
+
+-- Enough of a cost model for the solver to prefer one plan over another. The full model
+-- (fuel, wages, tolls, depreciation) is P5; these two numbers are what an objective needs.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS cost_per_km NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS cost_per_hour NUMERIC(10,2);
+
+-- The driver's shift, which bounds the route independently of the vehicle.
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS shift_start TIME;
+ALTER TABLE drivers ADD COLUMN IF NOT EXISTS shift_end TIME;
+
+-- One run of the optimizer over one day's orders. Several scenarios can exist for the same
+-- date; exactly one gets committed into real routes.
+CREATE TABLE IF NOT EXISTS route_scenarios (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  route_date DATE NOT NULL,
+  name TEXT NOT NULL,
+  -- what the solver was asked: cost weights, vehicle cap, window penalty, seed
+  params JSONB NOT NULL DEFAULT '{}',
+  -- what it answered: km, hours, cost, vehicles used, unassigned orders
+  kpis JSONB NOT NULL DEFAULT '{}',
+  -- the plan itself, before anyone commits it to routes
+  solution JSONB,
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'rulat', 'esuat', 'promovat')),
+  error_message TEXT,
+  is_committed BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_route_scenarios_company ON route_scenarios(company_id);
+CREATE INDEX IF NOT EXISTS idx_route_scenarios_company_date
+  ON route_scenarios(company_id, route_date DESC);
+
+-- Only one scenario per day can be the one that was actually committed.
+CREATE UNIQUE INDEX IF NOT EXISTS route_scenarios_one_committed
+  ON route_scenarios (company_id, route_date) WHERE is_committed;
+
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS scenario_id UUID REFERENCES route_scenarios(id) ON DELETE SET NULL;
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS planned_cost NUMERIC(12,2);
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS actual_cost NUMERIC(12,2);
+
+-- ---------------------------------------------------------------------------
+-- P3: live execution — telematics history + exceptions.
+--
+-- gps_logs stays as the "last known position" projection the existing map already reads.
+-- telematics_positions is the full trail. Every ingest writes both.
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS telematics_api_key_hash TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS companies_telematics_key_hash
+  ON companies (telematics_api_key_hash) WHERE telematics_api_key_hash IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS telematics_positions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  vehicle_id UUID NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  route_id UUID REFERENCES routes(id) ON DELETE SET NULL,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  latitude NUMERIC(10,7) NOT NULL,
+  longitude NUMERIC(10,7) NOT NULL,
+  speed NUMERIC(8,2),
+  heading NUMERIC(8,2),
+  ignition BOOLEAN,
+  accuracy_m NUMERIC(10,2),
+  recorded_at TIMESTAMPTZ NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  source TEXT NOT NULL DEFAULT 'driver_app'
+    CHECK (source IN ('driver_app', 'simulate', 'webfleet', 'frotcom', 'teltonika', 'webhook', 'other')),
+  payload JSONB
+);
+
+CREATE INDEX IF NOT EXISTS idx_telematics_positions_vehicle_time
+  ON telematics_positions(company_id, vehicle_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telematics_positions_route_time
+  ON telematics_positions(company_id, route_id, recorded_at DESC)
+  WHERE route_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_telematics_positions_recorded
+  ON telematics_positions(company_id, recorded_at DESC);
+
+-- Exception bus for the live dispatcher board. Detection comes later; the table is here so
+-- ingest and the UI share one place to look.
+CREATE TABLE IF NOT EXISTS route_exceptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  route_id UUID REFERENCES routes(id) ON DELETE CASCADE,
+  route_stop_id UUID REFERENCES route_stops(id) ON DELETE SET NULL,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  type TEXT NOT NULL
+    CHECK (type IN (
+      'intarziere', 'prea_devreme', 'abatere_traseu', 'oprire_neplanificata',
+      'stationare', 'viteza', 'alta'
+    )),
+  severity TEXT NOT NULL DEFAULT 'warning'
+    CHECK (severity IN ('info', 'warning', 'critical')),
+  detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  acknowledged_at TIMESTAMPTZ,
+  acknowledged_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  resolved_at TIMESTAMPTZ,
+  message TEXT,
+  payload JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_route_exceptions_company_open
+  ON route_exceptions(company_id, detected_at DESC)
+  WHERE resolved_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_route_exceptions_route
+  ON route_exceptions(company_id, route_id, detected_at DESC);
+
+-- Live exceptions notify the office bell.
+ALTER TABLE office_notifications DROP CONSTRAINT IF EXISTS office_notifications_type_check;
+ALTER TABLE office_notifications ADD CONSTRAINT office_notifications_type_check
+  CHECK (type IN (
+    'trip_status', 'trip_problem', 'trip_unassigned', 'cmr_pending',
+    'client_confirmed', 'client_damage', 'document_expiry', 'route_exception', 'system'
+  ));
+
+-- ePOD: one proof per route stop (signature + photos + refusal).
+CREATE TABLE IF NOT EXISTS delivery_proofs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  route_id UUID NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+  route_stop_id UUID NOT NULL REFERENCES route_stops(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  outcome TEXT NOT NULL
+    CHECK (outcome IN ('livrat', 'refuzat', 'partial')),
+  recipient_name TEXT,
+  signature_url TEXT,
+  photo_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
+  refusal_reason TEXT,
+  notes TEXT,
+  latitude NUMERIC(10,7),
+  longitude NUMERIC(10,7),
+  captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  captured_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, route_stop_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_proofs_route
+  ON delivery_proofs(company_id, route_id, captured_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- P4: loading plan + territories foundation.
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS length_m NUMERIC(8,3);
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS width_m NUMERIC(8,3);
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS height_m NUMERIC(8,3);
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS unit_weight_kg NUMERIC(10,2);
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS stackable BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS adr_class TEXT;
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS pallet_type TEXT
+  CHECK (pallet_type IS NULL OR pallet_type IN ('eur', 'industrial', 'half', 'custom'));
+ALTER TABLE warehouse_products ADD COLUMN IF NOT EXISTS picking_zone TEXT;
+
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS cargo_length_m NUMERIC(8,3);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS cargo_width_m NUMERIC(8,3);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS cargo_height_m NUMERIC(8,3);
+-- Axle positions measured from the cargo nose (cab side); limits in kg.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS axle_front_m NUMERIC(8,3);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS axle_rear_m NUMERIC(8,3);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS axle_front_max_kg NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS axle_rear_max_kg NUMERIC(10,2);
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS product_id UUID REFERENCES warehouse_products(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS territories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  color TEXT,
+  polygon JSONB,
+  sort_order INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_territories_company ON territories(company_id);
+
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS territory_id UUID REFERENCES territories(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_locations_territory ON locations(company_id, territory_id);
+
+-- ---------------------------------------------------------------------------
+-- P5: cost model + RO compliance hooks (UIT / e-Factura readiness).
+-- ---------------------------------------------------------------------------
+
+-- Full vehicle cost stack (P2 only had cost_per_km / cost_per_hour for the solver).
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS fuel_price_per_l NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS wage_per_hour NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS toll_per_km NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS depreciation_per_km NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS maintenance_per_km NUMERIC(10,2);
+
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_fuel_price_per_l NUMERIC(10,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_wage_per_hour NUMERIC(10,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_toll_per_km NUMERIC(10,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_depreciation_per_km NUMERIC(10,2);
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_maintenance_per_km NUMERIC(10,2);
+
+-- e-Transport lifecycle on the route (trips.uit_code stays the CMR-level code).
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS uit_code TEXT;
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS uit_status TEXT NOT NULL DEFAULT 'none'
+  CHECK (uit_status IN ('none', 'pending', 'obtained', 'failed', 'manual'));
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS uit_requested_at TIMESTAMPTZ;
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS uit_error TEXT;
+
+-- Tachograph download archive (partial TLV parse; full 561 analysis later).
+CREATE TABLE IF NOT EXISTS tachograph_imports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  driver_id UUID REFERENCES drivers(id) ON DELETE SET NULL,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  imported_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  original_filename TEXT NOT NULL,
+  stored_filename TEXT NOT NULL,
+  file_url TEXT,
+  size_bytes INT NOT NULL DEFAULT 0,
+  sha256 TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'unknown'
+    CHECK (kind IN ('vu', 'card', 'unknown')),
+  status TEXT NOT NULL DEFAULT 'stored'
+    CHECK (status IN ('stored', 'partial', 'failed')),
+  message TEXT,
+  plates_guess JSONB DEFAULT '[]'::jsonb,
+  tags_summary JSONB DEFAULT '[]'::jsonb,
+  known_tag_count INT DEFAULT 0,
+  tag_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_tacho_imports_company ON tachograph_imports(company_id, created_at DESC);
 `
 
 async function migrate() {

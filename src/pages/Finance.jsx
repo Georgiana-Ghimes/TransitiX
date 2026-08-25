@@ -73,9 +73,24 @@ export default function Finance() {
 
   const sendToEfactura = () => {
     notifyError(
-      'e-Factura ANAF nu e conectată',
-      'Nu marcăm factura ca trimisă către SPV. Integrarea legală e pe roadmap — vezi docs/romania-tms-production.plan.md.'
+      'e-Factura SPV nu e conectată',
+      'Folosește „Descarcă UBL” pentru XML local. Nu marcăm factura ca trimisă către ANAF fără certificat SPV.'
     );
+  };
+
+  const downloadUbl = async (inv) => {
+    try {
+      const { blob, filename } = await api.invoices.downloadUbl(inv.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      notifySuccess('UBL descărcat', `${filename} — local, nu e trimis la SPV`);
+    } catch (e) {
+      notifyError('Export UBL eșuat', e);
+    }
   };
 
   const exportCSV = () => {
@@ -104,7 +119,7 @@ export default function Finance() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Financiar</h1>
-          <p className="text-sm text-slate-500 mt-1">Facturi locale, încasări și ciorne din avize — fără SPV ANAF</p>
+          <p className="text-sm text-slate-500 mt-1">Facturi locale, UBL pentru e-Factura, încasări — fără SPV ANAF</p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><Download className="w-4 h-4" /> Export</button>
@@ -112,15 +127,16 @@ export default function Finance() {
         </div>
       </div>
 
-      <DemoBanner title="e-Factura ANAF nu e conectată">
-        Butonul e-Factura nu trimite XML către SPV. Statusul rămâne local. QuickCargo și Routena au această integrare; Transitix o va avea după certificat SPV, nu prin simulare.
+      <DemoBanner title="e-Factura: UBL local, SPV neconectat">
+        Poți descărca XML UBL (CIUS-RO) pentru fiecare factură. Trimiterea către SPV ANAF vine după
+        certificat — până atunci statusul e-Factura rămâne local și nu inventăm „acceptat”.
       </DemoBanner>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard icon={FileText} label="Facturi emise" value={invoices.length} subtitle={`${totalIssued.toLocaleString('ro-RO')} RON`} accent="primary" />
         <KpiCard icon={Euro} label="Încasat" value={totalPaid.toLocaleString('ro-RO')} subtitle="RON · luna curentă" accent="success" />
         <KpiCard icon={Wallet} label="Neplătite" value={unpaid} subtitle="Facturi restante" accent="danger" />
-        <KpiCard icon={TrendingUp} label="e-Factura" value="—" subtitle="SPV neconectat" accent="accent" />
+        <KpiCard icon={TrendingUp} label="e-Factura" value="UBL" subtitle="Export local · SPV off" accent="accent" />
       </div>
 
       {/* Filters */}
@@ -168,9 +184,10 @@ export default function Finance() {
             </p>
             <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100">
               <button onClick={() => { setEditInvoice(inv); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
+              <button onClick={() => downloadUbl(inv)} className="text-slate-600 hover:underline text-xs">Descarcă UBL</button>
               {inv.status === 'draft' && <button onClick={() => sendToClient(inv)} className="text-blue-600 hover:underline text-xs">Trimite</button>}
               {inv.status === 'sent' && <button onClick={() => markPaid(inv)} className="text-emerald-600 hover:underline text-xs">Plătită</button>}
-              {inv.efactura_status === 'not_sent' && <button onClick={() => sendToEfactura(inv)} className="text-[#F5A623] hover:underline text-xs">e-Factura</button>}
+              {inv.efactura_status === 'not_sent' && <button onClick={() => sendToEfactura(inv)} className="text-[#F5A623] hover:underline text-xs">e-Factura SPV</button>}
             </div>
           </div>
         )) : (
@@ -211,13 +228,14 @@ export default function Finance() {
                       {inv.efactura_status === 'sent' ? <span className="text-xs text-blue-600">Trimisă</span> :
                        inv.efactura_status === 'accepted' ? <span className="text-xs text-emerald-600">Acceptată</span> :
                        inv.efactura_status === 'rejected' ? <span className="text-xs text-red-600">Respinsă</span> :
-                       <span className="text-xs text-slate-400">Neconectat SPV</span>}
+                       <span className="text-xs text-slate-400">UBL local</span>}
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
                       <button onClick={() => { setEditInvoice(inv); setShowForm(true); }} className="text-[#1D4E89] hover:underline text-xs">Editează</button>
+                      <button onClick={() => downloadUbl(inv)} className="text-slate-600 hover:underline text-xs">UBL</button>
                       {inv.status === 'draft' && <button onClick={() => sendToClient(inv)} className="text-blue-600 hover:underline text-xs">Trimite</button>}
                       {inv.status === 'sent' && <button onClick={() => markPaid(inv)} className="text-emerald-600 hover:underline text-xs">Plătită</button>}
-                      {inv.efactura_status === 'not_sent' && <button onClick={() => sendToEfactura(inv)} className="text-[#F5A623] hover:underline text-xs">e-Factura</button>}
+                      {inv.efactura_status === 'not_sent' && <button onClick={() => sendToEfactura(inv)} className="text-[#F5A623] hover:underline text-xs">SPV</button>}
                     </td>
                   </tr>
                 ))}

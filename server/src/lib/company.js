@@ -4,6 +4,8 @@ import { serializeRow } from '../entities.js';
 const COMPANY_WRITABLE = [
   'name', 'cui', 'vat_regime', 'address', 'phone', 'email', 'website',
   'logo_url', 'default_currency', 'fiscal_code', 'bank_account', 'settings',
+  'default_fuel_price_per_l', 'default_wage_per_hour', 'default_toll_per_km',
+  'default_depreciation_per_km', 'default_maintenance_per_km',
 ];
 
 const DEFAULT_SETTINGS = {
@@ -23,6 +25,9 @@ export function publicCompany(row) {
       ? settings.document_expiry_days
       : DEFAULT_SETTINGS.document_expiry_days,
   };
+  // Hash never leaves the server; the UI only needs to know whether a key exists.
+  out.telematics_key_configured = Boolean(row.telematics_api_key_hash);
+  delete out.telematics_api_key_hash;
   return out;
 }
 

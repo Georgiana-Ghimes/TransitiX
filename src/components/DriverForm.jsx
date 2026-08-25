@@ -11,6 +11,7 @@ export default function DriverForm({ driver, onClose, onSave }) {
     license_number: '', license_category: '', license_expiry: '',
     medical_certificate_number: '', medical_certificate_expiry: '',
     tachograph_card_number: '', tachograph_card_expiry: '',
+    shift_start: '', shift_end: '',
     status: 'disponibil', is_active: true,
     ...driver,
   });
@@ -47,6 +48,21 @@ export default function DriverForm({ driver, onClose, onSave }) {
             <div><label className={labelCls}>Email</label><input type="email" className={inputCls} value={form.email} onChange={e => set('email', e.target.value)} /></div>
             <div><label className={labelCls}>Data angajării</label><input type="date" className={inputCls} value={form.hire_date || ''} onChange={e => set('hire_date', e.target.value)} /></div>
             <div><label className={labelCls}>Data nașterii</label><input type="date" className={inputCls} value={form.birth_date || ''} onChange={e => set('birth_date', e.target.value)} /></div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-[#F5A623] pl-2">Tură</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Început tură</label>
+                <input type="time" className={inputCls} value={form.shift_start || ''} onChange={(e) => set('shift_start', e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>Sfârșit tură</label>
+                <input type="time" className={inputCls} value={form.shift_end || ''} onChange={(e) => set('shift_end', e.target.value)} />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400">Optimizatorul nu planifică în afara intervalului.</p>
           </div>
 
           <div className="space-y-3">

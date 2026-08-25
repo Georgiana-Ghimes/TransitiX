@@ -1,0 +1,36 @@
+# VROOM solver sidecar — the VRP optimizer behind /dispatch (P2).
+#
+# VROOM can talk to OSRM itself, but we never let it: the API hands it a matrix it already
+# measured through server/src/lib/geo/matrixCache.js, so a second run of the same day costs
+# no road-network calls at all. That is why there is no routing configuration here.
+#
+# Bring it up alongside the database (OSRM is still needed — the API measures with it):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.osrm.yml -f docker-compose.vroom.yml up -d db osrm vroom
+#
+# Point the API at it with VROOM_URL=http://localhost:3000 in server/.env
+# (inside the full Compose stack the api service reaches it as http://vroom:3000).
+#
+# 1.14 is the floor: `costs.per_km` on a vehicle arrived in that release, and without it the
+# solver can only optimize for time.
+services:
+  vroom:
+    image: ghcr.io/vroom-project/vroom-docker:v1.14.0
+    restart: unless-stopped
+    environment:
+      # No routing profile is configured, so every request must carry its own matrix.
+      # A request without one fails loudly rather than silently measuring straight lines.
+      VROOM_ROUTER: ""
+      VROOM_LOG: /conf
+    volumes:
+      - ./docker/vroom:/conf
+    ports:
+      - "${VROOM_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -q -O- --post-data='{"vehicles":[{"id":1,"start_index":0,"end_index":0}],"jobs":[{"id":1,"location_index":1}],"matrices":{"car":{"durations":[[0,60],[60,0]]}}}'
+          --header='Content-Type: application/json' http://localhost:3000 | grep -q '"code":0'
+      interval: 30s
+      timeout: 10s
+      retries: 3

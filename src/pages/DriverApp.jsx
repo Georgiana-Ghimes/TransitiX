@@ -5,6 +5,7 @@ import StatusBadge from '@/components/StatusBadge';
 import DriverNotifications from '@/components/driver/DriverNotifications';
 import DriverChat from '@/components/driver/DriverChat';
 import DriverProfile from '@/components/driver/DriverProfile';
+import DriverRoute from '@/components/driver/DriverRoute';
 import {
   formatDate,
   isActiveTripStatus,
@@ -13,7 +14,7 @@ import {
 } from '@/lib/utils';
 import {
   Route, Package, Truck, Camera, ChevronRight, Loader2, CheckCircle2,
-  CircleDot, Navigation, MessageSquare, User, Bell, Phone,
+  CircleDot, Navigation, MessageSquare, User, Bell, Phone, ListOrdered,
 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { withAccessToken } from '@/lib/uploadUrl';
@@ -240,7 +241,9 @@ export default function DriverApp() {
           <div>
             <p className="text-xs text-white/60">Aplicație Șofer</p>
             <p className="font-bold text-lg">
-              {selectedTrip && tab === 'trips' ? selectedTrip.cmr_number : 'Cursele mele'}
+              {tab === 'route'
+                ? 'Ruta mea'
+                : selectedTrip && tab === 'trips' ? selectedTrip.cmr_number : 'Cursele mele'}
             </p>
           </div>
           <div className="w-9 h-9 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
@@ -255,7 +258,9 @@ export default function DriverApp() {
       </div>
 
       <div className="p-4 space-y-4">
-        {tab === 'notifications' ? (
+        {tab === 'route' ? (
+          <DriverRoute />
+        ) : tab === 'notifications' ? (
           <DriverNotifications onRead={loadUnreadCount} />
         ) : tab === 'chat' ? (
           <DriverChat />
@@ -523,8 +528,9 @@ export default function DriverApp() {
       </div>
 
       <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {[
+            { key: 'route', icon: ListOrdered, label: 'Rută' },
             { key: 'trips', icon: Route, label: 'Curse' },
             { key: 'notifications', icon: Bell, label: 'Notificări', badge: unreadCount },
             { key: 'chat', icon: MessageSquare, label: 'Chat' },

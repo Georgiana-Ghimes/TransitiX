@@ -116,6 +116,11 @@ export async function canReadUpload(queryFn, companyId, filename) {
      UNION ALL
      SELECT 1 FROM trip_documents WHERE company_id = $1 AND (original_image_url LIKE $2 OR final_pdf_url LIKE $2)
      UNION ALL
+     SELECT 1 FROM delivery_proofs WHERE company_id = $1 AND (
+       signature_url LIKE $2
+       OR photo_urls::text LIKE $2
+     )
+     UNION ALL
      SELECT 1 FROM client_confirmations WHERE company_id = $1 AND damage_image_url LIKE $2
      UNION ALL
      SELECT 1 FROM companies WHERE id = $1 AND logo_url LIKE $2
