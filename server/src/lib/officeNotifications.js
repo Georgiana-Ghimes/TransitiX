@@ -44,6 +44,7 @@ export async function notifyTripStatusChange(companyId, trip, oldStatus, newStat
 
 export async function notifyCmrPending(companyId, trip) {
   if (!trip?.id) return;
+  const driver = trip.driver_name || 'Șoferul';
   await query(
     `INSERT INTO office_notifications (company_id, type, title, message, link, trip_id, cmr_number)
      VALUES ($1, 'cmr_pending', $2, $3, $4, $5, $6)
@@ -51,7 +52,7 @@ export async function notifyCmrPending(companyId, trip) {
     [
       companyId,
       `CMR de confirmat — ${trip.cmr_number || 'Cursă'}`,
-      'Șoferul a încărcat documentul CMR. Verifică datele OCR.',
+      `${driver} a încărcat documentul CMR. Verifică datele OCR pe cursă.`,
       `/trips/${trip.id}`,
       trip.id,
       trip.cmr_number,

@@ -406,6 +406,12 @@ opțional legate de șofer și vehicul. Fișierul e arhivat cu hash; sistemul de
 (TLV) și poate ghici plăcuțe din textul ASCII. Nu calculează încă ore de conducere /
 încălcări 561 — asta vine când avem decode complet de activități.
 
+### Profil șofer + CMR către birou
+
+Tab-ul **Profil** din app-ul de șofer nu mai rămâne pagină albă (lipseau iconițele) — poți vedea
+statistici și te poți deconecta. Când șoferul încarcă un CMR, biroul primește notificare
+„CMR de confirmat”, iar pe **Documente** apare lista CMR-urilor neconfirmate cu link la cursă.
+
 ## BUGFIX
 
 - `serializeRow` întorcea `geocode_confidence`, `max_vehicle_length_m` și

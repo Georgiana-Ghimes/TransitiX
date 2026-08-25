@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
-import { AlertTriangle, FileText, Truck, Users, Upload, HardDrive } from 'lucide-react';
+import { AlertTriangle, FileText, Truck, Users, Upload, HardDrive, Camera } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
 
 const KIND_LABEL = { vu: 'Unitate vehicul', card: 'Card șofer', unknown: 'Necunoscut' };
@@ -17,6 +18,7 @@ export default function Documents() {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [imports, setImports] = useState([]);
+  const [pendingCmrs, setPendingCmrs] = useState([]);
   const [driverId, setDriverId] = useState('');
   const [vehicleId, setVehicleId] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -26,15 +28,20 @@ export default function Documents() {
 
   const loadData = async () => {
     try {
-      const [vehicleList, driverList, company, tacho] = await Promise.all([
+      const [vehicleList, driverList, company, tacho, tripDocs] = await Promise.all([
         api.entities.Vehicle.list(),
         api.entities.Driver.list(),
         api.company.get().catch(() => null),
         api.tachograph.listImports(30).catch(() => []),
+        api.entities.TripDocument.filter({ is_confirmed: false }).catch(() => []),
       ]);
       setVehicles(vehicleList);
       setDrivers(driverList);
       setImports(Array.isArray(tacho) ? tacho : []);
+      const pending = (Array.isArray(tripDocs) ? tripDocs : [])
+        .filter((d) => d.original_image_url && !d.is_confirmed)
+        .sort((a, b) => new Date(b.created_date || b.created_at || 0) - new Date(a.created_date || a.created_at || 0));
+      setPendingCmrs(pending);
       const now = new Date();
       const days = Array.isArray(company?.settings?.document_expiry_days)
         ? company.settings.document_expiry_days
@@ -105,7 +112,13 @@ export default function Documents() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-96"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const expired = expiring.filter((d) => d.expired);
   const upcoming = expiring.filter((d) => !d.expired);
@@ -114,7 +127,49 @@ export default function Documents() {
     <div className="space-y-5 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Documente</h1>
-        <p className="text-sm text-slate-500 mt-1">{expired.length} expirate · {upcoming.length} expiră în {horizonDays} zile</p>
+        <p className="text-sm text-slate-500 mt-1">
+          {expired.length} expirate · {upcoming.length} expiră în {horizonDays} zile
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center gap-2">
+          <Camera className="w-5 h-5 text-[#1D4E89]" />
+          <div>
+            <h2 className="font-semibold text-[#0A2B4E]">CMR încărcate de șofer</h2>
+            <p className="text-xs text-slate-500">Rapoarte de confirmat pe cursă (OCR)</p>
+          </div>
+        </div>
+        {pendingCmrs.length > 0 ? (
+          <div className="divide-y divide-slate-50">
+            {pendingCmrs.map((doc) => (
+              <Link
+                key={doc.id}
+                to={`/trips/${doc.trip_id}`}
+                className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/80"
+              >
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-700 truncate">
+                    CMR {doc.cmr_number || '—'}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Neconfirmat · {doc.created_date || doc.created_at
+                      ? new Date(doc.created_date || doc.created_at).toLocaleString('ro-RO')
+                      : '—'}
+                  </p>
+                </div>
+                <span className="text-xs font-medium text-[#1D4E89]">Deschide cursa</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-slate-400 text-sm">
+            Niciun CMR neconfirmat de la șoferi.
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5 space-y-4">
@@ -125,7 +180,7 @@ export default function Documents() {
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold text-[#0A2B4E]">Import tahograf (.ddd)</h2>
             <p className="text-xs text-slate-500 mt-1">
-              Arhivăm download-ul VU/card și detectăm tipul TLV. Analiza completă Reg. 561/2006 (ore de conducere)
+              Arhivăm download-ul VU/card și detectăm tipul TLV. Analiza completă Reg. 561/2006
               vine mai târziu — nu inventăm încălcări din fișierul brut.
             </p>
           </div>
@@ -188,15 +243,9 @@ export default function Documents() {
                     {row.driver_name ? ` · ${row.driver_name}` : ''}
                     {row.vehicle_plate ? ` · ${row.vehicle_plate}` : ''}
                   </p>
-                  {Array.isArray(row.plates_guess) && row.plates_guess.length > 0 && (
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Plăcuțe detectate: {row.plates_guess.join(', ')}
-                    </p>
-                  )}
                 </div>
                 <span className="text-[11px] text-slate-400 tabular-nums shrink-0">
                   {row.created_at ? new Date(row.created_at).toLocaleString('ro-RO') : ''}
-                  {row.size_bytes != null ? ` · ${(row.size_bytes / 1024).toFixed(1)} KB` : ''}
                 </span>
               </div>
             ))}
@@ -216,8 +265,13 @@ export default function Documents() {
             {expired.map((d, i) => (
               <div key={i} className="flex items-center gap-3 bg-white rounded-lg p-3">
                 {d.entityType === 'vehicle' ? <Truck className="w-4 h-4 text-slate-400" /> : <Users className="w-4 h-4 text-slate-400" />}
-                <div className="flex-1"><p className="text-sm font-medium text-slate-700">{d.entity}</p><p className="text-xs text-slate-500">{d.type} · {d.number || 'fără număr'}</p></div>
-                <span className="text-xs font-medium text-red-600">Expirat: {new Date(d.date).toLocaleDateString('ro-RO')}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700">{d.entity}</p>
+                  <p className="text-xs text-slate-500">{d.type} · {d.number || 'fără număr'}</p>
+                </div>
+                <span className="text-xs font-medium text-red-600">
+                  Expirat: {new Date(d.date).toLocaleDateString('ro-RO')}
+                </span>
               </div>
             ))}
           </div>
@@ -236,13 +290,20 @@ export default function Documents() {
             {upcoming.map((d, i) => (
               <div key={i} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/50">
                 {d.entityType === 'vehicle' ? <Truck className="w-4 h-4 text-slate-400" /> : <Users className="w-4 h-4 text-slate-400" />}
-                <div className="flex-1"><p className="text-sm font-medium text-slate-700">{d.entity}</p><p className="text-xs text-slate-500">{d.type} · {d.number || 'fără număr'}</p></div>
-                <span className="text-xs font-medium text-amber-600">Expiră: {new Date(d.date).toLocaleDateString('ro-RO')}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700">{d.entity}</p>
+                  <p className="text-xs text-slate-500">{d.type} · {d.number || 'fără număr'}</p>
+                </div>
+                <span className="text-xs font-medium text-amber-600">
+                  Expiră: {new Date(d.date).toLocaleDateString('ro-RO')}
+                </span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center text-slate-400"><p className="text-sm">Nu există documente care expiră în curând.</p></div>
+          <div className="p-12 text-center text-slate-400">
+            <p className="text-sm">Nu există documente care expiră în curând.</p>
+          </div>
         )}
       </div>
     </div>

@@ -271,12 +271,16 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
     }
 
     if (req.params.entity === 'TripDocument' && row.original_image_url && !row.is_confirmed && row.trip_id) {
-      const tripRes = await query(
-        `SELECT id, cmr_number FROM trips WHERE id = $1 AND company_id = $2`,
-        [row.trip_id, req.user.company_id]
-      );
-      if (tripRes.rows[0]) {
-        await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
+      try {
+        const tripRes = await query(
+          `SELECT id, cmr_number, driver_name FROM trips WHERE id = $1 AND company_id = $2`,
+          [row.trip_id, req.user.company_id]
+        );
+        if (tripRes.rows[0]) {
+          await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
+        }
+      } catch (notifyErr) {
+        console.error('[notifyCmrPending]', notifyErr);
       }
     }
 
@@ -382,15 +386,19 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     }
 
     if (req.params.entity === 'TripDocument') {
-      if (row.original_image_url && !row.is_confirmed && row.trip_id) {
-        const tripRes = await query(
-          `SELECT id, cmr_number FROM trips WHERE id = $1 AND company_id = $2`,
-          [row.trip_id, req.user.company_id]
-        );
-        if (tripRes.rows[0]) await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
-      }
-      if (row.is_confirmed && row.trip_id) {
-        await dismissCmrPending(req.user.company_id, row.trip_id);
+      try {
+        if (row.original_image_url && !row.is_confirmed && row.trip_id) {
+          const tripRes = await query(
+            `SELECT id, cmr_number, driver_name FROM trips WHERE id = $1 AND company_id = $2`,
+            [row.trip_id, req.user.company_id]
+          );
+          if (tripRes.rows[0]) await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
+        }
+        if (row.is_confirmed && row.trip_id) {
+          await dismissCmrPending(req.user.company_id, row.trip_id);
+        }
+      } catch (notifyErr) {
+        console.error('[TripDocument notify]', notifyErr);
       }
     }
 

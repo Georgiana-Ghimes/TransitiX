@@ -204,7 +204,10 @@ export default function DriverApp() {
 
       docRow = await api.entities.TripDocument.update(docRow.id, { ocr_extracted_data: ocr });
       setTripDoc(docRow);
-      notifySuccess('CMR încărcat', 'Documentul a fost procesat. Dispecerul poate confirma datele OCR.');
+      notifySuccess(
+        'CMR încărcat',
+        'Documentul e pe cursă. Dispecerul primește notificare și îl vede la Documente / detaliu cursă.'
+      );
     } catch (err) {
       console.error(err);
       notifyError('Upload CMR eșuat', err);

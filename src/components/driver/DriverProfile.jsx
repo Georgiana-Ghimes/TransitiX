@@ -1,16 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
+import { useAuth } from '@/lib/AuthContext';
 import { isActiveTripStatus } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
+import { Truck, CheckCircle, Clock, Bell, Mail, Phone, LogOut } from 'lucide-react';
 
 export default function DriverProfile({ driver: driverProp, trips: tripsProp }) {
+  const { logout } = useAuth();
   const [user, setUser] = useState(null);
   const [trips, setTrips] = useState(tripsProp || []);
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [loading, setLoading] = useState(!tripsProp);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    api.auth.me().then(u => setUser(u)).catch(() => {});
+    api.auth.me().then((u) => setUser(u)).catch(() => {});
     if (!tripsProp) {
       api.entities.Trip.list('-created_date', 100).then(setTrips).catch(() => {}).finally(() => setLoading(false));
     } else {
@@ -21,15 +25,22 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
 
   const stats = useMemo(() => ({
     total: trips.length,
-    completed: trips.filter(t => t.status === 'livrata').length,
-    active: trips.filter(t => isActiveTripStatus(t.status)).length,
+    completed: trips.filter((t) => t.status === 'livrata').length,
+    active: trips.filter((t) => isActiveTripStatus(t.status)).length,
   }), [trips]);
 
   const handleLogout = async () => {
-    await api.auth.logout('/login');
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      logout(true);
+    } catch {
+      await api.auth.logout('/login');
+    }
   };
 
-  const initials = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const displayName = user?.full_name || user?.name || driverProp?.name || 'Șofer';
+  const initials = displayName.split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase()
     || user?.email?.[0]?.toUpperCase()
     || 'Ș';
 
@@ -43,7 +54,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
             {initials}
           </div>
           <div>
-            <p className="font-bold text-lg">{user?.full_name || driverProp?.name || 'Șofer'}</p>
+            <p className="font-bold text-lg">{displayName}</p>
             <p className="text-sm text-white/60">{user?.email || ''}</p>
             <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full">
               Rol: {user?.role || 'driver'}
@@ -102,10 +113,12 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
       </div>
 
       <button
+        type="button"
         onClick={handleLogout}
-        className="flex items-center justify-center gap-2 w-full px-5 py-3 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+        disabled={loggingOut}
+        className="flex items-center justify-center gap-2 w-full px-5 py-3 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60"
       >
-        <LogOut className="w-5 h-5" /> Deconectare
+        <LogOut className="w-5 h-5" /> {loggingOut ? 'Se deconectează…' : 'Deconectare'}
       </button>
 
       <p className="text-center text-xs text-slate-400 pt-2">Transitix Driver App {formatAppVersion()}</p>
