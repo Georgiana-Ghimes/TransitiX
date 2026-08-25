@@ -3,6 +3,7 @@ import {
   findDriverForUser,
   formatDate,
   isActiveTripStatus,
+  toFiniteNumber,
 } from './utils.js';
 
 describe('formatDate', () => {
@@ -49,5 +50,27 @@ describe('findDriverForUser', () => {
   it('returns null when no match', () => {
     expect(findDriverForUser(drivers, { id: 'u9', email: 'z@test.ro' })).toBeNull();
     expect(findDriverForUser(null, { id: 'u1' })).toBeNull();
+  });
+});
+
+describe('toFiniteNumber', () => {
+  it('tells "not set" apart from zero', () => {
+    expect(toFiniteNumber(null)).toBeNull();
+    expect(toFiniteNumber(undefined)).toBeNull();
+    expect(toFiniteNumber('')).toBeNull();
+    expect(toFiniteNumber(0)).toBe(0);
+    expect(toFiniteNumber('0')).toBe(0);
+  });
+
+  it('parses numeric strings, as pg returns for NUMERIC columns', () => {
+    expect(toFiniteNumber('0.60')).toBe(0.6);
+    expect(toFiniteNumber('44.4268')).toBe(44.4268);
+  });
+
+  it('returns null for values that are not numbers', () => {
+    expect(toFiniteNumber('abc')).toBeNull();
+    expect(toFiniteNumber(NaN)).toBeNull();
+    expect(toFiniteNumber(Infinity)).toBeNull();
+    expect(toFiniteNumber({})).toBeNull();
   });
 });

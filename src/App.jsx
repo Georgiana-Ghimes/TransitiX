@@ -22,6 +22,8 @@ import ResetPassword from '@/pages/ResetPassword';
 
 const TripDetail = lazy(() => import('@/pages/TripDetail'));
 const GPSMap = lazy(() => import('@/pages/GPSMap'));
+const Locations = lazy(() => import('@/pages/Locations'));
+const Dispatch = lazy(() => import('@/pages/Dispatch'));
 const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
 const Finance = lazy(() => import('@/pages/Finance'));
 const Documents = lazy(() => import('@/pages/Documents'));
@@ -73,6 +75,8 @@ const AuthenticatedApp = () => {
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/drivers" element={<Drivers />} />
             <Route path="/gps" element={<GPSMap />} />
+            <Route path="/locations" element={<Locations />} />
+            <Route path="/dispatch" element={<Dispatch />} />
             <Route path="/planning" element={<PlanningAI />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/finance" element={<Finance />} />

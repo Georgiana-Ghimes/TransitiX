@@ -211,7 +211,17 @@ export default function TripForm({ trip, onClose, onSave }) {
               <div><label className={labelCls}>Greutate (kg)</label><input type="number" step="0.01" className={inputCls} value={form.weight_kg} onChange={e => set('weight_kg', e.target.value)} /></div>
               <div><label className={labelCls}>Colete</label><input type="number" className={inputCls} value={form.package_count} onChange={e => set('package_count', e.target.value)} /></div>
               <div><label className={labelCls}>Volum (mc)</label><input type="number" step="0.01" className={inputCls} value={form.volume_mc} onChange={e => set('volume_mc', e.target.value)} /></div>
-              <div><label className={labelCls}>Distanță (km)</label><input type="number" className={inputCls} value={form.distance_km} onChange={e => set('distance_km', e.target.value)} /></div>
+              <div>
+                <label className={labelCls}>Distanță (km)</label>
+                <input type="number" className={inputCls} value={form.distance_km} onChange={e => set('distance_km', e.target.value)} />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {trip?.distance_source === 'manual'
+                    ? 'Introdusă manual — nu se recalculează automat. Golește câmpul ca să revină la calculul pe hartă.'
+                    : trip?.distance_source === 'osrm'
+                      ? 'Calculată pe rețeaua rutieră. Scrie altă valoare ca s-o fixezi manual.'
+                      : 'Se calculează automat dacă ambele adrese au coordonate.'}
+                </p>
+              </div>
             </div>
             <div><label className={labelCls}>Descriere marfă</label><textarea rows={2} className={inputCls} value={form.goods_description} onChange={e => set('goods_description', e.target.value)} /></div>
           </div>

@@ -30,6 +30,10 @@ services:
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost}
       UPLOAD_DIR: uploads
+      # Set to http://osrm:5000 when running with -f docker-compose.osrm.yml
+      OSRM_URL: ${OSRM_URL:-}
+      OSRM_PROFILE: ${OSRM_PROFILE:-driving}
+      PHOTON_URL: ${PHOTON_URL:-}
       GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}

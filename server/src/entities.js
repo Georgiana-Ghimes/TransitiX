@@ -24,6 +24,42 @@ export const ENTITY_MAP = {
     companyScoped: true,
     writable: ['name', 'cui', 'address', 'phone', 'email', 'contact_person', 'notes', 'is_active'],
   },
+  Location: {
+    table: 'locations',
+    companyScoped: true,
+    writable: [
+      'client_id', 'name', 'kind', 'address', 'city', 'county', 'postcode', 'country',
+      'address_key', 'latitude', 'longitude', 'geocode_source', 'geocode_confidence',
+      'geocode_verified', 'geocoded_at', 'default_service_time_min', 'window_start', 'window_end',
+      'max_vehicle_length_m', 'max_vehicle_weight_t', 'access_notes', 'contact_person',
+      'phone', 'is_active',
+    ],
+  },
+  Order: {
+    table: 'orders',
+    companyScoped: true,
+    writable: [
+      'client_id', 'location_id', 'order_number', 'type', 'requested_date',
+      'window_start', 'window_end', 'service_time_min', 'weight_kg', 'volume_mc', 'pallets',
+      'requires', 'goods_description', 'notes', 'status',
+    ],
+  },
+  Route: {
+    table: 'routes',
+    companyScoped: true,
+    writable: [
+      'route_date', 'code', 'vehicle_id', 'driver_id', 'depot_location_id', 'starts_at',
+      'status', 'notes',
+    ],
+  },
+  RouteStop: {
+    table: 'route_stops',
+    companyScoped: true,
+    writable: [
+      'route_id', 'seq', 'location_id', 'order_id', 'kind', 'service_time_min',
+      'actual_arrival', 'actual_departure', 'status', 'notes',
+    ],
+  },
   Trip: {
     table: 'trips',
     companyScoped: true,
@@ -34,7 +70,7 @@ export const ENTITY_MAP = {
       'loading_date', 'loading_time', 'estimated_delivery_date', 'estimated_delivery_time', 'actual_delivery_date',
       'goods_description', 'weight_kg', 'package_count', 'volume_mc', 'special_instructions', 'internal_notes',
       'status', 'distance_km', 'estimated_fuel_consumption', 'actual_fuel_consumption', 'start_mileage', 'end_mileage',
-      'uit_code', 'agreed_revenue', 'estimated_cost',
+      'uit_code', 'agreed_revenue', 'estimated_cost', 'route_id',
     ],
   },
   TripDocument: {
@@ -180,6 +216,7 @@ export function serializeRow(row) {
          key.includes('cost') || key.includes('rate') || key.includes('revenue') || key.includes('consumption') ||
          key.includes('latitude') || key.includes('longitude') || key.includes('speed') ||
          key.includes('heading') || key.includes('savings') || key.includes('volume') ||
+         key.includes('confidence') || key.startsWith('max_vehicle_') ||
          key === 'valoare_tpo' || key === 'cantitate_marfa' || key === 'numar_curse' ||
          key === 'taxe_suplimentare' || key === 'km_parcursi' || key === 'tarif_km')) {
       out[key] = Number(val);

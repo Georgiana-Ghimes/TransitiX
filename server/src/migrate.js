@@ -504,6 +504,192 @@ SELECT company_id, COALESCE(NULLIF(TRIM(series), ''), 'TRX'),
 FROM invoices
 GROUP BY 1, 2
 ON CONFLICT (company_id, series) DO NOTHING;
+
+-- P0: geocoded master data. Every stop the fleet can visit lives here exactly once,
+-- so routing (P1) and the optimizer (P2) have a stable point to attach to.
+CREATE TABLE IF NOT EXISTS locations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'client'
+    CHECK (kind IN ('client', 'depot', 'warehouse', 'other')),
+  address TEXT,
+  city TEXT,
+  county TEXT,
+  postcode TEXT,
+  country TEXT NOT NULL DEFAULT 'RO',
+  -- normalized address, used to dedupe on import and as the geocode cache key
+  address_key TEXT,
+  latitude NUMERIC(10,7),
+  longitude NUMERIC(10,7),
+  geocode_source TEXT
+    CHECK (geocode_source IS NULL OR geocode_source IN ('photon', 'nominatim', 'manual', 'import')),
+  geocode_confidence NUMERIC(3,2),
+  geocode_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  geocoded_at TIMESTAMPTZ,
+  -- planning defaults, inherited by every stop created at this location
+  default_service_time_min INT NOT NULL DEFAULT 15,
+  window_start TIME,
+  window_end TIME,
+  max_vehicle_length_m NUMERIC(5,2),
+  max_vehicle_weight_t NUMERIC(6,2),
+  access_notes TEXT,
+  contact_person TEXT,
+  phone TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_locations_company ON locations(company_id);
+CREATE INDEX IF NOT EXISTS idx_locations_company_client ON locations(company_id, client_id);
+CREATE INDEX IF NOT EXISTS idx_locations_company_active ON locations(company_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_locations_company_created ON locations(company_id, created_at DESC);
+-- drives the "needs geocoding" queue: no coordinates, or coordinates nobody vouched for
+CREATE INDEX IF NOT EXISTS idx_locations_ungeocoded ON locations(company_id)
+  WHERE latitude IS NULL OR longitude IS NULL OR geocode_verified = FALSE;
+CREATE UNIQUE INDEX IF NOT EXISTS locations_company_address_key
+  ON locations (company_id, address_key) WHERE address_key IS NOT NULL;
+
+-- Geocoding results keyed by the same normalized address_key as locations.
+-- Company-scoped rather than global: the set of addresses a tenant looks up is its customer
+-- list, and a shared cache would leak that across tenants for the sake of a few HTTP calls.
+-- Misses are cached too, so a bad address is not re-sent to the provider on every run.
+CREATE TABLE IF NOT EXISTS geocode_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  address_key TEXT NOT NULL,
+  provider TEXT NOT NULL DEFAULT 'photon',
+  query_text TEXT,
+  status TEXT NOT NULL DEFAULT 'hit'
+    CHECK (status IN ('hit', 'miss', 'error')),
+  latitude NUMERIC(10,7),
+  longitude NUMERIC(10,7),
+  confidence NUMERIC(3,2),
+  matched_label TEXT,
+  candidates JSONB,
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, address_key, provider)
+);
+
+CREATE INDEX IF NOT EXISTS idx_geocode_cache_company ON geocode_cache(company_id, status);
+
+-- Who last set trips.distance_km. 'manual' is never overwritten by the automatic
+-- computation; NULL means nobody has set it yet.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS distance_source TEXT;
+ALTER TABLE trips DROP CONSTRAINT IF EXISTS trips_distance_source_check;
+ALTER TABLE trips ADD CONSTRAINT trips_distance_source_check
+  CHECK (distance_source IS NULL OR distance_source IN ('manual', 'osrm'));
+-- Existing hand-entered distances predate the automatic path, so they are manual by definition.
+UPDATE trips SET distance_source = 'manual'
+  WHERE distance_km IS NOT NULL AND distance_source IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- P1: the distribution layer — orders become stops, stops become routes.
+--
+-- Strictly additive. The trips table stays exactly what it is (the CMR transport
+-- document, which is what Romanian FTL actually needs); a route can generate one trip
+-- per consignee, and a trip without a route keeps working as before.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  location_id UUID REFERENCES locations(id) ON DELETE RESTRICT,
+  order_number TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'livrare'
+    CHECK (type IN ('livrare', 'ridicare', 'schimb')),
+  requested_date DATE NOT NULL,
+  window_start TIME,
+  window_end TIME,
+  service_time_min INT NOT NULL DEFAULT 15,
+  weight_kg NUMERIC(10,2) NOT NULL DEFAULT 0,
+  volume_mc NUMERIC(10,2) NOT NULL DEFAULT 0,
+  pallets INT NOT NULL DEFAULT 0,
+  -- capabilities the vehicle must have: ADR, frigo, lift-hidraulic, ...
+  requires TEXT[] NOT NULL DEFAULT '{}',
+  goods_description TEXT,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'nou'
+    CHECK (status IN ('nou', 'planificat', 'pe_ruta', 'livrat', 'esuat', 'anulat')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, order_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_company ON orders(company_id);
+CREATE INDEX IF NOT EXISTS idx_orders_company_date ON orders(company_id, requested_date);
+CREATE INDEX IF NOT EXISTS idx_orders_company_status ON orders(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_orders_location ON orders(company_id, location_id);
+
+CREATE TABLE IF NOT EXISTS routes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  route_date DATE NOT NULL,
+  code TEXT NOT NULL,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  driver_id UUID REFERENCES drivers(id) ON DELETE SET NULL,
+  depot_location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
+  starts_at TIME NOT NULL DEFAULT '08:00',
+  planned_distance_km NUMERIC(10,2),
+  planned_duration_min INT,
+  actual_distance_km NUMERIC(10,2),
+  actual_duration_min INT,
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'planificata', 'lansata', 'in_executie', 'finalizata', 'anulata')),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, route_date, code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_routes_company ON routes(company_id);
+CREATE INDEX IF NOT EXISTS idx_routes_company_date ON routes(company_id, route_date DESC);
+CREATE INDEX IF NOT EXISTS idx_routes_company_status ON routes(company_id, status);
+
+CREATE TABLE IF NOT EXISTS route_stops (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  route_id UUID NOT NULL REFERENCES routes(id) ON DELETE CASCADE,
+  seq INT NOT NULL,
+  location_id UUID REFERENCES locations(id) ON DELETE RESTRICT,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'livrare'
+    CHECK (kind IN ('depot_start', 'livrare', 'ridicare', 'pauza', 'repaus', 'depot_end')),
+  service_time_min INT NOT NULL DEFAULT 15,
+  planned_arrival TIMESTAMPTZ,
+  planned_departure TIMESTAMPTZ,
+  actual_arrival TIMESTAMPTZ,
+  actual_departure TIMESTAMPTZ,
+  leg_distance_km NUMERIC(10,2),
+  leg_duration_min INT,
+  status TEXT NOT NULL DEFAULT 'planificat'
+    CHECK (status IN ('planificat', 'sosit', 'finalizat', 'esuat', 'sarit')),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_route_stops_company ON route_stops(company_id);
+CREATE INDEX IF NOT EXISTS idx_route_stops_route ON route_stops(route_id, seq);
+
+-- Reordering rewrites every seq in one statement, so the uniqueness check has to wait
+-- until commit — otherwise any swap collides mid-update.
+ALTER TABLE route_stops DROP CONSTRAINT IF EXISTS route_stops_route_seq_uniq;
+ALTER TABLE route_stops ADD CONSTRAINT route_stops_route_seq_uniq
+  UNIQUE (route_id, seq) DEFERRABLE INITIALLY DEFERRED;
+
+-- An order belongs to at most one route. This is the guard that keeps orders and stops
+-- from disagreeing about what is planned, so orders carries no back-pointer.
+CREATE UNIQUE INDEX IF NOT EXISTS route_stops_one_per_order
+  ON route_stops (order_id) WHERE order_id IS NOT NULL;
+
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS route_id UUID REFERENCES routes(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_trips_route ON trips(company_id, route_id);
 `
 
 async function migrate() {

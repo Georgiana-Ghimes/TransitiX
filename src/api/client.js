@@ -132,7 +132,8 @@ function createEntityApi(name) {
 }
 
 const entityNames = [
-  'Vehicle', 'Driver', 'Client', 'Trip', 'TripDocument', 'ClientConfirmation',
+  'Vehicle', 'Driver', 'Client', 'Location', 'Order', 'Route', 'RouteStop',
+  'Trip', 'TripDocument', 'ClientConfirmation',
   'Invoice', 'WarehouseProduct', 'GPSLog', 'ChatMessage', 'DriverNotification',
   'OptimizationSuggestion', 'ReportTemplate', 'AvizDocument',
 ];
@@ -166,6 +167,64 @@ export const api = {
         method: 'POST',
         body: { origin: origin || window.location.origin, client_email },
       });
+    },
+  },
+  geo: {
+    health() {
+      return request('/geo/health');
+    },
+    /** Ranked candidates for a free-text address — feeds the review screen. */
+    geocode(address, { refresh = false } = {}) {
+      return request('/geo/geocode', { method: 'POST', body: { address, refresh } });
+    },
+    /** Geocodes a stored location and saves the pin when the result is usable. */
+    geocodeLocation(id, { refresh = false } = {}) {
+      return request(`/geo/locations/${encodeURIComponent(id)}/geocode`, {
+        method: 'POST',
+        body: { refresh },
+      });
+    },
+    /** Recompute one trip's distance. `force` overrides a manual value. */
+    tripDistance(tripId, { force = false } = {}) {
+      return request(`/geo/trips/${encodeURIComponent(tripId)}/distance`, {
+        method: 'POST',
+        body: { force },
+      });
+    },
+    route(points, opts = {}) {
+      return request('/geo/route', { method: 'POST', body: { points, ...opts } });
+    },
+    matrix(points, opts = {}) {
+      return request('/geo/matrix', { method: 'POST', body: { points, ...opts } });
+    },
+    nearest(point, { number = 1 } = {}) {
+      return request('/geo/nearest', { method: 'POST', body: { point, number } });
+    },
+  },
+  routes: {
+    plan(routeId) {
+      return request(`/routes/${encodeURIComponent(routeId)}/plan`);
+    },
+    addStop(routeId, { order_id, at_index } = {}) {
+      return request(`/routes/${encodeURIComponent(routeId)}/stops`, {
+        method: 'POST',
+        body: { order_id, at_index },
+      });
+    },
+    /** Either a full stop_ids order, or stop_id + to_index for a single drag. */
+    reorder(routeId, payload) {
+      return request(`/routes/${encodeURIComponent(routeId)}/sequence`, {
+        method: 'PUT',
+        body: payload,
+      });
+    },
+    removeStop(routeId, stopId) {
+      return request(`/routes/${encodeURIComponent(routeId)}/stops/${encodeURIComponent(stopId)}`, {
+        method: 'DELETE',
+      });
+    },
+    recompute(routeId) {
+      return request(`/routes/${encodeURIComponent(routeId)}/recompute`, { method: 'POST' });
     },
   },
   notifications: {

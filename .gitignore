@@ -34,6 +34,9 @@ dist-ssr
 server/uploads/
 server/node_modules/
 
+# OSRM graph data (OSM extracts + build output, hundreds of MB)
+/docker/osrm/
+
 # Local notes (kept on disk, not published)
 /docs/
 /AGENTS.md

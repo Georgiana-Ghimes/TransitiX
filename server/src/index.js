@@ -14,12 +14,16 @@ import notificationRoutes from './routes/notifications.js';
 import searchRoutes from './routes/search.js';
 import companyRoutes from './routes/company.js';
 import avizeRoutes from './routes/avize.js';
+import geoRoutes from './routes/geo.js';
+import routePlanRoutes from './routes/routes.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
 import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
 import { emailConfigured } from './lib/email.js';
 import { visionConfigured } from './lib/cmrOcr.js';
+import { osrmConfigured } from './lib/geo/osrm.js';
+import { photonConfigured } from './lib/geo/photon.js';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -77,6 +81,8 @@ function healthCapabilities() {
     planning: 'stub',
     efactura: false,
     etransport: 'manual_uit',
+    routing: osrmConfigured() ? 'osrm' : false,
+    geocoding: photonConfigured() ? 'photon' : false,
     vision: visionConfigured(),
     email: emailConfigured(),
   };
@@ -102,6 +108,8 @@ app.use('/api/confirm', confirmRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/avize', avizeRoutes);
+app.use('/api/geo', geoRoutes);
+app.use('/api/routes', routePlanRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err?.type === 'entity.parse.failed') {

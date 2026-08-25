@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { query, withTransaction } from '../db.js';
+import { pool, query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import {
   ENTITY_MAP,
@@ -21,6 +21,7 @@ import {
 import { tpoExistsForOther } from '../lib/avizQuery.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
+import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
 
 const router = Router();
 
@@ -55,6 +56,21 @@ async function insertEntity(client, cfg, data) {
   return result.rows[0];
 }
 
+/**
+ * Decides who owns trips.distance_km for this write. `distance_source` is server-controlled
+ * on purpose — it is not in the Trip writable list, so a client cannot claim a value is ours.
+ */
+function applyTripDistance(data, previous) {
+  if (!Object.prototype.hasOwnProperty.call(data, 'distance_km')) return;
+  const resolved = resolveDistanceSource({
+    incoming: data.distance_km,
+    stored: previous?.distance_km ?? null,
+    storedSource: previous?.distance_source ?? null,
+  });
+  data.distance_km = resolved.distance_km;
+  data.distance_source = resolved.distance_source;
+}
+
 async function applyTripUit(data) {
   if (!Object.prototype.hasOwnProperty.call(data, 'uit_code')) return;
   const parsed = normalizeUitCode(data.uit_code);
@@ -85,7 +101,10 @@ async function insertWithGpsGuard(client, companyId, entity, item) {
       data.number = String(data.number).trim();
     }
   }
-  if (entity === 'Trip') await applyTripUit(data);
+  if (entity === 'Trip') {
+    await applyTripUit(data);
+    applyTripDistance(data, null);
+  }
   return insertEntity(client, cfg, data);
 }
 
@@ -242,6 +261,15 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
       insertWithGpsGuard(client, req.user.company_id, req.params.entity, req.body)
     )));
 
+    if (req.params.entity === 'Trip') {
+      // Best-effort: a CMR that cannot be measured is still a valid CMR.
+      const refreshed = await refreshTripDistance(pool, req.user.company_id, row);
+      if (refreshed.saved) {
+        row.distance_km = refreshed.distance_km;
+        row.distance_source = 'osrm';
+      }
+    }
+
     if (req.params.entity === 'TripDocument' && row.original_image_url && !row.is_confirmed && row.trip_id) {
       const tripRes = await query(
         `SELECT id, cmr_number FROM trips WHERE id = $1 AND company_id = $2`,
@@ -270,18 +298,23 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
 
     const data = writableForRequest(req, cfg);
     if (req.params.entity === 'Trip') await applyTripUit(data);
-    data.updated_at = new Date().toISOString();
-    const keys = Object.keys(data);
-    if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
 
     let previous = null;
-    if (req.params.entity === 'Trip' && data.status !== undefined) {
+    // distance ownership needs the stored value, so fetch on either trigger
+    if (req.params.entity === 'Trip' && (data.status !== undefined || data.distance_km !== undefined)) {
       const prev = await query(
         `SELECT * FROM ${cfg.table} WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
       );
       previous = prev.rows[0] || null;
     }
+    // Must run before `keys` is taken: it adds distance_source to `data`, and a key added
+    // afterwards would leave the SET clause and the value list out of step.
+    if (req.params.entity === 'Trip') applyTripDistance(data, previous);
+
+    data.updated_at = new Date().toISOString();
+    const keys = Object.keys(data);
+    if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
 
     if (req.params.entity === 'AvizDocument') {
       const prev = await query(
@@ -337,6 +370,15 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
         previous.status,
         row.status
       );
+    }
+
+    if (req.params.entity === 'Trip') {
+      // Best-effort; returns the refreshed value so the UI does not need a second fetch.
+      const refreshed = await refreshTripDistance(pool, req.user.company_id, row);
+      if (refreshed.saved) {
+        row.distance_km = refreshed.distance_km;
+        row.distance_source = 'osrm';
+      }
     }
 
     if (req.params.entity === 'TripDocument') {

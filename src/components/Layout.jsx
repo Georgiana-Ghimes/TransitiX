@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
-  ChevronsLeft, ChevronsRight, ClipboardList, HelpCircle,
+  ChevronsLeft, ChevronsRight, ClipboardList, HelpCircle, MapPinned, Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -24,9 +24,11 @@ import OfficeTour from '@/components/OfficeTour';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
+  { label: 'Dispecerat', path: '/dispatch', icon: Network },
   { label: 'Curse', path: '/trips', icon: Route },
   { label: 'Flotă', path: '/vehicles', icon: Truck },
   { label: 'Șoferi', path: '/drivers', icon: Users },
+  { label: 'Locații', path: '/locations', icon: MapPinned },
   { label: 'Tracking GPS', path: '/gps', icon: MapPin, demo: true },
   { label: 'Planning AI', path: '/planning', icon: Brain, demo: true },
   { label: 'Clienți', path: '/clients', icon: Building2 },
