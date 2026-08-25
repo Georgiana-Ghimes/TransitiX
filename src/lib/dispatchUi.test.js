@@ -5,13 +5,16 @@ import {
   formatDuration,
   formatEta,
   formatKm,
+  nextOrderNumber,
   nextRouteCode,
+  orderLocationOptions,
   parseDragPayload,
   previewFit,
   routeStatusMeta,
   routeWarnings,
   stopMarkerColor,
   unplannedOrders,
+  validateOrder,
 } from './dispatchUi.js';
 
 describe('routeStatusMeta', () => {
@@ -221,5 +224,96 @@ describe('stopMarkerColor', () => {
 
   it('uses the normal colour for a clean stop', () => {
     expect(stopMarkerColor(stop, [{ stop_id: 'other', type: 'intarziere' }])).toBe('#1D4E89');
+  });
+});
+
+describe('nextOrderNumber', () => {
+  it('builds the first number for a day', () => {
+    expect(nextOrderNumber('2026-08-27', [])).toBe('CMD-20260827-01');
+  });
+
+  it('continues past the highest existing number', () => {
+    expect(nextOrderNumber('2026-08-27', ['CMD-20260827-01', 'CMD-20260827-04']))
+      .toBe('CMD-20260827-05');
+  });
+
+  it('does not reuse a gap left by a deleted order', () => {
+    expect(nextOrderNumber('2026-08-27', ['CMD-20260827-09'])).toBe('CMD-20260827-10');
+  });
+
+  it('ignores numbers from other days and other shapes', () => {
+    expect(nextOrderNumber('2026-08-27', ['CMD-20260826-07', 'CMD-DEMO-3', 'altceva']))
+      .toBe('CMD-20260827-01');
+  });
+
+  it('accepts a timestamp as the date', () => {
+    expect(nextOrderNumber('2026-08-27T00:00:00.000Z', [])).toBe('CMD-20260827-01');
+  });
+
+  it('returns empty without a date', () => {
+    expect(nextOrderNumber(null, [])).toBe('');
+  });
+});
+
+describe('orderLocationOptions', () => {
+  const locations = [
+    { id: 'l1', name: 'Depozit Sud', city: 'bucuresti', client_id: 'c1', latitude: 44, longitude: 26 },
+    { id: 'l2', name: 'Hala Nord', city: 'cluj napoca', client_id: 'c2' },
+    { id: 'l3', name: 'Punct liber', city: 'arad', client_id: null, latitude: 46, longitude: 21 },
+    { id: 'l4', name: 'Inactiv', city: 'x', client_id: 'c1', is_active: false },
+  ];
+
+  it('lists active locations with a readable label', () => {
+    const options = orderLocationOptions(locations);
+    expect(options.map((o) => o.id)).toEqual(['l1', 'l2', 'l3']);
+    expect(options[0].label).toBe('Depozit Sud — bucuresti');
+  });
+
+  it('narrows to a client plus unattached locations', () => {
+    expect(orderLocationOptions(locations, 'c1').map((o) => o.id)).toEqual(['l1', 'l3']);
+  });
+
+  it('flags which locations have coordinates', () => {
+    const options = orderLocationOptions(locations);
+    expect(options.find((o) => o.id === 'l2').geocoded).toBe(false);
+    expect(options.find((o) => o.id === 'l3').geocoded).toBe(true);
+  });
+});
+
+describe('validateOrder', () => {
+  const valid = { order_number: 'CMD-1', location_id: 'l1', requested_date: '2026-08-27' };
+
+  it('accepts a complete order', () => {
+    expect(validateOrder(valid)).toEqual({ ok: true, errors: {} });
+  });
+
+  it('requires a location — without one the order can never be planned', () => {
+    const { ok, errors } = validateOrder({ ...valid, location_id: null });
+    expect(ok).toBe(false);
+    expect(errors.location_id).toMatch(/locație/);
+  });
+
+  it('requires a number and a date', () => {
+    expect(validateOrder({ ...valid, order_number: '  ' }).errors.order_number).toBeTruthy();
+    expect(validateOrder({ ...valid, requested_date: '' }).errors.requested_date).toBeTruthy();
+  });
+
+  it('rejects a window that ends before it starts', () => {
+    expect(validateOrder({ ...valid, window_start: '16:00', window_end: '08:00' }).errors.window_end)
+      .toBeTruthy();
+    expect(validateOrder({ ...valid, window_start: '08:00', window_end: '16:00' }).ok).toBe(true);
+  });
+
+  it('allows an open-ended window', () => {
+    expect(validateOrder({ ...valid, window_start: '08:00', window_end: '' }).ok).toBe(true);
+  });
+
+  it('rejects negative or non-numeric quantities', () => {
+    expect(validateOrder({ ...valid, weight_kg: -5 }).errors.weight_kg).toBeTruthy();
+    expect(validateOrder({ ...valid, pallets: 'abc' }).errors.pallets).toBeTruthy();
+  });
+
+  it('treats an empty quantity as simply unset', () => {
+    expect(validateOrder({ ...valid, weight_kg: '', volume_mc: null }).ok).toBe(true);
   });
 });

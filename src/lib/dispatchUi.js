@@ -67,6 +67,70 @@ export function nextRouteCode(existingCodes = []) {
 
 const num = (value) => toFiniteNumber(value) ?? 0;
 
+/** Capabilities an order can demand of the vehicle. Free text is allowed too. */
+export const ORDER_REQUIREMENTS = ['ADR', 'frigo', 'lift-hidraulic', 'macara'];
+
+/**
+ * Next free order number for a day: CMD-20260827-01.
+ * Scans existing numbers rather than counting them, so deleting an order never causes a clash.
+ */
+export function nextOrderNumber(date, existingNumbers = []) {
+  const day = String(date || '').slice(0, 10).replace(/-/g, '');
+  if (!day) return '';
+  const prefix = `CMD-${day}-`;
+  let max = 0;
+  for (const number of existingNumbers) {
+    // Prefix + tail rather than a built regex: `\d` inside a template literal collapses to
+    // `d`, and the prefix would need escaping anyway.
+    const value = String(number || '');
+    if (!value.startsWith(prefix)) continue;
+    const tail = value.slice(prefix.length);
+    if (!/^\d+$/.test(tail)) continue;
+    max = Math.max(max, Number(tail));
+  }
+  return `${prefix}${String(max + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Locations offerable for an order. Picking a client narrows the list to that client's
+ * places plus any unattached ones (depots, one-off addresses).
+ */
+export function orderLocationOptions(locations = [], clientId) {
+  return locations
+    .filter((l) => l.is_active !== false)
+    .filter((l) => !clientId || l.client_id === clientId || l.client_id == null)
+    .map((l) => ({
+      id: l.id,
+      label: [l.name, l.city].filter(Boolean).join(' — '),
+      geocoded: l.latitude != null && l.longitude != null,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'ro'));
+}
+
+/**
+ * Field errors for the order form. An order with no location can never be planned onto a
+ * route, so the location is required here even though the column is nullable.
+ */
+export function validateOrder(form = {}) {
+  const errors = {};
+  if (!String(form.order_number || '').trim()) errors.order_number = 'Numărul comenzii e obligatoriu';
+  if (!form.location_id) errors.location_id = 'Alege o locație — fără ea comanda nu poate intra pe o rută';
+  if (!String(form.requested_date || '').trim()) errors.requested_date = 'Alege data';
+
+  const start = String(form.window_start || '').trim();
+  const end = String(form.window_end || '').trim();
+  if (start && end && start >= end) {
+    errors.window_end = 'Ora de sfârșit trebuie să fie după cea de început';
+  }
+  for (const [key, label] of [['weight_kg', 'Greutatea'], ['volume_mc', 'Volumul'], ['pallets', 'Numărul de paleți']]) {
+    const value = form[key];
+    if (value === '' || value == null) continue;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) errors[key] = `${label} trebuie să fie un număr pozitiv`;
+  }
+  return { ok: Object.keys(errors).length === 0, errors };
+}
+
 /**
  * Would adding this order push the route past the vehicle?
  * Returns warnings, never a hard block: a dispatcher who knows the load will fit must be

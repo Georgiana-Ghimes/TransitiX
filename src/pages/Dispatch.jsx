@@ -4,9 +4,10 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronRight, Clock, Loader2, Package,
-  Plus, RefreshCw, Route as RouteIcon, Search, Trash2, TriangleAlert, Truck, X,
+  Pencil, Plus, RefreshCw, Route as RouteIcon, Search, Trash2, TriangleAlert, Truck, X,
 } from 'lucide-react';
 import { api } from '@/api/client';
+import OrderForm from '@/components/OrderForm';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   canDropOnRoute,
@@ -70,6 +71,10 @@ export default function Dispatch() {
   const [dragPayload, setDragPayload] = useState(null);
   const [dropTarget, setDropTarget] = useState(null);
   const [routingReady, setRoutingReady] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   const loadPlans = useCallback(async (routeList) => {
     const entries = await Promise.all(routeList.map(async (route) => {
@@ -84,16 +89,20 @@ export default function Dispatch() {
 
   const loadData = useCallback(async () => {
     try {
-      const [orderRows, routeRows, vehicleRows, driverRows] = await Promise.all([
+      const [orderRows, routeRows, vehicleRows, driverRows, clientRows, locationRows] = await Promise.all([
         api.entities.Order.list('-created_date', 500),
         api.entities.Route.filter({ route_date: date }, 'code', 200),
         api.entities.Vehicle.list(),
         api.entities.Driver.list(),
+        api.entities.Client.list(),
+        api.entities.Location.list('-created_date', 500),
       ]);
       setOrders(orderRows);
       setRoutes(routeRows);
       setVehicles(vehicleRows.filter((v) => v.is_active));
       setDrivers(driverRows.filter((d) => d.is_active));
+      setClients(clientRows.filter((c) => c.is_active !== false));
+      setLocations(locationRows);
       await loadPlans(routeRows);
     } catch (e) {
       notifyError('Nu am putut încărca panoul', e);
@@ -199,6 +208,17 @@ export default function Dispatch() {
     if (selectedRouteId === routeId) setSelectedRouteId(null);
   });
 
+  const closeOrderForm = () => { setOrderFormOpen(false); setEditingOrder(null); };
+
+  const afterOrderSaved = async () => {
+    closeOrderForm();
+    setOrders(await api.entities.Order.list('-created_date', 500));
+  };
+
+  const deleteOrder = (order) => run(`delete-order-${order.id}`, async () => {
+    await api.entities.Order.delete(order.id);
+  });
+
   // --- drag and drop (desktop enhancement; every action also has a button) ---
   const onDragStartOrder = (order) => (e) => {
     const payload = { kind: 'order', orderId: order.id };
@@ -261,6 +281,12 @@ export default function Dispatch() {
             className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89]"
           />
           <button
+            onClick={() => { setEditingOrder(null); setOrderFormOpen(true); }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#0A2B4E] bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+          >
+            <Plus className="w-4 h-4" /> Comandă nouă
+          </button>
+          <button
             onClick={createRoute}
             disabled={busy === 'create-route'}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-50"
@@ -318,6 +344,23 @@ export default function Dispatch() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 truncate">{order.goods_description || 'Fără descriere'}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <button
+                    onClick={() => { setEditingOrder(order); setOrderFormOpen(true); }}
+                    aria-label={`Editează ${order.order_number}`}
+                    className="p-1 text-slate-300 hover:text-[#1D4E89]"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteOrder(order)}
+                    disabled={busy === `delete-order-${order.id}`}
+                    aria-label={`Șterge ${order.order_number}`}
+                    className="p-1 text-slate-300 hover:text-red-500 disabled:opacity-30"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 {(order.window_start || order.window_end) && (
                   <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -353,6 +396,14 @@ export default function Dispatch() {
                     ? 'Nicio comandă pentru această zi'
                     : search ? 'Nimic pe această căutare' : 'Toate comenzile zilei sunt pe rute'}
                 </p>
+                {totals.orders === 0 && !search && (
+                  <button
+                    onClick={() => { setEditingOrder(null); setOrderFormOpen(true); }}
+                    className="mt-3 px-3 py-1.5 text-xs font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89]"
+                  >
+                    Adaugă prima comandă
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -568,6 +619,18 @@ export default function Dispatch() {
           )}
         </section>
       </div>
+
+      {orderFormOpen && (
+        <OrderForm
+          order={editingOrder}
+          defaultDate={date}
+          clients={clients}
+          locations={locations}
+          orders={orders}
+          onClose={closeOrderForm}
+          onSave={afterOrderSaved}
+        />
+      )}
     </div>
   );
 }

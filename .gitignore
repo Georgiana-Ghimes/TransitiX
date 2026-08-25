@@ -38,7 +38,12 @@ server/node_modules/
 /docker/osrm/
 
 # Local notes (kept on disk, not published)
-/docs/
+/docs/*
+!/docs/CHANGELOGS/
+/docs/CHANGELOGS/*
+!/docs/CHANGELOGS/changelogsSprints/
+/docs/CHANGELOGS/changelogsSprints/*
+!/docs/CHANGELOGS/changelogsSprints/ChangeLogSprint*.md
 /AGENTS.md
 /CLAUDE.md
 /CHANGELOG.md
