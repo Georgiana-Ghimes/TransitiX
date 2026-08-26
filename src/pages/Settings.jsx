@@ -8,6 +8,92 @@ const EXPIRY_OPTIONS = [30, 15, 7, 1];
 const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors';
 const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
 
+
+/**
+ * The devices currently signed in, and a way to cut them all off.
+ *
+ * Logging out ends the session on the device doing it. This is the other case: a phone left in a
+ * cab or an employee who has gone. Without it, revocation exists in the API and nowhere a person
+ * can reach.
+ */
+function SessionsCard() {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [revoking, setRevoking] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await api.auth.sessions();
+      setSessions(res.sessions ?? []);
+    } catch {
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const revokeAll = async () => {
+    if (!window.confirm(
+      'Închizi toate sesiunile?\n\nVei fi delogat și pe dispozitivul acesta, și pe orice '
+      + 'telefon sau calculator unde ești autentificat.'
+    )) return;
+    setRevoking(true);
+    try {
+      await api.auth.revokeAllSessions();
+      // The current session is gone too — that is the point — so go to the login screen.
+      await api.auth.logout();
+    } catch (err) {
+      notifyError('Sesiunile nu au putut fi închise', err);
+      setRevoking(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[#0A2B4E]">Sesiuni active</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Dispozitivele pe care ești autentificat acum.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={revokeAll}
+          disabled={revoking || loading}
+          className="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1.5 min-h-[38px] shrink-0"
+        >
+          {revoking ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          Închide toate
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-slate-400">Se încarcă…</p>
+      ) : sessions.length === 0 ? (
+        <p className="text-sm text-slate-500">Nicio sesiune înregistrată.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {sessions.map((session) => (
+            <li key={session.jti} className="py-2 text-sm">
+              <p className="text-slate-700 break-words">{session.user_agent || 'Dispozitiv necunoscut'}</p>
+              <p className="text-xs text-slate-400">
+                autentificat {new Date(session.issued_at).toLocaleString('ro-RO')}
+                {session.last_used_at
+                  ? ` · folosit ultima dată ${new Date(session.last_used_at).toLocaleString('ro-RO')}`
+                  : ''}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const canSave = user?.role === 'admin';
@@ -170,6 +256,8 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      <SessionsCard />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
         {!canSave && (

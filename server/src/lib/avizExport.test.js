@@ -1,11 +1,13 @@
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
-import { buildAnnexWorkbook } from './avizExport.js';
+import { renderReportWorkbook } from './avizExport.js';
+import { buildReport } from './reporting/build.js';
 import {
   ANNEX_SOURCE_KEYS,
   DEFAULT_RAI_COLUMNS,
   annexFieldDefaults,
   isCompleteRaiTemplate,
+  normalizeTemplateColumns,
   resolveExportColumns,
 } from './avizTemplate.js';
 
@@ -42,8 +44,18 @@ function sablonNouColumns() {
     });
 }
 
+/** The same two calls the export route makes, so the tests guard the real path. */
+function annexWorkbook(template, avize) {
+  return renderReportWorkbook({
+    name: template.name || 'Anexa',
+    columns: normalizeTemplateColumns(template.columns),
+    rows: buildReport({ template, documents: avize }).rows,
+    totals: null,
+  });
+}
+
 async function loadSheet(template, avize) {
-  const built = await buildAnnexWorkbook(template, avize);
+  const built = annexWorkbook(template, avize);
   const buffer = await built.xlsx.writeBuffer();
   const loaded = new ExcelJS.Workbook();
   await loaded.xlsx.load(buffer);
@@ -88,7 +100,7 @@ describe('resolveExportColumns', () => {
   });
 });
 
-describe('buildAnnexWorkbook — default Anexa Factura RAI', () => {
+describe('anexa exportată — default Anexa Factura RAI', () => {
   it('writes all 14 headers and extracted fields into the xlsx', async () => {
     const sheet = await loadSheet({ name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
@@ -137,7 +149,7 @@ describe('buildAnnexWorkbook — default Anexa Factura RAI', () => {
   });
 });
 
-describe('buildAnnexWorkbook — custom Șablon nou defaults', () => {
+describe('anexa exportată — custom Șablon nou defaults', () => {
   it('writes Taxa 100 and Tarif km 20 when aviz fields are still 0', async () => {
     const sheet = await loadSheet({ name: 'Șablon nou', columns: sablonNouColumns() }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
@@ -210,7 +222,7 @@ describe('buildAnnexWorkbook — custom Șablon nou defaults', () => {
   });
 
   it('round-trips custom defaults through an xlsx buffer the same way Unește downloads', async () => {
-    const built = await buildAnnexWorkbook(
+    const built = annexWorkbook(
       { name: 'Șablon nou', columns: sablonNouColumns() },
       [EXTRACTED_AVIZ]
     );

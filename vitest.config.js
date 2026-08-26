@@ -20,7 +20,10 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'node',
-    include: ['src/**/*.test.js', 'server/src/**/*.test.js', 'scripts/**/*.test.js'],
+    include: ['src/**/*.test.{js,ts,tsx}', 'server/src/**/*.test.js', 'scripts/**/*.test.js'],
+    // Route tests need a live database and run from `npm run test:api`; `npm test` must stay
+    // runnable on a clean checkout with nothing else started.
+    exclude: ['**/node_modules/**', '**/dist/**', 'server/src/**/*.api.test.js'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

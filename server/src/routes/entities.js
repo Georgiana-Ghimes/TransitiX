@@ -22,6 +22,7 @@ import { tpoExistsForOther } from '../lib/avizQuery.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
+import { auditEntityChange, isAudited } from '../lib/audit/events.js';
 
 const router = Router();
 
@@ -257,9 +258,15 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
     const cfg = ENTITY_MAP[req.params.entity];
     if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
 
-    const row = serializeRow(await withTransaction(async (client) => (
-      insertWithGpsGuard(client, req.user.company_id, req.params.entity, req.body)
-    )));
+    const row = serializeRow(await withTransaction(async (client) => {
+      const created = await insertWithGpsGuard(client, req.user.company_id, req.params.entity, req.body);
+      // Inside the transaction on purpose: a trail with silent gaps is worse than none, because
+      // a gap cannot be told apart from nothing having happened.
+      await auditEntityChange(client, req, {
+        action: 'create', entity: req.params.entity, after: created,
+      });
+      return created;
+    }));
 
     if (req.params.entity === 'Trip') {
       // Best-effort: a CMR that cannot be measured is still a valid CMR.
@@ -304,8 +311,10 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     if (req.params.entity === 'Trip') await applyTripUit(data);
 
     let previous = null;
-    // distance ownership needs the stored value, so fetch on either trigger
-    if (req.params.entity === 'Trip' && (data.status !== undefined || data.distance_km !== undefined)) {
+    // Distance ownership needs the stored value, and so does the audit diff: what changed can
+    // only be known against what was there. Fetched once and shared.
+    const audited = isAudited(req.params.entity);
+    if (audited || (req.params.entity === 'Trip' && (data.status !== undefined || data.distance_km !== undefined))) {
       const prev = await query(
         `SELECT * FROM ${cfg.table} WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
@@ -348,13 +357,22 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
       }
       const sets = keys.map((k, idx) => `${k} = $${idx + 1}`);
       const values = [...Object.values(data), req.params.id, req.user.company_id];
-      return client.query(
+      const updated = await client.query(
         `UPDATE ${cfg.table}
          SET ${sets.join(', ')}
          WHERE id = $${keys.length + 1} AND company_id = $${keys.length + 2}
          RETURNING *`,
         values
       );
+      if (updated.rows[0]) {
+        await auditEntityChange(client, req, {
+          action: 'update',
+          entity: req.params.entity,
+          before: previous,
+          after: updated.rows[0],
+        });
+      }
+      return updated;
     });
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     const row = serializeRow(result.rows[0]);
@@ -418,10 +436,20 @@ router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), asy
     const cfg = ENTITY_MAP[req.params.entity];
     if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
 
-    const result = await query(
-      `DELETE FROM ${cfg.table} WHERE id = $1 AND company_id = $2 RETURNING id`,
-      [req.params.id, req.user.company_id]
-    );
+    // RETURNING the whole row, not just the id: a delete is the one event where nothing else
+    // will hold what was there, so the trail keeps the row itself.
+    const result = await withTransaction(async (client) => {
+      const deleted = await client.query(
+        `DELETE FROM ${cfg.table} WHERE id = $1 AND company_id = $2 RETURNING *`,
+        [req.params.id, req.user.company_id]
+      );
+      if (deleted.rows[0]) {
+        await auditEntityChange(client, req, {
+          action: 'delete', entity: req.params.entity, before: deleted.rows[0],
+        });
+      }
+      return deleted;
+    });
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     res.json({ ok: true, id: req.params.id });
   } catch (err) {

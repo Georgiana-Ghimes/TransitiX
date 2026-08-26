@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import { query } from '../db.js';
 import { buildUblInvoice } from '../lib/compliance/efactura.js';
+import { serializeRow } from '../entities.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -19,6 +20,31 @@ function sendError(res, err, fallback) {
  * Download local UBL XML for an invoice. Never marks efactura_status as sent.
  * GET /api/invoices/:id/ubl
  */
+/**
+ * The lines an invoice is made of.
+ *
+ * A customer disputes a component, not a total — "why 120 for the crane". The invoice is built
+ * from `trip_charges`, so the breakdown exists; without this it would exist only in the database.
+ */
+router.get('/:id/lines', async (req, res) => {
+  try {
+    const invoice = await query(
+      'SELECT id FROM invoices WHERE id = $1 AND company_id = $2',
+      [req.params.id, req.user.company_id]
+    );
+    if (!invoice.rows[0]) return res.status(404).json({ message: 'Factură inexistentă' });
+
+    const lines = await query(
+      `SELECT * FROM invoice_lines WHERE company_id = $1 AND invoice_id = $2 ORDER BY seq`,
+      [req.user.company_id, req.params.id]
+    );
+    res.json({ lines: lines.rows.map(serializeRow) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Liniile nu au putut fi citite' });
+  }
+});
+
 router.get('/:id/ubl', async (req, res) => {
   try {
     const invRes = await query(

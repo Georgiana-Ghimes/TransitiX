@@ -257,8 +257,47 @@ async function buildComputedNotifications(companyId) {
     });
   }
 
+  items.push(...await dataIssueNotifications(companyId));
+
   computedCache.set(companyId, { at: Date.now(), items });
   return items;
+}
+
+/**
+ * Only the errors reach the bell — the ones that end in a wrong invoice.
+ *
+ * The warnings live on `/checks`, where there is room to explain them. Putting all of them here
+ * would bury the trip and document alerts the bell exists for.
+ *
+ * The findings share their key with the validation screen, so dismissing one dismisses it in
+ * both places.
+ */
+async function dataIssueNotifications(companyId) {
+  try {
+    const { collectFindings } = await import('./validation/checks.js');
+    const { findings } = await collectFindings(companyId);
+    const now = new Date().toISOString();
+    return findings
+      .filter((item) => item.severity === 'error')
+      .slice(0, 20)
+      .map((item) => ({
+        id: item.key,
+        type: 'data_issue',
+        title: item.title,
+        message: item.message,
+        link: item.link ?? '/checks',
+        trip_id: item.subject?.type === 'trip' ? item.subject.id : null,
+        cmr_number: null,
+        is_read: false,
+        computed: true,
+        created_at: now,
+        created_date: now,
+      }));
+  } catch (err) {
+    // A failing check must not take the notification list down with it.
+    console.error('[notifications] data checks failed', err);
+    return [];
+  }
 }
 
 export async function getComputedNotifications(companyId, dismissalState = new Map()) {

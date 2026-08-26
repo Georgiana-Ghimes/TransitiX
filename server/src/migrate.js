@@ -1,7 +1,10 @@
 import { pool } from './db.js';
 
 const sql = `
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- gen_random_uuid() is built into PostgreSQL 13 and later, which is the floor this schema
+-- targets (compose pins 16). pgcrypto used to be pulled in for it and nothing else, and on a
+-- locked-down host the extension can be blocked from loading at all — which failed the whole
+-- migration for a function the server already provides.
 
 CREATE TABLE IF NOT EXISTS companies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -524,7 +527,7 @@ CREATE TABLE IF NOT EXISTS locations (
   latitude NUMERIC(10,7),
   longitude NUMERIC(10,7),
   geocode_source TEXT
-    CHECK (geocode_source IS NULL OR geocode_source IN ('photon', 'nominatim', 'manual', 'import')),
+    CHECK (geocode_source IS NULL OR geocode_source IN ('photon', 'nominatim', 'tomtom', 'manual', 'import')),
   geocode_confidence NUMERIC(3,2),
   geocode_verified BOOLEAN NOT NULL DEFAULT FALSE,
   geocoded_at TIMESTAMPTZ,
@@ -579,6 +582,11 @@ CREATE INDEX IF NOT EXISTS idx_geocode_cache_company ON geocode_cache(company_id
 
 -- Who last set trips.distance_km. 'manual' is never overwritten by the automatic
 -- computation; NULL means nobody has set it yet.
+-- Widen the geocode source list for databases created before TomTom was an option.
+ALTER TABLE locations DROP CONSTRAINT IF EXISTS locations_geocode_source_check;
+ALTER TABLE locations ADD CONSTRAINT locations_geocode_source_check
+  CHECK (geocode_source IS NULL OR geocode_source IN ('photon', 'nominatim', 'tomtom', 'manual', 'import'));
+
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS distance_source TEXT;
 ALTER TABLE trips DROP CONSTRAINT IF EXISTS trips_distance_source_check;
 ALTER TABLE trips ADD CONSTRAINT trips_distance_source_check
@@ -997,6 +1005,408 @@ CREATE TABLE IF NOT EXISTS tachograph_imports (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_tacho_imports_company ON tachograph_imports(company_id, created_at DESC);
+-- ---------------------------------------------------------------------------
+-- Commercial core: vehicle class, tariffs, taxes and TPO.
+--
+-- The business question this answers is:
+--   document -> trip -> vehicle -> kilometres -> tariff -> taxes -> TPO -> report
+-- Every money figure is stored decomposed, never only as a total, because an invoice
+-- dispute is always about one line, not about the sum.
+-- ---------------------------------------------------------------------------
+
+-- Commercial class ("10t") is what the tariff is negotiated against.
+-- MMA is what the registration document says and what zone taxes are charged on.
+-- They are deliberately two different columns: a "10t" truck commonly has an MMA of 19t.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_class TEXT;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS mma_kg NUMERIC(10,2);
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS body_type TEXT;
+CREATE INDEX IF NOT EXISTS idx_vehicles_class ON vehicles(company_id, vehicle_class);
+
+-- The depot every route leaves from and returns to. Kept as a location so it is geocoded
+-- like any other point; more than one per company is already possible.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS default_depot_location_id UUID
+  REFERENCES locations(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS contracts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  name TEXT,
+  starts_on DATE,
+  ends_on DATE,
+  currency TEXT NOT NULL DEFAULT 'RON',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, code)
+);
+CREATE INDEX IF NOT EXISTS idx_contracts_company_client ON contracts(company_id, client_id);
+
+-- Negotiated rates. Never fetched from anywhere: they are contractual and change by
+-- addendum. Rows are never edited in place - a new validity period is added, so a report
+-- for an old month can still be recomputed with the rate that applied back then.
+CREATE TABLE IF NOT EXISTS contract_tariffs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  contract_id UUID NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
+  vehicle_class TEXT NOT NULL,
+  trip_rate NUMERIC(12,2),
+  km_rate NUMERIC(12,4),
+  min_km NUMERIC(10,2),
+  currency TEXT NOT NULL DEFAULT 'RON',
+  valid_from DATE NOT NULL,
+  valid_to DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (valid_to IS NULL OR valid_to >= valid_from)
+);
+CREATE INDEX IF NOT EXISTS idx_contract_tariffs_lookup
+  ON contract_tariffs(company_id, contract_id, vehicle_class, valid_from DESC);
+
+-- Geographic tax areas. the matcher column holds the cheap textual rules (county code, city names)
+-- so a zone works before any polygon is drawn; the polygon column is the precise GeoJSON when
+-- available. Matching prefers the polygon and falls back to the matcher.
+CREATE TABLE IF NOT EXISTS tax_zones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'zone'
+    CHECK (kind IN ('zone', 'county', 'city', 'custom')),
+  matcher JSONB NOT NULL DEFAULT '{}'::jsonb,
+  polygon JSONB,
+  priority INT NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, code)
+);
+CREATE INDEX IF NOT EXISTS idx_tax_zones_company ON tax_zones(company_id, is_active);
+
+-- The charge depends on the vehicle's MMA, not on how much cargo it happens to carry.
+CREATE TABLE IF NOT EXISTS tax_zone_rates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  tax_zone_id UUID NOT NULL REFERENCES tax_zones(id) ON DELETE CASCADE,
+  mma_min_kg NUMERIC(10,2) NOT NULL DEFAULT 0,
+  mma_max_kg NUMERIC(10,2),
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'RON',
+  valid_from DATE NOT NULL,
+  valid_to DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (mma_max_kg IS NULL OR mma_max_kg >= mma_min_kg),
+  CHECK (valid_to IS NULL OR valid_to >= valid_from)
+);
+CREATE INDEX IF NOT EXISTS idx_tax_zone_rates_lookup
+  ON tax_zone_rates(company_id, tax_zone_id, valid_from DESC);
+
+-- Everything chargeable that is not distance: crane unloading, waiting, permits.
+CREATE TABLE IF NOT EXISTS surcharge_types (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  applies_per TEXT NOT NULL DEFAULT 'trip'
+    CHECK (applies_per IN ('trip', 'stop', 'hour')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, code)
+);
+
+-- Rates differ by vehicle class; a NULL class is the catch-all.
+CREATE TABLE IF NOT EXISTS surcharge_rates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  surcharge_type_id UUID NOT NULL REFERENCES surcharge_types(id) ON DELETE CASCADE,
+  vehicle_class TEXT,
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'RON',
+  valid_from DATE NOT NULL,
+  valid_to DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (valid_to IS NULL OR valid_to >= valid_from)
+);
+CREATE INDEX IF NOT EXISTS idx_surcharge_rates_lookup
+  ON surcharge_rates(company_id, surcharge_type_id, valid_from DESC);
+
+-- Standardised observation codes (DM, ZA, ZB, IF...). The existing aviz table only had
+-- code + label; type and active state make it a real reference list that can be imported.
+ALTER TABLE aviz_observation_codes ADD COLUMN IF NOT EXISTS kind TEXT;
+ALTER TABLE aviz_observation_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE aviz_observation_codes ADD COLUMN IF NOT EXISTS surcharge_type_id UUID
+  REFERENCES surcharge_types(id) ON DELETE SET NULL;
+ALTER TABLE aviz_observation_codes ADD COLUMN IF NOT EXISTS tax_zone_id UUID
+  REFERENCES tax_zones(id) ON DELETE SET NULL;
+
+-- Trip-level commercial data.
+-- Several trips may share one TPO: the goods did not fit in one truck, or the site could
+-- not take a big one. Two unloading points on one trip is still ONE trip.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS tpo_number TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS contract_id UUID REFERENCES contracts(id) ON DELETE SET NULL;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS depot_location_id UUID REFERENCES locations(id) ON DELETE SET NULL;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS crane_unload BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS quantity NUMERIC(12,3);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS quantity_unit TEXT;
+-- Gross weight is what the weighbridge shows: goods plus pallets. Reports need this one.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS gross_weight_kg NUMERIC(12,2);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS net_weight_kg NUMERIC(12,2);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS pallet_weight_kg NUMERIC(12,2);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS tpo_total NUMERIC(12,2);
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS tpo_currency TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS tpo_calculated_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_trips_tpo ON trips(company_id, tpo_number);
+
+-- The kilometres a trip is paid for, kept per leg so the total can always be explained.
+CREATE TABLE IF NOT EXISTS trip_legs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  seq INT NOT NULL,
+  kind TEXT NOT NULL
+    CHECK (kind IN ('depot_to_loading', 'loading_to_unloading', 'between_unloading', 'unloading_to_depot')),
+  from_label TEXT,
+  to_label TEXT,
+  from_location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
+  to_location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
+  distance_km NUMERIC(10,2),
+  duration_min INT,
+  source TEXT NOT NULL DEFAULT 'osrm'
+    CHECK (source IN ('osrm', 'manual', 'estimate')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (trip_id, seq)
+);
+CREATE INDEX IF NOT EXISTS idx_trip_legs_trip ON trip_legs(company_id, trip_id);
+
+-- One row per money component. The sum is the TPO; the rows are what gets disputed.
+CREATE TABLE IF NOT EXISTS trip_charges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL
+    CHECK (kind IN ('trip_rate', 'km_rate', 'zone_tax', 'surcharge', 'manual')),
+  code TEXT,
+  label TEXT NOT NULL,
+  quantity NUMERIC(12,3),
+  unit_amount NUMERIC(12,4),
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'RON',
+  source TEXT NOT NULL DEFAULT 'auto'
+    CHECK (source IN ('auto', 'manual')),
+  detail JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_trip_charges_trip ON trip_charges(company_id, trip_id);
+
+-- ---------------------------------------------------------------------------
+-- Phase 3: documents.
+--   document type -> OCR profile -> field extraction -> confidence -> manual correction
+--
+-- Documents arrive in batches of twenty, in layouts that differ by supplier and by year.
+-- Nothing here assumes one format.
+-- ---------------------------------------------------------------------------
+
+-- One upload session. Twenty avize dropped at once are one batch, reviewed together and
+-- confirmed together.
+CREATE TABLE IF NOT EXISTS document_batches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  document_type TEXT NOT NULL DEFAULT 'aviz'
+    CHECK (document_type IN ('aviz', 'cmr', 'other')),
+  label TEXT,
+  -- Same vocabulary as aviz_documents.status, which this table sits beside.
+  status TEXT NOT NULL DEFAULT 'uploaded'
+    CHECK (status IN ('uploaded', 'extracted', 'confirmed', 'cancelled')),
+  file_count INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_document_batches_company
+  ON document_batches(company_id, created_at DESC);
+
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS batch_id UUID
+  REFERENCES document_batches(id) ON DELETE SET NULL;
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS document_type TEXT NOT NULL DEFAULT 'aviz';
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS ocr_profile_id TEXT;
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS ocr_confidence NUMERIC(4,3);
+-- Per-field confidence, so the review screen can point at the three boxes that need a look
+-- rather than colouring the whole document red.
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS field_confidence JSONB;
+-- Fields a person edited. Re-running OCR must never overwrite these.
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS corrected_fields TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS needs_review BOOLEAN NOT NULL DEFAULT TRUE;
+-- Weights, kept apart from quantity. The report needs the weighbridge figure, not "378 saci".
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS gross_weight_kg NUMERIC(12,2);
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS net_weight_kg NUMERIC(12,2);
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallet_weight_kg NUMERIC(12,2);
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallets INT;
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS quantity_unit TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_batch ON aviz_documents(company_id, batch_id);
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_review
+  ON aviz_documents(company_id, needs_review) WHERE needs_review;
+
+-- Document history: who did what to a document and when. An OCR result that was later
+-- corrected has to stay explicable months afterwards.
+CREATE TABLE IF NOT EXISTS document_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  document_id UUID REFERENCES aviz_documents(id) ON DELETE CASCADE,
+  batch_id UUID REFERENCES document_batches(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  kind TEXT NOT NULL
+    CHECK (kind IN ('uploaded', 'extracted', 're_extracted', 'corrected', 'confirmed',
+                    'linked_trip', 'rejected', 'deleted')),
+  summary TEXT,
+  detail JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_document_events_document
+  ON document_events(company_id, document_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_document_events_batch
+  ON document_events(company_id, batch_id, created_at DESC);
+
+-- Export history. The log used to keep only the filename and the ids, which is not enough to
+-- answer "what exactly did we send them in March?" once the documents have been corrected since.
+-- The rendered rows are snapshotted, so a re-download reproduces the file that actually left.
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS template_name TEXT;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS row_count INT;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS filters JSONB;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS totals JSONB;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS warnings JSONB;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS snapshot JSONB;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS batch_id UUID
+  REFERENCES document_batches(id) ON DELETE SET NULL;
+ALTER TABLE aviz_export_log ADD COLUMN IF NOT EXISTS note TEXT;
+CREATE INDEX IF NOT EXISTS idx_aviz_export_log_created
+  ON aviz_export_log(company_id, created_at DESC);
+
+-- Which preset a template came from, so the builder can tell a customised RAI annex from a
+-- template someone wrote by hand.
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS preset_id TEXT;
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS description TEXT;
+
+-- The digital CMR lives on the same row as a scanned one. A trip has one consignment note
+-- whichever way it came into being; two tables would let a scan and a typed note disagree about
+-- what was carried. The source column says which, and cmr_data holds the written boxes.
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'scan';
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS cmr_data JSONB;
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS signatures JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS signed_loading_at TIMESTAMPTZ;
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS signed_delivery_at TIMESTAMPTZ;
+ALTER TABLE trip_documents ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE trip_documents DROP CONSTRAINT IF EXISTS trip_documents_source_check;
+ALTER TABLE trip_documents ADD CONSTRAINT trip_documents_source_check
+  CHECK (source IN ('scan', 'digital'));
+CREATE INDEX IF NOT EXISTS idx_trip_documents_source
+  ON trip_documents(company_id, source, updated_at DESC);
+
+-- A document a driver uploads from the road belongs in the same review queue as one the office
+-- scanned, otherwise it never reaches OCR and never reaches a report.
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS uploaded_from TEXT NOT NULL DEFAULT 'office';
+ALTER TABLE aviz_documents DROP CONSTRAINT IF EXISTS aviz_documents_uploaded_from_check;
+ALTER TABLE aviz_documents ADD CONSTRAINT aviz_documents_uploaded_from_check
+  CHECK (uploaded_from IN ('office', 'driver'));
+ALTER TABLE document_batches ADD COLUMN IF NOT EXISTS trip_id UUID REFERENCES trips(id) ON DELETE SET NULL;
+ALTER TABLE document_batches ADD COLUMN IF NOT EXISTS created_from TEXT NOT NULL DEFAULT 'office';
+
+-- Where a UIT came from. A locally generated placeholder and a code ANAF actually issued must
+-- never be indistinguishable once they are sitting in a column together.
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS uit_source TEXT;
+
+-- The date a line is invoiced on, which is not the date the trip ran. Tariffs are always read
+-- as of the trip date, so this column must never be used for a rate lookup; it exists because
+-- the customer's annex has a billing-date column of its own.
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS data_facturare DATE;
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_facturare
+  ON aviz_documents(company_id, data_facturare);
+
+-- Issued refresh tokens, so logging out actually ends a session. Without this a signed token
+-- stays valid until it expires on its own: a lost phone or a departed employee keeps working
+-- access for a week, and the logout button is decoration.
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  jti UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_agent TEXT,
+  issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ,
+  last_used_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id, revoked_at);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expiry ON refresh_tokens(expires_at);
+
+-- Invoice lines, mirroring trip_charges. An invoice used to carry only a subtotal, so a customer
+-- disputing a figure had nothing to point at and nothing tied the amount back to the components
+-- the pricing engine computed.
+CREATE TABLE IF NOT EXISTS invoice_lines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  invoice_id UUID NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+  charge_id UUID REFERENCES trip_charges(id) ON DELETE SET NULL,
+  seq INT NOT NULL DEFAULT 0,
+  kind TEXT,
+  code TEXT,
+  label TEXT NOT NULL,
+  reference TEXT,
+  quantity NUMERIC(12,3),
+  unit_amount NUMERIC(12,4),
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'RON',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_invoice_lines_invoice ON invoice_lines(company_id, invoice_id, seq);
+
+-- Which avize a draft was built from, so the invoice can be traced back to the paperwork.
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS aviz_ids UUID[] DEFAULT '{}';
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS source TEXT;
+
+-- Who changed what, outside the OCR pipeline.
+--
+-- document_events already explained a corrected aviz. Nothing explained a tariff that moved, a
+-- depot that changed (which silently changes every billable kilometre afterwards), or a trip
+-- edited after it was invoiced. Those are the questions asked months later, by somebody who was
+-- not in the room.
+--
+-- entity_id carries no foreign key on purpose: it is polymorphic, and the trail must survive the
+-- deletion of the row it describes -- a delete is precisely the event worth keeping.
+CREATE TABLE IF NOT EXISTS audit_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  -- Denormalised on purpose. ON DELETE SET NULL above would otherwise erase the one fact the
+  -- row exists to record: who did this.
+  user_name TEXT,
+  user_email TEXT,
+  user_role TEXT,
+  action TEXT NOT NULL
+    CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
+                      'sessions_revoked', 'export', 'import', 'run')),
+  entity TEXT NOT NULL,
+  entity_id UUID,
+  label TEXT,
+  -- { field: { from, to } } for an update; the whole row for a delete.
+  changes JSONB,
+  detail JSONB,
+  ip TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_events_company_time
+  ON audit_events(company_id, created_at DESC);
+-- The per-record trail: "everything that happened to this tariff".
+CREATE INDEX IF NOT EXISTS idx_audit_events_entity
+  ON audit_events(company_id, entity, entity_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_events_user
+  ON audit_events(company_id, user_id, created_at DESC);
+
 `
 
 async function migrate() {

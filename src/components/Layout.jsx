@@ -5,7 +5,8 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
-  ChevronsLeft, ChevronsRight, ClipboardList, HelpCircle, MapPinned, Network, Layers,
+  ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -21,10 +22,14 @@ import {
 import NotificationBell from '@/components/NotificationBell';
 import GlobalSearch from '@/components/GlobalSearch';
 import OfficeTour from '@/components/OfficeTour';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import BrandLogo from '@/components/BrandLogo';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { label: 'Dispecerat', path: '/dispatch', icon: Network },
+  { label: 'Încărcare', path: '/loading', icon: Boxes },
+  { label: 'Plan 2D', path: '/load-planner', icon: LayoutGrid },
   { label: 'Curse', path: '/trips', icon: Route },
   { label: 'Flotă', path: '/vehicles', icon: Truck },
   { label: 'Șoferi', path: '/drivers', icon: Users },
@@ -37,6 +42,13 @@ const NAV = [
   { label: 'Depozit', path: '/warehouse', icon: Package },
   { label: 'Documente', path: '/documents', icon: FileText },
   { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
+  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
+  { label: 'Verificări date', path: '/checks', icon: ShieldCheck },
+  { label: 'Config. comercială', path: '/commercial', icon: Receipt },
+  // Admin-only: the searchable log answers "what has this person been doing", which is an
+  // owner's question. The per-record trail behind it stays open to the whole office.
+  { label: 'Utilizatori', path: '/users', icon: UserCog, roles: ['admin'] },
+  { label: 'Jurnal modificări', path: '/audit', icon: History, roles: ['admin'] },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
@@ -102,13 +114,18 @@ export default function Layout() {
     }
   }, [isDriver]);
 
+  // Navigate when the tour *step* changes — not whenever the user leaves the step path.
+  // Listening to `location.pathname` yanked every sidebar click back to the current step,
+  // so the rest of the app looked broken (and racing lazy loads could surface ErrorBoundary).
   useEffect(() => {
     if (isDriver || !tourOpen) return;
     const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
     if (current.path && !tourAtPath(location.pathname, current.path)) {
       navigate(current.path);
     }
-  }, [isDriver, tourOpen, tourStep, location.pathname, navigate]);
+    // intentionally omit location.pathname — user may explore freely during the tour
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [isDriver, tourOpen, tourStep, navigate]);
 
   // Desktop: open drawer for nav steps; mobile keeps drawer closed (sheet explains ☰).
   useEffect(() => {
@@ -195,7 +212,9 @@ export default function Layout() {
     return (
       <div className="min-h-screen bg-[#F8F9FA]">
         <main className="p-4 lg:p-6">
-          <Outlet />
+          <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     );
@@ -244,13 +263,12 @@ export default function Layout() {
               showIconsOnly ? 'justify-center' : 'gap-2.5 flex-1'
             )}
           >
-            <div className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center shrink-0">
-              <Truck className="w-5 h-5 text-[#0A2B4E]" />
-            </div>
-            {!showIconsOnly && (
-              <div className="min-w-0">
-                <h1 className="font-bold text-lg tracking-tight leading-tight">Transitix</h1>
-                <p className="text-[10px] text-white/50">TMS Platform</p>
+            {showIconsOnly ? (
+              <BrandLogo variant="mark" />
+            ) : (
+              <div className="min-w-0 flex flex-col gap-0.5">
+                <BrandLogo imgClassName="h-7 max-w-[10.5rem]" />
+                <p className="text-[10px] text-white/50 pl-0.5">TMS Platform</p>
               </div>
             )}
           </Link>
@@ -263,7 +281,7 @@ export default function Layout() {
 
         <nav className={cn('flex-1 py-3 overflow-y-auto overflow-x-hidden', showIconsOnly ? 'px-2' : 'px-3')}>
           <ul className="space-y-1">
-            {NAV.map((item) => {
+            {NAV.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
               const highlighted = isDesktop && tourOpen && tourNavPath === item.path;
@@ -425,7 +443,9 @@ export default function Layout() {
         )}
 
         <main className="flex-1 p-3 sm:p-4 lg:p-6 min-w-0 overflow-x-hidden">
-          <Outlet />
+          <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
 
         {tourOpen && (

@@ -22,6 +22,16 @@ export function SourceBadge({ source }) {
   );
 }
 
+/** Marks paperwork photographed in the cab vs scanned at the office. */
+export function DriverUploadBadge({ uploadedFrom }) {
+  if (uploadedFrom !== 'driver') return null;
+  return (
+    <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
+      De la șofer
+    </span>
+  );
+}
+
 export default function AvizFilePreview({ fileUrl }) {
   const [src, setSrc] = useState('');
   const kind = previewKind(fileUrl);

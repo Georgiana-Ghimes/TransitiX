@@ -13,6 +13,7 @@ import {
 import { cachedMatrix } from '../lib/geo/matrixCache.js';
 import { applyToLocation, geocodeAddress } from '../lib/geo/geocode.js';
 import { photonPing } from '../lib/geo/photon.js';
+import { tomtomPing } from '../lib/geo/tomtom.js';
 import {
   DISTANCE_REASON_LABELS,
   computeTripDistance,
@@ -40,10 +41,11 @@ function sendError(res, err, fallback) {
 }
 
 router.get('/health', async (_req, res) => {
-  const [routing, geocoding] = await Promise.all([osrmPing(), photonPing()]);
+  const [routing, geocoding, tomtom] = await Promise.all([osrmPing(), photonPing(), tomtomPing()]);
   res.json({
     ...routing,
     geocoding,
+    tomtom,
     max_route_points: MAX_ROUTE_POINTS,
     max_matrix_points: MAX_MATRIX_POINTS,
   });

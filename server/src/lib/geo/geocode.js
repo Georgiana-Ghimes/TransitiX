@@ -7,7 +7,84 @@
  */
 
 import { addressKey, parseRomanianAddress } from './address.js';
-import { AUTO_ACCEPT_CONFIDENCE, photonSearch } from './photon.js';
+import { AUTO_ACCEPT_CONFIDENCE, photonConfigured, photonSearch } from './photon.js';
+import { tomtomConfigured, tomtomSearch } from './tomtom.js';
+
+/** Escalate to the paid provider only when the free one is not confident enough to accept. */
+export const ESCALATION_THRESHOLD = AUTO_ACCEPT_CONFIDENCE;
+
+/**
+ * Which providers are in play, as a single label.
+ *
+ * The cache is keyed by this, so it identifies a *strategy*, not a vendor: turning TomTom on
+ * changes the label, which retires the photon-only cache entries and gives exactly the weak
+ * addresses another attempt with the better provider. That is the behaviour you want, and it
+ * costs nothing for the ones Photon already resolved well.
+ */
+export function activeGeocodeProvider() {
+  const photon = photonConfigured();
+  const tomtom = tomtomConfigured();
+  if (photon && tomtom) return 'photon+tomtom';
+  if (tomtom) return 'tomtom';
+  return 'photon';
+}
+
+/**
+ * Runs the free provider first and only pays for the second when the first is unsure.
+ *
+ * The fallback failing — bad key, quota gone, network — must never break geocoding: the
+ * primary result stands, exactly as it would have without TomTom configured.
+ */
+export function escalatingSearch({
+  primary = photonSearch,
+  fallback = tomtomSearch,
+  threshold = ESCALATION_THRESHOLD,
+  onEscalate,
+} = {}) {
+  return async function search(address, options = {}) {
+    let primaryResult = null;
+    let primaryError = null;
+    try {
+      primaryResult = await primary(address, options);
+    } catch (err) {
+      primaryError = err;
+    }
+
+    const best = primaryResult?.best;
+    if (best && best.confidence >= threshold) return primaryResult;
+
+    let fallbackResult = null;
+    try {
+      if (onEscalate) onEscalate({ address, primaryConfidence: best?.confidence ?? null });
+      fallbackResult = await fallback(address, options);
+    } catch {
+      // Paid provider unavailable — fall back to whatever the free one managed.
+      if (primaryResult) return primaryResult;
+      throw primaryError || new Error('Geocodarea a eșuat la ambii furnizori');
+    }
+
+    if (!primaryResult) return fallbackResult;
+
+    // Keep both providers' suggestions so the review screen can show the alternatives.
+    const merged = [...(fallbackResult.candidates || []), ...(primaryResult.candidates || [])]
+      .sort((a, b) => b.confidence - a.confidence);
+    const winner = merged[0] || null;
+    return {
+      ...primaryResult,
+      candidates: merged,
+      best: winner,
+      autoAcceptable: Boolean(winner && winner.confidence >= threshold),
+      escalated: true,
+    };
+  };
+}
+
+/** Default strategy: escalate when TomTom is configured, plain Photon otherwise. */
+export function defaultSearch() {
+  return tomtomConfigured() && photonConfigured()
+    ? escalatingSearch()
+    : (tomtomConfigured() ? tomtomSearch : photonSearch);
+}
 
 export const GEOCODE_PROVIDER = 'photon';
 
@@ -83,8 +160,8 @@ async function writeCache(db, companyId, key, provider, payload) {
  * dropped in later without changing callers.
  */
 export async function geocodeAddress(db, companyId, address, {
-  provider = GEOCODE_PROVIDER,
-  search = photonSearch,
+  provider = activeGeocodeProvider(),
+  search = defaultSearch(),
   refresh = false,
   autoAccept = AUTO_ACCEPT_CONFIDENCE,
 } = {}) {
@@ -161,7 +238,9 @@ export async function applyToLocation(db, companyId, locationId, result) {
      WHERE id = $5 AND company_id = $6`,
     [
       result.best.latitude, result.best.longitude, result.best.confidence,
-      GEOCODE_PROVIDER, locationId, companyId,
+      // The winning candidate carries its own provider; with escalation on, the pin that
+      // wins may not be the one the free provider returned.
+      result.best.provider || GEOCODE_PROVIDER, locationId, companyId,
     ]
   );
   return true;

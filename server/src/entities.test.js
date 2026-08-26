@@ -91,6 +91,29 @@ describe('ENTITY_MAP', () => {
     ]));
   });
 
+  it('keeps every calendar-day column out of the UTC path', () => {
+    // pg returns DATE as *local* midnight. Anything serialized with toISOString() lands in the
+    // previous evening east of Greenwich, shifting a whole column by a day — which is exactly
+    // what happened to `data_facturare` on a customer's annex.
+    const day = new Date(2026, 2, 31, 0, 0, 0);
+    const out = serializeRow({
+      id: 'x',
+      data_efectuare_cursa: day,
+      data_facturare: day,
+      loading_date: day,
+      itp_expiry: day,
+    });
+    for (const key of ['data_efectuare_cursa', 'data_facturare', 'loading_date', 'itp_expiry']) {
+      expect(out[key], key).toBe('2026-03-31');
+    }
+  });
+
+  it('lets office save the billing date apart from the trip date', () => {
+    expect(ENTITY_MAP.AvizDocument.writable).toEqual(
+      expect.arrayContaining(['data_efectuare_cursa', 'data_facturare'])
+    );
+  });
+
   it('lets office save UIT and trip margin fields', () => {
     expect(ENTITY_MAP.Trip.writable).toEqual(expect.arrayContaining([
       'uit_code',

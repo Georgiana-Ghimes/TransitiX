@@ -13,9 +13,15 @@ export function signAccessToken(user) {
   );
 }
 
-export function signRefreshToken(user) {
+/**
+ * A refresh token carries a `jti` so the session behind it can be revoked.
+ *
+ * Without one, signing out is only the client forgetting its copy — the token keeps working
+ * until it expires, and there is nothing to point at to take it away.
+ */
+export function signRefreshToken(user, jti) {
   return jwt.sign(
-    { sub: user.id, company_id: user.company_id, type: 'refresh' },
+    { sub: user.id, company_id: user.company_id, type: 'refresh', jti },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
   );

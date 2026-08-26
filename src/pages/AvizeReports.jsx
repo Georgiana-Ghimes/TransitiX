@@ -14,7 +14,7 @@ import AvizFilterBar from './avize/AvizFilterBar';
 import AvizLegend from './avize/AvizLegend';
 import AvizReportsTab from './avize/AvizReportsTab';
 import AvizTemplatesTab from './avize/AvizTemplatesTab';
-import { SourceBadge } from './avize/AvizFilePreview';
+import { DriverUploadBadge, SourceBadge } from './avize/AvizFilePreview';
 import {
   AVIZ_ACTION_LEGEND,
   displayRoute,
@@ -45,10 +45,9 @@ export default function AvizeReports() {
   const [activePreset, setActivePreset] = useState('');
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
-  const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '' });
+  const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '', uploaded_from: '' });
   const [qInput, setQInput] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [amountRule, setAmountRule] = useState('tpo');
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
   const [trips, setTrips] = useState([]);
@@ -104,7 +103,7 @@ export default function AvizeReports() {
   useEffect(() => {
     if (!loading) setRefreshing(true);
     load();
-  }, [filters.from, filters.to, filters.status, filters.q]);
+  }, [filters.from, filters.to, filters.status, filters.q, filters.uploaded_from]);
 
   const loadReports = async () => {
     try {
@@ -127,7 +126,7 @@ export default function AvizeReports() {
 
   const resetAvizFilters = () => {
     setActivePreset('');
-    setFilters({ from: '', to: '', status: '', q: '' });
+    setFilters({ from: '', to: '', status: '', q: '', uploaded_from: '' });
     setQInput('');
   };
 
@@ -372,11 +371,17 @@ export default function AvizeReports() {
     }
     setBusy(true);
     try {
-      const inv = await api.avize.draftInvoice({ aviz_ids: ids, amount_rule: amountRule });
+      const inv = await api.avize.draftInvoice({ aviz_ids: ids });
+      // The lines come from the pricing engine, so the count is worth saying: it tells the
+      // operator the invoice is itemised, not a single re-derived figure.
       notifySuccess(
         'Ciornă factură',
-        `${inv.series || 'TRX'}-${inv.number} — deschide Financiar. Fără e-Factura.`
+        `${inv.series || 'TRX'}-${inv.number} — ${inv.lines?.length ?? 0} linii din TPO. `
+        + 'Deschide Financiar. Fără e-Factura.'
       );
+      for (const warning of inv.warnings ?? []) {
+        notifyError('Atenție la ciornă', warning.message);
+      }
     } catch (e) {
       notifyError('Ciornă eșuată', e);
     } finally {
@@ -601,15 +606,6 @@ export default function AvizeReports() {
             >
               <Archive className="w-4 h-4" /> Zip
             </button>
-            <select
-              className={`${inputCls} h-10 py-0 w-full sm:w-44`}
-              value={amountRule}
-              onChange={(e) => setAmountRule(e.target.value)}
-              aria-label="Regulă sumă ciornă"
-            >
-              <option value="tpo">Ciornă: valoare TPO</option>
-              <option value="km_tarif">Ciornă: km × tarif</option>
-            </select>
             <button
               type="button"
               disabled={selected.size === 0 || busy}
@@ -652,6 +648,7 @@ export default function AvizeReports() {
                             {STATUS_LABEL[row.status] || row.status}
                           </span>
                           <SourceBadge source={row.extraction_source} />
+                          <DriverUploadBadge uploadedFrom={row.uploaded_from} />
                         </div>
                       </div>
                     </div>
@@ -707,7 +704,12 @@ export default function AvizeReports() {
                             {row.cantitate_marfa ?? '—'} {row.tip_marfa || ''}
                           </td>
                           <td className="px-3 py-3 truncate" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
-                          <td className="px-3 py-3 overflow-hidden"><SourceBadge source={row.extraction_source} /></td>
+                          <td className="px-3 py-3 overflow-hidden">
+                            <div className="flex flex-wrap gap-1">
+                              <SourceBadge source={row.extraction_source} />
+                              <DriverUploadBadge uploadedFrom={row.uploaded_from} />
+                            </div>
+                          </td>
                           <td className="px-3 py-3 text-xs truncate">{STATUS_LABEL[row.status] || row.status}</td>
                           <td className="px-3 py-3">
                             <div className="flex flex-wrap justify-end gap-x-2 gap-y-1">

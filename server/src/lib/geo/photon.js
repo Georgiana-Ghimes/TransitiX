@@ -7,7 +7,16 @@
  * a geocoder that always answers is worse than one that admits when it guessed.
  */
 
-import { parseRomanianAddress, streetNameTokens, stripDiacritics } from './address.js';
+import { parseRomanianAddress } from './address.js';
+import {
+  AUTO_ACCEPT_CONFIDENCE,
+  buildSearchResult,
+  rankCandidates as rankScored,
+  scoreCandidate,
+} from './matchScore.js';
+
+// Re-exported so existing importers (and their tests) keep the same entry points.
+export { AUTO_ACCEPT_CONFIDENCE, scoreCandidate };
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_LIMIT = 5;
@@ -16,9 +25,6 @@ const DEFAULT_LANG = 'default';
 
 /** Romania's bounding box, so a query for "Unirii 1" cannot land in Hungary. */
 export const RO_BBOX = '20.26,43.62,29.72,48.27';
-
-/** Below this a pin is never written unattended. */
-export const AUTO_ACCEPT_CONFIDENCE = 0.8;
 
 export function photonBaseUrl() {
   return String(process.env.PHOTON_URL || '').trim().replace(/\/+$/, '');
@@ -32,17 +38,6 @@ function httpError(message, status) {
   const err = new Error(message);
   err.status = status;
   return err;
-}
-
-function round2(value) {
-  return Math.round(value * 100) / 100;
-}
-
-function norm(value) {
-  return stripDiacritics(String(value || ''))
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
 }
 
 /** Free-text query for Photon, assembled from the parsed parts we trust. */
@@ -80,97 +75,20 @@ export function toCandidate(feature) {
     county: props.county || props.state || null,
     postcode: props.postcode || null,
     countrycode: props.countrycode || null,
+    provider: 'photon',
     osm_key: props.osm_key || null,
     osm_value: props.osm_value || null,
     osm_id: props.osm_id ?? null,
   };
 }
 
-/**
- * How much do we trust this candidate for the address we asked about?
- *
- * Precision of what came back sets the ceiling (a house beats a street beats a village),
- * then agreement with the query moves it up or down.
- */
-export function scoreCandidate(parsed, candidate) {
-  const reasons = [];
-  if (!candidate) return { score: 0, reasons: ['fara_rezultat'] };
-
-  // Anything outside Romania is a wrong answer, however confident it looks.
-  if (candidate.countrycode && candidate.countrycode.toUpperCase() !== 'RO') {
-    return { score: 0, reasons: ['alta_tara'] };
-  }
-
-  let score;
-  if (candidate.housenumber) { score = 0.55; reasons.push('nivel_adresa'); }
-  else if (candidate.street) { score = 0.4; reasons.push('nivel_strada'); }
-  else if (candidate.osm_key === 'place') { score = 0.25; reasons.push('nivel_localitate'); }
-  else { score = 0.2; reasons.push('nivel_imprecis'); }
-
-  const wantCity = norm(parsed?.city);
-  const gotCity = norm(candidate.city);
-  if (wantCity && gotCity) {
-    if (wantCity === gotCity) { score += 0.2; reasons.push('oras_potrivit'); }
-    else if (gotCity.includes(wantCity) || wantCity.includes(gotCity)) {
-      score += 0.1;
-      reasons.push('oras_partial');
-    } else { score -= 0.15; reasons.push('oras_diferit'); }
-  }
-
-  // Compare street *names* only. Including the type word would match "Calea Aradului"
-  // against "Calea Torontalului" on the shared "calea" and score two different streets
-  // as a perfect hit.
-  const wantStreet = streetNameTokens(parsed?.street);
-  const gotStreet = streetNameTokens(candidate.street);
-  if (wantStreet.length && gotStreet.length) {
-    const overlap = wantStreet.filter((want) => gotStreet.some((got) => (
-      got === want
-      // tolerate inflection ("Arad" / "Aradului") without matching unrelated names
-      || (want.length >= 4 && got.length >= 4 && (got.includes(want) || want.includes(got)))
-    )));
-    if (overlap.length) { score += 0.1; reasons.push('strada_potrivita'); }
-    // A different street is disqualifying, not a minor deduction: it must not survive
-    // into auto-accept even when city and house number both agree.
-    else { score -= 0.3; reasons.push('strada_diferita'); }
-  }
-
-  if (parsed?.houseNumber && candidate.housenumber) {
-    if (norm(parsed.houseNumber) === norm(candidate.housenumber)) {
-      score += 0.15;
-      reasons.push('numar_potrivit');
-    } else { score -= 0.1; reasons.push('numar_diferit'); }
-  } else if (parsed?.houseNumber && !candidate.housenumber) {
-    reasons.push('numar_negasit');
-  }
-
-  if (parsed?.postcode && candidate.postcode && parsed.postcode === candidate.postcode) {
-    score += 0.05;
-    reasons.push('cod_postal_potrivit');
-  }
-
-  return { score: round2(Math.max(0, Math.min(1, score))), reasons };
-}
-
 export function rankCandidates(parsed, features = []) {
-  return features
-    .map(toCandidate)
-    .filter(Boolean)
-    .map((candidate) => {
-      const { score, reasons } = scoreCandidate(parsed, candidate);
-      return { ...candidate, confidence: score, reasons };
-    })
-    .sort((a, b) => b.confidence - a.confidence);
+  return rankScored(parsed, features.map(toCandidate));
 }
 
 export function parseSearchResponse(json, parsed) {
   const features = Array.isArray(json?.features) ? json.features : [];
-  const candidates = rankCandidates(parsed, features);
-  return {
-    candidates,
-    best: candidates[0] || null,
-    // Only a clear winner may be written without a human looking at it.
-    autoAcceptable: Boolean(candidates[0] && candidates[0].confidence >= AUTO_ACCEPT_CONFIDENCE),
-  };
+  return buildSearchResult(parsed, features.map(toCandidate));
 }
 
 /** Photon returns {"lang":[{"message":"..."}]} style validation errors. */

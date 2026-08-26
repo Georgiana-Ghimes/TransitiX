@@ -12,6 +12,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # The route tests talk to a real Postgres on purpose: every serious defect this project has
+    # shipped lived at the seam a mocked database cannot reach.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/transitix_test
+      JWT_SECRET: ci-secret-not-a-real-key
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,6 +54,12 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Route tests
+        run: npm run test:api
+
+      - name: Typecheck (load planner)
+        run: npm run typecheck:loadplanner
 
       - name: Build frontend
         run: npm run build

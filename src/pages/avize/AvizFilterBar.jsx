@@ -56,7 +56,19 @@ export default function AvizFilterBar({
           <option value="confirmed">Confirmat</option>
         </select>
       </div>
-      <div className="sm:col-span-2 lg:col-span-3">
+      <div>
+        <label className={labelCls}>Proveniență</label>
+        <select
+          className={inputCls}
+          value={filters.uploaded_from || ''}
+          onChange={(e) => setFilters((p) => ({ ...p, uploaded_from: e.target.value }))}
+        >
+          <option value="">Toate</option>
+          <option value="driver">De la șofer</option>
+          <option value="office">Din birou</option>
+        </select>
+      </div>
+      <div className="sm:col-span-2 lg:col-span-2">
         <label className={labelCls}>Caută TPO / auto / document / fișier</label>
         <input
           className={inputCls}

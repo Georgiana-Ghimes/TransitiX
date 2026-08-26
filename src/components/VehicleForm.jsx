@@ -5,6 +5,7 @@ import ModalShell from '@/components/ModalShell';
 import { FieldError, FormErrorBanner, fieldInputClass } from '@/components/FormFeedback';
 import { friendlyErrorMessage } from '@/lib/notify';
 import { formatCapabilities, parseCapabilities } from '@/lib/planningUi';
+import { VEHICLE_CLASSES } from '@/lib/commercial';
 
 const INT_MAX = 2_147_483_647;
 const YEAR_MIN = 1950;
@@ -34,6 +35,12 @@ function validateVehicle(form) {
   if (form.year !== '' && form.year != null) {
     if (!Number.isFinite(year) || !Number.isInteger(year)) errors.year = 'An invalid.';
     else if (year < YEAR_MIN || year > YEAR_MAX) errors.year = `An între ${YEAR_MIN} și ${YEAR_MAX}.`;
+  }
+
+  if (form.mma_kg !== '' && form.mma_kg != null) {
+    const mma = parseOptionalNumber(form.mma_kg);
+    if (!Number.isFinite(mma) || mma <= 0) errors.mma_kg = 'MMA invalidă (min. 1 kg).';
+    else if (mma > INT_MAX) errors.mma_kg = `Prea mare (max. ${INT_MAX.toLocaleString('ro-RO')} kg).`;
   }
 
   if (form.capacity_kg !== '' && form.capacity_kg != null) {
@@ -77,7 +84,8 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [form, setForm] = useState({
-    plate: '', brand: '', model: '', year: '', capacity_kg: '', capacity_mc: '',
+    plate: '', brand: '', model: '', year: '', vehicle_class: '', mma_kg: '',
+    capacity_kg: '', capacity_mc: '',
     capacity_pallets: '', capabilities: '', cost_per_km: '', cost_per_hour: '',
     cargo_length_m: '', cargo_width_m: '', cargo_height_m: '',
     axle_front_m: '', axle_rear_m: '', axle_front_max_kg: '', axle_rear_max_kg: '',
@@ -114,6 +122,8 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
       const data = {
         ...form,
         year: parseOptionalNumber(form.year),
+        vehicle_class: String(form.vehicle_class || '').trim() || null,
+        mma_kg: parseOptionalNumber(form.mma_kg),
         capacity_kg: parseOptionalNumber(form.capacity_kg),
         capacity_mc: parseOptionalNumber(form.capacity_mc),
         capacity_pallets: parseOptionalNumber(form.capacity_pallets),
@@ -210,6 +220,30 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
               <option value="electric">Electric</option>
               <option value="hybrid">Hibrid</option>
             </select>
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="vehicle-vehicle_class">Clasă comercială</label>
+            <input
+              id="vehicle-vehicle_class"
+              list="vehicle-class-options"
+              className={inputCls}
+              placeholder="10t"
+              value={form.vehicle_class || ''}
+              onChange={(e) => set('vehicle_class', e.target.value)}
+            />
+            <datalist id="vehicle-class-options">
+              {VEHICLE_CLASSES.map((c) => <option key={c} value={c} />)}
+            </datalist>
+            <p className="text-[11px] text-slate-400 mt-1">Banda pe care se negociază tariful.</p>
+          </div>
+          <div>
+            <label className={labelCls} htmlFor="vehicle-mma_kg">MMA din talon (kg)</label>
+            {field('mma_kg', { type: 'number', min: 0, max: INT_MAX, value: form.mma_kg, onChange: (e) => set('mma_kg', e.target.value) })}
+            <FieldError id="vehicle-mma_kg-error" message={errors.mma_kg} />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Nu e același lucru cu clasa: un camion de 10t are MMA ~19.000 kg. Taxele de zonă se
+              calculează după MMA.
+            </p>
           </div>
           <div>
             <label className={labelCls} htmlFor="vehicle-capacity_kg">Capacitate (kg)</label>

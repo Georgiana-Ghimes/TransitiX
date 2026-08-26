@@ -1,4 +1,5 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
+import { getSource } from './reporting/sources.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -145,7 +146,9 @@ export function mapAnnexRows(columns, avize) {
       const raw = col.source ? row?.[col.source] : undefined;
       if (useTemplateDefault(col, raw)) {
         out[col.key] = coerceCell(col, col.default_value);
-      } else if (col.source === 'data_efectuare_cursa') {
+      } else if (getSource(col.source)?.type === 'date') {
+        // Driven by the declared type, not by a hard-coded column name: the moment a second
+        // date source appeared, the name check silently left it in ISO on the customer's sheet.
         out[col.key] = formatDateCell(raw);
       } else {
         out[col.key] = coerceCell(col, raw);

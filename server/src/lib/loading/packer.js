@@ -354,3 +354,97 @@ export function sideViewRects(placements = []) {
     weight_kg: p.weight_kg,
   }));
 }
+
+/** Default number of compartments a cargo bay is shown as. */
+export const DEFAULT_SEGMENTS = 6;
+
+/** Length of overlap between [aFrom,aTo] and [bFrom,bTo]. */
+function overlapLength(aFrom, aTo, bFrom, bTo) {
+  return Math.max(0, Math.min(aTo, bTo) - Math.max(aFrom, bFrom));
+}
+
+/**
+ * Fill per compartment along the bay length — the numbered bars above the truck profile.
+ *
+ * A pallet straddling two compartments is split by how much of it lies in each, rather than
+ * being credited entirely to whichever compartment its origin falls in. Otherwise the bars
+ * lie whenever the load is not neatly aligned to the compartment grid.
+ */
+export function segmentFill(placements = [], bay, { count = DEFAULT_SEGMENTS } = {}) {
+  const length = Number(bay?.length_m);
+  const width = Number(bay?.width_m);
+  const height = Number(bay?.height_m);
+  const n = Math.max(1, Math.trunc(count));
+  if (!(length > 0) || !(width > 0) || !(height > 0)) return [];
+
+  const step = length / n;
+  const segments = [];
+
+  for (let i = 0; i < n; i += 1) {
+    const from = i * step;
+    const to = from + step;
+    const segmentVolume = step * width * height;
+    let usedVolume = 0;
+    let weight = 0;
+    const stops = new Set();
+    let items = 0;
+
+    for (const p of placements) {
+      const share = overlapLength(p.x, p.x + p.length_m, from, to);
+      if (share <= 0) continue;
+      const fraction = p.length_m > 0 ? share / p.length_m : 0;
+      usedVolume += share * p.width_m * p.height_m;
+      weight += (Number(p.weight_kg) || 0) * fraction;
+      if (p.stop_seq != null) stops.add(p.stop_seq);
+      items += 1;
+    }
+
+    segments.push({
+      index: i,
+      // FleetLoader numbers compartments 001, 002, … — kept because crews read them aloud.
+      label: String(i + 1).padStart(3, '0'),
+      from_m: Math.round(from * 1000) / 1000,
+      to_m: Math.round(to * 1000) / 1000,
+      volume_pct: segmentVolume > 0 ? Math.round((usedVolume / segmentVolume) * 1000) / 10 : 0,
+      weight_kg: Math.round(weight * 10) / 10,
+      item_count: items,
+      stops: [...stops].sort((a, b) => a - b),
+    });
+  }
+
+  return segments;
+}
+
+/**
+ * Weight carried on each side of the centre line.
+ *
+ * y = 0 is the driver's side (left, for right-hand traffic). Items crossing the centre line
+ * are split proportionally. A large imbalance is a real handling and enforcement problem,
+ * not a cosmetic one, so it is reported as its own number.
+ */
+export function lateralBalance(placements = [], bay) {
+  const width = Number(bay?.width_m);
+  if (!(width > 0)) return { driver_kg: 0, passenger_kg: 0, total_kg: 0, imbalance_kg: 0, imbalance_pct: 0 };
+
+  const mid = width / 2;
+  let driver = 0;
+  let passenger = 0;
+
+  for (const p of placements) {
+    const weight = Number(p.weight_kg) || 0;
+    if (!(p.width_m > 0)) continue;
+    const left = overlapLength(p.y, p.y + p.width_m, 0, mid) / p.width_m;
+    driver += weight * left;
+    passenger += weight * (1 - left);
+  }
+
+  const total = driver + passenger;
+  const imbalance = Math.abs(driver - passenger);
+  return {
+    driver_kg: Math.round(driver * 10) / 10,
+    passenger_kg: Math.round(passenger * 10) / 10,
+    total_kg: Math.round(total * 10) / 10,
+    imbalance_kg: Math.round(imbalance * 10) / 10,
+    imbalance_pct: total > 0 ? Math.round((imbalance / total) * 1000) / 10 : 0,
+  };
+}

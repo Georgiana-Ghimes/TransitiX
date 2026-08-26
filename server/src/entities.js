@@ -8,6 +8,7 @@ export const ENTITY_MAP = {
       'fuel_type', 'chassis_number', 'engine_number', 'mileage', 'last_maintenance_mileage',
       'itp_number', 'itp_expiry', 'rca_number', 'rca_expiry', 'rovinieta_number', 'rovinieta_expiry',
       'casco_number', 'casco_expiry', 'is_active', 'status',
+      'vehicle_class', 'mma_kg', 'body_type',
       'capacity_pallets', 'capabilities', 'home_location_id', 'cost_per_km', 'cost_per_hour',
       'cargo_length_m', 'cargo_width_m', 'cargo_height_m',
       'axle_front_m', 'axle_rear_m', 'axle_front_max_kg', 'axle_rear_max_kg',
@@ -65,6 +66,59 @@ export const ENTITY_MAP = {
       'actual_arrival', 'actual_departure', 'status', 'notes',
     ],
   },
+  Contract: {
+    table: 'contracts',
+    companyScoped: true,
+    writable: [
+      'client_id', 'code', 'name', 'starts_on', 'ends_on', 'currency', 'is_active', 'notes',
+    ],
+  },
+  ContractTariff: {
+    table: 'contract_tariffs',
+    companyScoped: true,
+    writable: [
+      'contract_id', 'vehicle_class', 'trip_rate', 'km_rate', 'min_km', 'currency',
+      'valid_from', 'valid_to', 'notes',
+    ],
+  },
+  TaxZone: {
+    table: 'tax_zones',
+    companyScoped: true,
+    jsonFields: ['matcher', 'polygon'],
+    writable: ['code', 'name', 'kind', 'matcher', 'polygon', 'priority', 'is_active'],
+  },
+  TaxZoneRate: {
+    table: 'tax_zone_rates',
+    companyScoped: true,
+    writable: ['tax_zone_id', 'mma_min_kg', 'mma_max_kg', 'amount', 'currency', 'valid_from', 'valid_to'],
+  },
+  SurchargeType: {
+    table: 'surcharge_types',
+    companyScoped: true,
+    writable: ['code', 'name', 'applies_per', 'is_active'],
+  },
+  SurchargeRate: {
+    table: 'surcharge_rates',
+    companyScoped: true,
+    writable: ['surcharge_type_id', 'vehicle_class', 'amount', 'currency', 'valid_from', 'valid_to'],
+  },
+  TripLeg: {
+    table: 'trip_legs',
+    companyScoped: true,
+    writable: [
+      'trip_id', 'seq', 'kind', 'from_label', 'to_label', 'from_location_id', 'to_location_id',
+      'distance_km', 'duration_min', 'source',
+    ],
+  },
+  TripCharge: {
+    table: 'trip_charges',
+    companyScoped: true,
+    jsonFields: ['detail'],
+    writable: [
+      'trip_id', 'kind', 'code', 'label', 'quantity', 'unit_amount', 'amount', 'currency',
+      'source', 'detail',
+    ],
+  },
   Trip: {
     table: 'trips',
     companyScoped: true,
@@ -76,6 +130,8 @@ export const ENTITY_MAP = {
       'goods_description', 'weight_kg', 'package_count', 'volume_mc', 'special_instructions', 'internal_notes',
       'status', 'distance_km', 'estimated_fuel_consumption', 'actual_fuel_consumption', 'start_mileage', 'end_mileage',
       'uit_code', 'agreed_revenue', 'estimated_cost', 'route_id',
+      'tpo_number', 'contract_id', 'depot_location_id', 'crane_unload',
+      'quantity', 'quantity_unit', 'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg',
     ],
   },
   TripDocument: {
@@ -84,6 +140,7 @@ export const ENTITY_MAP = {
     writable: [
       'trip_id', 'cmr_number', 'original_image_url', 'ocr_extracted_data', 'ocr_verified_by',
       'ocr_verified_at', 'is_confirmed', 'ocr_edited_manually', 'final_pdf_url', 'notes',
+      'source',
     ],
   },
   ClientConfirmation: {
@@ -145,22 +202,43 @@ export const ENTITY_MAP = {
       'priority', 'is_applied', 'trip_ids',
     ],
   },
+  ObservationCode: {
+    table: 'aviz_observation_codes',
+    companyScoped: true,
+    writable: ['code', 'label', 'kind', 'sort_order', 'is_active', 'surcharge_type_id', 'tax_zone_id'],
+  },
+  DocumentBatch: {
+    table: 'document_batches',
+    companyScoped: true,
+    writable: ['document_type', 'label', 'status', 'file_count'],
+  },
+  DocumentEvent: {
+    table: 'document_events',
+    companyScoped: true,
+    jsonFields: ['detail'],
+    writable: ['document_id', 'batch_id', 'kind', 'summary', 'detail'],
+  },
   ReportTemplate: {
     table: 'report_templates',
     companyScoped: true,
     jsonFields: ['columns'],
-    writable: ['name', 'columns', 'is_default'],
+    // `preset_id` records which built-in layout a template came from and is set by the server
+    // when a preset is instantiated — it is provenance, not something a client may claim.
+    writable: ['name', 'columns', 'is_default', 'description'],
   },
   AvizDocument: {
     table: 'aviz_documents',
     companyScoped: true,
-    jsonFields: ['extracted_data'],
+    jsonFields: ['extracted_data', 'field_confidence'],
     writable: [
       'file_url', 'original_filename', 'status', 'extracted_data',
-      'numar_tpo', 'data_efectuare_cursa', 'valoare_tpo', 'numar_auto',
+      'numar_tpo', 'data_efectuare_cursa', 'data_facturare', 'valoare_tpo', 'numar_auto',
       'ruta_transport', 'tip_marfa', 'cantitate_marfa', 'numar_document_marfa',
       'numar_curse', 'taxe_suplimentare', 'km_parcursi', 'tarif_km', 'observatii',
       'ruta_display', 'trip_id',
+      'batch_id', 'document_type', 'ocr_profile_id', 'ocr_confidence',
+      'field_confidence', 'corrected_fields', 'needs_review',
+      'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg', 'pallets', 'quantity_unit',
     ],
   },
 };
@@ -177,10 +255,19 @@ export function parseOrder(order) {
   return `${col} ${desc ? 'DESC' : 'ASC'}`;
 }
 
+/**
+ * Which columns are calendar days rather than instants.
+ *
+ * A DATE that misses this list is serialized with `toISOString()`, and pg hands DATE back as
+ * *local* midnight — so east of Greenwich it lands in the previous evening and the whole column
+ * shifts a day. `data_facturare` did exactly that on a customer's annex before the `data_`
+ * prefix was recognised here, so the Romanian naming convention is matched by pattern rather
+ * than remembered column by column.
+ */
 function isDateOnlyField(key) {
-  return /(_date|_expiry)$/.test(key) || key === 'hire_date' || key === 'birth_date'
-    || key === 'issue_date' || key === 'due_date' || key === 'payment_date'
-    || key === 'data_efectuare_cursa';
+  return /(_date|_expiry)$/.test(key) || /^data_/.test(key)
+    || key === 'hire_date' || key === 'birth_date'
+    || key === 'issue_date' || key === 'due_date' || key === 'payment_date';
 }
 
 function formatDateOnly(val) {
@@ -229,6 +316,8 @@ export function serializeRow(row) {
          key.includes('latitude') || key.includes('longitude') || key.includes('speed') ||
          key.includes('heading') || key.includes('savings') || key.includes('volume') ||
          key.includes('confidence') || key.startsWith('max_vehicle_') ||
+         key.includes('_rate') || key.includes('mma') || key.includes('_km') ||
+         key === 'quantity' || key === 'unit_amount' || key === 'tpo_total' ||
          key === 'valoare_tpo' || key === 'cantitate_marfa' || key === 'numar_curse' ||
          key === 'taxe_suplimentare' || key === 'km_parcursi' || key === 'tarif_km')) {
       out[key] = Number(val);

@@ -161,11 +161,19 @@ function normalizeDocNo(value) {
   return null;
 }
 
+/**
+ * Normalises a TPO number to `TPO-<digits>`.
+ *
+ * The whole identifier is kept, including any sequence that follows a year. Matching only the
+ * first run of digits turned every `TPO 2026-0311` of a year into the same `TPO-2026`: on a
+ * report that collapses distinct trips onto one identifier and makes the annex's key column
+ * useless, and it fires the duplicate-TPO warning on a perfectly clean selection.
+ */
 function normalizeTpo(value, minDigits = 1) {
   if (!value) return null;
   const n = Number(minDigits) >= 1 ? Number(minDigits) : 1;
-  const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-\\.]*(\\d{${n},})`));
-  return m ? `TPO-${m[1]}` : null;
+  const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-.]*(\\d{${n},}(?:[-/.]\\d+)*)`));
+  return m ? `TPO-${m[1].replace(/[/.]/g, '-')}` : null;
 }
 
 function findTpoNumber(blob) {

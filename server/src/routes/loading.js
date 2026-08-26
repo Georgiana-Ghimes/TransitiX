@@ -3,8 +3,12 @@ import { authRequired, officeRequired } from '../middleware/auth.js';
 import { pool, query } from '../db.js';
 import { serializeRow } from '../entities.js';
 import {
+  DEFAULT_SEGMENTS,
   itemsFromStops,
+  lateralBalance,
   packItems,
+  resolveCargoBay,
+  segmentFill,
   sideViewRects,
 } from '../lib/loading/packer.js';
 
@@ -76,6 +80,7 @@ router.post('/routes/:routeId/pack', async (req, res) => {
       });
     }
 
+    const segmentCount = Math.max(1, Math.min(12, Number(req.body?.segments) || DEFAULT_SEGMENTS));
     const packed = packItems(items, route, { strategy });
     res.json({
       route: serializeRow({
@@ -91,10 +96,58 @@ router.post('/routes/:routeId/pack', async (req, res) => {
       placements: packed.placements,
       unplaced: packed.unplaced,
       side_view: sideViewRects(packed.placements),
+      segments: segmentFill(packed.placements, packed.bay, { count: segmentCount }),
+      balance: lateralBalance(packed.placements, packed.bay),
       stops: stops.map(serializeRow),
     });
   } catch (err) {
     sendError(res, err, 'Planul de încărcare a eșuat');
+  }
+});
+
+/**
+ * Fleet list for the load planner, searchable by plate, brand or model.
+ * Each vehicle carries its resolved cargo bay so the screen can draw the profile before any
+ * route is chosen — and can say plainly when the dimensions are assumed rather than measured.
+ */
+router.get('/vehicles', async (req, res) => {
+  try {
+    const search = String(req.query.q || '').trim().toLowerCase();
+    const result = await query(
+      `SELECT * FROM vehicles WHERE company_id = $1 AND is_active = TRUE ORDER BY plate`,
+      [req.user.company_id]
+    );
+    const vehicles = result.rows
+      .map(serializeRow)
+      .filter((v) => {
+        if (!search) return true;
+        return [v.plate, v.brand, v.model, v.chassis_number]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(search));
+      })
+      .map((v) => ({ ...v, bay: resolveCargoBay(v) }));
+    res.json({ vehicles, count: vehicles.length });
+  } catch (err) {
+    sendError(res, err, 'Nu am putut încărca flota');
+  }
+});
+
+/** Routes that a given vehicle is assigned to, newest first — what it has to load. */
+router.get('/vehicles/:id/routes', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT r.id, r.code, r.route_date, r.status,
+              r.planned_distance_km, r.planned_duration_min,
+              (SELECT count(*) FROM route_stops s WHERE s.route_id = r.id) AS stop_count
+       FROM routes r
+       WHERE r.company_id = $1 AND r.vehicle_id = $2
+       ORDER BY r.route_date DESC, r.code
+       LIMIT 60`,
+      [req.user.company_id, req.params.id]
+    );
+    res.json({ routes: result.rows.map(serializeRow) });
+  } catch (err) {
+    sendError(res, err, 'Nu am putut încărca rutele vehiculului');
   }
 });
 

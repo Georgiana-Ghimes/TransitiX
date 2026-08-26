@@ -92,6 +92,34 @@ async function request(path, { method = 'GET', body, headers = {}, formData } = 
   return data;
 }
 
+/**
+ * Fetches a file rather than JSON, keeping the filename the server chose.
+ *
+ * `request` parses every response as text, which would corrupt a workbook, so binary downloads
+ * go through their own path — including the 401 retry, so a long-open report screen does not
+ * lose an export to an expired token.
+ */
+async function downloadFile(url, opts, retried, retry, fallbackName) {
+  const token = getToken();
+  const res = await fetch(url, {
+    ...opts,
+    headers: { ...(opts.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (res.status === 401 && !retried) {
+    await refreshAccessToken();
+    return retry();
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const err = new Error(data?.message || res.statusText || 'Descărcarea a eșuat');
+    err.status = res.status;
+    throw err;
+  }
+  const blob = await res.blob();
+  const match = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/);
+  return { blob, filename: match?.[1] || fallbackName };
+}
+
 function createEntityApi(name) {
   return {
     list(order, limit) {
@@ -133,6 +161,8 @@ function createEntityApi(name) {
 
 const entityNames = [
   'Vehicle', 'Driver', 'Client', 'Location', 'Order', 'Route', 'RouteStop',
+  'Contract', 'ContractTariff', 'TaxZone', 'TaxZoneRate', 'SurchargeType', 'SurchargeRate',
+  'TripLeg', 'TripCharge', 'ObservationCode', 'DocumentBatch', 'DocumentEvent',
   'Trip', 'TripDocument', 'ClientConfirmation',
   'Invoice', 'WarehouseProduct', 'Territory', 'GPSLog', 'ChatMessage', 'DriverNotification',
   'OptimizationSuggestion', 'ReportTemplate', 'AvizDocument',
@@ -249,10 +279,20 @@ export const api = {
   },
   loading: {
     /** Pack a route into its vehicle bay (lifo | warehouse). */
-    packRoute(routeId, { strategy = 'lifo' } = {}) {
+    /** Fleet for the load planner; `q` matches plate, brand, model or chassis. */
+    vehicles(q) {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      const qs = params.toString();
+      return request(`/loading/vehicles${qs ? `?${qs}` : ''}`);
+    },
+    vehicleRoutes(vehicleId) {
+      return request(`/loading/vehicles/${encodeURIComponent(vehicleId)}/routes`);
+    },
+    packRoute(routeId, { strategy = 'lifo', segments } = {}) {
       return request(`/loading/routes/${encodeURIComponent(routeId)}/pack`, {
         method: 'POST',
-        body: { strategy },
+        body: { strategy, segments },
       });
     },
   },
@@ -288,7 +328,68 @@ export const api = {
       return request(`/analytics/cockpit${q ? `?${q}` : ''}`);
     },
   },
+  /** The people who use the system. Admin only. */
+  users: {
+    list() {
+      return request('/users');
+    },
+    /** Creates the account and sends a link; nobody ever types somebody else's password. */
+    invite(body) {
+      return request('/users/invite', {
+        method: 'POST',
+        body: { ...body, origin: window.location.origin },
+      });
+    },
+    resendInvite(id) {
+      return request(`/users/${encodeURIComponent(id)}/resend-invite`, {
+        method: 'POST',
+        body: { origin: window.location.origin },
+      });
+    },
+    setRole(id, role) {
+      return request(`/users/${encodeURIComponent(id)}/role`, {
+        method: 'PUT',
+        body: { role },
+      });
+    },
+    setActive(id, is_active) {
+      return request(`/users/${encodeURIComponent(id)}/active`, {
+        method: 'PUT',
+        body: { is_active },
+      });
+    },
+    linkDriver(id, driver_id) {
+      return request(`/users/${encodeURIComponent(id)}/driver`, {
+        method: 'PUT',
+        body: { driver_id },
+      });
+    },
+  },
+
+  /** Who changed what. */
+  audit: {
+    list(params = {}) {
+      const qs = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (value != null && value !== '') qs.set(key, value);
+      }
+      const q = qs.toString();
+      return request(`/audit${q ? `?${q}` : ''}`);
+    },
+    /** Everything that happened to one record. */
+    trail(entity, id) {
+      return request(`/audit/trail/${encodeURIComponent(entity)}/${encodeURIComponent(id)}`);
+    },
+    meta() {
+      return request('/audit/meta');
+    },
+  },
+
   invoices: {
+    /** What an invoice is made of — the charges the pricing engine produced. */
+    lines(id) {
+      return request(`/invoices/${encodeURIComponent(id)}/lines`);
+    },
     /** Local UBL XML — never claims SPV send. */
     async downloadUbl(id, retried = false) {
       const token = getToken();
@@ -310,6 +411,55 @@ export const api = {
       const disp = res.headers.get('Content-Disposition') || '';
       const match = disp.match(/filename="([^"]+)"/);
       return { blob, filename: match?.[1] || 'efactura.xml' };
+    },
+  },
+  /** Digital consignment note (written CMR). */
+  cmr: {
+    get(tripId) {
+      return request(`/cmr/trips/${encodeURIComponent(tripId)}`);
+    },
+    save(tripId, data) {
+      return request(`/cmr/trips/${encodeURIComponent(tripId)}`, {
+        method: 'PUT',
+        body: { data },
+      });
+    },
+    sign(tripId, { stage, data, signatures }) {
+      return request(`/cmr/trips/${encodeURIComponent(tripId)}/sign`, {
+        method: 'POST',
+        body: { stage, data, signatures },
+      });
+    },
+  },
+  /**
+   * Photos from the cab → same document_batches queue as office uploads (Faza 3).
+   */
+  driverDocuments: {
+    listForTrip(tripId) {
+      return request(`/driver-documents/trips/${encodeURIComponent(tripId)}`);
+    },
+    async upload({ tripId, files, document_type = 'aviz' }, retried = false) {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append('trip_id', tripId);
+      fd.append('document_type', document_type);
+      for (const file of files) fd.append('files', file);
+      const res = await fetch('/api/driver-documents', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.driverDocuments.upload({ tripId, files, document_type }, true);
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data?.message || res.statusText || 'Încărcare eșuată');
+        err.status = res.status;
+        throw err;
+      }
+      return data;
     },
   },
   tachograph: {
@@ -453,6 +603,62 @@ export const api = {
       return request(`/routes/${encodeURIComponent(routeId)}/recompute`, { method: 'POST' });
     },
   },
+  documents: {
+    profiles(type) {
+      const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+      return request(`/documents/profiles${qs}`);
+    },
+    /** Multi-file upload — the whole batch goes up in one request. */
+    async uploadBatch(files, { documentType = 'aviz', label } = {}) {
+      const form = new FormData();
+      for (const file of files) form.append('files', file);
+      form.append('document_type', documentType);
+      if (label) form.append('label', label);
+      return request('/documents/batches', { method: 'POST', formData: form });
+    },
+    listBatches() {
+      return request('/documents/batches');
+    },
+    getBatch(id) {
+      return request(`/documents/batches/${encodeURIComponent(id)}`);
+    },
+    extractBatch(id, { force = false, profileId } = {}) {
+      return request(`/documents/batches/${encodeURIComponent(id)}/extract`, {
+        method: 'POST',
+        body: { force, profile_id: profileId },
+      });
+    },
+    correct(documentId, corrections) {
+      return request(`/documents/${encodeURIComponent(documentId)}/corrections`, {
+        method: 'PUT',
+        body: { corrections },
+      });
+    },
+    history(documentId) {
+      return request(`/documents/${encodeURIComponent(documentId)}/history`);
+    },
+    confirmBatch(id, documentIds, { force = false } = {}) {
+      return request(`/documents/batches/${encodeURIComponent(id)}/confirm`, {
+        method: 'POST',
+        body: { document_ids: documentIds, force },
+      });
+    },
+  },
+  tpo: {
+    /** Preview the price for a trip; pass persist to commit legs and charge lines. */
+    calculate(tripId, { persist = false } = {}) {
+      return request(`/tpo/trips/${encodeURIComponent(tripId)}/calculate`, {
+        method: 'POST',
+        body: { persist },
+      });
+    },
+    get(tpoNumber) {
+      return request(`/tpo/${encodeURIComponent(tpoNumber)}`);
+    },
+    recalculate(tpoNumber) {
+      return request(`/tpo/${encodeURIComponent(tpoNumber)}/recalculate`, { method: 'POST' });
+    },
+  },
   notifications: {
     inbox() {
       return request('/notifications/inbox');
@@ -496,9 +702,21 @@ export const api = {
     async me() {
       return request('/auth/me');
     },
+    /** The sessions signed in right now, so a lost phone can be cut off. */
+    sessions() {
+      return request('/auth/sessions');
+    },
+    revokeAllSessions() {
+      return request('/auth/sessions/revoke-all', { method: 'POST' });
+    },
     async logout(redirectTo) {
       try {
-        await request('/auth/logout', { method: 'POST' });
+        // The refresh token goes with the request: the server needs something to revoke, and
+        // without it logging out is only this browser forgetting its copy.
+        await request('/auth/logout', {
+          method: 'POST',
+          body: { refresh_token: localStorage.getItem(REFRESH_KEY) || undefined },
+        });
       } catch {
         // ignore
       }
@@ -552,13 +770,110 @@ export const api = {
       },
     },
   },
+  /** Contracts, tariffs, zone taxes, surcharges, observation codes and the depot. */
+  commercial: {
+    overview() {
+      return request('/commercial/overview');
+    },
+    tariffHistory(contractId, vehicleClass) {
+      return request(`/commercial/contracts/${encodeURIComponent(contractId)}/history`
+        + `?vehicle_class=${encodeURIComponent(vehicleClass)}`);
+    },
+    setDepot(locationId) {
+      return request('/commercial/depot', { method: 'PUT', body: { location_id: locationId } });
+    },
+    async importCodes(file, { dryRun = false } = {}) {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append('file', file);
+      if (dryRun) fd.append('dry_run', 'true');
+      const res = await fetch('/api/commercial/observation-codes/import', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data?.message || res.statusText || 'Import eșuat');
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    },
+  },
+  validation: {
+    /** What each rule looks for, so the screen explains itself from one source. */
+    rules() {
+      return request('/validation/rules');
+    },
+    findings({ window_days, include_dismissed } = {}) {
+      const params = new URLSearchParams();
+      if (window_days) params.set('window_days', String(window_days));
+      if (include_dismissed) params.set('include_dismissed', 'true');
+      const qs = params.toString();
+      return request(`/validation/findings${qs ? `?${qs}` : ''}`);
+    },
+    dismiss(key) {
+      return request('/validation/findings/dismiss', { method: 'POST', body: { key } });
+    },
+  },
+  reports: {
+    /** The fields a template may draw on, grouped for the column picker. */
+    sources() {
+      return request('/reports/sources');
+    },
+    presets() {
+      return request('/reports/presets');
+    },
+    createFromPreset({ preset_id, name }) {
+      return request('/reports/templates/from-preset', { method: 'POST', body: { preset_id, name } });
+    },
+    /** Rows, totals and warnings, before anything is written to a file. */
+    preview({ template_id, filters }) {
+      return request('/reports/preview', { method: 'POST', body: { template_id, filters } });
+    },
+    /** Stamps one billing date across a whole selection. */
+    setInvoiceDate({ filters, data_facturare }) {
+      return request('/reports/invoice-date', {
+        method: 'POST',
+        body: { filters, data_facturare },
+      });
+    },
+    exports({ from, to, template_id, limit, offset } = {}) {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      if (template_id) params.set('template_id', template_id);
+      if (limit) params.set('limit', String(limit));
+      if (offset) params.set('offset', String(offset));
+      const qs = params.toString();
+      return request(`/reports/exports${qs ? `?${qs}` : ''}`);
+    },
+    exportDetail(id) {
+      return request(`/reports/exports/${encodeURIComponent(id)}`);
+    },
+    async export({ template_id, filters, note, totals }, retried = false) {
+      return downloadFile('/api/reports/export', {
+        method: 'POST',
+        body: JSON.stringify({ template_id, filters, note, totals }),
+        headers: { 'Content-Type': 'application/json' },
+      }, retried, () => api.reports.export({ template_id, filters, note, totals }, true), 'raport.xlsx');
+    },
+    /** Re-downloads the file that was actually sent, rendered from the stored snapshot. */
+    async redownload(id, retried = false) {
+      return downloadFile(`/api/reports/exports/${encodeURIComponent(id)}/file`, { method: 'GET' },
+        retried, () => api.reports.redownload(id, true), 'raport.xlsx');
+    },
+  },
   avize: {
-    list({ from, to, status, q } = {}) {
+    list({ from, to, status, q, uploaded_from } = {}) {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
       if (status) params.set('status', status);
       if (q) params.set('q', q);
+      if (uploaded_from) params.set('uploaded_from', uploaded_from);
       const qs = params.toString();
       return request(`/avize${qs ? `?${qs}` : ''}`);
     },

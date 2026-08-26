@@ -295,6 +295,17 @@ describe('repairAvizFromStored', () => {
     expect(repaired.numar_tpo).toBe('TPO-0024665');
   });
 
+  it('keeps the whole TPO number when it carries a year and a sequence', () => {
+    // `TPO 2026-0311` used to normalise to `TPO-2026`, so every trip of that year shared one
+    // number: a report showed the same identifier on every line and flagged them as duplicates.
+    expect(repairAvizFromStored({ numar_tpo: 'TPO 2026-0311' }).numar_tpo).toBe('TPO-2026-0311');
+    expect(repairAvizFromStored({ numar_tpo: 'TPO 2026-0312' }).numar_tpo).toBe('TPO-2026-0312');
+  });
+
+  it('still normalises the plain Baumit form', () => {
+    expect(repairAvizFromStored({ numar_tpo: 'TPO 0025803' }).numar_tpo).toBe('TPO-0025803');
+  });
+
   it('keeps an office-edited date instead of the PDF date', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-0025813',

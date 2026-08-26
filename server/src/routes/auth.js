@@ -7,6 +7,18 @@ import { isPgUniqueViolation } from '../lib/concurrency.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
 import { sendEmail, emailConfigured } from '../lib/email.js';
 import { rateLimit } from '../lib/rateLimit.js';
+import { ipFrom, recordAudit } from '../lib/audit/events.js';
+import { pool } from '../db.js';
+import {
+  durationMs,
+  listSessions,
+  newSessionId,
+  recordSession,
+  revokeAllForUser,
+  revokeSession,
+  sessionUsable,
+  touchSession,
+} from '../lib/sessions.js';
 
 const router = Router();
 const authAttemptLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
@@ -24,6 +36,47 @@ function publicUser(row) {
   };
 }
 
+
+/** Mints a tracked session and returns the pair the client stores. */
+async function issueTokens(user, req) {
+  const jti = newSessionId();
+  await recordSession({
+    jti,
+    userId: user.id,
+    companyId: user.company_id,
+    userAgent: req.headers['user-agent'],
+    ttlMs: durationMs(process.env.JWT_REFRESH_EXPIRES_IN, 7 * 24 * 60 * 60 * 1000),
+  });
+  return { access_token: signAccessToken(user), refresh_token: signRefreshToken(user, jti) };
+}
+
+/**
+ * Security events, recorded without ever failing the request that produced them.
+ *
+ * A sign-in that returns 500 because logging it did not work is a worse outcome than a missing
+ * line in the trail — so this swallows its own errors and says so in the log instead.
+ */
+async function auditSecurity(req, { user, action, detail = null }) {
+  if (!user?.company_id) return;
+  try {
+    await recordAudit(pool, {
+      company_id: user.company_id,
+      user_id: user.id ?? null,
+      user_name: user.name || null,
+      user_email: user.email || null,
+      user_role: user.role || null,
+      action,
+      entity: 'Session',
+      entity_id: user.id ?? null,
+      label: user.email || user.name || null,
+      detail,
+      ip: ipFrom(req),
+    });
+  } catch (err) {
+    console.error('[audit] security', action, err.message);
+  }
+}
+
 router.post('/login', authAttemptLimit, async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -36,12 +89,16 @@ router.post('/login', authAttemptLimit, async (req, res) => {
     );
     const user = result.rows[0];
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      // Only a known account produces an entry: an unknown email belongs to no company, and the
+      // table is scoped per company. Repeated failures on a real account are the signal worth
+      // having anyway.
+      await auditSecurity(req, { user, action: 'login_failed' });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     await query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
-    const access_token = signAccessToken(user);
-    const refresh_token = signRefreshToken(user);
-    res.json({ access_token, refresh_token, user: publicUser(user) });
+    await auditSecurity(req, { user, action: 'login' });
+    const tokens = await issueTokens(user, req);
+    res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Login failed' });
@@ -77,9 +134,8 @@ router.post('/register', authAttemptLimit, async (req, res) => {
       );
       return userResult.rows[0];
     });
-    const access_token = signAccessToken(user);
-    const refresh_token = signRefreshToken(user);
-    res.status(201).json({ access_token, refresh_token, user: publicUser(user) });
+    const tokens = await issueTokens(user, req);
+    res.status(201).json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Email already registered' });
@@ -122,19 +178,75 @@ router.post('/refresh', async (req, res) => {
     if (payload.company_id && payload.company_id !== user.company_id) {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
-    res.json({
-      access_token: signAccessToken(user),
-      refresh_token: signRefreshToken(user),
-      user: publicUser(user),
-    });
+
+    const session = await sessionUsable(payload.jti);
+    if (!session.ok) {
+      return res.status(401).json({ message: `Sesiune încheiată (${session.reason})` });
+    }
+
+    // Rotate: the new token gets its own row and the old one is retired, so a refresh token
+    // that leaks is usable at most once before the real client's next refresh invalidates it.
+    const tokens = await issueTokens(user, req);
+    if (payload.jti) {
+      await touchSession(payload.jti);
+      await revokeSession(payload.jti);
+    }
+    res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Refresh failed' });
   }
 });
 
-router.post('/logout', (_req, res) => {
-  res.json({ ok: true });
+/**
+ * Ends the session the caller presents.
+ *
+ * Deliberately tolerant: a client logging out with an already-expired token still gets `ok`,
+ * because the outcome it wants — this session no longer works — is true either way.
+ */
+router.post('/logout', async (req, res) => {
+  try {
+    const token = String(req.body?.refresh_token || '').trim();
+    if (token) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        if (payload?.jti) await revokeSession(payload.jti);
+        // Logout carries no authenticated user; the verified payload is the only identity here.
+        await auditSecurity(req, {
+          user: { id: payload?.sub, company_id: payload?.company_id, email: payload?.email },
+          action: 'logout',
+        });
+      } catch {
+        // An expired or malformed token is already unusable; nothing to revoke.
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.json({ ok: true });
+  }
+});
+
+/** The sessions signed in right now — what a lost phone needs in order to be cut off. */
+router.get('/sessions', authRequired, async (req, res) => {
+  try {
+    res.json({ sessions: await listSessions(req.user.id) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Sesiunile nu au putut fi citite' });
+  }
+});
+
+/** Signs out everywhere. The caller's own session goes too — that is the point. */
+router.post('/sessions/revoke-all', authRequired, async (req, res) => {
+  try {
+    const revoked = await revokeAllForUser(req.user.id);
+    await auditSecurity(req, { user: req.user, action: 'sessions_revoked', detail: { revoked } });
+    res.json({ revoked });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Sesiunile nu au putut fi încheiate' });
+  }
 });
 
 router.post('/reset-password-request', async (req, res) => {

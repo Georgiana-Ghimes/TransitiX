@@ -15,7 +15,9 @@ import {
   repairAvizFromStored,
   stubAvizFields,
 } from '../lib/avizOcr.js';
-import { buildAnnexWorkbook } from '../lib/avizExport.js';
+import { renderReportWorkbook } from '../lib/avizExport.js';
+import { buildReport } from '../lib/reporting/build.js';
+import { recordExport } from '../lib/reporting/exportLog.js';
 import {
   isPgUniqueViolation,
   mergeReextractRow,
@@ -26,7 +28,6 @@ import { resolveUploadPath } from '../lib/cmrOcr.js';
 import { sendEmail } from '../lib/email.js';
 import { zipStore } from '../lib/zipStore.js';
 import {
-  annexDraftAmount,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
@@ -39,6 +40,12 @@ import {
 } from '../lib/avizQuery.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { allocateInvoiceNumber } from '../lib/invoiceNumber.js';
+import {
+  buildInvoiceDraft,
+  describeDraft,
+  headerTripId,
+  vatRateFor,
+} from '../lib/pricing/invoiceDraft.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -136,12 +143,25 @@ function decorateAviz(row) {
   };
 }
 
-async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename }) {
-  await query(
-    `INSERT INTO aviz_export_log (company_id, user_id, kind, template_id, aviz_ids, filename)
-     VALUES ($1, $2, $3, $4, $5::uuid[], $6)`,
-    [companyId, userId || null, kind || 'xlsx', templateId || null, avizIds || [], filename || null]
-  );
+/**
+ * Records an export through the shared recorder, so history from this screen is as complete —
+ * and as re-downloadable — as history from `/reports`. Before this the two paths wrote different
+ * amounts of detail, and only one of them could reproduce its own file.
+ */
+async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename, built }) {
+  await recordExport({
+    companyId,
+    userId,
+    kind: kind || 'xlsx',
+    templateId: templateId || null,
+    templateName: built?.template?.name ?? null,
+    documents: avizIds || [],
+    filename: filename || null,
+    columns: built?.columns ?? [],
+    rows: built?.report?.rows ?? [],
+    totals: null,
+    warnings: built?.report?.warnings ?? [],
+  });
 }
 
 async function loadAvizeByIds(companyId, avizIds) {
@@ -171,11 +191,19 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     throw err;
   }
   const template = serializeRow(tmpl.rows[0]);
-  const workbook = await buildAnnexWorkbook(template, avize);
+  const columns = normalizeTemplateColumns(template.columns);
+  const report = buildReport({ template, documents: avize });
+  // The annex keeps its exact agreed shape here — no totals row on the legacy path.
+  const workbook = renderReportWorkbook({
+    name: template.name || 'Anexa',
+    columns,
+    rows: report.rows,
+    totals: null,
+  });
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   const stamp = new Date().toISOString().slice(0, 10);
-  const safeName = String(tmpl.rows[0].name || 'Anexa').replace(/[^\w\-]+/g, '_').slice(0, 40);
-  return { buffer, filename: `${safeName}-${stamp}.xlsx`, template, avize };
+  const safeName = String(tmpl.rows[0].name || 'Anexa').replace(/[^\w-]+/g, '_').slice(0, 40);
+  return { buffer, filename: `${safeName}-${stamp}.xlsx`, template, avize, columns, report };
 }
 
 async function ensureObservationCodes(companyId) {
@@ -207,6 +235,7 @@ router.get('/', async (req, res) => {
       to: req.query.to,
       status: req.query.status,
       q: req.query.q,
+      uploadedFrom: req.query.uploaded_from,
     });
     const result = await query(sql, params);
     const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
@@ -493,12 +522,10 @@ router.post('/export', async (req, res) => {
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
-    const { buffer, filename } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const { buffer, filename } = built;
     await logAvizExport(req.user.company_id, req.user.id, {
-      kind: 'xlsx',
-      templateId,
-      avizIds,
-      filename,
+      kind: 'xlsx', templateId, avizIds, filename, built,
     });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -581,7 +608,8 @@ router.post('/email', async (req, res) => {
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
-    const { buffer, filename } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const { buffer, filename } = built;
     const sent = await sendEmail({
       to,
       subject: `Anexa Factura ${filename}`,
@@ -590,9 +618,7 @@ router.post('/email', async (req, res) => {
     });
     await logAvizExport(req.user.company_id, req.user.id, {
       kind: sent.stub ? 'email-stub' : 'email',
-      templateId,
-      avizIds,
-      filename,
+      templateId, avizIds, filename, built,
     });
     res.json({
       ...sent,
@@ -613,7 +639,8 @@ router.post('/zip', async (req, res) => {
     if (!templateId) return res.status(400).json({ message: 'template_id required' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
 
-    const { buffer, filename, avize } = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const { buffer, filename, avize } = built;
     const files = [{ name: filename, data: buffer }];
     const used = new Set([filename]);
     let missing = 0;
@@ -635,10 +662,7 @@ router.post('/zip', async (req, res) => {
     const zip = zipStore(files);
     const zipName = filename.replace(/\.xlsx$/i, '.zip');
     await logAvizExport(req.user.company_id, req.user.id, {
-      kind: 'zip',
-      templateId,
-      avizIds,
-      filename: zipName,
+      kind: 'zip', templateId, avizIds, filename: zipName, built,
     });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
@@ -683,62 +707,130 @@ router.get('/trip-suggestions', async (req, res) => {
   }
 });
 
+/**
+ * A draft invoice built from what the pricing engine computed.
+ *
+ * The amounts are the trip's `trip_charges` — the same lines the TPO is made of — not a figure
+ * re-derived here. There used to be two money paths: the engine decomposed a trip into charges
+ * while this endpoint summed `aviz_documents.valoare_tpo`, a column an operator types into. They
+ * could disagree, and nothing compared them, so an invoice could go out on a number nothing had
+ * recalculated.
+ *
+ * A trip with no charges is reported, never substituted. An invoice built on a figure of unknown
+ * origin is worse than one that refuses to be built.
+ */
 router.post('/draft-invoice', async (req, res) => {
   try {
     const avizIds = capAvizIds(req.body?.aviz_ids);
-    const rule = req.body?.amount_rule === 'km_tarif' ? 'km_tarif' : 'tpo';
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+
     const avize = await loadAvizeByIds(req.user.company_id, avizIds);
     const confirmed = pickConfirmedAvize(avize);
     if (confirmed.length === 0) {
       return res.status(400).json({ message: 'Selectează avize confirmate pentru ciornă' });
     }
-    const subtotal = confirmed.reduce((sum, row) => sum + annexDraftAmount(row, rule), 0);
-    const vatRate = 19;
-    const vatAmount = Math.round(subtotal * vatRate) / 100;
-    const total = Math.round((subtotal + vatAmount) * 100) / 100;
-    const tpos = confirmed.map((row) => row.numar_tpo).filter(Boolean).join(', ');
-    const tripId = confirmed.find((row) => row.trip_id)?.trip_id || null;
-    let clientName = String(req.body?.client_name || '').trim();
-    if (!clientName && tripId) {
-      const trip = await query(
-        `SELECT consignee_name FROM trips WHERE id = $1 AND company_id = $2`,
-        [tripId, req.user.company_id]
-      );
-      clientName = String(trip.rows[0]?.consignee_name || '').trim();
+
+    const tripIds = [...new Set(confirmed.map((row) => row.trip_id).filter(Boolean))];
+    if (tripIds.length === 0) {
+      return res.status(422).json({
+        message: 'Niciun aviz din selecție nu e legat de o cursă, deci nu există TPO de facturat. '
+          + 'Leagă avizele de curse întâi.',
+      });
     }
-    if (!clientName) clientName = 'Client avize';
+
+    const [tripRows, chargeRows, companyRow] = await Promise.all([
+      query(
+        `SELECT id, tpo_number, cmr_number, tpo_total, consignee_name
+         FROM trips WHERE company_id = $1 AND id = ANY($2::uuid[])`,
+        [req.user.company_id, tripIds]
+      ),
+      query(
+        `SELECT * FROM trip_charges WHERE company_id = $1 AND trip_id = ANY($2::uuid[])
+         ORDER BY trip_id, created_at`,
+        [req.user.company_id, tripIds]
+      ),
+      query('SELECT name, vat_regime FROM companies WHERE id = $1', [req.user.company_id]),
+    ]);
+
+    const chargesByTrip = new Map();
+    for (const charge of chargeRows.rows) {
+      if (!chargesByTrip.has(charge.trip_id)) chargesByTrip.set(charge.trip_id, []);
+      chargesByTrip.get(charge.trip_id).push(charge);
+    }
+
+    const draft = buildInvoiceDraft(tripRows.rows, chargesByTrip, {
+      vatRate: vatRateFor(companyRow.rows[0]),
+    });
+
+    if (draft.lines.length === 0) {
+      return res.status(422).json({
+        message: 'Niciuna dintre curse nu are TPO calculat, deci nu există ce factura.',
+        warnings: draft.warnings,
+      });
+    }
+
+    let clientName = String(req.body?.client_name || '').trim();
+    if (!clientName) {
+      const named = tripRows.rows.find((t) => t.consignee_name);
+      clientName = String(named?.consignee_name || '').trim() || 'Client avize';
+    }
+
+    const pricedTrips = tripRows.rows.filter((t) => draft.priced_trip_ids.includes(t.id));
+
     const row = await withTransaction(async (client) => {
       const number = await allocateInvoiceNumber(client, req.user.company_id, 'TRX');
-      const result = await client.query(
+      const invoice = (await client.query(
         `INSERT INTO invoices (
            company_id, trip_id, series, number, client_name, issue_date,
            description, subtotal, vat_rate, vat_amount, total_amount,
-           currency, status, efactura_status, notes
+           currency, status, efactura_status, notes, aviz_ids, source
          ) VALUES (
            $1, $2, 'TRX', $3, $4, CURRENT_DATE,
            $5, $6, $7, $8, $9,
-           'RON', 'draft', 'not_sent', $10
+           $10, 'draft', 'not_sent', $11, $12::uuid[], 'trip_charges'
          ) RETURNING *`,
         [
           req.user.company_id,
-          tripId,
+          headerTripId(draft.priced_trip_ids),
           number,
           clientName,
-          `Servicii transport — avize ${tpos || confirmed.length}`,
-          subtotal,
-          vatRate,
-          vatAmount,
-          total,
-          `Avize: ${tpos || confirmed.map((r) => r.id).join(', ')}. Regulă sumă: ${rule}. Fără e-Factura ANAF.`,
+          describeDraft(pricedTrips),
+          draft.subtotal,
+          draft.vat_rate,
+          draft.vat_amount,
+          draft.total_amount,
+          draft.currency,
+          draft.warnings.length
+            ? draft.warnings.map((w) => w.message).join(' ')
+            : null,
+          confirmed.map((r) => r.id),
         ]
-      );
-      return result.rows[0];
+      )).rows[0];
+
+      for (const [index, line] of draft.lines.entries()) {
+        await client.query(
+          `INSERT INTO invoice_lines (company_id, invoice_id, trip_id, charge_id, seq,
+             kind, code, label, reference, quantity, unit_amount, amount, currency)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+          [
+            req.user.company_id, invoice.id, line.trip_id, line.charge_id, index,
+            line.kind, line.code, line.label, line.reference,
+            line.quantity, line.unit_amount, line.amount, line.currency,
+          ]
+        );
+      }
+      return invoice;
     });
-    res.status(201).json(serializeRow(row));
+
+    res.status(201).json({
+      ...serializeRow(row),
+      lines: draft.lines,
+      warnings: draft.warnings,
+    });
   } catch (err) {
     if (isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Numărul de factură există deja în această serie' });
+
     }
     console.error(err);
     res.status(500).json({ message: err.message || 'Draft invoice failed' });

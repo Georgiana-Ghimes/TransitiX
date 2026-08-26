@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  activeGeocodeProvider,
   applyToLocation,
   decideOutcome,
   emptyStats,
+  escalatingSearch,
   fromCacheRow,
   geocodeAddress,
   tally,
@@ -181,5 +183,102 @@ describe('tally', () => {
     tally(stats, { cached: true, outcome: { action: 'review' } });
     tally(stats, { cached: false, outcome: { action: 'reject' }, error: 'boom' });
     expect(stats).toEqual({ total: 3, accepted: 1, review: 1, rejected: 1, cached: 1, errors: 1 });
+  });
+});
+
+describe('escalatingSearch', () => {
+  const strong = { best: { confidence: 0.95, provider: 'photon' }, candidates: [{ confidence: 0.95, provider: 'photon' }] };
+  const weak = { best: { confidence: 0.5, provider: 'photon' }, candidates: [{ confidence: 0.5, provider: 'photon' }] };
+  const paid = { best: { confidence: 0.9, provider: 'tomtom' }, candidates: [{ confidence: 0.9, provider: 'tomtom' }] };
+
+  it('does not pay when the free provider is confident', async () => {
+    let paidCalls = 0;
+    const search = escalatingSearch({
+      primary: async () => strong,
+      fallback: async () => { paidCalls += 1; return paid; },
+    });
+    const out = await search('adresa');
+    expect(paidCalls).toBe(0);
+    expect(out.best.provider).toBe('photon');
+  });
+
+  it('escalates when the free provider is unsure', async () => {
+    const search = escalatingSearch({ primary: async () => weak, fallback: async () => paid });
+    const out = await search('adresa');
+    expect(out.best.provider).toBe('tomtom');
+    expect(out.escalated).toBe(true);
+    expect(out.autoAcceptable).toBe(true);
+  });
+
+  it('keeps suggestions from both providers so the review screen can show alternatives', async () => {
+    const search = escalatingSearch({ primary: async () => weak, fallback: async () => paid });
+    const out = await search('adresa');
+    expect(out.candidates.map((c) => c.provider)).toEqual(['tomtom', 'photon']);
+  });
+
+  it('keeps the free result when the paid provider is worse', async () => {
+    const worse = { best: { confidence: 0.2, provider: 'tomtom' }, candidates: [{ confidence: 0.2, provider: 'tomtom' }] };
+    const search = escalatingSearch({ primary: async () => weak, fallback: async () => worse });
+    expect((await search('adresa')).best.provider).toBe('photon');
+  });
+
+  it('never lets the paid provider break geocoding', async () => {
+    const search = escalatingSearch({
+      primary: async () => weak,
+      fallback: async () => { throw new Error('quota gone'); },
+    });
+    const out = await search('adresa');
+    expect(out.best.provider).toBe('photon');
+    expect(out.escalated).toBeUndefined();
+  });
+
+  it('still escalates when the free provider itself failed', async () => {
+    const search = escalatingSearch({
+      primary: async () => { throw new Error('photon down'); },
+      fallback: async () => paid,
+    });
+    expect((await search('adresa')).best.provider).toBe('tomtom');
+  });
+
+  it('throws only when both providers fail', async () => {
+    const search = escalatingSearch({
+      primary: async () => { throw new Error('photon down'); },
+      fallback: async () => { throw new Error('tomtom down'); },
+    });
+    await expect(search('adresa')).rejects.toThrow(/photon down/);
+  });
+
+  it('reports an escalation so cost can be tracked', async () => {
+    const seen = [];
+    const search = escalatingSearch({
+      primary: async () => weak,
+      fallback: async () => paid,
+      onEscalate: (info) => seen.push(info),
+    });
+    await search('adresa');
+    expect(seen).toEqual([{ address: 'adresa', primaryConfidence: 0.5 }]);
+  });
+});
+
+describe('activeGeocodeProvider', () => {
+  const key = process.env.TOMTOM_API_KEY;
+  const url = process.env.PHOTON_URL;
+  afterEach(() => {
+    if (key === undefined) delete process.env.TOMTOM_API_KEY; else process.env.TOMTOM_API_KEY = key;
+    if (url === undefined) delete process.env.PHOTON_URL; else process.env.PHOTON_URL = url;
+  });
+
+  it('labels the strategy, not the vendor — so turning TomTom on retires the old cache', () => {
+    process.env.PHOTON_URL = 'http://photon:2322';
+    delete process.env.TOMTOM_API_KEY;
+    expect(activeGeocodeProvider()).toBe('photon');
+    process.env.TOMTOM_API_KEY = 'K';
+    expect(activeGeocodeProvider()).toBe('photon+tomtom');
+  });
+
+  it('uses TomTom alone when Photon is not configured', () => {
+    delete process.env.PHOTON_URL;
+    process.env.TOMTOM_API_KEY = 'K';
+    expect(activeGeocodeProvider()).toBe('tomtom');
   });
 });

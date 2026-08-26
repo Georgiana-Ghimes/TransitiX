@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -25,10 +26,17 @@ const GPSMap = lazy(() => import('@/pages/GPSMap'));
 const Locations = lazy(() => import('@/pages/Locations'));
 const Territories = lazy(() => import('@/pages/Territories'));
 const Dispatch = lazy(() => import('@/pages/Dispatch'));
+const LoadPlanner = lazy(() => import('@/pages/LoadPlanner'));
+const LoadPlanner2D = lazy(() => import('@/loadplanner/LoadPlannerPage'));
 const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
 const Finance = lazy(() => import('@/pages/Finance'));
 const Documents = lazy(() => import('@/pages/Documents'));
 const AvizeReports = lazy(() => import('@/pages/AvizeReports'));
+const Reports = lazy(() => import('@/pages/Reports'));
+const Checks = lazy(() => import('@/pages/Checks'));
+const Commercial = lazy(() => import('@/pages/Commercial'));
+const Audit = lazy(() => import('@/pages/Audit'));
+const Users = lazy(() => import('@/pages/Users'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 
@@ -61,8 +69,11 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
+    // Last resort: a crash in the router, the layout or a provider still has to leave something
+    // on screen rather than a blank page.
+    <ErrorBoundary label="app">
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -79,19 +90,27 @@ const AuthenticatedApp = () => {
             <Route path="/locations" element={<Locations />} />
             <Route path="/territories" element={<Territories />} />
             <Route path="/dispatch" element={<Dispatch />} />
+            <Route path="/loading" element={<LoadPlanner />} />
+            <Route path="/load-planner" element={<LoadPlanner2D />} />
             <Route path="/planning" element={<PlanningAI />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/finance" element={<Finance />} />
             <Route path="/warehouse" element={<Warehouse />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/avize" element={<AvizeReports />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/checks" element={<Checks />} />
+            <Route path="/commercial" element={<Commercial />} />
+            <Route path="/audit" element={<Audit />} />
+            <Route path="/users" element={<Users />} />
             <Route path="/driver-app" element={<DriverApp />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </Suspense>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

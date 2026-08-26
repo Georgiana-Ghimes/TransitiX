@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   computeAxleLoads,
   itemsFromStops,
+  lateralBalance,
   orderItems,
   packItems,
   resolveCargoBay,
+  segmentFill,
   sideViewRects,
 } from './packer.js';
 
@@ -94,5 +96,83 @@ describe('sideViewRects', () => {
       { id: 'a', x: 1, z: 0, length_m: 1.2, height_m: 1.5, stop_seq: 2, weight_kg: 100 },
     ]);
     expect(rects[0]).toMatchObject({ x: 1, z: 0, length_m: 1.2, height_m: 1.5 });
+  });
+});
+
+describe('segmentFill', () => {
+  const bay = { length_m: 12, width_m: 2.4, height_m: 2.4 };
+  const box = (x, over = {}) => ({
+    x, y: 0, z: 0, length_m: 1.2, width_m: 2.4, height_m: 2.4, weight_kg: 600, stop_seq: 1, ...over,
+  });
+
+  it('splits the bay into the requested number of compartments', () => {
+    const segments = segmentFill([], bay, { count: 6 });
+    expect(segments).toHaveLength(6);
+    expect(segments.map((s) => s.label)).toEqual(['001', '002', '003', '004', '005', '006']);
+    expect(segments[0]).toMatchObject({ from_m: 0, to_m: 2 });
+  });
+
+  it('reports an empty bay as empty', () => {
+    expect(segmentFill([], bay).every((s) => s.volume_pct === 0)).toBe(true);
+  });
+
+  it('fills only the compartment the load sits in', () => {
+    const segments = segmentFill([box(0)], bay, { count: 6 });
+    expect(segments[0].volume_pct).toBeGreaterThan(0);
+    expect(segments[1].volume_pct).toBe(0);
+  });
+
+  it('splits a pallet straddling two compartments by overlap, not by its origin', () => {
+    // Compartment boundary at 2.0 m; this pallet spans 1.4–2.6 m, so 60/40.
+    const segments = segmentFill([box(1.4)], bay, { count: 6 });
+    expect(segments[0].weight_kg).toBeCloseTo(300, 0);
+    expect(segments[1].weight_kg).toBeCloseTo(300, 0);
+    expect(segments[0].weight_kg + segments[1].weight_kg).toBeCloseTo(600, 0);
+  });
+
+  it('reaches 100% when a compartment is completely full', () => {
+    const full = [box(0, { length_m: 2 })];
+    expect(segmentFill(full, bay, { count: 6 })[0].volume_pct).toBe(100);
+  });
+
+  it('lists which stops are loaded in each compartment', () => {
+    const segments = segmentFill([box(0, { stop_seq: 3 }), box(1.2, { stop_seq: 1 })], bay, { count: 6 });
+    expect(segments[0].stops).toEqual([1, 3]);
+  });
+
+  it('returns nothing for a bay with no dimensions', () => {
+    expect(segmentFill([box(0)], { length_m: 0, width_m: 0, height_m: 0 })).toEqual([]);
+  });
+});
+
+describe('lateralBalance', () => {
+  const bay = { length_m: 12, width_m: 2.4, height_m: 2.4 };
+  const box = (y, width_m, weight_kg = 1000) => ({
+    x: 0, y, z: 0, length_m: 1.2, width_m, height_m: 1.2, weight_kg,
+  });
+
+  it('puts a load against the left wall entirely on the driver side', () => {
+    expect(lateralBalance([box(0, 1.2)], bay)).toMatchObject({ driver_kg: 1000, passenger_kg: 0 });
+  });
+
+  it('puts a load against the right wall entirely on the passenger side', () => {
+    expect(lateralBalance([box(1.2, 1.2)], bay)).toMatchObject({ driver_kg: 0, passenger_kg: 1000 });
+  });
+
+  it('splits a load straddling the centre line proportionally', () => {
+    // 0.6–1.8 m across a 2.4 m bay: half each side of the 1.2 m centre line.
+    expect(lateralBalance([box(0.6, 1.2)], bay)).toMatchObject({ driver_kg: 500, passenger_kg: 500 });
+  });
+
+  it('reports the imbalance as its own number', () => {
+    const result = lateralBalance([box(0, 1.2, 2000), box(1.2, 1.2, 1000)], bay);
+    expect(result.total_kg).toBe(3000);
+    expect(result.imbalance_kg).toBe(1000);
+    expect(result.imbalance_pct).toBeCloseTo(33.3, 1);
+  });
+
+  it('handles an empty load and a bay with no width', () => {
+    expect(lateralBalance([], bay)).toMatchObject({ total_kg: 0, imbalance_pct: 0 });
+    expect(lateralBalance([box(0, 1.2)], { width_m: 0 })).toMatchObject({ total_kg: 0 });
   });
 });

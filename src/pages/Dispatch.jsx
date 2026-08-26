@@ -14,6 +14,7 @@ import RouteExceptionsPanel from '@/components/RouteExceptionsPanel';
 import LoadingSideView from '@/components/LoadingSideView';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { uitBadge } from '@/lib/uit';
 import { buildRouteSheet } from '@/lib/routeSheet';
 import {
   canDropOnRoute,
@@ -511,12 +512,16 @@ export default function Dispatch() {
                     <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${meta.badge}`}>
                       {meta.label}
                     </span>
-                    {route.uit_code && (
+                    {uitBadge(route) && (
                       <span
-                        className="px-2 py-0.5 text-[11px] font-medium rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800"
-                        title={route.uit_status ? `UIT · ${route.uit_status}` : 'UIT'}
+                        className={`px-2 py-0.5 text-[11px] font-medium rounded-full border ${
+                          uitBadge(route).tone === 'warn'
+                            ? 'border-amber-300 bg-amber-50 text-amber-800'
+                            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        }`}
+                        title={uitBadge(route).title}
                       >
-                        UIT {route.uit_code}
+                        {uitBadge(route).label}
                       </span>
                     )}
                     {!route.uit_code && route.uit_status === 'failed' && (

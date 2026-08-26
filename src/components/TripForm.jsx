@@ -16,7 +16,7 @@ export default function TripForm({ trip, onClose, onSave }) {
     loading_date: '', loading_time: '', estimated_delivery_date: '', estimated_delivery_time: '',
     goods_description: '', weight_kg: '', package_count: '', volume_mc: '',
     special_instructions: '', internal_notes: '', distance_km: '', status: 'planificata',
-    uit_code: '', agreed_revenue: '', estimated_cost: '',
+    uit_code: '', agreed_revenue: '', estimated_cost: '', crane_unload: false,
     ...trip,
   });
 
@@ -69,6 +69,7 @@ export default function TripForm({ trip, onClose, onSave }) {
         agreed_revenue: form.agreed_revenue !== '' && form.agreed_revenue != null ? Number(form.agreed_revenue) : null,
         estimated_cost: form.estimated_cost !== '' && form.estimated_cost != null ? Number(form.estimated_cost) : null,
         uit_code: form.uit_code || null,
+        crane_unload: Boolean(form.crane_unload),
       };
       if (data.driver_id && ['planificata', ''].includes(data.status || 'planificata')) {
         data.status = 'alocata';
@@ -224,6 +225,24 @@ export default function TripForm({ trip, onClose, onSave }) {
               </div>
             </div>
             <div><label className={labelCls}>Descriere marfă</label><textarea rows={2} className={inputCls} value={form.goods_description} onChange={e => set('goods_description', e.target.value)} /></div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-emerald-500 pl-2">Taxe pe cursă</h3>
+            <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={Boolean(form.crane_unload)}
+                onChange={(e) => set('crane_unload', e.target.checked)}
+              />
+              <span>
+                <span className="text-sm font-medium text-slate-700">Descărcare cu macara (DM)</span>
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  Adaugă taxa de macara la TPO, în suma configurată pentru clasa vehiculului.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="space-y-3">

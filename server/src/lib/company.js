@@ -6,6 +6,9 @@ const COMPANY_WRITABLE = [
   'logo_url', 'default_currency', 'fiscal_code', 'bank_account', 'settings',
   'default_fuel_price_per_l', 'default_wage_per_hour', 'default_toll_per_km',
   'default_depreciation_per_km', 'default_maintenance_per_km',
+  // Every trip's kilometres are measured garage -> loading -> unloading(s) -> garage, so the
+  // depot is not a cosmetic setting: without it the round trip cannot be measured at all.
+  'default_depot_location_id',
 ];
 
 const DEFAULT_SETTINGS = {

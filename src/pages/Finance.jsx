@@ -20,6 +20,52 @@ function InvoiceStatusBadge({ status }) {
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${s.className}`}>{s.label}</span>;
 }
 
+
+/** The charges behind one invoice, in the order the engine produced them. */
+function InvoiceLines({ lines }) {
+  if (!lines) return <p className="text-xs text-slate-400">Se încarcă…</p>;
+  if (lines.length === 0) {
+    return (
+      <p className="text-xs text-slate-500">
+        Factura nu are linii — a fost creată manual, nu din TPO-urile curselor.
+      </p>
+    );
+  }
+  return (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="text-slate-400">
+          <th className="text-left font-medium py-1">Referință</th>
+          <th className="text-left font-medium py-1">Componentă</th>
+          <th className="text-right font-medium py-1">Cantitate</th>
+          <th className="text-right font-medium py-1">Preț unitar</th>
+          <th className="text-right font-medium py-1">Valoare</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lines.map((line) => (
+          <tr key={line.id} className="border-t border-slate-200/60">
+            <td className="py-1 text-slate-500">{line.reference || '—'}</td>
+            <td className="py-1 text-slate-700">
+              {line.code ? <span className="font-mono text-[10px] text-slate-400 mr-1">{line.code}</span> : null}
+              {line.label}
+            </td>
+            <td className="py-1 text-right tabular-nums text-slate-500">
+              {line.quantity == null ? '—' : Number(line.quantity).toLocaleString('ro-RO')}
+            </td>
+            <td className="py-1 text-right tabular-nums text-slate-500">
+              {line.unit_amount == null ? '—' : Number(line.unit_amount).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+            </td>
+            <td className="py-1 text-right tabular-nums font-medium text-slate-700">
+              {Number(line.amount).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} {line.currency}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export default function Finance() {
   const [invoices, setInvoices] = useState([]);
   const [trips, setTrips] = useState([]);
@@ -90,6 +136,28 @@ export default function Finance() {
       notifySuccess('UBL descărcat', `${filename} — local, nu e trimis la SPV`);
     } catch (e) {
       notifyError('Export UBL eșuat', e);
+    }
+  };
+
+  const [openLines, setOpenLines] = useState(null);
+  const [lines, setLines] = useState({});
+
+  /**
+   * Loads the components behind an invoice, once.
+   *
+   * A customer disputes a component — "why 120 for the crane" — not a total. The invoice is built
+   * from `trip_charges`, so the breakdown exists; without a way to open it, it would exist only
+   * in the database.
+   */
+  const toggleLines = async (id) => {
+    if (openLines === id) { setOpenLines(null); return; }
+    setOpenLines(id);
+    if (lines[id]) return;
+    try {
+      const res = await api.invoices.lines(id);
+      setLines((prev) => ({ ...prev, [id]: res.lines }));
+    } catch {
+      setLines((prev) => ({ ...prev, [id]: [] }));
     }
   };
 
@@ -217,8 +285,18 @@ export default function Finance() {
               </thead>
               <tbody>
                 {filtered.map(inv => (
-                  <tr key={inv.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-medium text-[#0A2B4E]">{inv.series} {inv.number}</td>
+                  <React.Fragment key={inv.id}>
+                  <tr className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <td className="px-4 py-3 font-medium text-[#0A2B4E]">
+                      <button
+                        type="button"
+                        onClick={() => toggleLines(inv.id)}
+                        className="hover:underline"
+                        title="Vezi componentele facturii"
+                      >
+                        {inv.series} {inv.number}
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{inv.client_name}</td>
                     <td className="px-4 py-3 text-slate-500">{inv.issue_date ? new Date(inv.issue_date).toLocaleDateString('ro-RO') : '-'}</td>
                     <td className="px-4 py-3 text-slate-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ro-RO') : '-'}</td>
@@ -238,6 +316,14 @@ export default function Finance() {
                       {inv.efactura_status === 'not_sent' && <button onClick={() => sendToEfactura(inv)} className="text-[#F5A623] hover:underline text-xs">SPV</button>}
                     </td>
                   </tr>
+                  {openLines === inv.id ? (
+                    <tr className="bg-slate-50/60">
+                      <td colSpan={8} className="px-4 py-3">
+                        <InvoiceLines lines={lines[inv.id]} />
+                      </td>
+                    </tr>
+                  ) : null}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

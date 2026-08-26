@@ -82,7 +82,7 @@ export function uniqueZipEntry(name, used) {
   return candidate;
 }
 
-export function buildAvizListQuery({ companyId, from, to, status, q, limit = 200 }) {
+export function buildAvizListQuery({ companyId, from, to, status, q, uploadedFrom, limit = 200 }) {
   const where = ['company_id = $1'];
   const params = [companyId];
   let i = 2;
@@ -99,6 +99,11 @@ export function buildAvizListQuery({ companyId, from, to, status, q, limit = 200
   if (status && ['uploaded', 'extracted', 'confirmed'].includes(status)) {
     where.push(`status = $${i}`);
     params.push(status);
+    i += 1;
+  }
+  if (uploadedFrom && ['office', 'driver'].includes(uploadedFrom)) {
+    where.push(`uploaded_from = $${i}`);
+    params.push(uploadedFrom);
     i += 1;
   }
   const term = String(q || '').trim();

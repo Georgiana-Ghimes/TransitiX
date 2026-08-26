@@ -34,6 +34,15 @@ describe('avizQuery', () => {
     expect(params).not.toContain('%TPO-1%');
   });
 
+  it('filters paperwork from the cab', () => {
+    const { sql, params } = buildAvizListQuery({
+      companyId: 'co',
+      uploadedFrom: 'driver',
+    });
+    expect(sql).toMatch(/uploaded_from =/);
+    expect(params).toContain('driver');
+  });
+
   it('caps id lists at 200 and unique zip names', () => {
     expect(capAvizIds(['a', 'a', 'b'].concat(Array.from({ length: 250 }, (_, i) => String(i))))).toHaveLength(200);
     const used = new Set();

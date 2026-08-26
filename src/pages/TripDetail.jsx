@@ -10,11 +10,13 @@ import {
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { formatRon, tripMargin } from '@/lib/tripOps';
 import { withAccessToken } from '@/lib/uploadUrl';
+import DriverCmrPanel from '@/components/driver/DriverCmrPanel';
 
 export default function TripDetail() {
   const { id } = useParams();
   const [trip, setTrip] = useState(null);
   const [doc, setDoc] = useState(null);
+  const [cmrHasScan, setCmrHasScan] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [ocrProcessing, setOcrProcessing] = useState(false);
@@ -33,6 +35,12 @@ export default function TripDetail() {
       const docs = await api.entities.TripDocument.filter({ trip_id: id });
       if (docs.length > 0) setDoc(docs[0]);
       else setDoc(null);
+      try {
+        const cmr = await api.cmr.get(id);
+        setCmrHasScan(Boolean(cmr.has_scan));
+      } catch {
+        setCmrHasScan(false);
+      }
       const confs = await api.entities.ClientConfirmation.filter({ trip_id: id });
       if (confs.length > 0) {
         const conf = confs[0];
@@ -62,15 +70,18 @@ export default function TripDetail() {
           cmr_number: trip.cmr_number,
           original_image_url: file_url,
           is_confirmed: false,
+          source: 'scan',
         });
       } else {
         existing = await api.entities.TripDocument.update(existing.id, {
           original_image_url: file_url,
           is_confirmed: false,
           ocr_extracted_data: null,
+          source: 'scan',
         });
       }
       setDoc(existing);
+      setCmrHasScan(true);
       await runOCR(existing.id, file_url);
     } catch (err) {
       console.error(err);
@@ -309,11 +320,18 @@ export default function TripDetail() {
         </div>
       )}
 
-      {/* OCR / Document */}
+      {/* Digital CMR (office) — scan path below when paper already exists */}
+      {!cmrHasScan && trip && (
+        <DriverCmrPanel trip={trip} showBatchUpload={false} />
+      )}
+
+      {/* OCR / Document — paper scan */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 p-5 border-b border-slate-100">
           <FileText className="w-5 h-5 text-[#1D4E89]" />
-          <h2 className="font-semibold text-[#0A2B4E]">Document CMR & OCR</h2>
+          <h2 className="font-semibold text-[#0A2B4E]">
+            {cmrHasScan ? 'Document CMR & OCR' : 'Scan CMR (hârtie)'}
+          </h2>
           {doc?.is_confirmed && (
             <span className="ml-auto flex items-center gap-1 text-xs font-medium text-emerald-600">
               <CheckCircle className="w-3.5 h-3.5" /> OCR verificat
@@ -321,6 +339,12 @@ export default function TripDetail() {
           )}
         </div>
         <div className="p-5 space-y-4">
+          {!cmrHasScan && !doc?.original_image_url && (
+            <p className="text-xs text-slate-500 -mt-1 mb-2">
+              Opțional: dacă șoferul are CMR pe hârtie, încarcă scanul aici. Asta dezactivează
+              formularul digital pe cursă.
+            </p>
+          )}
           {!doc?.original_image_url ? (
             <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl py-12 cursor-pointer hover:border-[#1D4E89] hover:bg-slate-50 transition-colors">
               {uploading ? (

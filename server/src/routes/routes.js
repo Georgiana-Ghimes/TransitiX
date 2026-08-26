@@ -724,7 +724,7 @@ router.post('/:id/recompute', async (req, res) => {
  */
 router.post('/:id/launch', async (req, res) => {
   try {
-    const { requestUitForRoute } = await import('../lib/compliance/etransport.js');
+    const { requestUitForRoute, isStubUit } = await import('../lib/compliance/etransport.js');
     const route = await loadRoute(pool, req.user.company_id, req.params.id);
     if (!route) return res.status(404).json({ message: 'Rută inexistentă' });
     if (['anulata', 'finalizata'].includes(route.status)) {
@@ -751,9 +751,11 @@ router.post('/:id/launch', async (req, res) => {
       );
       if (result.ok && result.uit_code) {
         await query(
-          `UPDATE routes SET uit_code = $1, uit_status = $2, uit_error = NULL, updated_at = NOW()
-           WHERE id = $3 AND company_id = $4`,
-          [result.uit_code, result.status || 'obtained', route.id, req.user.company_id]
+          `UPDATE routes SET uit_code = $1, uit_status = $2, uit_source = $3,
+             uit_error = NULL, updated_at = NOW()
+           WHERE id = $4 AND company_id = $5`,
+          [result.uit_code, result.status || 'obtained', result.source || null,
+           route.id, req.user.company_id]
         );
         uit = result;
       } else {
@@ -765,7 +767,13 @@ router.post('/:id/launch', async (req, res) => {
         uit = result;
       }
     } else {
-      uit = { ok: true, status: route.uit_status || 'manual', uit_code: route.uit_code, stub: false };
+      uit = {
+        ok: true,
+        status: route.uit_status || 'manual',
+        uit_code: route.uit_code,
+        source: route.uit_source || 'manual',
+        stub: isStubUit(route.uit_code),
+      };
     }
 
     const fresh = await loadRoute(pool, req.user.company_id, req.params.id);
