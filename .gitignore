@@ -48,3 +48,4 @@ server/node_modules/
 /CLAUDE.md
 /CHANGELOG.md
 /.cursor/
+/.claude/
