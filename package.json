@@ -12,6 +12,7 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
+    "typecheck:loadplanner": "tsc -p ./tsconfig.loadplanner.json",
     "preview": "vite preview",
     "db:migrate": "npm run migrate --prefix server",
     "osrm:prepare": "node scripts/osrm-prepare.js",
@@ -20,7 +21,9 @@
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:api": "vitest run --config server/vitest.config.js",
+    "test:all": "npm test && npm run test:api"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.2",
