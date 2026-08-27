@@ -162,7 +162,7 @@ export function extractQuantity(text) {
   const blob = String(text || '');
   // A labelled quantity is worth more than a loose number followed by a unit.
   const labelled = blob.match(
-    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(saci|buc|bucati|bucăți|paleti|paleți|palet|kg|to?ne?|mc|m3|role|colete)?\b/i
+    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|kg|to?ne?|mc|m3|role|colete)?\b/i
   );
   if (labelled) {
     const value = parseNumber(labelled[1]);
@@ -174,7 +174,7 @@ export function extractQuantity(text) {
   // "Greutate 4200 kg" must not come back as "4200 kg of goods". Reading a weight as a
   // quantity is exactly the confusion the report has to avoid.
   const bare = blob.match(
-    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|buc|bucati|bucăți|paleti|paleți|palet|mc|m3|role|colete)\b/i
+    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|mc|m3|role|colete)\b/i
   );
   if (bare) {
     const value = parseNumber(bare[1]);
@@ -189,15 +189,16 @@ export function extractQuantity(text) {
  */
 export function extractPalletCount(text) {
   const blob = String(text || '');
-  const labelled = blob.match(/(?:paleti|paleți|palet|pal\.)\s*[:\-]?\s*([\d.,]+)/i);
+  // Only same-line whitespace — `\s` would jump to the next article code after "7.00 pal".
+  const labelled = blob.match(/(?:paleti|paleți|palete?)\b[^\S\n]*[:\-]?[^\S\n]*([\d.,]+)/i);
   if (labelled) {
     const value = parseNumber(labelled[1]);
-    if (value != null) return result(Math.round(value), 0.9, labelled[0]);
+    if (value != null && value > 0 && value < 500) return result(Math.round(value), 0.9, labelled[0]);
   }
-  const trailing = blob.match(/\b([\d.,]+)\s*(?:paleti|paleți|palet|pal\.)\b/i);
+  const trailing = blob.match(/\b([\d.,]+)[^\S\n]*(?:paleti|paleți|palete?|pal)\b/i);
   if (trailing) {
     const value = parseNumber(trailing[1]);
-    if (value != null) return result(Math.round(value), 0.85, trailing[0]);
+    if (value != null && value > 0 && value < 500) return result(Math.round(value), 0.85, trailing[0]);
   }
   return NO_MATCH;
 }

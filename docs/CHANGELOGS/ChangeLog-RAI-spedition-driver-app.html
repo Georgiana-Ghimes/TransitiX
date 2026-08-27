@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>Transitix — Changelog RAI-spedition-driver-app</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --ok: #166534;
+      --warn: #92400e;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.6em 0 1em;
+      font-size: 9.5pt;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--soft); color: var(--brand); font-weight: 650; }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .ok { color: var(--ok); font-weight: 650; }
+    .warn { color: var(--warn); font-weight: 650; }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Transitix — Changelog</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong> · base <strong>RAI-spedition</strong> @ v1.12.0<br />
+      Data raport: 28 august 2026 · Stare: lucru local (modificări încă necommise pe branch)
+    </div>
+    <div class="badge-row">
+      <span class="badge">Driver App upload</span>
+      <span class="badge">Avize / Admin queue</span>
+      <span class="badge">PaddleOCR local</span>
+      <span class="badge">Auto-rotație + post-corecție</span>
+    </div>
+  </header>
+
+  <section class="avoid-break">
+    <h2>1. Rezumat executiv</h2>
+    <p>
+      Pe acest branch am legat <strong>aplicația șofer</strong> de coada de birou
+      <strong>Avize / Rapoarte</strong> și am activat un pipeline OCR local (PaddleOCR în Docker),
+      cu quick wins pentru poze strâmbe și coduri mutilate. Fluxul end-to-end a fost
+      verificat manual: upload din driver → extracție → vizibil în admin cu sursă
+      <code>paddle</code> / <code>uploaded_from: driver</code>.
+    </p>
+    <div class="card">
+      <strong>Verdict check (28.08.2026):</strong>
+      <ul>
+        <li><span class="ok">OK</span> — 1286 unit tests trecute (inclusiv OCR: extract, normalize, readText, profiles)</li>
+        <li><span class="ok">OK</span> — ESLint pe fișierele cheie OCR + DriverUpload (exit 0)</li>
+        <li><span class="warn">Notă</span> — testele API <code>driverDocuments.api.test.js</code> necesită <code>TEST_DATABASE_URL</code> cu DB <code>*_test</code> (nu au rulat în acest check)</li>
+        <li><span class="warn">Notă</span> — containerul Paddle depinde de Docker Desktop (la momentul raportului daemon-ul era oprit)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Win-uri (ce merge acum)</h2>
+    <div class="grid2">
+      <div class="card avoid-break">
+        <h3>Driver ↔ Admin</h3>
+        <ul>
+          <li>Tab dedicat <strong>Încarcă documente</strong> (Foto + Galerie)</li>
+          <li>Tip document: aviz / CMR / altul</li>
+          <li>Cursă opțională (biroul poate lega ulterior)</li>
+          <li>Listă „Trimise recent” cu status OCR</li>
+          <li>Documentele apar în <strong>Avize / Rapoarte</strong> cu badge <em>De la șofer</em></li>
+          <li>Extracție asincronă imediat după upload</li>
+        </ul>
+      </div>
+      <div class="card avoid-break">
+        <h3>OCR local</h3>
+        <ul>
+          <li>Sidecar PaddleOCR pe <code>:8100</code> (CPU Docker)</li>
+          <li><code>OCR_PROVIDER=paddle</code> în API</li>
+          <li>Profil Baumit PSL: TPO, PSL, auto, greutăți, cantitate</li>
+          <li>Auto-rotație pagină 0/90/270/180</li>
+          <li>Post-corecție: <code>PS-…→PSL-…</code>, <code>B330SRS→B 330 SRS</code></li>
+          <li>Printat Baumit: extracție utilă (TPO/PSL/auto/greutăți)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card avoid-break">
+      <h3>UX șofer (shell)</h3>
+      <ul>
+        <li>Nav redusă: Upload + Profil (fără Chat / Rută / Curse în acest branch)</li>
+        <li>Layout mobil: safe-area, <code>100dvh</code>, fără padding exterior care „strângea” ecranul</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Specificații tehnice</h2>
+
+    <h3>3.1 Arhitectură OCR</h3>
+    <table>
+      <thead>
+        <tr><th>Componentă</th><th>Detaliu</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Serviciu</td>
+          <td><code>tools/paddle-ocr/</code> — FastAPI + PaddleOCR 2.9 / paddlepaddle CPU, Python 3.10</td>
+        </tr>
+        <tr>
+          <td>Compose</td>
+          <td><code>docker-compose.paddle-ocr.yml</code> → host <code>127.0.0.1:8100</code></td>
+        </tr>
+        <tr>
+          <td>API Transitix</td>
+          <td><code>server/src/lib/ocr/readText.js</code> — PDF text → Paddle → (opțional Vision fallback)</td>
+        </tr>
+        <tr>
+          <td>Extracție câmpuri</td>
+          <td><code>profiles.js</code> + <code>fields.js</code> + <code>extract.js</code>; normalizare <code>normalizeOcrText.js</code></td>
+        </tr>
+        <tr>
+          <td>Env</td>
+          <td><code>OCR_PROVIDER=paddle</code>, <code>PADDLE_OCR_URL=http://127.0.0.1:8100</code> (<code>server/.env.example</code>)</td>
+        </tr>
+        <tr>
+          <td>Auto-rotate</td>
+          <td><code>PADDLE_OCR_AUTO_ROTATE=1</code> (default); early-exit doar dacă există deja TPO/PSL/TRO pe 0°</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Driver documents API</h3>
+    <table>
+      <thead>
+        <tr><th>Endpoint / comportament</th><th>Detaliu</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>POST /api/driver-documents</code></td>
+          <td>multipart <code>files</code>, <code>document_type</code>, <code>trip_id</code> opțional; <code>uploaded_from=driver</code></td>
+        </tr>
+        <tr>
+          <td><code>GET /api/driver-documents</code></td>
+          <td>ultimele upload-uri ale șoferului (listă „Trimise recent”)</td>
+        </tr>
+        <tr>
+          <td>După upload</td>
+          <td><code>extractBatchDocuments(...)</code> fire-and-forget (nu blochează răspunsul 201)</td>
+        </tr>
+        <tr>
+          <td>UI</td>
+          <td><code>DriverUploadDocuments.jsx</code> + <code>DriverApp.jsx</code> (2 tab-uri)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Fișiere principale pe branch</h3>
+    <table>
+      <thead>
+        <tr><th>Zonă</th><th>Fișiere</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Frontend driver</td>
+          <td><code>src/pages/DriverApp.jsx</code>, <code>src/components/driver/DriverUploadDocuments.jsx</code>, <code>DriverProfile.jsx</code>, <code>Layout.jsx</code>, <code>src/api/client.js</code></td>
+        </tr>
+        <tr>
+          <td>Backend</td>
+          <td><code>server/src/routes/driverDocuments.js</code> (+ api test), <code>server/src/lib/ocr/*</code></td>
+        </tr>
+        <tr>
+          <td>Infra OCR</td>
+          <td><code>tools/paddle-ocr/*</code>, <code>docker-compose.paddle-ocr.yml</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Limitări cunoscute (momentan)</h2>
+    <table>
+      <thead>
+        <tr><th>Limitare</th><th>Impact</th><th>Direcție viitoare</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scris de mână românesc (cursiv + diacritice)</td>
+          <td>Proza („Adresă”, „Placuță…”) rămâne slabă; codurile/plăcuța se salvează mai bine după rotație + normalize</td>
+          <td>TrOCR (self-hosted) sau Vision fallback pe poze slabe</td>
+        </tr>
+        <tr>
+          <td>Paddle pe CPU, fără GPU</td>
+          <td>Primul OCR / rotații multiple: mai lent</td>
+          <td>GPU image sau early-exit agresiv (deja pe printat cu PSL/TPO)</td>
+        </tr>
+        <tr>
+          <td>PDF scanat ca PDF (fără text layer)</td>
+          <td>Paddle path din Node sare peste PDF raw; rămâne text layer sau Vision</td>
+          <td>PDF→imagine înainte de Paddle</td>
+        </tr>
+        <tr>
+          <td>Șoferul nu vede încă câmpurile extrase</td>
+          <td>Doar listă fișiere / status; review-ul e în admin</td>
+          <td>Template / review pe telefon (cerință viitoare)</td>
+        </tr>
+        <tr>
+          <td>Listă driver nu re-poll după OCR async</td>
+          <td>Poate rămâne „Încărcat” până la refresh</td>
+          <td>Polling scurt sau websocket</td>
+        </tr>
+        <tr>
+          <td>Docker Desktop obligatoriu pentru OCR local</td>
+          <td>Fără daemon → Paddle down; upload tot reușește, extracție goală/slabă</td>
+          <td>Health-check în UI admin / alertă</td>
+        </tr>
+        <tr>
+          <td>API tests pe DB de test</td>
+          <td>Necesită <code>TEST_DATABASE_URL=…_test</code></td>
+          <td>Documentat în seed / CI</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="avoid-break">
+    <h2>5. Cum se pornește local</h2>
+    <ol>
+      <li>Docker Desktop pornit</li>
+      <li><code>docker compose -f docker-compose.paddle-ocr.yml up -d</code></li>
+      <li>Health: <code>http://127.0.0.1:8100/health</code></li>
+      <li><code>npm run dev</code> (Vite :5173) + <code>npm run dev</code> în <code>server/</code> (:3001)</li>
+      <li>Login șofer: <code>sofer@transitix.ro</code> / <code>sofer123</code> → <code>/driver-app</code></li>
+      <li>Login admin: <code>admin@transitix.ro</code> / <code>admin123</code> → <code>/avize</code> (filtru „De la șofer”)</li>
+    </ol>
+  </section>
+
+  <section class="avoid-break">
+    <h2>6. Verificare calitate (acest check)</h2>
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Rezultat</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Unit tests (vitest, OCR + lib)</td><td class="ok">1286 passed</td></tr>
+        <tr><td>ESLint pe OCR + DriverUpload + DriverApp</td><td class="ok">clean</td></tr>
+        <tr><td>Smoke manual driver → admin + Paddle</td><td class="ok">confirmat în sesiune (printat + quick wins rotație)</td></tr>
+        <tr><td>API suite driver-documents</td><td class="warn">neexecutat (lipsește DB <code>*_test</code>)</td></tr>
+        <tr><td>Paddle container la generarea PDF</td><td class="warn">Docker Desktop oprit — de repornit înainte de demo</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="foot">
+    Transitix TMS · Branch <span class="mono">RAI-spedition-driver-app</span> ·
+    Document generat automat pentru handoff / review · Nu include secrete (.env) ·
+    Conținutul reflectă starea workspace-ului la data raportului (modificări locale pe branch).
+  </footer>
+
+</body>
+</html>

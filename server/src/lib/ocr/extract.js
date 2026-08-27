@@ -9,6 +9,7 @@
  */
 
 import { overallConfidence } from './fields.js';
+import { normalizeOcrText } from './normalizeOcrText.js';
 import { detectProfile, getProfile, normaliseExtracted } from './profiles.js';
 
 /** At or above this, a field is trusted without review. */
@@ -56,7 +57,7 @@ export function extractWithProfile(text, profile) {
  * @param {string} [options.profileId]     forces a profile, overriding detection
  */
 export function extractDocument(text, { documentType, profileId } = {}) {
-  const raw = String(text || '');
+  const raw = normalizeOcrText(text);
 
   const forced = profileId ? getProfile(profileId) : null;
   const detection = detectProfile(raw, { documentType });

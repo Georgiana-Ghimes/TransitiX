@@ -45,6 +45,32 @@ Data: 10.03.2026
 Greutate bruta 9000 kg
 `;
 
+/** Real PaddleOCR output from a photographed Baumit PSL aviz (glued codes, OCR typos). */
+const PADDLE_BAUMIT_PSL = `
+Expeditor
+Site: BOL Bolintin
+Aviz de expeditiePSL-0044362
+Data avizutui de expeditie
+10.08.2026
+Comanda vanzare
+SOR-0046409
+Transportator
+Placuta de inmatriculare B 330 SRS
+Comanda de transport_TPO-0025629
+Nr_Descriere
+MP1 25 40 kg (35/pal)
+GTIN: 5945752000371 / Cod marfa: 38245090
+245.00 sac
+7.00 pal
+11001674
+Servicit Paletizare-Infotiere
+7.00 pce
+Greutate neta: 9,800.00 kg
+Greutate bruta: 9,964.15 kg
+Paletif inctusi In tivrare sunt ambalaje aferente produseior si nu fac oblectut unei operatiuni
+Baumit Romania Com SRL
+`;
+
 // ------------------------------------------------------------------ fields
 
 describe('parseNumber', () => {
@@ -198,6 +224,22 @@ describe('extractDocument', () => {
       net_weight_kg: 8244,
       pallets: 18,
     });
+  });
+
+  it('recovers TPO/PSL from glued PaddleOCR photo text', () => {
+    const result = extractDocument(PADDLE_BAUMIT_PSL, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_baumit_psl');
+    expect(result.values.numar_tpo).toBe('TPO-0025629');
+    expect(result.values.numar_document_marfa).toBe('PSL-0044362');
+    expect(result.values.numar_auto).toBe('B 330 SRS');
+    expect(result.values.data_efectuare_cursa).toBe('2026-08-10');
+    expect(result.values.gross_weight_kg).toBe(9964.15);
+    expect(result.values.net_weight_kg).toBe(9800);
+    expect(result.values.quantity).toBe(245);
+    expect(result.values.pallets).toBe(7);
+    expect(result.values.ruta_transport || '').not.toMatch(/Paletizare/i);
+    expect(String(result.values.tip_marfa || '')).toMatch(/MP[I1]/i);
+    expect(String(result.values.tip_marfa || '')).not.toMatch(/^38245090$/);
   });
 
   it('keeps quantity and its unit apart from the weight', () => {

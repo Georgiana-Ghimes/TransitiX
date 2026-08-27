@@ -30,22 +30,60 @@ function scoreMarkers(text, markers) {
   return hits.length / markers.length;
 }
 
+/**
+ * Paddle (and other photo OCR) often glues codes to the previous word
+ * (`expeditiePSL-0044362`) or uses `_` instead of space (`transport_TPO-…`).
+ * Do not require `\b` before the code — letters/`_` are word chars, so `\b`
+ * misses the glued forms. Requiring digits after the prefix keeps false hits low.
+ */
+const TPO_CODE = /(TPO[\s\-._]*\d{3,}[\d./-]*)/i;
+const PSL_CODE = /(PSL[\s\-._]*\d{3,}[\d./-]*)/i;
+const TRO_CODE = /(TRO[\s\-._]*\d{3,}[\d./-]*)/i;
+
 const tpoField = (patterns) => (text) => matchPatterns(text, patterns, {
-  transform: (raw) => String(raw).toUpperCase().replace(/\s+/g, ''),
+  transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
 });
 
 const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
-  transform: (raw) => String(raw).toUpperCase().replace(/\s+/g, ''),
+  transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
 });
 
-const routeField = (text) => matchPatterns(text, [
-  /(?:ruta|traseu|route)\s*[:\-]?\s*([A-ZĂÂÎȘȚ][^\n;]{3,80})/i,
-  /\b([A-ZĂÂÎȘȚ][a-zăâîșț-]{2,}\s*(?:-|–|→|catre|către)\s*[A-ZĂÂÎȘȚ][a-zăâîșț-]{2,})\b/,
-], { baseConfidence: 0.8 });
+const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf/i;
 
-const goodsField = (text) => matchPatterns(text, [
-  /(?:tip\s*marfa|denumire\s*produs|produs|marfa)\s*[:\-]?\s*([^\n;]{3,60})/i,
-], { baseConfidence: 0.75 });
+const routeField = (text) => {
+  const labelled = matchPatterns(text, [
+    /(?:ruta|traseu|route)\s*[:\-]?\s*([A-ZĂÂÎȘȚ][^\n;]{3,80})/i,
+  ], { baseConfidence: 0.8 });
+  if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
+
+  // Loose "City - City" only when both sides look like places, not goods lines.
+  const loose = matchPatterns(text, [
+    /\b([A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2}\s*(?:-|–|→|catre|către)\s*[A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2})\b/,
+  ], { baseConfidence: 0.65 });
+  if (loose.value && !ROUTE_NOISE.test(loose.value)) return loose;
+  return NO_MATCH;
+};
+
+const goodsField = (text) => {
+  // Do not treat HS / "Cod marfă: 38245090" as the goods description.
+  const labelled = matchPatterns(text, [
+    /(?:tip\s*marf[aă]|denumire\s*produs)\s*[:\-]?\s*([^\n;]{3,60})/i,
+    /(?<!cod\s)(?<!codul\s)\bprodus\b\s*[:\-]?\s*([^\n;]{3,60})/i,
+  ], { baseConfidence: 0.75 });
+  if (labelled.value && !/^\d{6,}$/.test(String(labelled.value).trim())) return labelled;
+
+  // Baumit product lines often start with MPI / MP1 (OCR of MPI).
+  const product = matchPatterns(text, [
+    /\b((?:MPI|MP[Il1])\s*\d+[^\n]{0,50})/i,
+  ], { baseConfidence: 0.7 });
+  if (product.value) {
+    return {
+      ...product,
+      value: String(product.value).replace(/\s+/g, ' ').trim().slice(0, 60),
+    };
+  }
+  return NO_MATCH;
+};
 
 /**
  * The built-in profiles.
@@ -60,10 +98,10 @@ export const OCR_PROFILES = [
     name: 'Aviz Baumit — PSL',
     markers: [/\bpsl\b/, /baumit/, /aviz/],
     fields: {
-      numar_tpo: tpoField([/\b(TPO[\s\-.]*\d[\d./-]*)\b/i, /\b(\d{4,}\/\d{2,4})\b/]),
+      numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
-      numar_document_marfa: docNoField([/\b(PSL[\s\-.]*\d[\d./-]*)\b/i]),
+      numar_document_marfa: docNoField([PSL_CODE]),
       ruta_transport: routeField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
@@ -83,10 +121,10 @@ export const OCR_PROFILES = [
     name: 'Aviz Baumit — TRO',
     markers: [/\btro\b/, /baumit/, /aviz/],
     fields: {
-      numar_tpo: tpoField([/\b(TPO[\s\-.]*\d[\d./-]*)\b/i, /\b(\d{4,}\/\d{2,4})\b/]),
+      numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
-      numar_document_marfa: docNoField([/\b(TRO[\s\-.]*\d[\d./-]*)\b/i]),
+      numar_document_marfa: docNoField([TRO_CODE]),
       ruta_transport: routeField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
@@ -106,10 +144,13 @@ export const OCR_PROFILES = [
     name: 'Aviz generic',
     markers: [/aviz/, /insotire/, /însoțire'/],
     fields: {
-      numar_tpo: tpoField([/\b(TPO[\s\-.]*\d[\d./-]*)\b/i]),
+      numar_tpo: tpoField([TPO_CODE]),
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
-      numar_document_marfa: docNoField([/\b(?:aviz|nr\.?)\s*([A-Z]{0,4}[\s\-.]*\d[\d./-]*)\b/i]),
+      numar_document_marfa: docNoField([
+        /\b(?:aviz|nr\.?)\s*([A-Z]{0,4}[\s\-._]*\d[\d./-]*)\b/i,
+        PSL_CODE,
+      ]),
       ruta_transport: routeField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,

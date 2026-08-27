@@ -1,0 +1,21 @@
+# Local PaddleOCR sidecar for Transitix (CPU).
+# Usage from repo root:
+#   docker compose -f docker-compose.paddle-ocr.yml up -d --build
+# Health: http://127.0.0.1:8100/health
+services:
+  paddle-ocr:
+    build:
+      context: ./tools/paddle-ocr
+    ports:
+      - "8100:8100"
+    environment:
+      PADDLE_OCR_LANG: ${PADDLE_OCR_LANG:-latin}
+      PADDLE_OCR_USE_GPU: "0"
+      PADDLE_OCR_AUTO_ROTATE: ${PADDLE_OCR_AUTO_ROTATE:-1}
+    restart: unless-stopped
+    volumes:
+      # Persist downloaded OCR models between rebuilds
+      - paddle_ocr_models:/root/.paddleocr
+
+volumes:
+  paddle_ocr_models:

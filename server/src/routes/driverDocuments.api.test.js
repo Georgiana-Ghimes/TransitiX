@@ -85,6 +85,18 @@ describe('POST /api/driver-documents', () => {
     expect(events.rows[0].detail.from).toBe('driver');
   });
 
+  it('allows upload without a trip so the office can link later', async () => {
+    const res = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
+      .field('document_type', 'aviz')
+      .attach('files', PDF, { filename: 'fara-cursa.pdf', contentType: 'application/pdf' });
+    expect(res.status).toBe(201);
+    expect(res.body.batch.trip_id).toBeNull();
+    expect(res.body.batch.created_from).toBe('driver');
+    expect(res.body.documents[0]).toMatchObject({
+      uploaded_from: 'driver', trip_id: null, needs_review: true,
+    });
+  });
+
   it('refuses a trip that is not this driver’s', async () => {
     expect((await upload(ctx.otherDriverToken, trip.id, 'strain.pdf')).status).toBe(404);
   });
@@ -116,6 +128,15 @@ describe('POST /api/driver-documents', () => {
       .field('trip_id', trip.id)
       .attach('files', PDF, { filename: 'anonim.pdf', contentType: 'application/pdf' });
     expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /api/driver-documents', () => {
+  it('lists recent uploads by this driver', async () => {
+    await upload(ctx.driverToken, trip.id, 'al-meu.pdf');
+    const res = await api().get('/api/driver-documents').set(auth(ctx.driverToken));
+    expect(res.status).toBe(200);
+    expect(res.body.documents.some((d) => d.original_filename === 'al-meu.pdf')).toBe(true);
   });
 });
 

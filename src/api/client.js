@@ -435,13 +435,16 @@ export const api = {
    * Photos from the cab → same document_batches queue as office uploads (Faza 3).
    */
   driverDocuments: {
+    listMine(limit = 30) {
+      return request(`/driver-documents?limit=${encodeURIComponent(limit)}`);
+    },
     listForTrip(tripId) {
       return request(`/driver-documents/trips/${encodeURIComponent(tripId)}`);
     },
     async upload({ tripId, files, document_type = 'aviz' }, retried = false) {
       const token = getToken();
       const fd = new FormData();
-      fd.append('trip_id', tripId);
+      if (tripId) fd.append('trip_id', tripId);
       fd.append('document_type', document_type);
       for (const file of files) fd.append('files', file);
       const res = await fetch('/api/driver-documents', {

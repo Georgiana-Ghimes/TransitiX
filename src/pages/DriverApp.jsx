@@ -1,44 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
-import StatusBadge from '@/components/StatusBadge';
-import DriverNotifications from '@/components/driver/DriverNotifications';
-import DriverChat from '@/components/driver/DriverChat';
 import DriverProfile from '@/components/driver/DriverProfile';
-import DriverRoute from '@/components/driver/DriverRoute';
-import DriverCmrPanel from '@/components/driver/DriverCmrPanel';
-import {
-  formatDate,
-  isActiveTripStatus,
-  findDriverForUser,
-  openNavigation,
-} from '@/lib/utils';
-import {
-  Route, Package, Truck, ChevronRight, Loader2, CheckCircle2,
-  CircleDot, Navigation, MessageSquare, User, Bell, Phone, ListOrdered,
-} from 'lucide-react';
-import { notifyError } from '@/lib/notify';
+import DriverUploadDocuments from '@/components/driver/DriverUploadDocuments';
+import { findDriverForUser } from '@/lib/utils';
+import { Upload, User } from 'lucide-react';
 
-/** One primary action per status — TMS driver pattern */
-const STATUS_FLOW = [
-  { key: 'alocata', label: 'Alocată', icon: CircleDot, next: 'incarcata', actionLabel: '📦 Am încărcat' },
-  { key: 'incarcata', label: 'Încărcată', icon: Package, next: 'in_tranzit', actionLabel: '🚛 Am plecat' },
-  { key: 'in_tranzit', label: 'În tranzit', icon: Truck, next: 'livrata', actionLabel: '📋 Am livrat' },
-  { key: 'livrata', label: 'Livrată', icon: CheckCircle2, next: null, actionLabel: null },
-];
+/** Shared column: phone → tablet → fold / Surface without looking like a thin strip. */
+const SHELL =
+  'w-full max-w-[28rem] sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto';
 
+/**
+ * Slim driver shell: upload road documents + profile.
+ * Sized for Chrome device presets (iPhone SE → iPad Pro / Fold / Surface).
+ */
 export default function DriverApp() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTrip, setSelectedTrip] = useState(null);
-  const [updating, setUpdating] = useState(false);
-  const [tab, setTab] = useState('trips');
-  const [listMode, setListMode] = useState('active'); // active | history
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [previewMode, setPreviewMode] = useState(false);
+  const [tab, setTab] = useState('upload');
 
   useEffect(() => {
     bootstrap();
@@ -49,14 +31,20 @@ export default function DriverApp() {
     try {
       const me = authUser || await api.auth.me();
       setUser(me);
-      const drivers = await api.entities.Driver.list();
+      const drivers = await api.entities.Driver.list().catch(() => []);
       const myDriver = findDriverForUser(drivers, me);
       setDriver(myDriver);
 
-      const isOffice = ['admin', 'dispatcher', 'finance'].includes(me.role);
-      setPreviewMode(!myDriver && isOffice);
-
-      await Promise.all([loadTrips(me, myDriver, isOffice), loadUnreadCount()]);
+      if (myDriver) {
+        const scoped = await api.entities.Trip.filter(
+          { driver_id: myDriver.id },
+          '-created_date',
+          50
+        ).catch(() => []);
+        setTrips(Array.isArray(scoped) ? scoped : []);
+      } else {
+        setTrips([]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -64,90 +52,14 @@ export default function DriverApp() {
     }
   };
 
-  const loadUnreadCount = async () => {
-    try {
-      const notifs = await api.entities.DriverNotification.filter({ is_read: false });
-      setUnreadCount(notifs.length);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const loadTrips = async (me = user, myDriver = driver, isOffice = previewMode) => {
-    try {
-      let scoped;
-      if (myDriver) {
-        scoped = await api.entities.Trip.filter({ driver_id: myDriver.id }, '-created_date', 50);
-      } else if (isOffice || (me && ['admin', 'dispatcher', 'finance'].includes(me.role))) {
-        const data = await api.entities.Trip.list('-created_date', 50);
-        scoped = data.filter((t) => t.driver_id || isActiveTripStatus(t.status) || t.status === 'livrata');
-      } else {
-        scoped = [];
-      }
-
-      setTrips(scoped);
-
-      // Keep selected trip in sync
-      setSelectedTrip((prev) => {
-        if (!prev) return null;
-        return scoped.find((t) => t.id === prev.id) || null;
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const updateStatus = async (trip, newStatus) => {
-    setUpdating(true);
-    try {
-      const patch = { status: newStatus };
-      if (newStatus === 'livrata') {
-        patch.actual_delivery_date = new Date().toISOString().slice(0, 10);
-      }
-      const updated = await api.entities.Trip.update(trip.id, patch);
-
-      const statusLabels = {
-        alocata: 'alocată',
-        incarcata: 'încărcată',
-        in_tranzit: 'în tranzit',
-        livrata: 'livrată',
-      };
-      try {
-        await api.entities.DriverNotification.create({
-          title: `Status: ${statusLabels[newStatus] || newStatus}`,
-          message: `Cursa ${trip.cmr_number || ''} → ${statusLabels[newStatus] || newStatus}.`,
-          type: 'status_update',
-          trip_id: trip.id,
-          cmr_number: trip.cmr_number,
-          is_read: false,
-        });
-      } catch {
-        // non-blocking
-      }
-
-      setSelectedTrip(updated);
-      await loadTrips();
-      loadUnreadCount();
-    } catch (e) {
-      console.error(e);
-      notifyError('Actualizare status eșuată', e);
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex min-h-[100dvh] items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" />
       </div>
     );
   }
 
-  const activeTrips = trips.filter((t) => !['livrata', 'anulata'].includes(t.status));
-  const historyTrips = trips.filter((t) => ['livrata', 'anulata'].includes(t.status));
-  const visibleTrips = listMode === 'active' ? activeTrips : historyTrips;
-  const currentFlowStep = STATUS_FLOW.findIndex((s) => s.key === selectedTrip?.status);
   const initials =
     (user?.full_name || user?.name || 'Ș')
       .split(' ')
@@ -156,264 +68,59 @@ export default function DriverApp() {
       .slice(0, 2)
       .toUpperCase();
 
+  const title = tab === 'profile' ? 'Profil' : 'Încarcă documente';
+
   return (
-    <div className="max-w-md mx-auto pb-24">
-      <div className="bg-[#0A2B4E] text-white px-5 py-4 -mx-4 lg:-mx-6 lg:rounded-t-xl sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/60">Aplicație Șofer</p>
-            <p className="font-bold text-lg">
-              {tab === 'route'
-                ? 'Ruta mea'
-                : selectedTrip && tab === 'trips' ? selectedTrip.cmr_number : 'Cursele mele'}
-            </p>
+    <div className="relative flex min-h-[100dvh] flex-col bg-[#F8F9FA]">
+      <header
+        className="sticky top-0 z-20 border-b border-white/10 bg-[#0A2B4E] text-white"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
+        <div
+          className={`${SHELL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4`}
+          style={{
+            paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+            paddingRight: 'max(1rem, env(safe-area-inset-right))',
+          }}
+        >
+          <div className="min-w-0">
+            <p className="text-[11px] sm:text-xs text-white/60">Aplicație Șofer</p>
+            <p className="font-bold text-base sm:text-lg truncate">{title}</p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
             {initials}
           </div>
         </div>
-        {previewMode && tab === 'trips' && !selectedTrip && (
-          <p className="mt-2 text-xs text-amber-200/90 bg-white/10 rounded-lg px-3 py-2">
-            Mod previzualizare dispecer — vezi cursele din firmă. Pentru experiența reală de șofer, autentifică-te cu <strong>sofer@transitix.ro</strong>.
-          </p>
-        )}
-      </div>
+      </header>
 
-      <div className="p-4 space-y-4">
-        {tab === 'route' ? (
-          <DriverRoute />
-        ) : tab === 'notifications' ? (
-          <DriverNotifications onRead={loadUnreadCount} />
-        ) : tab === 'chat' ? (
-          <DriverChat />
-        ) : tab === 'profile' ? (
+      <main
+        className={`${SHELL} w-full flex-1 px-4 pt-4 sm:px-5 sm:pt-5`}
+        style={{
+          paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right))',
+          paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))',
+        }}
+      >
+        {tab === 'profile' ? (
           <DriverProfile driver={driver} trips={trips} />
-        ) : selectedTrip ? (
-          <>
-            <button
-              onClick={() => setSelectedTrip(null)}
-              className="text-sm text-[#1D4E89] flex items-center gap-1"
-            >
-              ← Înapoi la curse
-            </button>
-
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-slate-400">CURSĂ</span>
-                <StatusBadge status={selectedTrip.status} />
-              </div>
-              <h2 className="font-bold text-[#0A2B4E] text-lg">{selectedTrip.cmr_number}</h2>
-              {(selectedTrip.driver_name || selectedTrip.vehicle_plate) && (
-                <p className="text-xs text-slate-500 mt-1">
-                  {selectedTrip.driver_name || '—'} · {selectedTrip.vehicle_plate || '—'}
-                </p>
-              )}
-
-              <div className="mt-4 space-y-3">
-                <div className="flex gap-3">
-                  <div className="w-2 flex-shrink-0 flex flex-col items-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#F5A623]" />
-                    <div className="w-0.5 flex-1 bg-slate-200 mt-1" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-400">Încărcare</p>
-                    <p className="text-sm font-medium text-slate-700">{selectedTrip.shipper_name}</p>
-                    <p className="text-xs text-slate-500">{selectedTrip.shipper_address}</p>
-                    {selectedTrip.shipper_phone && (
-                      <a href={`tel:${selectedTrip.shipper_phone}`} className="inline-flex items-center gap-1 text-xs text-[#1D4E89] mt-1">
-                        <Phone className="w-3 h-3" /> {selectedTrip.shipper_phone}
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-2 flex-shrink-0 flex justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#27AE60]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-400">Descărcare</p>
-                    <p className="text-sm font-medium text-slate-700">{selectedTrip.consignee_name}</p>
-                    <p className="text-xs text-slate-500">{selectedTrip.consignee_address}</p>
-                    {selectedTrip.consignee_phone && (
-                      <a href={`tel:${selectedTrip.consignee_phone}`} className="inline-flex items-center gap-1 text-xs text-[#1D4E89] mt-1">
-                        <Phone className="w-3 h-3" /> {selectedTrip.consignee_phone}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100 text-center">
-                <div>
-                  <p className="text-xs text-slate-400">Data</p>
-                  <p className="text-sm font-medium text-slate-700">{formatDate(selectedTrip.loading_date)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Greutate</p>
-                  <p className="text-sm font-medium text-slate-700">
-                    {selectedTrip.weight_kg ? `${selectedTrip.weight_kg} kg` : '-'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Colete</p>
-                  <p className="text-sm font-medium text-slate-700">{selectedTrip.package_count || '-'}</p>
-                </div>
-              </div>
-
-              {selectedTrip.special_instructions && (
-                <div className="mt-3 p-3 bg-amber-50 rounded-lg">
-                  <p className="text-xs text-amber-600 font-medium mb-1">Instrucțiuni speciale</p>
-                  <p className="text-sm text-slate-600">{selectedTrip.special_instructions}</p>
-                </div>
-              )}
-            </div>
-
-            {isActiveTripStatus(selectedTrip.status) && (
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-[#0A2B4E] mb-4">Progres cursă</h3>
-                <div className="space-y-3">
-                  {STATUS_FLOW.map((step, idx) => {
-                    const Icon = step.icon;
-                    const isDone = idx < currentFlowStep || selectedTrip.status === 'livrata';
-                    const isCurrent = idx === currentFlowStep;
-                    return (
-                      <div key={step.key} className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            isDone ? 'bg-emerald-100' : isCurrent ? 'bg-[#0A2B4E]' : 'bg-slate-100'
-                          }`}
-                        >
-                          <Icon
-                            className={`w-4 h-4 ${
-                              isDone ? 'text-emerald-600' : isCurrent ? 'text-white' : 'text-slate-400'
-                            }`}
-                          />
-                        </div>
-                        <span
-                          className={`text-sm ${
-                            isDone
-                              ? 'text-slate-400 line-through'
-                              : isCurrent
-                                ? 'font-medium text-[#0A2B4E]'
-                                : 'text-slate-400'
-                          }`}
-                        >
-                          {step.label}
-                        </span>
-                        {isCurrent && step.next && (
-                          <button
-                            onClick={() => updateStatus(selectedTrip, step.next)}
-                            disabled={updating}
-                            className="ml-auto px-4 py-2.5 text-sm font-medium text-white bg-[#27AE60] rounded-lg hover:bg-emerald-600 disabled:opacity-50 min-h-[48px]"
-                          >
-                            {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : step.actionLabel}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <DriverCmrPanel trip={selectedTrip} />
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() =>
-                  openNavigation(selectedTrip.consignee_address || selectedTrip.shipper_address)
-                }
-                className="flex flex-col items-center justify-center gap-1 py-4 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 min-h-[80px]"
-              >
-                <Navigation className="w-5 h-5 text-[#1D4E89]" />
-                <span className="text-xs font-medium">Navigare</span>
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedTrip(null);
-                  setTab('chat');
-                }}
-                className="flex flex-col items-center justify-center gap-1 py-4 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 min-h-[80px]"
-              >
-                <MessageSquare className="w-5 h-5 text-[#1D4E89]" />
-                <span className="text-xs font-medium">Chat dispecer</span>
-              </button>
-            </div>
-          </>
         ) : (
-          <>
-            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
-              <button
-                onClick={() => setListMode('active')}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  listMode === 'active' ? 'bg-white text-[#0A2B4E] shadow-sm' : 'text-slate-500'
-                }`}
-              >
-                Active ({activeTrips.length})
-              </button>
-              <button
-                onClick={() => setListMode('history')}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  listMode === 'history' ? 'bg-white text-[#0A2B4E] shadow-sm' : 'text-slate-500'
-                }`}
-              >
-                Istoric ({historyTrips.length})
-              </button>
-            </div>
-
-            {visibleTrips.length > 0 ? (
-              <div className="space-y-3">
-                {visibleTrips.map((trip) => (
-                  <button
-                    key={trip.id}
-                    onClick={() => setSelectedTrip(trip)}
-                    className="w-full text-left bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-bold text-[#0A2B4E]">{trip.cmr_number}</p>
-                        <p className="text-xs text-slate-500">
-                          {formatDate(trip.loading_date)}
-                          {trip.vehicle_plate ? ` · ${trip.vehicle_plate}` : ''}
-                        </p>
-                      </div>
-                      <StatusBadge status={trip.status} />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <span className="truncate flex-1">
-                        {trip.shipper_name} → {trip.consignee_name}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-400 shadow-sm">
-                <Route className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm font-medium text-slate-600">
-                  {listMode === 'active' ? 'Nicio cursă activă' : 'Nicio cursă în istoric'}
-                </p>
-                <p className="text-xs mt-2 max-w-xs mx-auto">
-                  {driver
-                    ? 'Când dispeceratul îți alocă o cursă, apare aici automat.'
-                    : previewMode
-                      ? 'Creează o cursă din meniul Curse și alocă un șofer + vehicul.'
-                      : 'Contul tău nu e legat de un profil de șofer. Contactează adminul.'}
-                </p>
-              </div>
-            )}
-          </>
+          <DriverUploadDocuments user={user} />
         )}
-      </div>
+      </main>
 
-      <nav className="fixed bottom-0 left-1/2 z-20 w-full max-w-md -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-md"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div
+          className={`${SHELL} grid grid-cols-2`}
+          style={{
+            paddingLeft: 'max(0px, env(safe-area-inset-left))',
+            paddingRight: 'max(0px, env(safe-area-inset-right))',
+          }}
+        >
           {[
-            { key: 'route', icon: ListOrdered, label: 'Rută' },
-            { key: 'trips', icon: Route, label: 'Curse' },
-            { key: 'notifications', icon: Bell, label: 'Notificări', badge: unreadCount },
-            { key: 'chat', icon: MessageSquare, label: 'Chat' },
+            { key: 'upload', icon: Upload, label: 'Încarcă documente' },
             { key: 'profile', icon: User, label: 'Profil' },
           ].map((t) => {
             const Icon = t.icon;
@@ -422,22 +129,13 @@ export default function DriverApp() {
               <button
                 key={t.key}
                 type="button"
-                onClick={() => {
-                  setTab(t.key);
-                  if (t.key !== 'trips') setSelectedTrip(null);
-                  if (t.key === 'notifications') loadUnreadCount();
-                }}
-                className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 ${
+                onClick={() => setTab(t.key)}
+                className={`relative flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-1 py-2 sm:min-h-[3.5rem] ${
                   active ? 'text-[#0A2B4E]' : 'text-slate-400'
                 }`}
               >
-                <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.25 : 2} />
-                {t.badge > 0 && (
-                  <span className="absolute top-1.5 right-[18%] flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {t.badge > 9 ? '9+' : t.badge}
-                  </span>
-                )}
-                <span className="max-w-full truncate text-[10px] font-medium leading-tight">
+                <Icon className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" strokeWidth={active ? 2.25 : 2} />
+                <span className="max-w-[9.5rem] truncate px-1 text-[10px] font-medium leading-tight sm:max-w-none sm:text-[11px]">
                   {t.label}
                 </span>
               </button>
