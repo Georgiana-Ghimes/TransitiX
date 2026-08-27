@@ -10,6 +10,9 @@ import {
   ingestPositions,
   looksLikeTelematicsKey,
 } from '../lib/telematics/ingest.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'telematics' });
 
 const router = Router();
 const ingestHits = new Map();
@@ -17,7 +20,7 @@ const driverHits = new Map();
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error(err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err.message || fallback });
 }
 
@@ -302,7 +305,7 @@ router.get('/replay/:routeId', authRequired, officeRequired, async (req, res) =>
           duration_min: routed.duration_min ?? null,
         };
       } catch (err) {
-        console.error('[replay osrm]', err.message);
+        log.error('replay osrm', err.message);
       }
     }
 

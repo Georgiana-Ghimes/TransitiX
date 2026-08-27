@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { PASSWORD_HINT, localPasswordError } from "@/lib/passwordPolicy";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -19,8 +20,10 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+    // Same rule as sign-up, stated the same way — the API is the authority either way.
+    const invalid = localPasswordError(newPassword, { confirm: confirmPassword });
+    if (invalid) {
+      setError(invalid);
       return;
     }
     setLoading(true);
@@ -67,6 +70,7 @@ export default function ResetPassword() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New Password</Label>
+          <p className="text-[11px] text-slate-500 mb-1">{PASSWORD_HINT}</p>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input

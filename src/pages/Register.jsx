@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2, Building2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { PASSWORD_HINT, localPasswordError } from "@/lib/passwordPolicy";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -19,12 +20,11 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (password !== confirmPassword) {
-      setError("Parolele nu coincid");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Parola trebuie să aibă cel puțin 6 caractere");
+    // The rule lives on the server; this only saves a round trip on the obvious cases. Six
+    // characters used to pass here and the API accepted anything at all.
+    const invalid = localPasswordError(password, { confirm: confirmPassword });
+    if (invalid) {
+      setError(invalid);
       return;
     }
     setLoading(true);
@@ -98,6 +98,7 @@ export default function Register() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Parolă</Label>
+          <p className="text-[11px] text-slate-500 mb-1">{PASSWORD_HINT}</p>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input

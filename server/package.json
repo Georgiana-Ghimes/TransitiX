@@ -1,6 +1,6 @@
 {
   "name": "transitix-server",
-  "version": "1.12.0",
+  "version": "1.15.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,9 @@
     "seed:demo": "node src/seed-demo.js",
     "seed:fleet": "node src/seed-fleet-data.js",
     "backfill:locations": "node src/backfill-locations.js",
-    "geocode:locations": "node src/geocode-locations.js"
+    "geocode:locations": "node src/geocode-locations.js",
+    "migrate:status": "node src/migrate.js status",
+    "migrate:down": "node src/migrate.js down"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -20,6 +22,7 @@
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1",
@@ -28,5 +31,9 @@
   },
   "devDependencies": {
     "supertest": "^7.2.2"
+  },
+  "engines": {
+    "node": ">=20.11",
+    "npm": ">=10"
   }
 }

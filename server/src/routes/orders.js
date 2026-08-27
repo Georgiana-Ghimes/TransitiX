@@ -6,6 +6,9 @@ import { query, withTransaction } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { MAX_IMPORT_ROWS, buildImportPlan, parseDelimited } from '../lib/orders/orderImport.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'orders' });
 
 const router = Router();
 const importHits = new Map();
@@ -97,7 +100,7 @@ router.post('/import', (req, res) => {
       try {
         rows = await readSheet(req.file);
       } catch (err) {
-        console.error('[orders import] parse', err);
+        log.error('fișierul de comenzi nu a putut fi citit', err);
         return res.status(400).json({ message: 'Fișierul nu a putut fi citit. Acceptăm .xlsx și .csv.' });
       }
       if (!rows.length) return res.status(400).json({ message: 'Fișierul este gol' });
@@ -160,7 +163,7 @@ router.post('/import', (req, res) => {
           message: 'O comandă din fișier a fost creată între timp. Reia importul.',
         });
       }
-      console.error('[orders import]', err);
+      log.error('orders import', err);
       res.status(500).json({ message: err.message || 'Importul a eșuat' });
     }
   });

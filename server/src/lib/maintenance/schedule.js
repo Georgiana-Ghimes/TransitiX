@@ -9,6 +9,9 @@
  * database with delete batches while the process is still failing to come up.
  */
 import { runRetention } from './retention.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'maintenance/schedule' });
 
 const HOUR = 60 * 60 * 1000;
 const FIRST_RUN_DELAY = 5 * 60 * 1000;
@@ -31,17 +34,17 @@ async function tick() {
         .filter((r) => r.deleted > 0)
         .map((r) => `${r.id}=${r.deleted}`)
         .join(' ');
-      console.log(`[retention] ${result.deleted} rânduri șterse: ${detail}${result.more ? ' (mai sunt)' : ''}`);
+      log.info(`[retention] ${result.deleted} rânduri șterse: ${detail}${result.more ? ' (mai sunt)' : ''}`);
     }
   } catch (err) {
     // Housekeeping failing must never take the API down with it.
-    console.error('[retention] rulare eșuată:', err.message);
+    log.error('rulare eșuată', err);
   }
 }
 
 export function startRetentionSchedule(env = process.env) {
   if (!retentionEnabled(env)) {
-    console.log('[retention] dezactivat (RETENTION_ENABLED=false)');
+    log.info('[retention] dezactivat (RETENTION_ENABLED=false)');
     return null;
   }
 
@@ -51,6 +54,6 @@ export function startRetentionSchedule(env = process.env) {
   // Neither timer should hold the process open when nothing else is running.
   first.unref?.();
   timer.unref?.();
-  console.log(`[retention] programat la fiecare ${Math.round(interval / HOUR)}h`);
+  log.info(`[retention] programat la fiecare ${Math.round(interval / HOUR)}h`);
   return () => { clearTimeout(first); clearInterval(timer); };
 }

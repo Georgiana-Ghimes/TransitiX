@@ -1,3 +1,6 @@
+import { createLogger } from './log.js';
+
+const log = createLogger({ scope: 'email' });
 const RESEND_URL = 'https://api.resend.com/emails';
 
 export function emailConfigured() {
@@ -25,7 +28,7 @@ export async function sendEmail({ to, subject, text, html, attachments } = {}) {
   }
 
   if (!emailConfigured()) {
-    console.log('[email stub]', {
+    log.info('[email stub]', {
       to: recipient,
       subject,
       body: String(text || html || '').slice(0, 300),
@@ -53,7 +56,7 @@ export async function sendEmail({ to, subject, text, html, attachments } = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message = data?.message || res.statusText || 'Resend request failed';
-    console.error('[email resend]', message);
+    log.error('email resend', message);
     throw new Error(message);
   }
 

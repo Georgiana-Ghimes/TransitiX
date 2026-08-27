@@ -1,7 +1,7 @@
 {
   "name": "transitix",
   "private": true,
-  "version": "1.12.0",
+  "version": "1.15.3",
   "type": "module",
   "scripts": {
     "prepare": "node scripts/install-git-hooks.js",
@@ -13,8 +13,11 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "typecheck:loadplanner": "tsc -p ./tsconfig.loadplanner.json",
+    "version:bump": "node scripts/bump-version.js",
     "preview": "vite preview",
     "db:migrate": "npm run migrate --prefix server",
+    "db:migrate:status": "npm run migrate:status --prefix server",
+    "db:migrate:down": "npm run migrate:down --prefix server",
     "osrm:prepare": "node scripts/osrm-prepare.js",
     "db:backfill:locations": "npm run backfill:locations --prefix server --",
     "db:geocode:locations": "npm run geocode:locations --prefix server --",
@@ -106,5 +109,9 @@
     "typescript": "^5.8.2",
     "vite": "^6.1.0",
     "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20.11",
+    "npm": ">=10"
   }
 }

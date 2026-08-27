@@ -14,6 +14,9 @@ import { serializeRow } from '../entities.js';
 import { publicUploadUrl } from '../uploadPath.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { logEvent, upload, extractBatchDocuments } from './documents.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'driverDocuments' });
 
 const router = Router();
 router.use(authRequired);
@@ -25,7 +28,7 @@ const driverHits = new Map();
 
 function sendError(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[driver-documents]', err);
+  if (status >= 500) log.error('driver-documents', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 
@@ -138,7 +141,7 @@ router.post('/', (req, res) => {
 
       // Same OCR pipeline as Documente — never block the cab on Vision latency.
       extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id).catch((err) => {
-        console.error('[driver-documents] extract', err?.message || err);
+        log.error('extragerea documentelor a eșuat', err, { batch: batch?.id });
       });
     } catch (error) {
       sendError(res, error, 'Încărcarea a eșuat');

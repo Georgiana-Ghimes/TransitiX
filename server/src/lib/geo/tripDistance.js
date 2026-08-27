@@ -12,6 +12,9 @@
 
 import { addressKey } from './address.js';
 import { osrmConfigured, osrmRoute } from './osrm.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'geo/tripDistance' });
 
 export const DISTANCE_SOURCES = ['manual', 'osrm'];
 
@@ -144,7 +147,7 @@ export async function refreshTripDistance(db, companyId, trip, options = {}) {
     );
     return { ...computed, saved: true };
   } catch (err) {
-    console.error('[trip distance]', err.message || err);
+    log.error('trip distance', err.message || err);
     return { ok: false, reason: 'eroare', message: err.message };
   }
 }

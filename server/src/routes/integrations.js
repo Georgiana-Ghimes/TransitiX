@@ -14,6 +14,9 @@ import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { ingestPositions } from '../lib/telematics/ingest.js';
 import { pool } from '../db.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'integrations' });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -43,7 +46,7 @@ router.post('/upload', authRequired, (req, res) => {
   }
   upload.single('file')(req, res, (err) => {
     if (err) {
-      console.error('[upload]', err);
+      log.error('upload', err);
       return res.status(400).json({ message: err.message || 'Upload failed' });
     }
     if (!req.file) return res.status(400).json({ message: 'Niciun fișier încărcat' });
@@ -67,7 +70,7 @@ router.post('/llm', authRequired, async (req, res) => {
       file_urls,
     } = req.body || {};
 
-    console.log('[llm/ocr]', {
+    log.info('[llm/ocr]', {
       promptLength: prompt?.length || 0,
       trip_id: trip_id || trip_context?.id || null,
       files: Array.isArray(file_urls) ? file_urls.length : 0,
@@ -115,7 +118,7 @@ router.post('/llm', authRequired, async (req, res) => {
         const extracted = await extractCmrFromImage(imageUrl, trip);
         return res.json(extracted);
       } catch (ocrErr) {
-        console.error('[vision ocr]', ocrErr.message || ocrErr);
+        log.error('vision ocr', ocrErr.message || ocrErr);
         const fallback = stubCmrFromTrip(trip);
         fallback._note = `OCR Vision a eșuat (${ocrErr.message}). Am folosit datele din cursă.`;
         fallback._vision_error = ocrErr.message;
@@ -131,7 +134,7 @@ router.post('/llm', authRequired, async (req, res) => {
 
     res.json(stubCmrFromTrip(trip));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'OCR failed' });
   }
 });
@@ -149,7 +152,7 @@ router.post('/email', authRequired, async (req, res) => {
     }
     res.json(result);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Email failed' });
   }
 });
@@ -165,7 +168,7 @@ router.post('/gps-simulate', authRequired, officeRequired, async (req, res) => {
     });
     res.status(201).json(result.accepted.map(serializeRow));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'GPS simulate failed' });
   }
 });

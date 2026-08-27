@@ -11,6 +11,9 @@ import { collectFindings, DEFAULT_WINDOW_DAYS } from '../lib/validation/checks.j
 import { summariseFindings } from '../lib/validation/rules.js';
 import { RULES } from '../lib/validation/catalog.js';
 import { getDismissalState, markNotificationRead } from '../lib/officeNotifications.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'validation' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -44,7 +47,7 @@ router.get('/findings', async (req, res) => {
       dismissed_count: all.filter((item) => item.dismissed).length,
     });
   } catch (err) {
-    console.error('[validation]', err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Verificările au eșuat' });
   }
 });
@@ -57,7 +60,7 @@ router.post('/findings/dismiss', async (req, res) => {
     await markNotificationRead(req.user.company_id, key);
     res.json({ ok: true, key });
   } catch (err) {
-    console.error('[validation]', err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Constatarea nu a putut fi ascunsă' });
   }
 });

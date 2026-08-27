@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -46,7 +47,10 @@ import { tomtomConfigured } from './lib/geo/tomtom.js';
 import { vroomConfigured } from './lib/planning/vroom.js';
 import { etransportCapability, etransportConfigured } from './lib/compliance/etransport.js';
 import { efacturaCapability } from './lib/compliance/efactura.js';
+import { createLogger, requestLogger } from './lib/log.js';
 import { fileURLToPath } from 'url';
+
+const log = createLogger({ scope: 'app' });
 
 dotenv.config();
 
@@ -55,11 +59,42 @@ const APP_VERSION = JSON.parse(
 ).version;
 
 if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET is required. Copy server/.env.example to server/.env');
+  log.error('JWT_SECRET is required. Copy server/.env.example to server/.env');
   process.exit(1);
 }
 
 const app = express();
+
+// First in the stack: everything below it gets `req.log` already carrying the request id.
+app.use(requestLogger());
+
+/**
+ * Security headers.
+ *
+ * `contentSecurityPolicy` is off because this process serves an API and user-uploaded files, not
+ * the application HTML — the SPA is served by Vite in development and by whatever fronts `dist/`
+ * in production, and that is where a CSP belongs. Turning one on here would protect nothing and
+ * would be read as protection that exists.
+ *
+ * `crossOriginResourcePolicy` is relaxed to same-site so the browser will still load an uploaded
+ * CMR scan from the API origin into a page served from another port.
+ */
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  // The uploads route sends files that the app opens in its own viewer.
+  crossOriginEmbedderPolicy: false,
+  // Off here and re-enabled below only in production. Helmet sends it by default, which means
+  // a developer's browser is told to pin localhost to https for a year. Browsers ignore HSTS
+  // over plain HTTP so nothing breaks today, but a header that is sent where it cannot apply is
+  // a header nobody can reason about.
+  hsts: false,
+}));
+
+// HSTS only where there is TLS to insist on.
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet.hsts({ maxAge: 15552000, includeSubDomains: true }));
+}
 
 app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -94,7 +129,7 @@ app.get('/uploads/:filename', bearerFromQuery, authRequired, async (req, res) =>
     const allowed = await canReadUpload(query, req.user.company_id, name);
     if (!allowed) return res.status(404).json({ message: 'Not found' });
   } catch (err) {
-    console.error(err);
+    req.log?.error('verificarea accesului la fișier a eșuat', err, { file: req.params?.name });
     return res.status(500).json({ message: 'Upload access check failed' });
   }
   fs.access(filePath, fs.constants.R_OK, (err) => {
@@ -127,7 +162,7 @@ app.get('/api/health', async (_req, res) => {
     await query('SELECT 1');
     res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION, capabilities });
   } catch (err) {
-    console.error(err);
+    log.error('health: baza de date nu răspunde', err);
     res.status(503).json({ ok: false, service: 'transitix-api', db: false, version: APP_VERSION, capabilities });
   }
 });
@@ -162,11 +197,13 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/users', userRoutes);
 
-app.use((err, _req, res, _next) => {
+// Last resort. `req.log` carries the request id, so the line a user reports as "eroare la 14:32"
+// can be found without guessing.
+app.use((err, req, res, _next) => {
   if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({ message: 'Invalid JSON body' });
   }
-  console.error(err);
+  (req.log || log).error('cerere eșuată', err, { url: req.originalUrl, method: req.method });
   res.status(err.status || 500).json({ message: err.message || 'Server error' });
 });
 

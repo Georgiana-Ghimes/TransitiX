@@ -3,13 +3,16 @@ import { authRequired, officeRequired } from '../middleware/auth.js';
 import { query, withTransaction } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { balanceReport, buildTerritoryDrafts } from '../lib/geo/territories.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'territories' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error('[territories]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err.message || fallback });
 }
 

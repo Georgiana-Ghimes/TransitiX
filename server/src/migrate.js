@@ -1,6 +1,38 @@
+/**
+ * Schema migration.
+ *
+ * Two halves. The `baseline` template below is the schema as it stood when versioning was
+ * introduced — every statement in it is idempotent, so it can run against an empty database or an
+ * existing one and reach the same place. It is recorded once as `0000_baseline` and, from then on,
+ * skipped.
+ *
+ * Everything after that lives in `src/migrations/NNNN_name.sql`, runs exactly once, and is
+ * recorded with its rollback. Add schema changes there, not here — a statement added to the
+ * baseline runs on every deploy forever, which is fine for `IF NOT EXISTS` and quietly wrong for
+ * anything else.
+ *
+ *   npm run migrate           apply everything pending
+ *   npm run migrate:status    what has run and what has not
+ *   npm run migrate:down      undo the last one, if it has a .down.sql
+ */
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { pool } from './db.js';
+import {
+  BASELINE_ID,
+  TABLE_SQL,
+  appliedIds,
+  applyOne,
+  orphanedIds,
+  pendingMigrations,
+  readMigrations,
+  rollbackLast,
+  statusRows,
+} from './lib/migrations/runner.js';
 
-const sql = `
+const migrationsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
+
+const baseline = `
 -- gen_random_uuid() is built into PostgreSQL 13 and later, which is the floor this schema
 -- targets (compose pins 16). pgcrypto used to be pulled in for it and nothing else, and on a
 -- locked-down host the extension can be blocked from loading at all — which failed the whole
@@ -1409,18 +1441,96 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_user
 
 `
 
+/**
+ * Brings the baseline up to date, then applies whatever is pending.
+ *
+ * The baseline runs on every invocation while it is unrecorded and never again once it is: a
+ * database that predates versioning gets stamped on its next migrate without re-running anything
+ * it already has.
+ */
 async function migrate() {
   const client = await pool.connect();
   try {
-    await client.query(sql);
-    console.log('Migration completed successfully.');
+    await client.query(TABLE_SQL);
+    const applied = await appliedIds(client);
+
+    if (!applied.includes(BASELINE_ID)) {
+      await client.query(baseline);
+      await client.query(
+        'INSERT INTO schema_migrations (id, down_sql) VALUES ($1, NULL) ON CONFLICT DO NOTHING',
+        [BASELINE_ID]
+      );
+      console.log(`Applied ${BASELINE_ID} (schema de bază).`);
+    }
+
+    const all = readMigrations(migrationsDir);
+    const orphans = orphanedIds(all, applied);
+    if (orphans.length) {
+      // Reported, not repaired: deleting the record would lose the rollback stored with it.
+      console.warn(
+        `Atenție: ${orphans.length} migrări aplicate nu mai există în repo (${orphans.join(', ')}). `
+        + 'Probabil o schimbare de ramură.'
+      );
+    }
+
+    const pending = pendingMigrations(all, await appliedIds(client));
+    if (pending.length === 0) {
+      console.log('Nimic de aplicat — schema e la zi.');
+      return;
+    }
+
+    for (const migration of pending) {
+      const result = await applyOne(client, migration);
+      console.log(`Applied ${result.id} (${result.duration_ms}ms)`);
+    }
+    console.log(`Migration completed successfully. ${pending.length} pas(i) aplicat(i).`);
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-migrate().catch((err) => {
-  console.error('Migration failed:', err);
+async function status() {
+  const client = await pool.connect();
+  try {
+    await client.query(TABLE_SQL);
+    const rows = statusRows(readMigrations(migrationsDir), await appliedIds(client));
+    for (const row of rows) {
+      const mark = row.applied ? 'x' : ' ';
+      const note = row.baseline ? ' (schema de bază)' : (row.reversible ? '' : ' — fără rollback');
+      console.log(`[${mark}] ${row.id}${note}`);
+    }
+    const pending = rows.filter((r) => !r.applied).length;
+    console.log(pending === 0 ? 'Schema e la zi.' : `${pending} de aplicat.`);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+async function down() {
+  const client = await pool.connect();
+  try {
+    await client.query(TABLE_SQL);
+    const result = await rollbackLast(client);
+    console.log(result.rolled_back ? `Anulat ${result.rolled_back}.` : result.reason);
+    if (!result.rolled_back) process.exitCode = 1;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+const command = process.argv[2] || 'up';
+const commands = { up: migrate, status, down };
+const run = commands[command];
+
+if (!run) {
+  console.error(`Comandă necunoscută: ${command}. Folosește up, status sau down.`);
+  process.exit(1);
+}
+
+run().catch((err) => {
+  console.error(err.migrationId ? `Migration ${err.migrationId} failed:` : 'Migration failed:', err);
   process.exit(1);
 });

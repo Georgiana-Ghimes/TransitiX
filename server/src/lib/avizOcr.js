@@ -9,6 +9,9 @@ import { resolveUploadPath } from './cmrOcr.js';
 import { annexFieldDefaults } from './avizTemplate.js';
 import { isTextPoor, visionAnnotateImage, visionAnnotatePdf, visionApiKey } from './avizVision.js';
 import { mapProviderToSource } from './avizQuery.js';
+import { createLogger } from './log.js';
+
+const log = createLogger({ scope: 'avizOcr' });
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -23,7 +26,7 @@ async function parsePdfTextLayer(buf) {
       if (text.trim()) return text;
     } catch (err) {
       lastErr = err;
-      console.error('[aviz pdf-parse]', err.message || err, `attempt ${attempt + 1}`);
+      log.error('aviz pdf-parse', err.message || err, `attempt ${attempt + 1}`);
     }
   }
   if (lastErr) throw lastErr;
@@ -495,14 +498,14 @@ export async function extractAvizFromFile(fileUrl) {
       rawText = await parsePdfTextLayer(buf);
       if (!isTextPoor(rawText)) provider = 'pdf_text';
     } catch (err) {
-      console.error('[aviz pdf-parse]', err.message || err);
+      log.error('aviz pdf-parse', err.message || err);
     }
     if (provider !== 'pdf_text' && apiKey) {
       try {
         rawText = await visionAnnotatePdf(buf, apiKey);
         provider = 'google_vision';
       } catch (err) {
-        console.error('[aviz vision pdf]', err.message || err);
+        log.error('aviz vision pdf', err.message || err);
       }
     }
   } else if (apiKey) {
@@ -510,7 +513,7 @@ export async function extractAvizFromFile(fileUrl) {
       rawText = await visionAnnotateImage(buf.toString('base64'), apiKey);
       provider = 'google_vision';
     } catch (err) {
-      console.error('[aviz vision image]', err.message || err);
+      log.error('aviz vision image', err.message || err);
     }
   }
 

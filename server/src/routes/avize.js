@@ -46,6 +46,9 @@ import {
   headerTripId,
   vatRateFor,
 } from '../lib/pricing/invoiceDraft.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'avize' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -241,7 +244,7 @@ router.get('/', async (req, res) => {
     const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
     res.json(rows);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to list avize' });
   }
 });
@@ -278,7 +281,7 @@ router.post('/repair', async (req, res) => {
     }
     res.json(out);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Repair failed' });
   }
 });
@@ -288,7 +291,7 @@ router.get('/templates', async (req, res) => {
     const templates = await ensureDefaultTemplate(req.user.company_id);
     res.json(templates);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to load templates' });
   }
 });
@@ -312,7 +315,7 @@ router.post('/templates', async (req, res) => {
     });
     res.status(201).json(serializeRow(row));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to create template' });
   }
 });
@@ -348,7 +351,7 @@ router.put('/templates/:id', async (req, res) => {
     if (!row) return res.status(404).json({ message: 'Template not found' });
     res.json(serializeRow(row));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(err.status || 500).json({ message: err.message || 'Failed to save template' });
   }
 });
@@ -389,7 +392,7 @@ router.delete('/templates/:id', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to delete template' });
   }
 });
@@ -421,7 +424,7 @@ router.post('/extract', async (req, res) => {
     try {
       extracted = await extractAvizFromFile(fileUrl);
     } catch (ocrErr) {
-      console.error('[aviz extract]', ocrErr);
+      log.error('aviz extract', ocrErr);
       extracted = {
         ...stubAvizFields(),
         extraction_source: 'stub',
@@ -510,7 +513,7 @@ router.post('/extract', async (req, res) => {
     });
     res.json(row);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Extract failed' });
   }
 });
@@ -531,7 +534,7 @@ router.post('/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(err.status || 500).json({ message: err.message || 'Export failed' });
   }
 });
@@ -551,7 +554,7 @@ router.post('/bulk-confirm', async (req, res) => {
     });
     res.json(flagDuplicateTpos(result.rows.map(decorateAviz)));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });
   }
 });
@@ -561,7 +564,7 @@ router.get('/observation-codes', async (req, res) => {
     const codes = await ensureObservationCodes(req.user.company_id);
     res.json(codes);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to load codes' });
   }
 });
@@ -580,7 +583,7 @@ router.post('/observation-codes', async (req, res) => {
     );
     res.status(201).json(serializeRow(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to save code' });
   }
 });
@@ -594,7 +597,7 @@ router.delete('/observation-codes/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Code not found' });
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to delete code' });
   }
 });
@@ -627,7 +630,7 @@ router.post('/email', async (req, res) => {
       content_base64: sent.stub ? buffer.toString('base64') : undefined,
     });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(err.status || 500).json({ message: err.message || 'Email failed' });
   }
 });
@@ -656,7 +659,7 @@ router.post('/zip', async (req, res) => {
         files.push({ name: uniqueZipEntry(`originale/${orig}`, used), data });
       } catch (err) {
         missing += 1;
-        console.error('[aviz zip file]', err.message || err);
+        log.error('aviz zip file', err.message || err);
       }
     }
     const zip = zipStore(files);
@@ -669,7 +672,7 @@ router.post('/zip', async (req, res) => {
     res.setHeader('X-Aviz-Missing-Files', String(missing));
     res.send(zip);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(err.status || 500).json({ message: err.message || 'Zip failed' });
   }
 });
@@ -702,7 +705,7 @@ router.get('/trip-suggestions', async (req, res) => {
     );
     res.json(result.rows.map(serializeRow));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Trip suggestions failed' });
   }
 });
@@ -832,7 +835,7 @@ router.post('/draft-invoice', async (req, res) => {
       return res.status(409).json({ message: 'Numărul de factură există deja în această serie' });
 
     }
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Draft invoice failed' });
   }
 });
@@ -893,7 +896,7 @@ router.get('/reports', async (req, res) => {
       exports: exports.rows.map(serializeRow),
     });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Reports failed' });
   }
 });

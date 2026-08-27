@@ -3,13 +3,16 @@ import { authRequired, officeRequired } from '../middleware/auth.js';
 import { query } from '../db.js';
 import { buildUblInvoice } from '../lib/compliance/efactura.js';
 import { serializeRow } from '../entities.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'invoices' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error('[invoices]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({
     message: err.message || fallback,
     ...(err.errors ? { errors: err.errors } : {}),
@@ -40,7 +43,7 @@ router.get('/:id/lines', async (req, res) => {
     );
     res.json({ lines: lines.rows.map(serializeRow) });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Liniile nu au putut fi citite' });
   }
 });

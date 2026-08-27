@@ -11,6 +11,9 @@ import {
   analyseTachographBuffer,
   isTachographFilename,
 } from '../lib/compliance/tachograph.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'tachograph' });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -36,7 +39,7 @@ const importHits = new Map();
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error('[tachograph]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err.message || fallback });
 }
 

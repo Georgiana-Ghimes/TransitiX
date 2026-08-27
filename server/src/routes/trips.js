@@ -3,6 +3,9 @@ import crypto from 'crypto';
 import { query } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'trips' });
 
 const router = Router();
 
@@ -65,7 +68,7 @@ router.post('/:tripId/confirmation-link', authRequired, async (req, res) => {
     const origin = req.body?.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
     const link = `${origin.replace(/\/$/, '')}/confirm/${confirmation.token}`;
 
-    console.log('[confirmation-link]', {
+    log.info('[confirmation-link]', {
       trip: trip.cmr_number,
       link,
       email: confirmation.client_email,
@@ -73,7 +76,7 @@ router.post('/:tripId/confirmation-link', authRequired, async (req, res) => {
 
     res.json({ confirmation, link, trip: serializeRow(trip) });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to create confirmation link' });
   }
 });

@@ -189,7 +189,7 @@ describe('the searchable log', () => {
 
 describe('security events', () => {
   it('records a sign-in', async () => {
-    const password = 'parola-de-test-123';
+    const password = 'caisele-verzi-din-livada';
     const email = `audit-login-${Date.now()}@test.local`;
     await query(
       `INSERT INTO users (company_id, name, email, password_hash, role)

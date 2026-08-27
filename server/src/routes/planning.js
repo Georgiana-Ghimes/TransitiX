@@ -8,6 +8,9 @@ import { promoteScenario } from '../lib/planning/promote.js';
 import { parseRouteDate } from '../lib/planning/scenario.js';
 import { vroomConfigured, vroomPing } from '../lib/planning/vroom.js';
 import { osrmConfigured, osrmPing } from '../lib/geo/osrm.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'planning' });
 
 const router = Router();
 const solveHits = new Map();
@@ -16,7 +19,7 @@ router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error(err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err.message || fallback });
 }
 

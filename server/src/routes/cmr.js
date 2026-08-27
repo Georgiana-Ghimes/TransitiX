@@ -22,13 +22,16 @@ import {
   sanitiseCmr,
   validateCmr,
 } from '../lib/cmr/form.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'cmr' });
 
 const router = Router();
 router.use(authRequired);
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[cmr]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

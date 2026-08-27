@@ -9,14 +9,17 @@ import dotenv from 'dotenv';
 import app from './app.js';
 import { uploadRoot } from './uploadPath.js';
 import { startRetentionSchedule } from './lib/maintenance/schedule.js';
+import { createLogger } from 'lib/log.js';
+
+const log = createLogger({ scope: 'index' });
 
 dotenv.config();
 
 const port = Number(process.env.PORT) || 3001;
 
 app.listen(port, () => {
-  console.log(`Transitix API listening on http://localhost:${port}`);
-  console.log(`Uploads directory: ${uploadRoot}`);
+  log.info(`Transitix API listening on http://localhost:${port}`);
+  log.info(`Uploads directory: ${uploadRoot}`);
   // Started here rather than in app.js so mounting the app in tests never starts a delete timer.
   startRetentionSchedule();
 });

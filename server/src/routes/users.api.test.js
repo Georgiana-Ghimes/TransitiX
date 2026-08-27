@@ -63,10 +63,10 @@ describe('inviting somebody', () => {
     const token = new URL(body.invite_link).searchParams.get('token');
 
     const set = await api().post('/api/auth/reset-password')
-      .send({ resetToken: token, newPassword: 'parola-mea-123' });
+      .send({ resetToken: token, newPassword: 'caisele-verzi-din-livada' });
     expect(set.status).toBe(200);
 
-    const login = await api().post('/api/auth/login').send({ email, password: 'parola-mea-123' });
+    const login = await api().post('/api/auth/login').send({ email, password: 'caisele-verzi-din-livada' });
     expect(login.status).toBe(200);
     expect(login.body.user.role).toBe('dispatcher');
   });
@@ -155,8 +155,8 @@ describe('changing a role', () => {
     const email = freshEmail();
     const { body } = await invite({ name: 'Cu Sesiune', email, role: 'finance' });
     const token = new URL(body.invite_link).searchParams.get('token');
-    await api().post('/api/auth/reset-password').send({ resetToken: token, newPassword: 'parola-123' });
-    await api().post('/api/auth/login').send({ email, password: 'parola-123' });
+    await api().post('/api/auth/reset-password').send({ resetToken: token, newPassword: 'trei-camioane-marti' });
+    await api().post('/api/auth/login').send({ email, password: 'trei-camioane-marti' });
 
     const res = await api().put(`/api/users/${body.user.id}/role`)
       .set(admin()).send({ role: 'dispatcher' });
@@ -206,8 +206,8 @@ describe('deactivating', () => {
     const email = freshEmail();
     const { body } = await invite({ name: 'De Oprit', email, role: 'dispatcher' });
     const token = new URL(body.invite_link).searchParams.get('token');
-    await api().post('/api/auth/reset-password').send({ resetToken: token, newPassword: 'parola-123' });
-    const session = await api().post('/api/auth/login').send({ email, password: 'parola-123' });
+    await api().post('/api/auth/reset-password').send({ resetToken: token, newPassword: 'trei-camioane-marti' });
+    const session = await api().post('/api/auth/login').send({ email, password: 'trei-camioane-marti' });
 
     const res = await api().put(`/api/users/${body.user.id}/active`)
       .set(admin()).send({ is_active: false });
@@ -222,7 +222,7 @@ describe('deactivating', () => {
     const refresh = await api().post('/api/auth/refresh')
       .send({ refresh_token: session.body.refresh_token });
     expect(refresh.status).toBe(401);
-    expect((await api().post('/api/auth/login').send({ email, password: 'parola-123' })).status)
+    expect((await api().post('/api/auth/login').send({ email, password: 'trei-camioane-marti' })).status)
       .toBe(401);
   });
 
@@ -304,7 +304,7 @@ describe('resending an invitation', () => {
 
     // Only one live invitation at a time.
     const old = await api().post('/api/auth/reset-password')
-      .send({ resetToken: first, newPassword: 'parola-123' });
+      .send({ resetToken: first, newPassword: 'trei-camioane-marti' });
     expect(old.status).toBe(400);
   });
 

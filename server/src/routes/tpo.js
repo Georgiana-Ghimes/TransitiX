@@ -6,13 +6,16 @@ import { osrmConfigured, osrmRoute } from '../lib/geo/osrm.js';
 import { addressKey } from '../lib/geo/address.js';
 import { buildLegs, describeLeg, measureLegs, summariseLegs } from '../lib/pricing/tripKm.js';
 import { calculateTpo, summariseCharges } from '../lib/pricing/tpo.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'tpo' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[tpo]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

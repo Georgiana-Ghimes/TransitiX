@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
 import { getCompanyById, pickCompanyWritable, publicCompany } from '../lib/company.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'company' });
 
 const router = Router();
 
@@ -13,7 +16,7 @@ router.get('/', async (req, res) => {
     if (!company) return res.status(404).json({ message: 'Company not found' });
     res.json(company);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to load company' });
   }
 });
@@ -39,7 +42,7 @@ router.put('/', adminRequired, async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Company not found' });
     res.json(publicCompany(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to save company' });
   }
 });

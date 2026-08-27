@@ -21,13 +21,16 @@ import { renderReportWorkbook } from '../lib/avizExport.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
 import { normalizeTemplateColumns } from '../lib/avizTemplate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'reports' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[reports]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

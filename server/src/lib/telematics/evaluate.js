@@ -10,6 +10,9 @@ import {
   detectExceptions,
   updateIdleSince,
 } from './exceptions.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'telematics/evaluate' });
 
 /**
  * Best-effort mail to clients on stops pushed by an ETA cascade.
@@ -51,7 +54,7 @@ export async function notifyClientsOfDelay(stops, { fromSeq, delayMin, routeCode
       });
       sent += 1;
     } catch (err) {
-      console.error('[telematics eta-mail]', err.message);
+      log.error('telematics eta-mail', err.message);
     }
   }
   return { sent };
@@ -247,7 +250,7 @@ export async function evaluatePosition(db, companyId, positionRow, {
 
     return { exceptions: created, cascaded };
   } catch (err) {
-    console.error('[telematics evaluate]', err.message);
+    log.error('telematics evaluate', err.message);
     return { exceptions: [], cascaded: null, error: err.message };
   }
 }

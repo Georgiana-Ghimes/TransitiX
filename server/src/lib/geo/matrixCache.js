@@ -18,6 +18,9 @@
  */
 
 import { osrmProfile, osrmTable, toCoordinate } from './osrm.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'geo/matrixCache' });
 
 /** Roads change. A month-old distance is still true; a year-old one may not be. */
 export const DEFAULT_TTL_DAYS = 30;
@@ -296,7 +299,7 @@ export async function cachedMatrix(db, companyId, points, {
     pointKeys.forEach((key, index) => { nodeKeys[index] = snaps.get(key) || null; });
     cached = await loadPairs(db, companyId, profile, nodeKeys);
   } catch (err) {
-    console.error('[matrix cache] read', err.message);
+    log.error('citirea cache-ului a eșuat', err);
     cacheUsable = false;
     nodeKeys.fill(null);
     cached = new Map();
@@ -327,7 +330,7 @@ export async function cachedMatrix(db, companyId, points, {
       await pruneExpired(db);
     } catch (err) {
       // A matrix we measured but could not store is still a correct matrix.
-      console.error('[matrix cache] write', err.message);
+      log.error('scrierea în cache a eșuat', err);
     }
   }
 

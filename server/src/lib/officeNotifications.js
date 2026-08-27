@@ -1,4 +1,7 @@
 import { query } from '../db.js';
+import { createLogger } from './log.js';
+
+const log = createLogger({ scope: 'officeNotifications' });
 
 const STATUS_LABELS = {
   planificata: 'De planificat',
@@ -295,7 +298,7 @@ async function dataIssueNotifications(companyId) {
       }));
   } catch (err) {
     // A failing check must not take the notification list down with it.
-    console.error('[notifications] data checks failed', err);
+    log.error('verificările de date au eșuat', err);
     return [];
   }
 }

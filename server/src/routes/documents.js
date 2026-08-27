@@ -9,6 +9,9 @@ import { hitRateLimit } from '../lib/rateLimit.js';
 import { readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'documents' });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -36,7 +39,7 @@ router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[documents]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

@@ -28,13 +28,16 @@ import {
   unusablePasswordSeed,
   validateInvite,
 } from '../lib/users/rules.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'users' });
 
 const router = Router();
 router.use(authRequired, officeRequired, adminRequired);
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[users]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 
@@ -54,6 +57,9 @@ function serializeUser(row) {
     driver_name: row.driver_name || null,
     driver_ready: driverReady(row),
     active_sessions: row.active_sessions ?? 0,
+    // Null for every account that predates the invitation screen — including the founder's.
+    invited_by: row.invited_by_name || row.invited_by_email || null,
+    invited_at: row.invited_at || null,
   };
 }
 
@@ -93,7 +99,7 @@ async function auditUser(req, { action, target, changes = null, detail = null })
     });
   } catch (err) {
     // The account change already happened; failing the request now would misreport it.
-    console.error('[audit] user', action, err.message);
+    log.error('nu am putut înregistra schimbarea de cont', err, { action });
   }
 }
 
@@ -105,11 +111,13 @@ router.get('/', async (req, res) => {
   try {
     const rows = await query(
       `SELECT u.*, d.id AS driver_id, d.name AS driver_name,
+              inviter.name AS invited_by_name, inviter.email AS invited_by_email,
               (SELECT COUNT(*)::int FROM refresh_tokens r
                WHERE r.user_id = u.id AND r.revoked_at IS NULL AND r.expires_at > NOW())
                 AS active_sessions
        FROM users u
        LEFT JOIN drivers d ON d.user_id = u.id AND d.company_id = u.company_id
+       LEFT JOIN users inviter ON inviter.id = u.invited_by
        WHERE u.company_id = $1
        ORDER BY u.is_active DESC, u.role, LOWER(u.name)`,
       [req.user.company_id]
@@ -168,11 +176,11 @@ router.post('/invite', async (req, res) => {
 
     const created = (await query(
       `INSERT INTO users (company_id, name, email, password_hash, role, phone,
-                          reset_token, reset_token_expires_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7, NOW() + ($8::int || ' hours')::interval)
+                          reset_token, reset_token_expires_at, invited_by, invited_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, NOW() + ($8::int || ' hours')::interval, $9, NOW())
        RETURNING *`,
       [req.user.company_id, name, email, password_hash, role,
-        String(req.body?.phone || '').trim() || null, token, INVITE_TTL_HOURS]
+        String(req.body?.phone || '').trim() || null, token, INVITE_TTL_HOURS, req.user.id]
     )).rows[0];
 
     // A driver profile already carrying this email is the same person; link it rather than
@@ -394,7 +402,7 @@ async function deliverInvite({ to, name, link }) {
     return Boolean(result?.ok && !result.stub);
   } catch (err) {
     // The account exists either way; the admin can pass the link on by hand.
-    console.error('[invite email]', err.message);
+    log.error('invite email', err.message);
     return false;
   }
 }

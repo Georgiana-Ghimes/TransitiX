@@ -18,13 +18,16 @@ import {
   previewRetention,
   runRetention,
 } from '../lib/maintenance/retention.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'maintenance' });
 
 const router = Router();
 router.use(authRequired, officeRequired, adminRequired);
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[maintenance]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

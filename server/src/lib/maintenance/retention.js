@@ -11,6 +11,9 @@
  * the rest of the system can be trusted; only telemetry and caches are on the list below.
  */
 import { query } from '../../db.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'maintenance/retention' });
 
 /**
  * A policy names its table, its primary key and the condition for "old enough".
@@ -158,7 +161,7 @@ export async function runRetention({ batch = DEFAULT_BATCH, overrides = {} } = {
           more: res.rowCount >= batch,
         });
       } catch (err) {
-        console.error('[retention]', policy.id, err.message);
+        log.error('retention', policy.id, err.message);
         results.push({ id: policy.id, days, deleted: 0, error: err.message });
       }
     }

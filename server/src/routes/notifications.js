@@ -9,6 +9,9 @@ import {
   markAllComputedRead,
   deleteReadComputed,
 } from '../lib/officeNotifications.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'notifications' });
 
 const router = Router();
 
@@ -34,7 +37,7 @@ router.get('/inbox', async (req, res) => {
     const read_count = items.filter((n) => n.is_read).length;
     res.json({ items, unread_count, read_count });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to load notifications' });
   }
 });
@@ -51,7 +54,7 @@ router.put('/read-all', async (req, res) => {
     await markAllComputedRead(companyId);
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to mark all read' });
   }
 });
@@ -66,7 +69,7 @@ router.delete('/read', async (req, res) => {
     await deleteReadComputed(companyId);
     res.json({ ok: true, deleted: result.rowCount });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to delete read notifications' });
   }
 });
@@ -91,7 +94,7 @@ router.put('/:id/read', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Failed to mark read' });
   }
 });

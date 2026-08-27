@@ -2,13 +2,19 @@
 
 SaaS TMS (Transport Management System) for Romanian road freight: trips/CMR, fleet, drivers, warehouse, finance, and a driver app.
 
+**Manual de utilizare** (în română, pentru cine folosește aplicația): [`docs/manual/`](docs/manual/README.md)
+— ce face fiecare ecran, rezultatele urmărite și problemele frecvente. Acest README e pentru
+cine o rulează și o dezvoltă.
+
 No teammate secrets are required to log in locally. Invented Docker/JWT values are enough; optional Google Vision / Resend keys stay empty and the app uses stubs.
 
 ## Stack
 
 - **Frontend:** React + Vite + Tailwind (`src/`)
 - **Backend:** Node.js + Express (`server/`)
-- **Database:** PostgreSQL (Docker for local)
+- **Database:** PostgreSQL 13+ (16 in Compose)
+
+Requires **Node >= 20.11** and **npm >= 10** — pinned in `engines` in both `package.json` files.
 
 ## Product map
 
@@ -16,25 +22,33 @@ No teammate secrets are required to log in locally. Invented Docker/JWT values a
 |------|------|--------|
 | Dashboard | `/` | KPIs, recent trips, Recharts |
 | Dispecerat | `/dispatch` | Plan orders onto routes: sequence, ETAs, capacity warnings |
+| Încărcare / Plan 2D | `/loading` `/load-planner` | Load building and a 2D plan of the trailer |
 | Curse | `/trips` | CMR trips, assign driver/vehicle, auto `distance_km` |
 | Flotă / Șoferi / Clienți | `/vehicles` `/drivers` `/clients` | Cards + deactivate/reactivate |
-| Tracking GPS | `/gps` | Demo map (not live GPS) |
-| Locații / rutare | `/api/geo` | Real road distances via OSRM sidecar (API only so far) |
 | Locații | `/locations` | Geocoding review: map, confidence tiers, drag-to-fix pins |
-| Planning AI | `/planning` | Stub suggestions |
-| Financiar | `/finance` | Invoices; e-Factura is a **simulation** |
+| Teritorii | `/territories` | Zone definitions behind zone charges |
+| Tracking GPS | `/gps` | Live positions from `telematics_positions`; the demo feed is one of several sources |
+| Planning AI | `/planning` | VROOM when configured, stub suggestions otherwise |
+| Financiar | `/finance` | Invoices built from `trip_charges`; click the number for the components. e-Factura is a **simulation** |
 | Depozit | `/warehouse` | Stock products |
 | Documente | `/documents` | Expiry alerts (ITP, RCA, permis, …) |
-| Avize / Rapoarte | `/avize` | Upload avize → review table → Anexa Factura XLSX. Files under `/uploads` need a login token. |
+| Avize / Rapoarte | `/avize` | Upload avize → review table → Anexa Factura XLSX. Files under `/uploads` need a login token |
+| Rapoarte | `/reports` | Report builder over a source registry: presets, preview, export history with snapshots |
+| Verificări date | `/checks` | Rules that catch a trip about to be invoiced wrong |
+| Config. comercială | `/commercial` | Contracts, tariffs, zone charges, surcharges, observation codes, depot |
+| Utilizatori | `/users` | **Admin.** Invitations, roles, deactivation, driver-profile links |
+| Jurnal modificări | `/audit` | **Admin.** Who changed what, with the fields that moved |
 | Setări | `/settings` | Company profile + document-alert thresholds |
-| App Șofer | `/driver-app` | Assigned trips, CMR photo, status flow |
+| App Șofer | `/driver-app` | Assigned trips, CMR (photo or signed digitally), status flow, works offline |
 | Portal client | `/confirm/:token` | Delivery confirmation link |
 
 ### Known stubs / demos (not production integrations)
 
 - **OCR:** Google Vision when `GOOGLE_VISION_API_KEY` is set; otherwise trip-prefill stub (CMR) / empty aviz fields to edit by hand. PDFs with a text layer parse without Vision.
 - **Email:** Resend when `RESEND_API_KEY` + `EMAIL_FROM` are set; otherwise console log (reset-password still returns a local link)
-- **Planning AI / GPS / ANAF e-Factura:** labeled demos
+- **Planning AI:** VROOM when `VROOM_URL` is set; labelled stub suggestions otherwise
+- **ANAF e-Factura / e-Transport:** simulated. e-Transport codes are prefixed `STUB-` on the code
+  itself so a placeholder can never be read as a real UIT at the roadside
 - **Routing:** real (OSRM) when `OSRM_URL` is set; otherwise `/api/geo/*` returns 503 rather than a made-up distance
 - **Geocoding:** real (Photon) when `PHOTON_URL` is set. Pins below 0.8 confidence are saved but left unverified for a human to confirm; below 0.45 nothing is saved at all
 
@@ -44,11 +58,16 @@ Preferred: **Postgres in Docker**, Vite + Express on the host (hot reload).
 
 ### 1. Database
 
+Either a container:
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
 ```
 
 Host port is **5434** (avoids clashes with other local Postgres on 5432/5433).
+
+Or a Postgres you already run natively — nothing here needs the container. Point `DATABASE_URL`
+at it (`…@localhost:5432/transitix` for a default install) and skip to the next step.
 
 ### 2. Backend env
 
@@ -171,6 +190,46 @@ docker compose up --build
 
 Serves the packaged app at `http://localhost:8082` (API + web + DB, seed on start). Better for a VM demo than daily coding. Production still needs a real `JWT_SECRET`, published HTTPS origin, and Resend keys if you want outbound mail.
 
+## Tests
+
+```bash
+npm test          # unit suite — runs on a clean checkout with nothing started
+npm run test:api  # route tests against a real Postgres
+```
+
+The route tests mount the Express app with supertest and talk to a real database, so they catch
+the schema and type mistakes a mocked test cannot. They need `TEST_DATABASE_URL` in `server/.env`
+pointing at a database **whose name ends in `_test`** — the setup refuses anything else and
+creates it if missing:
+
+```
+TEST_DATABASE_URL=postgresql://postgres:password@localhost:5434/transitix_test
+```
+
+## Migrations
+
+`npm run db:migrate` applies the baseline schema once, then every numbered file in
+`server/src/migrations/` that has not run yet.
+
+| Command | Description |
+|---------|-------------|
+| `npm run db:migrate` | Apply everything pending |
+| `npm run db:migrate:status` | What has run and what has not |
+| `npm run db:migrate:down` | Undo the last migration, if it has a `.down.sql` |
+
+New schema changes go in `server/src/migrations/NNNN_name.sql`, with `NNNN_name.down.sql` beside
+it wherever the change can be undone. Do not add them to the baseline in `migrate.js`: a statement
+there runs on every deploy forever, which is fine for `IF NOT EXISTS` and quietly wrong for
+anything else.
+
+## Logs
+
+The API writes structured lines — human-readable by default, JSON under `NODE_ENV=production`,
+overridable with `LOG_FORMAT`. Every request gets an id, returned as `X-Request-Id` and stamped on
+every line the request produces, so a report of "an error around 14:32" maps to the lines that
+caused it. `LOG_LEVEL` filters (`debug`/`info`/`warn`/`error`). Credentials never reach the log:
+field names matching password, token, secret, authorization, cookie or key are redacted.
+
 ## Scripts
 
 | Command | Description |
@@ -184,9 +243,20 @@ Serves the packaged app at `http://localhost:8082` (API + web + DB, seed on star
 | `npm run db:seed` | Admin + driver users |
 | `npm run db:seed:fleet` | Extra dummy vehicles/drivers/clients |
 | `npm test` | Vitest unit tests |
+| `npm run test:api` | Route tests against a real Postgres (`TEST_DATABASE_URL`) |
+| `npm run test:all` | Both suites |
+| `npm run db:migrate:status` | Which migrations have run |
+| `npm run db:migrate:down` | Undo the last migration |
 | `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc` over the JS with checkJs |
 | `npm run build` | Production frontend build |
+| `npm run version:bump` | `major`/`minor`/`patch` or an explicit version, in both package.json files |
 
 ## Docs & versioning
 
-Root and `server/package.json` versions stay aligned. Local notes (`docs/`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`) are gitignored.
+Root and `server/package.json` versions stay aligned — the sidebar reads the root one, `/api/health`
+reports the server one, and a mismatch turns "which version is this?" into a question with two
+answers. The post-commit hook bumps from the commit message (`feat:` minor, `!`/breaking major,
+everything else patch, `[skip version]` to opt out); `npm run version:bump` does the same by hand.
+
+Local notes (`docs/`, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`) are gitignored.

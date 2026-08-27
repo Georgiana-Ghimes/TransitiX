@@ -17,6 +17,9 @@ import {
   sortStops,
 } from '../lib/routing/routePlan.js';
 import { buildTripDrafts, cmrEligibleStops, fullAddress } from '../lib/routing/routeCmr.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'routes' });
 
 const router = Router();
 router.use(authRequired);
@@ -139,7 +142,7 @@ async function recomputeRoute(db, companyId, routeId) {
 
 function sendError(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[routes]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

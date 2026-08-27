@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { notifyClientConfirmed } from '../lib/officeNotifications.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'confirm' });
 
 const router = Router();
 
@@ -38,7 +41,7 @@ router.get('/:token', async (req, res) => {
     }
     res.json({ confirmation, trip });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Failed to load confirmation' });
   }
 });
@@ -111,7 +114,7 @@ router.post('/:token', async (req, res) => {
 
     res.json(confirmation);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Confirmation failed' });
   }
 });

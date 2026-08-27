@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'search' });
 
 const router = Router();
 
@@ -74,7 +77,7 @@ router.get('/', async (req, res) => {
       drivers: drivers.rows.map(serializeRow),
     });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Search failed' });
   }
 });

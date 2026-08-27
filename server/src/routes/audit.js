@@ -10,6 +10,9 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
 import { AUDITED_ENTITIES, NOT_AUDITED } from '../lib/audit/events.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'audit' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -18,7 +21,7 @@ const MAX_LIMIT = 200;
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[audit]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 

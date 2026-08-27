@@ -8,6 +8,8 @@ const PASSWORD = 'parola-de-test-123';
 
 let ctx;
 let email;
+/** Registration creates a company of its own; the suite has to take them away again. */
+const registered = [];
 
 beforeAll(async () => {
   ctx = await seedCompany('auth');
@@ -20,12 +22,69 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  for (const companyId of registered) await dropCompany(companyId);
   await dropCompany(ctx?.company?.id);
   await closePool();
 });
 
 const api = () => request(app);
 const login = () => api().post('/api/auth/login').send({ email, password: PASSWORD });
+
+describe('security headers', () => {
+  it('sets the headers a browser can act on', async () => {
+    const res = await api().get('/api/health');
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
+    expect(res.headers['referrer-policy']).toBeTruthy();
+    // Express advertises itself by default; there is nothing to gain from telling anybody.
+    expect(res.headers['x-powered-by']).toBeUndefined();
+  });
+
+  it('does not send HSTS outside production', async () => {
+    // Helmet sends it by default, which tells a developer's browser to pin localhost to https
+    // for a year. Browsers ignore it over plain HTTP, but a header sent where it cannot apply
+    // is one nobody can reason about.
+    const res = await api().get('/api/health');
+    expect(res.headers['strict-transport-security']).toBeUndefined();
+  });
+
+  it('returns a request id the caller can quote back', async () => {
+    const res = await api().get('/api/health');
+    expect(res.headers['x-request-id']).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe('what counts as a password', () => {
+  it('publishes the rule so a screen can state it before somebody types', async () => {
+    const res = await api().get('/api/auth/password-policy');
+    expect(res.status).toBe(200);
+    expect(res.body.hint).toMatch(/10/);
+  });
+
+  it('refuses to register an account with a trivial password', async () => {
+    // Registration used to accept anything at all, including one character.
+    const res = await api().post('/api/auth/register')
+      .send({ email: `slab-${Date.now()}@test.local`, password: 'abc', name: 'Slab' });
+    expect(res.status).toBe(400);
+    expect(res.body.hint).toBeTruthy();
+  });
+
+  it('refuses a password that is the person’s own email', async () => {
+    const email = `propriu-${Date.now()}@test.local`;
+    expect((await api().post('/api/auth/register').send({ email, password: email, name: 'Propriu' }))
+      .status).toBe(400);
+  });
+
+  it('accepts a long passphrase with no digits or symbols', async () => {
+    const res = await api().post('/api/auth/register').send({
+      email: `fraza-${Date.now()}@test.local`,
+      password: 'sapte camioane pleaca joi',
+      name: 'Fraza Lunga',
+    });
+    expect(res.status).toBe(201);
+    registered.push(res.body.user.company_id);
+  });
+});
 
 describe('login', () => {
   it('returns a pair and records the session', async () => {

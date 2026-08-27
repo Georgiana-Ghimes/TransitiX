@@ -4,13 +4,16 @@ import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { costActivity, resolveCostRates } from '../lib/analytics/costModel.js';
 import { buildCockpit } from '../lib/analytics/kpis.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'analytics' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
 
 function sendError(res, err, fallback) {
   const status = err.status || 500;
-  if (status >= 500) console.error('[analytics]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err.message || fallback });
 }
 

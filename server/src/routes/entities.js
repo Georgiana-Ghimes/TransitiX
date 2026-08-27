@@ -23,6 +23,9 @@ import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNum
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
 import { auditEntityChange, isAudited } from '../lib/audit/events.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'entities' });
 
 const router = Router();
 
@@ -122,7 +125,7 @@ router.get('/:entity', requireEntityAction('list'), async (req, res) => {
     );
     res.json(result.rows.map(serializeRow));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'List failed' });
   }
 });
@@ -154,7 +157,7 @@ router.post('/:entity/filter', requireEntityAction('filter'), async (req, res) =
     );
     res.json(result.rows.map(serializeRow));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Filter failed' });
   }
 });
@@ -175,7 +178,7 @@ router.post('/:entity/bulk', requireEntityAction('create'), async (req, res) => 
     });
     res.status(201).json(created);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Bulk create failed' });
   }
 });
@@ -207,7 +210,7 @@ router.put('/:entity/bulk', requireEntityAction('update'), async (req, res) => {
     }
     res.json(updated);
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Bulk update failed' });
   }
 });
@@ -231,7 +234,7 @@ router.post('/:entity/:id/adjust', requireEntityAction('update'), async (req, re
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Adjust failed' });
   }
 });
@@ -248,7 +251,7 @@ router.get('/:entity/:id', requireEntityAction('get'), async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Get failed' });
   }
 });
@@ -287,7 +290,7 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
           await notifyCmrPending(req.user.company_id, tripRes.rows[0]);
         }
       } catch (notifyErr) {
-        console.error('[notifyCmrPending]', notifyErr);
+        log.error('notifyCmrPending', notifyErr);
       }
     }
 
@@ -297,7 +300,7 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
     if (isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Înregistrare duplicată' });
     }
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Create failed' });
   }
 });
@@ -416,7 +419,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
           await dismissCmrPending(req.user.company_id, row.trip_id);
         }
       } catch (notifyErr) {
-        console.error('[TripDocument notify]', notifyErr);
+        log.error('TripDocument notify', notifyErr);
       }
     }
 
@@ -426,7 +429,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     if (isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Înregistrare duplicată' });
     }
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Update failed' });
   }
 });
@@ -453,7 +456,7 @@ router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), asy
     if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
     res.json({ ok: true, id: req.params.id });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: err.message || 'Delete failed' });
   }
 });

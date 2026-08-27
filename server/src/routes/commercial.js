@@ -17,6 +17,9 @@ import { serializeRow } from '../entities.js';
 import { findOverlaps, findTariff, tariffHistory } from '../lib/pricing/tariffs.js';
 import { parseCodeRows } from '../lib/pricing/codeImport.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'commercial' });
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -28,7 +31,7 @@ const upload = multer({
 
 function fail(res, err, fallback) {
   const status = err?.status || 500;
-  if (status >= 500) console.error('[commercial]', err);
+  if (status >= 500) log.error('eroare', err);
   res.status(status).json({ message: err?.message || fallback });
 }
 
@@ -178,7 +181,7 @@ router.put('/depot', adminRequired, async (req, res) => {
       } catch (auditErr) {
         // The depot is already saved. Failing the request now would tell the user the save did
         // not happen, which would be a lie.
-        console.error('[audit] depot', auditErr.message);
+        log.error('nu am putut înregistra mutarea garajului', auditErr);
       }
     }
 

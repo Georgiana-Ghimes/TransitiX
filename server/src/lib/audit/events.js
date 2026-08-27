@@ -1,3 +1,6 @@
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'audit/events' });
 /**
  * Who changed what.
  *
@@ -272,7 +275,7 @@ export async function auditEntityChange(client, req, { action, entity, before, a
     });
     return true;
   } catch (err) {
-    console.error('[audit]', entity, action, err.message);
+    log.error('audit', entity, action, err.message);
     return false;
   }
 }

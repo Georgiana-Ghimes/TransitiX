@@ -7,6 +7,7 @@ import { isPgUniqueViolation } from '../lib/concurrency.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
 import { sendEmail, emailConfigured } from '../lib/email.js';
 import { rateLimit } from '../lib/rateLimit.js';
+import { PASSWORD_HINT, passwordError } from '../lib/password.js';
 import { ipFrom, recordAudit } from '../lib/audit/events.js';
 import { pool } from '../db.js';
 import {
@@ -19,6 +20,9 @@ import {
   sessionUsable,
   touchSession,
 } from '../lib/sessions.js';
+import { createLogger } from '../lib/log.js';
+
+const log = createLogger({ scope: 'auth' });
 
 const router = Router();
 const authAttemptLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
@@ -73,7 +77,7 @@ async function auditSecurity(req, { user, action, detail = null }) {
       ip: ipFrom(req),
     });
   } catch (err) {
-    console.error('[audit] security', action, err.message);
+    log.error('nu am putut înregistra evenimentul de securitate', err, { action });
   }
 }
 
@@ -100,7 +104,7 @@ router.post('/login', authAttemptLimit, async (req, res) => {
     const tokens = await issueTokens(user, req);
     res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Login failed' });
   }
 });
@@ -111,6 +115,9 @@ router.post('/register', authAttemptLimit, async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password required' });
     }
+    // There was no check here at all: a company could be created with a one-character password.
+    const weak = passwordError(password, { email, name });
+    if (weak) return res.status(400).json({ message: weak, hint: PASSWORD_HINT });
 
     const password_hash = await bcrypt.hash(password, 12);
     const user = await withTransaction(async (client) => {
@@ -140,7 +147,7 @@ router.post('/register', authAttemptLimit, async (req, res) => {
     if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Email already registered' });
     }
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Registration failed' });
   }
 });
@@ -151,7 +158,7 @@ router.get('/me', authRequired, async (req, res) => {
     if (!result.rows[0]) return res.status(401).json({ message: 'User not found' });
     res.json(publicUser(result.rows[0]));
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Failed to load user' });
   }
 });
@@ -193,7 +200,7 @@ router.post('/refresh', async (req, res) => {
     }
     res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Refresh failed' });
   }
 });
@@ -222,7 +229,7 @@ router.post('/logout', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.json({ ok: true });
   }
 });
@@ -232,7 +239,7 @@ router.get('/sessions', authRequired, async (req, res) => {
   try {
     res.json({ sessions: await listSessions(req.user.id) });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Sesiunile nu au putut fi citite' });
   }
 });
@@ -244,7 +251,7 @@ router.post('/sessions/revoke-all', authRequired, async (req, res) => {
     await auditSecurity(req, { user: req.user, action: 'sessions_revoked', detail: { revoked } });
     res.json({ revoked });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Sesiunile nu au putut fi încheiate' });
   }
 });
@@ -280,7 +287,7 @@ router.post('/reset-password-request', async (req, res) => {
         html: `<p>Resetează parola aici (expiră în 1 oră):</p><p><a href="${reset_link}">${reset_link}</a></p>`,
       });
     } catch (mailErr) {
-      console.error('[reset email]', mailErr);
+      log.error('reset email', mailErr);
       return res.status(500).json({ message: 'Reset email failed' });
     }
 
@@ -290,7 +297,7 @@ router.post('/reset-password-request', async (req, res) => {
     }
     res.json({ ...empty, reset_link });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Reset request failed' });
   }
 });
@@ -301,9 +308,15 @@ router.post('/reset-password', async (req, res) => {
     if (!resetToken || !newPassword) {
       return res.status(400).json({ message: 'Token and new password required' });
     }
-    if (String(newPassword).length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
+    // The account behind the token is needed before hashing anything: a password that repeats
+    // the person's own email passes every other check and is the first thing anybody would try.
+    const owner = (await query(
+      `SELECT email, name FROM users WHERE reset_token = $1 LIMIT 1`,
+      [resetToken]
+    )).rows[0];
+
+    const weak = passwordError(newPassword, { email: owner?.email, name: owner?.name });
+    if (weak) return res.status(400).json({ message: weak, hint: PASSWORD_HINT });
 
     const password_hash = await bcrypt.hash(newPassword, 12);
     const result = await query(
@@ -321,9 +334,14 @@ router.post('/reset-password', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    log.error('eroare', err);
     res.status(500).json({ message: 'Password reset failed' });
   }
+});
+
+/** What the sign-up and reset screens should show before somebody types. */
+router.get('/password-policy', (_req, res) => {
+  res.json({ hint: PASSWORD_HINT });
 });
 
 export default router;

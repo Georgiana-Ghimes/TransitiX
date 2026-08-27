@@ -8,6 +8,9 @@
 
 import crypto from 'crypto';
 import { withTransaction } from '../../db.js';
+import { createLogger } from '../log.js';
+
+const log = createLogger({ scope: 'telematics/ingest' });
 
 export const TELEMATICS_SOURCES = [
   'driver_app', 'simulate', 'webfleet', 'frotcom', 'teltonika', 'webhook', 'other',
@@ -193,7 +196,7 @@ export async function ingestPosition(db, companyId, rawSample, {
         // Live board is optional — never fail ingest on a hung subscriber.
       }
     } catch (err) {
-      console.error('[telematics evaluate]', err.message);
+      log.error('telematics evaluate', err.message);
     }
   }
   return row;
