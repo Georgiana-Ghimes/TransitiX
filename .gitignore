@@ -51,3 +51,6 @@ server/node_modules/
 /.cursor/
 /.claude/
 backups/
+
+# Python bytecode from the OCR sidecar tooling
+__pycache__/

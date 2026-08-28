@@ -53,3 +53,22 @@ Transitix Node also post-corrects codes/plates (`PS-…` → `PSL-…`, `B330SRS
 ```bash
 docker compose -f docker-compose.paddle-ocr.yml down
 ```
+
+## Verificarea logicii, fără motorul OCR
+
+`check_logic.py` rulează tot ce e în jurul recunoașterii — rasterizarea PDF, plafonul de pagini,
+raportarea trunchierii, căutarea orientării — cu PaddleOCR înlocuit de un dublu. Așa se poate
+verifica partea care decide *ce* se citește, pe o mașină fără sute de megaocteți de dependențe ML:
+
+```bash
+python tools/paddle-ocr/check_logic.py
+```
+
+În container, unde e deja totul instalat:
+
+```bash
+docker compose -f docker-compose.companion.yml exec paddle-ocr python /app/check_logic.py
+```
+
+Iese cu cod diferit de zero dacă vreo verificare pică. Nu atinge PaddleOCR — pentru asta trebuie
+împins un aviz real prin `/avize`.
