@@ -110,54 +110,98 @@
       <h3>App companion izolat (profil documents)</h3>
       <ul>
         <li><strong>Profil documents</strong> activat din <code>vite --mode companion</code> — nu mai depinde de un fișier <code>.env.companion</code> uitat; build fără mod companion = Transitix full.</li>
-        <li><strong>Birou:</strong> meniu redus — doar <strong>Avize / Rapoarte</strong> și <strong>Rapoarte</strong>; landing <code>/avize</code>.</li>
-        <li><strong>Șofer:</strong> shell dedicat <code>DriverAppDocuments</code> (upload + profil), separat de app-ul șofer Transitix full.</li>
-        <li><strong>Docker companion:</strong> <code>docker-compose.companion.yml</code> — Postgres <code>:5435</code>, Paddle <code>:8101</code>.</li>
-        <li><strong>Env:</strong> <code>companion.env.example</code> + <code>server/companion.env.example</code> (API <code>:3002</code>, JWT și DB proprii).</li>
-        <li><strong>Dev:</strong> <code>npm run dev:companion</code> → <code>:5174</code>; API pe <code>:3002</code>.</li>
-        <li><strong>Producție VM:</strong> <code>npm run start:companion</code> — build static + servire din API (un singur origin, fără Vite dev prin tunnel).</li>
-        <li><strong>Backup:</strong> <code>npm run db:backup</code> — DB + folder uploads împreună.</li>
+        <li><strong>Birou:</strong> meniu redus — doar <strong>Avize / Rapoarte</strong> și <strong>Rapoarte</strong>; landing <code>/avize</code>; orice rută necunoscută redirecționează la <code>/avize</code>.</li>
+        <li><strong>Șofer:</strong> shell dedicat <code>DriverAppDocuments</code> (upload + profil), separat de <code>DriverApp.jsx</code> (app șofer Transitix full cu curse/CMR).</li>
+        <li><strong>Login companion:</strong> subtitlu „Autentifică-te în RAI Spedition — Documente”; link <strong>Creează cont</strong> ascuns (companion = conturi invitate).</li>
+        <li><strong>Navigare post-login:</strong> birou → <code>/avize</code>; șofer → <code>/driver-app</code>; <code>returnTo</code> respectat doar pe rutele companion (<code>/avize</code>, <code>/reports</code>).</li>
+        <li><strong>Layout birou:</strong> fără tur ghidat, fără căutare globală, fără clopoțel notificări — sidebar minimal pentru documente.</li>
+        <li><strong>Docker companion:</strong> <code>docker-compose.companion.yml</code> — Postgres <code>:5435</code> (DB <code>transitix_rai</code>), Paddle <code>:8101</code> (mapat din 8100 container).</li>
+        <li><strong>Env:</strong> <code>companion.env.example</code> (root) + <code>server/companion.env.example</code> — API <code>:3002</code>, <code>JWT_SECRET</code> și DB proprii, <code>PADDLE_OCR_URL=http://127.0.0.1:8101</code>.</li>
+        <li><strong>Dev:</strong> <code>npm run dev:companion</code> → Vite <code>0.0.0.0:5174</code>; API pe <code>:3002</code>.</li>
+        <li><strong>Producție VM:</strong> <code>npm run start:companion</code> — <code>vite build --mode companion</code> + API servește <code>dist/</code> (un singur origin, fără HMR prin tunnel).</li>
+        <li><strong>Backup:</strong> <code>npm run db:backup -- --keep 14</code> — <code>pg_dump</code> + arhivă folder uploads; ambele părți sunt necesare pentru refacerea unui export.</li>
+        <li><strong>README:</strong> secțiune dedicată „RAI Spedition companion” cu pași Docker, migrate, seed, start.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
       <h3>Branding și versiune companion</h3>
       <ul>
-        <li>Titlu produs: <strong>RAI Spedition — Documente</strong> (configurabil).</li>
-        <li>Tagline sidebar + versiune în login și topbar: <strong>v1.1.0 - build 5</strong>.</li>
-        <li>Număr companion în <code>package.json → companion</code> (version + build), decuplat de Transitix 1.12.x.</li>
-        <li>Titlu tab browser: nume produs + versiune.</li>
+        <li>Titlu produs: <strong>RAI Spedition — Documente</strong> (<code>package.json → companion.title</code>, suprascriibil prin <code>VITE_APP_TITLE</code>).</li>
+        <li>Tagline sidebar: <strong>Companionul tău pentru documente</strong> (<code>VITE_APP_TAGLINE</code> opțional).</li>
+        <li>Versiune afișată în <strong>login</strong> (în card), <strong>sidebar/topbar</strong> birou și <strong>titlul tab-ului</strong> browser: <strong>v1.1.0 - build 5</strong>.</li>
+        <li>Număr companion în <code>package.json → companion</code> (<code>version</code> + <code>build</code>), decuplat de Transitix 1.12.x; hook-ul semver nu atinge blocul <code>companion</code>.</li>
+        <li>Script <code>scripts/resolve-app-build.js</code> — sursă unică pentru <code>__APP_VERSION__</code> și <code>__APP_BUILD__</code> la compile; build numeric (nu hash git).</li>
+        <li>Evoluție în sprint: v1.0.0 → build 4 → <strong>v1.1.0 build 5</strong>.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
-      <h3>OCR — Paddle unic</h3>
+      <h3>OCR — Paddle unic (Google Vision eliminat)</h3>
       <ul>
-        <li><strong>Google Vision eliminat</strong> — un singur pipeline: PDF text layer → PaddleOCR local.</li>
-        <li>Același flux pentru upload șofer, loturi birou și <strong>Re-extrage</strong> pe <code>/avize</code>.</li>
-        <li><code>GET /api/health</code> raportează <code>ocr: paddle</code> / <code>paddle-down</code> / <code>false</code>.</li>
-        <li>Banner pe <code>/avize</code> când Paddle e configurat dar containerul nu răspunde.</li>
-        <li>După upload șofer: OCR doar pe <strong>documentele noi</strong>; timeout 5 min pe CPU VM; lock per batch.</li>
+        <li><strong>Un singur extractor</strong> — <code>extractBatchDocuments</code> în <code>documents.js</code>, peste <code>readText.js</code>; fișierele <code>avizVision.js</code> și testele Vision șterse.</li>
+        <li>Ordine citire: <strong>PDF cu text layer</strong> (pdf-parse, gratuit) → <strong>PaddleOCR</strong> local; fără fallback la alt provider.</li>
+        <li>Același flux pentru upload șofer, loturi birou și butonul <strong>Re-extrage</strong> pe <code>/avize</code>.</li>
+        <li><strong>CMR / integrations:</strong> endpoint-ul <code>/api/integrations/llm</code> nu mai apelează Vision; pozele CMR trec prin coada avize, nu prin stub separat.</li>
+        <li><code>GET /api/health</code> — câmp <code>capabilities.ocr</code>: <code>paddle</code> / <code>paddle-down</code> / <code>false</code> (probe la sidecar, TTL 15s); <code>vision</code> scos din health.</li>
+        <li>Banner galben pe <code>/avize</code> când OCR = <code>paddle-down</code>: upload merge, câmpurile rămân goale până repornești Paddle și apeși Re-extrage.</li>
+        <li>După upload șofer: OCR doar pe <strong>documentele noi</strong> (<code>documentIds</code>); lock per batch; erori per-document nu blochează restul lotului.</li>
+        <li><strong>Batch doar înainte:</strong> extracția nu rescrie rânduri deja <code>confirmed</code>; status batch nu revine din <code>confirmed</code> în <code>extracted</code>.</li>
+        <li><strong>Timeout ≠ eșec:</strong> la <code>OCR_TIMEOUT</code> documentul rămâne <code>uploaded</code> în coadă (nu se marchează „gol”); operatorul poate reîncerca.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
-      <h3>App șofer — UX upload</h3>
+      <h3>OCR — sidecar Paddle îmbunătățit</h3>
       <ul>
-        <li><strong>Avertisment blur</strong> înainte de trimitere (heuristică Laplacian) — poți refotografia sau trimite oricum.</li>
-        <li><strong>Throttle client</strong> (20/min) înainte de limita serverului — mesaj cu secunde rămase.</li>
-        <li><strong>Polling</strong> listă „Trimise recent” la 8s cât timp status = Încărcat (doar tab vizibil).</li>
-        <li>Verificare <strong>număr fișiere</strong> (max din API) și <strong>15 MB</strong> înainte de upload.</li>
-        <li>Mesaje eroare în română (nu „Failed to fetch” / „Unexpected field”).</li>
+        <li><strong>PDF scanat rasterizat în sidecar</strong> (PyMuPDF) — Node nu mai are nevoie de toolchain imagini; sidecar-ul primește PDF-ul întreg.</li>
+        <li>Documente multi-pagină: OCR pe fiecare pagină; răspuns cu <code>pages</code>, <code>total_pages</code>, <code>truncated</code> când depășește plafonul (<code>PADDLE_OCR_PDF_PAGES</code>, default 40).</li>
+        <li><strong>Rotație reutilizată:</strong> unghiul câștigător de pe pagina 1 se încearcă primul pe paginile următoare (scanner alimentează la fel).</li>
+        <li>Auto-rotație 0/90/270/180 cu early-exit când TPO/PSL/plăcuță sunt deja lizibile pe orientarea curentă.</li>
+        <li>Flag <code>pages_truncated</code> stocat pe rândul avizului când citirea a fost parțială — vizibil în evenimente document.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
-      <h3>Deploy VM și acces colegi</h3>
+      <h3>OCR — bugete timp (interactiv vs background)</h3>
       <ul>
-        <li>3 terminale dev: API, UI companion, <code>cloudflared</code> spre Vite.</li>
-        <li>Quick tunnel Cloudflare (<code>*.trycloudflare.com</code>).</li>
-        <li>Vite <code>allowedHosts</code> pentru tunnel; proxy API implicit <strong>3002</strong> în mod companion.</li>
+        <li><strong>Interactiv</strong> (cineva așteaptă): timeout 45s (<code>OCR_INTERACTIVE_TIMEOUT_MS</code>); max 3 pagini (<code>OCR_INTERACTIVE_MAX_PAGES</code>).</li>
+        <li><strong>Background</strong> (upload șofer, lot mare): timeout 300s+ (<code>OCR_TIMEOUT_MS</code>), crește cu numărul de pagini.</li>
+        <li>Document &gt; 3 pagini la <strong>Re-extrage</strong> pe <code>/avize</code> → răspuns <strong>202</strong> cu <code>extraction_pending: true</code>; OCR continuă în fundal.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>App șofer — shell și UX upload</h3>
+      <ul>
+        <li><strong>DriverAppDocuments:</strong> layout mobil (safe-area, <code>100dvh</code>), lățimi responsive iPhone SE → iPad/Surface; tab-uri Upload + Profil.</li>
+        <li><strong>Avertisment blur</strong> înainte de trimitere (heuristică Laplacian în <code>imageQuality.js</code>) — refotografiază sau trimite oricum.</li>
+        <li><strong>Throttle client</strong> (<code>uploadThrottle.js</code>, 20/min) înainte de limita serverului (30/min) — mesaj cu secunde rămase.</li>
+        <li><strong>Polling</strong> listă „Trimise recent” la 8s cât timp status = Încărcat — doar când tab-ul e vizibil (nu din buzunar).</li>
+        <li>Verificare <strong>număr fișiere</strong> (max din API) și <strong>15 MB</strong> per fișier înainte de upload.</li>
+        <li>Erori upload server traduse (<code>uploadErrorMessage</code>): „Prea multe fișiere odată…”, nu mesajul raw multer.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Mesaje eroare în română (client + API)</h3>
+      <ul>
+        <li><strong>API auth:</strong> login, refresh, me — mesaje operator („Email sau parolă greșite”, „Sesiunea a expirat” etc.).</li>
+        <li><strong>Middleware:</strong> 401/403 birou și admin — texte cu pas următor, nu „Invalid or expired token”.</li>
+        <li><strong>Client <code>notify.js</code>:</strong> detectează offline („Fără conexiune”); titluri după status HTTP; preferă mesajul serverului față de boilerplate englezesc.</li>
+        <li><strong>Login:</strong> erori prin <code>friendlyErrorMessage(err)</code>, nu <code>err.message</code> brut.</li>
+        <li>Upload-uri, confirmări client, company — mesaje API traduse acolo unde operatorul le citește.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Deploy VM, tunnel și documentație changelog</h3>
+      <ul>
+        <li>3 terminale dev: API (<code>:3002</code>), UI companion (<code>:5174</code>), <code>cloudflared tunnel --url http://127.0.0.1:5174</code>.</li>
+        <li>Quick tunnel Cloudflare (<code>*.trycloudflare.com</code>) — <code>allowedHosts</code> în Vite companion.</li>
+        <li>Proxy API companion forțează port <strong>3002</strong> (evită proxy implicit spre Transitix full pe 3001).</li>
+        <li><strong>Seed:</strong> conturi demo <code>admin@transitix.ro</code> / <code>sofer@transitix.ro</code>; parole reîmprospătate la fiecare <code>npm run db:seed</code>.</li>
+        <li>Changelog RAI: Sprint 1 închis; Sprint 2 (acest fișier) deschis; șterse changelogs Transitix TMS din <code>changelogsSprints/</code>; whitelist HTML/PDF în <code>.gitignore</code>.</li>
       </ul>
     </div>
   </section>
@@ -168,39 +212,77 @@
     <div class="avoid-break">
       <h3>Login 401 pe VM</h3>
       <ul>
-        <li><strong>Seed:</strong> parole demo reîmprospătate la re-run (<code>admin123</code> / <code>sofer123</code>).</li>
-        <li><strong>Proxy Vite:</strong> browser pe <code>:3001</code>, curl pe <code>:3002</code> — proxy companion forțează 3002.</li>
+        <li><strong>Seed:</strong> parole demo reîmprospătate la re-run (<code>admin123</code> / <code>sofer123</code>) — conturile existente nu rămâneau cu hash vechi.</li>
+        <li><strong>Proxy Vite:</strong> browser pe <code>:3001</code>, curl pe <code>:3002</code> — mod companion forțează proxy API spre <strong>3002</strong>.</li>
+        <li><strong>Login UI:</strong> erori afișate prin <code>friendlyErrorMessage</code> (respectă status HTTP 401 vs offline).</li>
       </ul>
     </div>
 
     <div class="avoid-break">
-      <h3>App companion nu se încărca</h3>
+      <h3>App companion nu se încărca (ecran alb)</h3>
       <ul>
-        <li>Import <code>ProtectedRoute</code> restaurat în <code>App.jsx</code>.</li>
-        <li><code>OfficeRoutes</code> ca fragment <code>{OfficeRoutes()}</code> (react-router v6).</li>
+        <li>Import <code>ProtectedRoute</code> restaurat în <code>App.jsx</code> (lipsea după refactor routing).</li>
+        <li><code>OfficeRoutes</code> randat ca fragment <code>{OfficeRoutes()}</code> — react-router v6 nu acceptă componentă ca copil direct.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
-      <h3>Cloudflare tunnel blocat</h3>
+      <h3>Cloudflare tunnel blocat de Vite</h3>
       <ul>
-        <li>Host <code>*.trycloudflare.com</code> respins de Vite — adăugat în <code>allowedHosts</code>.</li>
+        <li>Host <code>*.trycloudflare.com</code> respins — adăugat în <code>allowedHosts</code> când <code>mode === companion</code>.</li>
+        <li>Dev server companion ascultă pe <code>0.0.0.0:5174</code> (nu doar localhost).</li>
       </ul>
     </div>
 
     <div class="avoid-break">
       <h3>OCR rămânea pe „Încărcat”</h3>
       <ul>
-        <li>Batch deschis: OCR reprocesa toate pozele vechi înainte de cea nouă.</li>
-        <li>Timeout 2 min tăia Paddle pe rotații CPU.</li>
-        <li>Remediat: OCR doar fișiere noi, timeout 5 min, erori per-document nu blochează batch-ul.</li>
+        <li>Batch deschis: OCR reprocesa toate pozele vechi din lot înainte de cea nouă.</li>
+        <li>Timeout 2 min tăia Paddle pe VM cu CPU limitat (rotații multi-unghi).</li>
+        <li>Remediat: OCR doar fișiere noi (<code>documentIds</code>), timeout background 5 min, erori per-document nu opresc batch-ul.</li>
+        <li>Lock <code>runBatchExtract</code> — două extracții simultane pe același batch nu se mai calcă.</li>
       </ul>
     </div>
 
     <div class="avoid-break">
       <h3>Re-extrage pe /avize golea câmpurile</h3>
       <ul>
-        <li>Butonul folosea Vision/stub când nu exista cheie Google — acum același Paddle ca upload-ul șoferului.</li>
+        <li>Butonul folosea calea Vision/stub când lipsea cheia Google — înlocuit cu același Paddle ca upload-ul șoferului.</li>
+        <li>Eliminat al doilea extractor (<code>avizOcr.extractAvizFromFile</code> pe Vision) care suprascria TPO și câmpurile cu stub.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Extracție anula confirmarea operatorului</h3>
+      <ul>
+        <li>Background OCR putea rescrie status batch/document după ce operatorul confirmase pe <code>/avize</code>.</li>
+        <li>Remediat: batch nu revine din <code>confirmed</code>; update status document doar când rândul e încă <code>uploaded</code>.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Timeout OCR marca documentul ca eșuat</h3>
+      <ul>
+        <li>La expirarea ceasului, documentul era marcat failed și dispărea din coada de re-extrage.</li>
+        <li>Remediat: cod <code>OCR_TIMEOUT</code> — rândul rămâne <code>uploaded</code>, mesaj cu timpul, reîncercare posibilă.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Versiune companion confuză (hash git)</h3>
+      <ul>
+        <li>Build afișat ca hash git scurt — înlocuit cu număr <code>companion.build</code> din <code>package.json</code> (build 4 → 5).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare și acoperire</h2>
+    <div class="card">
+      <ul>
+        <li>Teste unitare noi: <code>imageQuality.test.js</code>, <code>uploadThrottle.test.js</code>, <code>appProfile.test.js</code>, <code>readText.test.js</code> (capability OCR, timeout).</li>
+        <li>Teste API rute: <code>driverDocuments.api.test.js</code> (upload + extracție), <code>avize.api.test.js</code> (extract, health OCR) — necesită <code>TEST_DATABASE_URL</code> cu sufix <code>_test</code>.</li>
+        <li>Verificare manuală VM: health → upload șofer → status trece din Încărcat → admin <code>/avize</code> cu sursă <code>paddle</code> și badge De la șofer.</li>
       </ul>
     </div>
   </section>
@@ -220,7 +302,7 @@
   </section>
 
   <footer class="foot">
-    Sprint 2 · deschis 28 august 2026 · actualizat 28 august 2026 · Companion v1.1.0 build 5 ·
+    Sprint 2 · deschis 28 august 2026 · actualizat 28 august 2026 (changelog complet) · Companion v1.1.0 build 5 ·
     Branch RAI-spedition-driver-app · Append până la închidere sprint
   </footer>
 
