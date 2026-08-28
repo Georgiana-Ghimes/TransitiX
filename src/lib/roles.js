@@ -1,4 +1,10 @@
+import { isCompanionOfficePath, isDocumentsProfile } from './appProfile.js';
+
 export const OFFICE_ROLES = ['admin', 'dispatcher', 'finance'];
+
+function officeHomePath() {
+  return isDocumentsProfile() ? '/avize' : '/';
+}
 
 export function isDriverRole(userOrRole) {
   const role = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
@@ -12,7 +18,8 @@ export function isOfficeRole(userOrRole) {
 
 /** Default landing path after login / when a role hits a forbidden area. */
 export function homePathForRole(userOrRole) {
-  return isDriverRole(userOrRole) ? '/driver-app' : '/';
+  if (isDriverRole(userOrRole)) return '/driver-app';
+  return officeHomePath();
 }
 
 /**
@@ -22,6 +29,13 @@ export function homePathForRole(userOrRole) {
  */
 export function postLoginPath(userOrRole, returnTo = '/') {
   if (isDriverRole(userOrRole)) return '/driver-app';
+  if (isDocumentsProfile()) {
+    const path = String(returnTo || '').split('?')[0];
+    if (path && path !== '/' && path !== '/driver-app' && isCompanionOfficePath(path)) {
+      return returnTo;
+    }
+    return '/avize';
+  }
   if (!returnTo || returnTo === '/driver-app') return '/';
   return returnTo;
 }

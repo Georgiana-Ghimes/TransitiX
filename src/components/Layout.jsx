@@ -12,6 +12,10 @@ import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
 import {
+  isCompanionOfficePath,
+  isDocumentsProfile,
+} from '@/lib/appProfile';
+import {
   OFFICE_TOUR_STEPS,
   clampTourStep,
   hasSeenOfficeTour,
@@ -51,6 +55,11 @@ const NAV = [
   { label: 'Jurnal modificări', path: '/audit', icon: History, roles: ['admin'] },
 ];
 
+const COMPANION_OFFICE_NAV = [
+  { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
+  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
+];
+
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
 const SIDEBAR_EXPANDED = 256;
 const SIDEBAR_RAIL = 72;
@@ -84,6 +93,8 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isDriver = isDriverRole(user);
+  const documentsCompanion = isDocumentsProfile();
+  const navItems = documentsCompanion ? COMPANION_OFFICE_NAV : NAV;
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -102,9 +113,9 @@ export default function Layout() {
   const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
   const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
-  // Office tour is for the sidebar app only — never for the driver shell.
+  // Office tour is for the full sidebar app only — never driver or documents companion.
   useEffect(() => {
-    if (isDriver) {
+    if (isDriver || documentsCompanion) {
       setTourOpen(false);
       return;
     }
@@ -112,7 +123,7 @@ export default function Layout() {
       setTourStep(0);
       setTourOpen(true);
     }
-  }, [isDriver]);
+  }, [isDriver, documentsCompanion]);
 
   // Navigate when the tour *step* changes — not whenever the user leaves the step path.
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
@@ -220,7 +231,16 @@ export default function Layout() {
   }
 
   if (location.pathname === '/driver-app' || location.pathname.startsWith('/driver-app/')) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={documentsCompanion ? '/avize' : '/'} replace />;
+  }
+
+  if (documentsCompanion) {
+    if (location.pathname === '/') {
+      return <Navigate to="/avize" replace />;
+    }
+    if (!isCompanionOfficePath(location.pathname)) {
+      return <Navigate to="/avize" replace />;
+    }
   }
 
   return (
@@ -280,7 +300,7 @@ export default function Layout() {
 
         <nav className={cn('flex-1 py-3 overflow-y-auto overflow-x-hidden', showIconsOnly ? 'px-2' : 'px-3')}>
           <ul className="space-y-1">
-            {NAV.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
+            {navItems.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
               const highlighted = isDesktop && tourOpen && tourNavPath === item.path;
@@ -313,6 +333,7 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
+          {!documentsCompanion && (
           <button
             type="button"
             data-tour-ghid
@@ -327,6 +348,8 @@ export default function Layout() {
             <HelpCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Ghid</span>}
           </button>
+          )}
+          {!documentsCompanion && (
           <Link
             to="/settings"
             title="Setări"
@@ -339,6 +362,7 @@ export default function Layout() {
             <UserCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Setări</span>}
           </Link>
+          )}
           <p
             title={`Transitix ${formatAppVersion()}`}
             className={cn(
@@ -389,7 +413,7 @@ export default function Layout() {
             )}
           </div>
 
-          <GlobalSearch className="hidden md:block" />
+          {!documentsCompanion && <GlobalSearch className="hidden md:block" />}
 
           <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-0">
             <NotificationBell />
@@ -435,7 +459,7 @@ export default function Layout() {
           </div>
         </header>
 
-        {!isDesktop && (
+        {!isDesktop && !documentsCompanion && (
           <div className="px-3 sm:px-4 py-2 bg-white border-b border-slate-200">
             <GlobalSearch className="w-full max-w-none" />
           </div>

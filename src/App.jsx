@@ -7,7 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { isDocumentsProfile } from '@/lib/appProfile';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import Trips from '@/pages/Trips';
@@ -57,6 +57,49 @@ function LoginRedirect() {
   return <Navigate to={`/login${q}`} replace />;
 }
 
+function OfficeRoutes() {
+  if (isDocumentsProfile()) {
+    return (
+      <>
+        <Route path="/" element={<Navigate to="/avize" replace />} />
+        <Route path="/avize" element={<AvizeReports />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/driver-app" element={<DriverApp />} />
+        <Route path="*" element={<Navigate to="/avize" replace />} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/trips" element={<Trips />} />
+      <Route path="/trips/:id" element={<TripDetail />} />
+      <Route path="/vehicles" element={<Vehicles />} />
+      <Route path="/drivers" element={<Drivers />} />
+      <Route path="/gps" element={<GPSMap />} />
+      <Route path="/locations" element={<Locations />} />
+      <Route path="/territories" element={<Territories />} />
+      <Route path="/dispatch" element={<Dispatch />} />
+      <Route path="/loading" element={<LoadPlanner />} />
+      <Route path="/load-planner" element={<LoadPlanner2D />} />
+      <Route path="/planning" element={<PlanningAI />} />
+      <Route path="/clients" element={<Clients />} />
+      <Route path="/finance" element={<Finance />} />
+      <Route path="/warehouse" element={<Warehouse />} />
+      <Route path="/documents" element={<Documents />} />
+      <Route path="/avize" element={<AvizeReports />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/checks" element={<Checks />} />
+      <Route path="/commercial" element={<Commercial />} />
+      <Route path="/audit" element={<Audit />} />
+      <Route path="/users" element={<Users />} />
+      <Route path="/driver-app" element={<DriverApp />} />
+      <Route path="/settings" element={<Settings />} />
+    </>
+  );
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth } = useAuth();
 
@@ -75,36 +118,17 @@ const AuthenticatedApp = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {!isDocumentsProfile() && (
+          <>
+            <Route path="/register" element={<Register />} />
+          </>
+        )}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/confirm/:token" element={<ClientPortal />} />
         <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/trips" element={<Trips />} />
-            <Route path="/trips/:id" element={<TripDetail />} />
-            <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/drivers" element={<Drivers />} />
-            <Route path="/gps" element={<GPSMap />} />
-            <Route path="/locations" element={<Locations />} />
-            <Route path="/territories" element={<Territories />} />
-            <Route path="/dispatch" element={<Dispatch />} />
-            <Route path="/loading" element={<LoadPlanner />} />
-            <Route path="/load-planner" element={<LoadPlanner2D />} />
-            <Route path="/planning" element={<PlanningAI />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/finance" element={<Finance />} />
-            <Route path="/warehouse" element={<Warehouse />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/avize" element={<AvizeReports />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/checks" element={<Checks />} />
-            <Route path="/commercial" element={<Commercial />} />
-            <Route path="/audit" element={<Audit />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/driver-app" element={<DriverApp />} />
-            <Route path="/settings" element={<Settings />} />
+            <OfficeRoutes />
           </Route>
         </Route>
           <Route path="*" element={<PageNotFound />} />

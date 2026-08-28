@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { isDocumentsProfile, companionAppTitle } from '@/lib/appProfile';
 import { postLoginPath } from "@/lib/roles";
 
 export default function Login() {
@@ -43,12 +44,16 @@ export default function Login() {
     setExistingSession(null);
   };
 
+  const documentsCompanion = isDocumentsProfile();
+  const appTitle = companionAppTitle();
+
   return (
     <AuthLayout
       brandLogo
       title="Bine ai revenit"
-      subtitle="Autentifică-te în Transitix"
+      subtitle={documentsCompanion ? `Autentifică-te în ${appTitle}` : 'Autentifică-te în Transitix'}
       footer={
+        documentsCompanion ? null : (
         <>
           Nu ai cont?{" "}
           <Link
@@ -58,6 +63,7 @@ export default function Login() {
             Creează unul
           </Link>
         </>
+        )
       }
     >
       {existingSession && (

@@ -1,0 +1,42 @@
+# RAI Spedition documents companion — isolated Postgres + Paddle OCR.
+# Does not touch the main Transitix stack (other ports, other DB volume).
+#
+#   docker compose -f docker-compose.companion.yml up -d --build
+#
+# Postgres: localhost:5435 / DB transitix_rai
+# Paddle OCR: localhost:8101
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-transitix_rai}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - transitix_rai_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-transitix_rai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  paddle-ocr:
+    build:
+      context: ./tools/paddle-ocr
+    ports:
+      - "8101:8100"
+    environment:
+      PADDLE_OCR_LANG: ${PADDLE_OCR_LANG:-latin}
+      PADDLE_OCR_USE_GPU: "0"
+      PADDLE_OCR_AUTO_ROTATE: ${PADDLE_OCR_AUTO_ROTATE:-1}
+    restart: unless-stopped
+    volumes:
+      - transitix_rai_paddle_models:/root/.paddleocr
+
+volumes:
+  transitix_rai_pg:
+  transitix_rai_paddle_models:
