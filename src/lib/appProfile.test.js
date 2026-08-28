@@ -23,4 +23,10 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
   });
+
+  it('companionTagline defaults for documents profile', async () => {
+    vi.stubEnv('VITE_APP_TAGLINE', '');
+    const { companionTagline } = await import('./appProfile.js');
+    expect(companionTagline()).toBe('Companionul tău pentru documente');
+  });
 });

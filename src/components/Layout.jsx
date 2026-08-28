@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
 import { homePathForRole, isDriverRole } from '@/lib/roles';
 import {
+  companionTagline,
   isCompanionOfficePath,
   isDocumentsProfile,
 } from '@/lib/appProfile';
@@ -274,8 +275,8 @@ export default function Layout() {
           )}
         >
           <Link
-            to="/"
-            title="Dashboard"
+            to={documentsCompanion ? '/avize' : '/'}
+            title={documentsCompanion ? 'Avize / Rapoarte' : 'Dashboard'}
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center min-w-0',
@@ -283,11 +284,20 @@ export default function Layout() {
             )}
           >
             {showIconsOnly ? (
-              <BrandLogo variant="mark" />
+              <span title={documentsCompanion ? `${companionTagline()} · ${formatAppVersion()}` : `Transitix · ${formatAppVersion()}`}>
+                <BrandLogo variant="mark" />
+              </span>
             ) : (
               <div className="min-w-0 flex flex-col gap-0.5">
                 <BrandLogo imgClassName="h-7 max-w-[10.5rem]" />
-                <p className="text-[10px] text-white/50 pl-0.5">TMS Platform</p>
+                {documentsCompanion ? (
+                  <>
+                    <p className="text-[11px] text-white/70 leading-snug">{companionTagline()}</p>
+                    <p className="text-[10px] text-white/45 tabular-nums">{formatAppVersion()}</p>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-white/50 pl-0.5">TMS Platform</p>
+                )}
               </div>
             )}
           </Link>
@@ -363,6 +373,7 @@ export default function Layout() {
             {!showIconsOnly && <span>Setări</span>}
           </Link>
           )}
+          {!documentsCompanion && (
           <p
             title={`Transitix ${formatAppVersion()}`}
             className={cn(
@@ -372,6 +383,7 @@ export default function Layout() {
           >
             {formatAppVersion()}
           </p>
+          )}
         </div>
       </aside>
 

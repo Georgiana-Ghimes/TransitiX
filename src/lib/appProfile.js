@@ -21,3 +21,8 @@ export function companionAppTitle() {
   const custom = String(import.meta.env.VITE_APP_TITLE || '').trim();
   return custom || 'Transitix';
 }
+
+export function companionTagline() {
+  const custom = String(import.meta.env.VITE_APP_TAGLINE || '').trim();
+  return custom || 'Companionul tău pentru documente';
+}

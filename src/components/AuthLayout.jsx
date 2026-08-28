@@ -23,13 +23,16 @@ export default function AuthLayout({ icon: Icon, brandLogo = false, title, subti
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-5 sm:p-8">
           {children}
+          <p
+            className="text-center text-xs text-muted-foreground/80 mt-6 tabular-nums"
+            title="Versiune aplicație"
+          >
+            {formatAppVersion()}
+          </p>
         </div>
         {footer && (
           <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
         )}
-        <p className="text-center text-xs text-muted-foreground/80 mt-4 tabular-nums" title="Versiune aplicație">
-          {formatAppVersion()}
-        </p>
       </div>
     </div>
   );
