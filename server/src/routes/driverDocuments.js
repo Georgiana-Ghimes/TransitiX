@@ -141,7 +141,7 @@ router.post('/', (req, res) => {
 
       // Same OCR pipeline as Documente — never block the cab on Vision latency.
       extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id).catch((err) => {
-        log.error('extragerea documentelor a eșuat', err, { batch: batch?.id });
+        log.error('extragerea documentelor a eșuat', err, { batch: result.batch.id });
       });
     } catch (error) {
       sendError(res, error, 'Încărcarea a eșuat');

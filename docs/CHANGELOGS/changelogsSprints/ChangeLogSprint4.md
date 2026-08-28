@@ -151,6 +151,9 @@ folosește — un dispecer nou învăța ecranele întrebând pe cineva.
   constanta comună, formularul ar fi lăsat să treacă exact ce API-ul respinge.
 - **HSTS pleca și în development** — vezi mai sus; comentariul din cod spunea că e limitat la
   producție, dar codul nu făcea asta.
+- **Testele API pentru documente șofer eșuau la OCR în fundal.** Dacă extragerea automată cădea,
+  jurnalul încerca să scrie `batch` din afara tranzacției — variabilă inexistentă — și CI
+  raporta „Unhandled Rejection” chiar când upload-ul reușise.
 
 ## NOTE
 
