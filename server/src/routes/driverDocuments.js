@@ -177,9 +177,11 @@ router.post('/', (req, res) => {
         documents: result.documents.map(serializeRow),
       });
 
-      extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id).catch((extractErr) => {
-        console.error('[driver-documents] extract', extractErr?.message || extractErr);
-      });
+      const docIds = result.documents.map((d) => d.id);
+      extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id, { documentIds: docIds })
+        .catch((extractErr) => {
+          console.error('[driver-documents] extract', extractErr?.message || extractErr);
+        });
     } catch (error) {
       sendError(res, error, 'Încărcarea a eșuat');
     }

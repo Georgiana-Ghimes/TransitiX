@@ -106,7 +106,8 @@ async function readWithPaddle(buffer, mimeType) {
         image_base64: buffer.toString('base64'),
         mime_type: mimeType || 'image/jpeg',
       }),
-      signal: AbortSignal.timeout(120_000),
+      // Auto-rotate tries up to four orientations on CPU — allow several minutes on a VM.
+      signal: AbortSignal.timeout(300_000),
     });
     if (!res.ok) return null;
     const json = await res.json();

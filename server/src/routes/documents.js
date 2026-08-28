@@ -66,18 +66,62 @@ function toColumns(values) {
   return out;
 }
 
+/** One batch at a time — parallel driver uploads must not OCR the same rows twice. */
+const batchExtractChains = new Map();
+
+function runBatchExtract(batchKey, fn) {
+  const prev = batchExtractChains.get(batchKey) || Promise.resolve();
+  const next = prev.catch(() => {}).then(fn).finally(() => {
+    if (batchExtractChains.get(batchKey) === next) batchExtractChains.delete(batchKey);
+  });
+  batchExtractChains.set(batchKey, next);
+  return next;
+}
+
+async function markExtractFailed(companyId, docId, err) {
+  const message = err?.message || String(err);
+  await query(
+    `UPDATE aviz_documents SET
+       status = 'extracted',
+       needs_review = TRUE,
+       extraction_source = 'none',
+       extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $1::jsonb,
+       updated_at = NOW()
+     WHERE id = $2 AND company_id = $3 AND status = 'uploaded'`,
+    [JSON.stringify({ extract_error: message }), docId, companyId]
+  );
+}
+
 /**
  * Runs OCR over every document in a batch that has not been extracted yet.
  * Shared by the office extract endpoint and the driver upload path.
+ *
+ * @param {string[]} [options.documentIds]  When set (driver upload), only these rows are OCR'd —
+ *   not every other stuck `uploaded` row still sitting in the open batch.
  */
-export async function extractBatchDocuments(companyId, batchId, userId, { force = false, profileId } = {}) {
-  const docs = (await query(
+export async function extractBatchDocuments(companyId, batchId, userId, {
+  force = false,
+  profileId,
+  documentIds,
+} = {}) {
+  const batchKey = `${companyId}:${batchId}`;
+  return runBatchExtract(batchKey, async () => {
+  let docs = (await query(
     `SELECT * FROM aviz_documents WHERE company_id = $1 AND batch_id = $2 ORDER BY created_at`,
     [companyId, batchId]
   )).rows;
 
+  if (Array.isArray(documentIds) && documentIds.length) {
+    const wanted = new Set(documentIds);
+    docs = docs.filter((d) => wanted.has(d.id));
+  }
+
   const results = [];
   for (const doc of docs) {
+    if (!force && doc.status !== 'uploaded') {
+      results.push({ id: doc.id, skipped: true, reason: 'already_extracted' });
+      continue;
+    }
     if (doc.ocr_profile_id && !force) {
       results.push({
         id: doc.id,
@@ -93,52 +137,58 @@ export async function extractBatchDocuments(companyId, batchId, userId, { force 
       continue;
     }
 
-    const text = await readDocumentText(doc.file_url);
-    const extraction = extractDocument(text.text, {
-      documentType: doc.document_type,
-      profileId,
-    });
-
-    const corrected = doc.corrected_fields ?? [];
-    const merged = corrected.length
-      ? reExtract(text.text, {
+    try {
+      const text = await readDocumentText(doc.file_url);
+      const extraction = extractDocument(text.text, {
         documentType: doc.document_type,
         profileId,
-        corrections: doc.extracted_data?.values ?? {},
-        correctedFields: corrected,
-      })
-      : extraction;
-
-    const columns = toColumns(merged.values);
-    const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
-
-    await withTransaction(async (client) => {
-      await client.query(
-        `UPDATE aviz_documents SET
-           ocr_profile_id = $1, ocr_confidence = $2, field_confidence = $3,
-           needs_review = $4, extraction_source = $5,
-           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $6::jsonb
-           ${sets.length ? `, ${sets.join(', ')}` : ''},
-           status = CASE WHEN status = 'uploaded' THEN 'extracted' ELSE status END,
-           updated_at = NOW()
-         WHERE id = $${7 + Object.keys(columns).length} AND company_id = $${8 + Object.keys(columns).length}`,
-        [
-          merged.profile_id, merged.confidence,
-          JSON.stringify(merged.fields), merged.needs_review, text.source,
-          JSON.stringify({ raw_text: text.text, values: merged.values, review_fields: merged.review_fields }),
-          ...Object.values(columns),
-          doc.id, companyId,
-        ]
-      );
-      await logEvent(client, {
-        companyId, documentId: doc.id, batchId,
-        userId, kind: doc.ocr_profile_id ? 're_extracted' : 'extracted',
-        summary: merged.profile_name ?? 'nerecunoscut',
-        detail: { confidence: merged.confidence, review_fields: merged.review_fields, text_source: text.source },
       });
-    });
 
-    results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
+      const corrected = doc.corrected_fields ?? [];
+      const merged = corrected.length
+        ? reExtract(text.text, {
+          documentType: doc.document_type,
+          profileId,
+          corrections: doc.extracted_data?.values ?? {},
+          correctedFields: corrected,
+        })
+        : extraction;
+
+      const columns = toColumns(merged.values);
+      const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
+
+      await withTransaction(async (client) => {
+        await client.query(
+          `UPDATE aviz_documents SET
+             ocr_profile_id = $1, ocr_confidence = $2, field_confidence = $3,
+             needs_review = $4, extraction_source = $5,
+             extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $6::jsonb
+             ${sets.length ? `, ${sets.join(', ')}` : ''},
+             status = CASE WHEN status = 'uploaded' THEN 'extracted' ELSE status END,
+             updated_at = NOW()
+           WHERE id = $${7 + Object.keys(columns).length} AND company_id = $${8 + Object.keys(columns).length}`,
+          [
+            merged.profile_id, merged.confidence,
+            JSON.stringify(merged.fields), merged.needs_review, text.source,
+            JSON.stringify({ raw_text: text.text, values: merged.values, review_fields: merged.review_fields }),
+            ...Object.values(columns),
+            doc.id, companyId,
+          ]
+        );
+        await logEvent(client, {
+          companyId, documentId: doc.id, batchId,
+          userId, kind: doc.ocr_profile_id ? 're_extracted' : 'extracted',
+          summary: merged.profile_name ?? 'nerecunoscut',
+          detail: { confidence: merged.confidence, review_fields: merged.review_fields, text_source: text.source },
+        });
+      });
+
+      results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
+    } catch (err) {
+      console.error('[documents] extract doc', doc.id, err);
+      await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      results.push({ id: doc.id, filename: doc.original_filename, error: err?.message || 'extract_failed' });
+    }
   }
 
   // A batch only ever moves forward. Extraction now runs in the background for driver uploads,
@@ -152,10 +202,11 @@ export async function extractBatchDocuments(companyId, batchId, userId, { force 
 
   return {
     batch_id: batchId,
-    extracted: results.length,
+    extracted: results.filter((r) => !r.skipped && !r.error).length,
     needs_review: results.filter((r) => r.needs_review).length,
     results,
   };
+  });
 }
 
 /** The profiles available, so the review screen can offer an override. */
