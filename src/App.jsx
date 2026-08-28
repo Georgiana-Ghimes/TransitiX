@@ -129,7 +129,7 @@ const AuthenticatedApp = () => {
         <Route path="/confirm/:token" element={<ClientPortal />} />
         <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
           <Route element={<Layout />}>
-            <OfficeRoutes />
+            {OfficeRoutes()}
           </Route>
         </Route>
           <Route path="*" element={<PageNotFound />} />
