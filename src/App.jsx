@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { isDocumentsProfile } from '@/lib/appProfile';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
