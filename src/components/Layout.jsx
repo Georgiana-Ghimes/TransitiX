@@ -282,7 +282,8 @@ export default function Layout() {
       >
         <div
           className={cn(
-            'flex items-center h-16 border-b border-white/10 shrink-0',
+            'flex items-center min-h-16 border-b border-white/10 shrink-0',
+            'pt-[max(0.625rem,env(safe-area-inset-top))] pb-3',
             showIconsOnly ? 'justify-center px-2' : 'gap-2.5 px-4'
           )}
         >
@@ -409,10 +410,10 @@ export default function Layout() {
         )}
 
         <header className={cn(
-          'sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6',
+          'sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6',
           !isDesktop && tourOpen && 'z-[118]'
         )}>
-          <div className="flex items-center justify-start min-w-0">
+          <div className="flex items-center justify-start min-w-0 shrink-0">
             {!isDesktop ? (
               <button
                 type="button"
@@ -437,9 +438,13 @@ export default function Layout() {
             )}
           </div>
 
-          {!documentsCompanion && <GlobalSearch className="hidden md:block" />}
+          {!documentsCompanion && (
+            <div className="hidden md:flex flex-1 justify-center min-w-0 px-2">
+              <GlobalSearch className="max-w-xl w-full" />
+            </div>
+          )}
 
-          <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-0 ml-auto shrink-0">
             <NotificationBell />
 
             <div className="relative">

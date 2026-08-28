@@ -19,6 +19,10 @@
     body {
       font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       color: var(--ink);
+      /* Fără fundal explicit, textul aproape negru rămâne invizibil într-un browser sau
+         cititor PDF pe temă întunecată — documentul ajunge la client, deci nu poate depinde
+         de setările lui. */
+      background: #ffffff;
       font-size: 10.5pt;
       line-height: 1.45;
       margin: 0;
@@ -87,7 +91,7 @@
     <h1>Transitix Companion — Sprint 2</h1>
     <div class="meta">
       Branch <strong>RAI-spedition-driver-app</strong> · profil <strong>documents</strong><br />
-      Versiune companion <strong>v1.1.0 · build 5</strong> · deschis <strong>28 august 2026</strong><br />
+      Versiune companion <strong>v1.1.0 · build 8</strong> · deschis <strong>28 august 2026</strong><br />
       Perioada: de la pull <em>driver-app</em> (după Sprint 1) până la închiderea sprintului (anunțată de PO)
     </div>
     <div class="badge-row">
@@ -132,7 +136,8 @@
         <li>Versiune afișată în <strong>login</strong> (în card), <strong>sidebar/topbar</strong> birou și <strong>titlul tab-ului</strong> browser: <strong>v1.1.0 - build 5</strong>.</li>
         <li>Număr companion în <code>package.json → companion</code> (<code>version</code> + <code>build</code>), decuplat de Transitix 1.12.x; hook-ul semver nu atinge blocul <code>companion</code>.</li>
         <li>Script <code>scripts/resolve-app-build.js</code> — sursă unică pentru <code>__APP_VERSION__</code> și <code>__APP_BUILD__</code> la compile; build numeric (nu hash git).</li>
-        <li>Evoluție în sprint: v1.0.0 → build 4 → <strong>v1.1.0 build 5</strong>.</li>
+        <li>Evoluție în sprint: v1.0.0 → build 4 → v1.1.0 build 5 → build 6 → <strong>build 7</strong>.</li>
+        <li>Profilul de build (<code>documents</code> / <code>full</code>) a ieșit din <code>vite.config.js</code> în <code>resolveAppProfile(mode)</code>, alături de versiune, build și titlu — acum acoperit de teste, fiindcă regresia care livra tăcut aplicația greșită nu era detectabilă din config.</li>
       </ul>
     </div>
 
@@ -197,11 +202,58 @@
     <div class="avoid-break">
       <h3>Deploy VM, tunnel și documentație changelog</h3>
       <ul>
-        <li>3 terminale dev: API (<code>:3002</code>), UI companion (<code>:5174</code>), <code>cloudflared tunnel --url http://127.0.0.1:5174</code>.</li>
-        <li>Quick tunnel Cloudflare (<code>*.trycloudflare.com</code>) — <code>allowedHosts</code> în Vite companion.</li>
+        <li><strong>Dezvoltare</strong> — 3 terminale: API (<code>:3002</code>), UI companion (<code>:5174</code>), <code>cloudflared tunnel --url http://127.0.0.1:5174</code>. Pentru punerea la dispoziția clientului, vezi „Publicare” mai jos: build servit de API, pe un tunel cu nume.</li>
+        <li>Quick tunnel Cloudflare (<code>*.trycloudflare.com</code>) — <code>allowedHosts</code> în Vite companion. Rămâne valabil doar pentru dezvoltare.</li>
         <li>Proxy API companion forțează port <strong>3002</strong> (evită proxy implicit spre Transitix full pe 3001).</li>
         <li><strong>Seed:</strong> conturi demo <code>admin@transitix.ro</code> / <code>sofer@transitix.ro</code>; parole reîmprospătate la fiecare <code>npm run db:seed</code>.</li>
         <li>Changelog RAI: Sprint 1 închis; Sprint 2 (acest fișier) deschis; șterse changelogs Transitix TMS din <code>changelogsSprints/</code>; whitelist HTML/PDF în <code>.gitignore</code>.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Publicare — tunel cu nume, proxy și headere (build 6)</h3>
+      <ul>
+        <li><strong>TLS rămâne la Cloudflare</strong>, nu în aplicație: certificatul de la marginea tunelului bate un certificat auto-semnat pe VM, care ar fi un pas înapoi plus reînnoiri de întreținut.</li>
+        <li><strong>Tunel cu nume în locul celui rapid.</strong> Un quick tunnel are certificat real, dar adresa <code>*.trycloudflare.com</code> se schimbă la fiecare repornire, deci linkul salvat de client moare după un reboot. Șablon și pași: <code>docker/cloudflared/config.example.yml</code> (hostname permanent, <code>connectTimeout</code> ridicat pentru OCR lung, notă că SSE nu are voie tamponat, port <code>3002</code>).</li>
+        <li><code>TRUST_PROXY</code> — <strong>oprit implicit</strong>. A crede <code>X-Forwarded-*</code> fără nimic în față permite oricui să pretindă orice adresă. Acceptă și număr de hopuri.</li>
+        <li><code>server/src/lib/security.js</code>: <code>nosniff</code>, <code>X-Frame-Options: DENY</code>, <code>frame-ancestors 'none'</code>, <code>Referrer-Policy</code>.</li>
+        <li><strong>HSTS doar pe HTTPS</strong>, decis per cerere din <code>req.secure</code> — un dezvoltator pe localhost nu-și fixează browserul pe o schemă pe care serverul de dezvoltare n-o vorbește.</li>
+        <li>Fără CSP complet, intenționat: aplicația încarcă bundle propriu, stiluri inline și previzualizări pe blob-URL; o politică netestată ar strica ecranul în tăcere.</li>
+        <li><code>CLIENT_ORIGIN</code> mutat pe hostname-ul <code>https://</code>, aceeași origine ca API-ul.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Întreținere — curățare uploads (build 6)</h3>
+      <ul>
+        <li><code>npm run uploads:prune</code> — șterge <strong>doar orfani</strong>: fișiere pe care nicio linie din bază nu le referențiază.</li>
+        <li><strong>Un fișier referențiat nu se șterge niciodată</strong>, oricât de vechi. <code>aviz_export_log.snapshot</code> reproduce cifrele de pe anexă, dar numai fișierul arată clientului de unde vin. Retenția prin vechime e o decizie contabilă cu termen legal, nu una de spațiu pe disc — deliberat neimplementată.</li>
+        <li>Trei paznici: <strong>dry-run implicit</strong> (<code>--delete</code> cere intenție), <code>--min-age-days</code> (7) ca un upload care își așteaptă rândul să nu dispară, și <strong>oprire dacă schema s-a schimbat</strong> — o coloană redenumită ar face fișierele ei să pară orfane.</li>
+        <li>Se oprește și dacă baza nu conține nicio companie, dar există fișiere pe disc — semn de <code>DATABASE_URL</code> greșit.</li>
+        <li>O coloană nouă care ține o cale de upload <strong>trebuie adăugată în <code>FILE_COLUMNS</code></strong>, altfel fișierele ei devin ștergibile.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Calibrare prag claritate (build 6)</h3>
+      <ul>
+        <li><code>/dev/sharpness</code> — pagină <strong>doar în build de dezvoltare</strong>: adaugi avize fotografiate, le marchezi Citibil / Neclar, primești pragul sugerat lângă cel din cod și câte greșeli face fiecare.</li>
+        <li>Rulează <strong>exact codul din producție</strong> (același decodor, aceeași reducere la 640px, același Laplacian). Un script Node cu alt decodor ar scala diferit și ar da un prag care se poartă altfel în browser.</li>
+        <li><code>suggestThreshold()</code> nu tratează egal cele două greșeli: un avertisment fals costă o apăsare (verificarea nu blochează), o poză mișcată ratată costă un document ilizibil. Ratările cântăresc dublu, la egalitate pragul urcă.</li>
+        <li>Spune când grupele se suprapun și când sunt prea puține exemple ca sugestia să fie credibilă.</li>
+        <li>Verificat absent din build-ul de producție — nici ruta, nici <code>suggestThreshold</code> (scos de tree-shaking).</li>
+        <li>Verificarea de claritate rulează acum și pe upload-ul din birou, dar <strong>fără să întrerupă</strong> un lot de scanări: numește fișierul slab și continuă.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Sidecar — verificare fără motorul ML (build 7)</h3>
+      <ul>
+        <li><code>tools/paddle-ocr/check_logic.py</code> rulează tot ce e în jurul recunoașterii, cu PaddleOCR înlocuit de un dublu: rasterizare PDF, plafon de pagini, raportarea trunchierii, căutarea orientării, contractul endpoint-ului.</li>
+        <li>Motivul: motorul are sute de megaocteți și descarcă modele, deci pe o mașină fără el logica din jur rămânea nerulată. <strong>12 verificări</strong>, ies cu cod diferit de zero la eșec.</li>
+        <li>Confirmă economia din refolosirea orientării: <code>passes per page: [4, 1, 1]</code> — prima pagină caută toate cele patru unghiuri, următoarele costă câte o trecere.</li>
+        <li>Copiat în imagine, deci rulabil și în container: <code>docker compose -f docker-compose.companion.yml exec paddle-ocr python /app/check_logic.py</code>.</li>
+        <li>Verificat separat că toate pinurile (<code>pymupdf</code>, <code>paddlepaddle</code>, <code>paddleocr</code>, <code>numpy</code>, <code>pillow</code>) au wheel pentru cp310/manylinux — build-ul nu compilează din sursă.</li>
       </ul>
     </div>
   </section>
@@ -274,13 +326,41 @@
         <li>Build afișat ca hash git scurt — înlocuit cu număr <code>companion.build</code> din <code>package.json</code> (build 4 → 5).</li>
       </ul>
     </div>
+    <div class="avoid-break">
+      <h3>Mesajele ocoleau traducătorul (build 6)</h3>
+      <ul>
+        <li>18 apeluri foloseau tiparul <code>notifyError(err.message || 'Text')</code> — un singur argument, deci eroarea brută devenea <strong>titlul</strong>, descrierea era generică, iar statusul HTTP se pierdea complet (un string nu poartă <code>err.status</code>).</li>
+        <li>Login, înregistrare și resetare parolă mergeau pe <code>setError(err.message)</code>, fără traducător — exact ecranele văzute primele de un utilizator nou.</li>
+        <li>Corectate toate: <code>notifyError('Text', err)</code>, <code>friendlyErrorMessage(err)</code> pe cele trei ecrane de autentificare, plus două <code>toast()</code> directe din <code>Vehicles.jsx</code>.</li>
+        <li><code>notifyError</code> cu un singur argument nu mai lipește o a doua propoziție generică sub un mesaj deja precis.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Topbar birou — iconițe centrate (build 8)</h3>
+      <ul>
+        <li>Profil și notificări apăreau la mijlocul header-ului în profilul companion (fără căutare globală).</li>
+        <li>Cauză: grid cu trei coloane — al doilea copil ajungea în coloana din mijloc când <code>GlobalSearch</code> lipsea.</li>
+        <li>Remediat: layout flex; grupul din dreapta cu <code>ml-auto</code>, lipit de colțul dreapta.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Logo sidebar lipit de marginea browserului (build 8)</h3>
+      <ul>
+        <li>Zona de brand din sidebar nu avea spațiu deasupra logo-ului.</li>
+        <li>Adăugat padding sus (<code>safe-area-inset-top</code> pe telefon) ca logo-ul să nu fie lipit de headerul browserului.</li>
+      </ul>
+    </div>
   </section>
 
   <section class="avoid-break">
     <h2>Testare și acoperire</h2>
     <div class="card">
       <ul>
-        <li>Teste unitare noi: <code>imageQuality.test.js</code>, <code>uploadThrottle.test.js</code>, <code>appProfile.test.js</code>, <code>readText.test.js</code> (capability OCR, timeout).</li>
+        <li>Teste unitare noi: <code>imageQuality.test.js</code> (inclusiv <code>suggestThreshold</code>), <code>uploadThrottle.test.js</code>, <code>appProfile.test.js</code>, <code>readText.test.js</code> (capability OCR, bugete timp), <code>notify.test.js</code> (status, offline, boilerplate), <code>resolve-app-build.test.js</code> (profil din mode), <code>security.test.js</code> (proxy, HSTS), <code>pruneUploads.test.js</code> (decizia de ștergere, izolată de disc și de bază).</li>
+        <li><strong>Total la build 7: 1436 teste unitare (94 fișiere) și 201 teste API (12 fișiere)</strong>, lint curat.</li>
+        <li>Logica sidecar-ului: <code>python tools/paddle-ocr/check_logic.py</code> — 12 verificări, fără PaddleOCR.</li>
         <li>Teste API rute: <code>driverDocuments.api.test.js</code> (upload + extracție), <code>avize.api.test.js</code> (extract, health OCR) — necesită <code>TEST_DATABASE_URL</code> cu sufix <code>_test</code>.</li>
         <li>Verificare manuală VM: health → upload șofer → status trece din Încărcat → admin <code>/avize</code> cu sursă <code>paddle</code> și badge De la șofer.</li>
       </ul>
@@ -291,18 +371,20 @@
     <h2>Testare rapidă (VM companion)</h2>
     <div class="card">
       <ol>
-        <li><code>docker compose -f docker-compose.companion.yml up -d --build</code></li>
-        <li><code>cp server/companion.env.example server/.env</code> · migrate · seed</li>
-        <li><strong>Dev:</strong> <code>npm run dev --prefix server</code> + <code>npm run dev:companion</code> + cloudflared</li>
-        <li><strong>Demo VM:</strong> <code>npm run start:companion</code> (un singur port API + UI build)</li>
-        <li>Health OCR: <code>curl http://127.0.0.1:3002/api/health</code> → <code>capabilities.ocr</code></li>
-        <li>Login șofer → upload aviz → admin <code>/avize</code> (filtru „De la șofer”)</li>
+        <li><code>docker compose -f docker-compose.companion.yml up -d --build</code> — Postgres <code>:5435</code>, sidecar OCR <code>:8101</code>.</li>
+        <li><code>curl http://127.0.0.1:8101/health</code> — <code>engine_loaded:false</code> e normal, modelele se încarcă la prima cerere.</li>
+        <li><code>docker compose -f docker-compose.companion.yml exec paddle-ocr python /app/check_logic.py</code> — caută <code>passes per page: [4, 1, 1]</code>.</li>
+        <li><code>cp server/companion.env.example server/.env</code> → schimbă <code>JWT_SECRET</code> și <code>CLIENT_ORIGIN</code> · <code>npm run db:migrate</code> · <code>npm run db:seed</code></li>
+        <li><code>npm run start:companion</code> — build companion + API pe un singur port (<code>:3002</code>).</li>
+        <li><code>curl -s http://127.0.0.1:3002/api/health</code> → <code>capabilities.ocr</code> trebuie <code>paddle</code> (nu <code>paddle-down</code>).</li>
+        <li><strong>Proba reală:</strong> aviz scanat de mai multe pagini pe <code>/avize</code>; peste 3 pagini merge în fundal. Verifică apoi <code>extracted_data->>'pages'</code> egal cu numărul real și <code>pages_truncated</code> gol.</li>
+        <li>Cu avize reale în mână: <code>npm run dev</code> → <code>/dev/sharpness</code> pentru pragul de claritate.</li>
       </ol>
     </div>
   </section>
 
   <footer class="foot">
-    Sprint 2 · deschis 28 august 2026 · actualizat 28 august 2026 (changelog complet) · Companion v1.1.0 build 5 ·
+    Sprint 2 · deschis 28 august 2026 · actualizat 28 august 2026 · Companion v1.1.0 build 8 ·
     Branch RAI-spedition-driver-app · Append până la închidere sprint
   </footer>
 
