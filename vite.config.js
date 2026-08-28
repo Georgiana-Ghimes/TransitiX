@@ -10,7 +10,7 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 
 const apiPort = Number(process.env.API_PORT) || 3001
 const appBuild = resolveAppBuild()
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_BUILD__: JSON.stringify(appBuild),
@@ -34,8 +34,10 @@ export default defineConfig({
     },
   },
   server: {
-    host: '127.0.0.1',
-    port: 5173,
+    host: mode === 'companion' ? '0.0.0.0' : '127.0.0.1',
+    port: mode === 'companion' ? 5174 : 5173,
+    // Cloudflare quick tunnels (*.trycloudflare.com) forward a foreign Host header.
+    allowedHosts: mode === 'companion' ? ['.trycloudflare.com', '.cfargotunnel.com'] : undefined,
     proxy: {
       '/api': {
         target: `http://127.0.0.1:${apiPort}`,
@@ -58,5 +60,5 @@ export default defineConfig({
       },
     },
   },
-});
+}));
 
