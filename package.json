@@ -2,6 +2,7 @@
   "name": "transitix",
   "private": true,
   "version": "1.0.0",
+  "build": 4,
   "type": "module",
   "scripts": {
     "prepare": "node scripts/install-git-hooks.js",

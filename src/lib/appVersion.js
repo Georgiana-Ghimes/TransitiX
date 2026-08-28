@@ -10,5 +10,5 @@ export function formatAppVersion(version = APP_VERSION, { withBuild = true } = {
   const ver = !raw ? 'v0.0.0' : (raw.startsWith('v') ? raw : `v${raw}`);
   if (!withBuild) return ver;
   const build = String(APP_BUILD || '').trim();
-  return build ? `${ver} - ${build}` : ver;
+  return build ? `${ver} - build ${build}` : ver;
 }
