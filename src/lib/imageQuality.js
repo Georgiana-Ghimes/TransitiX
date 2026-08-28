@@ -124,3 +124,57 @@ export async function findBlurriest(files, threshold = SHARPNESS_MIN) {
   if (!worst || !isBlurry(worst.score, threshold)) return null;
   return worst;
 }
+
+/**
+ * Where to put the warning line, given photos somebody has judged by eye.
+ *
+ * The two mistakes do not cost the same. A false warning on a readable photo costs one tap —
+ * the check never blocks. A missed blurry photo costs a document the office cannot read and,
+ * often, a trip back to the truck. So misses are weighted double and ties break upward.
+ *
+ * @param {{score: number, readable: boolean}[]} samples
+ * @returns {{threshold: number, falseWarnings: number, missed: number, separable: boolean,
+ *   readable: number, blurry: number}}
+ */
+export function suggestThreshold(samples) {
+  const clean = (samples || []).filter((s) => Number.isFinite(s?.score));
+  const readable = clean.filter((s) => s.readable).map((s) => s.score);
+  const blurry = clean.filter((s) => !s.readable).map((s) => s.score);
+
+  if (!readable.length || !blurry.length) {
+    return {
+      threshold: SHARPNESS_MIN,
+      falseWarnings: 0,
+      missed: 0,
+      separable: false,
+      readable: readable.length,
+      blurry: blurry.length,
+    };
+  }
+
+  const scores = [...new Set(clean.map((s) => s.score))].sort((a, b) => a - b);
+  const candidates = [scores[0] - 1];
+  for (let i = 1; i < scores.length; i += 1) candidates.push((scores[i - 1] + scores[i]) / 2);
+  candidates.push(scores[scores.length - 1] + 1);
+
+  let best = null;
+  for (const threshold of candidates) {
+    const falseWarnings = readable.filter((v) => v < threshold).length;
+    const missed = blurry.filter((v) => v >= threshold).length;
+    const cost = missed * 2 + falseWarnings;
+    // `>=` on the tie keeps the later, higher candidate: catching a blur beats sparing a tap.
+    if (!best || cost < best.cost || (cost === best.cost && threshold >= best.threshold)) {
+      best = { threshold, falseWarnings, missed, cost };
+    }
+  }
+
+  return {
+    threshold: Math.round(best.threshold * 10) / 10,
+    falseWarnings: best.falseWarnings,
+    missed: best.missed,
+    // No clean cut exists when the groups overlap; the number is then a compromise, not a line.
+    separable: Math.max(...blurry) < Math.min(...readable),
+    readable: readable.length,
+    blurry: blurry.length,
+  };
+}

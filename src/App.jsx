@@ -40,6 +40,11 @@ const Audit = lazy(() => import('@/pages/Audit'));
 const Users = lazy(() => import('@/pages/Users'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const DriverAppDocuments = lazy(() => import('@/pages/DriverAppDocuments'));
+// Folded away in a production build: `import.meta.env.DEV` becomes `false`, the ternary
+// collapses, and the dynamic import never becomes a chunk. Verified against dist/.
+const SharpnessCalibration = import.meta.env.DEV
+  ? lazy(() => import('@/pages/dev/SharpnessCalibration'))
+  : null;
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 
 function PageLoader() {
@@ -131,6 +136,9 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
           <Route element={<Layout />}>
             {OfficeRoutes()}
+            {SharpnessCalibration && (
+              <Route path="/dev/sharpness" element={<SharpnessCalibration />} />
+            )}
           </Route>
         </Route>
           <Route path="*" element={<PageNotFound />} />

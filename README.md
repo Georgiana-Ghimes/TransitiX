@@ -197,6 +197,41 @@ Back both halves up together — the database alone cannot reproduce a document:
 npm run db:backup -- --keep 14
 ```
 
+Disk is reclaimed separately, and only from files nothing points at:
+
+```bash
+npm run uploads:prune                      # lists orphans, deletes nothing
+npm run uploads:prune -- --delete
+```
+
+A file a row still references is never removed, however old — it is the evidence behind an
+export. Ageing those out is an accounting decision with a retention period behind it, not a
+disk-space one.
+
+### Publishing it
+
+TLS is not terminated by the app and should not be: Cloudflare presents a real certificate at
+its edge, and a self-signed one on the VM would be a downgrade. What the app has to do is know
+the proxy is there.
+
+Use a **named** tunnel, not `cloudflared tunnel --url`. A quick tunnel's certificate is real, but
+its `*.trycloudflare.com` address changes on every restart, so the link a customer bookmarked
+stops working after a reboot. Template and setup steps: `docker/cloudflared/config.example.yml`.
+
+Then in `server/.env`:
+
+```
+CLIENT_ORIGIN=https://documente.exemplu.ro
+TRUST_PROXY=1
+```
+
+`TRUST_PROXY` is off by default on purpose — believing `X-Forwarded-*` with nothing in front
+lets any client claim any address. With it on, `req.secure` is true behind the tunnel and the app
+sends HSTS; over plain HTTP it does not, so a developer on localhost never gets their browser
+pinned to a scheme the dev server does not speak.
+
+The tunnel dials out, so no inbound port is opened on the VM.
+
 `GET /api/health` reports `ocr`: `paddle` when the sidecar answers, `paddle-down` when it is
 configured but silent, `false` when there is none. `/avize` shows a banner for `paddle-down`,
 because with no fallback provider a stopped sidecar means uploads land with no fields filled.

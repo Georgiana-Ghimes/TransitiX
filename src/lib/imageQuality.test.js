@@ -4,6 +4,7 @@ import {
   isBlurry,
   laplacianVariance,
   sampleSize,
+  suggestThreshold,
   toGrayscale,
 } from './imageQuality.js';
 
@@ -89,5 +90,48 @@ describe('sampleSize', () => {
 
   it('never upscales a photo that is already small', () => {
     expect(sampleSize(320, 240, 640)).toEqual({ width: 320, height: 240 });
+  });
+});
+
+describe('suggestThreshold', () => {
+  const sample = (score, readable) => ({ score, readable });
+
+  it('puts the line between two groups that do not overlap', () => {
+    const out = suggestThreshold([
+      sample(120, true), sample(200, true), sample(310, true),
+      sample(10, false), sample(25, false), sample(40, false),
+    ]);
+    expect(out.threshold).toBeGreaterThan(40);
+    expect(out.threshold).toBeLessThanOrEqual(120);
+    expect(out.falseWarnings).toBe(0);
+    expect(out.missed).toBe(0);
+    expect(out.separable).toBe(true);
+  });
+
+  it('prefers a false warning over a missed blur when the groups overlap', () => {
+    const out = suggestThreshold([
+      sample(50, true), sample(60, true), sample(300, true),
+      sample(55, false), sample(20, false),
+    ]);
+    expect(out.separable).toBe(false);
+    // Letting the 55 through would cost an unreadable document; a warning costs one tap.
+    expect(out.threshold).toBeGreaterThan(55);
+    expect(out.missed).toBe(0);
+  });
+
+  it('says nothing useful when only one kind was labelled', () => {
+    const out = suggestThreshold([sample(100, true), sample(200, true)]);
+    expect(out.threshold).toBe(SHARPNESS_MIN);
+    expect(out.separable).toBe(false);
+    expect(out.blurry).toBe(0);
+  });
+
+  it('ignores samples that could not be measured', () => {
+    const out = suggestThreshold([
+      sample(null, true), sample(undefined, false),
+      sample(300, true), sample(10, false),
+    ]);
+    expect(out.readable).toBe(1);
+    expect(out.blurry).toBe(1);
   });
 });

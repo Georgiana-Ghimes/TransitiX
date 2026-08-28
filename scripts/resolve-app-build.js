@@ -35,3 +35,16 @@ export function resolveAppTitle(mode) {
   if (mode === 'companion' && pkg.companion?.title) return String(pkg.companion.title);
   return '';
 }
+
+/**
+ * Which app a build produces.
+ *
+ * Derived from the build mode, not from a `.env.companion` somebody has to remember to create:
+ * `vite build --mode companion` without that file silently produced the full Transitix app, and
+ * nothing failed — the wrong product just shipped. Env still wins, for one-off builds.
+ */
+export function resolveAppProfile(mode) {
+  const fromEnv = String(process.env.VITE_APP_PROFILE || '').trim().toLowerCase();
+  if (fromEnv) return fromEnv === 'documents' ? 'documents' : 'full';
+  return mode === 'companion' ? 'documents' : 'full';
+}

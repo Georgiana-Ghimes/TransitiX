@@ -2,22 +2,23 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { defineConfig } from 'vite'
 import { fileURLToPath } from 'url'
-import { resolveAppBuild, resolveAppTitle, resolveAppVersion } from './scripts/resolve-app-build.js'
+import {
+  resolveAppBuild,
+  resolveAppProfile,
+  resolveAppTitle,
+  resolveAppVersion,
+} from './scripts/resolve-app-build.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig(({ mode }) => {
   // Companion API defaults to :3002 so it never proxies to the main Transitix server on :3001.
   const apiPort = Number(process.env.API_PORT) || (mode === 'companion' ? 3002 : 3001)
-  // The profile comes from the mode, not from a .env.companion somebody has to remember to
-  // create: `--mode companion` without that file silently built the full Transitix app.
-  const appProfile = process.env.VITE_APP_PROFILE || (mode === 'companion' ? 'documents' : 'full')
-
   return {
     define: {
       __APP_VERSION__: JSON.stringify(resolveAppVersion(mode)),
       __APP_BUILD__: JSON.stringify(resolveAppBuild(mode)),
-      'import.meta.env.VITE_APP_PROFILE': JSON.stringify(appProfile),
+      'import.meta.env.VITE_APP_PROFILE': JSON.stringify(resolveAppProfile(mode)),
       'import.meta.env.VITE_APP_TITLE': JSON.stringify(resolveAppTitle(mode)),
     },
     plugins: [react()],

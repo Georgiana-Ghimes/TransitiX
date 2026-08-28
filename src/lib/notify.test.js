@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { errorTitle, friendlyErrorMessage, isOfflineError } from './notify.js';
+import { describe, expect, it, vi } from 'vitest';
+import { errorTitle, friendlyErrorMessage, isOfflineError, notifyError } from './notify.js';
+import { toast } from '@/components/ui/use-toast';
+
+vi.mock('@/components/ui/use-toast', () => ({ toast: vi.fn() }));
 
 const httpError = (status, message) => Object.assign(new Error(message), { status });
 
@@ -59,5 +62,34 @@ describe('friendlyErrorMessage', () => {
   it('keeps a message the server wrote for a person', () => {
     expect(friendlyErrorMessage(httpError(409, 'Cursa are deja un aviz atașat.')))
       .toBe('Cursa are deja un aviz atașat.');
+  });
+});
+
+describe('notifyError', () => {
+  it('shows a single-argument message on its own, with nothing invented under it', () => {
+    notifyError('Doar administratorul poate salva setările companiei.');
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Doar administratorul poate salva setările companiei.',
+      description: undefined,
+    }));
+  });
+
+  it('retitles by status and falls back to the status copy when the message is boilerplate', () => {
+    notifyError('Încărcare eșuată', Object.assign(new Error('Request failed'), { status: 429 }));
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Prea multe cereri',
+      description: expect.stringMatching(/Așteaptă un minut/),
+    }));
+  });
+
+  it('keeps the server’s own wording when it wrote one for a reader', () => {
+    const err = Object.assign(new Error('Prea multe încărcări. Reîncearcă într-un minut.'), {
+      status: 429,
+    });
+    notifyError('Încărcare eșuată', err);
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Prea multe cereri',
+      description: 'Prea multe încărcări. Reîncearcă într-un minut.',
+    }));
   });
 });

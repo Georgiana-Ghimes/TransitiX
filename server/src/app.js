@@ -38,6 +38,7 @@ import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
 import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
+import { securityHeadersMiddleware, trustProxySetting } from './lib/security.js';
 import { emailConfigured } from './lib/email.js';
 import { ocrCapability } from './lib/ocr/readText.js';
 import { osrmConfigured } from './lib/geo/osrm.js';
@@ -61,6 +62,12 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
+// Behind the tunnel, the client's scheme and address arrive in `X-Forwarded-*`. Believing them
+// without a proxy in front would let a client claim any address, so this is opt-in.
+const trustProxy = trustProxySetting();
+if (trustProxy !== false) app.set('trust proxy', trustProxy);
+
+app.use(securityHeadersMiddleware);
 app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   credentials: true,

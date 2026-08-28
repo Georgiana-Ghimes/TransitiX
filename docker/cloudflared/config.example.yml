@@ -1,0 +1,44 @@
+# Named Cloudflare tunnel for the RAI Spedition companion.
+#
+# Why a named tunnel and not `cloudflared tunnel --url …`:
+#
+# A quick tunnel hands out a random `*.trycloudflare.com` address and a new one every time the
+# process restarts. The certificate is real, so the padlock is real — but the address a customer
+# bookmarked stops working after a reboot, there is no access control, and the hostname says
+# nothing about who owns it. A named tunnel is a permanent hostname on your own domain, with a
+# certificate Cloudflare renews, and it can sit behind Access if you want a login before the
+# login.
+#
+# Setup, once, on the VM:
+#
+#   cloudflared tunnel login
+#   cloudflared tunnel create transitix-rai
+#   cloudflared tunnel route dns transitix-rai documente.exemplu.ro
+#   cp docker/cloudflared/config.example.yml ~/.cloudflared/config.yml   # then edit
+#   cloudflared tunnel run transitix-rai
+#
+# Run it as a service so it survives a reboot:
+#
+#   sudo cloudflared service install
+#
+# The tunnel dials out, so the VM needs no inbound port open and no certificate of its own.
+
+tunnel: transitix-rai
+credentials-file: /root/.cloudflared/<TUNNEL-UUID>.json
+
+ingress:
+  - hostname: documente.exemplu.ro
+    # Port from server/.env (`PORT`), 3002 in the companion. One origin: the API also serves the
+    # built frontend (`npm run start:companion`), so there is nothing else to route. Plain HTTP is
+    # correct here — this hop never leaves the machine.
+    service: http://127.0.0.1:3002
+    originRequest:
+      # `/api/telematics/stream` is Server-Sent Events; a buffering proxy would hold the whole
+      # stream and the live board would never move.
+      disableChunkedEncoding: false
+      # OCR on a scanned dossier runs long. The default would cut the request before it answers.
+      connectTimeout: 30s
+      noTLSVerify: false
+
+  # Anything that does not match a hostname above is refused rather than forwarded.
+  - service: http_status:404

@@ -5,6 +5,7 @@ import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange } from '@/lib/avizOps';
+import { findBlurriest } from '@/lib/imageQuality';
 import {
   Archive, Camera, Check, ClipboardList, Download, Loader2,
   Mail, Trash2, Upload, X,
@@ -148,6 +149,15 @@ export default function AvizeReports() {
     let dup = 0;
     let pending = 0;
     try {
+      // Photos taken at a desk blur too. Unlike the cab, a batch of scans is not interrupted for
+      // it — the operator is told which file may not read and the upload carries on.
+      const worst = await findBlurriest(files).catch(() => null);
+      if (worst) {
+        notifyError(
+          'O poză pare mișcată',
+          `„${worst.file.name}" iese neclară — s-ar putea să nu se extragă nimic din ea. Restul se încarcă normal.`
+        );
+      }
       for (const file of files) {
         try {
           const uploaded = await api.integrations.Core.UploadFile({ file });

@@ -120,10 +120,19 @@ export function errorTitle(fallback, errorOrMessage) {
   return fallback;
 }
 
+/**
+ * @param {string} title            what failed
+ * @param {unknown} [errorOrMessage] the error, when there is one
+ *
+ * Called with one argument, that argument is the whole message. Bolting a generic second line
+ * under it ("A apărut o eroare neașteptată") adds nothing a reader can use and makes a precise
+ * message look like a system failure.
+ */
 export function notifyError(title, errorOrMessage) {
+  const hasError = arguments.length > 1 && errorOrMessage !== undefined;
   toast({
-    title: errorTitle(title, errorOrMessage),
-    description: friendlyErrorMessage(errorOrMessage),
+    title: hasError ? errorTitle(title, errorOrMessage) : title,
+    description: hasError ? friendlyErrorMessage(errorOrMessage) : undefined,
     variant: 'destructive',
   });
 }

@@ -248,7 +248,10 @@ export default function Layout() {
     if (location.pathname === '/') {
       return <Navigate to="/avize" replace />;
     }
-    if (!isCompanionOfficePath(location.pathname)) {
+    // Dev-only tooling is reachable in either profile; the route itself does not exist in a
+    // production build, so this cannot open anything for a customer.
+    const devTool = import.meta.env.DEV && location.pathname.startsWith('/dev/');
+    if (!devTool && !isCompanionOfficePath(location.pathname)) {
       return <Navigate to="/avize" replace />;
     }
   }
