@@ -2,8 +2,13 @@ import pkg from '../../package.json';
 
 export const APP_VERSION = pkg.version;
 
-export function formatAppVersion(version = APP_VERSION) {
+export const APP_BUILD =
+  typeof __APP_BUILD__ !== 'undefined' ? String(__APP_BUILD__).trim() : 'dev';
+
+export function formatAppVersion(version = APP_VERSION, { withBuild = true } = {}) {
   const raw = String(version || '').trim();
-  if (!raw) return 'v0.0.0';
-  return raw.startsWith('v') ? raw : `v${raw}`;
+  const ver = !raw ? 'v0.0.0' : (raw.startsWith('v') ? raw : `v${raw}`);
+  if (!withBuild) return ver;
+  const build = String(APP_BUILD || '').trim();
+  return build ? `${ver} - ${build}` : ver;
 }
