@@ -2,12 +2,21 @@ import bcrypt from 'bcryptjs';
 import { pool } from './db.js';
 
 async function upsertUser(client, { companyId, name, email, password, role }) {
+  const passwordHash = await bcrypt.hash(password, 12);
   const existing = await client.query(
     `SELECT id FROM users WHERE company_id = $1 AND LOWER(email) = LOWER($2)`,
     [companyId, email]
   );
-  if (existing.rows[0]) return existing.rows[0].id;
-  const passwordHash = await bcrypt.hash(password, 12);
+  if (existing.rows[0]) {
+    // Dev seed accounts must stay login-able after a re-run — never skip password refresh.
+    await client.query(
+      `UPDATE users
+       SET name = $1, password_hash = $2, role = $3, is_active = TRUE, updated_at = NOW()
+       WHERE id = $4`,
+      [name, passwordHash, role, existing.rows[0].id]
+    );
+    return existing.rows[0].id;
+  }
   const result = await client.query(
     `INSERT INTO users (company_id, name, email, password_hash, role)
      VALUES ($1, $2, $3, $4, $5) RETURNING id`,
