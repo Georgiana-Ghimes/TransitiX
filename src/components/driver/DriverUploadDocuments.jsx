@@ -4,6 +4,8 @@ import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { findDriverForUser } from '@/lib/utils';
 import { DOC_TYPES } from '@/lib/cmrUi';
+import { findBlurriest } from '@/lib/imageQuality';
+import { throttleState } from '@/lib/uploadThrottle';
 
 const STATUS_LABEL = {
   uploaded: 'Încărcat',
@@ -13,6 +15,10 @@ const STATUS_LABEL = {
   unrecognised: 'Nerecunoscut',
   failed: 'Eșuat',
 };
+
+/** Mirrors the server's multer limit, so the driver hears about it before the upload starts. */
+const MAX_UPLOAD_MB = 15;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 const fieldCls =
   'w-full min-h-[44px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#1D4E89]';
@@ -25,8 +31,13 @@ export default function DriverUploadDocuments({ user }) {
   const [tripId, setTripId] = useState('');
   const [trips, setTrips] = useState([]);
   const [docs, setDocs] = useState([]);
+  // The route has always returned this; the app used to ignore it and let the driver find the
+  // limit by hitting it.
+  const [maxFiles, setMaxFiles] = useState(8);
+  const [blurWarning, setBlurWarning] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const sendTimes = useRef([]);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
 
@@ -45,6 +56,7 @@ export default function DriverUploadDocuments({ user }) {
       ]);
 
       setDocs(mine.documents || []);
+      if (mine.max_files) setMaxFiles(mine.max_files);
       const active = (Array.isArray(tripList) ? tripList : []).filter(
         (t) => !['livrata', 'anulata'].includes(t.status)
       );
@@ -59,9 +71,78 @@ export default function DriverUploadDocuments({ user }) {
 
   useEffect(() => { load(); }, [load]);
 
+  /**
+   * OCR runs after the upload responds, so a row sent a moment ago still says "Încărcat".
+   * Refresh only the document list, only while something is still pending, and only while the
+   * tab is visible — a phone in a cab should not poll from a pocket.
+   */
+  const pending = docs.some((d) => d.status === 'uploaded');
+  useEffect(() => {
+    if (!pending) return undefined;
+    const tick = async () => {
+      if (document.hidden) return;
+      try {
+        const mine = await api.driverDocuments.listMine(30);
+        setDocs(mine.documents || []);
+      if (mine.max_files) setMaxFiles(mine.max_files);
+      } catch {
+        // A failed refresh is not worth interrupting the driver for.
+      }
+    };
+    const id = setInterval(tick, 8000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [pending]);
+
   const uploadFiles = async (fileList) => {
     const files = [...(fileList || [])];
     if (!files.length) return;
+
+    // Say what the limit is before the upload, not after: on a phone the round trip costs the
+    // driver their data and a wait, and the answer used to come back as `Unexpected field`.
+    if (files.length > maxFiles) {
+      notifyError(
+        'Prea multe fișiere',
+        `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length} — trimite-le în două rânduri.`
+      );
+      return;
+    }
+    const tooBig = files.find((f) => f.size > MAX_UPLOAD_BYTES);
+    if (tooBig) {
+      notifyError(
+        'Fișier prea mare',
+        `„${tooBig.name}" are ${(tooBig.size / 1024 / 1024).toFixed(1)} MB. Limita este de ${MAX_UPLOAD_MB} MB.`
+      );
+      return;
+    }
+
+    // A photo the office cannot read is a trip back to the truck. Say so now, but never block:
+    // the check is a heuristic and a sent document beats a refused one.
+    const worst = await findBlurriest(files).catch(() => null);
+    if (worst) {
+      setBlurWarning({ files, name: worst.file.name });
+      return;
+    }
+
+    await sendFiles(files);
+  };
+
+  const sendFiles = async (files) => {
+    const brake = throttleState(sendTimes.current);
+    sendTimes.current = brake.recent;
+    if (!brake.allowed) {
+      notifyError(
+        'Prea multe trimiteri',
+        `Ai trimis multe documente într-un minut. Mai așteaptă ${brake.retryInSeconds} secunde.`
+      );
+      return;
+    }
+    sendTimes.current = [...brake.recent, Date.now()];
+
+    setBlurWarning(null);
     setUploading(true);
     try {
       const result = await api.driverDocuments.upload({
@@ -97,6 +178,32 @@ export default function DriverUploadDocuments({ user }) {
       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
         Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize / Rapoarte.
       </p>
+
+      {blurWarning && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <p className="text-sm font-medium text-amber-900">Poza pare mișcată</p>
+          <p className="text-xs text-amber-800 leading-relaxed">
+            „{blurWarning.name}" iese neclară, iar biroul s-ar putea să nu poată citi datele de pe
+            ea. Sprijină telefonul și mai fă una, cu avizul drept și bine luminat.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => { setBlurWarning(null); cameraRef.current?.click(); }}
+              className="min-h-[44px] px-3 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg active:scale-[0.99]"
+            >
+              Refă poza
+            </button>
+            <button
+              type="button"
+              onClick={() => sendFiles(blurWarning.files)}
+              className="min-h-[44px] px-3 py-2 text-sm font-medium text-amber-900 bg-white border border-amber-300 rounded-lg active:scale-[0.99]"
+            >
+              Trimite oricum
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 sm:p-5 space-y-3 sm:space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

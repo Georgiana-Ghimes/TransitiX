@@ -1,6 +1,6 @@
-import pkg from '../../package.json';
-
-export const APP_VERSION = pkg.version;
+/** Baked in by vite/vitest `define` — the companion carries its own number. */
+export const APP_VERSION =
+  typeof __APP_VERSION__ !== 'undefined' ? String(__APP_VERSION__).trim() : '0.0.0';
 
 export const APP_BUILD =
   typeof __APP_BUILD__ !== 'undefined' ? String(__APP_BUILD__).trim() : 'dev';

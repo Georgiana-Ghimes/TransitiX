@@ -606,6 +606,13 @@ export const api = {
       return request(`/routes/${encodeURIComponent(routeId)}/recompute`, { method: 'POST' });
     },
   },
+  system: {
+    /** Capabilities, including whether the OCR sidecar is answering. */
+    health() {
+      return request('/health');
+    },
+  },
+
   documents: {
     profiles(type) {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';

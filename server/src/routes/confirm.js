@@ -16,7 +16,7 @@ router.get('/:token', async (req, res) => {
       `SELECT * FROM client_confirmations WHERE token = $1 LIMIT 1`,
       [req.params.token]
     );
-    if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
+    if (!conf.rows[0]) return res.status(404).json({ message: 'Link invalid sau expirat.' });
 
     const row = conf.rows[0];
     if (isExpired(row) || row.status === 'expired') {
@@ -27,7 +27,7 @@ router.get('/:token', async (req, res) => {
         );
         row.status = 'expired';
       }
-      return res.status(410).json({ message: 'Confirmation link has expired' });
+      return res.status(410).json({ message: 'Linkul de confirmare a expirat.' });
     }
 
     const confirmation = serializeRow(row);
@@ -39,7 +39,7 @@ router.get('/:token', async (req, res) => {
     res.json({ confirmation, trip });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Failed to load confirmation' });
+    res.status(500).json({ message: 'Nu am putut încărca confirmarea.' });
   }
 });
 
@@ -84,7 +84,7 @@ router.post('/:token', async (req, res) => {
         `SELECT * FROM client_confirmations WHERE token = $1 LIMIT 1`,
         [req.params.token]
       );
-      if (!conf.rows[0]) return res.status(404).json({ message: 'Invalid token' });
+      if (!conf.rows[0]) return res.status(404).json({ message: 'Link invalid sau expirat.' });
       if (conf.rows[0].status === 'confirmed') {
         return res.json(serializeRow(conf.rows[0]));
       }
@@ -93,9 +93,9 @@ router.post('/:token', async (req, res) => {
           `UPDATE client_confirmations SET status = 'expired', updated_at = NOW() WHERE id = $1 AND status <> 'confirmed'`,
           [conf.rows[0].id]
         );
-        return res.status(410).json({ message: 'Confirmation link has expired' });
+        return res.status(410).json({ message: 'Linkul de confirmare a expirat.' });
       }
-      return res.status(409).json({ message: 'Confirmation already processed' });
+      return res.status(409).json({ message: 'Confirmarea a fost deja înregistrată.' });
     }
 
     const confirmation = serializeRow(result.rows[0]);
@@ -112,7 +112,7 @@ router.post('/:token', async (req, res) => {
     res.json(confirmation);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Confirmation failed' });
+    res.status(500).json({ message: 'Confirmarea nu a reușit. Încearcă din nou.' });
   }
 });
 

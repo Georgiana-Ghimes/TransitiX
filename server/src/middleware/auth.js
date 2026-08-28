@@ -31,12 +31,12 @@ export function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({ message: 'Autentificare necesară. Conectează-te din nou.' });
   }
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     if (payload.type === 'refresh') {
-      return res.status(401).json({ message: 'Invalid access token' });
+      return res.status(401).json({ message: 'Token de acces invalid. Conectează-te din nou.' });
     }
     req.user = {
       id: payload.sub,
@@ -46,7 +46,7 @@ export function authRequired(req, res, next) {
     };
     next();
   } catch {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    return res.status(401).json({ message: 'Sesiunea a expirat. Conectează-te din nou.' });
   }
 }
 
@@ -76,10 +76,10 @@ const OFFICE_ROLES = new Set(['admin', 'dispatcher', 'finance']);
 /** Office inbox / dispatcher tools — drivers stay on the driver app. */
 export function officeRequired(req, res, next) {
   if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({ message: 'Autentificare necesară. Conectează-te din nou.' });
   }
   if (!OFFICE_ROLES.has(req.user.role)) {
-    return res.status(403).json({ message: 'Office access only' });
+    return res.status(403).json({ message: 'Această secțiune este doar pentru personalul de birou.' });
   }
   next();
 }
@@ -87,10 +87,10 @@ export function officeRequired(req, res, next) {
 /** Company settings and other admin-only writes. */
 export function adminRequired(req, res, next) {
   if (!req.user) {
-    return res.status(401).json({ message: 'Authentication required' });
+    return res.status(401).json({ message: 'Autentificare necesară. Conectează-te din nou.' });
   }
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Admin access only' });
+    return res.status(403).json({ message: 'Această acțiune este permisă doar administratorului.' });
   }
   next();
 }

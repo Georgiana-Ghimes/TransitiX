@@ -119,7 +119,7 @@ export default function Checks() {
       });
       setData(found);
     } catch (err) {
-      notifyError(err.message || 'Verificările au eșuat');
+      notifyError('Verificările au eșuat', err);
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export default function Checks() {
         };
       });
     } catch (err) {
-      notifyError(err.message || 'Constatarea nu a putut fi ascunsă');
+      notifyError('Constatarea nu a putut fi ascunsă', err);
     } finally {
       setDismissing(null);
     }

@@ -10,7 +10,7 @@ router.use(authRequired, officeRequired);
 router.get('/', async (req, res) => {
   try {
     const company = await getCompanyById(req.user.company_id);
-    if (!company) return res.status(404).json({ message: 'Company not found' });
+    if (!company) return res.status(404).json({ message: 'Compania nu a fost găsită.' });
     res.json(company);
   } catch (err) {
     console.error(err);
@@ -22,7 +22,7 @@ router.put('/', adminRequired, async (req, res) => {
   try {
     const data = pickCompanyWritable(req.body || {});
     const keys = Object.keys(data);
-    if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
+    if (keys.length === 0) return res.status(400).json({ message: 'Nu ai modificat niciun câmp.' });
 
     const sets = keys.map((k, idx) => {
       if (k === 'settings') return `${k} = $${idx + 1}::jsonb`;
@@ -36,7 +36,7 @@ router.put('/', adminRequired, async (req, res) => {
        RETURNING *`,
       values
     );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Company not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Compania nu a fost găsită.' });
     res.json(publicCompany(result.rows[0]));
   } catch (err) {
     console.error(err);

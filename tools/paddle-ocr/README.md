@@ -29,7 +29,6 @@ In `server/.env`:
 OCR_PROVIDER=paddle
 PADDLE_OCR_URL=http://127.0.0.1:8100
 # Optional fallback if paddle is down:
-# GOOGLE_VISION_API_KEY=
 ```
 
 Restart the API (`npm run dev` in `server/`). Upload an aviz photo from the

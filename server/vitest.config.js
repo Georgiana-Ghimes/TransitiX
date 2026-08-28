@@ -27,7 +27,6 @@ export default defineConfig({
       OSRM_URL: '',
       PHOTON_URL: '',
       TOMTOM_API_KEY: '',
-      GOOGLE_VISION_API_KEY: '',
       ETRANSPORT_MODE: 'stub',
       // Fixture uploads go to a throwaway directory, never the developer's real one.
       UPLOAD_DIR: path.join(here, '.test-uploads'),

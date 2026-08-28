@@ -1,8 +1,13 @@
 {
   "name": "transitix",
   "private": true,
-  "version": "1.0.0",
-  "build": 4,
+  "version": "1.12.0",
+  "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
+  "companion": {
+    "title": "RAI Spedition — Documente",
+    "version": "1.1.0",
+    "build": 5
+  },
   "type": "module",
   "scripts": {
     "prepare": "node scripts/install-git-hooks.js",
@@ -11,6 +16,8 @@
     "dev:server": "npm run dev --prefix server",
     "dev:all": "npm run dev:server & npm run dev",
     "build": "vite build",
+    "build:companion": "vite build --mode companion",
+    "start:companion": "npm run build:companion && npm start --prefix server",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
@@ -20,6 +27,7 @@
     "osrm:prepare": "node scripts/osrm-prepare.js",
     "db:backfill:locations": "npm run backfill:locations --prefix server --",
     "db:geocode:locations": "npm run geocode:locations --prefix server --",
+    "db:backup": "node scripts/backup-companion.js",
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
     "test": "vitest run",

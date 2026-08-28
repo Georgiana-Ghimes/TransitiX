@@ -1,11 +1,12 @@
 """
 Local PaddleOCR HTTP service for Transitix.
 
-Transitix Node calls POST /ocr with an image (or PDF page bytes as image).
+Transitix Node calls POST /ocr with an image, or with a scanned PDF it could not read.
 Keep this process separate — heavy ML deps stay out of the Node API.
 
 Quick wins baked in:
   - Page auto-rotation (0/90/180/270) scored by OCR confidence + RO doc keywords
+  - Scanned PDFs rasterized here, so Node never needs an image toolchain
 """
 
 from __future__ import annotations
@@ -51,6 +52,10 @@ _PLATE_RE = re.compile(
 # rotations (CPU). Require a real doc code — a plate alone is not enough (sideways
 # handwriting often still reads B330SRS while mangling PSL → PS).
 _GOOD_ENOUGH_SCORE = 12.0
+# A scanned dossier runs to a dozen pages or more. The cap is a guard against a mis-sent
+# archive, not an editorial decision — whatever it drops is reported back, never silently.
+_PDF_MAX_PAGES = int(os.environ.get("PADDLE_OCR_PDF_PAGES", "40") or 40)
+_PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "200") or 200)
 _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0", "false", "False")
 
 
@@ -154,17 +159,48 @@ def ocr_array(arr) -> tuple[str, list[float]]:
     return lines_and_conf_from_result(result)
 
 
-def run_ocr_on_bytes(data: bytes) -> tuple[str, int]:
+def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list, int]:
     """
-    OCR image bytes. Returns (text, rotation_degrees_clockwise).
-    Tries other page orientations when the first pass looks weak.
+    One PIL image per page, plus how many pages the document actually has.
+
+    A scanned PDF has no text layer, so Node hands the whole file over rather than trying to
+    read it first. Rasterizing belongs here: the image toolchain is already installed for OCR,
+    and keeping it out of the API is the reason this service exists.
     """
     from PIL import Image
+
+    if data[:4] != b"%PDF":
+        return [Image.open(io.BytesIO(data)).convert("RGB")], 1
+
+    import fitz  # PyMuPDF
+
+    cap = max_pages if max_pages and max_pages > 0 else _PDF_MAX_PAGES
+    pages = []
+    with fitz.open(stream=data, filetype="pdf") as doc:
+        total = doc.page_count
+        for index, page in enumerate(doc):
+            if index >= cap:
+                break
+            pix = page.get_pixmap(dpi=_PDF_DPI)
+            pages.append(Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB"))
+    if not pages:
+        raise ValueError("PDF has no pages to read")
+    return pages, total
+
+
+def ocr_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
+    """
+    OCR one page, trying other orientations when the first pass looks weak.
+
+    `prefer` is the angle that won on an earlier page. A scanner feeds every sheet the same way,
+    so trying it first turns a four-orientation search per page into one — which is the
+    difference between a ten-page scan finishing and timing out.
+    """
     import numpy as np
 
-    image = Image.open(io.BytesIO(data)).convert("RGB")
     rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
-
+    if prefer is not None and prefer in rotations:
+        rotations = [prefer] + [d for d in rotations if d != prefer]
     best_text = ""
     best_score = -1.0
     best_rot = 0
@@ -178,21 +214,43 @@ def run_ocr_on_bytes(data: bytes) -> tuple[str, int]:
             best_score = score
             best_text = text
             best_rot = degrees
-        # Fast path: upright printouts with a clear TPO/PSL skip other angles.
-        if degrees == 0 and looks_upright_enough(text, score):
+        # Fast path: a page that already reads like an upright document skips other angles.
+        if degrees == rotations[0] and looks_upright_enough(text, score):
             break
 
     return best_text, best_rot
 
 
-def lines_from_result(result) -> str:
-    text, _ = lines_and_conf_from_result(result)
-    return text
+def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str, int, int, int]:
+    """
+    OCR image or PDF bytes.
+
+    Returns (text, rotation of the first page, pages read, pages the document has).
+    """
+    pages, total = pages_from_bytes(data, max_pages)
+    texts: list[str] = []
+    first_rot = 0
+    prefer: Optional[int] = None
+
+    for index, page in enumerate(pages):
+        text, rot = ocr_page(page, prefer=prefer)
+        if index == 0:
+            first_rot = rot
+            prefer = rot
+        if text:
+            texts.append(text)
+
+    log.info(
+        "OCR pages=%s/%s rotation=%s chars=%s",
+        len(pages), total, first_rot, sum(len(t) for t in texts),
+    )
+    return "\n".join(texts).strip(), first_rot, len(pages), total
 
 
 class OcrJsonRequest(BaseModel):
     image_base64: str = Field(..., description="Raw base64 (no data: URL prefix required)")
     mime_type: Optional[str] = "image/jpeg"
+    max_pages: Optional[int] = Field(None, description="Cap for PDFs; server default when unset")
 
 
 class OcrResponse(BaseModel):
@@ -200,6 +258,11 @@ class OcrResponse(BaseModel):
     engine: str = "paddleocr"
     chars: int = 0
     rotation: int = 0
+    pages: int = 1
+    total_pages: int = 1
+    # A caller that stored a partial read as if it were the whole document would put an
+    # understated figure on an invoice. Say so instead.
+    truncated: bool = False
 
 
 @app.get("/health")
@@ -218,6 +281,7 @@ def health():
 async def ocr_upload(
     file: Optional[UploadFile] = File(None),
     image_base64: Optional[str] = Form(None),
+    max_pages: Optional[int] = Form(None),
 ):
     data = b""
     if file is not None:
@@ -239,12 +303,15 @@ async def ocr_upload(
         raise HTTPException(status_code=400, detail="Empty image")
 
     try:
-        text, rotation = run_ocr_on_bytes(data)
+        text, rotation, pages, total = run_ocr_on_bytes(data, max_pages)
     except Exception as exc:  # noqa: BLE001
         log.exception("OCR failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return OcrResponse(text=text, engine="paddleocr", chars=len(text), rotation=rotation)
+    return OcrResponse(
+        text=text, engine="paddleocr", chars=len(text), rotation=rotation,
+        pages=pages, total_pages=total, truncated=pages < total,
+    )
 
 
 @app.post("/ocr/json", response_model=OcrResponse)
@@ -263,9 +330,12 @@ async def ocr_json(body: OcrJsonRequest):
         raise HTTPException(status_code=400, detail="Empty image")
 
     try:
-        text, rotation = run_ocr_on_bytes(data)
+        text, rotation, pages, total = run_ocr_on_bytes(data, body.max_pages)
     except Exception as exc:  # noqa: BLE001
         log.exception("OCR failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return OcrResponse(text=text, engine="paddleocr", chars=len(text), rotation=rotation)
+    return OcrResponse(
+        text=text, engine="paddleocr", chars=len(text), rotation=rotation,
+        pages=pages, total_pages=total, truncated=pages < total,
+    )

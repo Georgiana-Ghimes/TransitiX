@@ -1,6 +1,22 @@
 import bcrypt from 'bcryptjs';
 import { pool } from './db.js';
 
+/**
+ * Demo accounts with published passwords, and `upsertUser` resets the password, role and
+ * is_active of anyone whose email already matches. Pointed at a database holding real users,
+ * that is an account takeover, not a seed. `SEED_ALLOW_PRODUCTION=1` is the deliberate override.
+ */
+function assertSeedableDatabase() {
+  if (process.env.SEED_ALLOW_PRODUCTION === '1') return;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Refusing to seed with NODE_ENV=production (set SEED_ALLOW_PRODUCTION=1 to override).');
+  }
+  const name = String(process.env.DATABASE_URL || '').split('/').pop()?.split('?')[0] ?? '';
+  if (/prod|live/i.test(name)) {
+    throw new Error(`Refusing to seed "${name}" (set SEED_ALLOW_PRODUCTION=1 to override).`);
+  }
+}
+
 async function upsertUser(client, { companyId, name, email, password, role }) {
   const passwordHash = await bcrypt.hash(password, 12);
   const existing = await client.query(
@@ -220,6 +236,8 @@ async function seed() {
     await pool.end();
   }
 }
+
+assertSeedableDatabase();
 
 seed().catch((err) => {
   console.error('Seed failed:', err);

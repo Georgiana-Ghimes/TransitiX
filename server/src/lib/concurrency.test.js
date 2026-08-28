@@ -5,7 +5,6 @@ import {
   entityActionFromRequest,
   entityAllowedForRole,
   isPgUniqueViolation,
-  mergeReextractRow,
   nextAvizStatusOnSave,
   nextWarehouseQty,
   repairNeedsWrite,
@@ -16,56 +15,6 @@ import {
   filenameOwnedByCompany,
   canReadUpload,
 } from './concurrency.js';
-
-describe('mergeReextractRow', () => {
-  it('keeps office km/taxe/observatii when re-extracting', () => {
-    const merged = mergeReextractRow(
-      {
-        km_parcursi: 120,
-        taxe_suplimentare: 100,
-        tarif_km: 20,
-        observatii: 'Z:B*',
-        valoare_tpo: 50,
-        numar_curse: 2,
-      },
-      {
-        numar_tpo: 'TPO-1',
-        km_parcursi: 0,
-        taxe_suplimentare: 0,
-        tarif_km: 0,
-        observatii: null,
-        valoare_tpo: 0,
-        numar_curse: 1,
-      }
-    );
-    expect(merged.numar_tpo).toBe('TPO-1');
-    expect(merged.km_parcursi).toBe(120);
-    expect(merged.taxe_suplimentare).toBe(100);
-    expect(merged.tarif_km).toBe(20);
-    expect(merged.observatii).toBe('Z:B*');
-    expect(merged.valoare_tpo).toBe(50);
-    expect(merged.numar_curse).toBe(2);
-    expect(merged.ruta_display).toBeUndefined();
-  });
-
-  it('keeps ruta_display on re-extract', () => {
-    const merged = mergeReextractRow(
-      { ruta_display: 'Bucuresti-Militari', km_parcursi: 10 },
-      { numar_tpo: 'TPO-9', ruta_display: null, km_parcursi: 0 }
-    );
-    expect(merged.ruta_display).toBe('Bucuresti-Militari');
-    expect(merged.km_parcursi).toBe(10);
-  });
-
-  it('fills office fields from extract when they were empty', () => {
-    const merged = mergeReextractRow(
-      { km_parcursi: 0, observatii: '' },
-      { km_parcursi: 0, observatii: null, numar_tpo: 'TPO-2' }
-    );
-    expect(merged.numar_tpo).toBe('TPO-2');
-    expect(merged.km_parcursi).toBe(0);
-  });
-});
 
 describe('nextAvizStatusOnSave', () => {
   it('promotes uploaded to extracted and keeps confirmed', () => {

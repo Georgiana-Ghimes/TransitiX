@@ -17,10 +17,11 @@ const storage = multer.diskStorage({
 
 /** Twenty avize at once is the stated requirement; the cap leaves headroom above it. */
 export const MAX_BATCH_FILES = 40;
+export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 export const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024, files: MAX_BATCH_FILES },
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_BATCH_FILES },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith('image/') && file.mimetype !== 'application/pdf') {
       return cb(new Error('Doar imagini sau PDF sunt acceptate'));
@@ -28,6 +29,30 @@ export const upload = multer({
     cb(null, true);
   },
 });
+
+/**
+ * Multer speaks English to developers: `Unexpected field`, `File too large`. A driver in a cab
+ * reading that learns neither what went wrong nor what the limit is.
+ *
+ * @param {Error} err       the error multer handed back
+ * @param {number} maxFiles how many files this route accepts, so the message can say so
+ */
+export function uploadErrorMessage(err, maxFiles = MAX_BATCH_FILES) {
+  const mb = Math.round(MAX_UPLOAD_BYTES / 1024 / 1024);
+  switch (err?.code) {
+    case 'LIMIT_FILE_SIZE':
+      return `Fișierul este prea mare. Limita este de ${mb} MB per fișier.`;
+    case 'LIMIT_FILE_COUNT':
+    case 'LIMIT_UNEXPECTED_FILE':
+      return `Prea multe fișiere odată. Trimite maximum ${maxFiles} și repetă pentru restul.`;
+    case 'LIMIT_PART_COUNT':
+    case 'LIMIT_FIELD_COUNT':
+      return 'Cererea conține prea multe câmpuri.';
+    default:
+      // The file-type refusal from `fileFilter` already reads as a sentence.
+      return err?.message || 'Încărcarea nu a reușit. Încearcă din nou.';
+  }
+}
 
 const router = Router();
 export const uploadHits = new Map();
@@ -103,6 +128,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
   force = false,
   profileId,
   documentIds,
+  timeoutMs,
 } = {}) {
   const batchKey = `${companyId}:${batchId}`;
   return runBatchExtract(batchKey, async () => {
@@ -138,7 +164,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     }
 
     try {
-      const text = await readDocumentText(doc.file_url);
+      const text = await readDocumentText(doc.file_url, { timeoutMs });
       const extraction = extractDocument(text.text, {
         documentType: doc.document_type,
         profileId,
@@ -170,7 +196,15 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           [
             merged.profile_id, merged.confidence,
             JSON.stringify(merged.fields), merged.needs_review, text.source,
-            JSON.stringify({ raw_text: text.text, values: merged.values, review_fields: merged.review_fields }),
+            JSON.stringify({
+              raw_text: text.text,
+              values: merged.values,
+              review_fields: merged.review_fields,
+              // A partial read must stay visible on the row: the figures came from fewer pages
+              // than the document has, and nothing downstream could tell otherwise.
+              ...(text.pages ? { pages: text.pages } : {}),
+              ...(text.truncated ? { pages_truncated: true } : {}),
+            }),
             ...Object.values(columns),
             doc.id, companyId,
           ]
@@ -179,15 +213,28 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           companyId, documentId: doc.id, batchId,
           userId, kind: doc.ocr_profile_id ? 're_extracted' : 'extracted',
           summary: merged.profile_name ?? 'nerecunoscut',
-          detail: { confidence: merged.confidence, review_fields: merged.review_fields, text_source: text.source },
+          detail: {
+            confidence: merged.confidence,
+            review_fields: merged.review_fields,
+            text_source: text.source,
+            pages: text.pages ?? null,
+            pages_truncated: Boolean(text.truncated),
+          },
         });
       });
 
       results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
     } catch (err) {
       console.error('[documents] extract doc', doc.id, err);
-      await markExtractFailed(companyId, doc.id, err).catch(() => {});
-      results.push({ id: doc.id, filename: doc.original_filename, error: err?.message || 'extract_failed' });
+      // A timeout is us giving up on the clock, not a page nobody can read. Marking it would
+      // move it out of `uploaded` and the queue would stop offering it.
+      if (err?.code !== 'OCR_TIMEOUT') await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      results.push({
+        id: doc.id,
+        filename: doc.original_filename,
+        error: err?.message || 'extract_failed',
+        code: err?.code || null,
+      });
     }
   }
 
@@ -228,7 +275,7 @@ router.post('/batches', (req, res) => {
   }
 
   upload.array('files', MAX_BATCH_FILES)(req, res, async (err) => {
-    if (err) return res.status(400).json({ message: err.message || 'Upload eșuat' });
+    if (err) return res.status(400).json({ message: uploadErrorMessage(err, MAX_BATCH_FILES) });
     const files = req.files ?? [];
     if (!files.length) return res.status(400).json({ message: 'Niciun fișier încărcat' });
 

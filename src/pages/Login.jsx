@@ -9,6 +9,7 @@ import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { isDocumentsProfile, companionAppTitle } from '@/lib/appProfile';
 import { postLoginPath } from "@/lib/roles";
+import { friendlyErrorMessage } from '@/lib/notify';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -33,7 +34,7 @@ export default function Login() {
       const data = await api.auth.loginViaEmailPassword(email, password);
       window.location.href = postLoginPath(data?.user, returnTo);
     } catch (err) {
-      setError(err.message || "Email sau parolă invalidă");
+      setError(friendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }

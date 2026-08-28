@@ -39,7 +39,7 @@ import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
 import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
 import { emailConfigured } from './lib/email.js';
-import { visionConfigured } from './lib/cmrOcr.js';
+import { ocrCapability } from './lib/ocr/readText.js';
 import { osrmConfigured } from './lib/geo/osrm.js';
 import { photonConfigured } from './lib/geo/photon.js';
 import { tomtomConfigured } from './lib/geo/tomtom.js';
@@ -84,26 +84,26 @@ function bearerFromQuery(req, _res, next) {
 
 app.get('/uploads/:filename', bearerFromQuery, authRequired, async (req, res) => {
   const name = safeUploadBasename(req.params.filename);
-  if (!name) return res.status(400).json({ message: 'Invalid filename' });
+  if (!name) return res.status(400).json({ message: 'Nume de fișier invalid.' });
   const filePath = path.resolve(uploadRoot, name);
   const root = path.resolve(uploadRoot);
   if (filePath !== path.join(root, name)) {
-    return res.status(400).json({ message: 'Invalid filename' });
+    return res.status(400).json({ message: 'Nume de fișier invalid.' });
   }
   try {
     const allowed = await canReadUpload(query, req.user.company_id, name);
-    if (!allowed) return res.status(404).json({ message: 'Not found' });
+    if (!allowed) return res.status(404).json({ message: 'Fișierul nu a fost găsit.' });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Upload access check failed' });
+    return res.status(500).json({ message: 'Nu am putut verifica accesul la fișier.' });
   }
   fs.access(filePath, fs.constants.R_OK, (err) => {
-    if (err) return res.status(404).json({ message: 'Not found' });
+    if (err) return res.status(404).json({ message: 'Fișierul nu a fost găsit.' });
     res.sendFile(filePath, { maxAge: '7d' });
   });
 });
 
-function healthCapabilities() {
+async function healthCapabilities() {
   return {
     gps: 'telematics',
     planning: vroomConfigured() ? 'vroom' : 'stub',
@@ -116,13 +116,15 @@ function healthCapabilities() {
     geocoding: photonConfigured() || tomtomConfigured()
       ? [photonConfigured() && 'photon', tomtomConfigured() && 'tomtom'].filter(Boolean).join('+')
       : false,
-    vision: visionConfigured(),
     email: emailConfigured(),
+    // `paddle-down` is reported distinctly from `false`: with no fallback provider, a sidecar
+    // that stopped answering silently produces documents with no OCR at all.
+    ocr: await ocrCapability(),
   };
 }
 
 app.get('/api/health', async (_req, res) => {
-  const capabilities = healthCapabilities();
+  const capabilities = await healthCapabilities();
   try {
     await query('SELECT 1');
     res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION, capabilities });
@@ -162,9 +164,31 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/users', userRoutes);
 
+/**
+ * The built frontend, when there is one.
+ *
+ * The companion is handed to a customer, so it must not be served by `vite dev` through a
+ * tunnel: one origin, no HMR, no dev-only behaviour. Mounted after every /api route and
+ * skipped entirely when `dist/` has not been built, so tests and `npm run dev` are unaffected.
+ */
+const distDir = process.env.CLIENT_DIST_DIR
+  ? path.resolve(process.env.CLIENT_DIST_DIR)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');
+
+if (fs.existsSync(path.join(distDir, 'index.html'))) {
+  app.use(express.static(distDir, { index: false, maxAge: '1h' }));
+  // Client-side routing: anything that is not an API call or a file gets the shell.
+  app.get(/^(?!\/api\/|\/uploads\/).*/, (req, res, next) => {
+    if (req.method !== 'GET') return next();
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+} else {
+  console.warn('[app] dist/ not built — serving API only (run `npm run build`)');
+}
+
 app.use((err, _req, res, _next) => {
   if (err?.type === 'entity.parse.failed') {
-    return res.status(400).json({ message: 'Invalid JSON body' });
+    return res.status(400).json({ message: 'Datele trimise nu au un format valid.' });
   }
   console.error(err);
   res.status(err.status || 500).json({ message: err.message || 'Server error' });

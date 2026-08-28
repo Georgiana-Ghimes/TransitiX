@@ -1,14 +1,11 @@
 /**
  * Extract + parse Baumit-style avize (PSL sales and TRO transfer).
- * PDF text layer first; Vision for images / text-poor PDFs; stub when unset.
+ * Text parsing only. Reading a file is the profile extractor's job (lib/ocr/readText.js).
  */
 import fs from 'fs/promises';
 import path from 'path';
 import { createRequire } from 'module';
-import { resolveUploadPath } from './cmrOcr.js';
 import { annexFieldDefaults } from './avizTemplate.js';
-import { isTextPoor, visionAnnotateImage, visionAnnotatePdf, visionApiKey } from './avizVision.js';
-import { mapProviderToSource } from './avizQuery.js';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -464,76 +461,5 @@ export function avizFieldConfidence(row) {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
     ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
-  };
-}
-
-export function stubAvizFields() {
-  return {
-    ...annexFieldDefaults(),
-    layout: null,
-    _stub: true,
-    _note: 'OCR stub: completează manual. Configurează GOOGLE_VISION_API_KEY pentru imagini, sau încarcă un PDF cu text.',
-  };
-}
-
-export async function extractAvizFromFile(fileUrl) {
-  const localPath = resolveUploadPath(fileUrl);
-  if (!localPath) {
-    const err = new Error('Could not resolve file path for aviz OCR');
-    err.code = 'AVIZ_NO_FILE';
-    throw err;
-  }
-
-  const buf = await fs.readFile(localPath);
-  const ext = path.extname(localPath).toLowerCase();
-  const apiKey = visionApiKey();
-  let rawText = '';
-  let provider = 'stub';
-
-  if (ext === '.pdf') {
-    try {
-      rawText = await parsePdfTextLayer(buf);
-      if (!isTextPoor(rawText)) provider = 'pdf_text';
-    } catch (err) {
-      console.error('[aviz pdf-parse]', err.message || err);
-    }
-    if (provider !== 'pdf_text' && apiKey) {
-      try {
-        rawText = await visionAnnotatePdf(buf, apiKey);
-        provider = 'google_vision';
-      } catch (err) {
-        console.error('[aviz vision pdf]', err.message || err);
-      }
-    }
-  } else if (apiKey) {
-    try {
-      rawText = await visionAnnotateImage(buf.toString('base64'), apiKey);
-      provider = 'google_vision';
-    } catch (err) {
-      console.error('[aviz vision image]', err.message || err);
-    }
-  }
-
-  if (!rawText.trim()) {
-    const stub = stubAvizFields();
-    return {
-      ...stub,
-      extraction_source: 'stub',
-      extracted_data: { raw_text: '', parsed: stub, provider: 'stub' },
-    };
-  }
-
-  const parsed = parseBaumitAviz(rawText);
-  parsed._stub = false;
-  parsed._provider = provider;
-  const extraction_source = mapProviderToSource(provider);
-  return {
-    ...parsed,
-    extraction_source,
-    extracted_data: {
-      raw_text: rawText.slice(0, 8000),
-      parsed,
-      provider,
-    },
   };
 }

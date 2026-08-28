@@ -218,7 +218,7 @@ export default function Reports() {
         const [presetRes] = await Promise.all([api.reports.presets(), loadHistory()]);
         setPresets(presetRes.presets);
       } catch (err) {
-        notifyError(err.message || 'Nu am putut încărca ecranul de rapoarte');
+        notifyError('Nu am putut încărca ecranul de rapoarte', err);
       }
     })();
   }, [loadTemplates, loadHistory]);
@@ -232,7 +232,7 @@ export default function Reports() {
       setPreview(await api.reports.preview({ template_id: templateId, filters: cleanFilters(filters) }));
     } catch (err) {
       setPreview(null);
-      notifyError(err.message || 'Previzualizarea a eșuat');
+      notifyError('Previzualizarea a eșuat', err);
     } finally {
       setLoading(false);
     }
@@ -256,7 +256,7 @@ export default function Reports() {
       notifySuccess(`Raport generat: ${filename}`);
       await loadHistory();
     } catch (err) {
-      notifyError(err.message || 'Exportul a eșuat');
+      notifyError('Exportul a eșuat', err);
     } finally {
       setExporting(false);
     }
@@ -268,7 +268,7 @@ export default function Reports() {
       const { blob, filename } = await api.reports.redownload(row.id);
       saveBlob(blob, filename);
     } catch (err) {
-      notifyError(err.message || 'Re-descărcarea a eșuat');
+      notifyError('Re-descărcarea a eșuat', err);
     } finally {
       setBusyId(null);
     }
@@ -279,7 +279,7 @@ export default function Reports() {
     try {
       setDetail(await api.reports.exportDetail(id));
     } catch (err) {
-      notifyError(err.message || 'Detaliile nu au putut fi citite');
+      notifyError('Detaliile nu au putut fi citite', err);
     }
   }
 
@@ -302,7 +302,7 @@ export default function Reports() {
       );
       await runPreview();
     } catch (err) {
-      notifyError(err.message || 'Data de facturare nu a putut fi salvată');
+      notifyError('Data de facturare nu a putut fi salvată', err);
     } finally {
       setStamping(false);
     }
@@ -316,7 +316,7 @@ export default function Reports() {
       setTemplateId(created.id);
       notifySuccess(`Șablon creat: ${created.name}`);
     } catch (err) {
-      notifyError(err.message || 'Șablonul nu a putut fi creat');
+      notifyError('Șablonul nu a putut fi creat', err);
     } finally {
       setCreatingPreset('');
     }

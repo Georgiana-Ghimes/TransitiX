@@ -221,12 +221,21 @@ export default function Layout() {
     if (location.pathname !== '/driver-app') {
       return <Navigate to={homePathForRole(user)} replace />;
     }
-    // Driver shell owns its own padding / safe-areas — no outer main gutter.
+    // The companion's slim shell draws its own padding and safe-areas; the full driver app
+    // still expects the outer gutter it was built with.
     return (
       <div className="min-h-[100dvh] bg-[#F8F9FA]">
-        <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
-          <Outlet />
-        </ErrorBoundary>
+        {documentsCompanion ? (
+          <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
+        ) : (
+          <main className="p-4 lg:p-6">
+            <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
+          </main>
+        )}
       </div>
     );
   }

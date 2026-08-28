@@ -31,7 +31,7 @@ router.use(authRequired);
 function requireEntityAction(action) {
   return (req, res, next) => {
     if (!entityAllowedForRole(req.user?.role, req.params.entity, action)) {
-      return res.status(403).json({ message: 'Office access only' });
+      return res.status(403).json({ message: 'Această secțiune este doar pentru personalul de birou.' });
     }
     next();
   };
@@ -112,7 +112,7 @@ async function insertWithGpsGuard(client, companyId, entity, item) {
 router.get('/:entity', requireEntityAction('list'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const order = parseOrder(req.query.order);
     const limit = Math.min(Number(req.query.limit) || 200, 1000);
@@ -130,7 +130,7 @@ router.get('/:entity', requireEntityAction('list'), async (req, res) => {
 router.post('/:entity/filter', requireEntityAction('filter'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const filters = req.body?.filters || req.body || {};
     const order = parseOrder(req.body?.order || req.query.order);
@@ -162,7 +162,7 @@ router.post('/:entity/filter', requireEntityAction('filter'), async (req, res) =
 router.post('/:entity/bulk', requireEntityAction('create'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const items = Array.isArray(req.body) ? req.body : req.body?.items || [];
     const created = await withTransaction(async (client) => {
@@ -183,7 +183,7 @@ router.post('/:entity/bulk', requireEntityAction('create'), async (req, res) => 
 router.put('/:entity/bulk', requireEntityAction('update'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const items = Array.isArray(req.body) ? req.body : req.body?.items || [];
     const updated = [];
@@ -215,11 +215,11 @@ router.put('/:entity/bulk', requireEntityAction('update'), async (req, res) => {
 router.post('/:entity/:id/adjust', requireEntityAction('update'), async (req, res) => {
   try {
     if (req.params.entity !== 'WarehouseProduct') {
-      return res.status(404).json({ message: 'Unknown entity' });
+      return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
     }
     const delta = Number(req.body?.delta);
     if (!Number.isFinite(delta) || delta === 0) {
-      return res.status(400).json({ message: 'delta required' });
+      return res.status(400).json({ message: 'Completează cantitatea de modificat.' });
     }
     const result = await query(
       `UPDATE warehouse_products
@@ -228,7 +228,7 @@ router.post('/:entity/:id/adjust', requireEntityAction('update'), async (req, re
        RETURNING *`,
       [delta, req.params.id, req.user.company_id]
     );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
     console.error(err);
@@ -239,13 +239,13 @@ router.post('/:entity/:id/adjust', requireEntityAction('update'), async (req, re
 router.get('/:entity/:id', requireEntityAction('get'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const result = await query(
       `SELECT * FROM ${cfg.table} WHERE id = $1 AND company_id = $2`,
       [req.params.id, req.user.company_id]
     );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
     console.error(err);
@@ -256,7 +256,7 @@ router.get('/:entity/:id', requireEntityAction('get'), async (req, res) => {
 router.post('/:entity', requireEntityAction('create'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const row = serializeRow(await withTransaction(async (client) => {
       const created = await insertWithGpsGuard(client, req.user.company_id, req.params.entity, req.body);
@@ -305,7 +305,7 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
 router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     const data = writableForRequest(req, cfg);
     if (req.params.entity === 'Trip') await applyTripUit(data);
@@ -327,14 +327,14 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
 
     data.updated_at = new Date().toISOString();
     const keys = Object.keys(data);
-    if (keys.length === 0) return res.status(400).json({ message: 'No fields to update' });
+    if (keys.length === 0) return res.status(400).json({ message: 'Nu ai modificat niciun câmp.' });
 
     if (req.params.entity === 'AvizDocument') {
       const prev = await query(
         `SELECT status FROM aviz_documents WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
       );
-      if (!prev.rows[0]) return res.status(404).json({ message: 'Not found' });
+      if (!prev.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
       if (data.status !== undefined) {
         data.status = nextAvizStatusOnSave(prev.rows[0].status, data.status);
       }
@@ -374,7 +374,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
       }
       return updated;
     });
-    if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
     const row = serializeRow(result.rows[0]);
 
     if (req.params.entity === 'AvizDocument') {
@@ -434,7 +434,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
 router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), async (req, res) => {
   try {
     const cfg = ENTITY_MAP[req.params.entity];
-    if (!cfg) return res.status(404).json({ message: 'Unknown entity' });
+    if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
     // RETURNING the whole row, not just the id: a delete is the one event where nothing else
     // will hold what was there, so the trail keeps the row itself.
@@ -450,7 +450,7 @@ router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), asy
       }
       return deleted;
     });
-    if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
     res.json({ ok: true, id: req.params.id });
   } catch (err) {
     console.error(err);

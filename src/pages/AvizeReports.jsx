@@ -57,9 +57,19 @@ export default function AvizeReports() {
   const loadGen = useRef(0);
   const bulkConfirmLock = useRef(false);
 
+  const [ocrDown, setOcrDown] = useState(false);
+
   const confirmableSelectedIds = rows
     .filter((r) => selected.has(r.id) && r.status !== 'confirmed')
     .map((r) => r.id);
+
+  // With no fallback provider, a stopped sidecar means uploads land with no OCR and nothing
+  // on screen would say why.
+  useEffect(() => {
+    api.system.health()
+      .then((h) => setOcrDown(h?.capabilities?.ocr === 'paddle-down'))
+      .catch(() => setOcrDown(false));
+  }, []);
 
   const load = async () => {
     const gen = ++loadGen.current;
@@ -136,6 +146,7 @@ export default function AvizeReports() {
     setUploading(true);
     const failed = [];
     let dup = 0;
+    let pending = 0;
     try {
       for (const file of files) {
         try {
@@ -145,17 +156,21 @@ export default function AvizeReports() {
             original_filename: file.name,
           });
           if (row?.duplicate_tpo) dup += 1;
+          if (row?.extraction_pending) pending += 1;
         } catch (err) {
           failed.push(file.name);
           console.error('[aviz upload]', file.name, err);
         }
       }
       if (failed.length === 0) {
+        const pendingNote = pending
+          ? ` ${pending} document(e) lungi — OCR-ul lor rulează în fundal.`
+          : '';
         notifySuccess(
           'Avize încărcate',
           dup
-            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).`
-            : `${files.length} fișier(e) procesate.`
+            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).${pendingNote}`
+            : `${files.length} fișier(e) procesate.${pendingNote}`
         );
       } else if (failed.length < files.length) {
         notifyError('Unele fișiere nu s-au extras', failed.join(', '));
@@ -266,8 +281,17 @@ export default function AvizeReports() {
     if (busyId) return;
     setBusyId(row.id);
     try {
-      await api.avize.extract({ id: row.id, file_url: row.file_url, original_filename: row.original_filename });
-      notifySuccess('Re-extras', 'TPO/auto/rută din document; km, taxe și ruta de birou rămân.');
+      const result = await api.avize.extract({
+        id: row.id, file_url: row.file_url, original_filename: row.original_filename,
+      });
+      if (result?.extraction_pending) {
+        notifySuccess(
+          'Extragere pornită',
+          `Documentul are ${result.pages} pagini — OCR-ul rulează în fundal. Reîmprospătează în câteva minute.`
+        );
+      } else {
+        notifySuccess('Re-extras', 'TPO/auto/rută din document; km, taxe și ruta de birou rămân.');
+      }
       await load();
     } catch (e) {
       notifyError('Extragere eșuată', e);
@@ -486,6 +510,13 @@ export default function AvizeReports() {
     );
   }
 
+  const ocrBanner = ocrDown ? (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+      Serviciul OCR nu răspunde. Documentele se încarcă în continuare, dar ajung fără câmpuri
+      completate — pornește sidecar-ul PaddleOCR și apasă „Re-extrage".
+    </div>
+  ) : null;
+
   const filterBar = (
     <AvizFilterBar
       filters={filters}
@@ -616,6 +647,7 @@ export default function AvizeReports() {
             </button>
           </div>
 
+          {ocrBanner}
           {filterBar}
           <AvizLegend title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
 

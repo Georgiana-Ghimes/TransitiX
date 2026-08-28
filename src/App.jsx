@@ -39,6 +39,7 @@ const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
 const Users = lazy(() => import('@/pages/Users'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
+const DriverAppDocuments = lazy(() => import('@/pages/DriverAppDocuments'));
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 
 function PageLoader() {
@@ -65,7 +66,7 @@ function OfficeRoutes() {
         <Route path="/" element={<Navigate to="/avize" replace />} />
         <Route path="/avize" element={<AvizeReports />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/driver-app" element={<DriverApp />} />
+        <Route path="/driver-app" element={<DriverAppDocuments />} />
         <Route path="*" element={<Navigate to="/avize" replace />} />
       </>
     );

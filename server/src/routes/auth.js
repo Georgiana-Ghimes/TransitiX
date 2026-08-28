@@ -81,7 +81,7 @@ router.post('/login', authAttemptLimit, async (req, res) => {
   try {
     const { email, password } = req.body || {};
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password required' });
+      return res.status(400).json({ message: 'Completează emailul și parola.' });
     }
     const result = await query(
       `SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE LIMIT 1`,
@@ -93,7 +93,7 @@ router.post('/login', authAttemptLimit, async (req, res) => {
       // table is scoped per company. Repeated failures on a real account are the signal worth
       // having anyway.
       await auditSecurity(req, { user, action: 'login_failed' });
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Email sau parolă greșite.' });
     }
     await query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
     await auditSecurity(req, { user, action: 'login' });
@@ -101,7 +101,7 @@ router.post('/login', authAttemptLimit, async (req, res) => {
     res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Login failed' });
+    res.status(500).json({ message: 'Autentificarea nu a reușit. Încearcă din nou.' });
   }
 });
 
@@ -109,7 +109,7 @@ router.post('/register', authAttemptLimit, async (req, res) => {
   try {
     const { email, password, name, company_name } = req.body || {};
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password required' });
+      return res.status(400).json({ message: 'Completează emailul și parola.' });
     }
 
     const password_hash = await bcrypt.hash(password, 12);
@@ -138,45 +138,45 @@ router.post('/register', authAttemptLimit, async (req, res) => {
     res.status(201).json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
-      return res.status(409).json({ message: 'Email already registered' });
+      return res.status(409).json({ message: 'Există deja un cont cu acest email.' });
     }
     console.error(err);
-    res.status(500).json({ message: 'Registration failed' });
+    res.status(500).json({ message: 'Crearea contului nu a reușit. Încearcă din nou.' });
   }
 });
 
 router.get('/me', authRequired, async (req, res) => {
   try {
     const result = await query(`SELECT * FROM users WHERE id = $1`, [req.user.id]);
-    if (!result.rows[0]) return res.status(401).json({ message: 'User not found' });
+    if (!result.rows[0]) return res.status(401).json({ message: 'Utilizatorul nu există.' });
     res.json(publicUser(result.rows[0]));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Failed to load user' });
+    res.status(500).json({ message: 'Nu am putut încărca datele contului.' });
   }
 });
 
 router.post('/refresh', async (req, res) => {
   try {
     const token = String(req.body?.refresh_token || '').trim();
-    if (!token) return res.status(400).json({ message: 'refresh_token required' });
+    if (!token) return res.status(400).json({ message: 'Sesiune lipsă. Conectează-te din nou.' });
     let payload;
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
-      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+      return res.status(401).json({ message: 'Sesiunea a expirat. Conectează-te din nou.' });
     }
     if (payload.type !== 'refresh' || !payload.sub) {
-      return res.status(401).json({ message: 'Invalid refresh token' });
+      return res.status(401).json({ message: 'Sesiunea nu mai este validă. Conectează-te din nou.' });
     }
     const result = await query(
       `SELECT * FROM users WHERE id = $1 AND is_active = TRUE LIMIT 1`,
       [payload.sub]
     );
     const user = result.rows[0];
-    if (!user) return res.status(401).json({ message: 'User not found' });
+    if (!user) return res.status(401).json({ message: 'Utilizatorul nu există.' });
     if (payload.company_id && payload.company_id !== user.company_id) {
-      return res.status(401).json({ message: 'Invalid refresh token' });
+      return res.status(401).json({ message: 'Sesiunea nu mai este validă. Conectează-te din nou.' });
     }
 
     const session = await sessionUsable(payload.jti);
@@ -194,7 +194,7 @@ router.post('/refresh', async (req, res) => {
     res.json({ ...tokens, user: publicUser(user) });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Refresh failed' });
+    res.status(500).json({ message: 'Reînnoirea sesiunii nu a reușit. Conectează-te din nou.' });
   }
 });
 
@@ -254,7 +254,7 @@ router.post('/reset-password-request', async (req, res) => {
     const email = String(req.body?.email || '').trim();
     const origin = req.body?.origin || process.env.CLIENT_ORIGIN || 'http://localhost:5173';
     // Always return ok to avoid email enumeration
-    const empty = { ok: true, message: 'If the email exists, a reset link was sent.' };
+    const empty = { ok: true, message: 'Dacă emailul există, am trimis un link de resetare.' };
     if (!email) return res.json(empty);
 
     const result = await query(
@@ -281,7 +281,7 @@ router.post('/reset-password-request', async (req, res) => {
       });
     } catch (mailErr) {
       console.error('[reset email]', mailErr);
-      return res.status(500).json({ message: 'Reset email failed' });
+      return res.status(500).json({ message: 'Nu am putut trimite emailul de resetare. Încearcă din nou.' });
     }
 
     // Local/dev: return link when Resend is not configured so UI can show it.
@@ -291,7 +291,7 @@ router.post('/reset-password-request', async (req, res) => {
     res.json({ ...empty, reset_link });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Reset request failed' });
+    res.status(500).json({ message: 'Cererea de resetare nu a reușit. Încearcă din nou.' });
   }
 });
 
@@ -299,10 +299,10 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body || {};
     if (!resetToken || !newPassword) {
-      return res.status(400).json({ message: 'Token and new password required' });
+      return res.status(400).json({ message: 'Completează parola nouă.' });
     }
     if (String(newPassword).length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      return res.status(400).json({ message: 'Parola trebuie să aibă cel puțin 6 caractere.' });
     }
 
     const password_hash = await bcrypt.hash(newPassword, 12);
@@ -317,12 +317,12 @@ router.post('/reset-password', async (req, res) => {
       [password_hash, resetToken]
     );
     if (!result.rows[0]) {
-      return res.status(400).json({ message: 'Invalid or expired reset link' });
+      return res.status(400).json({ message: 'Linkul de resetare este invalid sau a expirat. Cere unul nou.' });
     }
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Password reset failed' });
+    res.status(500).json({ message: 'Resetarea parolei nu a reușit. Încearcă din nou.' });
   }
 });
 

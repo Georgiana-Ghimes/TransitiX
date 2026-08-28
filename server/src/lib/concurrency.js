@@ -2,16 +2,6 @@ import path from 'path';
 import crypto from 'crypto';
 
 /** Annex fields the office types in Editează — re-extract must not wipe them. */
-export const OFFICE_AVIZ_FIELDS = [
-  'valoare_tpo',
-  'numar_curse',
-  'taxe_suplimentare',
-  'km_parcursi',
-  'tarif_km',
-  'observatii',
-  'ruta_display',
-];
-
 export const OCR_AVIZ_FIELDS = [
   'numar_tpo',
   'data_efectuare_cursa',
@@ -21,24 +11,6 @@ export const OCR_AVIZ_FIELDS = [
   'cantitate_marfa',
   'numar_document_marfa',
 ];
-
-function filledOfficeValue(key, value) {
-  if (value == null) return false;
-  if (typeof value === 'string') return value.trim() !== '';
-  if (key === 'observatii') return true;
-  if (Number(value) === 0) return false;
-  return true;
-}
-
-/** Keep km/taxe/observatii from the stored row when re-extracting from the PDF. */
-export function mergeReextractRow(existing, extractedFields) {
-  const out = { ...extractedFields };
-  if (!existing) return out;
-  for (const key of OFFICE_AVIZ_FIELDS) {
-    if (filledOfficeValue(key, existing[key])) out[key] = existing[key];
-  }
-  return out;
-}
 
 /** Salvează / re-extract must not demote Confirmat back to Extras. */
 export function nextAvizStatusOnSave(current, requested) {

@@ -2,7 +2,7 @@
 
 SaaS TMS (Transport Management System) for Romanian road freight: trips/CMR, fleet, drivers, warehouse, finance, and a driver app.
 
-No teammate secrets are required to log in locally. Invented Docker/JWT values are enough; optional Google Vision / Resend keys stay empty and the app uses stubs.
+No teammate secrets are required to log in locally. Invented Docker/JWT values are enough; the optional Resend key stays empty and the app uses stubs.
 
 ## Stack
 
@@ -32,7 +32,7 @@ No teammate secrets are required to log in locally. Invented Docker/JWT values a
 
 ### Known stubs / demos (not production integrations)
 
-- **OCR:** Google Vision when `GOOGLE_VISION_API_KEY` is set; otherwise trip-prefill stub (CMR) / empty aviz fields to edit by hand. PDFs with a text layer parse without Vision.
+- **OCR:** PaddleOCR, a local sidecar (`docker-compose.paddle-ocr.yml`), pointed at by `PADDLE_OCR_URL`. PDFs with a text layer parse without it. With no sidecar running, an upload still succeeds and the fields are typed by hand.
 - **Email:** Resend when `RESEND_API_KEY` + `EMAIL_FROM` are set; otherwise console log (reset-password still returns a local link)
 - **Planning AI / GPS / ANAF e-Factura:** labeled demos
 - **Routing:** real (OSRM) when `OSRM_URL` is set; otherwise `/api/geo/*` returns 503 rather than a made-up distance
@@ -66,7 +66,7 @@ CLIENT_ORIGIN=http://localhost:5173
 PORT=3001
 ```
 
-Leave `GOOGLE_VISION_API_KEY` and `RESEND_API_KEY` empty unless you have keys.
+Leave `RESEND_API_KEY` empty unless you have a key.
 
 ### 3. Install, migrate, seed
 
@@ -170,6 +170,36 @@ docker compose up --build
 ```
 
 Serves the packaged app at `http://localhost:8082` (API + web + DB, seed on start). Better for a VM demo than daily coding. Production still needs a real `JWT_SECRET`, published HTTPS origin, and Resend keys if you want outbound mail.
+
+## RAI Spedition companion
+
+The same codebase, built as a separate product for one customer: the office UI trimmed to
+`/avize` + `/reports`, a slim driver shell that only sends paperwork, its own database, its own
+`JWT_SECRET`, and its own version. The profile comes from the build mode, not from a file
+somebody has to remember to create.
+
+```bash
+docker compose -f docker-compose.companion.yml up -d --build   # Postgres :5435 + PaddleOCR :8101
+cp server/companion.env.example server/.env                    # then edit
+npm run db:migrate
+npm run start:companion                                        # builds dist/ and serves it from the API
+```
+
+`start:companion` runs `vite build --mode companion` and then the API, which serves the built
+files itself — one origin, no dev server. `npm run dev:companion` is still there for development.
+
+Numbering lives in `package.json` under `companion` (title, version, build); the release hook
+only ever touches the product's own `version`.
+
+Back both halves up together — the database alone cannot reproduce a document:
+
+```bash
+npm run db:backup -- --keep 14
+```
+
+`GET /api/health` reports `ocr`: `paddle` when the sidecar answers, `paddle-down` when it is
+configured but silent, `false` when there is none. `/avize` shows a banner for `paddle-down`,
+because with no fallback provider a stopped sidecar means uploads land with no fields filled.
 
 ## Scripts
 

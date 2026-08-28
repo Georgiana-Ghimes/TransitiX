@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>Transitix Companion — Changelog Sprint 2</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --ok: #166534;
+      --warn: #92400e;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Transitix Companion — Sprint 2</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong> · profil <strong>documents</strong><br />
+      Versiune companion <strong>v1.1.0 · build 5</strong> · deschis <strong>28 august 2026</strong><br />
+      Perioada: de la pull <em>driver-app</em> (după Sprint 1) până la închiderea sprintului (anunțată de PO)
+    </div>
+    <div class="badge-row">
+      <span class="badge">Companion izolat</span>
+      <span class="badge">Paddle OCR</span>
+      <span class="badge">VM + Cloudflare</span>
+      <span class="badge">App șofer</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Changelog de testare pentru <strong>RAI Spedition — app documente</strong> (nu Transitix TMS complet).
+    Sprint 1 = upload șofer + OCR Paddle (fișierul <span class="mono">ChangeLog-RAI-spedition-driver-app.html</span>).
+  </p>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>App companion izolat (profil documents)</h3>
+      <ul>
+        <li><strong>Profil documents</strong> activat din <code>vite --mode companion</code> — nu mai depinde de un fișier <code>.env.companion</code> uitat; build fără mod companion = Transitix full.</li>
+        <li><strong>Birou:</strong> meniu redus — doar <strong>Avize / Rapoarte</strong> și <strong>Rapoarte</strong>; landing <code>/avize</code>.</li>
+        <li><strong>Șofer:</strong> shell dedicat <code>DriverAppDocuments</code> (upload + profil), separat de app-ul șofer Transitix full.</li>
+        <li><strong>Docker companion:</strong> <code>docker-compose.companion.yml</code> — Postgres <code>:5435</code>, Paddle <code>:8101</code>.</li>
+        <li><strong>Env:</strong> <code>companion.env.example</code> + <code>server/companion.env.example</code> (API <code>:3002</code>, JWT și DB proprii).</li>
+        <li><strong>Dev:</strong> <code>npm run dev:companion</code> → <code>:5174</code>; API pe <code>:3002</code>.</li>
+        <li><strong>Producție VM:</strong> <code>npm run start:companion</code> — build static + servire din API (un singur origin, fără Vite dev prin tunnel).</li>
+        <li><strong>Backup:</strong> <code>npm run db:backup</code> — DB + folder uploads împreună.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Branding și versiune companion</h3>
+      <ul>
+        <li>Titlu produs: <strong>RAI Spedition — Documente</strong> (configurabil).</li>
+        <li>Tagline sidebar + versiune în login și topbar: <strong>v1.1.0 - build 5</strong>.</li>
+        <li>Număr companion în <code>package.json → companion</code> (version + build), decuplat de Transitix 1.12.x.</li>
+        <li>Titlu tab browser: nume produs + versiune.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>OCR — Paddle unic</h3>
+      <ul>
+        <li><strong>Google Vision eliminat</strong> — un singur pipeline: PDF text layer → PaddleOCR local.</li>
+        <li>Același flux pentru upload șofer, loturi birou și <strong>Re-extrage</strong> pe <code>/avize</code>.</li>
+        <li><code>GET /api/health</code> raportează <code>ocr: paddle</code> / <code>paddle-down</code> / <code>false</code>.</li>
+        <li>Banner pe <code>/avize</code> când Paddle e configurat dar containerul nu răspunde.</li>
+        <li>După upload șofer: OCR doar pe <strong>documentele noi</strong>; timeout 5 min pe CPU VM; lock per batch.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>App șofer — UX upload</h3>
+      <ul>
+        <li><strong>Avertisment blur</strong> înainte de trimitere (heuristică Laplacian) — poți refotografia sau trimite oricum.</li>
+        <li><strong>Throttle client</strong> (20/min) înainte de limita serverului — mesaj cu secunde rămase.</li>
+        <li><strong>Polling</strong> listă „Trimise recent” la 8s cât timp status = Încărcat (doar tab vizibil).</li>
+        <li>Verificare <strong>număr fișiere</strong> (max din API) și <strong>15 MB</strong> înainte de upload.</li>
+        <li>Mesaje eroare în română (nu „Failed to fetch” / „Unexpected field”).</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Deploy VM și acces colegi</h3>
+      <ul>
+        <li>3 terminale dev: API, UI companion, <code>cloudflared</code> spre Vite.</li>
+        <li>Quick tunnel Cloudflare (<code>*.trycloudflare.com</code>).</li>
+        <li>Vite <code>allowedHosts</code> pentru tunnel; proxy API implicit <strong>3002</strong> în mod companion.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+
+    <div class="avoid-break">
+      <h3>Login 401 pe VM</h3>
+      <ul>
+        <li><strong>Seed:</strong> parole demo reîmprospătate la re-run (<code>admin123</code> / <code>sofer123</code>).</li>
+        <li><strong>Proxy Vite:</strong> browser pe <code>:3001</code>, curl pe <code>:3002</code> — proxy companion forțează 3002.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>App companion nu se încărca</h3>
+      <ul>
+        <li>Import <code>ProtectedRoute</code> restaurat în <code>App.jsx</code>.</li>
+        <li><code>OfficeRoutes</code> ca fragment <code>{OfficeRoutes()}</code> (react-router v6).</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Cloudflare tunnel blocat</h3>
+      <ul>
+        <li>Host <code>*.trycloudflare.com</code> respins de Vite — adăugat în <code>allowedHosts</code>.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>OCR rămânea pe „Încărcat”</h3>
+      <ul>
+        <li>Batch deschis: OCR reprocesa toate pozele vechi înainte de cea nouă.</li>
+        <li>Timeout 2 min tăia Paddle pe rotații CPU.</li>
+        <li>Remediat: OCR doar fișiere noi, timeout 5 min, erori per-document nu blochează batch-ul.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Re-extrage pe /avize golea câmpurile</h3>
+      <ul>
+        <li>Butonul folosea Vision/stub când nu exista cheie Google — acum același Paddle ca upload-ul șoferului.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă (VM companion)</h2>
+    <div class="card">
+      <ol>
+        <li><code>docker compose -f docker-compose.companion.yml up -d --build</code></li>
+        <li><code>cp server/companion.env.example server/.env</code> · migrate · seed</li>
+        <li><strong>Dev:</strong> <code>npm run dev --prefix server</code> + <code>npm run dev:companion</code> + cloudflared</li>
+        <li><strong>Demo VM:</strong> <code>npm run start:companion</code> (un singur port API + UI build)</li>
+        <li>Health OCR: <code>curl http://127.0.0.1:3002/api/health</code> → <code>capabilities.ocr</code></li>
+        <li>Login șofer → upload aviz → admin <code>/avize</code> (filtru „De la șofer”)</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Sprint 2 · deschis 28 august 2026 · actualizat 28 august 2026 · Companion v1.1.0 build 5 ·
+    Branch RAI-spedition-driver-app · Append până la închidere sprint
+  </footer>
+
+</body>
+</html>

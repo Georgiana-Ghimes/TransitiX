@@ -102,7 +102,7 @@ function InviteForm({ roles, onInvited, onLink }) {
       setOpen(false);
       onInvited();
     } catch (err) {
-      notifyError(err.message || 'Invitația nu a putut fi trimisă');
+      notifyError('Invitația nu a putut fi trimisă', err);
     } finally {
       setBusy(false);
     }
@@ -170,7 +170,7 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
       if (done) done(res);
       onChanged();
     } catch (err) {
-      notifyError(err.message || 'Acțiunea nu a reușit');
+      notifyError('Acțiunea nu a reușit', err);
     } finally {
       setBusy(null);
     }
@@ -289,7 +289,7 @@ export default function Users() {
     try {
       setData(await api.users.list());
     } catch (err) {
-      notifyError(err.message || 'Lista de utilizatori nu a putut fi încărcată');
+      notifyError('Lista de utilizatori nu a putut fi încărcată', err);
     } finally {
       setLoading(false);
     }

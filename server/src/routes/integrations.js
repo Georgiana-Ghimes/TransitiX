@@ -5,11 +5,7 @@ import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { query } from '../db.js';
 import { serializeRow } from '../entities.js';
 import { sendEmail } from '../lib/email.js';
-import {
-  extractCmrFromImage,
-  stubCmrFromTrip,
-  visionConfigured,
-} from '../lib/cmrOcr.js';
+import { stubCmrFromTrip } from '../lib/cmrOcr.js';
 import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { ingestPositions } from '../lib/telematics/ingest.js';
@@ -54,7 +50,8 @@ router.post('/upload', authRequired, (req, res) => {
 
 /**
  * OCR / LLM endpoint.
- * CMR requests: Google Vision when GOOGLE_VISION_API_KEY is set; else trip prefill stub.
+ * CMR requests: prefilled from the trip. Reading a photograph is PaddleOCR's job and happens
+ * on /avize, where the result lands in a queue a person reviews.
  * Planning AI (suggestions schema): still stubbed.
  */
 router.post('/llm', authRequired, async (req, res) => {
@@ -71,7 +68,6 @@ router.post('/llm', authRequired, async (req, res) => {
       promptLength: prompt?.length || 0,
       trip_id: trip_id || trip_context?.id || null,
       files: Array.isArray(file_urls) ? file_urls.length : 0,
-      vision: visionConfigured(),
     });
 
     if (response_json_schema?.properties?.suggestions) {
@@ -106,27 +102,6 @@ router.post('/llm', authRequired, async (req, res) => {
         [tid, req.user.company_id]
       );
       if (result.rows[0]) trip = serializeRow(result.rows[0]);
-    }
-
-    const imageUrl = Array.isArray(file_urls) ? file_urls.find(Boolean) : null;
-
-    if (visionConfigured() && imageUrl) {
-      try {
-        const extracted = await extractCmrFromImage(imageUrl, trip);
-        return res.json(extracted);
-      } catch (ocrErr) {
-        console.error('[vision ocr]', ocrErr.message || ocrErr);
-        const fallback = stubCmrFromTrip(trip);
-        fallback._note = `OCR Vision a eșuat (${ocrErr.message}). Am folosit datele din cursă.`;
-        fallback._vision_error = ocrErr.message;
-        return res.json(fallback);
-      }
-    }
-
-    if (visionConfigured() && !imageUrl) {
-      const fallback = stubCmrFromTrip(trip);
-      fallback._note = 'Nicio imagine trimisă pentru OCR. Am folosit datele din cursă.';
-      return res.json(fallback);
     }
 
     res.json(stubCmrFromTrip(trip));

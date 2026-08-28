@@ -41,11 +41,13 @@ server/node_modules/
 /docs/*
 !/docs/CHANGELOGS/
 /docs/CHANGELOGS/*
-!/docs/CHANGELOGS/changelogsSprints/
-/docs/CHANGELOGS/changelogsSprints/*
-!/docs/CHANGELOGS/changelogsSprints/ChangeLogSprint*.md
+!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app*.html
+!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app*.pdf
+!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-Sprint2.html
+!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-Sprint2.pdf
 /AGENTS.md
 /CLAUDE.md
 /CHANGELOG.md
 /.cursor/
 /.claude/
+backups/

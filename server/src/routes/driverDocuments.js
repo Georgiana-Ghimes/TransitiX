@@ -11,7 +11,7 @@ import { authRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import { publicUploadUrl } from '../uploadPath.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
-import { logEvent, upload, extractBatchDocuments } from './documents.js';
+import { logEvent, upload, extractBatchDocuments, uploadErrorMessage } from './documents.js';
 
 const router = Router();
 router.use(authRequired);
@@ -113,7 +113,7 @@ router.post('/', (req, res) => {
   }
 
   upload.array('files', DRIVER_FILE_CAP)(req, res, async (err) => {
-    if (err) return res.status(400).json({ message: err.message || 'Încărcare eșuată' });
+    if (err) return res.status(400).json({ message: uploadErrorMessage(err, DRIVER_FILE_CAP) });
     const files = (req.files ?? []).slice(0, DRIVER_FILE_CAP);
     if (!files.length) return res.status(400).json({ message: 'Niciun fișier trimis' });
 

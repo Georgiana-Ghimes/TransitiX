@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2, Building2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { friendlyErrorMessage } from '@/lib/notify';
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ export default function Register() {
       });
       window.location.href = safeReturnTo();
     } catch (err) {
-      setError(err.message || "Înregistrarea a eșuat");
+      setError(friendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }

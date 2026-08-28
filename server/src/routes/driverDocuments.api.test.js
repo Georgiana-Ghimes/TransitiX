@@ -110,6 +110,23 @@ describe('POST /api/driver-documents', () => {
     }
   });
 
+  /**
+   * Multer answers `Unexpected field` past the array limit. A driver reading that learns neither
+   * what went wrong nor what the limit is.
+   */
+  it('names the file limit in Romanian instead of multer’s wording', async () => {
+    let req = api().post('/api/driver-documents').set(auth(ctx.driverToken))
+      .field('trip_id', trip.id).field('document_type', 'aviz');
+    for (let i = 0; i < 9; i += 1) {
+      req = req.attach('files', PDF, { filename: `p${i}.pdf`, contentType: 'application/pdf' });
+    }
+    const res = await req;
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/Prea multe fișiere/);
+    expect(res.body.message).toContain('8');
+    expect(res.body.message).not.toMatch(/unexpected field/i);
+  });
+
   it('refuses a request with no file', async () => {
     const res = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
       .field('trip_id', trip.id);
@@ -153,5 +170,107 @@ describe('GET /api/driver-documents/trips/:tripId', () => {
     const res = await api().get(`/api/driver-documents/trips/${trip.id}`)
       .set(auth(ctx.otherDriverToken));
     expect(res.status).toBe(404);
+  });
+});
+
+describe('POST /api/avize/extract on a document that came in through a batch', () => {
+  /**
+   * `/avize` lists office scans and driver photos in one table, but the two arrived through
+   * different extractors. Re-extracting a driver photo on the avize/Vision path rewrote it with
+   * a stub wherever no Vision key is configured — the default in the documents companion, where
+   * paddle is the only provider. The suite runs with no key, so this is that configuration.
+   */
+  it('re-runs the batch extractor instead of stubbing the row', async () => {
+    const uploaded = await upload(ctx.driverToken, trip.id, 're-extrage.pdf');
+    const docId = uploaded.body.documents[0].id;
+
+    // Stands in for a finished paddle run: fields on the row, raw text in extracted_data.
+    await query(
+      `UPDATE aviz_documents SET
+         status = 'extracted', extraction_source = 'paddle', numar_tpo = 'TPO-0025629',
+         extracted_data = $2::jsonb
+       WHERE id = $1`,
+      [docId, JSON.stringify({
+        raw_text: 'Comanda de transport TPO-0025629',
+        values: { numar_tpo: 'TPO-0025629' },
+      })]
+    );
+
+    const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
+    expect(res.status).toBe(200);
+
+    const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
+    expect(after.numar_tpo).toBe('TPO-0025629');
+    expect(after.status).toBe('extracted');
+    expect(after.extraction_source).not.toBe('stub');
+  });
+});
+
+describe('POST /api/avize/extract when OCR runs long', () => {
+  /**
+   * Paddle on a CPU VM can take minutes, which is fine for a background pass and not fine for
+   * somebody holding a button down. The interactive path gives up early — and must say so
+   * rather than store the empty read it came back with.
+   */
+  const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
+  const saved = {};
+  let hanging;
+
+  beforeAll(async () => {
+    const http = await import('node:http');
+    hanging = http.createServer(() => { /* stands in for paddle: never answers */ });
+    await new Promise((resolve) => hanging.listen(0, '127.0.0.1', resolve));
+
+    for (const key of KEYS) saved[key] = process.env[key];
+    process.env.OCR_PROVIDER = 'paddle';
+    process.env.PADDLE_OCR_URL = `http://127.0.0.1:${hanging.address().port}`;
+    process.env.OCR_TIMEOUT_MS = '80';
+    process.env.OCR_INTERACTIVE_TIMEOUT_MS = '80';
+  });
+
+  afterAll(async () => {
+    for (const key of KEYS) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+    hanging?.closeAllConnections?.();
+    await new Promise((resolve) => hanging.close(resolve));
+  });
+
+  it('reports the timeout and leaves the row as it was', async () => {
+    const uploaded = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
+      .field('trip_id', trip.id)
+      .field('document_type', 'aviz')
+      .attach('files', Buffer.from('poza'), { filename: 'lenta.jpg', contentType: 'image/jpeg' });
+    const docId = uploaded.body.documents[0].id;
+
+    await query(
+      `UPDATE aviz_documents SET
+         status = 'extracted', extraction_source = 'paddle', numar_tpo = 'TPO-0025629'
+       WHERE id = $1`,
+      [docId]
+    );
+
+    const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
+    expect(res.status).toBe(504);
+    expect(res.body.message).toMatch(/timpul alocat/i);
+
+    const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
+    expect(after.numar_tpo).toBe('TPO-0025629');
+    expect(after.status).toBe('extracted');
+    expect(after.extraction_source).toBe('paddle');
+  });
+
+  /**
+   * A scan reaches the sidecar as a PDF and is rasterized there. Node used to skip PDFs, so the
+   * sidecar was never called for one — reaching the clock at all is what proves it is now.
+   */
+  it('sends a text-poor PDF to the sidecar instead of giving up on it', async () => {
+    const uploaded = await upload(ctx.driverToken, trip.id, 'scanata.pdf');
+    const docId = uploaded.body.documents[0].id;
+
+    const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
+    expect(res.status).toBe(504);
+    expect(res.body.message).toMatch(/timpul alocat/i);
   });
 });

@@ -1,3 +1,7 @@
+/**
+ * How a stored row was read. `vision` stays in the table for rows extracted before Google Vision
+ * was removed — dropping it would relabel their history rather than erase a dependency.
+ */
 export function mapProviderToSource(provider) {
   const p = String(provider || '').toLowerCase();
   if (p === 'pdf_text' || p === 'pdf-text') return 'pdf-text';

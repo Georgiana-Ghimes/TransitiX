@@ -176,7 +176,7 @@ export default function Audit() {
       setTotal(res.total);
       setOffset(nextOffset);
     } catch (err) {
-      notifyError(err.message || 'Jurnalul nu a putut fi încărcat');
+      notifyError('Jurnalul nu a putut fi încărcat', err);
     } finally {
       setLoading(false);
     }

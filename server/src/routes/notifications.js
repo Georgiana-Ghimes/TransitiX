@@ -88,7 +88,7 @@ router.put('/:id/read', async (req, res) => {
        RETURNING *`,
       [id, companyId]
     );
-    if (!result.rows[0]) return res.status(404).json({ message: 'Not found' });
+    if (!result.rows[0]) return res.status(404).json({ message: 'Notificarea nu a fost găsită.' });
     res.json(serializeRow(result.rows[0]));
   } catch (err) {
     console.error(err);

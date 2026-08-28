@@ -21,7 +21,7 @@ function resendAttachments(attachments) {
 export async function sendEmail({ to, subject, text, html, attachments } = {}) {
   const recipient = String(to || '').trim();
   if (!recipient || !subject) {
-    return { ok: false, message: 'to and subject required' };
+    return { ok: false, message: 'Completează destinatarul și subiectul.' };
   }
 
   if (!emailConfigured()) {
@@ -31,7 +31,7 @@ export async function sendEmail({ to, subject, text, html, attachments } = {}) {
       body: String(text || html || '').slice(0, 300),
       attachments: Array.isArray(attachments) ? attachments.map((a) => a.filename) : [],
     });
-    return { ok: true, stub: true, message: 'Email logged on server (Resend not configured)' };
+    return { ok: true, stub: true, message: 'Emailul a fost înregistrat pe server (serviciul de email nu este configurat).' };
   }
 
   const res = await fetch(RESEND_URL, {

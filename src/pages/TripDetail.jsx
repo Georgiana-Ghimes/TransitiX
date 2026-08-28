@@ -390,11 +390,6 @@ export default function TripDetail() {
                         {ocr._note || 'OCR stub: date precompletate din cursă.'}
                       </p>
                     )}
-                    {!ocr._stub && ocr._provider === 'google_vision' && (
-                      <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                        Extras cu Google Vision — verifică și confirmă datele.
-                      </p>
-                    )}
                     {[
                       { label: 'Număr CMR', value: ocr.cmr_number },
                       { label: 'Dată', value: ocr.date },

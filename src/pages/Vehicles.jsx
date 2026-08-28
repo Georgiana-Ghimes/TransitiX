@@ -6,6 +6,7 @@ import SuggestSearch from '@/components/SuggestSearch';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { toast } from '@/components/ui/use-toast';
 import { Plus, Truck } from 'lucide-react';
+import { notifyError } from '@/lib/notify';
 
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
@@ -47,11 +48,7 @@ export default function Vehicles() {
       setConfirmAction(null);
       await loadVehicles();
     } catch (e) {
-      toast({
-        title: 'Acțiune eșuată',
-        description: e.message || 'Nu s-a putut actualiza vehiculul.',
-        variant: 'destructive',
-      });
+      notifyError('Nu s-a putut actualiza vehiculul', e);
     } finally {
       setBusy(false);
     }
@@ -63,11 +60,7 @@ export default function Vehicles() {
       toast({ title: 'Vehicul reactivat', description: `${vehicle.plate} este din nou disponibil.` });
       await loadVehicles();
     } catch (e) {
-      toast({
-        title: 'Acțiune eșuată',
-        description: e.message || 'Nu s-a putut reactiva vehiculul.',
-        variant: 'destructive',
-      });
+      notifyError('Nu s-a putut reactiva vehiculul', e);
     }
   };
 
