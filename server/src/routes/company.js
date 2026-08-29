@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
 import { getCompanyById, pickCompanyWritable, publicCompany } from '../lib/company.js';
+import { invalidateComputedNotificationsCache } from '../lib/officeNotifications.js';
 
 const router = Router();
 
@@ -37,6 +38,9 @@ router.put('/', adminRequired, async (req, res) => {
       values
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Compania nu a fost găsită.' });
+    // `document_expiry_days` sets the horizon the bell computes against, so a threshold change
+    // has to reach the next inbox read rather than the next cache expiry.
+    invalidateComputedNotificationsCache(req.user.company_id);
     res.json(publicCompany(result.rows[0]));
   } catch (err) {
     console.error(err);

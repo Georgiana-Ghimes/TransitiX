@@ -11,6 +11,7 @@ import {
   notifyTripStatusChange,
   notifyCmrPending,
   dismissCmrPending,
+  invalidateComputedNotificationsCache,
 } from '../lib/officeNotifications.js';
 import {
   DRIVER_TRIP_WRITABLE,
@@ -23,6 +24,7 @@ import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNum
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
 import { auditEntityChange, isAudited } from '../lib/audit/events.js';
+import { firstErrorMessage, validateEntityInput } from '../lib/validation/entityInput.js';
 
 const router = Router();
 
@@ -37,11 +39,40 @@ function requireEntityAction(action) {
   };
 }
 
-function writableForRequest(req, cfg) {
-  if (req.user.role === 'driver' && req.params.entity === 'Trip') {
-    return pickWritable({ writable: DRIVER_TRIP_WRITABLE, jsonFields: cfg.jsonFields }, req.body);
+/**
+ * Expiry and unassigned-trip alerts are computed on read and cached for minutes. Without this,
+ * setting an expiry date on an existing driver produced no bell ping until the cache aged out,
+ * which read as "notifications only fire on create".
+ */
+const COMPUTED_ALERT_ENTITIES = new Set(['Driver', 'Vehicle', 'Trip']);
+
+function refreshComputedAlerts(req) {
+  if (COMPUTED_ALERT_ENTITIES.has(req.params.entity)) {
+    invalidateComputedNotificationsCache(req.user.company_id);
   }
-  return pickWritable(cfg, req.body);
+}
+
+/**
+ * Rejects here as well as in the form, because `/api/entities/:entity` is a public surface: a
+ * client saved through curl with a whitespace-only name is just as unusable in Financiar as one
+ * saved through the modal.
+ */
+function guardEntityInput(entity, body, { partial }) {
+  const { errors, data } = validateEntityInput(entity, body, { partial });
+  if (errors) {
+    const err = new Error(firstErrorMessage(errors));
+    err.status = 400;
+    err.fieldErrors = errors;
+    throw err;
+  }
+  return data;
+}
+
+function writableForRequest(req, cfg, body = req.body) {
+  if (req.user.role === 'driver' && req.params.entity === 'Trip') {
+    return pickWritable({ writable: DRIVER_TRIP_WRITABLE, jsonFields: cfg.jsonFields }, body);
+  }
+  return pickWritable(cfg, body);
 }
 
 async function insertEntity(client, cfg, data) {
@@ -85,7 +116,7 @@ async function applyTripUit(data) {
 
 async function insertWithGpsGuard(client, companyId, entity, item) {
   const cfg = ENTITY_MAP[entity];
-  const data = pickWritable(cfg, item);
+  const data = pickWritable(cfg, guardEntityInput(entity, item, { partial: false }));
   data.company_id = companyId;
   if (entity === 'GPSLog' && data.is_current && data.vehicle_id) {
     await client.query(
@@ -173,8 +204,10 @@ router.post('/:entity/bulk', requireEntityAction('create'), async (req, res) => 
       }
       return rows;
     });
+    refreshComputedAlerts(req);
     res.status(201).json(created);
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ message: err.message });
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk create failed' });
   }
@@ -190,7 +223,7 @@ router.put('/:entity/bulk', requireEntityAction('update'), async (req, res) => {
     for (const item of items) {
       if (!item.id) continue;
       const { id, ...rest } = item;
-      const data = pickWritable(cfg, rest);
+      const data = pickWritable(cfg, guardEntityInput(req.params.entity, rest, { partial: true }));
       data.updated_at = new Date().toISOString();
       const keys = Object.keys(data);
       if (keys.length === 0) continue;
@@ -205,8 +238,10 @@ router.put('/:entity/bulk', requireEntityAction('update'), async (req, res) => {
       );
       if (result.rows[0]) updated.push(serializeRow(result.rows[0]));
     }
+    refreshComputedAlerts(req);
     res.json(updated);
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ message: err.message });
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk update failed' });
   }
@@ -267,6 +302,7 @@ router.post('/:entity', requireEntityAction('create'), async (req, res) => {
       });
       return created;
     }));
+    refreshComputedAlerts(req);
 
     if (req.params.entity === 'Trip') {
       // Best-effort: a CMR that cannot be measured is still a valid CMR.
@@ -307,7 +343,11 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     const cfg = ENTITY_MAP[req.params.entity];
     if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
 
-    const data = writableForRequest(req, cfg);
+    const data = writableForRequest(
+      req,
+      cfg,
+      guardEntityInput(req.params.entity, req.body, { partial: true })
+    );
     if (req.params.entity === 'Trip') await applyTripUit(data);
 
     let previous = null;
@@ -375,6 +415,7 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
       return updated;
     });
     if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
+    refreshComputedAlerts(req);
     const row = serializeRow(result.rows[0]);
 
     if (req.params.entity === 'AvizDocument') {
@@ -451,6 +492,7 @@ router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), asy
       return deleted;
     });
     if (!result.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
+    refreshComputedAlerts(req);
     res.json({ ok: true, id: req.params.id });
   } catch (err) {
     console.error(err);

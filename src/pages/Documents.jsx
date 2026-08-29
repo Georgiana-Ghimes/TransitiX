@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
 import { AlertTriangle, FileText, Truck, Users, Upload, HardDrive, Camera } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { collectExpiringDocuments, expiryHorizonDays } from '@/lib/documentExpiry';
 
 const KIND_LABEL = { vu: 'Unitate vehicul', card: 'Card șofer', unknown: 'Necunoscut' };
 const STATUS_LABEL = {
@@ -42,45 +43,13 @@ export default function Documents() {
         .filter((d) => d.original_image_url && !d.is_confirmed)
         .sort((a, b) => new Date(b.created_date || b.created_at || 0) - new Date(a.created_date || a.created_at || 0));
       setPendingCmrs(pending);
-      const now = new Date();
-      const days = Array.isArray(company?.settings?.document_expiry_days)
-        ? company.settings.document_expiry_days
-        : [30];
-      const horizonDaysValue = days.length ? Math.max(...days) : 30;
+      const horizonDaysValue = expiryHorizonDays(company);
       setHorizonDays(horizonDaysValue);
-      const inHorizon = new Date();
-      inHorizon.setDate(now.getDate() + horizonDaysValue);
-      const list = [];
-
-      vehicleList.forEach((v) => {
-        const docs = [
-          { type: 'ITP', number: v.itp_number, date: v.itp_expiry },
-          { type: 'RCA', number: v.rca_number, date: v.rca_expiry },
-          { type: 'Rovinietă', number: v.rovinieta_number, date: v.rovinieta_expiry },
-          { type: 'CASCO', number: v.casco_number, date: v.casco_expiry },
-        ];
-        docs.forEach((d) => {
-          if (d.date && new Date(d.date) <= inHorizon) {
-            list.push({ entity: `${v.brand} ${v.model} (${v.plate})`, entityType: 'vehicle', ...d, expired: new Date(d.date) < now });
-          }
-        });
-      });
-
-      driverList.forEach((d) => {
-        const docs = [
-          { type: 'Permis', number: d.license_number, date: d.license_expiry },
-          { type: 'Medical', number: d.medical_certificate_number, date: d.medical_certificate_expiry },
-          { type: 'Tahograf', number: d.tachograph_card_number, date: d.tachograph_card_expiry },
-        ];
-        docs.forEach((doc) => {
-          if (doc.date && new Date(doc.date) <= inHorizon) {
-            list.push({ entity: d.name, entityType: 'driver', ...doc, expired: new Date(doc.date) < now });
-          }
-        });
-      });
-
-      list.sort((a, b) => new Date(a.date) - new Date(b.date));
-      setExpiring(list);
+      setExpiring(collectExpiringDocuments({
+        vehicles: vehicleList,
+        drivers: driverList,
+        horizonDays: horizonDaysValue,
+      }));
     } catch (e) {
       console.error(e);
       notifyError('Nu am putut încărca documentele', e);

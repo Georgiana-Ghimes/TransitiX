@@ -12,7 +12,7 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false);
   const [editClient, setEditClient] = useState(null);
   const [search, setSearch] = useState('');
-  const [confirmClient, setConfirmClient] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => { loadClients(); }, []);
@@ -26,18 +26,34 @@ export default function Clients() {
     finally { setLoading(false); }
   };
 
-  const runDeactivate = async () => {
-    if (!confirmClient) return;
+  const runConfirm = async () => {
+    if (!confirmAction) return;
+    const { type, client } = confirmAction;
     setBusy(true);
     try {
-      await api.entities.Client.update(confirmClient.id, { is_active: false });
-      notifySuccess('Client dezactivat', `${confirmClient.name || 'Clientul'} a fost dezactivat.`);
-      setConfirmClient(null);
+      if (type === 'remove') {
+        await api.entities.Client.delete(client.id);
+        notifySuccess('Client șters', `${client.name || 'Clientul'} a fost eliminat.`);
+      } else {
+        await api.entities.Client.update(client.id, { is_active: false });
+        notifySuccess('Client dezactivat', `${client.name || 'Clientul'} a fost dezactivat.`);
+      }
+      setConfirmAction(null);
       await loadClients();
     } catch (e) {
-      notifyError('Dezactivare eșuată', e);
+      notifyError(type === 'remove' ? 'Ștergere eșuată' : 'Dezactivare eșuată', e);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleReactivate = async (client) => {
+    try {
+      await api.entities.Client.update(client.id, { is_active: true });
+      notifySuccess('Client reactivat', `${client.name || 'Clientul'} este din nou activ.`);
+      await loadClients();
+    } catch (e) {
+      notifyError('Reactivare eșuată', e);
     }
   };
 
@@ -48,6 +64,21 @@ export default function Clients() {
   );
 
   if (loading) return <div className="flex items-center justify-center h-96"><div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" /></div>;
+
+  const confirmCopy =
+    confirmAction?.type === 'remove'
+      ? {
+          title: 'Șterge clientul?',
+          description: `Ștergeți definitiv ${confirmAction.client?.name || 'acest client'}? Acțiunea nu poate fi anulată, iar facturile și cursele deja emise pe el rămân fără client legat.`,
+          confirmLabel: 'Șterge definitiv',
+          variant: 'danger',
+        }
+      : {
+          title: 'Dezactivează clientul?',
+          description: `${confirmAction?.client?.name || 'Clientul'} rămâne în listă marcat Inactiv. Îl poți reactiva sau șterge ulterior.`,
+          confirmLabel: 'Dezactivează',
+          variant: 'warning',
+        };
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
@@ -79,13 +110,18 @@ export default function Clients() {
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(c => (
-            <div key={c.id} className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={c.id} className={`bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-shadow ${c.is_active === false ? 'opacity-70' : ''}`}>
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-11 h-11 rounded-lg bg-[#1D4E89] flex items-center justify-center">
+                <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${c.is_active === false ? 'bg-slate-400' : 'bg-[#1D4E89]'}`}>
                   <Building2 className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[#0A2B4E] truncate">{c.name}</p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="font-semibold text-[#0A2B4E] truncate">{c.name}</p>
+                    {c.is_active === false && (
+                      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">Inactiv</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">CUI: {c.cui || '-'}</p>
                 </div>
               </div>
@@ -95,9 +131,16 @@ export default function Clients() {
                 {c.phone && <p className="flex items-center gap-2 text-xs"><Phone className="w-3.5 h-3.5 text-slate-400" /> {c.phone}</p>}
                 {c.email && <p className="flex items-center gap-2 text-xs truncate"><Mail className="w-3.5 h-3.5 text-slate-400" /> {c.email}</p>}
               </div>
-              <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
-                <button onClick={() => { setEditClient(c); setShowForm(true); }} className="flex-1 text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
-                <button onClick={() => setConfirmClient(c)} className="flex-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
+                <button onClick={() => { setEditClient(c); setShowForm(true); }} className="flex-1 min-w-[5.5rem] text-xs font-medium text-[#1D4E89] bg-blue-50 rounded-lg py-1.5 hover:bg-blue-100">Editează</button>
+                {c.is_active === false ? (
+                  <>
+                    <button onClick={() => handleReactivate(c)} className="flex-1 min-w-[5.5rem] text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
+                    <button onClick={() => setConfirmAction({ type: 'remove', client: c })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
+                  </>
+                ) : (
+                  <button onClick={() => setConfirmAction({ type: 'deactivate', client: c })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
+                )}
               </div>
             </div>
           ))}
@@ -112,14 +155,14 @@ export default function Clients() {
       {showForm && <ClientForm client={editClient} onClose={() => setShowForm(false)} onSave={() => { setShowForm(false); loadClients(); }} />}
 
       <ConfirmDialog
-        open={Boolean(confirmClient)}
-        onClose={() => { if (!busy) setConfirmClient(null); }}
-        onConfirm={runDeactivate}
+        open={Boolean(confirmAction)}
+        onClose={() => { if (!busy) setConfirmAction(null); }}
+        onConfirm={runConfirm}
         busy={busy}
-        variant="warning"
-        title="Dezactivează clientul?"
-        description={`${confirmClient?.name || 'Clientul'} va rămâne în listă ca inactiv.`}
-        confirmLabel="Dezactivează"
+        variant={confirmCopy.variant}
+        title={confirmCopy.title}
+        description={confirmCopy.description}
+        confirmLabel={confirmCopy.confirmLabel}
       />
     </div>
   );

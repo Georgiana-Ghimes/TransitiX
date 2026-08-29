@@ -105,17 +105,47 @@ function normalizeDateKey(dateStr) {
   return s;
 }
 
-function checkExpiry(dateStr, type, name, link) {
+export const DEFAULT_EXPIRY_HORIZON_DAYS = 30;
+
+/**
+ * The office picks the warning thresholds in Setări (`document_expiry_days`). The widest one is
+ * the horizon: a company that wants a 60-day heads-up should not be told 30 days later by the
+ * bell than by the Documente screen, which already reads this setting.
+ */
+export function expiryHorizonDays(settings) {
+  const days = settings?.document_expiry_days;
+  if (!Array.isArray(days)) return DEFAULT_EXPIRY_HORIZON_DAYS;
+  const usable = days
+    .map((d) => Number(d))
+    .filter((d) => Number.isFinite(d) && d > 0);
+  if (usable.length === 0) return DEFAULT_EXPIRY_HORIZON_DAYS;
+  return Math.max(...usable);
+}
+
+async function companyExpiryHorizon(companyId) {
+  try {
+    const result = await query(`SELECT settings FROM companies WHERE id = $1`, [companyId]);
+    return expiryHorizonDays(result.rows[0]?.settings);
+  } catch {
+    return DEFAULT_EXPIRY_HORIZON_DAYS;
+  }
+}
+
+/**
+ * Keyed by entity id, not by name: renaming a driver used to mint a brand-new key, so an alert
+ * the office had already dismissed came back, and the old dismissal lingered forever.
+ */
+function checkExpiry(dateStr, type, { id, name, link, horizonDays }) {
   if (!dateStr) return null;
   const now = new Date();
-  const in30Days = new Date();
-  in30Days.setDate(now.getDate() + 30);
+  const horizon = new Date();
+  horizon.setDate(now.getDate() + horizonDays);
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime()) || d > in30Days) return null;
+  if (Number.isNaN(d.getTime()) || d > horizon) return null;
   const expired = d < now;
   const dateKey = normalizeDateKey(dateStr);
   return {
-    id: `computed:document_expiry:${type}:${name}:${dateKey}`,
+    id: `computed:document_expiry:${type}:${id}:${dateKey}`,
     type: 'document_expiry',
     title: expired ? `${type} expirat` : `${type} expiră curând`,
     message: `${name} — ${expired ? 'expirat' : 'expiră'} ${d.toLocaleDateString('ro-RO')}`,
@@ -189,29 +219,30 @@ async function buildComputedNotifications(companyId) {
   }
 
   const items = [];
+  const horizonDays = await companyExpiryHorizon(companyId);
   const [vehicles, drivers, trips] = await Promise.all([
     query(
       `SELECT id, brand, model, plate, itp_expiry, rca_expiry, rovinieta_expiry, casco_expiry
        FROM vehicles
        WHERE company_id = $1 AND is_active = TRUE
          AND (
-           itp_expiry <= CURRENT_DATE + 30
-           OR rca_expiry <= CURRENT_DATE + 30
-           OR rovinieta_expiry <= CURRENT_DATE + 30
-           OR casco_expiry <= CURRENT_DATE + 30
+           itp_expiry <= CURRENT_DATE + $2::int
+           OR rca_expiry <= CURRENT_DATE + $2::int
+           OR rovinieta_expiry <= CURRENT_DATE + $2::int
+           OR casco_expiry <= CURRENT_DATE + $2::int
          )`,
-      [companyId]
+      [companyId, horizonDays]
     ),
     query(
       `SELECT id, name, license_expiry, medical_certificate_expiry, tachograph_card_expiry
        FROM drivers
        WHERE company_id = $1 AND is_active = TRUE
          AND (
-           license_expiry <= CURRENT_DATE + 30
-           OR medical_certificate_expiry <= CURRENT_DATE + 30
-           OR tachograph_card_expiry <= CURRENT_DATE + 30
+           license_expiry <= CURRENT_DATE + $2::int
+           OR medical_certificate_expiry <= CURRENT_DATE + $2::int
+           OR tachograph_card_expiry <= CURRENT_DATE + $2::int
          )`,
-      [companyId]
+      [companyId, horizonDays]
     ),
     query(
       `SELECT id, cmr_number FROM trips
@@ -224,19 +255,23 @@ async function buildComputedNotifications(companyId) {
   for (const v of vehicles.rows) {
     const label = `${v.brand} ${v.model} (${v.plate})`;
     for (const doc of ['itp', 'rca', 'rovinieta', 'casco']) {
-      const n = checkExpiry(v[`${doc}_expiry`], doc.toUpperCase(), label, '/vehicles');
+      const n = checkExpiry(v[`${doc}_expiry`], doc.toUpperCase(), {
+        id: v.id, name: label, link: '/vehicles', horizonDays,
+      });
       if (n) items.push(n);
     }
   }
 
   for (const d of drivers.rows) {
     const docs = [
-      ['license_expiry', 'Permis', '/drivers'],
-      ['medical_certificate_expiry', 'Medical', '/drivers'],
-      ['tachograph_card_expiry', 'Tahograf', '/drivers'],
+      ['license_expiry', 'Permis'],
+      ['medical_certificate_expiry', 'Medical'],
+      ['tachograph_card_expiry', 'Tahograf'],
     ];
-    for (const [field, label, link] of docs) {
-      const n = checkExpiry(d[field], label, d.name, link);
+    for (const [field, label] of docs) {
+      const n = checkExpiry(d[field], label, {
+        id: d.id, name: d.name, link: '/drivers', horizonDays,
+      });
       if (n) items.push(n);
     }
   }

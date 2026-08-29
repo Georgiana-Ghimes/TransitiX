@@ -134,6 +134,27 @@ export function resolveExportColumns(template) {
   return cols;
 }
 
+export function hasUsableColumns(columns) {
+  return Array.isArray(columns) && columns.length > 0;
+}
+
+/**
+ * Export must never invent a layout. A stored template with no columns used to fall through to
+ * the 14 RAI defaults, which on the operator's screen is indistinguishable from the export
+ * ignoring the template they picked. Fail loudly instead.
+ */
+export function exportColumnsFor(template) {
+  if (!hasUsableColumns(template?.columns)) {
+    const err = new Error(
+      `Șablonul „${template?.name || 'selectat'}” nu are nicio coloană salvată. `
+      + 'Deschide-l în tab-ul Șabloane și adaugă cel puțin o coloană.'
+    );
+    err.status = 400;
+    throw err;
+  }
+  return normalizeTemplateColumns(template.columns);
+}
+
 export function mapAnnexRows(columns, avize) {
   const cols = normalizeTemplateColumns(columns);
   return (avize || []).map((row, idx) => {

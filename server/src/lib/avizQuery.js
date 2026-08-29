@@ -86,17 +86,38 @@ export function uniqueZipEntry(name, used) {
   return candidate;
 }
 
-export function buildAvizListQuery({ companyId, from, to, status, q, uploadedFrom, limit = 200 }) {
+/**
+ * Which calendar date the `from`/`to` filters mean.
+ *
+ * `cursa` is the trip date read off the aviz — the one a monthly annex is built on. `incarcare`
+ * is when the file reached us, expressed in Bucharest so a 23:30 upload does not count as the
+ * next day. They are far apart in practice: an aviz photographed today can carry a trip date
+ * from two weeks ago, which is why a week preset on the trip date can come back empty while the
+ * month preset does not.
+ */
+export const AVIZ_DATE_FIELDS = {
+  cursa: 'data_efectuare_cursa',
+  incarcare: `((created_at AT TIME ZONE 'Europe/Bucharest')::date)`,
+};
+
+export function avizDateColumn(dateField) {
+  return AVIZ_DATE_FIELDS[dateField] || AVIZ_DATE_FIELDS.cursa;
+}
+
+export function buildAvizListQuery({
+  companyId, from, to, status, q, uploadedFrom, dateField, limit = 200,
+}) {
   const where = ['company_id = $1'];
   const params = [companyId];
+  const dateCol = avizDateColumn(dateField);
   let i = 2;
   if (from) {
-    where.push(`data_efectuare_cursa >= $${i}`);
+    where.push(`${dateCol} >= $${i}`);
     params.push(from);
     i += 1;
   }
   if (to) {
-    where.push(`data_efectuare_cursa <= $${i}`);
+    where.push(`${dateCol} <= $${i}`);
     params.push(to);
     i += 1;
   }

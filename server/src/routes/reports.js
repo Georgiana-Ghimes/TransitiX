@@ -19,7 +19,7 @@ import {
 } from '../lib/reporting/select.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
-import { normalizeTemplateColumns } from '../lib/avizTemplate.js';
+import { exportColumnsFor, normalizeTemplateColumns } from '../lib/avizTemplate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
 
 const router = Router();
@@ -146,7 +146,7 @@ router.post('/export', async (req, res) => {
 
     const withTotals = req.body?.totals !== false;
     const report = buildReport({ template, documents });
-    const columns = normalizeTemplateColumns(template.columns);
+    const columns = exportColumnsFor(template);
     const workbook = renderReportWorkbook({
       name: template.name,
       columns,

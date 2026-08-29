@@ -6,8 +6,8 @@ import {
   ANNEX_SOURCE_KEYS,
   DEFAULT_RAI_COLUMNS,
   annexFieldDefaults,
+  exportColumnsFor,
   isCompleteRaiTemplate,
-  normalizeTemplateColumns,
   resolveExportColumns,
 } from './avizTemplate.js';
 
@@ -48,7 +48,7 @@ function sablonNouColumns() {
 function annexWorkbook(template, avize) {
   return renderReportWorkbook({
     name: template.name || 'Anexa',
-    columns: normalizeTemplateColumns(template.columns),
+    columns: exportColumnsFor(template),
     rows: buildReport({ template, documents: avize }).rows,
     totals: null,
   });
@@ -97,6 +97,41 @@ describe('resolveExportColumns', () => {
     expect(resolved[0].source).toBe('numar_tpo');
     expect(resolved.find((c) => c.source === 'taxe_suplimentare').default_value).toBe('100');
     expect(resolved.find((c) => c.source === 'tarif_km').default_value).toBe('20');
+  });
+});
+
+describe('exportColumnsFor', () => {
+  it('exports exactly the selected template, never the RAI layout', () => {
+    const columns = [
+      { key: 'tip_marfa', header: 'Tip marfa', source: 'tip_marfa', default_value: '' },
+      { key: 'km_parcursi', header: 'Km parcursi', source: 'km_parcursi', default_value: 0 },
+      { key: 'tarif_km', header: 'Tarif km', source: 'tarif_km', default_value: 0 },
+    ];
+    const resolved = exportColumnsFor({ name: 'Șablon RAI redus', columns });
+    expect(resolved.map((c) => c.header)).toEqual(['Tip marfa', 'Km parcursi', 'Tarif km']);
+  });
+
+  it('refuses a template with no columns instead of silently emitting the RAI default', () => {
+    expect(() => exportColumnsFor({ name: 'Gol', columns: [] })).toThrowError(/nicio coloană/);
+    expect(() => exportColumnsFor({ name: 'Gol', columns: null })).toThrowError(/nicio coloană/);
+    try {
+      exportColumnsFor({ name: 'Gol', columns: [] });
+    } catch (err) {
+      expect(err.status).toBe(400);
+      expect(err.message).toContain('Gol');
+    }
+  });
+
+  it('writes only the selected template headers into the xlsx', async () => {
+    const columns = [
+      { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
+      { key: 'tip_marfa', header: 'Tip marfa', source: 'tip_marfa', default_value: '' },
+    ];
+    const sheet = await loadSheet({ name: 'Doar două', columns }, [EXTRACTED_AVIZ]);
+    const { headers, rows } = tableFromSheet(sheet);
+    expect(headers).toEqual(['Numar TPO', 'Tip marfa']);
+    expect(headers).not.toContain('Nr. crt');
+    expect(rows[0]['Numar TPO']).toBe('TPO-0025803');
   });
 });
 

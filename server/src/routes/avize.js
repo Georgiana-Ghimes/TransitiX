@@ -4,7 +4,12 @@ import { Router } from 'express';
 import { query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
-import { DEFAULT_RAI_COLUMNS, normalizeTemplateColumns } from '../lib/avizTemplate.js';
+import {
+  DEFAULT_RAI_COLUMNS,
+  exportColumnsFor,
+  hasUsableColumns,
+  normalizeTemplateColumns,
+} from '../lib/avizTemplate.js';
 import { avizFieldConfidence, repairAvizFromStored } from '../lib/avizOcr.js';
 import { extractBatchDocuments, logEvent } from './documents.js';
 import {
@@ -177,7 +182,7 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     throw err;
   }
   const template = serializeRow(tmpl.rows[0]);
-  const columns = normalizeTemplateColumns(template.columns);
+  const columns = exportColumnsFor(template);
   const report = buildReport({ template, documents: avize });
   // The annex keeps its exact agreed shape here — no totals row on the legacy path.
   const workbook = renderReportWorkbook({
@@ -222,6 +227,7 @@ router.get('/', async (req, res) => {
       status: req.query.status,
       q: req.query.q,
       uploadedFrom: req.query.uploaded_from,
+      dateField: req.query.date_field,
     });
     const result = await query(sql, params);
     const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
@@ -283,6 +289,9 @@ router.post('/templates', async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
     if (!name) return res.status(400).json({ message: 'Dă un nume șablonului.' });
+    if (!hasUsableColumns(req.body?.columns)) {
+      return res.status(400).json({ message: 'Adaugă cel puțin o coloană în șablon.' });
+    }
     const columns = normalizeTemplateColumns(req.body?.columns);
     const isDefault = Boolean(req.body?.is_default);
     const row = await withTransaction(async (client) => {
@@ -307,6 +316,9 @@ router.put('/templates/:id', async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
     if (!name) return res.status(400).json({ message: 'Dă un nume șablonului.' });
+    if (!hasUsableColumns(req.body?.columns)) {
+      return res.status(400).json({ message: 'Adaugă cel puțin o coloană în șablon.' });
+    }
     const columns = normalizeTemplateColumns(req.body?.columns);
     const isDefault = Boolean(req.body?.is_default);
     const row = await withTransaction(async (client) => {

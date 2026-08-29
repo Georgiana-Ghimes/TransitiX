@@ -26,18 +26,18 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Unește în Anexa XLSX',
-    text: 'Bifează rândurile, alege șablonul din lista de lângă buton (nu e de ajuns să-l salvezi în tab-ul Șabloane), apoi descarcă. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
+    text: 'Bifează rândurile, verifică șablonul din lista de lângă buton (scrie câte coloane exportă), apoi descarcă. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
   },
 ];
 
 export const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Șablonul selectat în tab-ul Avize (lista de lângă Unește) este cel folosit la export. „Implicit” este preselectat la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie — duplică-l ca șablon nou.',
+    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX — îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie — duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Nu trebuie să păstrezi toate cele 14 coloane — exportul folosește exact ce salvezi. Apoi selectează șablonul în tab-ul Avize înainte de Unește.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei — șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
   },
   {
     name: 'Șterge șablon',
@@ -47,6 +47,10 @@ export const TEMPLATE_ACTION_LEGEND = [
 
 export function isLockedRai(t) {
   return Boolean(t?.is_default) && String(t?.name || '').trim() === 'Anexa Factura RAI';
+}
+
+export function columnCountOf(t) {
+  return Array.isArray(t?.columns) ? t.columns.length : 0;
 }
 
 export function emptyForm(row = {}) {

@@ -464,15 +464,12 @@ export default function Layout() {
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                  {/*
+                    Only Deconectare here. /settings is company configuration, not a personal
+                    account page, so a second entry point under the avatar read as "contul meu"
+                    and duplicated the sidebar link with no difference in behaviour.
+                  */}
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-40">
-                    <Link
-                      to="/settings"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                    >
-                      <UserCircle className="w-4 h-4" />
-                      Setări
-                    </Link>
                     <button
                       type="button"
                       onClick={handleLogout}

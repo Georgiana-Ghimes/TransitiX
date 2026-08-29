@@ -34,6 +34,26 @@ describe('avizQuery', () => {
     expect(params).not.toContain('%TPO-1%');
   });
 
+  it('filters on the upload day when asked, in Bucharest time', () => {
+    const { sql, params } = buildAvizListQuery({
+      companyId: 'co',
+      from: '2026-08-24',
+      to: '2026-08-30',
+      dateField: 'incarcare',
+    });
+    expect(sql).toMatch(/created_at AT TIME ZONE 'Europe\/Bucharest'/);
+    expect(sql).not.toMatch(/data_efectuare_cursa >=/);
+    expect(params).toContain('2026-08-24');
+  });
+
+  it('keeps the trip date for an unknown or missing date_field', () => {
+    for (const dateField of [undefined, '', 'created_at; DROP TABLE aviz_documents']) {
+      const { sql } = buildAvizListQuery({ companyId: 'co', from: '2026-08-01', dateField });
+      expect(sql).toMatch(/data_efectuare_cursa >=/);
+      expect(sql).not.toMatch(/DROP TABLE/);
+    }
+  });
+
   it('filters paperwork from the cab', () => {
     const { sql, params } = buildAvizListQuery({
       companyId: 'co',

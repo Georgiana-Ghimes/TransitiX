@@ -15,9 +15,10 @@ import AvizFilterBar from './avize/AvizFilterBar';
 import AvizLegend from './avize/AvizLegend';
 import AvizReportsTab from './avize/AvizReportsTab';
 import AvizTemplatesTab from './avize/AvizTemplatesTab';
-import { DriverUploadBadge, SourceBadge } from './avize/AvizFilePreview';
+import { DriverUploadBadge, NeedsReviewBadge, SourceBadge } from './avize/AvizFilePreview';
 import {
   AVIZ_ACTION_LEGEND,
+  columnCountOf,
   displayRoute,
   downloadBlob,
   emptyForm,
@@ -46,7 +47,9 @@ export default function AvizeReports() {
   const [activePreset, setActivePreset] = useState('');
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
-  const [filters, setFilters] = useState({ from: '', to: '', status: '', q: '', uploaded_from: '' });
+  const [filters, setFilters] = useState({
+    from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'cursa',
+  });
   const [qInput, setQInput] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -63,6 +66,8 @@ export default function AvizeReports() {
   const confirmableSelectedIds = rows
     .filter((r) => selected.has(r.id) && r.status !== 'confirmed')
     .map((r) => r.id);
+
+  const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
   // With no fallback provider, a stopped sidecar means uploads land with no OCR and nothing
   // on screen would say why.
@@ -114,7 +119,54 @@ export default function AvizeReports() {
   useEffect(() => {
     if (!loading) setRefreshing(true);
     load();
-  }, [filters.from, filters.to, filters.status, filters.q, filters.uploaded_from]);
+  }, [filters.from, filters.to, filters.status, filters.q, filters.uploaded_from, filters.date_field]);
+
+  /**
+   * Notifications already poll every 15s while the office tab is open. The avize table used to
+   * refresh only while a row said `uploaded`, so a finished driver upload (or a new one) stayed
+   * invisible until a manual refresh. Same rule as the bell: poll while this page is open and
+   * the browser tab is visible; stay quiet when the tab is hidden.
+   */
+  useEffect(() => {
+    if (tab !== 'avize') return undefined;
+
+    const tick = async () => {
+      if (document.hidden || uploading || busyId) return;
+      const gen = ++loadGen.current;
+      try {
+        const avize = await api.avize.list(filters);
+        if (gen !== loadGen.current) return;
+        setRows(avize);
+        setSelected((prev) => {
+          const visible = new Set(avize.map((r) => r.id));
+          return new Set([...prev].filter((id) => visible.has(id)));
+        });
+      } catch {
+        // Background refresh must not toast over the operator.
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+
+    const timer = setInterval(tick, 15_000);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [
+    tab,
+    uploading,
+    busyId,
+    filters.from,
+    filters.to,
+    filters.status,
+    filters.q,
+    filters.uploaded_from,
+    filters.date_field,
+  ]);
 
   const loadReports = async () => {
     try {
@@ -137,7 +189,7 @@ export default function AvizeReports() {
 
   const resetAvizFilters = () => {
     setActivePreset('');
-    setFilters({ from: '', to: '', status: '', q: '', uploaded_from: '' });
+    setFilters({ from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'cursa' });
     setQInput('');
   };
 
@@ -174,7 +226,7 @@ export default function AvizeReports() {
       }
       if (failed.length === 0) {
         const pendingNote = pending
-          ? ` ${pending} document(e) lungi — OCR-ul lor rulează în fundal.`
+          ? ` ${pending} document(e) — OCR-ul rulează în fundal; statusul se actualizează singur.`
           : '';
         notifySuccess(
           'Avize încărcate',
@@ -290,6 +342,10 @@ export default function AvizeReports() {
   const reextract = async (row) => {
     if (busyId) return;
     setBusyId(row.id);
+    // Immediate feedback — don't wait for the round-trip to flip status.
+    setRows((prev) => prev.map((r) => (
+      r.id === row.id ? { ...r, status: 'uploaded' } : r
+    )));
     try {
       const result = await api.avize.extract({
         id: row.id, file_url: row.file_url, original_filename: row.original_filename,
@@ -297,14 +353,25 @@ export default function AvizeReports() {
       if (result?.extraction_pending) {
         notifySuccess(
           'Extragere pornită',
-          `Documentul are ${result.pages} pagini — OCR-ul rulează în fundal. Reîmprospătează în câteva minute.`
+          result.pages > 1
+            ? `Documentul are ${result.pages} pagini — OCR-ul rulează în fundal. Lista se actualizează singură.`
+            : 'OCR-ul rulează în fundal. Rândul rămâne pe „Se procesează…” până termină.'
+        );
+      } else if (!String(result?.numar_tpo || '').trim()) {
+        notifyError(
+          'OCR fără TPO',
+          'Extragerea s-a terminat, dar nu am găsit număr TPO. Deschide Editează sau încearcă o poză mai clară.'
         );
       } else {
-        notifySuccess('Re-extras', 'TPO/auto/rută din document; km, taxe și ruta de birou rămân.');
+        notifySuccess(
+          'Re-extras',
+          `${result.numar_tpo} — TPO/auto/rută din document; km, taxe și ruta de birou rămân.`
+        );
       }
       await load();
     } catch (e) {
       notifyError('Extragere eșuată', e);
+      await load();
     } finally {
       setBusyId(null);
     }
@@ -344,7 +411,13 @@ export default function AvizeReports() {
     try {
       const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
-      notifySuccess('Export gata', filename);
+      // Naming the template here is the only place the operator can tell which layout landed
+      // in the file — the filename alone reads the same for every export of the day.
+      notifySuccess(
+        'Export gata',
+        `${filename} — șablon ${selectedTemplate?.name || 'selectat'}, `
+        + `${columnCountOf(selectedTemplate)} coloane.`
+      );
     } catch (e) {
       notifyError('Export eșuat', e);
     } finally {
@@ -434,12 +507,17 @@ export default function AvizeReports() {
       notifyError('Șablon blocat', 'Anexa Factura RAI nu poate fi suprascrisă.');
       return;
     }
+    const columns = editTemplate.columns || [];
+    if (columns.length === 0) {
+      notifyError('Fără coloane', 'Adaugă cel puțin o coloană — altfel exportul nu ar avea ce scrie.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
         name,
         is_default: Boolean(editTemplate.is_default),
-        columns: editTemplate.columns || [],
+        columns,
       };
       let keepId = editTemplate.id;
       if (editTemplate.id) {
@@ -448,10 +526,16 @@ export default function AvizeReports() {
         const created = await api.avize.createTemplate(payload);
         keepId = created?.id;
       }
-      notifySuccess('Șablon salvat', `${name} e selectat pentru Unește. Exportă din nou ca să vezi Taxă / Tarif km.`);
       setEditTemplate(null);
       await load();
-      if (keepId) setTemplateId(keepId);
+      // Only claim the template is active once the id actually landed in state; the old message
+      // said "e selectat" unconditionally, which is how an export could silently use another one.
+      if (keepId) {
+        setTemplateId(keepId);
+        notifySuccess('Șablon salvat', `${name} — ${columns.length} coloane, folosit la următorul export.`);
+      } else {
+        notifySuccess('Șablon salvat', `${name} — ${columns.length} coloane. Alege-l cu „Folosește la export”.`);
+      }
     } catch (e) {
       notifyError('Salvare șablon eșuată', e);
     } finally {
@@ -485,6 +569,13 @@ export default function AvizeReports() {
     } catch (e) {
       notifyError('Codul nu s-a salvat', e);
     }
+  };
+
+  const useTemplateForExport = (id) => {
+    const chosen = templates.find((t) => t.id === id);
+    if (!chosen) return;
+    setTemplateId(id);
+    notifySuccess('Șablon activ', `${chosen.name} — ${columnCountOf(chosen)} coloane la următorul export.`);
   };
 
   const newTemplate = () => {
@@ -610,7 +701,9 @@ export default function AvizeReports() {
                 ))}
               </select>
               <p className="text-[11px] text-slate-500 leading-snug">
-                Exportul folosește acest șablon, inclusiv Default (ex. taxă 100, tarif 20).
+                {selectedTemplate
+                  ? `Exportă ${columnCountOf(selectedTemplate)} coloane, cu valorile Default din șablon.`
+                  : 'Exportul folosește acest șablon, inclusiv Default (ex. taxă 100, tarif 20).'}
               </p>
             </div>
             <button
@@ -670,9 +763,22 @@ export default function AvizeReports() {
             <>
               <div className="lg:hidden space-y-3">
                 {rows.map((row) => (
-                  <div key={row.id} className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4">
+                  <div
+                    key={row.id}
+                    className={`bg-white rounded-xl border shadow-sm p-4 relative ${
+                      busyId === row.id
+                        ? 'border-sky-300 ring-1 ring-sky-200'
+                        : 'border-slate-200/80'
+                    }`}
+                  >
+                    {busyId === row.id ? (
+                      <div className="absolute inset-0 z-10 rounded-xl bg-white/70 flex items-center justify-center gap-2 text-sm text-sky-800">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Se re-extrage…
+                      </div>
+                    ) : null}
                     <div className="flex items-start gap-3">
-                      <input type="checkbox" className="mt-1" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} />
+                      <input type="checkbox" className="mt-1" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                       <div className="min-w-0 flex-1">
                         <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`}>
                           {row.numar_tpo || 'Fără TPO'}
@@ -686,11 +792,17 @@ export default function AvizeReports() {
                           {displayRoute(row) || '—'}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                            {STATUS_LABEL[row.status] || row.status}
+                          <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${
+                            row.status === 'uploaded' || busyId === row.id
+                              ? 'bg-sky-50 text-sky-800'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {row.status === 'uploaded' || busyId === row.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            {busyId === row.id ? 'Se re-extrage…' : (STATUS_LABEL[row.status] || row.status)}
                           </span>
                           <SourceBadge source={row.extraction_source} />
                           <DriverUploadBadge uploadedFrom={row.uploaded_from} />
+                          <NeedsReviewBadge needsReview={row.needs_review} />
                         </div>
                       </div>
                     </div>
@@ -699,8 +811,8 @@ export default function AvizeReports() {
                       {row.status !== 'confirmed' && (
                         <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
-                      <button type="button" className="text-slate-600 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
-                        {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
+                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                        {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                       </button>
                       <button type="button" className="text-red-500 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                     </div>
@@ -729,15 +841,27 @@ export default function AvizeReports() {
                     </thead>
                     <tbody>
                       {rows.map((row) => (
-                        <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                        <tr
+                          key={row.id}
+                          className={`border-b border-slate-50 ${
+                            busyId === row.id ? 'bg-sky-50/80' : 'hover:bg-slate-50/50'
+                          }`}
+                        >
                           <td className="px-3 py-3 overflow-hidden">
-                            <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} />
+                            <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                           </td>
                           <td className={`px-3 py-3 font-medium truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
-                            {row.numar_tpo || (
+                            {busyId === row.id ? (
+                              <span className="inline-flex items-center gap-1.5 font-normal text-sky-800">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                                Se re-extrage…
+                              </span>
+                            ) : row.numar_tpo ? (
+                              row.numar_tpo
+                            ) : (
                               <span className="font-normal text-slate-400">{row.original_filename || '—'}</span>
                             )}
-                            {row.duplicate_tpo ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
+                            {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
                           <td className="px-3 py-3 text-slate-600 truncate">{row.data_efectuare_cursa || '—'}</td>
                           <td className={`px-3 py-3 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
@@ -750,17 +874,25 @@ export default function AvizeReports() {
                             <div className="flex flex-wrap gap-1">
                               <SourceBadge source={row.extraction_source} />
                               <DriverUploadBadge uploadedFrom={row.uploaded_from} />
+                              <NeedsReviewBadge needsReview={row.needs_review} />
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-xs truncate">{STATUS_LABEL[row.status] || row.status}</td>
+                          <td className="px-3 py-3 text-xs truncate">
+                            <span className={`inline-flex items-center gap-1 ${
+                              row.status === 'uploaded' || busyId === row.id ? 'text-sky-800' : ''
+                            }`}>
+                              {row.status === 'uploaded' || busyId === row.id ? <Loader2 className="w-3 h-3 animate-spin shrink-0" /> : null}
+                              {busyId === row.id ? 'Se re-extrage…' : (STATUS_LABEL[row.status] || row.status)}
+                            </span>
+                          </td>
                           <td className="px-3 py-3">
                             <div className="flex flex-wrap justify-end gap-x-2 gap-y-1">
                               <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                               {row.status !== 'confirmed' && (
                                 <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                               )}
-                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
-                                {busyId === row.id ? 'Re-extrag...' : 'Re-extrage'}
+                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                                {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                               </button>
                               <button type="button" className="text-red-500 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
                             </div>
@@ -785,6 +917,8 @@ export default function AvizeReports() {
           onDelete={setDeleteTemplate}
           onAddCode={addObsCode}
           onDeleteCode={(c) => api.avize.deleteObservationCode(c.id).then(() => api.avize.observationCodes().then(setObsCodes)).catch((e) => notifyError('Ștergere eșuată', e))}
+          activeTemplateId={templateId}
+          onUseForExport={useTemplateForExport}
         />
       ) : (
         <AvizReportsTab filterBar={filterBar} reportData={reportData} />

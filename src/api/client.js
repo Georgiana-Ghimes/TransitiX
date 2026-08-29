@@ -877,13 +877,14 @@ export const api = {
     },
   },
   avize: {
-    list({ from, to, status, q, uploaded_from } = {}) {
+    list({ from, to, status, q, uploaded_from, date_field } = {}) {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
       if (status) params.set('status', status);
       if (q) params.set('q', q);
       if (uploaded_from) params.set('uploaded_from', uploaded_from);
+      if (date_field) params.set('date_field', date_field);
       const qs = params.toString();
       return request(`/avize${qs ? `?${qs}` : ''}`);
     },

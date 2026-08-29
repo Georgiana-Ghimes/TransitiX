@@ -6,6 +6,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { Truck, Users, Route, AlertTriangle, TrendingUp, Clock, Coins, MapPinned } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { notifyError } from '@/lib/notify';
+import { collectExpiringDocuments, expiryHorizonDays } from '@/lib/documentExpiry';
 
 function fmtPct(v) {
   if (v == null) return '—';
@@ -31,11 +32,12 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [vehicles, drivers, trips, cockpitRes] = await Promise.all([
+      const [vehicles, drivers, trips, cockpitRes, company] = await Promise.all([
         api.entities.Vehicle.list(),
         api.entities.Driver.list(),
         api.entities.Trip.list('-created_date', 50),
         api.analytics.cockpit().catch(() => null),
+        api.company.get().catch(() => null),
       ]);
       setCockpit(cockpitRes);
 
@@ -48,31 +50,11 @@ export default function Dashboard() {
       });
       setRecentTrips(trips.slice(0, 6));
 
-      // Check expiring documents (30 days)
-      const now = new Date();
-      const in30Days = new Date(); in30Days.setDate(now.getDate() + 30);
-      const checkExpiry = (dateStr, type, name, id) => {
-        if (!dateStr) return null;
-        const d = new Date(dateStr);
-        if (d <= in30Days) return { type, name, date: dateStr, id, expired: d < now };
-        return null;
-      };
-
-      const expiring = [];
-      vehicles.forEach(v => {
-        ['itp', 'rca', 'rovinieta', 'casco'].forEach(doc => {
-          const dateField = `${doc}_expiry`;
-          const e = checkExpiry(v[dateField], doc.toUpperCase(), `${v.brand} ${v.model} (${v.plate})`, v.id);
-          if (e) expiring.push(e);
-        });
-      });
-      drivers.forEach(d => {
-        ['license', 'medical_certificate', 'tachograph_card'].forEach(doc => {
-          const dateField = `${doc}_expiry`;
-          const e = checkExpiry(d[dateField], doc === 'license' ? 'Permis' : doc === 'medical_certificate_expiry' ? 'Medical' : 'Tahograf', d.name, d.id);
-          if (e) expiring.push(e);
-        });
-      });
+      const expiring = collectExpiringDocuments({
+        vehicles,
+        drivers,
+        horizonDays: expiryHorizonDays(company),
+      }).map((doc) => ({ ...doc, id: doc.entityId, name: doc.entity }));
       setExpiringDocs(expiring);
       setStats(s => ({ ...s, alerts: expiring.length }));
 
