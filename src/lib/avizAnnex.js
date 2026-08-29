@@ -20,7 +20,7 @@ export const AVIZ_SOURCE_OPTIONS = [
 ];
 
 export const STATUS_LABEL = {
-  uploaded: 'Încărcat',
+  uploaded: 'Se procesează…',
   extracted: 'Extras',
   confirmed: 'Confirmat',
 };

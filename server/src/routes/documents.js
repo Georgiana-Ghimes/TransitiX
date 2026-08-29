@@ -163,6 +163,17 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       continue;
     }
 
+    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed rows stay put —
+    // only a finished-but-empty extract needs to look pending again.
+    if (force && doc.status === 'extracted') {
+      await query(
+        `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
+         WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+        [doc.id, companyId]
+      );
+      doc.status = 'uploaded';
+    }
+
     try {
       const text = await readDocumentText(doc.file_url, { timeoutMs });
       const extraction = extractDocument(text.text, {

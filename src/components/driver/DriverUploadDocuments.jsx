@@ -8,13 +8,28 @@ import { findBlurriest } from '@/lib/imageQuality';
 import { throttleState } from '@/lib/uploadThrottle';
 
 const STATUS_LABEL = {
-  uploaded: 'Încărcat',
+  uploaded: 'Se procesează…',
   extracted: 'OCR gata',
   needs_review: 'De revizuit',
   confirmed: 'Confirmat',
   unrecognised: 'Nerecunoscut',
   failed: 'Eșuat',
 };
+
+/** Driver list never showed fields — "OCR gata" looked like success even when TPO was empty. */
+function driverStatusDetail(doc) {
+  const base = STATUS_LABEL[doc.status] || doc.status || '—';
+  if (doc.status === 'uploaded') return base;
+  const tpo = String(doc.numar_tpo || '').trim();
+  if (tpo) {
+    return doc.needs_review ? `${base} · ${tpo} · de revizuit` : `${base} · ${tpo}`;
+  }
+  if (doc.status === 'extracted' || doc.status === 'needs_review') {
+    return 'OCR gata, fără TPO · biroul completează';
+  }
+  if (doc.needs_review) return `${base} · de revizuit`;
+  return base;
+}
 
 /** Mirrors the server's multer limit, so the driver hears about it before the upload starts. */
 const MAX_UPLOAD_MB = 15;
@@ -72,7 +87,7 @@ export default function DriverUploadDocuments({ user }) {
   useEffect(() => { load(); }, [load]);
 
   /**
-   * OCR runs after the upload responds, so a row sent a moment ago still says "Încărcat".
+   * OCR runs after the upload responds, so a row sent a moment ago still says "Se procesează…".
    * Refresh only the document list, only while something is still pending, and only while the
    * tab is visible — a phone in a cab should not poll from a pocket.
    */
@@ -294,14 +309,18 @@ export default function DriverUploadDocuments({ user }) {
                   <p className="text-sm font-medium text-slate-700 truncate">
                     {doc.original_filename || 'Document'}
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5 break-words">
-                    {doc.document_type || 'aviz'}
-                    {' · '}
-                    {STATUS_LABEL[doc.status] || doc.status || '—'}
-                    {doc.needs_review ? ' · de revizuit' : ''}
+                  <p className="text-[11px] text-slate-400 mt-0.5 break-words inline-flex flex-wrap items-center gap-x-1">
+                    <span>{doc.document_type || 'aviz'}</span>
+                    <span>·</span>
+                    <span className={`inline-flex items-center gap-1 ${
+                      doc.status === 'uploaded' ? 'text-sky-700' : ''
+                    }`}>
+                      {doc.status === 'uploaded' ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                      {driverStatusDetail(doc)}
+                    </span>
                     {doc.created_at
-                      ? ` · ${new Date(doc.created_at).toLocaleString('ro-RO')}`
-                      : ''}
+                      ? <span>· {new Date(doc.created_at).toLocaleString('ro-RO')}</span>
+                      : null}
                   </p>
                 </div>
               </li>

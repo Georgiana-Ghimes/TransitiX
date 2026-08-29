@@ -5,6 +5,7 @@ import { fetchUploadBlob } from '@/lib/uploadUrl';
 const SOURCE_LABEL = {
   'pdf-text': 'Text PDF',
   vision: 'Vision',
+  paddle: 'Paddle',
   stub: 'Stub',
 };
 
@@ -28,6 +29,16 @@ export function DriverUploadBadge({ uploadedFrom }) {
   return (
     <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
       De la șofer
+    </span>
+  );
+}
+
+/** OCR finished but confidence/fields still need a human eye. */
+export function NeedsReviewBadge({ needsReview }) {
+  if (!needsReview) return null;
+  return (
+    <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
+      De revizuit
     </span>
   );
 }

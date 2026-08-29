@@ -24,6 +24,8 @@ const DIGIT_CONFUSION = Object.freeze({
 function normalizeCodeDigits(raw) {
   return String(raw || '')
     .toUpperCase()
+    // Handwriting OCR often injects &, $, S, B, Q into digit runs (TPO-O0&5813 / TP0-Q026813).
+    .replace(/[&$SBQ]/g, '')
     .replace(/[ILCOP]/g, (ch) => DIGIT_CONFUSION[ch] || ch)
     .replace(/[^0-9]/g, '');
 }
@@ -48,16 +50,16 @@ export function normalizeOcrText(text) {
 
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(
-    /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._]*([0-9OIl]{4,10})\b/gi,
+    /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('PSL', digits);
       return code ? `${lead}${code}` : full;
     }
   );
 
-  // TPO: TP0 / TPQ / TPO + digit tail
+  // TPO: TP0 / TPQ / TPO + digit tail (ampersands / O-as-zero in the number)
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?P[\s]?[O0Q])[\s\-._]*([0-9OIl]{4,10})\b/gi,
+    /(^|[^A-Za-z0-9])(T[\s]?P[\s]?[O0Q])[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TPO', digits);
       return code ? `${lead}${code}` : full;
@@ -66,21 +68,26 @@ export function normalizeOcrText(text) {
 
   // TRO codes (Baumit variant)
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._]*([0-9OIl]{4,10})\b/gi,
+    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TRO', digits);
       return code ? `${lead}${code}` : full;
     }
   );
 
-  // Romanian plates: B330SRS / B-330-SRS / B 330SRS → B 330 SRS
+  // Romanian plates: B330SRS / B-330-SRS / B 33o SRS → B 330 SRS.
+  // Handwriting OCR returns the number with letter look-alikes (`33o`, `1l2`), which used to
+  // drop the plate entirely. Rewrite only when at least one character was a real digit.
   const plateRe = new RegExp(
-    `(^|[^A-Za-z0-9])(${COUNTY})[\\s.\\-]*(\\d{2,3})[\\s.\\-]*([A-Z]{3})(?=$|[^A-Za-z0-9])`,
+    `(^|[^A-Za-z0-9])(${COUNTY})[\\s.\\-]*([0-9OoQDIl]{2,3})[\\s.\\-]*([A-Z]{3})(?=$|[^A-Za-z0-9])`,
     'gi'
   );
-  out = out.replace(plateRe, (_full, lead, county, num, letters) => (
-    `${lead}${String(county).toUpperCase()} ${num} ${String(letters).toUpperCase()}`
-  ));
+  out = out.replace(plateRe, (full, lead, county, num, letters) => {
+    if (!/[0-9]/.test(num)) return full;
+    const digits = String(num).toUpperCase().replace(/[OQD]/g, '0').replace(/[IL]/g, '1');
+    if (!/^\d{2,3}$/.test(digits)) return full;
+    return `${lead}${String(county).toUpperCase()} ${digits} ${String(letters).toUpperCase()}`;
+  });
 
   return out;
 }

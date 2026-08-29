@@ -95,6 +95,19 @@ describe('POST /api/driver-documents', () => {
     expect(res.body.documents[0]).toMatchObject({
       uploaded_from: 'driver', trip_id: null, needs_review: true,
     });
+
+    const notif = await query(
+      `SELECT type, title, message, link, trip_id FROM office_notifications
+       WHERE company_id = $1 AND type = 'driver_upload'
+       ORDER BY created_at DESC LIMIT 1`,
+      [ctx.company.id]
+    );
+    expect(notif.rows[0]).toMatchObject({
+      type: 'driver_upload',
+      link: '/avize',
+      trip_id: null,
+    });
+    expect(notif.rows[0].message).toMatch(/fără cursă/i);
   });
 
   it('refuses a trip that is not this driver’s', async () => {
@@ -209,8 +222,9 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
 describe('POST /api/avize/extract when OCR runs long', () => {
   /**
    * Paddle on a CPU VM can take minutes, which is fine for a background pass and not fine for
-   * somebody holding a button down. The interactive path gives up early — and must say so
-   * rather than store the empty read it came back with.
+   * somebody holding a button down. The interactive path gives up early, then hands the same
+   * document to the background pass — an error would have left the operator to press
+   * Re-extrage by hand for a document that is perfectly readable, just slow.
    */
   const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
   const saved = {};
@@ -237,7 +251,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     await new Promise((resolve) => hanging.close(resolve));
   });
 
-  it('reports the timeout and leaves the row as it was', async () => {
+  it('hands a slow read to the background pass without losing what was read before', async () => {
     const uploaded = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
       .field('trip_id', trip.id)
       .field('document_type', 'aviz')
@@ -252,12 +266,15 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     );
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
-    expect(res.status).toBe(504);
-    expect(res.body.message).toMatch(/timpul alocat/i);
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('ocr_timeout_retry');
 
+    // Pending on the row too, so the list shows "Se procesează…" rather than a finished read,
+    // and the figures from the earlier pass stay put until a better one replaces them.
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
-    expect(after.status).toBe('extracted');
+    expect(after.status).toBe('uploaded');
     expect(after.extraction_source).toBe('paddle');
   });
 
@@ -270,7 +287,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     const docId = uploaded.body.documents[0].id;
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
-    expect(res.status).toBe(504);
-    expect(res.body.message).toMatch(/timpul alocat/i);
+    expect(res.status).toBe(202);
+    expect(res.body.reason).toBe('ocr_timeout_retry');
   });
 });

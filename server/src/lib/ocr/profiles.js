@@ -40,9 +40,29 @@ const TPO_CODE = /(TPO[\s\-._]*\d{3,}[\d./-]*)/i;
 const PSL_CODE = /(PSL[\s\-._]*\d{3,}[\d./-]*)/i;
 const TRO_CODE = /(TRO[\s\-._]*\d{3,}[\d./-]*)/i;
 
-const tpoField = (patterns) => (text) => matchPatterns(text, patterns, {
-  transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
-});
+/**
+ * TPO / PSL / TRO codes are zero-padded to this many digits.
+ *
+ * A photo where a hand or a fold covers the last digit still reads as a valid-looking code, and
+ * a short code copied onto an invoice is worse than a blank field. Length that does not match
+ * pulls the value below the accept threshold so it lands in front of an operator.
+ */
+const CODE_DIGITS = 7;
+
+function codeLengthPenalty(value) {
+  const digits = String(value || '').match(/\d+/g)?.join('') ?? '';
+  if (!digits) return 0;
+  return digits.length === CODE_DIGITS ? 0 : 0.35;
+}
+
+const tpoField = (patterns) => (text) => {
+  const found = matchPatterns(text, patterns, {
+    transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
+  });
+  if (!found.value) return found;
+  const penalty = codeLengthPenalty(found.value);
+  return penalty ? { ...found, confidence: Math.max(0, found.confidence - penalty) } : found;
+};
 
 const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
   transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
@@ -142,7 +162,15 @@ export const OCR_PROFILES = [
     id: 'aviz_generic',
     documentType: 'aviz',
     name: 'Aviz generic',
-    markers: [/aviz/, /insotire/, /însoțire'/],
+    markers: [
+      /aviz/,
+      /insotire/,
+      /însoțire/,
+      /\btpo\b/,
+      /expeditor/,
+      /livrare/,
+      /comanda\s+de\s+transport/,
+    ],
     fields: {
       numar_tpo: tpoField([TPO_CODE]),
       data_efectuare_cursa: extractDate,
@@ -159,8 +187,9 @@ export const OCR_PROFILES = [
       quantity: extractQuantity,
     },
     weights: {
-      numar_auto: 3, data_efectuare_cursa: 2, gross_weight_kg: 2,
-      numar_tpo: 1, numar_document_marfa: 1, ruta_transport: 1, tip_marfa: 1,
+      numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
+      numar_document_marfa: 1, ruta_transport: 1, tip_marfa: 1,
+      gross_weight_kg: 1,
     },
   },
   {

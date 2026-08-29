@@ -36,7 +36,7 @@ describe('avizAnnex field map', () => {
 
   it('labels row status in Romanian', () => {
     expect(STATUS_LABEL).toEqual({
-      uploaded: 'Încărcat',
+      uploaded: 'Se procesează…',
       extracted: 'Extras',
       confirmed: 'Confirmat',
     });

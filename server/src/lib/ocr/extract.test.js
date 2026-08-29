@@ -242,6 +242,52 @@ describe('extractDocument', () => {
     expect(String(result.values.tip_marfa || '')).not.toMatch(/^38245090$/);
   });
 
+  /**
+   * Real Paddle output from a handwritten notebook photo (wrong rotation often wins,
+   * "aviz" is mangled). Previously profile detection scored 0 and TPO was discarded.
+   */
+  it('still pulls TPO from mangled handwriting OCR without clear aviz markers', () => {
+    const hand = `
+TPO-O025813
+Datoviacxpedt11.020263:10.
+OeROtitMMMARFA
+TP0-O026813
+Expeolita
+TW
+`;
+    const result = extractDocument(hand, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_generic');
+    expect(result.values.numar_tpo).toBe('TPO-0025813');
+    expect(result.needs_review).toBe(true);
+  });
+
+  /**
+   * A hand over the corner of the page truncates the code without making it look wrong.
+   * Copied onto an invoice that is worse than a blank field, so it has to reach an operator.
+   */
+  it('flags a TPO whose digit count is short instead of trusting it', () => {
+    const short = extractDocument(
+      'Aviz de expeditie PSL-0044362\nComanda transport: TPO 002562',
+      { documentType: 'aviz' }
+    );
+    expect(short.values.numar_tpo).toBe('TPO-002562');
+    expect(short.fields.numar_tpo.status).not.toBe('ok');
+
+    const full = extractDocument(
+      'Aviz de expeditie PSL-0044362\nComanda transport: TPO 0025620',
+      { documentType: 'aviz' }
+    );
+    expect(full.fields.numar_tpo.status).toBe('ok');
+  });
+
+  it('reads a handwritten plate once the zero is repaired', () => {
+    const result = extractDocument(
+      'Aviz de expeditie PSL-0044362\nPlacuta de inmatriculare B 33o SRS',
+      { documentType: 'aviz' }
+    );
+    expect(result.values.numar_auto).toBe('B 330 SRS');
+  });
+
   it('keeps quantity and its unit apart from the weight', () => {
     const result = extractDocument(PSL_AVIZ);
     expect(result.values.quantity).toBe(378);

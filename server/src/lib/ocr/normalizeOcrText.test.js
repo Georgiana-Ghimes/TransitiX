@@ -18,8 +18,22 @@ describe('normalizeOcrText', () => {
     expect(normalizeOcrText('TP0-0025629')).toBe('TPO-0025629');
   });
 
+  it('repairs handwriting TPO with O-as-zero and ampersand noise', () => {
+    expect(normalizeOcrText('TPO-O025813')).toContain('TPO-0025813');
+    expect(normalizeOcrText('TP0-O0&5813')).toMatch(/TPO-00\d{4,}/);
+  });
+
   it('spaces a glued Romanian plate', () => {
     expect(normalizeOcrText('Placuta B330SRS.')).toContain('B 330 SRS');
+  });
+
+  it('repairs a handwritten plate whose zero was read as a letter', () => {
+    expect(normalizeOcrText('B 33o SRS')).toContain('B 330 SRS');
+    expect(normalizeOcrText('CJ 1l ABC')).toContain('CJ 11 ABC');
+  });
+
+  it('leaves a letters-only run alone rather than inventing a plate', () => {
+    expect(normalizeOcrText('CS OOO SRL')).toBe('CS OOO SRL');
   });
 
   it('leaves unrelated text alone', () => {

@@ -11,6 +11,7 @@ const TYPE_CONFIG = {
   trip_problem: { icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
   trip_unassigned: { icon: UserX, color: 'bg-amber-50 text-amber-600' },
   cmr_pending: { icon: FileText, color: 'bg-blue-50 text-blue-600' },
+  driver_upload: { icon: FileText, color: 'bg-sky-50 text-sky-700' },
   client_confirmed: { icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600' },
   client_damage: { icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
   document_expiry: { icon: AlertTriangle, color: 'bg-amber-50 text-amber-600' },
@@ -19,6 +20,11 @@ const TYPE_CONFIG = {
   data_issue: { icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
   system: { icon: Info, color: 'bg-slate-50 text-slate-500' },
 };
+
+/** Badge / list refresh while the office tab is open. Hidden tabs do not poll. */
+const POLL_MS = 15_000;
+/** Slightly faster while the dropdown is open so a new upload shows up in-list. */
+const POLL_OPEN_MS = 8_000;
 
 function formatWhen(value) {
   if (!value) return '';
@@ -54,22 +60,28 @@ export default function NotificationBell() {
     }
   };
 
+  // Poll while the tab is visible; pause in background to spare the API.
   useEffect(() => {
-    loadInbox();
-    const refreshIfVisible = () => {
-      if (document.visibilityState === 'visible') loadInbox();
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled || document.visibilityState !== 'visible') return;
+      loadInbox();
     };
-    document.addEventListener('visibilitychange', refreshIfVisible);
-    const timer = setInterval(refreshIfVisible, 120000);
+    tick();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    const timer = setInterval(tick, open ? POLL_OPEN_MS : POLL_MS);
     return () => {
+      cancelled = true;
       clearInterval(timer);
-      document.removeEventListener('visibilitychange', refreshIfVisible);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    loadInbox();
     const onClick = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         setOpen(false);

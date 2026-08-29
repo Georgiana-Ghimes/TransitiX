@@ -102,9 +102,9 @@ def main() -> int:
     per_page: list[int] = []
     real_ocr_page = app_module.ocr_page
 
-    def counting_ocr_page(image, prefer=None):
+    def counting_ocr_page(image, prefer=None, extra_passes=False):
         before = len(calls)
-        result = real_ocr_page(image, prefer=prefer)
+        result = real_ocr_page(image, prefer=prefer, extra_passes=extra_passes)
         per_page.append(len(calls) - before)
         return result
 
@@ -135,6 +135,42 @@ def main() -> int:
     )))
     check("nothing is flagged truncated when everything was read",
           whole.truncated is False and whole.total_pages == 2)
+
+    # Re-rendering passes are for phone photos, and must not multiply the cost of a dossier.
+    from PIL import Image as PILImage
+    tiny = PILImage.new("RGB", (400, 600), (180, 180, 180))
+    check("a small phone frame is upscaled for the second pass",
+          app_module.upscale_for_ocr(tiny).size == (1200, 1800),
+          f"size={app_module.upscale_for_ocr(tiny).size}")
+    check("an already large page is left at its own size",
+          app_module.upscale_for_ocr(PILImage.new("RGB", (2400, 3000))).size == (2400, 3000))
+    check("short garbage does not trigger a second OCR pass",
+          app_module.needs_aggressive_pass("iiii") is False)
+    check("longer text without a code does trigger it",
+          app_module.needs_aggressive_pass("x" * 40) is True)
+    check("text that already has TPO skips the second pass",
+          app_module.needs_aggressive_pass("Aviz TPO-0025813 livrare") is False)
+    check("a page missing only the plate still asks for another pass",
+          app_module.missing_from_text("Aviz de expeditie TPO-0025813 catre depozit") is True)
+    check("a page with both a code and a plate is done",
+          app_module.missing_from_text("Aviz TPO-0025813 auto B 330 SRS livrare") is False)
+
+    # The photo path re-renders; the dossier path must stay at one pass per page after the first.
+    calls.clear()
+    photo = io.BytesIO()
+    PILImage.new("RGB", (900, 1200), (200, 200, 200)).save(photo, format="PNG")
+    app_module.ocr_array = stub_engine(False)
+    app_module.run_ocr_on_bytes(photo.getvalue())
+    photo_passes = len(calls)
+    # The first orientation already reads, so anything past one call is a re-render looking for
+    # the field the flat pass missed — here the plate.
+    check("a single photo gets the extra rendering passes", photo_passes > 1,
+          f"{photo_passes} passes")
+
+    calls.clear()
+    app_module.run_ocr_on_bytes(make_pdf(3))
+    check("a multi-page scan does not pay for them on every page", len(calls) <= 8,
+          f"{len(calls)} passes for 3 pages")
 
     print()
     if failures:

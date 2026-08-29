@@ -40,7 +40,7 @@ _KEYWORD_RE = re.compile(
     r"adres|delegat|palet|comanda|livrare|auto|numar)",
     re.I,
 )
-_CODE_RE = re.compile(r"(?:TPO|PSL|TRO)[\s\-._]*\d{3,}", re.I)
+_CODE_RE = re.compile(r"(?:TPO|TP0|TPQ|PSL|TRO)[\s\-._]*[0-9OIl]{3,}", re.I)
 _PLATE_RE = re.compile(
     r"\b(?:B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|"
     r"HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)"
@@ -133,7 +133,7 @@ def lines_and_conf_from_result(result) -> tuple[str, list[float]]:
     return "\n".join(lines).strip(), confs
 
 
-def score_ocr(text: str, confidences: list[float]) -> float:
+def score_ocr(text: str, confidences: list[float], *, portrait_bonus: float = 0.0) -> float:
     """Higher = more likely upright logistics document."""
     blob = text or ""
     if not blob.strip():
@@ -141,12 +141,15 @@ def score_ocr(text: str, confidences: list[float]) -> float:
 
     avg_conf = sum(confidences) / len(confidences) if confidences else 0.35
     score = avg_conf * 10.0
-    score += min(len(blob) / 80.0, 6.0)
+    # Handwriting upside-down can look "confident" on a few short lines; reward volume.
+    score += min(len(blob) / 50.0, 8.0)
     score += min(len(_KEYWORD_RE.findall(blob)), 8) * 1.5
     if _CODE_RE.search(blob):
         score += 6.0
     if _PLATE_RE.search(blob):
         score += 3.0
+    # Phone photos of a notebook are almost always portrait; sideways pages get a small penalty.
+    score += portrait_bonus
     return score
 
 
@@ -188,13 +191,120 @@ def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list
     return pages, total
 
 
-def ocr_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
+def enhance_for_ocr(image):
+    """
+    Light contrast lift for shadowed notebook photos.
+
+    Does not binarize — handwriting OCR on CPU is brittle to hard thresholds.
+    """
+    from PIL import ImageEnhance, ImageOps
+
+    frame = ImageOps.autocontrast(image, cutoff=1)
+    frame = ImageEnhance.Contrast(frame).enhance(1.25)
+    frame = ImageEnhance.Sharpness(frame).enhance(1.15)
+    return frame
+
+
+def upscale_for_ocr(image, target_short: int = 2000, cap: float = 3.0):
+    """
+    More pixels on thin ink.
+
+    Measured on real driver photos: a plain 2x upscale is what recovers a handwritten plate
+    (`B 33o SRS` at native size, `B330SRS` upscaled). Contrast tricks help less and sometimes
+    cost the printed codes, so they belong in a later pass, not this one.
+    """
+    from PIL import Image
+
+    frame = image.convert("RGB")
+    w, h = frame.size
+    short = min(w, h)
+    if short >= target_short:
+        return frame
+    scale = min(cap, target_short / float(short))
+    return frame.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.Resampling.LANCZOS)
+
+
+def enhance_aggressive(image):
+    """
+    Upscale + CLAHE, for pages where more pixels alone were not enough.
+
+    OpenCV stays optional so a slim install without cv2 still OCRs — it just degrades to plain
+    upscaling.
+    """
+    from PIL import Image
+
+    frame = upscale_for_ocr(image, 1600, 2.0)
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        log.warning("opencv not installed — skipping CLAHE pass")
+        return frame
+
+    arr = np.asarray(frame)
+    lab = cv2.cvtColor(arr, cv2.COLOR_RGB2LAB)
+    channel_l, channel_a, channel_b = cv2.split(lab)
+    channel_l = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8)).apply(channel_l)
+    merged = cv2.merge([channel_l, channel_a, channel_b])
+    return Image.fromarray(cv2.cvtColor(merged, cv2.COLOR_LAB2RGB))
+
+
+def flatten_shadow(image):
+    """
+    Divide the page by its own blur, which removes the hand / phone shadow a driver casts.
+
+    Uneven light is the single most common defect in cab photos, and it defeats global contrast
+    because half the sheet is correctly exposed.
+    """
+    from PIL import Image
+
+    frame = upscale_for_ocr(image, 1600, 2.0)
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return frame
+
+    arr = np.asarray(frame.convert("L")).astype("float32")
+    background = cv2.GaussianBlur(arr, (0, 0), sigmaX=25, sigmaY=25)
+    normalised = np.clip(arr / np.maximum(background, 1e-3) * 200.0, 0, 255).astype("uint8")
+    return Image.fromarray(normalised).convert("RGB")
+
+
+def missing_from_text(text: str) -> bool:
+    """
+    Whether another pass is worth its CPU: a page with content but no code, or no plate.
+
+    A printed aviz that already yielded both stops here, which is why clean PDFs stay fast.
+    """
+    blob = (text or "").strip()
+    if len(blob) < 24:
+        return False
+    return not (_CODE_RE.search(blob) and _PLATE_RE.search(blob))
+
+
+def needs_aggressive_pass(text: str) -> bool:
+    """Kept for the offline checks: content on the page but no logistics code at all."""
+    blob = (text or "").strip()
+    if len(blob) < 24:
+        return False
+    return not bool(_CODE_RE.search(blob))
+
+
+_AGGRESSIVE = os.environ.get("PADDLE_OCR_AGGRESSIVE", "1").strip() not in ("0", "false", "False")
+
+
+def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
     """
     OCR one page, trying other orientations when the first pass looks weak.
 
     `prefer` is the angle that won on an earlier page. A scanner feeds every sheet the same way,
     so trying it first turns a four-orientation search per page into one — which is the
     difference between a ten-page scan finishing and timing out.
+
+    `extra_passes` re-renders the page when fields are missing. Reserved for single-page photos:
+    on a dossier it would multiply every page by three for documents that are simply printed
+    without a plate on them.
     """
     import numpy as np
 
@@ -204,19 +314,50 @@ def ocr_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
     best_text = ""
     best_score = -1.0
     best_rot = 0
+    best_frame = image
 
     for degrees in rotations:
         frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
-        text, confs = ocr_array(np.array(frame))
-        score = score_ocr(text, confs)
+        # Autocontrast helps uneven phone lighting; run on a copy so rotation stays cheap.
+        enhanced = enhance_for_ocr(frame)
+        text, confs = ocr_array(np.array(enhanced))
+        w, h = frame.size
+        portrait_bonus = 1.5 if h >= w else -1.0
+        score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
         log.info("OCR rotation=%s score=%.2f chars=%s", degrees, score, len(text))
         if score > best_score:
             best_score = score
             best_text = text
             best_rot = degrees
+            best_frame = frame
         # Fast path: a page that already reads like an upright document skips other angles.
         if degrees == rotations[0] and looks_upright_enough(text, score):
             break
+
+    # Printed avize usually already carry both a code and a plate, and stop here. Photos often
+    # give up one field per rendering: native size reads the printed code, an upscale reads the
+    # handwritten plate. Extra passes are therefore appended rather than compared — the field
+    # extractor downstream takes the first match per field, so the strongest text stays first.
+    if _AGGRESSIVE and extra_passes:
+        w, h = best_frame.size
+        portrait_bonus = 1.5 if h >= w else -1.0
+        passes = (("upscale", upscale_for_ocr), ("shadow", flatten_shadow), ("clahe", enhance_aggressive))
+        for name, transform in passes:
+            if not missing_from_text(best_text):
+                break
+            try:
+                text, confs = ocr_array(np.array(transform(best_frame)))
+            except Exception as exc:  # noqa: BLE001
+                log.warning("OCR pass %s failed: %s", name, exc)
+                continue
+            score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
+            log.info("OCR pass=%s score=%.2f chars=%s", name, score, len(text))
+            if not text:
+                continue
+            if score > best_score:
+                best_text, best_score = f"{text}\n{best_text}".strip(), score
+            else:
+                best_text = f"{best_text}\n{text}".strip()
 
     return best_text, best_rot
 
@@ -231,9 +372,11 @@ def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str,
     texts: list[str] = []
     first_rot = 0
     prefer: Optional[int] = None
+    # A photo is one page and worth re-rendering; a dossier is not.
+    extra_passes = len(pages) == 1
 
     for index, page in enumerate(pages):
-        text, rot = ocr_page(page, prefer=prefer)
+        text, rot = ocr_page(page, prefer=prefer, extra_passes=extra_passes)
         if index == 0:
             first_rot = rot
             prefer = rot
@@ -274,6 +417,7 @@ def health():
         "use_gpu": os.environ.get("PADDLE_OCR_USE_GPU", "0"),
         "lang": os.environ.get("PADDLE_OCR_LANG", "latin"),
         "auto_rotate": _AUTO_ROTATE,
+        "aggressive": _AGGRESSIVE,
     }
 
 

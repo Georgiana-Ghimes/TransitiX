@@ -885,7 +885,8 @@ ALTER TABLE office_notifications DROP CONSTRAINT IF EXISTS office_notifications_
 ALTER TABLE office_notifications ADD CONSTRAINT office_notifications_type_check
   CHECK (type IN (
     'trip_status', 'trip_problem', 'trip_unassigned', 'cmr_pending',
-    'client_confirmed', 'client_damage', 'document_expiry', 'route_exception', 'system'
+    'client_confirmed', 'client_damage', 'document_expiry', 'route_exception', 'system',
+    'data_issue', 'driver_upload'
   ));
 
 -- ePOD: one proof per route stop (signature + photos + refusal).

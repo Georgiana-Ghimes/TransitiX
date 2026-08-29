@@ -54,3 +54,11 @@ backups/
 
 # Python bytecode from the OCR sidecar tooling
 __pycache__/
+
+# Scans and OCR dumps produced while tuning the sidecar locally — inputs and output of a run,
+# not code, and they change on every experiment.
+/tools/paddle-ocr/*.jpg
+/tools/paddle-ocr/*.jpeg
+/tools/paddle-ocr/*.png
+/tools/paddle-ocr/*.pdf
+/tools/paddle-ocr/last-*.txt

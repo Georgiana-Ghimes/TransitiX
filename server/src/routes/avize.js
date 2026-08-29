@@ -468,6 +468,12 @@ router.post('/extract', async (req, res) => {
     // perfectly readable. Those run in the background, the same way a driver's upload does.
     const pages = await documentPageCount(storedFileUrl);
     if (pages > interactiveOcrMaxPages()) {
+      // Flip before the background job is scheduled so the list shows "Se procesează…" immediately.
+      await query(
+        `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
+         WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+        [docId, req.user.company_id]
+      );
       extractBatchDocuments(req.user.company_id, batchId, req.user.id, {
         force: true,
         profileId: req.body?.profile_id,
@@ -498,10 +504,35 @@ router.post('/extract', async (req, res) => {
     const failed = outcome.results?.find((r) => r.id === docId && r.error);
     if (failed) {
       const timedOut = failed.code === 'OCR_TIMEOUT';
-      return res.status(timedOut ? 504 : 502).json({
-        message: timedOut
-          ? 'OCR-ul a depășit timpul alocat. Documentul a rămas neschimbat — încearcă din nou.'
-          : failed.error || 'Extragerea a eșuat',
+      // Cold Paddle + auto-rotate often exceeds the interactive budget on the first photo.
+      // Leaving a silent "uploaded" row forces a manual Re-extrage; continue with the full
+      // background timeout instead and let the UI poll until fields appear.
+      if (timedOut) {
+        await query(
+          `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
+           WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+          [docId, req.user.company_id]
+        );
+        extractBatchDocuments(req.user.company_id, batchId, req.user.id, {
+          force: true,
+          profileId: req.body?.profile_id,
+          documentIds: [docId],
+        }).catch((err) => console.error('[avize extract background retry]', err?.message || err));
+
+        const pending = await query(
+          `SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2`,
+          [docId, req.user.company_id]
+        );
+        if (!pending.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
+        return res.status(202).json({
+          ...decorateAviz(pending.rows[0]),
+          extraction_pending: true,
+          pages,
+          reason: 'ocr_timeout_retry',
+        });
+      }
+      return res.status(502).json({
+        message: failed.error || 'Extragerea a eșuat',
       });
     }
 

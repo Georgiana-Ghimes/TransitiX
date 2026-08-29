@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const docs = await query(
       `SELECT id, original_filename, file_url, document_type, status, needs_review,
-              trip_id, created_at, uploaded_from
+              numar_tpo, trip_id, created_at, uploaded_from
        FROM aviz_documents
        WHERE company_id = $1 AND uploaded_by = $2 AND uploaded_from = 'driver'
        ORDER BY created_at DESC
@@ -167,9 +167,21 @@ router.post('/', (req, res) => {
         return { batch: counted, documents };
       });
 
-      if (trip) {
-        const { notifyCmrPending } = await import('../lib/officeNotifications.js');
-        await notifyCmrPending(req.user.company_id, trip).catch(() => {});
+      const { notifyCmrPending, notifyDriverUpload } = await import('../lib/officeNotifications.js');
+      const driverName = req.user.name || req.user.full_name;
+      // Always ping the office bell — including uploads without a trip (previous gap).
+      await notifyDriverUpload(req.user.company_id, {
+        driverName,
+        documentType,
+        fileCount: result.documents.length,
+        trip,
+      }).catch(() => {});
+      // Trip-linked CMR still gets the classic pending-on-trip entry.
+      if (trip && documentType === 'cmr') {
+        await notifyCmrPending(req.user.company_id, {
+          ...trip,
+          driver_name: driverName,
+        }).catch(() => {});
       }
 
       res.status(201).json({

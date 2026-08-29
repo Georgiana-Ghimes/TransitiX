@@ -60,6 +60,38 @@ export async function notifyCmrPending(companyId, trip) {
   );
 }
 
+/**
+ * Bell ping when a driver sends paperwork — with or without a trip.
+ *
+ * Uploads without a cursă used to stay silent; the office only noticed them by
+ * opening /avize. Always land on /avize (companion has no trips menu).
+ */
+export async function notifyDriverUpload(companyId, {
+  driverName,
+  documentType = 'aviz',
+  fileCount = 1,
+  trip = null,
+} = {}) {
+  if (!companyId) return;
+  const count = Math.max(1, Number(fileCount) || 1);
+  const filesLabel = count === 1 ? '1 fișier' : `${count} fișiere`;
+  const kind = { aviz: 'aviz / cântar', cmr: 'CMR', other: 'document' }[documentType] || 'document';
+  const who = String(driverName || '').trim() || 'Șoferul';
+  const tripBit = trip?.cmr_number
+    ? ` · cursă ${trip.cmr_number}`
+    : ' · fără cursă (de legat la birou)';
+
+  await createOfficeNotification({
+    company_id: companyId,
+    type: 'driver_upload',
+    title: `De pe drum — ${filesLabel}`,
+    message: `${who} a încărcat ${filesLabel} (${kind})${tripBit}.`,
+    link: '/avize',
+    trip_id: trip?.id || null,
+    cmr_number: trip?.cmr_number || null,
+  });
+}
+
 export async function dismissCmrPending(companyId, tripId) {
   if (!tripId) return;
   await query(
