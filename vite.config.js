@@ -42,8 +42,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: mode === 'companion' ? '0.0.0.0' : '127.0.0.1',
       port: mode === 'companion' ? 5174 : 5173,
-      // Cloudflare quick tunnels (*.trycloudflare.com) forward a foreign Host header.
-      allowedHosts: mode === 'companion' ? ['.trycloudflare.com', '.cfargotunnel.com'] : undefined,
+      // Companion is meant to be opened from LAN / Cloudflare tunnels — allow any Host.
+      // (A strict list of tunnel suffixes alone blocks http://<lan-ip>:5174 with 403.)
+      allowedHosts: mode === 'companion' ? true : undefined,
       proxy: {
         '/api': {
           target: `http://127.0.0.1:${apiPort}`,

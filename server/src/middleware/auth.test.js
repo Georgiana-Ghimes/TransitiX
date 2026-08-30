@@ -4,6 +4,7 @@ import {
   adminRequired,
   authRequired,
   officeRequired,
+  platformAdminRequired,
   signAccessToken,
   signRefreshToken,
 } from './auth.js';
@@ -92,6 +93,27 @@ describe('auth middleware', () => {
     const denied = mockReqRes();
     denied.req.user = { role: 'dispatcher' };
     adminRequired(denied.req, denied.res, denied.next);
+    expect(denied.res.statusCode).toBe(403);
+    expect(denied.wasNextCalled()).toBe(false);
+  });
+
+  it('officeRequired blocks platform_admin (GOD uses /platform, not tenant tools)', () => {
+    const denied = mockReqRes();
+    denied.req.user = { role: 'platform_admin' };
+    officeRequired(denied.req, denied.res, denied.next);
+    expect(denied.res.statusCode).toBe(403);
+    expect(denied.wasNextCalled()).toBe(false);
+  });
+
+  it('platformAdminRequired allows only platform_admin', () => {
+    const allowed = mockReqRes();
+    allowed.req.user = { role: 'platform_admin' };
+    platformAdminRequired(allowed.req, allowed.res, allowed.next);
+    expect(allowed.wasNextCalled()).toBe(true);
+
+    const denied = mockReqRes();
+    denied.req.user = { role: 'admin' };
+    platformAdminRequired(denied.req, denied.res, denied.next);
     expect(denied.res.statusCode).toBe(403);
     expect(denied.wasNextCalled()).toBe(false);
   });

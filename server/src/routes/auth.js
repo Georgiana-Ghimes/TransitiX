@@ -36,6 +36,37 @@ function publicUser(row) {
   };
 }
 
+/** Attach tenant feature_flags so the UI can hide modules without an extra round-trip. */
+async function publicUserWithCompany(row, req = null) {
+  const base = publicUser(row);
+  if (!row?.company_id) return { ...base, company: null };
+  const company = await query(
+    `SELECT id, name, slug, is_platform, feature_flags
+     FROM companies WHERE id = $1`,
+    [row.company_id],
+  );
+  const c = company.rows[0];
+  if (!c) return { ...base, company: null };
+  const out = {
+    ...base,
+    company: {
+      id: c.id,
+      name: c.name,
+      slug: c.slug || null,
+      is_platform: Boolean(c.is_platform),
+      feature_flags: c.feature_flags && typeof c.feature_flags === 'object' ? c.feature_flags : {},
+    },
+  };
+  if (req?.user?.impersonator_id) {
+    out.impersonation = {
+      active: true,
+      actor_id: req.user.impersonator_id,
+      actor_email: req.user.impersonator_email || null,
+    };
+  }
+  return out;
+}
+
 
 /** Mints a tracked session and returns the pair the client stores. */
 async function issueTokens(user, req) {
@@ -98,7 +129,7 @@ router.post('/login', authAttemptLimit, async (req, res) => {
     await query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
     await auditSecurity(req, { user, action: 'login' });
     const tokens = await issueTokens(user, req);
-    res.json({ ...tokens, user: publicUser(user) });
+    res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Autentificarea nu a reușit. Încearcă din nou.' });
@@ -113,6 +144,7 @@ router.post('/register', authAttemptLimit, async (req, res) => {
     }
 
     const password_hash = await bcrypt.hash(password, 12);
+    const { generateSlug } = await import('../lib/platform/slug.js');
     const user = await withTransaction(async (client) => {
       const existing = await client.query(
         `SELECT id FROM users WHERE LOWER(email) = LOWER($1)`,
@@ -123,9 +155,18 @@ router.post('/register', authAttemptLimit, async (req, res) => {
         taken.code = 'EMAIL_TAKEN';
         throw taken;
       }
+      let slug = generateSlug(10);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const clash = await client.query(
+          `SELECT id FROM companies WHERE slug = $1 LIMIT 1`,
+          [slug],
+        );
+        if (!clash.rows[0]) break;
+        slug = generateSlug(10);
+      }
       const company = await client.query(
-        `INSERT INTO companies (name, email) VALUES ($1, $2) RETURNING id`,
-        [company_name || 'Compania mea', email]
+        `INSERT INTO companies (name, email, slug) VALUES ($1, $2, $3) RETURNING id`,
+        [company_name || 'Compania mea', email, slug]
       );
       const userResult = await client.query(
         `INSERT INTO users (company_id, name, email, password_hash, role)
@@ -135,7 +176,7 @@ router.post('/register', authAttemptLimit, async (req, res) => {
       return userResult.rows[0];
     });
     const tokens = await issueTokens(user, req);
-    res.status(201).json({ ...tokens, user: publicUser(user) });
+    res.status(201).json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Există deja un cont cu acest email.' });
@@ -149,7 +190,7 @@ router.get('/me', authRequired, async (req, res) => {
   try {
     const result = await query(`SELECT * FROM users WHERE id = $1`, [req.user.id]);
     if (!result.rows[0]) return res.status(401).json({ message: 'Utilizatorul nu există.' });
-    res.json(publicUser(result.rows[0]));
+    res.json(await publicUserWithCompany(result.rows[0], req));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Nu am putut încărca datele contului.' });
@@ -191,7 +232,7 @@ router.post('/refresh', async (req, res) => {
       await touchSession(payload.jti);
       await revokeSession(payload.jti);
     }
-    res.json({ ...tokens, user: publicUser(user) });
+    res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Reînnoirea sesiunii nu a reușit. Conectează-te din nou.' });

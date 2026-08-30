@@ -150,15 +150,20 @@ Health: `GET /api/health`.
 
 ### Seed accounts
 
-| Role | Email | Password |
-|------|--------|----------|
-| Admin (office) | `admin@transitix.ro` | `admin123` |
-| Șofer (driver app) | `sofer@transitix.ro` | `sofer123` |
+| Portal | Rol | Email | Password |
+|--------|-----|--------|----------|
+| TMS full (`:5173`) | Admin | `admin@transitix.ro` | `admin123` |
+| TMS full (`:5173`) | Șofer | `sofer@transitix.ro` | `sofer123` |
+| Companion documente (`:5174`) | Admin | `admin@rai-spedition.ro` | `admin123` |
+| Companion documente (`:5174`) | Șofer | `sofer@rai-spedition.ro` | `sofer123` |
+| Platformă GOD | `platform_admin` | bootstrap via `PLATFORM_ADMIN_EMAILS` | — |
+
+Each tenant has its own users (login is by email globally). Re-run `npm run db:seed` after migrate / ensure apps.
 
 ### App Șofer smoke
 
-1. Log in as `sofer@transitix.ro`
-2. You land on **App Șofer** with assigned trips
+1. Log in as `sofer@transitix.ro` on the full app, or `sofer@rai-spedition.ro` on the companion
+2. You land on **App Șofer** with assigned trips (TMS) or document upload (companion)
 3. From office: Curse → assign that driver → status `alocata` appears in the app
 
 ### Alternate: full Compose / VM

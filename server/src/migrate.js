@@ -1389,7 +1389,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
   user_role TEXT,
   action TEXT NOT NULL
     CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
-                      'sessions_revoked', 'export', 'import', 'run')),
+                      'sessions_revoked', 'export', 'import', 'run',
+                      'impersonate_start', 'impersonate_end')),
   entity TEXT NOT NULL,
   entity_id UUID,
   label TEXT,
@@ -1408,7 +1409,31 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_entity
 CREATE INDEX IF NOT EXISTS idx_audit_events_user
   ON audit_events(company_id, user_id, created_at DESC);
 
-`
+-- Allow platform GOD impersonation events.
+ALTER TABLE audit_events DROP CONSTRAINT IF EXISTS audit_events_action_check;
+ALTER TABLE audit_events ADD CONSTRAINT audit_events_action_check
+  CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
+                    'sessions_revoked', 'export', 'import', 'run',
+                    'impersonate_start', 'impersonate_end'));
+
+-- Platform (GOD) admin — not a customer tenant admin.
+-- Customer "admin" stays company-scoped. Platform operators live on a dedicated
+-- is_platform company so company_id stays NOT NULL and existing tenancy filters stay safe.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_platform BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS feature_flags JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE UNIQUE INDEX IF NOT EXISTS companies_one_platform
+  ON companies ((true)) WHERE is_platform = TRUE;
+
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check
+  CHECK (role IN ('admin', 'dispatcher', 'driver', 'finance', 'platform_admin'));
+
+-- Public URL slug alongside UUID PK (e.g. /txdemo7k2m/avize).
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS companies_slug_uniq
+  ON companies (slug) WHERE slug IS NOT NULL;
+
+`;
 
 async function migrate() {
   const client = await pool.connect();

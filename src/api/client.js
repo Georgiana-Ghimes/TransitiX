@@ -1,5 +1,7 @@
 const TOKEN_KEY = 'transitix_access_token';
 const REFRESH_KEY = 'transitix_refresh_token';
+const GOD_TOKEN_KEY = 'transitix_god_access_token';
+const GOD_REFRESH_KEY = 'transitix_god_refresh_token';
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -13,6 +15,29 @@ function setToken(token) {
 function setRefreshToken(token) {
   if (token) localStorage.setItem(REFRESH_KEY, token);
   else localStorage.removeItem(REFRESH_KEY);
+}
+
+function stashGodSession() {
+  const access = localStorage.getItem(TOKEN_KEY);
+  const refresh = localStorage.getItem(REFRESH_KEY);
+  if (access) localStorage.setItem(GOD_TOKEN_KEY, access);
+  if (refresh) localStorage.setItem(GOD_REFRESH_KEY, refresh);
+}
+
+function clearGodStash() {
+  localStorage.removeItem(GOD_TOKEN_KEY);
+  localStorage.removeItem(GOD_REFRESH_KEY);
+}
+
+function restoreGodSession() {
+  const access = localStorage.getItem(GOD_TOKEN_KEY);
+  const refresh = localStorage.getItem(GOD_REFRESH_KEY);
+  clearGodStash();
+  if (!access) return false;
+  setToken(access);
+  if (refresh) setRefreshToken(refresh);
+  else setRefreshToken(null);
+  return true;
 }
 
 function skipAuthRefresh(path) {
@@ -683,6 +708,53 @@ export const api = {
       return request('/notifications/read', { method: 'DELETE' });
     },
   },
+  platform: {
+    me() {
+      return request('/platform/me');
+    },
+    companies({ ensureApps = false } = {}) {
+      const q = ensureApps ? '?ensure_apps=1' : '';
+      return request(`/platform/companies${q}`);
+    },
+    ensureApps() {
+      return request('/platform/apps/ensure', { method: 'POST' });
+    },
+    company(id) {
+      return request(`/platform/companies/${encodeURIComponent(id)}`);
+    },
+    patchCompany(id, body) {
+      return request(`/platform/companies/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body,
+      });
+    },
+    putFeatureFlags(companyId, feature_flags) {
+      return request(`/platform/companies/${encodeURIComponent(companyId)}/feature-flags`, {
+        method: 'PUT',
+        body: { feature_flags },
+      });
+    },
+    /** Enter a customer company as its admin; stashes GOD tokens for exit. */
+    async impersonate(companyId) {
+      stashGodSession();
+      const data = await request(`/platform/companies/${encodeURIComponent(companyId)}/impersonate`, {
+        method: 'POST',
+      });
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      return data;
+    },
+    /** Restore stashed GOD session and hard-navigate to /platform. */
+    exitImpersonation() {
+      if (!restoreGodSession()) {
+        setToken(null);
+        setRefreshToken(null);
+        window.location.href = '/login';
+        return;
+      }
+      window.location.href = '/platform';
+    },
+  },
   search(q, limit = 5) {
     const params = new URLSearchParams({ q, limit: String(limit) });
     return request(`/search?${params.toString()}`);
@@ -732,6 +804,7 @@ export const api = {
       }
       setToken(null);
       setRefreshToken(null);
+      clearGodStash();
       if (redirectTo !== false) {
         window.location.href = typeof redirectTo === 'string' ? redirectTo : '/login';
       }
