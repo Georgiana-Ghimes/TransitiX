@@ -81,46 +81,90 @@ export function mergeModules(profileKey, storedModules) {
 
 /**
  * Ensure the two product tenants exist (TMS full + documents companion).
- * Idempotent — keyed by feature_flags.app_key. Fixed public slugs.
+ * Idempotent — keyed by feature_flags.app_key, preferring the fixed product slug.
+ * Never steals a slug owned by another company.
+ * Also repairs customer rows that wrongly reused a product app_key.
  */
 export async function ensureProductCompanies(queryFn) {
   const created = [];
   const updated = [];
 
+  // Customer companies must not share product catalog app_keys (breaks slug sync).
+  await queryFn(
+    `UPDATE companies c
+     SET feature_flags = jsonb_set(
+           jsonb_set(
+             COALESCE(c.feature_flags, '{}'::jsonb),
+             '{app_key}',
+             to_jsonb('tenant_' || c.slug)
+           ),
+           '{portal_url}',
+           to_jsonb('/' || c.slug)
+         ),
+         updated_at = NOW()
+     WHERE c.is_platform = FALSE
+       AND c.slug IS NOT NULL
+       AND c.feature_flags->>'app_key' IN ('transitix_full', 'rai_documents')
+       AND c.slug <> ALL($1::text[])`,
+    [Object.values(PRODUCT_SLUGS)],
+  );
+
   for (const profile of Object.values(PRODUCT_APPS)) {
-    const existing = await queryFn(
+    const slug = profile.slug;
+    const bySlug = await queryFn(
+      `SELECT id, name, slug, feature_flags
+       FROM companies
+       WHERE is_platform = FALSE AND slug = $1
+       LIMIT 1`,
+      [slug],
+    );
+    const byAppKey = await queryFn(
       `SELECT id, name, slug, feature_flags
        FROM companies
        WHERE is_platform = FALSE
          AND feature_flags->>'app_key' = $1
+       ORDER BY CASE WHEN slug = $2 THEN 0 ELSE 1 END, created_at ASC
        LIMIT 1`,
-      [profile.appKey],
+      [profile.appKey, slug],
     );
 
-    const prevFlags = existing.rows[0]?.feature_flags || {};
-    const slug = profile.slug;
+    // Prefer the row that already owns the product slug; else the canonical app_key row.
+    const existing = bySlug.rows[0] || byAppKey.rows[0] || null;
+    const prevFlags = existing?.feature_flags || {};
     const flags = {
       app_key: profile.appKey,
       app_profile: profile.key,
-      // Path on the shared host — no more :5173 vs :5174 portal switching.
       portal_url: `/${slug}`,
       modules: mergeModules(profile.key, prevFlags.modules),
     };
 
-    if (existing.rows[0]) {
-      await queryFn(
-        `UPDATE companies
-         SET feature_flags = $2::jsonb,
-             slug = $3,
-             updated_at = NOW()
-         WHERE id = $1`,
-        [existing.rows[0].id, JSON.stringify(flags), slug],
-      );
+    if (existing) {
+      // Only set the product slug if free or already ours.
+      const slugOwner = bySlug.rows[0];
+      const canTakeSlug = !slugOwner || slugOwner.id === existing.id;
+      if (canTakeSlug) {
+        await queryFn(
+          `UPDATE companies
+           SET feature_flags = $2::jsonb,
+               slug = $3,
+               updated_at = NOW()
+           WHERE id = $1`,
+          [existing.id, JSON.stringify(flags), slug],
+        );
+      } else {
+        await queryFn(
+          `UPDATE companies
+           SET feature_flags = $2::jsonb,
+               updated_at = NOW()
+           WHERE id = $1`,
+          [existing.id, JSON.stringify({ ...flags, portal_url: existing.slug ? `/${existing.slug}` : flags.portal_url })],
+        );
+      }
       updated.push({
-        id: existing.rows[0].id,
+        id: existing.id,
         app_key: profile.appKey,
-        slug,
-        name: existing.rows[0].name,
+        slug: canTakeSlug ? slug : existing.slug,
+        name: existing.name,
       });
       continue;
     }
@@ -141,22 +185,58 @@ export async function ensureProductCompanies(queryFn) {
           ...flags,
           modules: mergeModules('full', demoPrev.modules),
         };
-        await queryFn(
-          `UPDATE companies
-           SET feature_flags = $2::jsonb,
-               slug = $3,
-               updated_at = NOW()
-           WHERE id = $1`,
-          [demo.rows[0].id, JSON.stringify(demoFlags), slug],
+        const clash = await queryFn(
+          `SELECT id FROM companies WHERE slug = $1 AND id <> $2 LIMIT 1`,
+          [slug, demo.rows[0].id],
         );
+        if (!clash.rows[0]) {
+          await queryFn(
+            `UPDATE companies
+             SET feature_flags = $2::jsonb,
+                 slug = $3,
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [demo.rows[0].id, JSON.stringify(demoFlags), slug],
+          );
+        } else {
+          await queryFn(
+            `UPDATE companies
+             SET feature_flags = $2::jsonb,
+                 updated_at = NOW()
+             WHERE id = $1`,
+            [demo.rows[0].id, JSON.stringify(demoFlags)],
+          );
+        }
         updated.push({
           id: demo.rows[0].id,
           app_key: profile.appKey,
-          slug,
+          slug: clash.rows[0] ? demo.rows[0].slug : slug,
           name: demo.rows[0].name,
         });
         continue;
       }
+    }
+
+    const slugTaken = await queryFn(
+      `SELECT id FROM companies WHERE slug = $1 LIMIT 1`,
+      [slug],
+    );
+    if (slugTaken.rows[0]) {
+      // Another tenant holds the slug without matching lookup — adopt flags on that row.
+      await queryFn(
+        `UPDATE companies
+         SET feature_flags = $2::jsonb,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [slugTaken.rows[0].id, JSON.stringify(flags)],
+      );
+      updated.push({
+        id: slugTaken.rows[0].id,
+        app_key: profile.appKey,
+        slug,
+        name: null,
+      });
+      continue;
     }
 
     const inserted = await queryFn(

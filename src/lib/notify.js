@@ -88,7 +88,13 @@ export function friendlyErrorMessage(errorOrMessage) {
     return 'Valoare numerică prea mare (ex. consum max 999.99). Verifică câmpurile numerice.';
   }
   if (/duplicate key|unique constraint/i.test(msg)) {
-    return 'Există deja o înregistrare cu aceste date (ex. număr înmatriculare duplicat).';
+    if (/companies_slug|slug/i.test(msg)) {
+      return 'Slug-ul firmei este deja folosit. Alege altul sau sincronizează din nou.';
+    }
+    if (/users_email|email/i.test(msg)) {
+      return 'Există deja un cont cu acest email pe platformă.';
+    }
+    return 'Există deja o înregistrare cu aceste date (conflict de unicitate).';
   }
   if (/violates check constraint/i.test(msg)) {
     return 'Valoare invalidă pentru unul din câmpurile cu listă fixă (status, tip combustibil, etc.).';

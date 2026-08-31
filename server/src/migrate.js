@@ -1433,6 +1433,28 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS slug TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS companies_slug_uniq
   ON companies (slug) WHERE slug IS NOT NULL;
 
+-- Lead form "Solicită acces" — GOD converts these into companies; never auto-provisions.
+CREATE TABLE IF NOT EXISTS access_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  message TEXT,
+  preferred_profile TEXT NOT NULL DEFAULT 'full'
+    CHECK (preferred_profile IN ('full', 'documents')),
+  status TEXT NOT NULL DEFAULT 'new'
+    CHECK (status IN ('new', 'contacted', 'converted', 'dismissed')),
+  notes TEXT,
+  converted_company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_access_leads_status_created
+  ON access_leads (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_leads_email
+  ON access_leads (LOWER(email));
+
 `;
 
 async function migrate() {

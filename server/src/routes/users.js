@@ -10,11 +10,9 @@
  * out administrator rights and leave no trace would undo the point of having a trail at all.
  */
 import { Router } from 'express';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 import { pool, query } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
-import { sendEmail, emailConfigured } from '../lib/email.js';
+import { emailConfigured } from '../lib/email.js';
 import { revokeAllForUser } from '../lib/sessions.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
 import {
@@ -25,9 +23,14 @@ import {
   checkRoleChange,
   driverReady,
   inviteState,
-  unusablePasswordSeed,
   validateInvite,
 } from '../lib/users/rules.js';
+import {
+  buildInviteLink,
+  deliverInvite,
+  hashUnusablePassword,
+  newInviteToken,
+} from '../lib/users/invite.js';
 
 const router = Router();
 router.use(authRequired, officeRequired, adminRequired);
@@ -160,11 +163,9 @@ router.post('/invite', async (req, res) => {
       });
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = newInviteToken();
     // NOT NULL needs a value, and it must be one nobody can guess or reuse.
-    const password_hash = await bcrypt.hash(
-      unusablePasswordSeed(crypto.randomBytes(32).toString('hex')), 12
-    );
+    const password_hash = await hashUnusablePassword();
 
     const created = (await query(
       `INSERT INTO users (company_id, name, email, password_hash, role, phone,
@@ -187,8 +188,8 @@ router.post('/invite', async (req, res) => {
       )).rows[0] || null;
     }
 
-    const invite_link = inviteLink(req, token);
-    const sent = await deliverInvite({ to: email, name, link: invite_link, company: req.user });
+    const invite_link = buildInviteLink(req, token);
+    const sent = await deliverInvite({ to: email, name, link: invite_link });
 
     await auditUser(req, {
       action: 'create',
@@ -217,7 +218,7 @@ router.post('/:id/resend-invite', async (req, res) => {
       return res.status(422).json({ message: 'Contul este dezactivat. Reactivează-l întâi.' });
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = newInviteToken();
     await query(
       `UPDATE users SET reset_token = $1,
               reset_token_expires_at = NOW() + ($2::int || ' hours')::interval,
@@ -226,9 +227,9 @@ router.post('/:id/resend-invite', async (req, res) => {
       [token, INVITE_TTL_HOURS, target.id, req.user.company_id]
     );
 
-    const invite_link = inviteLink(req, token);
+    const invite_link = buildInviteLink(req, token);
     const sent = await deliverInvite({
-      to: target.email, name: target.name, link: invite_link, company: req.user,
+      to: target.email, name: target.name, link: invite_link,
     });
     await auditUser(req, { action: 'update', target, changes: { invitatie: { from: null, to: 'retrimisă' } } });
 
@@ -366,37 +367,5 @@ router.put('/:id/driver', async (req, res) => {
     fail(res, err, 'Profilul de șofer nu a putut fi legat.');
   }
 });
-
-function inviteLink(req, token) {
-  const origin = req.body?.origin
-    || process.env.CLIENT_ORIGIN
-    || `${req.protocol}://${req.get('host')}`;
-  return `${String(origin).replace(/\/$/, '')}/reset-password?token=${token}`;
-}
-
-/**
- * Sends the invitation, reporting whether it actually went.
- *
- * `sendEmail` resolves happily without a mail provider — it logs the message and returns
- * `{ stub: true }`. Reporting that as sent would leave an admin waiting for an email nobody will
- * ever receive, so a stubbed send counts as not sent and the caller hands back the link instead.
- */
-async function deliverInvite({ to, name, link }) {
-  try {
-    const result = await sendEmail({
-      to,
-      subject: 'Invitație în Transitix',
-      text: `Salut, ${name}.\n\nAi fost invitat în Transitix. Alege-ți parola aici (link valabil `
-        + `${INVITE_TTL_HOURS / 24} zile):\n${link}\n`,
-      html: `<p>Salut, ${name}.</p><p>Ai fost invitat în Transitix. Alege-ți parola aici `
-        + `(link valabil ${INVITE_TTL_HOURS / 24} zile):</p><p><a href="${link}">${link}</a></p>`,
-    });
-    return Boolean(result?.ok && !result.stub);
-  } catch (err) {
-    // The account exists either way; the admin can pass the link on by hand.
-    console.error('[invite email]', err.message);
-    return false;
-  }
-}
 
 export default router;

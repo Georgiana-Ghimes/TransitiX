@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -58,9 +58,12 @@ const NAV = [
   { label: 'Jurnal modificări', path: '/audit', icon: History, roles: ['admin'], module: 'audit' },
 ];
 
-/** Same on full TMS and companion — not a customer-tenant screen. */
+/** GOD operator nav — no per-tenant company rows in the rail. */
 const PLATFORM_NAV = [
-  { label: 'Platformă', path: '/platform', icon: ShieldCheck },
+  { label: 'Acasă', path: '/platform', icon: ShieldCheck, end: true },
+  { label: 'Companii', path: '/platform/companies', icon: Building2 },
+  { label: 'Solicitări', path: '/platform/leads', icon: Inbox },
+  { label: 'Utilizatori', path: '/platform/users', icon: UserCog },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
@@ -101,21 +104,11 @@ export default function Layout() {
   const companyProfile = user?.company?.feature_flags?.app_profile;
   const treatAsDocumentsEarly = companyProfile === 'documents'
     || (!companyProfile && documentsCompanion);
-  const [platformCompanies, setPlatformCompanies] = useState([]);
   // Full TMS catalog; hide Dashboard home for documents-profile companies.
   const tenantNav = treatAsDocumentsEarly
     ? NAV.filter((item) => item.path !== '/')
     : NAV;
-  const navItems = isPlatform
-    ? [
-      ...PLATFORM_NAV,
-      ...platformCompanies.map((c) => ({
-        label: c.name,
-        path: `/platform/companies/${c.id}`,
-        icon: Building2,
-      })),
-    ]
-    : tenantNav;
+  const navItems = isPlatform ? PLATFORM_NAV : tenantNav;
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -130,28 +123,6 @@ export default function Layout() {
   const [tourStep, setTourStep] = useState(0);
 
   useEffect(() => {
-    if (!isPlatform) {
-      setPlatformCompanies([]);
-      return undefined;
-    }
-    let cancelled = false;
-    api.platform.companies({ ensureApps: true })
-      .then((data) => {
-        if (!cancelled) setPlatformCompanies(data.items || []);
-      })
-      .catch(() => {
-        if (!cancelled) setPlatformCompanies([]);
-      });
-    return () => { cancelled = true; };
-  }, [isPlatform]);
-
-  const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
-  const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
-  const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
-  const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
-
-  // Office tour is for the full sidebar app only — never driver, platform, or companion.
-  useEffect(() => {
     if (isDriver || isPlatform || documentsCompanion) {
       setTourOpen(false);
       return;
@@ -161,6 +132,11 @@ export default function Layout() {
       setTourOpen(true);
     }
   }, [isDriver, isPlatform, documentsCompanion]);
+
+  const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
+  const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
+  const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
+  const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
   // Navigate when the tour *step* changes — not whenever the user leaves the step path.
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
@@ -243,7 +219,10 @@ export default function Layout() {
     await api.auth.logout();
   };
 
-  const isActive = (path) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const isActive = (path, end = false) => {
+    if (path === '/' || end) return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
   const displayName = user?.full_name || user?.name || user?.email || 'Utilizator';
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const roleLabel = {
@@ -418,7 +397,7 @@ export default function Layout() {
               return true;
             }).map((item) => {
               const Icon = item.icon;
-              const active = isActive(item.path);
+              const active = isActive(item.path, item.end);
               const highlighted = isDesktop && tourOpen && tourNavPath === item.path;
               return (
                 <li key={item.path}>

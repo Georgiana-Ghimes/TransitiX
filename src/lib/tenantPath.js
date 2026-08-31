@@ -12,6 +12,7 @@ export const RESERVED_SLUGS = new Set([
   'login',
   'platform',
   'register',
+  'request-access',
   'reset-password',
   'uploads',
 ]);

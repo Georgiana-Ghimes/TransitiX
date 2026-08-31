@@ -2,13 +2,11 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { query, withTransaction } from '../db.js';
-import { isPgUniqueViolation } from '../lib/concurrency.js';
+import { query, pool } from '../db.js';
 import { authRequired, signAccessToken, signRefreshToken } from '../middleware/auth.js';
 import { sendEmail, emailConfigured } from '../lib/email.js';
 import { rateLimit } from '../lib/rateLimit.js';
 import { ipFrom, recordAudit } from '../lib/audit/events.js';
-import { pool } from '../db.js';
 import {
   durationMs,
   listSessions,
@@ -136,54 +134,12 @@ router.post('/login', authAttemptLimit, async (req, res) => {
   }
 });
 
-router.post('/register', authAttemptLimit, async (req, res) => {
-  try {
-    const { email, password, name, company_name } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Completează emailul și parola.' });
-    }
-
-    const password_hash = await bcrypt.hash(password, 12);
-    const { generateSlug } = await import('../lib/platform/slug.js');
-    const user = await withTransaction(async (client) => {
-      const existing = await client.query(
-        `SELECT id FROM users WHERE LOWER(email) = LOWER($1)`,
-        [email]
-      );
-      if (existing.rows.length > 0) {
-        const taken = new Error('EMAIL_TAKEN');
-        taken.code = 'EMAIL_TAKEN';
-        throw taken;
-      }
-      let slug = generateSlug(10);
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        const clash = await client.query(
-          `SELECT id FROM companies WHERE slug = $1 LIMIT 1`,
-          [slug],
-        );
-        if (!clash.rows[0]) break;
-        slug = generateSlug(10);
-      }
-      const company = await client.query(
-        `INSERT INTO companies (name, email, slug) VALUES ($1, $2, $3) RETURNING id`,
-        [company_name || 'Compania mea', email, slug]
-      );
-      const userResult = await client.query(
-        `INSERT INTO users (company_id, name, email, password_hash, role)
-         VALUES ($1, $2, $3, $4, 'admin') RETURNING *`,
-        [company.rows[0].id, name || email.split('@')[0], email, password_hash]
-      );
-      return userResult.rows[0];
-    });
-    const tokens = await issueTokens(user, req);
-    res.status(201).json({ ...tokens, user: await publicUserWithCompany(user) });
-  } catch (err) {
-    if (err.code === 'EMAIL_TAKEN' || isPgUniqueViolation(err)) {
-      return res.status(409).json({ message: 'Există deja un cont cu acest email.' });
-    }
-    console.error(err);
-    res.status(500).json({ message: 'Crearea contului nu a reușit. Încearcă din nou.' });
-  }
+/** Public self-signup is closed — firms are provisioned by platform GOD. */
+router.post('/register', authAttemptLimit, (_req, res) => {
+  res.status(410).json({
+    message: 'Înregistrarea publică nu mai este disponibilă. Folosește „Solicită acces” sau contactează Transitix.',
+    request_access: '/request-access',
+  });
 });
 
 router.get('/me', authRequired, async (req, res) => {

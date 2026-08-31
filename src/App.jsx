@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useMemo } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -9,8 +9,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { isDocumentsProfile } from '@/lib/appProfile';
-import { isPlatformAdmin } from '@/lib/roles';
-import { detectSlugFromPath } from '@/lib/tenantPath';
+import { isPlatformAdmin, postLoginPath } from '@/lib/roles';
+import {
+  RESERVED_SLUGS,
+  detectSlugFromPath,
+  normalizeSlug,
+  tenantPath,
+} from '@/lib/tenantPath';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import Trips from '@/pages/Trips';
@@ -21,6 +26,7 @@ import Settings from '@/pages/Settings';
 import Warehouse from '@/pages/Warehouse';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import RequestAccess from '@/pages/RequestAccess';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 
@@ -41,6 +47,9 @@ const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
 const Users = lazy(() => import('@/pages/Users'));
 const PlatformAdmin = lazy(() => import('@/pages/PlatformAdmin'));
+const PlatformCompanies = lazy(() => import('@/pages/PlatformCompanies'));
+const PlatformLeads = lazy(() => import('@/pages/PlatformLeads'));
+const PlatformUsers = lazy(() => import('@/pages/PlatformUsers'));
 const PlatformCompanyPage = lazy(() => import('@/pages/PlatformCompanyPage'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const DriverAppDocuments = lazy(() => import('@/pages/DriverAppDocuments'));
@@ -82,6 +91,9 @@ function OfficeRoutes() {
     <>
       <Route path="/" element={<Dashboard />} />
       <Route path="/platform" element={<PlatformAdmin />} />
+      <Route path="/platform/companies" element={<PlatformCompanies />} />
+      <Route path="/platform/leads" element={<PlatformLeads />} />
+      <Route path="/platform/users" element={<PlatformUsers />} />
       <Route path="/platform/companies/:id" element={<PlatformCompanyPage />} />
       <Route path="/trips" element={<Trips />} />
       <Route path="/trips/:id" element={<TripDetail />} />
@@ -126,9 +138,8 @@ const AuthenticatedApp = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
         <Route path="/login" element={<Login />} />
-        {!isDocumentsProfile() && (
-          <Route path="/register" element={<Register />} />
-        )}
+        <Route path="/request-access" element={<RequestAccess />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/confirm/:token" element={<ClientPortal />} />
@@ -148,20 +159,51 @@ const AuthenticatedApp = () => {
 };
 
 /**
- * Tenant URLs are /{slug}/avize. React Router basename strips the slug so the
- * rest of the app keeps absolute paths like /avize, /trips.
+ * Tenant URLs are /{slug}/avize. Basename comes only from the browser path so
+ * Router never mounts with /{slug} while the URL is still "/".
  * Platform GOD and auth pages use basename "".
  */
 function TenantAwareRouter({ children }) {
   const { user, isLoadingAuth } = useAuth();
-  const basename = useMemo(() => {
-    const fromUrl = detectSlugFromPath();
-    if (fromUrl) return `/${fromUrl}`;
-    if (isLoadingAuth) return '';
-    if (isPlatformAdmin(user)) return '';
+  const [redirecting, setRedirecting] = useState(false);
+
+  const fromUrl = useMemo(
+    () => (typeof window !== 'undefined' ? detectSlugFromPath(window.location.pathname) : null),
+    // Re-evaluate when auth settles (impersonation / login may change session without remount).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.id, user?.company?.slug, isLoadingAuth],
+  );
+
+  const basename = fromUrl ? `/${fromUrl}` : '';
+
+  useEffect(() => {
+    if (isLoadingAuth || typeof window === 'undefined') return;
+    if (isPlatformAdmin(user)) return;
     const slug = user?.company?.slug;
-    return slug ? `/${slug}` : '';
-  }, [user, isLoadingAuth]);
+    if (!slug || fromUrl) return;
+
+    const path = window.location.pathname || '/';
+    const search = window.location.search || '';
+    const first = path.split('/').filter(Boolean)[0] || '';
+    const reserved = Boolean(first) && RESERVED_SLUGS.has(normalizeSlug(first));
+    if (reserved) return;
+
+    // Bare `/` or unprefixed app path (/avize) while logged into a tenant.
+    const target = first
+      ? tenantPath(slug, path) + search
+      : postLoginPath(user) + search;
+    if (target === path + search) return;
+    setRedirecting(true);
+    window.location.replace(target);
+  }, [user, isLoadingAuth, fromUrl]);
+
+  if (redirecting) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Router basename={basename} key={basename || 'root'}>

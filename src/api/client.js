@@ -2,6 +2,7 @@ const TOKEN_KEY = 'transitix_access_token';
 const REFRESH_KEY = 'transitix_refresh_token';
 const GOD_TOKEN_KEY = 'transitix_god_access_token';
 const GOD_REFRESH_KEY = 'transitix_god_refresh_token';
+const GOD_RETURN_KEY = 'transitix_god_return_to';
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -41,7 +42,8 @@ function restoreGodSession() {
 }
 
 function skipAuthRefresh(path) {
-  return /^\/auth\/(login|register|refresh|logout|reset-password)/.test(path);
+  return /^\/auth\/(login|register|refresh|logout|reset-password)/.test(path)
+    || /^\/public\//.test(path);
 }
 
 let refreshInFlight = null;
@@ -719,6 +721,30 @@ export const api = {
     ensureApps() {
       return request('/platform/apps/ensure', { method: 'POST' });
     },
+    createCompany(body) {
+      return request('/platform/companies', { method: 'POST', body });
+    },
+    stats() {
+      return request('/platform/stats');
+    },
+    users({ q, companyId } = {}) {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (companyId) params.set('company_id', companyId);
+      const qs = params.toString();
+      return request(`/platform/users${qs ? `?${qs}` : ''}`);
+    },
+    setUserActive(userId, is_active) {
+      return request(`/platform/users/${encodeURIComponent(userId)}/active`, {
+        method: 'PUT',
+        body: { is_active: Boolean(is_active) },
+      });
+    },
+    resetUserPassword(userId) {
+      return request(`/platform/users/${encodeURIComponent(userId)}/reset-password`, {
+        method: 'POST',
+      });
+    },
     company(id) {
       return request(`/platform/companies/${encodeURIComponent(id)}`);
     },
@@ -734,9 +760,35 @@ export const api = {
         body: { feature_flags },
       });
     },
-    /** Enter a customer company as its admin; stashes GOD tokens for exit. */
-    async impersonate(companyId) {
+    companyUsers(id) {
+      return request(`/platform/companies/${encodeURIComponent(id)}/users`);
+    },
+    inviteCompanyUser(id, body) {
+      return request(`/platform/companies/${encodeURIComponent(id)}/users/invite`, {
+        method: 'POST',
+        body,
+      });
+    },
+    leads({ status } = {}) {
+      const q = status ? `?status=${encodeURIComponent(status)}` : '';
+      return request(`/platform/leads${q}`);
+    },
+    patchLead(id, body) {
+      return request(`/platform/leads/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body,
+      });
+    },
+    /** Enter a customer company as its admin; stashes GOD tokens + return path for exit. */
+    async impersonate(companyId, { returnTo } = {}) {
       stashGodSession();
+      const back = returnTo
+        || (typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : '/platform');
+      try {
+        localStorage.setItem(GOD_RETURN_KEY, back.startsWith('/platform') ? back : '/platform');
+      } catch { /* ignore */ }
       const data = await request(`/platform/companies/${encodeURIComponent(companyId)}/impersonate`, {
         method: 'POST',
       });
@@ -744,15 +796,26 @@ export const api = {
       setRefreshToken(data.refresh_token);
       return data;
     },
-    /** Restore stashed GOD session and hard-navigate to /platform. */
+    /** Restore stashed GOD session and return to the page that started impersonation. */
     exitImpersonation() {
+      let returnTo = '/platform';
+      try {
+        const stored = localStorage.getItem(GOD_RETURN_KEY);
+        localStorage.removeItem(GOD_RETURN_KEY);
+        if (stored && stored.startsWith('/platform')) returnTo = stored;
+      } catch { /* ignore */ }
       if (!restoreGodSession()) {
         setToken(null);
         setRefreshToken(null);
         window.location.href = '/login';
         return;
       }
-      window.location.href = '/platform';
+      window.location.href = returnTo;
+    },
+  },
+  public: {
+    requestAccess(body) {
+      return request('/public/request-access', { method: 'POST', body });
     },
   },
   search(q, limit = 5) {

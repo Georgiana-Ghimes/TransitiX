@@ -16,6 +16,7 @@ describe('tenantPath', () => {
     expect(detectSlugFromPath('/txdemo7k2m/avize')).toBe('txdemo7k2m');
     expect(detectSlugFromPath('/platform')).toBe(null);
     expect(detectSlugFromPath('/login')).toBe(null);
+    expect(detectSlugFromPath('/request-access')).toBe(null);
   });
 
   it('builds and strips tenant paths', () => {

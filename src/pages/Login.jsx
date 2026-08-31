@@ -54,17 +54,12 @@ export default function Login() {
       title="Bine ai revenit"
       subtitle={documentsCompanion ? `Autentifică-te în ${appTitle}` : 'Autentifică-te în Transitix'}
       footer={
-        documentsCompanion ? null : (
         <>
-          Nu ai cont?{" "}
-          <Link
-            to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
-            className="text-primary font-medium hover:underline"
-          >
-            Creează unul
+          Vrei acces la Transitix?{" "}
+          <Link to="/request-access" className="text-primary font-medium hover:underline">
+            Solicită acces
           </Link>
         </>
-        )
       }
     >
       {existingSession && (

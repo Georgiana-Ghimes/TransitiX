@@ -152,13 +152,15 @@ Health: `GET /api/health`.
 
 | Portal | Rol | Email | Password |
 |--------|-----|--------|----------|
-| TMS full (`:5173`) | Admin | `admin@transitix.ro` | `admin123` |
-| TMS full (`:5173`) | Șofer | `sofer@transitix.ro` | `sofer123` |
-| Companion documente (`:5174`) | Admin | `admin@rai-spedition.ro` | `admin123` |
-| Companion documente (`:5174`) | Șofer | `sofer@rai-spedition.ro` | `sofer123` |
-| Platformă GOD | `platform_admin` | bootstrap via `PLATFORM_ADMIN_EMAILS` | — |
+| TMS full (`/txdemo7k2m`) | Admin | `admin@transitix.ro` | `admin123` |
+| TMS full | Șofer | `sofer@transitix.ro` | `sofer123` |
+| Companion documente (`/raidocs4n9p`) | Admin | `admin@rai-spedition.ro` | `admin123` |
+| Companion documente | Șofer | `sofer@rai-spedition.ro` | `sofer123` |
+| Platformă GOD (`/platform`) | `platform_admin` | bootstrap via `PLATFORM_ADMIN_EMAILS` | — |
 
-Each tenant has its own users (login is by email globally). Re-run `npm run db:seed` after migrate / ensure apps.
+Public self-signup is closed. New firms come from **Solicită acces** (`/request-access`) + GOD provisioning on `/platform` (create company / invite users). Re-run `npm run db:seed` after migrate / ensure apps.
+
+Each tenant has its own users (login is by email globally).
 
 ### App Șofer smoke
 
