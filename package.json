@@ -6,13 +6,14 @@
   "companion": {
     "title": "RAI Spedition — Documente",
     "version": "1.2.0",
-    "build": 18
+    "build": 19
   },
   "type": "module",
   "scripts": {
     "prepare": "node scripts/install-git-hooks.js",
     "dev": "vite",
     "dev:companion": "vite --mode companion --host 0.0.0.0 --port 5174",
+    "tunnel:companion": "cloudflared tunnel --url http://127.0.0.1:5174",
     "dev:server": "npm run dev --prefix server",
     "dev:all": "npm run dev:server & npm run dev",
     "build": "vite build",

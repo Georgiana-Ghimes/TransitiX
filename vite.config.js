@@ -42,6 +42,11 @@ export default defineConfig(({ mode }) => {
     server: {
       host: mode === 'companion' ? '0.0.0.0' : '127.0.0.1',
       port: mode === 'companion' ? 5174 : 5173,
+      // The companion port is not a preference, it is what the tunnel points at. Without this a
+      // leftover process makes Vite step up to the next free port without complaining, and whoever
+      // starts the tunnel re-points it there to make it work. Fail loudly instead. Office dev keeps
+      // the fallback so two checkouts can run side by side.
+      strictPort: mode === 'companion',
       // Cloudflare quick tunnels (*.trycloudflare.com) forward a foreign Host header.
       allowedHosts: mode === 'companion' ? ['.trycloudflare.com', '.cfargotunnel.com'] : undefined,
       proxy: {
