@@ -6,6 +6,8 @@
  * state once — period, vehicle, lot, status — and re-state next month.
  */
 
+import { avizDateClauses } from '../avizQuery.js';
+
 export const SELECTION_CAP = 500;
 
 const STATUSES = ['uploaded', 'extracted', 'confirmed'];
@@ -58,8 +60,11 @@ export function buildSelectionQuery(companyId, input = {}) {
 
   // An explicit id list wins: the operator ticked those rows and means exactly those.
   if (f.aviz_ids.length) add('id = ANY($n::uuid[])', f.aviz_ids);
-  if (f.from) add('data_efectuare_cursa >= $n', f.from);
-  if (f.to) add('data_efectuare_cursa <= $n', f.to);
+  // Same date rule as the /avize list, or a row could show on screen for a period and then be
+  // missing from the export built for that same period.
+  const dateClauses = avizDateClauses('cursa');
+  if (f.from) add(dateClauses.from, f.from);
+  if (f.to) add(dateClauses.to, f.to);
   if (f.status) add('status = $n', f.status);
   if (f.batch_id) add('batch_id = $n::uuid', f.batch_id);
   if (f.document_type) add('document_type = $n', f.document_type);

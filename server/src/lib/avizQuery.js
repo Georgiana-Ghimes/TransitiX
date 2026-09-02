@@ -18,7 +18,7 @@ export function annexDraftAmount(row, rule = 'tpo') {
 }
 
 export function isLockedRaiTemplate(row) {
-  return Boolean(row?.is_default) && String(row?.name || '').trim() === 'Anexa Factura RAI';
+  return String(row?.name || '').trim() === 'Anexa Factura RAI';
 }
 
 export function flagDuplicateTpos(rows) {
@@ -87,65 +87,88 @@ export function uniqueZipEntry(name, used) {
 }
 
 /**
- * Which calendar date the `from`/`to` filters mean.
+ * Which calendar date the `from`/`to` filters mean, as clauses rather than a bare expression.
  *
  * `cursa` is the trip date read off the aviz — the one a monthly annex is built on. `incarcare`
  * is when the file reached us, expressed in Bucharest so a 23:30 upload does not count as the
  * next day. They are far apart in practice: an aviz photographed today can carry a trip date
  * from two weeks ago, which is why a week preset on the trip date can come back empty while the
  * month preset does not.
+ *
+ * A row OCR has not dated yet falls back to its upload day, otherwise a document uploaded today
+ * would be invisible under today's date filter until extraction finishes.
+ *
+ * Both bounds compare the stored column rather than an expression over it, so the indexes on
+ * `(company_id, data_efectuare_cursa)` and `(company_id, created_at)` remain candidates. A
+ * functional index could not stand in for that: `AT TIME ZONE` is STABLE, not IMMUTABLE, and
+ * Postgres refuses it in an index.
+ *
+ * Each clause carries a single `$n` placeholder, repeated where needed — callers substitute their
+ * own parameter index and push one value.
  */
-export const AVIZ_DATE_FIELDS = {
-  cursa: 'data_efectuare_cursa',
-  incarcare: `((created_at AT TIME ZONE 'Europe/Bucharest')::date)`,
-};
-
-export function avizDateColumn(dateField) {
-  return AVIZ_DATE_FIELDS[dateField] || AVIZ_DATE_FIELDS.cursa;
+export function avizDateClauses(dateField, alias = '') {
+  const col = alias ? `${alias}.` : '';
+  const dayStart = `($n::date AT TIME ZONE 'Europe/Bucharest')`;
+  const nextDayStart = `(($n::date + 1) AT TIME ZONE 'Europe/Bucharest')`;
+  if (dateField === 'incarcare') {
+    return {
+      from: `${col}created_at >= ${dayStart}`,
+      to: `${col}created_at < ${nextDayStart}`,
+    };
+  }
+  return {
+    from: `(${col}data_efectuare_cursa >= $n::date`
+      + ` OR (${col}data_efectuare_cursa IS NULL AND ${col}created_at >= ${dayStart}))`,
+    to: `(${col}data_efectuare_cursa <= $n::date`
+      + ` OR (${col}data_efectuare_cursa IS NULL AND ${col}created_at < ${nextDayStart}))`,
+  };
 }
 
 export function buildAvizListQuery({
   companyId, from, to, status, q, uploadedFrom, dateField, limit = 200,
 }) {
-  const where = ['company_id = $1'];
+  const where = ['a.company_id = $1'];
   const params = [companyId];
-  const dateCol = avizDateColumn(dateField);
+  const dateClauses = avizDateClauses(dateField, 'a');
   let i = 2;
   if (from) {
-    where.push(`${dateCol} >= $${i}`);
+    where.push(dateClauses.from.replace(/\$n/g, `$${i}`));
     params.push(from);
     i += 1;
   }
   if (to) {
-    where.push(`${dateCol} <= $${i}`);
+    where.push(dateClauses.to.replace(/\$n/g, `$${i}`));
     params.push(to);
     i += 1;
   }
   if (status && ['uploaded', 'extracted', 'confirmed'].includes(status)) {
-    where.push(`status = $${i}`);
+    where.push(`a.status = $${i}`);
     params.push(status);
     i += 1;
   }
   if (uploadedFrom && ['office', 'driver'].includes(uploadedFrom)) {
-    where.push(`uploaded_from = $${i}`);
+    where.push(`a.uploaded_from = $${i}`);
     params.push(uploadedFrom);
     i += 1;
   }
   const term = String(q || '').trim();
   if (term) {
     where.push(`(
-      strpos(lower(COALESCE(numar_tpo, '')), lower($${i})) > 0
-      OR strpos(lower(COALESCE(numar_auto, '')), lower($${i})) > 0
-      OR strpos(lower(COALESCE(numar_document_marfa, '')), lower($${i})) > 0
-      OR strpos(lower(COALESCE(original_filename, '')), lower($${i})) > 0
+      strpos(lower(COALESCE(a.numar_tpo, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(a.numar_auto, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(a.numar_document_marfa, '')), lower($${i})) > 0
+      OR strpos(lower(COALESCE(a.original_filename, '')), lower($${i})) > 0
     )`);
     params.push(term);
     i += 1;
   }
   const cap = Math.min(Math.max(Number(limit) || 200, 1), AVIZ_ID_CAP);
   params.push(cap);
-  const sql = `SELECT * FROM aviz_documents WHERE ${where.join(' AND ')}
-    ORDER BY created_at DESC
+  const sql = `SELECT a.*, u.name AS uploaded_by_name
+    FROM aviz_documents a
+    LEFT JOIN users u ON u.id = a.uploaded_by AND u.company_id = a.company_id
+    WHERE ${where.join(' AND ')}
+    ORDER BY a.created_at DESC
     LIMIT $${i}`;
   return { sql, params };
 }

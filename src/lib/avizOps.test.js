@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   annexDraftAmount,
   avizFieldConfidence,
+  avizIncarcareDate,
+  avizMatchesListFilters,
   datePresetRange,
+  filtersToRevealUploads,
   normalizeExtractionSource,
   previewKind,
 } from './avizOps.js';
@@ -39,5 +42,43 @@ describe('avizOps', () => {
   it('detects pdf vs image preview', () => {
     expect(previewKind('/uploads/a.pdf')).toBe('pdf');
     expect(previewKind('/uploads/a.JPG')).toBe('image');
+  });
+
+  it('knows when a row is hidden by the active date filter', () => {
+    const row = {
+      id: '1',
+      data_efectuare_cursa: '2026-09-02',
+      created_at: '2026-09-02T10:00:00.000Z',
+      status: 'extracted',
+    };
+    expect(avizMatchesListFilters(row, { from: '2026-08-01', to: '2026-08-31', date_field: 'cursa' }))
+      .toBe(false);
+    expect(avizMatchesListFilters(row, { from: '2026-09-01', to: '2026-09-30', date_field: 'cursa' }))
+      .toBe(true);
+    expect(avizMatchesListFilters(row, { from: '2026-08-01', to: '2026-08-31', date_field: 'incarcare' }))
+      .toBe(false);
+  });
+
+  it('falls back to upload day when trip date is missing', () => {
+    const row = {
+      id: '1',
+      data_efectuare_cursa: null,
+      created_at: '2026-09-02T10:00:00.000Z',
+      status: 'uploaded',
+    };
+    expect(avizMatchesListFilters(row, { from: '2026-09-01', to: '2026-09-30', date_field: 'cursa' }))
+      .toBe(true);
+    expect(avizIncarcareDate(row)).toBe('2026-09-02');
+  });
+
+  it('builds a reveal filter around upload dates', () => {
+    expect(filtersToRevealUploads([
+      { created_at: '2026-09-02T10:00:00.000Z' },
+      { created_at: '2026-09-02T18:00:00.000Z' },
+    ])).toEqual({
+      date_field: 'incarcare',
+      from: '2026-09-02',
+      to: '2026-09-02',
+    });
   });
 });

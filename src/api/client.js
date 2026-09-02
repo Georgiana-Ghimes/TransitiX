@@ -441,7 +441,7 @@ export const api = {
     listForTrip(tripId) {
       return request(`/driver-documents/trips/${encodeURIComponent(tripId)}`);
     },
-    async upload({ tripId, files, document_type = 'aviz' }, retried = false) {
+    async upload({ tripId, files, document_type = 'aviz', signal } = {}, retried = false) {
       const token = getToken();
       const fd = new FormData();
       if (tripId) fd.append('trip_id', tripId);
@@ -451,6 +451,7 @@ export const api = {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
+        signal,
       });
       if (res.status === 401 && !retried) {
         await refreshAccessToken();

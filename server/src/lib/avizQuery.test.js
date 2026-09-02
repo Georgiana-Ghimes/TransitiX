@@ -26,8 +26,10 @@ describe('avizQuery', () => {
       status: 'confirmed',
       q: 'TPO-1',
     });
-    expect(sql).toMatch(/data_efectuare_cursa >=/);
+    expect(sql).toMatch(/a\.data_efectuare_cursa >= \$2::date/);
     expect(sql).toMatch(/strpos\(lower/);
+    expect(sql).toMatch(/uploaded_by_name/);
+    expect(sql).toMatch(/u\.company_id = a\.company_id/);
     expect(params[0]).toBe('co');
     expect(params).toContain('2026-08-01');
     expect(params).toContain('TPO-1');
@@ -41,16 +43,34 @@ describe('avizQuery', () => {
       to: '2026-08-30',
       dateField: 'incarcare',
     });
-    expect(sql).toMatch(/created_at AT TIME ZONE 'Europe\/Bucharest'/);
-    expect(sql).not.toMatch(/data_efectuare_cursa >=/);
+    expect(sql).toMatch(/a\.created_at >= \(\$2::date AT TIME ZONE 'Europe\/Bucharest'\)/);
+    expect(sql).toMatch(/a\.created_at < \(\(\$3::date \+ 1\) AT TIME ZONE 'Europe\/Bucharest'\)/);
+    expect(sql).not.toMatch(/data_efectuare_cursa/);
     expect(params).toContain('2026-08-24');
   });
 
   it('keeps the trip date for an unknown or missing date_field', () => {
     for (const dateField of [undefined, '', 'created_at; DROP TABLE aviz_documents']) {
       const { sql } = buildAvizListQuery({ companyId: 'co', from: '2026-08-01', dateField });
-      expect(sql).toMatch(/data_efectuare_cursa >=/);
+      expect(sql).toMatch(/a\.data_efectuare_cursa >= \$2::date/);
       expect(sql).not.toMatch(/DROP TABLE/);
+    }
+  });
+
+  it('falls back to the upload day for rows OCR has not dated yet', () => {
+    const { sql } = buildAvizListQuery({ companyId: 'co', from: '2026-08-01', to: '2026-08-31' });
+    expect(sql).toMatch(/a\.data_efectuare_cursa IS NULL AND a\.created_at >=/);
+    expect(sql).toMatch(/a\.data_efectuare_cursa IS NULL AND a\.created_at </);
+  });
+
+  it('compares stored columns so the date indexes stay usable', () => {
+    const cursa = buildAvizListQuery({ companyId: 'co', from: '2026-08-01' }).sql;
+    const incarcare = buildAvizListQuery({
+      companyId: 'co', from: '2026-08-01', dateField: 'incarcare',
+    }).sql;
+    for (const sql of [cursa, incarcare]) {
+      expect(sql).not.toMatch(/COALESCE\(a\.data_efectuare_cursa/);
+      expect(sql).not.toMatch(/\(a\.created_at AT TIME ZONE[^)]*\)::date >=/);
     }
   });
 
@@ -81,9 +101,10 @@ describe('avizQuery', () => {
     expect(flagged[2].duplicate_tpo).toBe(false);
   });
 
-  it('locks the default Anexa Factura RAI template', () => {
+  it('locks the Anexa Factura RAI template by name', () => {
     expect(isLockedRaiTemplate({ is_default: true, name: 'Anexa Factura RAI' })).toBe(true);
-    expect(isLockedRaiTemplate({ is_default: false, name: 'Anexa Factura RAI' })).toBe(false);
+    expect(isLockedRaiTemplate({ is_default: false, name: 'Anexa Factura RAI' })).toBe(true);
+    expect(isLockedRaiTemplate({ is_default: true, name: 'Alt șablon' })).toBe(false);
   });
 
   it('drafts invoice amount from TPO or km x tarif', () => {
@@ -100,7 +121,7 @@ describe('avizQuery', () => {
   });
 
   it('blocks deleting or overwriting locked Anexa Factura RAI', () => {
-    const locked = { is_default: true, name: 'Anexa Factura RAI' };
+    const locked = { is_default: false, name: 'Anexa Factura RAI' };
     expect(templateDeleteDecision({ count: 3, existing: locked })).toBe('locked_rai');
     expect(templateDeleteDecision({ count: 1, existing: { name: 'Altul' } })).toBe('keep_one');
     expect(templateDeleteDecision({ count: 2, existing: null })).toBe('not_found');

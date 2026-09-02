@@ -4,7 +4,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
-import { datePresetRange } from '@/lib/avizOps';
+import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
 import { findBlurriest } from '@/lib/imageQuality';
 import {
   Archive, Camera, Check, ClipboardList, Download, Loader2,
@@ -22,7 +22,10 @@ import {
   displayRoute,
   downloadBlob,
   emptyForm,
+  formatIncarcareLabel,
+  hasManualAvizEdits,
   inputCls,
+  manualAvizEditLabels,
   isLockedRai,
   labelCls,
   lowField,
@@ -42,6 +45,8 @@ export default function AvizeReports() {
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
+  const [confirmDuplicate, setConfirmDuplicate] = useState(null);
+  const [confirmReextract, setConfirmReextract] = useState(null);
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [activePreset, setActivePreset] = useState('');
@@ -77,11 +82,12 @@ export default function AvizeReports() {
       .catch(() => setOcrDown(false));
   }, []);
 
-  const load = async () => {
+  const load = async (filterOverride) => {
+    const activeFilters = filterOverride ?? filters;
     const gen = ++loadGen.current;
     try {
       const [avize, tmpls, codes] = await Promise.all([
-        api.avize.list(filters),
+        api.avize.list(activeFilters),
         api.avize.templates(),
         api.avize.observationCodes().catch(() => []),
       ]);
@@ -200,6 +206,8 @@ export default function AvizeReports() {
     const failed = [];
     let dup = 0;
     let pending = 0;
+    const uploadedRows = [];
+    let listFilters = filters;
     try {
       // Photos taken at a desk blur too. Unlike the cab, a batch of scans is not interrupted for
       // it — the operator is told which file may not read and the upload carries on.
@@ -217,11 +225,40 @@ export default function AvizeReports() {
             file_url: uploaded.file_url,
             original_filename: file.name,
           });
+          uploadedRows.push(row);
           if (row?.duplicate_tpo) dup += 1;
           if (row?.extraction_pending) pending += 1;
         } catch (err) {
           failed.push(file.name);
           console.error('[aviz upload]', file.name, err);
+        }
+      }
+      let filterNote = '';
+      if (uploadedRows.length > 0) {
+        listFilters = filters;
+        const hidden = uploadedRows.filter((r) => r?.id && !avizMatchesListFilters(r, listFilters));
+        if (hidden.length > 0) {
+          const reveal = filtersToRevealUploads(uploadedRows);
+          const hiddenByDate = hidden.some((row) => !avizMatchesListFilters(row, {
+            ...listFilters,
+            status: '',
+            q: '',
+            uploaded_from: '',
+          }));
+          if (hiddenByDate && reveal) {
+            listFilters = { ...listFilters, ...reveal };
+            setActivePreset('');
+            setFilters(listFilters);
+            filterNote = ' Lista s-a ajustat la data încărcării ca să vezi avizele noi.';
+          }
+          const stillHidden = uploadedRows.filter((r) => r?.id && !avizMatchesListFilters(r, listFilters));
+          if (stillHidden.length > 0) {
+            notifyError(
+              'Aviz ascuns de filtru',
+              `${stillHidden.length} aviz(e) încărcat(e) nu apar în listă din cauza filtrelor active `
+              + '(status, proveniență sau căutare). Resetează filtrele sau ajustează-le.'
+            );
+          }
         }
       }
       if (failed.length === 0) {
@@ -231,15 +268,16 @@ export default function AvizeReports() {
         notifySuccess(
           'Avize încărcate',
           dup
-            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).${pendingNote}`
-            : `${files.length} fișier(e) procesate.${pendingNote}`
+            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).${pendingNote}${filterNote}`
+            : `${files.length} fișier(e) procesate.${pendingNote}${filterNote}`
         );
       } else if (failed.length < files.length) {
         notifyError('Unele fișiere nu s-au extras', failed.join(', '));
       } else {
         notifyError('Încărcare eșuată', failed.join(', '));
+        return;
       }
-      await load();
+      await load(listFilters);
     } catch (e) {
       notifyError('Încărcare eșuată', e);
     } finally {
@@ -299,7 +337,15 @@ export default function AvizeReports() {
     }
   };
 
-  const confirmRow = async (row) => {
+  const confirmRow = (row) => {
+    if (row.duplicate_tpo) {
+      setConfirmDuplicate({ mode: 'single', row });
+      return;
+    }
+    runConfirmRow(row);
+  };
+
+  const runConfirmRow = async (row) => {
     if (busyId) return;
     setBusyId(row.id);
     try {
@@ -313,12 +359,21 @@ export default function AvizeReports() {
     }
   };
 
-  const bulkConfirm = async () => {
+  const bulkConfirm = () => {
     const ids = confirmableSelectedIds;
     if (ids.length === 0) {
       notifyError('Nimic de confirmat', 'Selectează rânduri care nu sunt încă Confirmat.');
       return;
     }
+    const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
+    if (dupCount > 0) {
+      setConfirmDuplicate({ mode: 'bulk', ids, dupCount });
+      return;
+    }
+    runBulkConfirm(ids);
+  };
+
+  const runBulkConfirm = async (ids) => {
     if (bulkConfirmLock.current) return;
     bulkConfirmLock.current = true;
     setBusy(true);
@@ -337,6 +392,32 @@ export default function AvizeReports() {
       setBusy(false);
       bulkConfirmLock.current = false;
     }
+  };
+
+  const runDuplicateConfirm = async () => {
+    if (!confirmDuplicate) return;
+    const pending = confirmDuplicate;
+    setConfirmDuplicate(null);
+    if (pending.mode === 'single') {
+      await runConfirmRow(pending.row);
+    } else {
+      await runBulkConfirm(pending.ids);
+    }
+  };
+
+  const requestReextract = (row) => {
+    if (hasManualAvizEdits(row)) {
+      setConfirmReextract(row);
+      return;
+    }
+    reextract(row);
+  };
+
+  const runReextractConfirm = async () => {
+    if (!confirmReextract) return;
+    const row = confirmReextract;
+    setConfirmReextract(null);
+    await reextract(row);
   };
 
   const reextract = async (row) => {
@@ -409,6 +490,7 @@ export default function AvizeReports() {
     }
     setBusy(true);
     try {
+      const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
       const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
       // Naming the template here is the only place the operator can tell which layout landed
@@ -418,6 +500,14 @@ export default function AvizeReports() {
         `${filename} — șablon ${selectedTemplate?.name || 'selectat'}, `
         + `${columnCountOf(selectedTemplate)} coloane.`
       );
+      if (dupCount > 0) {
+        notifyError(
+          'Atenție la export',
+          dupCount === 1
+            ? 'Un aviz marcat „duplicat” a fost inclus. Verifică dacă nu e o încărcare dublă.'
+            : `${dupCount} avize marcate „duplicat” au fost incluse. Verifică dacă nu sunt încărcări duble.`
+        );
+      }
     } catch (e) {
       notifyError('Export eșuat', e);
     } finally {
@@ -453,16 +543,20 @@ export default function AvizeReports() {
         template_id: templateId,
         aviz_ids: ids,
       });
-      if (result?.content_base64) {
-        const bin = Uint8Array.from(atob(result.content_base64), (c) => c.charCodeAt(0));
-        downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
-        notifySuccess('Email stub', 'Resend nu e configurat — anexa s-a descărcat.');
-      } else if (result?.stub || result?.download) {
-        notifySuccess('Email stub', 'Resend nu e configurat. Descarcă anexa cu Unește.');
+      if (result?.email_sent === false || result?.stub || result?.download) {
+        if (result?.content_base64) {
+          const bin = Uint8Array.from(atob(result.content_base64), (c) => c.charCodeAt(0));
+          downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
+        }
+        notifyError(
+          'Email netrimis',
+          result?.message
+            || 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.'
+        );
       } else {
         notifySuccess('Email trimis', result?.filename || emailTo);
+        setEmailOpen(false);
       }
-      setEmailOpen(false);
     } catch (e) {
       notifyError('Email eșuat', e);
     } finally {
@@ -761,7 +855,7 @@ export default function AvizeReports() {
             </div>
           ) : (
             <>
-              <div className="lg:hidden space-y-3">
+              <div className="xl:hidden space-y-3">
                 {rows.map((row) => (
                   <div
                     key={row.id}
@@ -788,8 +882,11 @@ export default function AvizeReports() {
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
                           {row.numar_auto || '—'} · {row.data_efectuare_cursa || '—'}
                         </p>
-                        <p className={`text-xs truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
+                        <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
                           {displayRoute(row) || '—'}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, avizIncarcareDate)}>
+                          {formatIncarcareLabel(row, avizIncarcareDate)}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${
@@ -811,7 +908,7 @@ export default function AvizeReports() {
                       {row.status !== 'confirmed' && (
                         <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
-                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => requestReextract(row)}>
                         {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                       </button>
                       <button type="button" className="text-red-500 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
@@ -820,37 +917,42 @@ export default function AvizeReports() {
                 ))}
               </div>
 
-              <div className="hidden lg:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="hidden xl:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <p className="px-4 py-2 text-[11px] text-slate-500 border-b border-slate-100 xl:block 2xl:hidden">
+                  Marfă și Document apar pe ecrane late (≥1536px). Pe laptop derulează ușor spre dreapta dacă e nevoie — coloana Acțiuni rămâne fixă.
+                </p>
                 <div className="overflow-x-auto">
-                  <table className="text-sm table-fixed w-full min-w-[82rem]">
+                  <table className="text-sm w-full">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-500 text-xs">
-                        <th className="px-3 py-3 w-10 overflow-hidden">
+                        <th className="px-2 py-2.5 w-9">
                           <input type="checkbox" checked={rows.length > 0 && selected.size === rows.length} onChange={toggleAll} />
                         </th>
-                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">TPO</th>
-                        <th className="text-left font-medium px-3 py-3 w-[7rem] overflow-hidden">Data</th>
-                        <th className="text-left font-medium px-3 py-3 w-[11rem] overflow-hidden">Auto</th>
-                        <th className="text-left font-medium px-3 py-3 w-[16rem] overflow-hidden">Rută</th>
-                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">Marfă</th>
-                        <th className="text-left font-medium px-3 py-3 w-[8rem] overflow-hidden">Document</th>
-                        <th className="text-left font-medium px-3 py-3 w-[7rem] overflow-hidden">Sursă</th>
-                        <th className="text-left font-medium px-3 py-3 w-[6.5rem] overflow-hidden">Status</th>
-                        <th className="text-right font-medium px-3 py-3 w-[14rem] overflow-hidden">Acțiuni</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[6.5rem]">TPO</th>
+                        <th className="text-left font-medium px-2 py-2.5 w-[5.5rem]">Data</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[5.5rem] max-w-[8rem]">Auto</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[8rem]">Rută</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[5rem] hidden 2xl:table-cell">Marfă</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[5rem] hidden 2xl:table-cell">Document</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[6.5rem]">Stare</th>
+                        <th className="text-left font-medium px-2 py-2.5 min-w-[7.5rem]">Încărcare</th>
+                        <th className="text-right font-medium px-2 py-2.5 min-w-[9.5rem] sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)]">
+                          Acțiuni
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {rows.map((row) => (
                         <tr
                           key={row.id}
-                          className={`border-b border-slate-50 ${
+                          className={`group border-b border-slate-50 ${
                             busyId === row.id ? 'bg-sky-50/80' : 'hover:bg-slate-50/50'
                           }`}
                         >
-                          <td className="px-3 py-3 overflow-hidden">
+                          <td className="px-2 py-2.5">
                             <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                           </td>
-                          <td className={`px-3 py-3 font-medium truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
+                          <td className={`px-2 py-2.5 font-medium truncate max-w-[9rem] ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
                             {busyId === row.id ? (
                               <span className="inline-flex items-center gap-1.5 font-normal text-sky-800">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
@@ -863,35 +965,40 @@ export default function AvizeReports() {
                             )}
                             {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
-                          <td className="px-3 py-3 text-slate-600 truncate">{row.data_efectuare_cursa || '—'}</td>
-                          <td className={`px-3 py-3 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
-                          <td className={`px-3 py-3 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '—'}</td>
-                          <td className="px-3 py-3 truncate" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || ''}`.trim()}>
+                          <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{row.data_efectuare_cursa || '—'}</td>
+                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
+                          <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '—'}</td>
+                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || ''}`.trim()}>
                             {row.cantitate_marfa ?? '—'} {row.tip_marfa || ''}
                           </td>
-                          <td className="px-3 py-3 truncate" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
-                          <td className="px-3 py-3 overflow-hidden">
-                            <div className="flex flex-wrap gap-1">
-                              <SourceBadge source={row.extraction_source} />
-                              <DriverUploadBadge uploadedFrom={row.uploaded_from} />
-                              <NeedsReviewBadge needsReview={row.needs_review} />
+                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
+                          <td className="px-2 py-2.5">
+                            <div className="space-y-1">
+                              <span className={`inline-flex items-center gap-1 text-xs truncate ${
+                                row.status === 'uploaded' || busyId === row.id ? 'text-sky-800' : 'text-slate-700'
+                              }`}>
+                                {row.status === 'uploaded' || busyId === row.id ? <Loader2 className="w-3 h-3 animate-spin shrink-0" /> : null}
+                                {busyId === row.id ? 'Se re-extrage…' : (STATUS_LABEL[row.status] || row.status)}
+                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                <SourceBadge source={row.extraction_source} />
+                                <DriverUploadBadge uploadedFrom={row.uploaded_from} />
+                                <NeedsReviewBadge needsReview={row.needs_review} />
+                              </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3 text-xs truncate">
-                            <span className={`inline-flex items-center gap-1 ${
-                              row.status === 'uploaded' || busyId === row.id ? 'text-sky-800' : ''
-                            }`}>
-                              {row.status === 'uploaded' || busyId === row.id ? <Loader2 className="w-3 h-3 animate-spin shrink-0" /> : null}
-                              {busyId === row.id ? 'Se re-extrage…' : (STATUS_LABEL[row.status] || row.status)}
-                            </span>
+                          <td className="px-2 py-2.5 text-xs text-slate-600 whitespace-nowrap" title={formatIncarcareLabel(row, avizIncarcareDate)}>
+                            {formatIncarcareLabel(row, avizIncarcareDate)}
                           </td>
-                          <td className="px-3 py-3">
-                            <div className="flex flex-wrap justify-end gap-x-2 gap-y-1">
+                          <td className={`px-2 py-2.5 sticky right-0 z-10 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)] ${
+                            busyId === row.id ? 'bg-sky-50/80' : 'bg-white group-hover:bg-slate-50/50'
+                          }`}>
+                            <div className="flex flex-col items-end gap-0.5">
                               <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
                               {row.status !== 'confirmed' && (
                                 <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                               )}
-                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => reextract(row)}>
+                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => requestReextract(row)}>
                                 {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                               </button>
                               <button type="button" className="text-red-500 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
@@ -1059,6 +1166,37 @@ export default function AvizeReports() {
         </ModalShell>
       )}
 
+      <ConfirmDialog
+        open={Boolean(confirmReextract)}
+        onClose={() => { if (!busyId) setConfirmReextract(null); }}
+        onConfirm={runReextractConfirm}
+        busy={Boolean(busyId)}
+        variant="warning"
+        title="Re-extrage peste editări?"
+        description={
+          `„${confirmReextract?.numar_tpo || confirmReextract?.original_filename || 'Acest aviz'}” `
+          + `are valori diferite de ultima extragere: ${manualAvizEditLabels(confirmReextract).join(', ')}. `
+          + 'Re-extragerea le rescrie din fișier; km, taxe, valoare TPO, observațiile și ruta de birou rămân. '
+          + 'Continui?'
+        }
+        confirmLabel="Re-extrage oricum"
+      />
+      <ConfirmDialog
+        open={Boolean(confirmDuplicate)}
+        onClose={() => { if (!busy && !busyId) setConfirmDuplicate(null); }}
+        onConfirm={runDuplicateConfirm}
+        busy={busy || Boolean(busyId)}
+        variant="warning"
+        title="TPO duplicat"
+        description={
+          confirmDuplicate?.mode === 'bulk'
+            ? `${confirmDuplicate.dupCount} din rândurile selectate au același TPO ca alt document. `
+              + 'Dacă sunt încărcări greșite, folosește Șterge înainte de confirmare. Confirmi oricum?'
+            : `„${confirmDuplicate?.row?.numar_tpo || confirmDuplicate?.row?.original_filename || 'Acest aviz'}” `
+              + 'are același TPO ca alt rând. Dacă e o încărcare greșită, folosește Șterge. Confirmi oricum?'
+        }
+        confirmLabel="Confirmă oricum"
+      />
       <ConfirmDialog
         open={Boolean(deleteRow)}
         onClose={() => { if (!busy) setDeleteRow(null); }}

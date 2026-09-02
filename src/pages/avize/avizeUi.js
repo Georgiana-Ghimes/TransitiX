@@ -25,6 +25,10 @@ export const AVIZ_ACTION_LEGEND = [
     text: 'Scoate avizul din listă. Folosește-l pentru dubluri, teste sau documente încărcate greșit. Nu se poate anula.',
   },
   {
+    name: 'TPO duplicat',
+    text: 'Același număr TPO există deja pe alt rând. Eticheta este un semnal vizual — nu blochează acțiunile, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
+  },
+  {
     name: 'Unește în Anexa XLSX',
     text: 'Bifează rândurile, verifică șablonul din lista de lângă buton (scrie câte coloane exportă), apoi descarcă. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
   },
@@ -46,7 +50,80 @@ export const TEMPLATE_ACTION_LEGEND = [
 ];
 
 export function isLockedRai(t) {
-  return Boolean(t?.is_default) && String(t?.name || '').trim() === 'Anexa Factura RAI';
+  return String(t?.name || '').trim() === 'Anexa Factura RAI';
+}
+
+export function formatIncarcareLabel(row, formatDate = (d) => d) {
+  const date = row?.created_at ? formatDate(row.created_at) : '';
+  const who = String(row?.uploaded_by_name || '').trim()
+    || (row?.uploaded_from === 'driver' ? 'Șofer' : '');
+  if (who && date) return `${who} · ${date}`;
+  return who || date || '—';
+}
+
+/**
+ * The fields Re-extrage rewrites from the file — mirrors `EXTRACT_COLUMNS` on the server, narrowed
+ * to the ones the edit form can actually change. Km, taxe, valoare TPO and observations are absent
+ * on purpose: extraction never touches them, so they are never at risk.
+ */
+const OCR_OWNED_FIELDS = [
+  'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
+  'cantitate_marfa', 'numar_document_marfa',
+];
+
+function ocrValueFor(values, key) {
+  // The extractor calls it `quantity`; the column is `cantitate_marfa`.
+  if (key === 'cantitate_marfa') return values.cantitate_marfa ?? values.quantity;
+  return values[key];
+}
+
+function comparable(value, key) {
+  if (value === null || value === undefined) return '';
+  const text = String(value).trim();
+  if (key.startsWith('data_')) return text.slice(0, 10);
+  return text;
+}
+
+function sameValue(current, extracted, key) {
+  const a = comparable(current, key);
+  const b = comparable(extracted, key);
+  if (a === b) return true;
+  if (a === '' || b === '') return false;
+  const na = Number(a);
+  const nb = Number(b);
+  if (Number.isFinite(na) && Number.isFinite(nb)) return na === nb;
+  return false;
+}
+
+/**
+ * Which OCR-owned fields no longer match what the last extraction wrote.
+ *
+ * `corrected_fields` alone is not enough: it is only written by the corrections endpoint, while
+ * the Editează modal saves through the generic entity update and leaves that column empty. So a
+ * plain office edit has to be spotted by comparing the row against `extracted_data.values`.
+ */
+export function manuallyEditedAvizFields(row) {
+  const edited = new Set(
+    (Array.isArray(row?.corrected_fields) ? row.corrected_fields : [])
+      .filter((key) => OCR_OWNED_FIELDS.includes(key))
+  );
+  const values = row?.extracted_data?.values;
+  if (values && typeof values === 'object') {
+    for (const key of OCR_OWNED_FIELDS) {
+      if (!sameValue(row?.[key], ocrValueFor(values, key), key)) edited.add(key);
+    }
+  }
+  return OCR_OWNED_FIELDS.filter((key) => edited.has(key));
+}
+
+export function hasManualAvizEdits(row) {
+  return manuallyEditedAvizFields(row).length > 0;
+}
+
+/** Field labels for the re-extract warning, so the operator sees what is about to be rewritten. */
+export function manualAvizEditLabels(row) {
+  const labels = new Map(AVIZ_FORM_FIELDS.map((f) => [f.key, f.label]));
+  return manuallyEditedAvizFields(row).map((key) => labels.get(key) || key);
 }
 
 export function columnCountOf(t) {

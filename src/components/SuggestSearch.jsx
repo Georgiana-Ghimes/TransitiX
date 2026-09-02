@@ -70,7 +70,8 @@ export default function SuggestSearch({
     <div ref={rootRef} className={cn('relative', className)}>
       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
       <input
-        type="search"
+        type="text"
+        role="searchbox"
         value={value}
         autoComplete="off"
         placeholder={placeholder}

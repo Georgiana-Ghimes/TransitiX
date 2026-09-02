@@ -1327,6 +1327,13 @@ ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS data_facturare DATE;
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_facturare
   ON aviz_documents(company_id, data_facturare);
 
+-- A date filter falls back to the upload day for rows OCR has not dated yet, so that branch of
+-- the filter needs an index of its own. Partial, because it only ever covers the short queue of
+-- documents waiting on extraction, not the archive.
+CREATE INDEX IF NOT EXISTS idx_aviz_documents_undated
+  ON aviz_documents(company_id, created_at)
+  WHERE data_efectuare_cursa IS NULL;
+
 -- Issued refresh tokens, so logging out actually ends a session. Without this a signed token
 -- stays valid until it expires on its own: a lost phone or a departed employee keeps working
 -- access for a week, and the logout button is decoration.
