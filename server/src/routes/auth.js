@@ -21,6 +21,18 @@ import {
 const router = Router();
 const authAttemptLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
+/** Postgres down or unreachable — say so plainly instead of a generic 500. */
+function isDbUnavailable(err) {
+  const code = err?.code;
+  if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' || code === '57P03') {
+    return true;
+  }
+  if (err?.name === 'AggregateError' && Array.isArray(err.errors)) {
+    return err.errors.some((e) => isDbUnavailable(e));
+  }
+  return false;
+}
+
 function publicUser(row) {
   return {
     id: row.id,
@@ -130,6 +142,11 @@ router.post('/login', authAttemptLimit, async (req, res) => {
     res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     console.error(err);
+    if (isDbUnavailable(err)) {
+      return res.status(503).json({
+        message: 'Serverul nu poate accesa baza de date. Verifică dacă baza rulează sau contactează biroul.',
+      });
+    }
     res.status(500).json({ message: 'Autentificarea nu a reușit. Încearcă din nou.' });
   }
 });

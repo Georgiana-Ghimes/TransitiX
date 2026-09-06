@@ -663,8 +663,12 @@ router.post('/email', async (req, res) => {
     res.json({
       ...sent,
       filename,
+      email_sent: !sent.stub,
       download: Boolean(sent.stub),
       content_base64: sent.stub ? buffer.toString('base64') : undefined,
+      message: sent.stub
+        ? 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa manual.'
+        : undefined,
     });
   } catch (err) {
     console.error(err);

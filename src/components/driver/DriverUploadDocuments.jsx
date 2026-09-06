@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, FileText, Loader2, Upload } from 'lucide-react';
+import { Camera, CloudOff, FileText, Loader2, Upload } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { findDriverForUser } from '@/lib/utils';
 import { DOC_TYPES } from '@/lib/cmrUi';
 import { findBlurriest } from '@/lib/imageQuality';
 import { throttleState } from '@/lib/uploadThrottle';
+import { isOfflineError, useOnline, useOutbox } from '@/lib/useOffline';
+import { offlineStore } from '@/lib/offlineStore';
+import { pendingEntries } from '@/lib/offlineQueue';
 
 const STATUS_LABEL = {
   uploaded: 'Se procesează…',
@@ -17,7 +20,10 @@ const STATUS_LABEL = {
 };
 
 /** Driver list never showed fields — "OCR gata" looked like success even when TPO was empty. */
-function driverStatusDetail(doc) {
+function driverStatusDetail(doc, online = true) {
+  if (doc.status === 'uploaded' && !online) {
+    return 'Procesare întreruptă · reluăm la reconectare';
+  }
   const base = STATUS_LABEL[doc.status] || doc.status || '—';
   if (doc.status === 'uploaded') return base;
   const tpo = String(doc.numar_tpo || '').trim();
@@ -38,14 +44,21 @@ const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 const fieldCls =
   'w-full min-h-[44px] px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#1D4E89]';
 
+function browserOffline() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 /**
  * Driver home for road paperwork: camera or gallery → same office avize queue.
  */
 export default function DriverUploadDocuments({ user }) {
+  const userId = user?.id;
   const [docType, setDocType] = useState('aviz');
   const [tripId, setTripId] = useState('');
   const [trips, setTrips] = useState([]);
   const [docs, setDocs] = useState([]);
+  const [queuedUploads, setQueuedUploads] = useState([]);
+  const [online, setOnline] = useOnline();
   // The route has always returned this; the app used to ignore it and let the driver find the
   // limit by hitting it.
   const [maxFiles, setMaxFiles] = useState(8);
@@ -55,6 +68,66 @@ export default function DriverUploadDocuments({ user }) {
   const sendTimes = useRef([]);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
+  const prevOutboxPending = useRef(0);
+
+  /** Replays one queued upload once coverage is back. */
+  const sendQueued = useCallback(async (entry) => {
+    if (entry.kind !== 'driver_document_upload') {
+      throw new Error(`Acțiune necunoscută: ${entry.kind}`);
+    }
+    const { tripId: queuedTripId, document_type, files: stored = [] } = entry.payload ?? {};
+    const files = stored.map((f) => {
+      const blob = f.blob instanceof Blob ? f.blob : f;
+      return new File([blob], f.name, { type: f.type || blob.type || 'application/octet-stream' });
+    });
+    return api.driverDocuments.upload({
+      tripId: queuedTripId,
+      files,
+      document_type: document_type || 'aviz',
+    });
+  }, []);
+
+  const outbox = useOutbox(userId, sendQueued);
+
+  const refreshQueued = useCallback(async () => {
+    if (!userId) return;
+    const waiting = await pendingEntries(offlineStore, userId);
+    setQueuedUploads(waiting.filter((e) => e.kind === 'driver_document_upload'));
+  }, [userId]);
+
+  const clearFileInputs = () => {
+    if (fileRef.current) fileRef.current.value = '';
+    if (cameraRef.current) cameraRef.current.value = '';
+  };
+
+  const queueFiles = useCallback(async (files) => {
+    if (!userId) {
+      notifyError('Încărcare eșuată', 'Nu am putut salva documentele pe telefon.');
+      return false;
+    }
+    await outbox.queue({
+      kind: 'driver_document_upload',
+      label: files.length === 1 ? files[0].name : `${files.length} documente`,
+      run: {
+        tripId: tripId || undefined,
+        document_type: docType,
+        files: files.map((f) => ({ name: f.name, type: f.type, blob: f })),
+      },
+    });
+    await refreshQueued();
+    notifySuccess(
+      'Salvat pe telefon',
+      `${files.length} fișier(e) — se trimite automat când prinzi semnal`
+    );
+    return true;
+  }, [userId, outbox, tripId, docType, refreshQueued]);
+
+  const syncDocs = useCallback(async () => {
+    const mine = await api.driverDocuments.listMine(30);
+    setDocs(mine.documents || []);
+    if (mine.max_files) setMaxFiles(mine.max_files);
+    return mine;
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,28 +136,33 @@ export default function DriverUploadDocuments({ user }) {
       const drivers = await api.entities.Driver.list().catch(() => []);
       const myDriver = findDriverForUser(drivers, me);
 
-      const [mine, tripList] = await Promise.all([
-        api.driverDocuments.listMine(30).catch(() => ({ documents: [] })),
+      const [syncResult, tripList] = await Promise.all([
+        syncDocs().then((value) => ({ ok: true, value })).catch((err) => ({ ok: false, err })),
         myDriver
           ? api.entities.Trip.filter({ driver_id: myDriver.id }, '-created_date', 30).catch(() => [])
           : Promise.resolve([]),
       ]);
 
-      setDocs(mine.documents || []);
-      if (mine.max_files) setMaxFiles(mine.max_files);
       const active = (Array.isArray(tripList) ? tripList : []).filter(
         (t) => !['livrata', 'anulata'].includes(t.status)
       );
       setTrips(active);
       if (active.length === 1) setTripId((prev) => prev || active[0].id);
+
+      if (syncResult.ok) setOnline(true);
+      else if (isOfflineError(syncResult.err)) setOnline(false);
+      else throw syncResult.err;
     } catch (err) {
-      notifyError('Nu am putut încărca documentele', err);
+      if (isOfflineError(err)) setOnline(false);
+      else notifyError('Nu am putut încărca documentele', err);
     } finally {
       setLoading(false);
+      await refreshQueued();
     }
-  }, [user]);
+  }, [user, syncDocs, setOnline, refreshQueued]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { refreshQueued(); }, [refreshQueued]);
 
   /**
    * OCR runs after the upload responds, so a row sent a moment ago still says "Se procesează…".
@@ -92,25 +170,49 @@ export default function DriverUploadDocuments({ user }) {
    * tab is visible — a phone in a cab should not poll from a pocket.
    */
   const pending = docs.some((d) => d.status === 'uploaded');
+  const hasQueuedUploads = queuedUploads.length > 0;
+  const refreshDocs = useCallback(async () => {
+    if (document.hidden) return;
+    try {
+      await syncDocs();
+      setOnline(true);
+    } catch (err) {
+      if (isOfflineError(err)) setOnline(false);
+    }
+  }, [syncDocs, setOnline]);
+
+  useEffect(() => {
+    if (outbox.counts.pending < prevOutboxPending.current) {
+      refreshDocs();
+      refreshQueued();
+    }
+    prevOutboxPending.current = outbox.counts.pending;
+  }, [outbox.counts.pending, refreshDocs, refreshQueued]);
+
+  /** When coverage drops mid-OCR, stop the spinner immediately — don't wait for the next poll. */
+  useEffect(() => {
+    const onOffline = () => setOnline(false);
+    window.addEventListener('offline', onOffline);
+    return () => window.removeEventListener('offline', onOffline);
+  }, [setOnline]);
+
   useEffect(() => {
     if (!pending) return undefined;
-    const tick = async () => {
-      if (document.hidden) return;
-      try {
-        const mine = await api.driverDocuments.listMine(30);
-        setDocs(mine.documents || []);
-      if (mine.max_files) setMaxFiles(mine.max_files);
-      } catch {
-        // A failed refresh is not worth interrupting the driver for.
-      }
-    };
-    const id = setInterval(tick, 8000);
-    document.addEventListener('visibilitychange', tick);
+    const id = setInterval(refreshDocs, 8000);
+    document.addEventListener('visibilitychange', refreshDocs);
     return () => {
       clearInterval(id);
-      document.removeEventListener('visibilitychange', tick);
+      document.removeEventListener('visibilitychange', refreshDocs);
     };
-  }, [pending]);
+  }, [pending, refreshDocs]);
+
+  /** When coverage returns, pull the list right away — don't wait for the next poll tick. */
+  const wasOnline = useRef(online);
+  useEffect(() => {
+    const cameBack = online && !wasOnline.current;
+    wasOnline.current = online;
+    if (cameBack) refreshDocs();
+  }, [online, refreshDocs]);
 
   const uploadFiles = async (fileList) => {
     const files = [...(fileList || [])];
@@ -158,12 +260,26 @@ export default function DriverUploadDocuments({ user }) {
     sendTimes.current = [...brake.recent, Date.now()];
 
     setBlurWarning(null);
+
+    if (!online || browserOffline()) {
+      await queueFiles(files);
+      clearFileInputs();
+      return;
+    }
+
     setUploading(true);
+    const controller = new AbortController();
+    const onOffline = () => {
+      controller.abort();
+      setOnline(false);
+    };
+    window.addEventListener('offline', onOffline);
     try {
       const result = await api.driverDocuments.upload({
         tripId: tripId || undefined,
         files,
         document_type: docType,
+        signal: controller.signal,
       });
       const n = result.documents?.length || files.length;
       notifySuccess(
@@ -171,12 +287,18 @@ export default function DriverUploadDocuments({ user }) {
         `${n} fișier(e) → coada biroului (OCR pe /avize)`
       );
       setDocs((prev) => [...(result.documents || []), ...prev].slice(0, 40));
+      setOnline(true);
     } catch (err) {
-      notifyError('Încărcare eșuată', err);
+      if (err?.name === 'AbortError' || isOfflineError(err)) {
+        setOnline(false);
+        await queueFiles(files);
+      } else {
+        notifyError('Încărcare eșuată', err);
+      }
     } finally {
+      window.removeEventListener('offline', onOffline);
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
-      if (cameraRef.current) cameraRef.current.value = '';
+      clearFileInputs();
     }
   };
 
@@ -193,6 +315,20 @@ export default function DriverUploadDocuments({ user }) {
       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
         Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize / Rapoarte.
       </p>
+
+      {!online ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
+          <CloudOff className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-amber-900">Fără conexiune</p>
+            <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+              {pending || hasQueuedUploads
+                ? 'Documentele salvate pe telefon se trimit automat când revine internetul.'
+                : 'Trimiterea documentelor merge doar cu semnal. Poți pregăti fișierele până atunci.'}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {blurWarning && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
@@ -300,8 +436,29 @@ export default function DriverUploadDocuments({ user }) {
         <div className="px-4 sm:px-5 py-3 border-b border-slate-100">
           <h3 className="text-sm font-semibold text-[#0A2B4E]">Trimise recent</h3>
         </div>
-        {docs.length > 0 ? (
+        {hasQueuedUploads || docs.length > 0 ? (
           <ul className="divide-y divide-slate-50">
+            {queuedUploads.map((entry) => (
+              <li key={entry.id} className="px-4 sm:px-5 py-3 flex items-start gap-3 min-w-0">
+                <CloudOff className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-700 truncate">
+                    {entry.label || 'Document'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 break-words inline-flex flex-wrap items-center gap-x-1">
+                    <span>{entry.payload?.document_type || 'aviz'}</span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1 text-amber-700">
+                      {outbox.flushing ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                      {outbox.flushing ? 'Se trimite…' : 'Netrimis · așteaptă semnal'}
+                    </span>
+                    {entry.queued_at
+                      ? <span>· {new Date(entry.queued_at).toLocaleString('ro-RO')}</span>
+                      : null}
+                  </p>
+                </div>
+              </li>
+            ))}
             {docs.map((doc) => (
               <li key={doc.id} className="px-4 sm:px-5 py-3 flex items-start gap-3 min-w-0">
                 <FileText className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
@@ -313,10 +470,16 @@ export default function DriverUploadDocuments({ user }) {
                     <span>{doc.document_type || 'aviz'}</span>
                     <span>·</span>
                     <span className={`inline-flex items-center gap-1 ${
-                      doc.status === 'uploaded' ? 'text-sky-700' : ''
+                      doc.status === 'uploaded'
+                        ? (online ? 'text-sky-700' : 'text-amber-700')
+                        : ''
                     }`}>
-                      {doc.status === 'uploaded' ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                      {driverStatusDetail(doc)}
+                      {doc.status === 'uploaded' ? (
+                        online
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <CloudOff className="w-3 h-3" />
+                      ) : null}
+                      {driverStatusDetail(doc, online)}
                     </span>
                     {doc.created_at
                       ? <span>· {new Date(doc.created_at).toLocaleString('ro-RO')}</span>

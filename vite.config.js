@@ -42,9 +42,14 @@ export default defineConfig(({ mode }) => {
     server: {
       host: mode === 'companion' ? '0.0.0.0' : '127.0.0.1',
       port: mode === 'companion' ? 5174 : 5173,
-      // Companion is meant to be opened from LAN / Cloudflare tunnels — allow any Host.
+      // The companion port is not a preference, it is what the tunnel points at. Without this a
+      // leftover process makes Vite step up to the next free port without complaining, and whoever
+      // starts the tunnel re-points it there to make it work. Fail loudly instead. Office dev keeps
+      // the fallback so two checkouts can run side by side.
+      strictPort: mode === 'companion',
+      // Companion: allow any Host (LAN IP + tunnels). Full mode: Cloudflare tunnel Host headers.
       // (A strict list of tunnel suffixes alone blocks http://<lan-ip>:5174 with 403.)
-      allowedHosts: mode === 'companion' ? true : undefined,
+      allowedHosts: mode === 'companion' ? true : ['.trycloudflare.com', '.cfargotunnel.com'],
       proxy: {
         '/api': {
           target: `http://127.0.0.1:${apiPort}`,

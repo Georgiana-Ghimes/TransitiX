@@ -78,3 +78,54 @@ export function previewKind(url) {
   if (/\.(png|jpe?g|gif|webp)$/.test(s)) return 'image';
   return 'file';
 }
+
+/** Bucharest calendar date for when the file reached us — mirrors the server list filter. */
+export function avizIncarcareDate(row) {
+  if (!row?.created_at) return '';
+  return bucharestYmd(new Date(row.created_at));
+}
+
+function avizFilterDate(row, dateField = 'cursa') {
+  if (dateField === 'incarcare') return avizIncarcareDate(row);
+  const cursa = String(row?.data_efectuare_cursa || '').slice(0, 10);
+  return cursa || avizIncarcareDate(row);
+}
+
+/** Client-side mirror of `buildAvizListQuery` so we can tell when a row is hidden by filters. */
+export function avizMatchesListFilters(row, filters = {}) {
+  if (!row) return false;
+  const dateField = filters.date_field === 'incarcare' ? 'incarcare' : 'cursa';
+  const dateValue = avizFilterDate(row, dateField);
+
+  if (filters.from) {
+    if (!dateValue || dateValue < filters.from) return false;
+  }
+  if (filters.to) {
+    if (!dateValue || dateValue > filters.to) return false;
+  }
+  if (filters.status && row.status !== filters.status) return false;
+  if (filters.uploaded_from && row.uploaded_from !== filters.uploaded_from) return false;
+
+  const term = String(filters.q || '').trim().toLowerCase();
+  if (term) {
+    const hay = [
+      row.numar_tpo,
+      row.numar_auto,
+      row.numar_document_marfa,
+      row.original_filename,
+    ].filter(Boolean).join(' ').toLowerCase();
+    if (!hay.includes(term)) return false;
+  }
+  return true;
+}
+
+/** After an upload, widen the date filter to the upload day(s) so fresh rows are visible. */
+export function filtersToRevealUploads(uploadedRows = []) {
+  const dates = uploadedRows.map(avizIncarcareDate).filter(Boolean);
+  if (!dates.length) return null;
+  return {
+    date_field: 'incarcare',
+    from: dates.reduce((min, d) => (d < min ? d : min)),
+    to: dates.reduce((max, d) => (d > max ? d : max)),
+  };
+}

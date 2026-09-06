@@ -79,7 +79,8 @@ export default function GlobalSearch({ className }) {
     <div ref={rootRef} className={cn('relative w-full max-w-md md:w-[min(100vw-12rem,28rem)] md:max-w-none', className)}>
       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
       <input
-        type="search"
+        type="text"
+        role="searchbox"
         value={query}
         placeholder="Caută cursă, vehicul, șofer..."
         autoComplete="off"
