@@ -1,7 +1,7 @@
 import { isPathAllowedForCompany, moduleForPath } from './companyModules.js';
 
 /** Baseline office routes on VITE_APP_PROFILE=documents (always on for companion). */
-export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/platform'];
+export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/platform', '/settings'];
 
 export function appProfile() {
   const raw = String(import.meta.env.VITE_APP_PROFILE || 'full').trim().toLowerCase();

@@ -10,10 +10,11 @@ import {
 } from '@/lib/officeTour';
 
 /** Mobile-only full-width bottom sheet — no sidebar drawer required. */
-export default function OfficeTourMobile({ step, onStepChange, onClose }) {
-  const total = OFFICE_TOUR_STEPS.length;
+export default function OfficeTourMobile({ step, steps, onStepChange, onClose }) {
+  const script = steps?.length ? steps : OFFICE_TOUR_STEPS;
+  const total = script.length;
   const index = clampTourStep(step, total);
-  const current = OFFICE_TOUR_STEPS[index];
+  const current = script[index];
   const last = index === total - 1;
   const showMenuCue = tourMobileMenuStep(current) || current.highlightTarget === 'ghid';
 
@@ -114,7 +115,7 @@ export default function OfficeTourMobile({ step, onStepChange, onClose }) {
 
           <div className="shrink-0 px-4 py-3 border-t border-slate-100 bg-white">
             <div className="flex items-center justify-center gap-1 mb-3" aria-hidden="true">
-              {OFFICE_TOUR_STEPS.map((s, i) => (
+              {script.map((s, i) => (
                 <span
                   key={s.id}
                   className={

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_EXPIRY_HORIZON_DAYS,
   expiryHorizonDays,
+  sortInboxNotifications,
 } from './officeNotifications.js';
 import { expiryHorizonDays as clientHorizon } from '../../../src/lib/documentExpiry.js';
 
@@ -25,5 +26,24 @@ describe('expiryHorizonDays', () => {
       expect(expiryHorizonDays({ document_expiry_days: days }))
         .toBe(clientHorizon({ settings: { document_expiry_days: days } }));
     }
+  });
+});
+
+describe('sortInboxNotifications', () => {
+  it('keeps unread above read even when the read row has a newer stamp', () => {
+    const now = '2026-09-06T18:00:00.000Z';
+    const older = '2026-09-06T17:00:00.000Z';
+    const sorted = sortInboxNotifications([
+      { id: 'read-new', is_read: true, created_at: now, title: 'Medical expirat' },
+      { id: 'unread-old', is_read: false, created_at: older, title: 'Permis expiră' },
+      { id: 'unread-new', is_read: false, created_at: now, title: 'Tahograf expiră' },
+      { id: 'read-old', is_read: true, created_at: older, title: 'Cursă nealocată' },
+    ]);
+    expect(sorted.map((n) => n.id)).toEqual([
+      'unread-new',
+      'unread-old',
+      'read-new',
+      'read-old',
+    ]);
   });
 });

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { homePathForRole } from '@/lib/roles';
 import { Building2, Bell, Save, Loader2 } from 'lucide-react';
 
 const EXPIRY_OPTIONS = [30, 15, 7, 1];
@@ -96,7 +98,8 @@ function SessionsCard() {
 
 export default function Settings() {
   const { user } = useAuth();
-  const canSave = user?.role === 'admin';
+  const impersonating = Boolean(user?.impersonation?.active);
+  const canSave = user?.role === 'admin' && !impersonating;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -111,9 +114,12 @@ export default function Settings() {
   });
 
   useEffect(() => {
+    if (impersonating || user?.role !== 'admin') return undefined;
+    let cancelled = false;
     (async () => {
       try {
         const company = await api.company.get();
+        if (cancelled) return;
         const days = company.settings?.document_expiry_days;
         setForm({
           name: company.name || '',
@@ -126,12 +132,18 @@ export default function Settings() {
           document_expiry_days: Array.isArray(days) ? days : [30, 15, 7, 1],
         });
       } catch (e) {
-        notifyError('Nu am putut încărca setările', e);
+        if (!cancelled) notifyError('Nu am putut încărca setările', e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [impersonating, user?.role]);
+
+  // Impersonation: no company settings UI — GOD configures tenants from /platform.
+  if (impersonating || user?.role !== 'admin') {
+    return <Navigate to={homePathForRole(user)} replace />;
+  }
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 

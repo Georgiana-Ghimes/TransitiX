@@ -4,7 +4,9 @@ import {
   OFFICE_TOUR_STEPS,
   clampTourStep,
   hasSeenOfficeTour,
+  isTourPathReachable,
   markOfficeTourSeen,
+  officeTourStepsForUser,
   tourMobileHighlightMenuButton,
   tourMobileMenuStep,
   tourNavHighlightPath,
@@ -44,6 +46,38 @@ describe('office tour steps', () => {
     expect(clampTourStep(99)).toBe(OFFICE_TOUR_STEPS.length - 1);
     expect(clampTourStep(2.9)).toBe(2);
     expect(clampTourStep('x')).toBe(0);
+  });
+
+  it('drops unreachable steps for a documents-profile company', () => {
+    const docsUser = {
+      role: 'admin',
+      company: {
+        feature_flags: {
+          app_profile: 'documents',
+          modules: {
+            avize: true,
+            reports: true,
+            trips: false,
+            finance: false,
+            gps: false,
+          },
+        },
+      },
+    };
+    expect(isTourPathReachable(docsUser, '/', { treatAsDocuments: true })).toBe(false);
+    expect(isTourPathReachable(docsUser, '/trips', { treatAsDocuments: true })).toBe(false);
+    const ids = officeTourStepsForUser(docsUser, { treatAsDocuments: true }).map((s) => s.id);
+    expect(ids).toEqual(['avize', 'again']);
+  });
+
+  it('keeps the full script when every module is on', () => {
+    const fullUser = {
+      role: 'admin',
+      company: { feature_flags: { app_profile: 'full', modules: {} } },
+    };
+    expect(officeTourStepsForUser(fullUser).map((s) => s.id)).toEqual(
+      OFFICE_TOUR_STEPS.map((s) => s.id),
+    );
   });
 });
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -19,10 +19,10 @@ import {
 } from '@/lib/appProfile';
 import { detectSlugFromPath, tenantPath } from '@/lib/tenantPath';
 import {
-  OFFICE_TOUR_STEPS,
   clampTourStep,
   hasSeenOfficeTour,
   markOfficeTourSeen,
+  officeTourStepsForUser,
   tourNavHighlightPath,
   tourMobileHighlightMenuButton,
 } from '@/lib/officeTour';
@@ -122,8 +122,20 @@ export default function Layout() {
   const [tourOpen, setTourOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
 
+  // Prefer company app_profile (single-host multi-tenant) over Vite build profile.
+  // Early: tour gate must match Layout redirect rules (documents bounce `/` → `/avize`).
+  const treatAsDocuments = treatAsDocumentsEarly;
+  const documentsShell = treatAsDocuments;
+  const tourSteps = useMemo(
+    () => officeTourStepsForUser(user, { treatAsDocuments }),
+    [user, treatAsDocuments],
+  );
+  const tourEnabled = !isDriver && !isPlatform && tourSteps.length > 0;
+
   useEffect(() => {
-    if (isDriver || isPlatform || documentsCompanion) {
+    // Documents / limited tenants must not auto-run the full TMS script — Layout would
+    // bounce `/`, `/trips`, … and fight navigate() (Maximum update depth).
+    if (!tourEnabled || treatAsDocuments || documentsCompanion) {
       setTourOpen(false);
       return;
     }
@@ -131,9 +143,9 @@ export default function Layout() {
       setTourStep(0);
       setTourOpen(true);
     }
-  }, [isDriver, isPlatform, documentsCompanion]);
+  }, [tourEnabled, treatAsDocuments, documentsCompanion]);
 
-  const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
+  const tourCurrent = tourOpen ? tourSteps[clampTourStep(tourStep, tourSteps.length)] : null;
   const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
   const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
   const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
@@ -142,31 +154,37 @@ export default function Layout() {
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
   // so the rest of the app looked broken (and racing lazy loads could surface ErrorBoundary).
   useEffect(() => {
-    if (isDriver || !tourOpen) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
-    if (current.path && !tourAtPath(location.pathname, current.path)) {
+    if (!tourOpen || !tourEnabled) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
+    if (
+      current?.path
+      && !tourAtPath(location.pathname, current.path)
+      && isPathAllowedForCompany(user, current.path)
+      && !(treatAsDocuments && (current.path === '/' || !isCompanionOfficePath(current.path, user)))
+    ) {
       navigate(current.path);
     }
     // intentionally omit location.pathname — user may explore freely during the tour
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [isDriver, tourOpen, tourStep, navigate]);
+  }, [tourOpen, tourEnabled, tourStep, tourSteps, treatAsDocuments, user, navigate]);
 
   // Desktop: open drawer for nav steps; mobile keeps drawer closed (sheet explains ☰).
   useEffect(() => {
-    if (isDriver || !tourOpen || !isDesktop) return;
+    if (!tourOpen || !isDesktop) return;
     if (tourHighlightDashboard) setMobileOpen(false);
     else if (tourNavPath || tourHighlightGhid) setMobileOpen(true);
-  }, [isDriver, tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
+  }, [tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
 
   useEffect(() => {
-    if (isDriver || !tourOpen || isDesktop) return;
+    if (!tourOpen || isDesktop) return;
     setMobileOpen(false);
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop]);
 
   // Desktop-only spotlight on sidebar nav or dashboard content.
   useEffect(() => {
-    if (isDriver || !tourOpen || !isDesktop) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    if (!tourOpen || !isDesktop) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
+    if (!current) return;
     const id = requestAnimationFrame(() => {
       document.querySelectorAll('[data-tour-dashboard]').forEach((el) => {
         el.classList.toggle('tour-content-highlight', current.highlightTarget === 'dashboard');
@@ -185,17 +203,17 @@ export default function Layout() {
         el.classList.remove('tour-content-highlight');
       });
     };
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop, tourSteps]);
 
   // Mobile: ring the ☰ button when the step refers to the menu.
   useEffect(() => {
-    if (isDriver || !tourOpen || isDesktop) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    if (!tourOpen || isDesktop) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
     const btn = document.querySelector('[data-tour-mobile-menu]');
     if (!btn) return;
     btn.classList.toggle('tour-mobile-menu-highlight', tourMobileHighlightMenuButton(current));
     return () => btn.classList.remove('tour-mobile-menu-highlight');
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop, tourSteps]);
 
   const closeTour = () => {
     markOfficeTourSeen();
@@ -203,6 +221,7 @@ export default function Layout() {
   };
 
   const openTour = () => {
+    if (!tourEnabled) return;
     setTourStep(0);
     setTourOpen(true);
   };
@@ -238,9 +257,6 @@ export default function Layout() {
     ? (collapsed ? SIDEBAR_RAIL : SIDEBAR_EXPANDED)
     : SIDEBAR_EXPANDED;
 
-  // Prefer company app_profile (single-host multi-tenant) over Vite build profile.
-  const treatAsDocuments = treatAsDocumentsEarly;
-  const documentsShell = treatAsDocuments;
   const impersonating = Boolean(user?.impersonation?.active);
 
   if (isPlatform) {
@@ -428,7 +444,7 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
-          {!documentsCompanion && (
+          {tourEnabled && (
           <button
             type="button"
             data-tour-ghid
@@ -444,7 +460,12 @@ export default function Layout() {
             {!showIconsOnly && <span>Ghid</span>}
           </button>
           )}
-          {!documentsCompanion && (
+          {/*
+            Company settings: real tenant admins only.
+            Hide while GOD is impersonating — firm config belongs to the company's own admin,
+            not the platform operator walking the portal as someone else.
+          */}
+          {!isPlatform && !impersonating && user?.role === 'admin' && (
           <Link
             to="/settings"
             title="Setări"
@@ -573,6 +594,7 @@ export default function Layout() {
           <OfficeTour
             isDesktop={isDesktop}
             step={tourStep}
+            steps={tourSteps}
             onStepChange={setTourStep}
             onClose={closeTour}
           />

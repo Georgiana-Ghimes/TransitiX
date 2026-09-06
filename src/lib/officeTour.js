@@ -1,8 +1,36 @@
 /** First-visit office intro. Reopened from the sidebar Ghid control. */
 
+import { isPathAllowedForCompany } from './companyModules.js';
+import { isCompanionOfficePath } from './appProfile.js';
+
 export const OFFICE_TOUR_SEEN_KEY = 'transitix_office_tour_seen';
 
 /** @typedef {'dashboard' | 'ghid'} TourHighlightTarget */
+
+/**
+ * Whether Layout will keep the user on `path` (not bounce with &lt;Navigate&gt;).
+ * Documents-profile companies redirect `/` → `/avize` and reject non-companion routes.
+ */
+export function isTourPathReachable(user, path, { treatAsDocuments = false } = {}) {
+  if (!path) return true;
+  if (treatAsDocuments) {
+    if (path === '/' || path === '') return false;
+    if (!isCompanionOfficePath(path, user)) return false;
+  }
+  return isPathAllowedForCompany(user, path);
+}
+
+/**
+ * Full TMS script filtered to routes this company can actually open.
+ * Prevents tour navigate() fighting Layout redirects (Maximum update depth).
+ */
+export function officeTourStepsForUser(user, { treatAsDocuments = false } = {}) {
+  const steps = OFFICE_TOUR_STEPS.filter((step) =>
+    isTourPathReachable(user, step.path, { treatAsDocuments })
+  );
+  return steps.length ? steps : OFFICE_TOUR_STEPS.filter((s) => !s.path);
+}
+
 
 export const OFFICE_TOUR_STEPS = [
   {
