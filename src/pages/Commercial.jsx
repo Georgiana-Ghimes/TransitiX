@@ -7,13 +7,21 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import ModalShell from '@/components/ModalShell';
 import {
   APPLIES_PER,
+  BUCHAREST_ZONE_PRESETS,
   VEHICLE_CLASSES,
-  ZONE_KINDS,
+  ZONE_CITY_SUGGESTIONS,
+  ZONE_COUNTY_OPTIONS,
   bracketLabel,
+  buildZoneMatcher,
+  exampleZoneAmount,
   formatAmount,
   groupTariffs,
   isInForce,
+  matcherSummary,
   parseAmount,
+  parseZoneMatcher,
+  pmbDayRatesFor,
+  splitMatcherList,
   validateSurchargeRate,
   validateTariff,
   validateZoneRate,
@@ -306,16 +314,28 @@ function TariffsTab({ data, reload }) {
 function ZonesTab({ data, reload }) {
   const [zoneForm, setZoneForm] = useState(null);
   const [rateForm, setRateForm] = useState(null);
+  const [applyingPreset, setApplyingPreset] = useState(null);
 
   const ratesFor = (zoneId) => data.zone_rates.filter((r) => r.tax_zone_id === zoneId);
+  const existingCodes = new Set(data.zones.map((z) => String(z.code || '').toUpperCase()));
+  const missingPresets = BUCHAREST_ZONE_PRESETS.filter((p) => !existingCodes.has(p.code));
 
   const saveZone = async (form) => {
     try {
+      const matcher = buildZoneMatcher({
+        counties: form.counties || splitMatcherList(form.countiesText),
+        cities: form.cities || splitMatcherList(form.citiesText),
+        postcodes: splitMatcherList(form.postcodesText),
+      });
+      if (!matcher.counties?.length && !matcher.cities?.length && !matcher.postcodes?.length) {
+        notifyError('Unde se aplică?', 'Alege cel puțin un județ sau un oraș.');
+        return;
+      }
       const payload = {
-        code: form.code.trim(),
+        code: form.code.trim().toUpperCase(),
         name: form.name.trim(),
-        kind: form.kind || 'custom',
-        matcher: form.matcher ? JSON.parse(form.matcher) : null,
+        kind: 'zone',
+        matcher,
         priority: Number(form.priority) || 0,
         is_active: form.is_active !== false,
       };
@@ -355,101 +375,393 @@ function ZonesTab({ data, reload }) {
     }
   };
 
+  const applyPreset = async (preset) => {
+    setApplyingPreset(preset.code);
+    try {
+      const created = await api.entities.TaxZone.create({
+        code: preset.code,
+        name: preset.name,
+        kind: 'zone',
+        priority: preset.priority,
+        is_active: true,
+        matcher: buildZoneMatcher({ counties: preset.counties, cities: preset.cities }),
+      });
+      const rates = pmbDayRatesFor(preset.amountKey);
+      for (const rate of rates) {
+        await api.entities.TaxZoneRate.create({
+          tax_zone_id: created.id,
+          mma_min_kg: rate.mma_min_kg,
+          mma_max_kg: rate.mma_max_kg,
+          amount: rate.amount,
+          currency: 'RON',
+          valid_from: rate.valid_from,
+        });
+      }
+      notifySuccess(`${preset.code} adăugată`, 'Cu tarifele pe zi HCGMB 514/2026 pe benzi de MMA.');
+      reload();
+    } catch (err) {
+      notifyError(`Nu am putut adăuga ${preset.code}`, err);
+    } finally {
+      setApplyingPreset(null);
+    }
+  };
+
+  const fillPmbRates = async (zone) => {
+    const code = String(zone.code || '').toUpperCase();
+    const rates = pmbDayRatesFor(code);
+    if (!rates.length) {
+      notifyError('Fără tabel PMB', 'Preseturile cu tarife sunt doar pentru ZA și ZB.');
+      return;
+    }
+    try {
+      for (const rate of rates) {
+        await api.entities.TaxZoneRate.create({
+          tax_zone_id: zone.id,
+          mma_min_kg: rate.mma_min_kg,
+          mma_max_kg: rate.mma_max_kg,
+          amount: rate.amount,
+          currency: 'RON',
+          valid_from: rate.valid_from,
+        });
+      }
+      notifySuccess('Tarife PMB încărcate', `${code}: taxe pe zi după MMA.`);
+      reload();
+    } catch (err) {
+      notifyError('Încărcarea tarifelor a eșuat', err);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          Taxa de zonă se calculează după <strong>MMA-ul din talon</strong>, nu după marfa
-          încărcată.
+      <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+        <p className="text-sm text-slate-700">
+          O <strong>zonă</strong> spune <em>unde</em> se aplică taxa (ex. București A).
+          <strong> Valorile</strong> sunt tranșele de MMA de mai jos (câți lei / zi după talon).
         </p>
-        <button type="button" className={btnPrimary} onClick={() => setZoneForm({ kind: 'oras', priority: 0 })}>
-          <Plus className="w-4 h-4" /> Zonă nouă
+        <p className="text-xs text-slate-500">
+          Taxa oficială PMB e pe zi sau pe lună (autorizație). În TPO folosim suma pe zi pe bandă de MMA.
+        </p>
+      </div>
+
+      {missingPresets.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {missingPresets.map((preset) => {
+            const sample = exampleZoneAmount(preset.amountKey, preset.exampleMmaKg);
+            return (
+              <div key={preset.code} className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900">{preset.code}</span>
+                  <span className="text-sm text-slate-600">{preset.name}</span>
+                </div>
+                <p className="text-xs text-slate-500">{preset.blurb}</p>
+                <p className="text-xs text-slate-600">Se aplică: {preset.where}</p>
+                <p className="text-sm tabular-nums text-slate-800">
+                  Exemplu camion ~19 t MMA:{' '}
+                  <strong>{formatAmount(sample)} lei/zi</strong>
+                </p>
+                <button
+                  type="button"
+                  className={btnPrimary}
+                  disabled={Boolean(applyingPreset)}
+                  onClick={() => applyPreset(preset)}
+                >
+                  {applyingPreset === preset.code ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Adaugă {preset.code} cu tarife PMB
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">Zonele firmei</p>
+        <button
+          type="button"
+          className={btnGhost}
+          onClick={() => setZoneForm({
+            kind: 'zone',
+            priority: 0,
+            counties: [],
+            cities: [],
+            is_active: true,
+          })}
+        >
+          <Plus className="w-4 h-4" /> Zonă personalizată
         </button>
       </div>
 
       {data.zones.length === 0 ? (
-        <Empty>Nicio zonă definită. Fără zone, taxele geografice nu se pot calcula.</Empty>
-      ) : data.zones.map((zone) => (
-        <section key={zone.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-sm text-slate-800">{zone.code}</span>
-            <span className="text-sm text-slate-600">{zone.name}</span>
-            {!zone.is_active ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">inactivă</span> : null}
-            {zone.polygon ? (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">poligon</span>
+        <Empty>Nicio zonă încă. Folosește butoanele ZA / ZB de mai sus — e cel mai rapid.</Empty>
+      ) : data.zones.map((zone) => {
+        const rates = ratesFor(zone.id);
+        const sampleAmt = rates.length
+          ? rates.find((r) => Number(r.mma_min_kg) <= 19000 && (r.mma_max_kg == null || Number(r.mma_max_kg) >= 19000))?.amount
+          : exampleZoneAmount(zone.code, 19000);
+        return (
+          <section key={zone.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap items-start gap-3">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-slate-900">{zone.code}</span>
+                  <span className="text-sm text-slate-700">{zone.name}</span>
+                  {!zone.is_active ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">inactivă</span>
+                  ) : null}
+                </div>
+                <p className="text-xs text-slate-500">Unde: {matcherSummary(zone.matcher)}</p>
+                {sampleAmt != null ? (
+                  <p className="text-sm text-slate-800">
+                    Camion ~19 t MMA → <strong className="tabular-nums">{formatAmount(sampleAmt)} lei/zi</strong>
+                    {rates.length ? '' : ' (din tabelul PMB, încă neîncărcat pe zonă)'}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {!rates.length && pmbDayRatesFor(zone.code).length ? (
+                  <button type="button" className={btnGhost} onClick={() => fillPmbRates(zone)}>
+                    Încarcă tarife PMB
+                  </button>
+                ) : null}
+                <button type="button" className={btnGhost} onClick={() => setRateForm({
+                  tax_zone_id: zone.id,
+                  currency: 'RON',
+                  valid_from: '2026-01-01',
+                })}>
+                  + Tranșă
+                </button>
+                <button
+                  type="button"
+                  className={btnGhost}
+                  onClick={() => setZoneForm(zoneFormFromRow(zone, rates))}
+                >
+                  <Pencil className="w-4 h-4" /> Editează
+                </button>
+              </div>
+            </div>
+            {rates.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-amber-800 bg-amber-50">
+                Zona nu are tarife — nu va genera bani pe TPO până nu adaugi tranșe MMA.
+              </p>
             ) : (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">potrivire textuală</span>
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400 border-b border-slate-100">
+                    <th className="px-4 py-2 font-medium">MMA din talon</th>
+                    <th className="px-4 py-2 font-medium text-right">Lei / zi</th>
+                    <th className="px-4 py-2 font-medium">Valabil</th>
+                    <th className="px-4 py-2" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rates.map((rate) => (
+                    <tr key={rate.id} className="border-t border-slate-50">
+                      <td className="px-4 py-2 text-slate-700">{bracketLabel(rate)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums font-medium text-slate-900">
+                        {formatAmount(rate.amount)}
+                      </td>
+                      <td className="px-4 py-2 text-slate-500 whitespace-nowrap">
+                        {validityLabel(rate)} <InForceBadge row={rate} />
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <button type="button" className="p-1 text-slate-400 hover:text-slate-700" onClick={() => setRateForm(rate)}>
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
-            <div className="ml-auto flex gap-2">
-              <button type="button" className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-600 hover:bg-white"
-                onClick={() => setRateForm({ tax_zone_id: zone.id, currency: 'RON' })}>
-                + Tranșă MMA
-              </button>
-              <button type="button" className="p-1 text-slate-400 hover:text-slate-700"
-                onClick={() => setZoneForm({ ...zone, matcher: zone.matcher ? JSON.stringify(zone.matcher) : '' })}>
-                <Pencil className="w-4 h-4" />
-              </button>
+          </section>
+        );
+      })}
+
+      {zoneForm ? (
+        <ZoneModal
+          initial={zoneForm}
+          onClose={() => setZoneForm(null)}
+          onSave={saveZone}
+        />
+      ) : null}
+      {rateForm ? <ZoneRateModal initial={rateForm} onClose={() => setRateForm(null)} onSave={saveRate} /> : null}
+    </div>
+  );
+}
+
+function zoneFormFromRow(zone = {}, rates = []) {
+  const m = parseZoneMatcher(zone.matcher);
+  return {
+    ...zone,
+    kind: 'zone',
+    counties: m.counties,
+    cities: m.cities,
+    postcodesText: m.postcodes.join(', '),
+    rates,
+  };
+}
+
+function toggleInList(list, value) {
+  const next = new Set(list || []);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return [...next];
+}
+
+function ZoneModal({ initial, onClose, onSave }) {
+  const seeded = zoneFormFromRow(initial, initial?.rates || []);
+  const [form, setForm] = useState({
+    code: '',
+    name: '',
+    priority: 0,
+    is_active: true,
+    counties: [],
+    cities: [],
+    postcodesText: '',
+    cityDraft: '',
+    ...seeded,
+  });
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const ratesPreview = (form.rates && form.rates.length)
+    ? form.rates
+    : pmbDayRatesFor(form.code);
+  const sample = exampleZoneAmount(form.code, 19000)
+    ?? ratesPreview.find((r) => Number(r.mma_min_kg) <= 19000
+      && (r.mma_max_kg == null || Number(r.mma_max_kg) >= 19000))?.amount;
+
+  const addCity = () => {
+    const name = String(form.cityDraft || '').trim();
+    if (!name) return;
+    set('cities', [...new Set([...(form.cities || []), name])]);
+    set('cityDraft', '');
+  };
+
+  return (
+    <ModalShell open onClose={onClose} title={initial?.id ? `Zona ${form.code || ''}` : 'Zonă nouă'}>
+      <form className="p-5 space-y-5" onSubmit={(e) => { e.preventDefault(); onSave(form); }}>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Cod scurt" hint="ex. ZA, ZB">
+            <input className={inputCls} value={form.code} onChange={(e) => set('code', e.target.value.toUpperCase())} placeholder="ZA" />
+          </Field>
+          <Field label="Nume afișat">
+            <input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Zona A — București centru" />
+          </Field>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-3 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-slate-800">Unde se aplică?</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Bifează județul și adaugă orașele. Pentru București: județ <strong>B</strong> + oraș <strong>Bucuresti</strong>
+              (nu scrie „Bucuresti” la județ).
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ZONE_COUNTY_OPTIONS.map((opt) => {
+              const on = (form.counties || []).includes(opt.code);
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  onClick={() => set('counties', toggleInList(form.counties, opt.code))}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs border ${
+                    on
+                      ? 'bg-[#1D4E89] text-white border-[#1D4E89]'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-600 mb-1.5">Orașe</p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {(form.cities || []).map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 text-xs text-slate-700"
+                  onClick={() => set('cities', (form.cities || []).filter((c) => c !== city))}
+                  title="Șterge"
+                >
+                  {city} ×
+                </button>
+              ))}
+              {(form.cities || []).length === 0 ? (
+                <span className="text-xs text-slate-400">Niciun oraș — apasă o sugestie sau scrie mai jos</span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {ZONE_CITY_SUGGESTIONS.filter((c) => !(form.cities || []).includes(c)).slice(0, 8).map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  className="px-2 py-1 rounded-md border border-dashed border-slate-300 text-[11px] text-slate-600 hover:bg-slate-50"
+                  onClick={() => set('cities', [...(form.cities || []), city])}
+                >
+                  + {city}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className={inputCls}
+                value={form.cityDraft || ''}
+                onChange={(e) => set('cityDraft', e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCity(); } }}
+                placeholder="Alt oraș…"
+              />
+              <button type="button" className={btnGhost} onClick={addCity}>Adaugă</button>
             </div>
           </div>
-          {ratesFor(zone.id).length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-500">
-              Zona nu are niciun tarif — nu va produce nicio taxă.
+          <Field label="Prioritate dacă se suprapun două zone" hint="ZA = 20, ZB = 10 — câștigă cifra mai mare">
+            <input type="number" className={inputCls} value={form.priority} onChange={(e) => set('priority', e.target.value)} />
+          </Field>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
+            <p className="text-sm font-medium text-slate-800">Cât costă? (lei / zi după MMA)</p>
+            <p className="text-xs text-slate-500">
+              Astea sunt <em>valorile</em> zonei. Se editează pe cardul din listă (+ Tranșă).
+              {sample != null ? (
+                <>
+                  {' '}Exemplu ~19 t: <strong className="tabular-nums text-slate-700">{formatAmount(sample)} lei/zi</strong>.
+                </>
+              ) : null}
+            </p>
+          </div>
+          {ratesPreview.length === 0 ? (
+            <p className="px-3 py-3 text-sm text-slate-500">
+              Nicio tranșă încă. Salvează zona, apoi pe card apasă „Încarcă tarife PMB” (pentru ZA/ZB)
+              sau „+ Tranșă”.
             </p>
           ) : (
             <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] text-slate-400">
+                  <th className="px-3 py-1.5 font-medium">MMA</th>
+                  <th className="px-3 py-1.5 font-medium text-right">Lei/zi</th>
+                </tr>
+              </thead>
               <tbody>
-                {ratesFor(zone.id).map((rate) => (
-                  <tr key={rate.id} className="border-t border-slate-100">
-                    <td className="px-4 py-2 text-slate-700">{bracketLabel(rate)}</td>
-                    <td className="px-4 py-2 text-right tabular-nums font-medium">
-                      {formatAmount(rate.amount)} {rate.currency}
+                {ratesPreview.map((rate, idx) => (
+                  <tr key={rate.id || `${rate.mma_min_kg}-${idx}`} className="border-t border-slate-100">
+                    <td className="px-3 py-1.5 text-slate-600">
+                      {rate.label || bracketLabel(rate)}
                     </td>
-                    <td className="px-4 py-2 text-slate-500 whitespace-nowrap">
-                      {validityLabel(rate)} <InForceBadge row={rate} />
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <button type="button" className="p-1 text-slate-400 hover:text-slate-700" onClick={() => setRateForm(rate)}>
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                    <td className="px-3 py-1.5 text-right tabular-nums font-medium">
+                      {formatAmount(rate.amount)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-        </section>
-      ))}
-
-      {zoneForm ? <ZoneModal initial={zoneForm} onClose={() => setZoneForm(null)} onSave={saveZone} /> : null}
-      {rateForm ? <ZoneRateModal initial={rateForm} onClose={() => setRateForm(null)} onSave={saveRate} /> : null}
-    </div>
-  );
-}
-
-function ZoneModal({ initial, onClose, onSave }) {
-  const [form, setForm] = useState({ code: '', name: '', kind: 'oras', matcher: '', priority: 0, is_active: true, ...initial });
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  return (
-    <ModalShell open onClose={onClose} title={initial?.id ? 'Editează zona' : 'Zonă nouă'}>
-      <form className="p-5 space-y-4" onSubmit={(e) => { e.preventDefault(); onSave(form); }}>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cod"><input className={inputCls} value={form.code} onChange={(e) => set('code', e.target.value)} placeholder="ZB" /></Field>
-          <Field label="Nume"><input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Zona B" /></Field>
-          <Field label="Tip">
-            <select className={inputCls} value={form.kind} onChange={(e) => set('kind', e.target.value)}>
-              {ZONE_KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Prioritate" hint="Cea mai mare câștigă când se suprapun">
-            <input type="number" className={inputCls} value={form.priority} onChange={(e) => set('priority', e.target.value)} />
-          </Field>
         </div>
-        <Field
-          label="Potrivire textuală (JSON)"
-          hint='Ex.: {"counties":["IF"],"cities":["Otopeni","Voluntari"]} — funcționează înainte de a desena un poligon'
-        >
-          <textarea rows={3} className={`${inputCls} font-mono text-xs`} value={form.matcher || ''} onChange={(e) => set('matcher', e.target.value)} />
-        </Field>
+
         <label className="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" checked={form.is_active !== false} onChange={(e) => set('is_active', e.target.checked)} />
           Zonă activă

@@ -77,8 +77,8 @@ export async function logEvent(client, { companyId, documentId, batchId, userId,
 /** Columns an extraction may write on a document row. */
 const EXTRACT_COLUMNS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
-  'cantitate_marfa', 'numar_document_marfa', 'gross_weight_kg', 'net_weight_kg',
-  'pallets', 'quantity_unit',
+  'cantitate_marfa', 'numar_document_marfa', 'numar_sor', 'gross_weight_kg', 'net_weight_kg',
+  'pallet_weight_kg', 'pallets', 'quantity_unit',
 ];
 
 /** Maps extractor field names onto the document columns. */

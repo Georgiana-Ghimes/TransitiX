@@ -18,6 +18,7 @@ export const REPORT_SOURCES = [
   { key: 'nr_crt', label: 'Nr. crt', group: 'identificare', type: 'integer', numFmt: '0', total: 'none', computed: true },
   { key: 'numar_tpo', label: 'Număr TPO', group: 'identificare', type: 'text', total: 'none' },
   { key: 'numar_document_marfa', label: 'Număr document marfă (aviz/factură)', group: 'identificare', type: 'text', total: 'none' },
+  { key: 'numar_sor', label: 'Număr SOR (comandă vânzare)', group: 'identificare', type: 'text', total: 'none' },
   { key: 'original_filename', label: 'Fișier sursă', group: 'identificare', type: 'text', total: 'none' },
 
   { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', group: 'cursa', type: 'date', total: 'none' },

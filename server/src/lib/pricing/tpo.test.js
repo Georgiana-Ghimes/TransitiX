@@ -97,6 +97,16 @@ describe('zone matching', () => {
     expect(matchesTextually(city[0], { city: 'Bucureşti' })).toBe(true);
   });
 
+  it('requires every listed dimension (județ + oraș)', () => {
+    const zone = {
+      matcher: { counties: ['B'], cities: ['bucuresti'] },
+    };
+    expect(matchesTextually(zone, { county: 'B', city: 'Bucuresti' })).toBe(true);
+    expect(matchesTextually(zone, { county: 'B' })).toBe(false);
+    expect(matchesTextually(zone, { city: 'Bucuresti' })).toBe(false);
+    expect(matchesTextually(zone, { county: 'IF', city: 'Bucuresti' })).toBe(false);
+  });
+
   it('returns nothing when no zone applies', () => {
     expect(resolveZone(zones, { county: 'CJ' })).toBeNull();
   });

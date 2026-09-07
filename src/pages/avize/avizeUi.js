@@ -6,7 +6,7 @@ export const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
 export const AVIZ_ACTION_LEGEND = [
   {
     name: 'Încarcă avize / Foto',
-    text: 'Adaugă PDF-ul sau poza avizului. Sistemul citește TPO, dată, auto, rută, cantitate. Km, taxe, valoare TPO și observații se completează manual.',
+    text: 'Adaugă PDF-ul sau poza avizului. Sistemul citește TPO, PSL/TRO, SOR, dată, auto, rută, cantitate și greutate brută. Km, taxe, valoare TPO și observații se completează manual.',
   },
   {
     name: 'Editează',
@@ -68,7 +68,8 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
  */
 const OCR_OWNED_FIELDS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
-  'cantitate_marfa', 'numar_document_marfa',
+  'cantitate_marfa', 'numar_document_marfa', 'numar_sor',
+  'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg', 'pallets', 'quantity_unit',
 ];
 
 function ocrValueFor(values, key) {

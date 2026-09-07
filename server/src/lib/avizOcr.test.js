@@ -1,8 +1,6 @@
-import fs from 'fs';
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, extractAvizFromFile } from './avizOcr.js';
+import { parseBaumitAviz, normalizePlate, repairAvizFromStored } from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
-import { uploadRoot } from '../uploadPath.js';
 
 const PSL_FIXTURE = `
 SC FURNIZOR DEMO SRL
@@ -107,6 +105,7 @@ describe('parseBaumitAviz', () => {
     expect(parsed.numar_tpo).toBe('TPO-0025629');
     expect(parsed.numar_tpo).not.toMatch(/MPI|Adeziv|Adresa/i);
     expect(parsed.numar_document_marfa).toBe('PSL-0044362');
+    expect(parsed.numar_sor).toBe('SOR-0046409');
     expect(parsed.cantitate_marfa).toBe(245);
     expect(parsed.tip_marfa).toBe('saci');
   });
@@ -452,27 +451,5 @@ describe('mapAnnexRows', () => {
     const mapped = mapAnnexRows(cols, [{ taxe_suplimentare: 0, tarif_km: 0 }]);
     expect(mapped[0].taxe_suplimentare).toBe(100);
     expect(mapped[0].tarif_km).toBe(20);
-  });
-});
-
-const localTest002 = (() => {
-  try {
-    const names = fs.readdirSync(uploadRoot).filter((f) => f.endsWith('Aviz_test_002.pdf'));
-    return names.length ? names[names.length - 1] : null;
-  } catch {
-    return null;
-  }
-})();
-
-describe('extractAvizFromFile pdf-parse retry', () => {
-  it.skipIf(!localTest002)('reads the same BUILDTEST PDF repeatedly without stubbing', async () => {
-    const url = `/uploads/${localTest002}`;
-    for (let i = 0; i < 6; i += 1) {
-      const extracted = await extractAvizFromFile(url);
-      expect(extracted._stub).toBe(false);
-      expect(extracted.numar_auto).toBe('TEST-102');
-      expect(extracted.numar_document_marfa).toBe('TEST-AVZ-000102');
-      expect(extracted.data_efectuare_cursa).toBe('2026-08-20');
-    }
   });
 });

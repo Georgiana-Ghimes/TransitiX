@@ -55,6 +55,8 @@ export function annexFieldDefaults() {
     tip_marfa: null,
     cantitate_marfa: null,
     numar_document_marfa: null,
+    numar_sor: null,
+    gross_weight_kg: null,
     numar_curse: 1,
     taxe_suplimentare: 0,
     km_parcursi: 0,

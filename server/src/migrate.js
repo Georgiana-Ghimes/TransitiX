@@ -1246,6 +1246,8 @@ ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS net_weight_kg NUMERIC(12,2);
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallet_weight_kg NUMERIC(12,2);
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallets INT;
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS quantity_unit TEXT;
+-- Sales order reference on Baumit PSL avize (not the goods document number).
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS numar_sor TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_batch ON aviz_documents(company_id, batch_id);
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_review

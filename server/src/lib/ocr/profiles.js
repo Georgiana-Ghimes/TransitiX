@@ -14,8 +14,10 @@ import {
   extractGrossWeight,
   extractNetWeight,
   extractPalletCount,
+  extractPalletWeight,
   extractPlate,
   extractQuantity,
+  extractSorNumber,
   matchPatterns,
   parseNumber,
 } from './fields.js';
@@ -39,6 +41,7 @@ function scoreMarkers(text, markers) {
 const TPO_CODE = /(TPO[\s\-._]*\d{3,}[\d./-]*)/i;
 const PSL_CODE = /(PSL[\s\-._]*\d{3,}[\d./-]*)/i;
 const TRO_CODE = /(TRO[\s\-._]*\d{3,}[\d./-]*)/i;
+const SOR_CODE = /(SOR[\s\-._]*\d{3,}[\d./-]*)/i;
 
 /**
  * TPO / PSL / TRO codes are zero-padded to this many digits.
@@ -115,31 +118,34 @@ export const OCR_PROFILES = [
   {
     id: 'aviz_baumit_psl',
     documentType: 'aviz',
-    name: 'Aviz Baumit — PSL',
-    markers: [/\bpsl\b/, /baumit/, /aviz/],
+    name: 'Aviz Baumit — PSL (vânzare)',
+    markers: [/\bpsl\b/, /\bsor\b/, /baumit/, /aviz/, /comanda\s+vanzare/],
     fields: {
       numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([PSL_CODE]),
+      numar_sor: extractSorNumber,
       ruta_transport: routeField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
       net_weight_kg: extractNetWeight,
+      pallet_weight_kg: extractPalletWeight,
       pallets: extractPalletCount,
       quantity: extractQuantity,
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
-      gross_weight_kg: 2, numar_document_marfa: 2, ruta_transport: 1,
-      tip_marfa: 1, net_weight_kg: 0.5, pallets: 0.5, quantity: 0.5,
+      gross_weight_kg: 3, numar_document_marfa: 2, ruta_transport: 1,
+      tip_marfa: 1, net_weight_kg: 0.5, pallets: 0.5, quantity: 0.5, numar_sor: 0.5,
     },
   },
   {
     id: 'aviz_baumit_tro',
     documentType: 'aviz',
-    name: 'Aviz Baumit — TRO',
-    markers: [/\btro\b/, /baumit/, /aviz/],
+    name: 'Aviz Baumit — TRO (transfer)',
+    // "rezumat" + TPO in title is the transfer summary layout; marfă lives on TRO.
+    markers: [/\btro\b/, /rezumat/, /transfer\s+intern/, /baumit/, /aviz/, /depozit/],
     fields: {
       numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
       data_efectuare_cursa: extractDate,
@@ -149,12 +155,13 @@ export const OCR_PROFILES = [
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
       net_weight_kg: extractNetWeight,
+      pallet_weight_kg: extractPalletWeight,
       pallets: extractPalletCount,
       quantity: extractQuantity,
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
-      gross_weight_kg: 2, numar_document_marfa: 2, ruta_transport: 1,
+      gross_weight_kg: 3, numar_document_marfa: 2, ruta_transport: 1,
       tip_marfa: 1, net_weight_kg: 0.5, pallets: 0.5, quantity: 0.5,
     },
   },
@@ -178,18 +185,21 @@ export const OCR_PROFILES = [
       numar_document_marfa: docNoField([
         /\b(?:aviz|nr\.?)\s*([A-Z]{0,4}[\s\-._]*\d[\d./-]*)\b/i,
         PSL_CODE,
+        TRO_CODE,
       ]),
+      numar_sor: extractSorNumber,
       ruta_transport: routeField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
       net_weight_kg: extractNetWeight,
+      pallet_weight_kg: extractPalletWeight,
       pallets: extractPalletCount,
       quantity: extractQuantity,
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
       numar_document_marfa: 1, ruta_transport: 1, tip_marfa: 1,
-      gross_weight_kg: 1,
+      gross_weight_kg: 2,
     },
   },
   {
@@ -237,9 +247,27 @@ export function profilesFor(documentType) {
  * detection is a hint, not a verdict.
  */
 export function detectProfile(text, { documentType, profiles = OCR_PROFILES } = {}) {
+  const blob = String(text || '');
+  const hasPsl = PSL_CODE.test(blob) || /\bpsl\b/i.test(blob);
+  const hasTro = TRO_CODE.test(blob) || /\btro\b/i.test(blob);
+  const transferCue = /rezumat|transfer\s+intern/i.test(blob);
+
   const candidates = profiles
     .filter((p) => !documentType || p.documentType === documentType)
-    .map((profile) => ({ profile, score: Math.round(scoreMarkers(text, profile.markers) * 100) / 100 }))
+    .map((profile) => {
+      let score = scoreMarkers(text, profile.markers);
+      // Title "Aviz rezumat: TPO-…" is transfer — prefer TRO even when TPO dominates the header.
+      if (profile.id === 'aviz_baumit_tro' && (hasTro || transferCue) && !hasPsl) {
+        score = Math.min(1, score + 0.35);
+      }
+      if (profile.id === 'aviz_baumit_psl' && hasPsl) {
+        score = Math.min(1, score + 0.25);
+      }
+      if (profile.id === 'aviz_baumit_psl' && transferCue && !hasPsl) {
+        score = Math.max(0, score - 0.4);
+      }
+      return { profile, score: Math.round(score * 100) / 100 };
+    })
     .sort((a, b) => b.score - a.score);
 
   const best = candidates[0] ?? null;

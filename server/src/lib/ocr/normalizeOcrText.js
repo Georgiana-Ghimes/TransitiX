@@ -44,9 +44,9 @@ export function normalizeOcrText(text) {
   let out = String(text || '');
   if (!out.trim()) return out;
 
-  // Separate glued prefixes: expeditiePSL-… / transport_TPO-…
-  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._]*\d)/gi, '$1 $2');
-  out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._]*[\dOIl])/gi, ' $1');
+  // Separate glued prefixes: expeditiePSL-… / transport_TPO-… / vanzareSOR-…
+  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO|SOR)(?=[\s\-._]*\d)/gi, '$1 $2');
+  out = out.replace(/_(TPO|PSL|TRO|SOR)(?=[\s\-._]*[\dOIl])/gi, ' $1');
 
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(
@@ -71,6 +71,15 @@ export function normalizeOcrText(text) {
     /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TRO', digits);
+      return code ? `${lead}${code}` : full;
+    }
+  );
+
+  // SOR sales order
+  out = out.replace(
+    /(^|[^A-Za-z0-9])(S[\s]?O[\s]?R)[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    (full, lead, _prefix, digits) => {
+      const code = formatPrefixedCode('SOR', digits);
       return code ? `${lead}${code}` : full;
     }
   );

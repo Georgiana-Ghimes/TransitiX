@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { normalizeOcrText } from './normalizeOcrText.js';
 
 describe('normalizeOcrText', () => {
-  it('repairs glued PSL after a lowercase letter', () => {
-    expect(normalizeOcrText('Aviz de expeditiePSL-0044362')).toContain('PSL-0044362');
+  it('repairs glued SOR after a lowercase letter', () => {
+    expect(normalizeOcrText('Comanda vanzareSOR-0046409')).toContain('SOR-0046409');
   });
 
   it('repairs underscore-glued TPO', () => {

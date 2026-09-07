@@ -159,6 +159,12 @@ describe('quantity stays separate from weight', () => {
     expect(extractQuantity('Cantitate: 378 saci').value).toEqual({ quantity: 378, unit: 'saci' });
   });
 
+  it('folds OCR 245.000 saci back to 245 and flags review', () => {
+    const found = extractQuantity('245.000 sac');
+    expect(found.value).toEqual({ quantity: 245, unit: 'sac' });
+    expect(found.confidence).toBeLessThan(ACCEPT_CONFIDENCE);
+  });
+
   it('reads a pallet count', () => {
     expect(extractPalletCount('Paleti: 18').value).toBe(18);
   });
@@ -185,6 +191,16 @@ describe('overallConfidence', () => {
 describe('profile detection', () => {
   it('recognises a PSL aviz', () => {
     expect(detectProfile(PSL_AVIZ).profile?.id).toBe('aviz_baumit_psl');
+  });
+
+  it('prefers TRO when the title is a transfer rezumat without PSL', () => {
+    const text = `
+Aviz de expeditie rezumat: TPO-0025813
+Transfer intern MIL
+Aviz de expeditie: TRO-0008053
+Data: 11.08.2026
+`;
+    expect(detectProfile(text).profile?.id).toBe('aviz_baumit_tro');
   });
 
   it('recognises a CMR', () => {
@@ -231,6 +247,7 @@ describe('extractDocument', () => {
     expect(result.profile_id).toBe('aviz_baumit_psl');
     expect(result.values.numar_tpo).toBe('TPO-0025629');
     expect(result.values.numar_document_marfa).toBe('PSL-0044362');
+    expect(result.values.numar_sor).toBe('SOR-0046409');
     expect(result.values.numar_auto).toBe('B 330 SRS');
     expect(result.values.data_efectuare_cursa).toBe('2026-08-10');
     expect(result.values.gross_weight_kg).toBe(9964.15);

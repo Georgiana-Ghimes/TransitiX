@@ -162,25 +162,73 @@ export function extractQuantity(text) {
   const blob = String(text || '');
   // A labelled quantity is worth more than a loose number followed by a unit.
   const labelled = blob.match(
-    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|kg|to?ne?|mc|m3|role|colete)?\b/i
+    /(?:cantitate|quantity|numarul\s+de\s+galeti)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|galeti|galeți|kg|to?ne?|mc|m3|role|colete)?\b/i
   );
   if (labelled) {
-    const value = parseNumber(labelled[1]);
-    if (value != null) {
-      return result({ quantity: value, unit: (labelled[2] || '').toLowerCase() || null }, 0.9, labelled[0]);
-    }
+    const scored = scorePieceQuantity(parseNumber(labelled[1]), labelled[2] || '');
+    if (scored) return result(scored.value, scored.confidence, labelled[0]);
   }
   // An unlabelled number in a weight unit is almost always the weight, not the quantity —
   // "Greutate 4200 kg" must not come back as "4200 kg of goods". Reading a weight as a
   // quantity is exactly the confusion the report has to avoid.
   const bare = blob.match(
-    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|mc|m3|role|colete)\b/i
+    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|galeti|galeți|mc|m3|role|colete)\b/i
   );
   if (bare) {
-    const value = parseNumber(bare[1]);
-    if (value != null) return result({ quantity: value, unit: bare[2].toLowerCase() }, 0.8, bare[0]);
+    const scored = scorePieceQuantity(parseNumber(bare[1]), bare[2]);
+    if (scored) return result(scored.value, Math.min(scored.confidence, 0.8), bare[0]);
   }
   return NO_MATCH;
+}
+
+/**
+ * OCR often turns "245.00 sac" into "245.000" → thousands parse → 245000.
+ * Piece units that large are not credible on a single aviz; fold back by 1000 and flag review.
+ */
+function scorePieceQuantity(rawValue, rawUnit) {
+  if (rawValue == null || rawValue <= 0) return null;
+  const unit = String(rawUnit || '').toLowerCase() || null;
+  const piece = unit && /saci?|buc|pal|galeti|galeți|role|colete/.test(unit);
+  let quantity = rawValue;
+  let confidence = 0.9;
+  if (piece && quantity >= 10000 && quantity % 1000 === 0) {
+    const folded = quantity / 1000;
+    if (folded > 0 && folded < 5000) {
+      quantity = folded;
+      confidence = 0.4;
+    }
+  }
+  if (piece && quantity > 5000) confidence = Math.min(confidence, 0.35);
+  // Gross weight belongs in its own field — a "quantity" of tens of thousands of kg is wrong.
+  if (unit && /^(kg|t|to|tone|tona)$/.test(unit) && quantity > 80000) {
+    return null;
+  }
+  return { value: { quantity, unit }, confidence };
+}
+
+/** Sales order (SOR) — commercial reference on PSL avize, not the packing-slip number. */
+export function extractSorNumber(text) {
+  return matchPatterns(text, [
+    /\b(SOR[\s\-._]*\d[\d./-]*)\b/i,
+  ], {
+    transform: (raw) => {
+      const m = String(raw).toUpperCase().match(/SOR[\s\-._]*(\d[\d./-]*)/);
+      if (!m) return null;
+      return `SOR-${m[1].replace(/[^\d]/g, '')}`;
+    },
+    baseConfidence: 0.9,
+  });
+}
+
+export function extractPalletWeight(text) {
+  const hit = String(text || '').match(
+    /(?:greutate\s*(?:paleti|paleți|palet)|pallet\s*weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
+  );
+  if (!hit) return NO_MATCH;
+  const value = parseNumber(hit[1]);
+  if (value == null) return NO_MATCH;
+  const factor = String(hit[2]).toLowerCase().startsWith('t') ? 1000 : 1;
+  return result(Math.round(value * factor * 100) / 100, 0.85, hit[0]);
 }
 
 /**

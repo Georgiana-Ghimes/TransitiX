@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   VEHICLE_CLASSES,
   bracketLabel,
+  buildZoneMatcher,
+  exampleZoneAmount,
   formatAmount,
   groupTariffs,
   isInForce,
+  matcherSummary,
   parseAmount,
+  parseZoneMatcher,
+  splitMatcherList,
   validateSurchargeRate,
   validateTariff,
   validateZoneRate,
@@ -199,5 +204,39 @@ describe('validateSurchargeRate', () => {
 describe('VEHICLE_CLASSES', () => {
   it('offers the bands the client named', () => {
     for (const band of ['2.5t', '10t', '20t']) expect(VEHICLE_CLASSES).toContain(band);
+  });
+});
+
+describe('zone matcher form helpers', () => {
+  it('builds județ + oraș together', () => {
+    expect(buildZoneMatcher({
+      counties: splitMatcherList('B'),
+      cities: splitMatcherList('Bucuresti'),
+    })).toEqual({ counties: ['B'], cities: ['Bucuresti'] });
+  });
+
+  it('maps Bucuresti typed as județ to code B', () => {
+    expect(buildZoneMatcher({ counties: ['Bucuresti'], cities: ['Bucuresti'] }))
+      .toEqual({ counties: ['B'], cities: ['Bucuresti'] });
+  });
+
+  it('parses seeded matcher objects', () => {
+    expect(parseZoneMatcher({ counties: ['B'], cities: ['Bucuresti'] })).toEqual({
+      counties: ['B'],
+      cities: ['Bucuresti'],
+      postcodes: [],
+    });
+  });
+
+  it('summarises for the list row', () => {
+    expect(matcherSummary({ counties: ['B'], cities: ['Bucuresti'] }))
+      .toContain('B — București');
+    expect(matcherSummary({ counties: ['B'], cities: ['Bucuresti'] }))
+      .toContain('Bucuresti');
+  });
+
+  it('knows PMB day amounts for ~19t', () => {
+    expect(exampleZoneAmount('ZA', 19000)).toBe(2133);
+    expect(exampleZoneAmount('ZB', 19000)).toBe(363);
   });
 });

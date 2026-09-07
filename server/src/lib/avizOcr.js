@@ -151,7 +151,7 @@ function pickRegex(text, patterns) {
 function normalizeDocNo(value) {
   if (!value) return null;
   const upper = String(value).toUpperCase();
-  const m = upper.match(/\b(PSL|TRO)[-.\s]*(\d[\d./-]*)/);
+  const m = upper.match(/\b(PSL|TRO|SOR)[-.\s]*(\d[\d./-]*)/);
   if (m) return `${m[1]}-${m[2].replace(/[^\d]/g, '')}`;
   const testAvz = upper.match(/\b(TEST-AVZ[-.\s]*\d+)\b/);
   if (testAvz) return testAvz[1].replace(/\s+/g, '');
@@ -402,11 +402,38 @@ export function parseBaumitAviz(rawText) {
 
   const psl = normalizeDocNo(pickRegex(blob, [/\b(PSL[\s\-\.]*\d[\d./-]*)\b/i]));
   const tro = normalizeDocNo(pickRegex(blob, [/\b(TRO[\s\-\.]*\d[\d./-]*)\b/i]));
+  const sor = normalizeDocNo(pickRegex(blob, [/\b(SOR[\s\-\.]*\d[\d./-]*)\b/i]));
   const testAvz = normalizeDocNo(pickRegex(blob, [/\b(TEST-AVZ[\s\-\.]*\d+)\b/i]));
+  // Goods document: PSL (sale) wins over TRO when both appear; TPO is never the goods id.
   const numar_document_marfa = psl || tro || testAvz;
+  const transferCue = /rezumat|transfer\s+intern/i.test(blob);
+  const layout = psl ? 'psl' : (tro || transferCue) ? 'tro' : null;
 
   const qty = parseQty(blob);
   const defaults = annexFieldDefaults();
+
+  // Prefer labelled gross weight — Baumit report column is brută, not saci.
+  const grossMatch = blob.match(
+    /(?:greutate\s*(?:bruta|brută)|masa\s*(?:bruta|brută))\s*[:\-]?\s*([\d.,\s]+)\s*(kg|t)\b/i
+  );
+  let gross_weight_kg = null;
+  if (grossMatch) {
+    const raw = String(grossMatch[1]).replace(/\s/g, '');
+    let parsed;
+    if (/\d,\d{2}$/.test(raw) && raw.includes('.')) {
+      parsed = Number(raw.replace(/\./g, '').replace(',', '.'));
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+      parsed = Number(raw.replace(/\./g, ''));
+    } else if (raw.includes(',')) {
+      parsed = Number(raw.replace(',', '.'));
+    } else {
+      parsed = Number(raw);
+    }
+    if (Number.isFinite(parsed) && parsed > 0) {
+      const factor = String(grossMatch[2]).toLowerCase().startsWith('t') ? 1000 : 1;
+      gross_weight_kg = Math.round(parsed * factor * 100) / 100;
+    }
+  }
 
   return {
     ...defaults,
@@ -417,7 +444,9 @@ export function parseBaumitAviz(rawText) {
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
     numar_document_marfa,
-    layout: psl ? 'psl' : tro ? 'tro' : null,
+    numar_sor: sor,
+    gross_weight_kg,
+    layout,
     _stub: false,
   };
 }
@@ -453,6 +482,8 @@ export function repairAvizFromStored(row) {
     tip_marfa: preferStored(row?.tip_marfa, parsed?.tip_marfa),
     cantitate_marfa: row?.cantitate_marfa ?? parsed?.cantitate_marfa ?? null,
     numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
+    numar_sor: preferStored(row?.numar_sor, parsed?.numar_sor),
+    gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
   };
 }
 
