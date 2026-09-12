@@ -19,6 +19,7 @@ const EXTRACTED_AVIZ = {
   ruta_transport: 'Bucuresti/Aeroportului120-T-Bucuresti/Viilor52',
   tip_marfa: 'saci',
   cantitate_marfa: 378,
+  gross_weight_kg: 9000,
   numar_document_marfa: 'PSL-0044633',
 };
 
@@ -151,7 +152,7 @@ describe('anexa exportată — default Anexa Factura RAI', () => {
     expect(row['Numar auto']).toBe('B-34-BAU');
     expect(row['Ruta transport']).toBe('Bucuresti/Aeroportului120-T-Bucuresti/Viilor52');
     expect(row['Tip marfa']).toBe('saci');
-    expect(row['Cantitate marfa (t/m3/galeti)']).toBe(378);
+    expect(row['Cantitate marfa (t/m3/galeti)']).toBe(9);
     expect(row['Numar document marfa (aviz/factura)']).toBe('PSL-0044633');
     expect(row['Numar curse']).toBe(1);
     expect(row['Taxa suplimentara']).toBe(0);

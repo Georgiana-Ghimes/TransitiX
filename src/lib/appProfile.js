@@ -1,5 +1,5 @@
 /** Office routes exposed when VITE_APP_PROFILE=documents (RAI companion). */
-export const COMPANION_OFFICE_PATHS = ['/avize', '/reports'];
+export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/settings'];
 
 export function appProfile() {
   const raw = String(import.meta.env.VITE_APP_PROFILE || 'full').trim().toLowerCase();

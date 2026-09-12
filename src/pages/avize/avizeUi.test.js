@@ -7,6 +7,7 @@ import {
   isLockedRai,
   lowField,
   manualAvizEditLabels,
+  shouldAutoDownloadEmailFallback,
 } from './avizeUi.js';
 
 describe('avizeUi', () => {
@@ -93,5 +94,11 @@ describe('avizeUi', () => {
     expect(form.numar_tpo).toBe('TPO-1');
     expect(form.trip_id).toBe('trip-9');
     expect(form.ruta_display).toBe('B');
+  });
+
+  it('auto-downloads the email stub annex only once per attempt', () => {
+    expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: true })).toBe(true);
+    expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: true, hasContent: true })).toBe(false);
+    expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: false })).toBe(false);
   });
 });

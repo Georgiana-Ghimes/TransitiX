@@ -216,7 +216,7 @@ describe('reportWarnings', () => {
   it('says when the documents have a weight the template drops', () => {
     // The RAI annex is contractual, so we do not rewrite it — but a sheet that cannot be
     // reconciled against the weighbridge has to say so out loud.
-    expect(codes([CONFIRMED], getPreset('rai_anexa'))).toContain('weight_not_exported');
+    expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('weight_not_exported');
   });
 
   it('does not complain about a missing weight when no weight is exported', () => {

@@ -5,7 +5,14 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createRequire } from 'module';
-import { annexFieldDefaults } from './avizTemplate.js';
+import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
+import {
+  extractGrossWeight,
+  isAcceptableAutoField,
+  isPlausibleQuantity,
+  parseNumber,
+  RO_PLATE_COUNTIES,
+} from './ocr/fields.js';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -80,14 +87,17 @@ function findAvizDate(blob) {
   return any ? toIsoDate(any[1]) : null;
 }
 
-const PLATE_RE = /\b([A-Z]{1,2})[-\s]?(\d{2,3})[-\s]?([A-Z]{2,3})\b/g;
+const PLATE_RE = new RegExp(
+  `\\b(${RO_PLATE_COUNTIES})[-\\s]?(\\d{2,3})[-\\s]?([A-Z]{2,3})\\b`,
+  'gi'
+);
 
 export function extractPlates(value) {
   const s = normalizeWs(value).toUpperCase();
   const plates = [];
   const seen = new Set();
   let m;
-  const re = new RegExp(PLATE_RE.source, 'g');
+  const re = new RegExp(PLATE_RE.source, 'gi');
   while ((m = re.exec(s)) !== null) {
     const plate = `${m[1]}-${m[2]}-${m[3]}`;
     if (seen.has(plate)) continue;
@@ -101,6 +111,17 @@ export function extractPlates(value) {
 export function normalizePlate(value) {
   const plates = extractPlates(value);
   if (plates.length) return plates.join(' / ');
+  return null;
+}
+
+/** Synthetic office/driver fixtures — not RO format, but intentional and short. */
+function syntheticLabeledPlate(labeled) {
+  const text = normalizeWs(labeled).toUpperCase();
+  if (!text) return null;
+  const multi = [...text.matchAll(/\bB\s+TEST\s+\d{1,4}\b/g)].map((m) => m[0].replace(/\s+/g, ' '));
+  if (multi.length) return multi.join(' / ');
+  const single = text.match(/\bTEST[-\s]?\d{1,6}\b/);
+  if (single) return single[0].replace(/\s+/g, '').replace(/^TEST(\d)/, 'TEST-$1');
   return null;
 }
 
@@ -131,12 +152,9 @@ function findPlates(blob) {
   const search = labeled == null ? folded : labeled;
   const plates = extractPlates(search);
   if (plates.length) return plates.join(' / ');
-  if (labeled && labeled.length > 0 && labeled.length <= 40) {
-    if (/document de test|fara valoare|materiale demonstrative|aviz de expeditie|buildtest/.test(labeled)) {
-      return null;
-    }
-    return labeled.replace(/\s+/g, ' ').toUpperCase();
-  }
+  // Never dump the labelled window as-is: OCR often glues bookmark/UI noise onto a partial
+  // plate ("330 SRS FOOTY STREAM TRANSPORTATOR"). Empty + review beats a poisoned Excel cell.
+  if (labeled) return syntheticLabeledPlate(labeled);
   return null;
 }
 
@@ -198,8 +216,10 @@ function parseQty(blob) {
   const folded = fold(blob);
   const galetiLabel = folded.match(/numarul de galeti\s+([\d.,]+)/);
   if (galetiLabel) {
-    const qty = Number(String(galetiLabel[1]).replace(',', '.'));
-    if (!Number.isNaN(qty) && qty > 0) return { qty, tip: 'galeti', rank: 4 };
+    const qty = parseNumber(galetiLabel[1]);
+    if (qty != null && isPlausibleQuantity(qty, 'galeti')) {
+      return { qty, tip: 'galeti', rank: 4 };
+    }
   }
 
   const re = /(\d+(?:[.,]\d+)?)\s*(saci?|pal(?:eti|et[ie]?)?|buc(?:ati)?|pcs|gal(?:eti)?|gale(?:ti|ata|ata)?)\b/gi;
@@ -211,8 +231,8 @@ function parseQty(blob) {
     if (rawUnit.startsWith('pal')) mapped = 'paleti';
     else if (rawUnit.startsWith('buc') || rawUnit === 'pcs') mapped = 'bucati';
     else if (rawUnit.startsWith('gal')) mapped = 'galeti';
-    const qty = Number(String(match[1]).replace(',', '.'));
-    if (Number.isNaN(qty)) continue;
+    const qty = parseNumber(match[1]);
+    if (qty == null || !isPlausibleQuantity(qty, mapped)) continue;
     const rank = UNIT_RANK[mapped] || 0;
     if (!best || rank > best.rank) best = { qty, tip: mapped, rank };
   }
@@ -406,6 +426,7 @@ export function parseBaumitAviz(rawText) {
   const numar_document_marfa = psl || tro || testAvz;
 
   const qty = parseQty(blob);
+  const gross = extractGrossWeight(blob);
   const defaults = annexFieldDefaults();
 
   return {
@@ -416,6 +437,7 @@ export function parseBaumitAviz(rawText) {
     ruta_transport: parseRoute(blob),
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
+    gross_weight_kg: gross.value ?? null,
     numar_document_marfa,
     layout: psl ? 'psl' : tro ? 'tro' : null,
     _stub: false,
@@ -431,13 +453,42 @@ function fieldFilled(value) {
 function isGarbageAuto(value) {
   const s = String(value || '').trim();
   if (!s) return true;
-  if (s.length > 48) return true;
-  return /document de test|fara valoare|materiale demonstrative|buildtest/i.test(s);
+  if (isAcceptableAutoField(s)) return false;
+  if (normalizePlate(s)) return false;
+  return true;
+}
+
+function isGarbageQuantity(value, tip) {
+  if (!fieldFilled(value)) return true;
+  return !isPlausibleQuantity(value, tip);
 }
 
 function preferStored(stored, parsedValue, isGarbage) {
   if (fieldFilled(stored) && !(isGarbage && isGarbage(stored))) return stored;
-  return parsedValue ?? (fieldFilled(stored) ? stored : null);
+  if (parsedValue != null && String(parsedValue).trim() !== '') return parsedValue;
+  // Do not keep a poisoned stored plate when we have nothing better — leave empty for review.
+  return null;
+}
+
+function preferQuantity(row, parsed) {
+  const tip = row?.tip_marfa || parsed?.tip_marfa || 'saci';
+  if (fieldFilled(row?.cantitate_marfa) && isPlausibleQuantity(row.cantitate_marfa, tip)) {
+    return row.cantitate_marfa;
+  }
+  if (parsed?.cantitate_marfa != null
+    && isPlausibleQuantity(parsed.cantitate_marfa, parsed.tip_marfa || tip)) {
+    return parsed.cantitate_marfa;
+  }
+  // Impossible OCR magnitudes (245000 saci) stay empty so the row is marked for review.
+  return null;
+}
+
+function preferTipMarfa(row, parsed) {
+  const stored = preferStored(row?.tip_marfa, parsed?.tip_marfa);
+  if (fieldFilled(stored)) return stored;
+  return normalizeGoodsUnit(row?.quantity_unit)
+    || normalizeGoodsUnit(parsed?.tip_marfa)
+    || null;
 }
 
 /** Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values. */
@@ -450,8 +501,9 @@ export function repairAvizFromStored(row) {
     data_efectuare_cursa: preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
     numar_auto: preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
     ruta_transport: preferStored(row?.ruta_transport, parsed?.ruta_transport),
-    tip_marfa: preferStored(row?.tip_marfa, parsed?.tip_marfa),
-    cantitate_marfa: row?.cantitate_marfa ?? parsed?.cantitate_marfa ?? null,
+    tip_marfa: preferTipMarfa(row, parsed),
+    cantitate_marfa: preferQuantity(row, parsed),
+    gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
     numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
   };
 }
@@ -461,5 +513,6 @@ export function avizFieldConfidence(row) {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
     ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
+    cantitate_marfa: isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa) ? 'low' : 'ok',
   };
 }

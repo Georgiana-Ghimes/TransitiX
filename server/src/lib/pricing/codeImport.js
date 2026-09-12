@@ -1,10 +1,12 @@
 /**
  * Importing the customer's own observation codes.
  *
- * The codes on the delivery notes (`DM`, `Z:B*`, `IF*`) are theirs, not ours — the brief is
+ * The codes on the delivery notes (`DM`, `Z:B`, `IF`) are theirs, not ours — the brief is
  * explicit that we must not invent the list. So this reads their sheet and takes what is there,
  * rather than mapping it onto a vocabulary we made up.
  */
+
+import { normalizeObservationCode, validateObservationCodeInput } from '../observationCodes.js';
 
 /** Header names we recognise, in the several ways a Romanian spreadsheet writes them. */
 const HEADERS = {
@@ -68,8 +70,8 @@ export function parseCodeRows(rows = []) {
 
   rows.slice(1).forEach((row, offset) => {
     const line = offset + 2;
-    const code = String(row?.[headers.code] ?? '').trim();
-    if (!code) {
+    const rawCode = String(row?.[headers.code] ?? '').trim();
+    if (!rawCode) {
       // A blank line at the end of a sheet is normal; a blank code mid-list is not, but either
       // way it is reported rather than dropped.
       if (row?.some((cell) => String(cell ?? '').trim())) {
@@ -77,15 +79,23 @@ export function parseCodeRows(rows = []) {
       }
       return;
     }
-    if (seen.has(code.toLowerCase())) {
-      skipped.push({ line, code, reason: 'cod duplicat în fișier' });
+
+    const rawLabel = headers.label === undefined ? '' : String(row[headers.label] ?? '').trim();
+    const checked = validateObservationCodeInput({ code: rawCode, label: rawLabel });
+    if (!checked.ok) {
+      skipped.push({ line, code: normalizeObservationCode(rawCode) || rawCode, reason: checked.message });
       return;
     }
-    seen.add(code.toLowerCase());
+
+    if (seen.has(checked.code)) {
+      skipped.push({ line, code: checked.code, reason: 'cod duplicat în fișier' });
+      return;
+    }
+    seen.add(checked.code);
 
     codes.push({
-      code: code.slice(0, 40),
-      label: headers.label === undefined ? null : (String(row[headers.label] ?? '').trim() || null),
+      code: checked.code,
+      label: checked.label,
       kind: headers.kind === undefined ? null : (String(row[headers.kind] ?? '').trim() || null),
       is_active: headers.active === undefined ? true : readActive(row[headers.active]),
       sort_order: codes.length + 1,

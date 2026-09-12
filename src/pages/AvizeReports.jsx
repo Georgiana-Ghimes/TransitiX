@@ -3,6 +3,7 @@ import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { appendObservationCode, validateObservationCodeInput } from '@/lib/observationCodes';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
 import { findBlurriest } from '@/lib/imageQuality';
@@ -29,6 +30,7 @@ import {
   isLockedRai,
   labelCls,
   lowField,
+  shouldAutoDownloadEmailFallback,
 } from './avize/avizeUi';
 
 export default function AvizeReports() {
@@ -61,10 +63,12 @@ export default function AvizeReports() {
   const [emailTo, setEmailTo] = useState('');
   const [trips, setTrips] = useState([]);
   const [newCode, setNewCode] = useState('');
+  const [newLabel, setNewLabel] = useState('');
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const loadGen = useRef(0);
   const bulkConfirmLock = useRef(false);
+  const emailFallbackDownloadedRef = useRef(false);
 
   const [ocrDown, setOcrDown] = useState(false);
 
@@ -394,12 +398,53 @@ export default function AvizeReports() {
     }
   };
 
+  const exportSelected = () => {
+    const ids = [...selected];
+    if (ids.length === 0) {
+      notifyError('Nimic selectat', 'Bifează cel puțin un aviz pentru export.');
+      return;
+    }
+    if (!templateId) {
+      notifyError('Fără șablon', 'Alege un șablon XLSX.');
+      return;
+    }
+    const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
+    if (dupCount > 0) {
+      // Warn before download — a post-export toast was easy to miss under „Export gata”.
+      setConfirmDuplicate({ mode: 'export', ids, dupCount });
+      return;
+    }
+    runExportSelected(ids);
+  };
+
+  const runExportSelected = async (ids) => {
+    if (!templateId || !ids?.length) return;
+    setBusy(true);
+    try {
+      const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
+      downloadBlob(blob, filename);
+      // Naming the template here is the only place the operator can tell which layout landed
+      // in the file — the filename alone reads the same for every export of the day.
+      notifySuccess(
+        'Export gata',
+        `${filename} — șablon ${selectedTemplate?.name || 'selectat'}, `
+        + `${columnCountOf(selectedTemplate)} coloane.`
+      );
+    } catch (e) {
+      notifyError('Export eșuat', e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const runDuplicateConfirm = async () => {
     if (!confirmDuplicate) return;
     const pending = confirmDuplicate;
     setConfirmDuplicate(null);
     if (pending.mode === 'single') {
       await runConfirmRow(pending.row);
+    } else if (pending.mode === 'export') {
+      await runExportSelected(pending.ids);
     } else {
       await runBulkConfirm(pending.ids);
     }
@@ -478,43 +523,6 @@ export default function AvizeReports() {
     }
   };
 
-  const exportSelected = async () => {
-    const ids = [...selected];
-    if (ids.length === 0) {
-      notifyError('Nimic selectat', 'Bifează cel puțin un aviz pentru export.');
-      return;
-    }
-    if (!templateId) {
-      notifyError('Fără șablon', 'Alege un șablon XLSX.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
-      const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
-      downloadBlob(blob, filename);
-      // Naming the template here is the only place the operator can tell which layout landed
-      // in the file — the filename alone reads the same for every export of the day.
-      notifySuccess(
-        'Export gata',
-        `${filename} — șablon ${selectedTemplate?.name || 'selectat'}, `
-        + `${columnCountOf(selectedTemplate)} coloane.`
-      );
-      if (dupCount > 0) {
-        notifyError(
-          'Atenție la export',
-          dupCount === 1
-            ? 'Un aviz marcat „duplicat” a fost inclus. Verifică dacă nu e o încărcare dublă.'
-            : `${dupCount} avize marcate „duplicat” au fost incluse. Verifică dacă nu sunt încărcări duble.`
-        );
-      }
-    } catch (e) {
-      notifyError('Export eșuat', e);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const zipSelected = async () => {
     const ids = [...selected];
     if (ids.length === 0 || !templateId) {
@@ -544,18 +552,32 @@ export default function AvizeReports() {
         aviz_ids: ids,
       });
       if (result?.email_sent === false || result?.stub || result?.download) {
-        if (result?.content_base64) {
+        const hasContent = Boolean(result?.content_base64);
+        if (shouldAutoDownloadEmailFallback({
+          alreadyDownloaded: emailFallbackDownloadedRef.current,
+          hasContent,
+        })) {
           const bin = Uint8Array.from(atob(result.content_base64), (c) => c.charCodeAt(0));
           downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
+          emailFallbackDownloadedRef.current = true;
+          notifyError(
+            'Email netrimis',
+            result?.message
+              || 'Resend nu este configurat — anexa s-a descărcat o dată. Nu apăsa Trimite din nou doar pentru alt fișier.'
+          );
+        } else {
+          notifyError(
+            'Email netrimis',
+            emailFallbackDownloadedRef.current
+              ? 'Anexa a fost deja descărcată pentru această trimitere. Folosește fișierul din Downloads sau „Unește în Anexa XLSX”.'
+              : (result?.message
+                || 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.')
+          );
         }
-        notifyError(
-          'Email netrimis',
-          result?.message
-            || 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.'
-        );
       } else {
         notifySuccess('Email trimis', result?.filename || emailTo);
         setEmailOpen(false);
+        emailFallbackDownloadedRef.current = false;
       }
     } catch (e) {
       notifyError('Email eșuat', e);
@@ -653,13 +675,18 @@ export default function AvizeReports() {
   };
 
   const addObsCode = async () => {
-    const code = newCode.trim();
-    if (!code) return;
+    const checked = validateObservationCodeInput({ code: newCode, label: newLabel });
+    if (!checked.ok) {
+      notifyError('Cod invalid', checked.message);
+      return;
+    }
     try {
-      await api.avize.createObservationCode({ code, label: code });
+      await api.avize.createObservationCode({ code: checked.code, label: checked.label });
       setNewCode('');
+      setNewLabel('');
       const codes = await api.avize.observationCodes();
       setObsCodes(codes);
+      notifySuccess('Cod adăugat', `${checked.code} — ${checked.label}`);
     } catch (e) {
       notifyError('Codul nu s-a salvat', e);
     }
@@ -687,11 +714,10 @@ export default function AvizeReports() {
   };
 
   const appendObs = (code) => {
-    setForm((prev) => {
-      const current = String(prev.observatii || '').trim();
-      if (current.includes(code)) return prev;
-      return { ...prev, observatii: current ? `${current} ${code}` : code };
-    });
+    setForm((prev) => ({
+      ...prev,
+      observatii: appendObservationCode(prev.observatii, code),
+    }));
   };
 
   const rowLocked = (id) => uploading || busyId === id;
@@ -821,7 +847,10 @@ export default function AvizeReports() {
             <button
               type="button"
               disabled={selected.size === 0 || !templateId}
-              onClick={() => setEmailOpen(true)}
+              onClick={() => {
+                emailFallbackDownloadedRef.current = false;
+                setEmailOpen(true);
+              }}
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
             >
               <Mail className="w-4 h-4" /> Email
@@ -968,8 +997,8 @@ export default function AvizeReports() {
                           <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{row.data_efectuare_cursa || '—'}</td>
                           <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
                           <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '—'}</td>
-                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || ''}`.trim()}>
-                            {row.cantitate_marfa ?? '—'} {row.tip_marfa || ''}
+                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || row.quantity_unit || ''}`.trim()}>
+                            {row.cantitate_marfa ?? '—'} {row.tip_marfa || row.quantity_unit || ''}
                           </td>
                           <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
                           <td className="px-2 py-2.5">
@@ -1019,6 +1048,8 @@ export default function AvizeReports() {
           obsCodes={obsCodes}
           newCode={newCode}
           setNewCode={setNewCode}
+          newLabel={newLabel}
+          setNewLabel={setNewLabel}
           onNewTemplate={newTemplate}
           onEdit={(t) => setEditTemplate(t)}
           onDelete={setDeleteTemplate}
@@ -1046,14 +1077,32 @@ export default function AvizeReports() {
       )}
 
       {emailOpen && (
-        <ModalShell onClose={() => setEmailOpen(false)} panelClassName="max-w-md" labelledBy="aviz-email-title">
+        <ModalShell
+          onClose={() => {
+            setEmailOpen(false);
+            emailFallbackDownloadedRef.current = false;
+          }}
+          panelClassName="max-w-md"
+          labelledBy="aviz-email-title"
+        >
           <div className="p-5">
             <h2 id="aviz-email-title" className="text-lg font-semibold text-[#0A2B4E] mb-3">Trimite anexa</h2>
             <label className={labelCls}>Email destinatar</label>
             <input className={inputCls} type="email" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} placeholder="office@firma.ro" />
-            <p className="text-xs text-slate-500 mt-2">{selectedIds.length} aviz(e). Dacă Resend lipsește, anexa se descarcă.</p>
+            <p className="text-xs text-slate-500 mt-2">
+              {selectedIds.length} aviz(e). Dacă Resend lipsește, anexa se descarcă o singură dată (nu la fiecare Trimite).
+            </p>
             <div className="flex justify-end gap-2 mt-4">
-              <button type="button" className="px-4 py-2 text-sm border rounded-lg" onClick={() => setEmailOpen(false)}>Anulează</button>
+              <button
+                type="button"
+                className="px-4 py-2 text-sm border rounded-lg"
+                onClick={() => {
+                  emailFallbackDownloadedRef.current = false;
+                  setEmailOpen(false);
+                }}
+              >
+                Anulează
+              </button>
               <button type="button" disabled={busy || !emailTo.trim()} className="px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60" onClick={sendAnnexEmail}>
                 Trimite
               </button>
@@ -1187,15 +1236,21 @@ export default function AvizeReports() {
         onConfirm={runDuplicateConfirm}
         busy={busy || Boolean(busyId)}
         variant="warning"
-        title="TPO duplicat"
+        title={confirmDuplicate?.mode === 'export' ? 'Export cu TPO duplicat?' : 'TPO duplicat'}
         description={
-          confirmDuplicate?.mode === 'bulk'
-            ? `${confirmDuplicate.dupCount} din rândurile selectate au același TPO ca alt document. `
-              + 'Dacă sunt încărcări greșite, folosește Șterge înainte de confirmare. Confirmi oricum?'
-            : `„${confirmDuplicate?.row?.numar_tpo || confirmDuplicate?.row?.original_filename || 'Acest aviz'}” `
-              + 'are același TPO ca alt rând. Dacă e o încărcare greșită, folosește Șterge. Confirmi oricum?'
+          confirmDuplicate?.mode === 'export'
+            ? (confirmDuplicate.dupCount === 1
+              ? 'Un aviz marcat „duplicat” e în selecție — risc de facturare dublă dacă e o încărcare greșită. '
+                + 'Verifică lista (Șterge rândul greșit) sau exportă oricum.'
+              : `${confirmDuplicate.dupCount} avize marcate „duplicat” sunt în selecție — risc de facturare dublă. `
+                + 'Verifică lista sau exportă oricum.')
+            : confirmDuplicate?.mode === 'bulk'
+              ? `${confirmDuplicate.dupCount} din rândurile selectate au același TPO ca alt document. `
+                + 'Dacă sunt încărcări greșite, folosește Șterge înainte de confirmare. Confirmi oricum?'
+              : `„${confirmDuplicate?.row?.numar_tpo || confirmDuplicate?.row?.original_filename || 'Acest aviz'}” `
+                + 'are același TPO ca alt rând. Dacă e o încărcare greșită, folosește Șterge. Confirmi oricum?'
         }
-        confirmLabel="Confirmă oricum"
+        confirmLabel={confirmDuplicate?.mode === 'export' ? 'Exportă oricum' : 'Confirmă oricum'}
       />
       <ConfirmDialog
         open={Boolean(deleteRow)}

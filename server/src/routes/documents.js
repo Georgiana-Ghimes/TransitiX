@@ -9,6 +9,7 @@ import { hitRateLimit } from '../lib/rateLimit.js';
 import { readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
+import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -88,6 +89,10 @@ function toColumns(values) {
     if (name === 'quantity') out.cantitate_marfa = value;
     else if (EXTRACT_COLUMNS.includes(name)) out[name] = value;
   }
+  // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
+  if ((out.tip_marfa == null || String(out.tip_marfa).trim() === '') && out.quantity_unit) {
+    out.tip_marfa = normalizeGoodsUnit(out.quantity_unit) || String(out.quantity_unit).trim();
+  }
   return out;
 }
 
@@ -163,12 +168,12 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       continue;
     }
 
-    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed rows stay put —
-    // only a finished-but-empty extract needs to look pending again.
-    if (force && doc.status === 'extracted') {
+    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed must drop too —
+    // rewriting OCR fields while leaving "Confirmat" would let unreviewed data go to billing.
+    if (force && (doc.status === 'extracted' || doc.status === 'confirmed')) {
       await query(
         `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
-         WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+         WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed')`,
         [doc.id, companyId]
       );
       doc.status = 'uploaded';

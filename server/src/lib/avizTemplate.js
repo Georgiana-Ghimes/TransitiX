@@ -1,5 +1,6 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
 import { getSource } from './reporting/sources.js';
+import { applyNumarCurseByRuns } from './avizQuery.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -127,6 +128,78 @@ function formatDateCell(value) {
   return String(value);
 }
 
+/**
+ * Anexa Factura RAI column “Cantitate marfa (t/m3/galeti)” must carry weighbridge tons when
+ * we have greutate brută — not the sack/bucket line count OCR also finds on the same page.
+ */
+export function annexQuantityValue(row) {
+  const kg = Number(row?.gross_weight_kg);
+  if (Number.isFinite(kg) && kg > 0) {
+    return Math.round((kg / 1000) * 100) / 100;
+  }
+  const qty = row?.cantitate_marfa;
+  if (qty === undefined || qty === null || qty === '') return null;
+  const n = Number(qty);
+  return Number.isFinite(n) ? n : qty;
+}
+
+/**
+ * Client Anexa wants Tip marfa = packaging unit (saci / galeti / …), not an empty cell while
+ * the unit sits only in quantity_unit or is glued into Marfă on screen.
+ */
+const GOODS_UNIT_ALIASES = Object.freeze({
+  sac: 'saci',
+  saci: 'saci',
+  galeti: 'galeti',
+  galeti_: 'galeti',
+  galeata: 'galeti',
+  galeate: 'galeti',
+  paleti: 'paleti',
+  palet: 'paleti',
+  palete: 'paleti',
+  bucati: 'bucati',
+  buc: 'bucati',
+  pcs: 'bucati',
+  kg: 'kg',
+  role: 'role',
+  colete: 'colete',
+  mc: 'mc',
+  m3: 'mc',
+});
+
+function foldGoodsToken(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/** Map OCR / tip text onto a canonical packaging unit, or null if it is not a unit. */
+export function normalizeGoodsUnit(raw) {
+  const folded = foldGoodsToken(raw);
+  if (!folded) return null;
+  if (GOODS_UNIT_ALIASES[folded]) return GOODS_UNIT_ALIASES[folded];
+  if (folded.startsWith('sac')) return 'saci';
+  if (folded.startsWith('gal')) return 'galeti';
+  if (folded.startsWith('pal')) return 'paleti';
+  if (folded.startsWith('buc')) return 'bucati';
+  return null;
+}
+
+/**
+ * Tip marfa for export: prefer quantity_unit (saci/galeti), then a tip that is itself a unit,
+ * then whatever tip_marfa already holds (product name).
+ */
+export function annexTipMarfa(row) {
+  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
+  if (fromUnit) return fromUnit;
+  const fromTip = normalizeGoodsUnit(row?.tip_marfa);
+  if (fromTip) return fromTip;
+  const tip = String(row?.tip_marfa || '').trim();
+  return tip || '';
+}
+
 /** Use the saved template as-is. Only fall back when it has no columns. */
 export function resolveExportColumns(template) {
   const cols = normalizeTemplateColumns(template?.columns);
@@ -157,14 +230,20 @@ export function exportColumnsFor(template) {
 
 export function mapAnnexRows(columns, avize) {
   const cols = normalizeTemplateColumns(columns);
-  return (avize || []).map((row, idx) => {
+  // Derive Numar curse from distinct runs per TPO (not the stored default of 1).
+  const docs = applyNumarCurseByRuns(avize);
+  return docs.map((row, idx) => {
     const out = {};
     for (const col of cols) {
       if (col.source === 'nr_crt') {
         out[col.key] = idx + 1;
         continue;
       }
-      const raw = col.source ? row?.[col.source] : undefined;
+      const raw = col.source === 'cantitate_marfa'
+        ? annexQuantityValue(row)
+        : col.source === 'tip_marfa'
+          ? annexTipMarfa(row)
+          : (col.source ? row?.[col.source] : undefined);
       if (useTemplateDefault(col, raw)) {
         out[col.key] = coerceCell(col, col.default_value);
       } else if (getSource(col.source)?.type === 'date') {

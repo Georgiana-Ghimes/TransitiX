@@ -34,6 +34,43 @@ export function flagDuplicateTpos(rows) {
   });
 }
 
+/**
+ * One cursă ≠ one aviz. Same TPO with two trucks (or two days) is two runs; two unloadings
+ * on the same truck/day stay one run. Prefer linked trip_id when present.
+ */
+export function runIdentity(row) {
+  if (row?.trip_id) return `trip:${row.trip_id}`;
+  const date = String(row?.data_efectuare_cursa || '').slice(0, 10) || '_';
+  const auto = String(row?.numar_auto || '')
+    .toUpperCase()
+    .replace(/\s+/g, '')
+    .replace(/[^A-Z0-9/]/g, '');
+  if (auto) return `${date}|${auto}`;
+  // No plate: do not collapse unrelated unloadings into one phantom run.
+  return `${date}|id:${row?.id || ''}`;
+}
+
+/**
+ * Sets `numar_curse` on each row to the count of distinct runs sharing its TPO
+ * (within the given set — typically the list view or the export selection).
+ */
+export function applyNumarCurseByRuns(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const runsByTpo = new Map();
+  for (const row of list) {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    if (!tpo) continue;
+    if (!runsByTpo.has(tpo)) runsByTpo.set(tpo, new Set());
+    runsByTpo.get(tpo).add(runIdentity(row));
+  }
+  return list.map((row) => {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    if (!tpo) return { ...row, numar_curse: 1 };
+    const count = runsByTpo.get(tpo)?.size || 1;
+    return { ...row, numar_curse: count };
+  });
+}
+
 export async function tpoExistsForOther(queryFn, { companyId, tpo, exceptId }) {
   const term = String(tpo || '').trim();
   if (!term) return false;

@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -59,6 +59,7 @@ const NAV = [
 const COMPANION_OFFICE_NAV = [
   { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
+  { label: 'Setări', path: '/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';

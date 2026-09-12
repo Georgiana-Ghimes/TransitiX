@@ -68,7 +68,7 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
  */
 const OCR_OWNED_FIELDS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
-  'cantitate_marfa', 'numar_document_marfa',
+  'cantitate_marfa', 'gross_weight_kg', 'numar_document_marfa',
 ];
 
 function ocrValueFor(values, key) {
@@ -147,6 +147,13 @@ export function downloadBlob(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Email stub fallback: download the annex once per modal attempt, not on every Trimite click.
+ */
+export function shouldAutoDownloadEmailFallback({ alreadyDownloaded, hasContent }) {
+  return Boolean(hasContent) && !alreadyDownloaded;
 }
 
 export function displayRoute(row) {

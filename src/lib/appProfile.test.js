@@ -21,6 +21,7 @@ describe('appProfile', () => {
     expect(isDocumentsProfile()).toBe(true);
     expect(isCompanionOfficePath('/avize')).toBe(true);
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
+    expect(isCompanionOfficePath('/settings')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
   });
 

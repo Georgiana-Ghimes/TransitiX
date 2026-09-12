@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   annexDraftAmount,
+  applyNumarCurseByRuns,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
@@ -99,6 +100,31 @@ describe('avizQuery', () => {
     expect(flagged[0].duplicate_tpo).toBe(true);
     expect(flagged[1].duplicate_tpo).toBe(true);
     expect(flagged[2].duplicate_tpo).toBe(false);
+  });
+
+  it('counts distinct runs per TPO, not avize', () => {
+    // Two trucks on the same TPO / day → 2 curse on both rows.
+    const twoTrucks = applyNumarCurseByRuns([
+      { id: 'a', numar_tpo: 'TPO-100', data_efectuare_cursa: '2026-09-10', numar_auto: 'B 111 AAA' },
+      { id: 'b', numar_tpo: 'TPO-100', data_efectuare_cursa: '2026-09-10', numar_auto: 'B 222 BBB' },
+    ]);
+    expect(twoTrucks.map((r) => r.numar_curse)).toEqual([2, 2]);
+
+    // Two unloadings, same truck/day → still 1 cursă.
+    const twoUnloadings = applyNumarCurseByRuns([
+      { id: 'a', numar_tpo: 'TPO-100', data_efectuare_cursa: '2026-09-10', numar_auto: 'B-111-AAA' },
+      { id: 'b', numar_tpo: 'TPO-100', data_efectuare_cursa: '2026-09-10', numar_auto: 'B 111 AAA' },
+    ]);
+    expect(twoUnloadings.map((r) => r.numar_curse)).toEqual([1, 1]);
+  });
+
+  it('treats linked trip_id as the run, not each aviz', () => {
+    const sameTrip = applyNumarCurseByRuns([
+      { id: 'a', numar_tpo: 'TPO-9', trip_id: 'trip-1', numar_auto: 'B 1', data_efectuare_cursa: '2026-01-01' },
+      { id: 'b', numar_tpo: 'TPO-9', trip_id: 'trip-1', numar_auto: 'B 1', data_efectuare_cursa: '2026-01-01' },
+      { id: 'c', numar_tpo: 'TPO-9', trip_id: 'trip-2', numar_auto: 'B 2', data_efectuare_cursa: '2026-01-01' },
+    ]);
+    expect(sameTrip.map((r) => r.numar_curse)).toEqual([2, 2, 2]);
   });
 
   it('locks the Anexa Factura RAI template by name', () => {

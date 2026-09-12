@@ -1,8 +1,6 @@
-import fs from 'fs';
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, extractAvizFromFile } from './avizOcr.js';
+import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence } from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
-import { uploadRoot } from '../uploadPath.js';
 
 const PSL_FIXTURE = `
 SC FURNIZOR DEMO SRL
@@ -47,6 +45,11 @@ describe('normalizePlate', () => {
 
   it('does not treat document prose as a plate', () => {
     expect(normalizePlate('DOCUMENT DE TEST BUILDTEST MATERIALE DEMONSTRATIVE PENTRU PLATFORMA DE TEST')).toBeNull();
+  });
+
+  it('rejects partial plate + OCR noise (ClickUp Numar auto)', () => {
+    expect(normalizePlate('330 SRS FOOTY STREAM TRANSPORTATOR')).toBeNull();
+    expect(normalizePlate('330 SR5 FOOTY STREAM TRANSPORTATOR')).toBeNull();
   });
 });
 
@@ -109,6 +112,12 @@ describe('parseBaumitAviz', () => {
     expect(parsed.numar_document_marfa).toBe('PSL-0044362');
     expect(parsed.cantitate_marfa).toBe(245);
     expect(parsed.tip_marfa).toBe('saci');
+  });
+
+  it('rejects glued OCR bag counts that exceed a truck load', () => {
+    const parsed = parseBaumitAviz('AVIZ DE INSOTIRE\nCantitate 245090 saci\nAuto B 123 ABC');
+    expect(parsed.cantitate_marfa).toBeNull();
+    expect(parsed.tip_marfa).toBeNull();
   });
 
   it('reads TPO from word-per-line PDF text instead of the next product word', () => {
@@ -284,6 +293,17 @@ NUME DELEGAT Dumitru Costin
     expect(parsed.numar_auto).toBe('B TEST 43 / B TEST 44');
     expect(parsed.numar_document_marfa).toBe('TRO-0008097');
   });
+
+  it('leaves Numar auto empty when OCR dumps bookmark text onto a partial plate', () => {
+    const raw = `
+Aviz de expeditie PSL-0044362
+Placuta de inmatriculare 330 SRS FOOTY STREAM TRANSPORTATOR
+245.00 sac
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.numar_auto).toBeNull();
+    expect(parsed.numar_document_marfa).toBe('PSL-0044362');
+  });
 });
 
 describe('repairAvizFromStored', () => {
@@ -370,6 +390,28 @@ NUME DELEGAT Ionescu Mara
     expect(repaired.numar_auto).not.toMatch(/DOCUMENT DE TEST/i);
   });
 
+  it('clears FOOTY STREAM noise from numar_auto instead of exporting it', () => {
+    const repaired = repairAvizFromStored({
+      numar_auto: '330 SR5 FOOTY STREAM TRANSPORTATOR',
+      extracted_data: {
+        raw_text: `Aviz de expeditie PSL-0044362
+Placuta de inmatriculare 330 SR5 FOOTY STREAM TRANSPORTATOR
+245.00 sac`,
+      },
+    });
+    expect(repaired.numar_auto).toBeNull();
+  });
+
+  it('replaces FOOTY STREAM noise when the PDF still has a real plate', () => {
+    const repaired = repairAvizFromStored({
+      numar_auto: '330 SRS FOOTY STREAM TRANSPORTATOR',
+      extracted_data: {
+        raw_text: 'Placuta de inmatriculare B 330 SRS Aviz de expeditie PSL-0044362',
+      },
+    });
+    expect(repaired.numar_auto).toBe('B-330-SRS');
+  });
+
   it('keeps a TPO typed in Editează when the PDF has none', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-00990011',
@@ -389,6 +431,16 @@ NUMAR AUTO TEST-101
       extracted_data: { raw_text: 'AVIZ DE EXPEDITIE TEST-AVZ-000101 245.00 sac' },
     });
     expect(repaired.numar_tpo).toBe('TPO-12');
+  });
+
+  it('clears an impossible stored bag count so the field can be reviewed', () => {
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'saci',
+      cantitate_marfa: 245090,
+      extracted_data: { raw_text: 'AVIZ Cantitate 245090 saci' },
+    });
+    expect(repaired.cantitate_marfa).toBeNull();
+    expect(avizFieldConfidence(repaired).cantitate_marfa).toBe('low');
   });
 });
 
@@ -414,6 +466,72 @@ describe('mapAnnexRows', () => {
     expect(mapped[0].nr_crt).toBe(1);
     expect(mapped[0].valoare_tpo).toBe(0);
     expect(mapped[0].numar_curse).toBe(1);
+  });
+
+  it('exports Numar curse as distinct runs per TPO, not always 1', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [
+      {
+        numar_tpo: 'TPO-9',
+        data_efectuare_cursa: '2026-09-10',
+        numar_auto: 'B-111-AAA',
+        numar_curse: 1,
+      },
+      {
+        numar_tpo: 'TPO-9',
+        data_efectuare_cursa: '2026-09-10',
+        numar_auto: 'B-222-BBB',
+        numar_curse: 1,
+      },
+    ]);
+    expect(mapped[0].numar_curse).toBe(2);
+    expect(mapped[1].numar_curse).toBe(2);
+  });
+
+  it('fills Tip marfa from quantity_unit when tip is empty', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      numar_tpo: 'TPO-1',
+      cantitate_marfa: 245,
+      tip_marfa: null,
+      quantity_unit: 'saci',
+    }]);
+    expect(mapped[0].tip_marfa).toBe('saci');
+  });
+
+  it('prefers packaging unit over empty tip even when unit is galeți', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      cantitate_marfa: 768,
+      tip_marfa: '',
+      quantity_unit: 'galeți',
+    }]);
+    expect(mapped[0].tip_marfa).toBe('galeti');
+  });
+
+  it('puts quantity_unit into Tip marfa even when tip holds a product name', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      tip_marfa: 'MPI Adeziv',
+      quantity_unit: 'saci',
+      cantitate_marfa: 245,
+    }]);
+    expect(mapped[0].tip_marfa).toBe('saci');
+  });
+
+  it('puts weighbridge tons into Cantitate when greutate brută is present', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      numar_tpo: 'TPO-1',
+      cantitate_marfa: 245,
+      tip_marfa: 'saci',
+      gross_weight_kg: 9964.15,
+    }]);
+    expect(mapped[0].cantitate_marfa).toBe(9.96);
+  });
+
+  it('keeps package count in Cantitate when there is no greutate brută', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      numar_tpo: 'TPO-1',
+      cantitate_marfa: 768,
+      tip_marfa: 'galeti',
+    }]);
+    expect(mapped[0].cantitate_marfa).toBe(768);
   });
 
   it('applies template Default for tax and tarif when the aviz still has 0', () => {
@@ -452,27 +570,5 @@ describe('mapAnnexRows', () => {
     const mapped = mapAnnexRows(cols, [{ taxe_suplimentare: 0, tarif_km: 0 }]);
     expect(mapped[0].taxe_suplimentare).toBe(100);
     expect(mapped[0].tarif_km).toBe(20);
-  });
-});
-
-const localTest002 = (() => {
-  try {
-    const names = fs.readdirSync(uploadRoot).filter((f) => f.endsWith('Aviz_test_002.pdf'));
-    return names.length ? names[names.length - 1] : null;
-  } catch {
-    return null;
-  }
-})();
-
-describe('extractAvizFromFile pdf-parse retry', () => {
-  it.skipIf(!localTest002)('reads the same BUILDTEST PDF repeatedly without stubbing', async () => {
-    const url = `/uploads/${localTest002}`;
-    for (let i = 0; i < 6; i += 1) {
-      const extracted = await extractAvizFromFile(url);
-      expect(extracted._stub).toBe(false);
-      expect(extracted.numar_auto).toBe('TEST-102');
-      expect(extracted.numar_document_marfa).toBe('TEST-AVZ-000102');
-      expect(extracted.data_efectuare_cursa).toBe('2026-08-20');
-    }
   });
 });

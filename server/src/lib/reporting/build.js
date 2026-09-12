@@ -92,10 +92,11 @@ export function reportWarnings(columns, documents) {
     warn(found, 'missing_gross_weight', 'warning',
       'Raportul are coloană de greutate brută, dar unele documente nu au valoarea.',
       docs.filter((d) => toNumber(d.gross_weight_kg) === null).map((d) => d.id));
-  } else {
+  } else if (!sources.has('cantitate_marfa')) {
     // The report the client asked for is checked against a weighbridge ticket. If the documents
     // carry that figure and the template drops it, the sheet cannot be reconciled — so say so
     // rather than quietly exporting a sack count in its place.
+    // Anexa RAI “Cantitate marfa (t/…)” already maps from gross_weight_kg → tons when present.
     warn(found, 'weight_not_exported', 'warning',
       'Documentele au greutate brută, dar șablonul nu o exportă.',
       docs.filter((d) => toNumber(d.gross_weight_kg) !== null).map((d) => d.id));

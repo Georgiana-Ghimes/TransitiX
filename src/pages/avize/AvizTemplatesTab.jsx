@@ -4,7 +4,7 @@ import AvizLegend from './AvizLegend';
 import { TEMPLATE_ACTION_LEGEND, inputCls, isLockedRai } from './avizeUi';
 
 export default function AvizTemplatesTab({
-  templates, obsCodes, newCode, setNewCode,
+  templates, obsCodes, newCode, setNewCode, newLabel, setNewLabel,
   onNewTemplate, onEdit, onDelete, onAddCode, onDeleteCode,
   activeTemplateId, onUseForExport,
 }) {
@@ -68,18 +68,35 @@ export default function AvizTemplatesTab({
         })}
       </div>
       <div className="bg-white rounded-xl border border-slate-200/80 p-4">
-        <p className="text-sm font-medium text-[#0A2B4E] mb-2">Coduri observații</p>
+        <p className="text-sm font-medium text-[#0A2B4E] mb-1">Coduri observații</p>
+        <p className="text-xs text-slate-500 mb-3">
+          Cod + descriere. Fără * în catalog — * se pune automat între coduri la Observații / export (ex. IF*Z:B).
+        </p>
         <div className="flex flex-wrap gap-2 mb-3">
           {obsCodes.map((c) => (
-            <span key={c.id} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-slate-100">
-              {c.code}
+            <span key={c.id} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-slate-100" title={c.label || ''}>
+              <span className="font-mono font-medium">{c.code}</span>
+              {c.label ? <span className="text-slate-500">· {c.label}</span> : null}
               <button type="button" className="text-red-500" onClick={() => onDeleteCode(c)} aria-label={`Șterge ${c.code}`}>×</button>
             </span>
           ))}
         </div>
-        <div className="flex gap-2">
-          <input className={inputCls} value={newCode} onChange={(e) => setNewCode(e.target.value)} placeholder="ex. Z:B*" />
-          <button type="button" className="px-3 py-2 text-sm border rounded-lg" onClick={onAddCode}>Adaugă</button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            className={inputCls}
+            value={newCode}
+            onChange={(e) => setNewCode(e.target.value)}
+            placeholder="Cod (ex. IF, Z:B, DM)"
+            aria-label="Cod observație"
+          />
+          <input
+            className={inputCls}
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Descriere (ex. Ilfov)"
+            aria-label="Descriere cod observație"
+          />
+          <button type="button" className="px-3 py-2 text-sm border rounded-lg shrink-0" onClick={onAddCode}>Adaugă</button>
         </div>
       </div>
     </div>

@@ -31,18 +31,39 @@ export function matchPatterns(text, patterns, { transform, baseConfidence = 0.9 
   return NO_MATCH;
 }
 
-/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ. */
+/** Romanian county codes used on standard plates (B, CJ, …). */
+export const RO_PLATE_COUNTIES =
+  'B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN';
+
+const RO_PLATE_TOKEN = new RegExp(
+  `^(?:${RO_PLATE_COUNTIES})[\\s-]?\\d{2,3}[\\s-]?[A-Z]{2,3}$`,
+  'i'
+);
+const SYNTHETIC_PLATE_TOKEN = /^(?:TEST-?\d{1,6}|B\s+TEST\s+\d{1,4})$/i;
+
+/**
+ * True when every slash-separated token is a real RO plate or a known synthetic test plate.
+ * Used so OCR prose ("330 SRS FOOTY STREAM…") never lands in Număr auto / Excel.
+ */
+export function isAcceptableAutoField(value) {
+  const parts = String(value || '')
+    .split('/')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!parts.length) return false;
+  if (parts.some((p) => p.length > 24)) return false;
+  return parts.every((p) => RO_PLATE_TOKEN.test(p) || SYNTHETIC_PLATE_TOKEN.test(p));
+}
+
+/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ — county required, no loose shape matches. */
 export function extractPlate(text) {
   const found = matchPatterns(text, [
-    /\b((?:B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)\s?\d{2,3}\s?[A-Z]{3})\b/,
-    /\b([A-Z]{1,2}\s?\d{2,3}\s?[A-Z]{3})\b/,
+    new RegExp(`\\b((?:${RO_PLATE_COUNTIES})\\s?\\d{2,3}\\s?[A-Z]{3})\\b`, 'i'),
   ], {
     transform: (raw) => String(raw).toUpperCase().replace(/\s+/g, ' ').trim(),
   });
-  if (!found.value) return NO_MATCH;
-  // A plate that is only plausible in shape, without a real county prefix, is worth less.
-  const strong = /^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)\s/.test(found.value);
-  return result(found.value, strong ? found.confidence : found.confidence - 0.25, found.matched);
+  if (!found.value || !isAcceptableAutoField(found.value)) return NO_MATCH;
+  return result(found.value, found.confidence, found.matched);
 }
 
 const MONTHS = {
@@ -157,6 +178,61 @@ export function extractNetWeight(text) {
   return result(Math.round(value * factor * 100) / 100, 0.9, hit[0]);
 }
 
+/**
+ * Hard ceilings — only drop OCR noise that is orders of magnitude wrong
+ * ("245.000 saci" / "245090 saci"). Real loads of 10_000+ bags must still pass.
+ */
+export const QUANTITY_CEILING = Object.freeze({
+  saci: 100000,
+  sac: 100000,
+  galeti: 100000,
+  bucati: 200000,
+  buc: 200000,
+  bucăți: 200000,
+  paleti: 2000,
+  paleți: 2000,
+  palet: 2000,
+  role: 100000,
+  colete: 100000,
+  kg: 100000,
+  t: 100,
+  to: 100,
+  ton: 100,
+  tone: 100,
+  mc: 500,
+  m3: 500,
+});
+
+/** Fold diacritics so tip_marfa / OCR units compare cleanly. */
+function foldUnit(unit) {
+  return String(unit || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+function quantityKey(unit) {
+  const u = foldUnit(unit);
+  if (u.startsWith('sac')) return 'saci';
+  if (u.startsWith('pal')) return 'paleti';
+  if (u.startsWith('buc') || u === 'pcs') return 'bucati';
+  if (u.startsWith('gal')) return 'galeti';
+  if (u.startsWith('ton') || u === 't' || u === 'to') return 'tone';
+  return u || 'saci';
+}
+
+/**
+ * True when qty is below the hard OCR-garbage ceiling for the unit.
+ * Unknown count units default to the saci ceiling.
+ */
+export function isPlausibleQuantity(value, unit) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return false;
+  const key = quantityKey(unit);
+  const max = QUANTITY_CEILING[key] ?? QUANTITY_CEILING.saci;
+  return n <= max;
+}
+
 /** Quantity with its unit — kept separate from weight, never used in its place. */
 export function extractQuantity(text) {
   const blob = String(text || '');
@@ -166,8 +242,9 @@ export function extractQuantity(text) {
   );
   if (labelled) {
     const value = parseNumber(labelled[1]);
-    if (value != null) {
-      return result({ quantity: value, unit: (labelled[2] || '').toLowerCase() || null }, 0.9, labelled[0]);
+    const unit = (labelled[2] || '').toLowerCase() || null;
+    if (value != null && isPlausibleQuantity(value, unit)) {
+      return result({ quantity: value, unit }, 0.9, labelled[0]);
     }
   }
   // An unlabelled number in a weight unit is almost always the weight, not the quantity —
@@ -178,7 +255,10 @@ export function extractQuantity(text) {
   );
   if (bare) {
     const value = parseNumber(bare[1]);
-    if (value != null) return result({ quantity: value, unit: bare[2].toLowerCase() }, 0.8, bare[0]);
+    const unit = bare[2].toLowerCase();
+    if (value != null && isPlausibleQuantity(value, unit)) {
+      return result({ quantity: value, unit }, 0.8, bare[0]);
+    }
   }
   return NO_MATCH;
 }

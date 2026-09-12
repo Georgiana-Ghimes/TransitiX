@@ -6,6 +6,7 @@ import {
   extractPalletCount,
   extractPlate,
   extractQuantity,
+  isPlausibleQuantity,
   overallConfidence,
   parseNumber,
 } from './fields.js';
@@ -99,10 +100,16 @@ describe('extractPlate', () => {
     expect(extractPlate('Auto: B 123 ABC').value).toBe('B 123 ABC');
   });
 
-  it('trusts a real county prefix more than a plausible shape', () => {
-    const real = extractPlate('CJ 12 XYZ');
-    const shaped = extractPlate('QQ 12 XYZ');
-    expect(real.confidence).toBeGreaterThan(shaped.confidence);
+  it('rejects a plate-shaped string without a real county', () => {
+    expect(extractPlate('QQ 12 XYZ').value).toBeNull();
+    expect(extractPlate('CJ 12 XYZ').value).toBe('CJ 12 XYZ');
+  });
+
+  it('does not keep bookmark/UI noise glued to a partial plate', () => {
+    const found = extractPlate(
+      'Placuta de inmatriculare 330 SRS FOOTY STREAM TRANSPORTATOR'
+    );
+    expect(found.value).toBeNull();
   });
 
   it('returns nothing when there is no plate', () => {
@@ -161,6 +168,21 @@ describe('quantity stays separate from weight', () => {
 
   it('reads a pallet count', () => {
     expect(extractPalletCount('Paleti: 18').value).toBe(18);
+  });
+
+  it('rejects OCR magnitudes that cannot fit one truck', () => {
+    // Romanian thousands / glued digits from poor photos — not a real bag count.
+    expect(extractQuantity('Cantitate: 245.000 saci').value).toBeNull();
+    expect(extractQuantity('245090 saci').value).toBeNull();
+    expect(isPlausibleQuantity(245000, 'saci')).toBe(false);
+    expect(isPlausibleQuantity(245, 'saci')).toBe(true);
+    // Large but real loads must still be accepted (hard ceiling is for OCR garbage only).
+    expect(isPlausibleQuantity(10000, 'saci')).toBe(true);
+    expect(extractQuantity('Cantitate: 10000 saci').value).toEqual({ quantity: 10000, unit: 'saci' });
+  });
+
+  it('still accepts a labelled quantity in kilograms within truck weight', () => {
+    expect(extractQuantity('Cantitate: 4200 kg').value).toEqual({ quantity: 4200, unit: 'kg' });
   });
 });
 
@@ -422,6 +444,16 @@ describe('quantity must never absorb a weight', () => {
     const result = extractDocument('AVIZ DE INSOTIRE\nData 12.03.2026\nGreutate 4200 kg');
     expect(result.values.quantity).toBeUndefined();
     expect(result.values.gross_weight_kg).toBe(4200);
+  });
+
+  it('leaves quantity empty when OCR invents an impossible bag count', () => {
+    const result = extractDocument(
+      'AVIZ DE INSOTIRE\nTPO 2026-0313\nData: 12.03.2026\nCantitate: 245.000 saci',
+      { documentType: 'aviz' }
+    );
+    expect(result.values.quantity).toBeUndefined();
+    expect(result.review_fields).toContain('quantity');
+    expect(result.needs_review).toBe(true);
   });
 });
 
