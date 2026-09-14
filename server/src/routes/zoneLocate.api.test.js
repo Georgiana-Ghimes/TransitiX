@@ -98,6 +98,33 @@ describe('POST /api/commercial/zones/locate', () => {
   });
 });
 
+describe('GET /api/commercial/zones', () => {
+  it('returns zones and their brackets, and nothing else', async () => {
+    const res = await api().get('/api/commercial/zones').set(auth(ctx.adminToken));
+    expect(res.status).toBe(200);
+    expect(Object.keys(res.body).sort()).toEqual(['zone_rates', 'zones']);
+  });
+
+  it('is an office screen', async () => {
+    expect((await api().get('/api/commercial/zones').set(auth(ctx.driverToken))).status).toBe(403);
+  });
+
+  it('never returns another company’s zones', async () => {
+    const other = await seedCompany('zones-other');
+    try {
+      await query(
+        `INSERT INTO tax_zones (company_id, code, name, kind, matcher, priority)
+         VALUES ($1, 'ZOTHER', 'A lor', 'zone', '{}'::jsonb, 1)`,
+        [other.company.id],
+      );
+      const res = await api().get('/api/commercial/zones').set(auth(ctx.adminToken));
+      expect(res.body.zones.some((z) => z.code === 'ZOTHER')).toBe(false);
+    } finally {
+      await dropCompany(other.company.id);
+    }
+  });
+});
+
 describe('resolving a point against zones', () => {
   let zoneA;
 

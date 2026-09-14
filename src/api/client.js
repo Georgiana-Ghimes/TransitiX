@@ -793,6 +793,10 @@ export const api = {
     setDepot(locationId) {
       return request('/commercial/depot', { method: 'PUT', body: { location_id: locationId } });
     },
+    /** Only the tax zones and their MMA brackets — what the zone map needs, nothing else. */
+    zones() {
+      return request('/commercial/zones');
+    },
     /** Which zone an address falls in, resolved by the same functions the TPO uses. */
     locateZone({ address, mmaKg = null, date = null }) {
       return request('/commercial/zones/locate', {

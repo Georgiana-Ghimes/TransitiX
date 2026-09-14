@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   ZoneImportError,
-  latLngsToGeometry,
   combinedBounds,
   geometryBounds,
   geometrySummary,
@@ -306,39 +305,6 @@ describe('findSpikeVertices', () => {
   it('is empty for a ring too short to have a middle', () => {
     expect(findSpikeVertices([[26, 44], [26.1, 44]])).toEqual([]);
     expect(findSpikeVertices(null)).toEqual([]);
-  });
-});
-
-describe('latLngsToGeometry', () => {
-  const traced = [[44.4, 26.0], [44.4, 26.2], [44.5, 26.2], [44.5, 26.0]];
-
-  it('swaps a traced outline back into GeoJSON lon/lat', () => {
-    // The round trip is the assertion that matters: trace it, store it, draw it again, and the
-    // shape has to be the one the operator clicked. A transposed save draws correctly in the
-    // session that made it and puts pointInPolygon in the wrong hemisphere afterwards.
-    const geometry = latLngsToGeometry(traced);
-    expect(geometry.coordinates[0][0]).toEqual([26.0, 44.4]);
-    expect(geometryToRings(geometry)[0].slice(0, 4)).toEqual(traced);
-  });
-
-  it('closes the ring', () => {
-    const ring = latLngsToGeometry(traced).coordinates[0];
-    expect(ring[0]).toEqual(ring[ring.length - 1]);
-    expect(ring).toHaveLength(5);
-  });
-
-  it('does not double-close an already closed ring', () => {
-    const closed = [...traced, [44.4, 26.0]];
-    expect(latLngsToGeometry(closed).coordinates[0]).toHaveLength(5);
-  });
-
-  it('refuses fewer than three points', () => {
-    expect(latLngsToGeometry([[44.4, 26.0], [44.5, 26.1]])).toBeNull();
-    expect(latLngsToGeometry([])).toBeNull();
-  });
-
-  it('drops points that are not finite pairs', () => {
-    expect(latLngsToGeometry([...traced, [null, 26.0], ['x', 'y']]).coordinates[0]).toHaveLength(5);
   });
 });
 

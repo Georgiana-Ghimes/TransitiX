@@ -128,6 +128,30 @@ router.get('/contracts/:id/history', async (req, res) => {
 });
 
 /**
+ * Just the zones and their rates.
+ *
+ * The zone map used to call `/overview`, which loads contracts, tariffs, surcharges,
+ * observation codes, locations and the fleet's vehicle classes — eleven queries to read two
+ * tables. On the documents companion none of the rest exists, and a screen that drags the whole
+ * commercial configuration behind it is a screen that breaks when any part of it does.
+ */
+router.get('/zones', async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const [zones, rates] = await Promise.all([
+      query('SELECT * FROM tax_zones WHERE company_id = $1 ORDER BY priority DESC, code', [companyId]),
+      query('SELECT * FROM tax_zone_rates WHERE company_id = $1 ORDER BY mma_min_kg NULLS FIRST', [companyId]),
+    ]);
+    res.json({
+      zones: zones.rows.map(serializeRow),
+      zone_rates: rates.rows.map(serializeRow),
+    });
+  } catch (err) {
+    fail(res, err, 'Zonele nu au putut fi citite');
+  }
+});
+
+/**
  * Which zone an address falls in, and what that costs for a given MMA.
  *
  * The map screen asks this instead of deciding for itself: `resolveZone` and `findZoneRate` are

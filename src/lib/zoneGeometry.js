@@ -404,24 +404,6 @@ export function parseZoneOutlines(text, filename = '') {
 }
 
 /**
- * The inverse of `geometryToRings`, for an outline traced on the map by hand.
- *
- * Leaflet hands back `[lat, lon]` and `tax_zones.polygon` stores `[lon, lat]`; getting this
- * backwards would save a zone that draws correctly in the session that traced it and lands in
- * the wrong hemisphere for `pointInPolygon`. The ring is closed here rather than at the call
- * site, because an unclosed ring is accepted by most readers and rejected by some.
- */
-export function latLngsToGeometry(points = []) {
-  const ring = points
-    .map(toPair)
-    .filter(Boolean)
-    .map(([lat, lon]) => [lon, lat]);
-  if (ring.length < 3) return null;
-  const closed = closeRing(ring);
-  return closed ? { type: 'Polygon', coordinates: [closed] } : null;
-}
-
-/**
  * Guards against the single most likely import mistake: a file in lat/lon order, or in a
  * projected CRS. Both parse cleanly and both put the zone somewhere it is not.
  */
