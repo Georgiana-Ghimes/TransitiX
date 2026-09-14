@@ -75,6 +75,50 @@ export function combinedBounds(geometries = []) {
   ]);
 }
 
+/**
+ * Whether a point falls inside a drawn outline.
+ *
+ * This answers a display question — which shape on screen contains this pin — and never what
+ * an address costs. Pricing is resolved by `resolveZone` on the server, against `tax_zones`,
+ * and that stays the only authority: the two are asked different questions on purpose, so a
+ * zone drawn on the map but not yet linked to pricing can be reported as exactly that instead
+ * of the screen showing a pin inside a polygon and claiming it is in no zone.
+ *
+ * Ray casting on the half-open interval, so a vertex shared by two edges is counted once.
+ */
+function pointInRing([lat, lon], ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [latI, lonI] = ring[i];
+    const [latJ, lonJ] = ring[j];
+    if ((latI > lat) !== (latJ > lat)) {
+      const x = ((lonJ - lonI) * (lat - latI)) / (latJ - latI) + lonI;
+      if (lon < x) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+export function pointInGeometry(point, geometry) {
+  if (!Array.isArray(point) || point.length < 2) return false;
+  const lat = toFiniteNumber(point[0]);
+  const lon = toFiniteNumber(point[1]);
+  if (lat == null || lon == null) return false;
+
+  const polygons = geometry?.type === 'Polygon'
+    ? [geometry.coordinates]
+    : geometry?.type === 'MultiPolygon' ? geometry.coordinates : [];
+
+  return polygons.some((polygonCoords) => {
+    const rings = (polygonCoords || [])
+      .map((ring) => (ring || []).map(toPair).filter(Boolean).map(([lo, la]) => [la, lo]))
+      .filter((ring) => ring.length >= 3);
+    if (!rings.length || !pointInRing([lat, lon], rings[0])) return false;
+    // A hit inside a hole puts the point back outside.
+    return !rings.slice(1).some((hole) => pointInRing([lat, lon], hole));
+  });
+}
+
 /** Whether one geometry's extent sits entirely inside another's. */
 export function boundsContain(outer, inner) {
   const o = geometryBounds(outer);

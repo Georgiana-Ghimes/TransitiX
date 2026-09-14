@@ -37,6 +37,11 @@ function fail(res, err, fallback) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Lowercased and stripped of diacritics, so "Bucuresti" and "București" compare equal. */
+function plainText(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 /**
  * Everything the configuration screen needs, in one call.
  *
@@ -165,8 +170,16 @@ router.get('/zones', async (req, res) => {
 router.post('/zones/locate', async (req, res) => {
   try {
     const companyId = req.user.company_id;
-    const address = String(req.body?.address || '').trim();
-    if (!address) return res.status(400).json({ message: 'Adresa este obligatorie' });
+    const street = String(req.body?.address || '').trim();
+    if (!street) return res.status(400).json({ message: 'Adresa este obligatorie' });
+
+    // The screen knows which city's tab is open, so an operator types a street and nothing
+    // else. Without this a bare "Calea Victoriei" is geocoded country-wide and lands on the
+    // first street of that name anywhere in Romania — a confident pin in the wrong county.
+    const cityHint = String(req.body?.city || '').trim();
+    const address = cityHint && !plainText(street).includes(plainText(cityHint))
+      ? street + ', ' + cityHint
+      : street;
 
     const mmaKg = req.body?.mma_kg == null || req.body.mma_kg === ''
       ? null
@@ -178,8 +191,18 @@ router.post('/zones/locate', async (req, res) => {
 
     const geo = await geocodeAddress(pool, companyId, address);
     if (!geo.best) {
+      // "Not found" and "there is no geocoder" send someone to different places: one is a
+      // typo, the other is a server that cannot answer any address at all.
+      if (geo.providerDown) {
+        return res.status(503).json({
+          message: 'Geocodarea nu este configurată pe server, deci adresele nu pot fi '
+            + 'localizate. Setează PHOTON_URL în server/.env.',
+          geocoder: 'indisponibil',
+        });
+      }
       return res.json({
         address,
+        query: address,
         point: null,
         outcome: geo.outcome,
         zone: null,

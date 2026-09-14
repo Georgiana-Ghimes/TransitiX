@@ -159,6 +159,18 @@ async function writeCache(db, companyId, key, provider, payload) {
  * `search` is injectable so tests never touch the network, and so a second provider can be
  * dropped in later without changing callers.
  */
+/**
+ * Whether a thrown geocoding failure is about the address or about the provider.
+ *
+ * A provider answers a bad address with no results, not an exception — so a throw is almost
+ * always infrastructure. Only a 4xx, which means the provider looked at this request and
+ * rejected it, is treated as something the address caused.
+ */
+export function isAddressFault(err) {
+  const status = Number(err?.status);
+  return Number.isFinite(status) && status >= 400 && status < 500;
+}
+
 export async function geocodeAddress(db, companyId, address, {
   provider = activeGeocodeProvider(),
   search = defaultSearch(),
@@ -191,15 +203,21 @@ export async function geocodeAddress(db, companyId, address, {
   try {
     result = await search(parsed);
   } catch (err) {
-    // Cache the failure so a broken address is not re-sent to the provider every run.
-    await writeCache(db, companyId, key, provider, {
-      queryText: parsed.raw, status: 'error',
-      latitude: null, longitude: null, confidence: null, matchedLabel: null,
-      candidates: [], errorMessage: err.message,
-    });
+    // Only a failure the address itself caused is worth remembering. A provider that is
+    // unconfigured, down, or unreachable says nothing about the address, and caching that
+    // outlives the outage: every address tried while PHOTON_URL was unset stayed "not found"
+    // after it was set, because the cache is read before the provider is called.
+    if (isAddressFault(err)) {
+      await writeCache(db, companyId, key, provider, {
+        queryText: parsed.raw, status: 'error',
+        latitude: null, longitude: null, confidence: null, matchedLabel: null,
+        candidates: [], errorMessage: err.message,
+      });
+    }
     return {
       key, cached: false, best: null, candidates: [], error: err.message,
-      outcome: { action: 'reject', reason: 'eroare_provider' },
+      providerDown: !isAddressFault(err),
+      outcome: { action: 'reject', reason: isAddressFault(err) ? 'eroare_provider' : 'geocoder_indisponibil' },
     };
   }
 

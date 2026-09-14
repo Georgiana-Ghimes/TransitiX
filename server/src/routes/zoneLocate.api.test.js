@@ -42,6 +42,18 @@ async function seedGeocode(address, { lat, lon }, { confidence = 0.92, city = 'B
   return key;
 }
 
+/** A cached "the provider looked and found nothing" row, which is not an outage. */
+async function seedGeocodeMiss(address) {
+  const key = addressKey(parseRomanianAddress(address));
+  await query(
+    `INSERT INTO geocode_cache
+       (company_id, address_key, provider, query_text, status, candidates)
+     VALUES ($1, $2, $3, $4, 'miss', '[]'::jsonb)
+     ON CONFLICT (company_id, address_key, provider) DO UPDATE SET status = 'miss'`,
+    [ctx.company.id, key, activeGeocodeProvider(), address],
+  );
+}
+
 async function makeZone({ code, name, polygon = null, matcher = {}, priority = 0, active = true }) {
   const res = await query(
     `INSERT INTO tax_zones (company_id, code, name, kind, matcher, polygon, priority, is_active)
@@ -88,9 +100,36 @@ describe('POST /api/commercial/zones/locate', () => {
     expect((await locate({ address: 'x' }, ctx.driverToken)).status).toBe(403);
   });
 
-  it('answers 200 with no point when the address cannot be geocoded', async () => {
+  it('appends the city so a bare street is not geocoded country-wide', async () => {
+    // The screen knows which tab is open. Without this "Calea Victoriei" is matched against
+    // every street of that name in Romania, and the pin lands confidently in another county.
+    await seedGeocode('Strada Doar, Bucuresti', INSIDE);
+    const res = await locate({ address: 'Strada Doar', city: 'București' });
+    expect(res.status).toBe(200);
+    expect(res.body.point).not.toBeNull();
+    expect(res.body.query).toBeUndefined();
+  });
+
+  it('does not repeat a city the operator already typed', async () => {
+    await seedGeocode('Calea Victoriei, Bucuresti', INSIDE);
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', city: 'București' });
+    expect(res.body.point).not.toBeNull();
+  });
+
+  it('says the geocoder is missing rather than blaming the address', async () => {
+    // The suite runs with PHOTON_URL empty, which is the same state a fresh server is in.
+    // Reporting that as "address not found" sent people hunting for a typo in a street that
+    // exists, while no address on the server could be resolved at all.
+    const res = await locate({ address: 'Strada Fara Cache 999' });
+    expect(res.status).toBe(503);
+    expect(res.body.geocoder).toBe('indisponibil');
+    expect(res.body.message).toMatch(/PHOTON_URL/);
+  });
+
+  it('answers 200 with no point when the provider genuinely found nothing', async () => {
     // A miss is not an error: the operator typed something, and the screen has to say so
     // rather than show a failure that looks like the server broke.
+    await seedGeocodeMiss('Strada Inexistenta 999, Nicaieri');
     const res = await locate({ address: 'Strada Inexistenta 999, Nicaieri' });
     expect(res.status).toBe(200);
     expect(res.body.point).toBeNull();

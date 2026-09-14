@@ -28,6 +28,7 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   ZoneImportError,
   combinedBounds,
+  pointInGeometry,
   ringsWithCutouts,
   geometryBounds,
   geometrySummary,
@@ -36,6 +37,9 @@ import {
   parseZoneOutlines,
 } from '@/lib/zoneGeometry';
 import { ZONE_CITIES, cityById, referenceZone } from '@/lib/zoneReference';
+import {
+  effectiveZone, hasStreetIndex, loadStreetIndex, lookupStreet,
+} from '@/lib/streetZones';
 
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
 const inputCls = 'w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30';
@@ -85,11 +89,21 @@ export default function ZoneMap() {
   const [searching, setSearching] = useState(false);
   const [hit, setHit] = useState(null);
 
+  const [streetIndex, setStreetIndex] = useState(null);
+  const [lookup, setLookup] = useState(null);
+
   const [importing, setImporting] = useState(null);
   const [choice, setChoice] = useState(null);
   const fileRef = useRef(null);
 
   const city = cityById(cityId);
+
+  // The field asks for kilograms and the tariff table speaks in tonnes, so "7,5" gets typed.
+  // Offered as a correction rather than applied: silently multiplying somebody's number is how
+  // a 7,5 kg answer becomes a 7.500 kg charge nobody chose.
+  const mmaNumber = Number(String(mma).replace(',', '.'));
+  const tonnesLikely = mma !== '' && Number.isFinite(mmaNumber)
+    && mmaNumber > 0 && mmaNumber < 100;
 
   useEffect(() => {
     load();
@@ -149,26 +163,79 @@ export default function ZoneMap() {
     });
   };
 
+  // Loaded on first use, not with the page: a few hundred kilobytes that a map nobody searches
+  // should never pay for.
+  const ensureIndex = async () => {
+    if (streetIndex?.cityId === city.id) return streetIndex;
+    if (!hasStreetIndex(city.id)) return null;
+    const loaded = await loadStreetIndex(city.id);
+    setStreetIndex(loaded);
+    return loaded;
+  };
+
+  /**
+   * Answers from the shipped index first, and only asks the geocoder when the street is not in
+   * it. The index never leaves the browser, which is the whole reason it exists: a search box
+   * on this screen is routinely fed a customer's delivery address.
+   */
   const search = async (e) => {
     e?.preventDefault();
     const q = address.trim();
     if (!q) return;
     setSearching(true);
     setHit(null);
+    setLookup(null);
     try {
+      const index = await ensureIndex();
+      if (index) {
+        const found = lookupStreet(index, q);
+        if (found.status !== 'unknown') {
+          setLookup(found);
+          setSearching(false);
+          return;
+        }
+        // Not in the index: it may be a street we do not carry, or an address with a number.
+        // Fall through to the geocoder only if one is configured.
+        setLookup(found);
+      }
+
       const res = await api.commercial.locateZone({
         address: q,
-        mmaKg: mma === '' ? null : Number(mma),
+        city: city.label,
+        mmaKg: mma === '' ? null : mmaNumber,
       });
-      setHit(res);
+      // Which drawn outline holds the pin. Asked here because the server answers about
+      // pricing, and a zone on the map that is not linked yet would otherwise come back as
+      // "no zone" while the operator is looking at the pin sitting inside it.
+      const drawn = res.point
+        ? [...city.zones]
+          .sort((a, b) => b.priority - a.priority)
+          .find((z) => pointInGeometry([res.point.latitude, res.point.longitude], z.outline))
+        : null;
+      setHit({ ...res, drawn: drawn ?? null });
       if (!res.point) {
         notifyError('Adresă negăsită', res.message || 'Geocodarea nu a returnat niciun rezultat.');
       }
     } catch (err) {
-      notifyError('Căutarea a eșuat', err);
+      // With the index answering the common case, a missing geocoder is a note, not a failure.
+      if (err?.status === 503) {
+        notifyError(
+          'Strada nu e în index',
+          'Nu am găsit strada în lista orașului, iar geocodarea nu e configurată pe server '
+          + 'ca rezervă. Verifică scrierea sau caută pe hartă.',
+        );
+      } else {
+        notifyError('Căutarea a eșuat', err);
+      }
     } finally {
       setSearching(false);
     }
+  };
+
+  const pickSuggestion = (entry) => {
+    setAddress(entry.label);
+    setLookup({ status: 'exact', query: entry.label, found: entry, suggestions: [] });
+    setHit(null);
   };
 
   /**
@@ -325,10 +392,10 @@ export default function ZoneMap() {
             className={inputCls}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder={`Strada, oraș — ex. Calea Victoriei, ${city.label}`}
+            placeholder={`Strada — ex. Calea Victoriei ${city.label ? `(${city.label})` : ''}`}
           />
         </div>
-        <div className="w-32">
+        <div className="w-36">
           <input
             className={inputCls}
             value={mma}
@@ -336,6 +403,15 @@ export default function ZoneMap() {
             inputMode="numeric"
             placeholder="MMA (kg)"
           />
+          {tonnesLikely ? (
+            <button
+              type="button"
+              onClick={() => setMma(String(Math.round(Number(mma) * 1000)))}
+              className="mt-1 text-[11px] text-amber-700 hover:underline"
+            >
+              {mma} pare în tone — pune {Number(mma) * 1000} kg?
+            </button>
+          ) : null}
         </div>
         <button
           type="submit"
@@ -346,6 +422,35 @@ export default function ZoneMap() {
           Verifică
         </button>
       </form>
+
+      {lookup && lookup.status !== 'unknown' ? (
+        <StreetResult
+          lookup={lookup}
+          city={city}
+          mmaKg={mma === '' ? null : mmaNumber}
+          taxZoneFor={taxZoneFor}
+          ratesFor={ratesFor}
+          onPick={pickSuggestion}
+        />
+      ) : null}
+
+      {lookup?.status === 'unknown' && lookup.suggestions.length && !hit ? (
+        <div className={`${cardCls} p-3 text-sm`}>
+          <span className="text-slate-600">Nu am găsit „{lookup.query}”. Ai vrut:</span>
+          <span className="ml-2 inline-flex flex-wrap gap-1.5">
+            {lookup.suggestions.map((sug) => (
+              <button
+                key={sug.key}
+                type="button"
+                onClick={() => pickSuggestion(sug)}
+                className="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+              >
+                {sug.label}
+              </button>
+            ))}
+          </span>
+        </div>
+      ) : null}
 
       {hit?.point ? <LocateResult hit={hit} /> : null}
 
@@ -462,43 +567,212 @@ export default function ZoneMap() {
   );
 }
 
+/**
+ * Two separate facts, never merged: where the pin fell, and what the calculation will charge.
+ *
+ * They can legitimately differ — a zone drawn on the map charges nothing until it is linked to
+ * pricing — and collapsing them into one line would either hide a zone the operator can see or
+ * promise a tax that will not appear on the invoice.
+ */
+/**
+ * What the index knows about a street, and what that means for the invoice.
+ *
+ * The two are reported separately for the same reason the geocoded result does it: a zone drawn
+ * on the map charges nothing until it is linked to pricing, and a street that only partly lies
+ * in its zone has no single answer at all.
+ */
+function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
+  if (lookup.status === 'ambiguous') {
+    return (
+      <div className={`${cardCls} p-3 text-sm`}>
+        <div className="flex items-start gap-2">
+          <TriangleAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-slate-700">
+              „{lookup.query}” poate fi mai multe străzi, iar ele <strong>nu sunt în aceeași
+              zonă</strong>. Alege una:
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {lookup.suggestions.map((entry) => (
+                <button
+                  key={entry.key}
+                  type="button"
+                  onClick={() => onPick(entry)}
+                  className="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50"
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const entry = lookup.found;
+  const effective = effectiveZone(entry, city.zones);
+  const zone = effective ? city.zones.find((z) => z.code === effective.code) : null;
+  const taxZone = zone ? taxZoneFor(zone.code) : null;
+  const rate = taxZone && mmaKg != null
+    ? pickRate(ratesFor(taxZone.id), mmaKg)
+    : null;
+
+  return (
+    <div className={`${cardCls} p-3 space-y-2 text-sm`}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <MapPin className="w-4 h-4 text-[#1D4E89] shrink-0" />
+        <span className="text-slate-700 font-medium">{entry.label}</span>
+        {lookup.sharedWith > 1 ? (
+          <span className="text-[11px] text-slate-400">
+            {lookup.sharedWith} străzi cu acest nume, toate în aceeași zonă
+          </span>
+        ) : lookup.status === 'without-type' ? (
+          <span className="text-[11px] text-slate-400">
+            potrivit după nume — verifică dacă e strada corectă
+          </span>
+        ) : null}
+        <span className="text-[11px] text-slate-400">din indexul {city.label}</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Zonă</span>
+        {!zone ? (
+          <span className="text-slate-500">În afara zonelor restricționate.</span>
+        ) : (
+          <>
+            <span
+              className="px-2 py-0.5 rounded-full text-white text-xs font-semibold"
+              style={{ backgroundColor: zone.color }}
+            >
+              {zone.code}
+            </span>
+            <span className="text-slate-600">{zone.name}</span>
+            {effective.certain ? (
+              <span className="text-[11px] text-slate-400">{zone.threshold}</span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
+                <TriangleAlert className="w-3.5 h-3.5" />
+                strada traversează limita — numărul poștal decide, verifică pe hartă
+              </span>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Calcul</span>
+        {!zone ? (
+          <span className="text-slate-500">Nicio taxă de zonă.</span>
+        ) : !taxZone ? (
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <TriangleAlert className="w-3.5 h-3.5" />
+            {zone.code} nu e activată pentru calcul — TPO-ul nu va adăuga nicio taxă aici.
+          </span>
+        ) : mmaKg == null ? (
+          <span className="text-slate-500">Completează MMA ca să vezi taxa.</span>
+        ) : rate ? (
+          <>
+            <span className="text-slate-800 font-semibold">{formatAmount(rate)}</span>
+            <span className="text-[11px] text-slate-400">
+              {zone.code} · {mmaKg.toLocaleString('ro-RO')} kg
+              {effective.certain ? '' : ' · dacă adresa e în zonă'}
+            </span>
+          </>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <TriangleAlert className="w-3.5 h-3.5" />
+            {zone.code} nu are tranșă pentru {mmaKg.toLocaleString('ro-RO')} kg.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The bracket covering a weight, narrowest first.
+ *
+ * Deliberately the same rule as `findZoneRate` on the server, because this reads the very rows
+ * that function reads. It is a display of the stored tariff, not a second opinion about it.
+ */
+function pickRate(rates, mmaKg) {
+  const matching = rates.filter((r) => {
+    const min = Number(r.mma_min_kg) || 0;
+    const max = r.mma_max_kg == null ? Infinity : Number(r.mma_max_kg);
+    return mmaKg >= min && mmaKg <= max;
+  });
+  return matching.sort((a, b) => {
+    const spanA = (a.mma_max_kg == null ? Infinity : Number(a.mma_max_kg)) - Number(a.mma_min_kg);
+    const spanB = (b.mma_max_kg == null ? Infinity : Number(b.mma_max_kg)) - Number(b.mma_min_kg);
+    return spanA - spanB;
+  })[0] ?? null;
+}
+
 function LocateResult({ hit }) {
+  const drawn = hit.drawn;
+  const charged = hit.zone;
   const amount = formatAmount(hit.rate);
 
   return (
-    <div className={`${cardCls} p-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm`}>
-      <MapPin className="w-4 h-4 text-[#1D4E89] shrink-0" />
-      <span className="text-slate-700 font-medium">{hit.point.label || hit.address}</span>
+    <div className={`${cardCls} p-3 space-y-2 text-sm`}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <MapPin className="w-4 h-4 text-[#1D4E89] shrink-0" />
+        <span className="text-slate-700 font-medium">{hit.point.label || hit.address}</span>
+        {hit.query && hit.query !== hit.address ? (
+          <span className="text-[11px] text-slate-400">căutat ca „{hit.query}”</span>
+        ) : null}
+        {hit.outcome?.action === 'review' ? (
+          <span className="text-[11px] text-amber-700">
+            Geocodare incertă — verifică pinul pe hartă.
+          </span>
+        ) : null}
+      </div>
 
-      {!hit.zone ? (
-        <span className="text-slate-500">Nu cade în nicio zonă activă din tarifare.</span>
-      ) : (
-        <>
-          <span className="px-2 py-0.5 rounded-full bg-[#0A2B4E] text-white text-xs font-semibold">
-            {hit.zone.code}
-          </span>
-          <span className="text-slate-600">{hit.zone.name}</span>
-          <span className="text-[11px] text-slate-400">
-            {hit.matched_by === 'polygon' ? 'după contur' : 'după text (nu după contur)'}
-          </span>
-          {hit.rate ? (
-            <span className="text-slate-800 font-semibold">{amount}</span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-amber-700">
-              <TriangleAlert className="w-3.5 h-3.5" />
-              {hit.mma_kg == null
-                ? 'Completează MMA ca să vezi taxa'
-                : `Fără tarif valabil la ${hit.date} pentru ${hit.mma_kg} kg`}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Zonă</span>
+        {drawn ? (
+          <>
+            <span
+              className="px-2 py-0.5 rounded-full text-white text-xs font-semibold"
+              style={{ backgroundColor: drawn.color }}
+            >
+              {drawn.code}
             </span>
-          )}
-        </>
-      )}
+            <span className="text-slate-600">{drawn.name}</span>
+            <span className="text-[11px] text-slate-400">{drawn.threshold}</span>
+          </>
+        ) : (
+          <span className="text-slate-500">În afara zonelor restricționate.</span>
+        )}
+      </div>
 
-      {hit.outcome?.action === 'review' ? (
-        <span className="text-[11px] text-amber-700">
-          Geocodare incertă — verifică pinul înainte să te bazezi pe rezultat.
-        </span>
-      ) : null}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Calcul</span>
+        {charged && hit.rate ? (
+          <>
+            <span className="text-slate-800 font-semibold">{amount}</span>
+            <span className="text-[11px] text-slate-400">
+              {charged.code} · {hit.matched_by === 'polygon' ? 'după contur' : 'după text'}
+              {hit.mma_kg != null ? ` · ${hit.mma_kg.toLocaleString('ro-RO')} kg` : ''}
+            </span>
+          </>
+        ) : charged ? (
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <TriangleAlert className="w-3.5 h-3.5" />
+            {hit.mma_kg == null
+              ? `${charged.code} intră în calcul, dar fără MMA nu se poate alege tranșa.`
+              : `${charged.code} nu are tarif valabil la ${hit.date} pentru ${hit.mma_kg.toLocaleString('ro-RO')} kg.`}
+          </span>
+        ) : drawn ? (
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <TriangleAlert className="w-3.5 h-3.5" />
+            {drawn.code} nu e activată pentru calcul — TPO-ul nu va adăuga nicio taxă aici.
+          </span>
+        ) : (
+          <span className="text-slate-500">Nicio taxă de zonă.</span>
+        )}
+      </div>
     </div>
   );
 }

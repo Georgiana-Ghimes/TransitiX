@@ -7,6 +7,7 @@ import {
   geometryToRings,
   boundsContain,
   ringsWithCutouts,
+  pointInGeometry,
   looksLikePlausibleOutline,
   parseKmlCoordinates,
   parseKmlPolygons,
@@ -15,6 +16,8 @@ import {
   dropSliverHoles,
   findSpikeVertices,
 } from './zoneGeometry.js';
+import { allReferenceZones } from './zoneReference.js';
+import { pointInPolygon } from '../../server/src/lib/pricing/taxes.js';
 
 const square = {
   type: 'Polygon',
@@ -78,6 +81,68 @@ describe('bounds', () => {
 
   it('counts rings and points for the sidebar', () => {
     expect(geometrySummary(square)).toEqual({ rings: 1, points: 5 });
+  });
+});
+
+describe('pointInGeometry', () => {
+  // square: 44.4-44.5 N, 26.0-26.2 E
+  it('finds a point inside and one outside', () => {
+    expect(pointInGeometry([44.45, 26.1], square)).toBe(true);
+    expect(pointInGeometry([44.30, 26.1], square)).toBe(false);
+    expect(pointInGeometry([44.45, 26.9], square)).toBe(false);
+  });
+
+  it('agrees with the server’s pointInPolygon everywhere it is asked', () => {
+    // The two answer different questions — what is drawn here, versus what is charged here —
+    // but they must never disagree about where a boundary is, or the screen contradicts the
+    // invoice. This runs both over the real Bucharest outlines.
+    const points = [
+      [44.4355, 26.1025], [44.4520, 26.0855], [44.4530, 26.1200], [44.4870, 26.1150],
+      [44.4380, 25.9900], [44.5500, 26.0700], [44.9400, 26.0300], [44.4185, 26.0593],
+    ];
+    for (const zone of allReferenceZones()) {
+      for (const [lat, lon] of points) {
+        expect(
+          pointInGeometry([lat, lon], zone.outline),
+          `${zone.code} at ${lat},${lon}`,
+        ).toBe(pointInPolygon({ latitude: lat, longitude: lon }, zone.outline));
+      }
+    }
+  });
+
+  it('puts a point in a hole back outside', () => {
+    const withHole = {
+      type: 'Polygon',
+      coordinates: [
+        square.coordinates[0],
+        [[26.05, 44.42], [26.15, 44.42], [26.15, 44.48], [26.05, 44.48], [26.05, 44.42]],
+      ],
+    };
+    expect(pointInGeometry([44.45, 26.1], withHole)).toBe(false);
+    expect(pointInGeometry([44.405, 26.02], withHole)).toBe(true);
+  });
+
+  it('handles a MultiPolygon', () => {
+    const far = {
+      type: 'Polygon',
+      coordinates: [[[27.0, 45.0], [27.2, 45.0], [27.2, 45.1], [27.0, 45.1], [27.0, 45.0]]],
+    };
+    const multi = { type: 'MultiPolygon', coordinates: [square.coordinates, far.coordinates] };
+    expect(pointInGeometry([45.05, 27.1], multi)).toBe(true);
+    expect(pointInGeometry([44.45, 26.1], multi)).toBe(true);
+    expect(pointInGeometry([40, 20], multi)).toBe(false);
+  });
+
+  it('refuses a point that is not two finite numbers', () => {
+    // Number(null) is 0, which would silently test the equator instead of rejecting the input.
+    expect(pointInGeometry([null, 26.1], square)).toBe(false);
+    expect(pointInGeometry([44.45], square)).toBe(false);
+    expect(pointInGeometry(null, square)).toBe(false);
+  });
+
+  it('is false for anything that is not a polygon', () => {
+    expect(pointInGeometry([44.45, 26.1], { type: 'Point', coordinates: [26.1, 44.45] })).toBe(false);
+    expect(pointInGeometry([44.45, 26.1], null)).toBe(false);
   });
 });
 
