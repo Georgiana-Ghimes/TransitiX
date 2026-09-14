@@ -104,9 +104,22 @@ describe('POST /api/reports/preview', () => {
     expect(history.body.total).toBe(0);
   });
 
-  it('warns that a template without a weight column cannot be reconciled', async () => {
+  it('does not warn weight_not_exported on Anexa RAI — Cantitate already carries weighbridge tons', async () => {
+    // Same contract as reportWarnings unit tests: cantitate_marfa maps gross_weight_kg → t,
+    // so the sheet is reconcilable without a separate weight column.
     const res = await api().post('/api/reports/preview').set(auth(ctx.adminToken))
       .send({ template_id: raiTemplate.id, filters: { status: 'confirmed' } });
+    expect(res.status).toBe(200);
+    expect(res.body.warnings.map((w) => w.code)).not.toContain('weight_not_exported');
+  });
+
+  it('warns that a template without weight or Cantitate cannot be reconciled against the weighbridge', async () => {
+    const created = await api().post('/api/reports/templates/from-preset').set(auth(ctx.adminToken))
+      .send({ preset_id: 'centralizator_km', name: `Km fără greutate ${Date.now()}` });
+    expect(created.status).toBe(201);
+    const res = await api().post('/api/reports/preview').set(auth(ctx.adminToken))
+      .send({ template_id: created.body.id, filters: { status: 'confirmed' } });
+    expect(res.status).toBe(200);
     expect(res.body.warnings.map((w) => w.code)).toContain('weight_not_exported');
   });
 

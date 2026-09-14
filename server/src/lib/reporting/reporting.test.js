@@ -213,10 +213,12 @@ describe('reportWarnings', () => {
     expect(codes).not.toContain('missing_invoice_date');
   });
 
-  it('says when the documents have a weight the template drops', () => {
-    // The RAI annex is contractual, so we do not rewrite it — but a sheet that cannot be
-    // reconciled against the weighbridge has to say so out loud.
+  it('does not treat Anexa RAI as dropping weight — Cantitate maps weighbridge tons', () => {
     expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('weight_not_exported');
+  });
+
+  it('says when the documents have a weight the template drops (no weight column, no Cantitate)', () => {
+    expect(codes([CONFIRMED], getPreset('centralizator_km'))).toContain('weight_not_exported');
   });
 
   it('does not complain about a missing weight when no weight is exported', () => {
