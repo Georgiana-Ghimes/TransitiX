@@ -1,7 +1,7 @@
 /**
  * Office routes exposed when VITE_APP_PROFILE=documents (RAI companion).
- * `/users` is here because an admin who cannot invite and link a driver from the UI has to
- * seed the database by hand — the screen itself is already role-gated to admin.
+ * Utilizatori lives under Setări (tab), not as its own sidebar item — `/users` still
+ * redirects there so old bookmarks keep working.
  */
 export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/settings', '/users'];
 

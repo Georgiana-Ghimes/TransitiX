@@ -277,7 +277,11 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
   );
 }
 
-export default function Users() {
+/**
+ * The people list — used as its own page on Transitix full, and as a Setări tab on companion.
+ * `embedded` drops the page chrome when the parent already provides a title.
+ */
+export function UsersPanel({ embedded = false } = {}) {
   const { user: me } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -303,24 +307,41 @@ export default function Users() {
   );
 
   return (
-    <div className="p-4 md:p-6 space-y-4 max-w-5xl">
-      <header className="flex flex-wrap items-center gap-3">
-        <UsersIcon className="w-6 h-6 text-[#1D4E89]" />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold text-[#0A2B4E]">Utilizatori</h1>
-          <p className="text-[12px] text-slate-500">
-            Invitații, roluri și acces. Nimeni nu alege parola altcuiva; conturile se dezactivează,
-            nu se șterg.
+    <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-4 max-w-5xl'}>
+      {!embedded && (
+        <header className="flex flex-wrap items-center gap-3">
+          <UsersIcon className="w-6 h-6 text-[#1D4E89]" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-semibold text-[#0A2B4E]">Utilizatori</h1>
+            <p className="text-[12px] text-slate-500">
+              Invitații, roluri și acces. Nimeni nu alege parola altcuiva; conturile se dezactivează,
+              nu se șterg.
+            </p>
+          </div>
+          <button
+            type="button" onClick={load} disabled={loading}
+            className="text-sm px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white inline-flex items-center gap-2 disabled:opacity-40"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Reîncarcă
+          </button>
+        </header>
+      )}
+
+      {embedded && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-slate-500">
+            Invitații, roluri și acces. Conturile se dezactivează, nu se șterg.
           </p>
+          <button
+            type="button" onClick={load} disabled={loading}
+            className="text-sm px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white inline-flex items-center gap-2 disabled:opacity-40"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Reîncarcă
+          </button>
         </div>
-        <button
-          type="button" onClick={load} disabled={loading}
-          className="text-sm px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white inline-flex items-center gap-2 disabled:opacity-40"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-          Reîncarcă
-        </button>
-      </header>
+      )}
 
       <div className="flex flex-wrap items-start gap-3">
         <label className="relative flex-1 min-w-[14rem]">
@@ -370,4 +391,8 @@ export default function Users() {
       )}
     </div>
   );
+}
+
+export default function Users() {
+  return <UsersPanel />;
 }

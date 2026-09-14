@@ -1,13 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { Building2, Bell, Save, Loader2 } from 'lucide-react';
+import { UsersPanel } from '@/pages/Users';
+import {
+  Building2, Bell, Save, Loader2, MonitorSmartphone, Users as UsersIcon,
+} from 'lucide-react';
 
 const EXPIRY_OPTIONS = [30, 15, 7, 1];
 const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors';
 const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
 
+const TABS = [
+  { id: 'company', label: 'Date companie', icon: Building2 },
+  { id: 'expiry', label: 'Notificări expirare', icon: Bell },
+  { id: 'sessions', label: 'Sesiuni active', icon: MonitorSmartphone },
+  { id: 'users', label: 'Utilizatori', icon: UsersIcon, adminOnly: true },
+];
 
 /**
  * The devices currently signed in, and a way to cut them all off.
@@ -97,6 +107,8 @@ function SessionsCard() {
 export default function Settings() {
   const { user } = useAuth();
   const canSave = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -109,6 +121,20 @@ export default function Settings() {
     default_currency: 'RON',
     document_expiry_days: [30, 15, 7, 1],
   });
+
+  const visibleTabs = useMemo(
+    () => TABS.filter((t) => !t.adminOnly || isAdmin),
+    [isAdmin],
+  );
+
+  const tabFromUrl = searchParams.get('tab');
+  const activeTab = visibleTabs.some((t) => t.id === tabFromUrl)
+    ? tabFromUrl
+    : 'company';
+
+  const setTab = (id) => {
+    setSearchParams(id === 'company' ? {} : { tab: id }, { replace: true });
+  };
 
   useEffect(() => {
     (async () => {
@@ -182,97 +208,132 @@ export default function Settings() {
     );
   }
 
+  const showSave = activeTab === 'company' || activeTab === 'expiry';
+
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
+    <div className="space-y-5 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Setări</h1>
-        <p className="text-sm text-slate-500 mt-1">Configurare companie și notificări</p>
+        <p className="text-sm text-slate-500 mt-1">Companie, alerte, sesiuni și utilizatori</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-5 border-b border-slate-100">
-          <Building2 className="w-5 h-5 text-[#1D4E89]" />
-          <h2 className="font-semibold text-[#0A2B4E]">Date companie</h2>
-        </div>
-        <div className="p-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Denumire</label>
-              <input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Nume companie" />
-            </div>
-            <div>
-              <label className={labelCls}>CUI</label>
-              <input className={inputCls} value={form.cui} onChange={(e) => set('cui', e.target.value)} placeholder="Cod fiscal" />
-            </div>
-            <div className="sm:col-span-2">
-              <label className={labelCls}>Adresă</label>
-              <input className={inputCls} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Adresă sediu" />
-            </div>
-            <div>
-              <label className={labelCls}>Telefon</label>
-              <input className={inputCls} value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Telefon" />
-            </div>
-            <div>
-              <label className={labelCls}>Email</label>
-              <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@companie.ro" />
-            </div>
-            <div>
-              <label className={labelCls}>Regim TVA</label>
-              <select className={inputCls} value={form.vat_regime} onChange={(e) => set('vat_regime', e.target.value)}>
-                <option value="platitor">Plătitor TVA</option>
-                <option value="neplatitor">Neplătitor TVA</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Monedă</label>
-              <select className={inputCls} value={form.default_currency} onChange={(e) => set('default_currency', e.target.value)}>
-                <option value="RON">RON</option>
-                <option value="EUR">EUR</option>
-              </select>
+      <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-lg w-fit max-w-full overflow-x-auto">
+        {visibleTabs.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md whitespace-nowrap ${
+                activeTab === t.id
+                  ? 'bg-white shadow text-[#0A2B4E] font-medium'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === 'company' && (
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 p-5 border-b border-slate-100">
+            <Building2 className="w-5 h-5 text-[#1D4E89]" />
+            <h2 className="font-semibold text-[#0A2B4E]">Date companie</h2>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Denumire</label>
+                <input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Nume companie" />
+              </div>
+              <div>
+                <label className={labelCls}>CUI</label>
+                <input className={inputCls} value={form.cui} onChange={(e) => set('cui', e.target.value)} placeholder="Cod fiscal" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelCls}>Adresă</label>
+                <input className={inputCls} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="Adresă sediu" />
+              </div>
+              <div>
+                <label className={labelCls}>Telefon</label>
+                <input className={inputCls} value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Telefon" />
+              </div>
+              <div>
+                <label className={labelCls}>Email</label>
+                <input className={inputCls} type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="email@companie.ro" />
+              </div>
+              <div>
+                <label className={labelCls}>Regim TVA</label>
+                <select className={inputCls} value={form.vat_regime} onChange={(e) => set('vat_regime', e.target.value)}>
+                  <option value="platitor">Plătitor TVA</option>
+                  <option value="neplatitor">Neplătitor TVA</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Monedă</label>
+                <select className={inputCls} value={form.default_currency} onChange={(e) => set('default_currency', e.target.value)}>
+                  <option value="RON">RON</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 p-5 border-b border-slate-100">
-          <Bell className="w-5 h-5 text-[#F5A623]" />
-          <h2 className="font-semibold text-[#0A2B4E]">Notificări expirare documente</h2>
-        </div>
-        <div className="p-5 space-y-4">
-          <p className="text-sm text-slate-500">Praguri alerte (zile înainte de expirare):</p>
-          <div className="flex gap-3 flex-wrap">
-            {EXPIRY_OPTIONS.map((days) => (
-              <label key={days} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="rounded"
-                  checked={form.document_expiry_days.includes(days)}
-                  onChange={() => toggleDay(days)}
-                />
-                <span className="text-sm text-slate-700">{days} zile</span>
-              </label>
-            ))}
+      {activeTab === 'expiry' && (
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 p-5 border-b border-slate-100">
+            <Bell className="w-5 h-5 text-[#F5A623]" />
+            <h2 className="font-semibold text-[#0A2B4E]">Notificări expirare documente</h2>
+          </div>
+          <div className="p-5 space-y-4">
+            <p className="text-sm text-slate-500">Praguri alerte (zile înainte de expirare):</p>
+            <div className="flex gap-3 flex-wrap">
+              {EXPIRY_OPTIONS.map((days) => (
+                <label key={days} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={form.document_expiry_days.includes(days)}
+                    onChange={() => toggleDay(days)}
+                  />
+                  <span className="text-sm text-slate-700">{days} zile</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <SessionsCard />
+      {activeTab === 'sessions' && <SessionsCard />}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
-        {!canSave && (
-          <p className="text-xs text-slate-500 sm:mr-auto">Doar administratorul poate salva setările.</p>
-        )}
-        <button
-          type="button"
-          disabled={saving || !canSave}
-          onClick={save}
-          className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] transition-colors disabled:opacity-60"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Salvează setările
-        </button>
-      </div>
+      {activeTab === 'users' && isAdmin && (
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-5">
+          <UsersPanel embedded />
+        </div>
+      )}
+
+      {showSave && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+          {!canSave && (
+            <p className="text-xs text-slate-500 sm:mr-auto">Doar administratorul poate salva setările.</p>
+          )}
+          <button
+            type="button"
+            disabled={saving || !canSave}
+            onClick={save}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] transition-colors disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvează setările
+          </button>
+        </div>
+      )}
     </div>
   );
 }
