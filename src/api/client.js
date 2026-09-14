@@ -793,6 +793,13 @@ export const api = {
     setDepot(locationId) {
       return request('/commercial/depot', { method: 'PUT', body: { location_id: locationId } });
     },
+    /** Which zone an address falls in, resolved by the same functions the TPO uses. */
+    locateZone({ address, mmaKg = null, date = null }) {
+      return request('/commercial/zones/locate', {
+        method: 'POST',
+        body: { address, mma_kg: mmaKg, date },
+      });
+    },
     async importCodes(file, { dryRun = false } = {}) {
       const token = getToken();
       const fd = new FormData();

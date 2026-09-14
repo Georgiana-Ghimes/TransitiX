@@ -26,6 +26,7 @@ const TripDetail = lazy(() => import('@/pages/TripDetail'));
 const GPSMap = lazy(() => import('@/pages/GPSMap'));
 const Locations = lazy(() => import('@/pages/Locations'));
 const Territories = lazy(() => import('@/pages/Territories'));
+const ZoneMap = lazy(() => import('@/pages/ZoneMap'));
 const Dispatch = lazy(() => import('@/pages/Dispatch'));
 const LoadPlanner = lazy(() => import('@/pages/LoadPlanner'));
 const LoadPlanner2D = lazy(() => import('@/loadplanner/LoadPlannerPage'));
@@ -71,6 +72,7 @@ function OfficeRoutes() {
         <Route path="/" element={<Navigate to="/avize" replace />} />
         <Route path="/avize" element={<AvizeReports />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/zone-map" element={<ZoneMap />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
         <Route path="/driver-app" element={<DriverAppDocuments />} />
@@ -89,6 +91,7 @@ function OfficeRoutes() {
       <Route path="/gps" element={<GPSMap />} />
       <Route path="/locations" element={<Locations />} />
       <Route path="/territories" element={<Territories />} />
+      <Route path="/zone-map" element={<ZoneMap />} />
       <Route path="/dispatch" element={<Dispatch />} />
       <Route path="/loading" element={<LoadPlanner />} />
       <Route path="/load-planner" element={<LoadPlanner2D />} />

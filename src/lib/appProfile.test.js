@@ -22,6 +22,7 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/avize')).toBe(true);
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
     expect(isCompanionOfficePath('/settings')).toBe(true);
+    expect(isCompanionOfficePath('/zone-map')).toBe(true);
     // Old /users bookmarks still resolve (redirect to Setări → Utilizatori).
     expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);

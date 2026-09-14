@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -40,6 +40,7 @@ const NAV = [
   { label: 'Șoferi', path: '/drivers', icon: Users },
   { label: 'Locații', path: '/locations', icon: MapPinned },
   { label: 'Teritorii', path: '/territories', icon: Layers },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map },
   { label: 'Tracking GPS', path: '/gps', icon: MapPin },
   { label: 'Planning AI', path: '/planning', icon: Brain },
   { label: 'Clienți', path: '/clients', icon: Building2 },
@@ -59,6 +60,7 @@ const NAV = [
 const COMPANION_OFFICE_NAV = [
   { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map },
   { label: 'Setări', path: '/settings', icon: Settings, roles: ['admin'] },
 ];
 

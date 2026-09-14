@@ -1,9 +1,15 @@
 /**
  * Office routes exposed when VITE_APP_PROFILE=documents (RAI companion).
  * Utilizatori lives under Setări (tab), not as its own sidebar item — `/users` still
- * redirects there so old bookmarks keep working.
+ * redirects there so old bookmarks keep working. Harta zonelor is shared with full TMS.
  */
-export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/settings', '/users'];
+export const COMPANION_OFFICE_PATHS = [
+  '/avize',
+  '/reports',
+  '/zone-map',
+  '/settings',
+  '/users',
+];
 
 export function appProfile() {
   const raw = String(import.meta.env.VITE_APP_PROFILE || 'full').trim().toLowerCase();
