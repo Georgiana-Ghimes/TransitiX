@@ -17,6 +17,13 @@ describe('avizOps', () => {
     expect(normalizeExtractionSource('stub')).toBe('stub');
   });
 
+  it('agrees with the server on paddle and a failed read', () => {
+    expect(normalizeExtractionSource('paddle')).toBe('paddle');
+    expect(normalizeExtractionSource('paddle_ocr')).toBe('paddle');
+    expect(normalizeExtractionSource('none')).toBe('none');
+    expect(normalizeExtractionSource('')).toBe('stub');
+  });
+
   it('flags empty TPO/auto/route as low confidence', () => {
     const c = avizFieldConfidence({ numar_tpo: '', numar_auto: '', ruta_transport: '' });
     expect(c.numar_tpo).toBe('low');

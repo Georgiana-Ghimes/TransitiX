@@ -60,6 +60,7 @@ const COMPANION_OFFICE_NAV = [
   { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Setări', path: '/settings', icon: Settings, roles: ['admin'] },
+  { label: 'Utilizatori', path: '/users', icon: UserCog, roles: ['admin'] },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';

@@ -1,11 +1,17 @@
 /**
  * How a stored row was read. `vision` stays in the table for rows extracted before Google Vision
  * was removed — dropping it would relabel their history rather than erase a dependency.
+ *
+ * `paddle` and `none` are named explicitly because they are what the extractor actually writes
+ * today: falling through to `stub` labelled a real PaddleOCR read, and a failed one, as though
+ * no OCR had been attempted at all.
  */
 export function mapProviderToSource(provider) {
   const p = String(provider || '').toLowerCase();
   if (p === 'pdf_text' || p === 'pdf-text') return 'pdf-text';
   if (p === 'google_vision' || p === 'vision') return 'vision';
+  if (p === 'paddle' || p === 'paddle_ocr' || p === 'paddleocr') return 'paddle';
+  if (p === 'none') return 'none';
   return 'stub';
 }
 

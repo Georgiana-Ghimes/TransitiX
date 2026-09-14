@@ -35,10 +35,13 @@ export function datePresetRange(preset, now = new Date()) {
   return { from: '', to: '' };
 }
 
+/** Mirrors `mapProviderToSource` on the server — the badge and the column must agree. */
 export function normalizeExtractionSource(provider) {
   const p = String(provider || '').toLowerCase().replace(/_/g, '-');
   if (p === 'pdf-text' || p === 'pdftext') return 'pdf-text';
   if (p === 'vision' || p === 'google-vision' || p === 'google_vision') return 'vision';
+  if (p === 'paddle' || p === 'paddle-ocr' || p === 'paddleocr') return 'paddle';
+  if (p === 'none') return 'none';
   return 'stub';
 }
 

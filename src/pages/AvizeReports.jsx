@@ -3,6 +3,7 @@ import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { isDocumentsProfile } from '@/lib/appProfile';
 import { appendObservationCode, validateObservationCodeInput } from '@/lib/observationCodes';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
@@ -863,14 +864,18 @@ export default function AvizeReports() {
             >
               <Archive className="w-4 h-4" /> Zip
             </button>
-            <button
-              type="button"
-              disabled={selected.size === 0 || busy}
-              onClick={draftInvoice}
-              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
-            >
-              Ciornă factură
-            </button>
+            {/* The draft lands in Financiar, and the companion has no /finance — a button whose
+                result the operator cannot open anywhere is worse than no button. */}
+            {!isDocumentsProfile() && (
+              <button
+                type="button"
+                disabled={selected.size === 0 || busy}
+                onClick={draftInvoice}
+                className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+              >
+                Ciornă factură
+              </button>
+            )}
           </div>
 
           {ocrBanner}

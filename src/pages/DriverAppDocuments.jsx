@@ -21,7 +21,6 @@ export default function DriverAppDocuments() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
-  const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('upload');
 
@@ -37,17 +36,9 @@ export default function DriverAppDocuments() {
       const drivers = await api.entities.Driver.list().catch(() => []);
       const myDriver = findDriverForUser(drivers, me);
       setDriver(myDriver);
-
-      if (myDriver) {
-        const scoped = await api.entities.Trip.filter(
-          { driver_id: myDriver.id },
-          '-created_date',
-          50
-        ).catch(() => []);
-        setTrips(Array.isArray(scoped) ? scoped : []);
-      } else {
-        setTrips([]);
-      }
+      // No trip list here: the companion does not dispatch trips, and the profile no longer
+      // shows trip counts. Fetching 50 rows over a cab's connection to render nothing is a
+      // cost the driver pays for us.
     } catch (e) {
       console.error(e);
     } finally {
@@ -105,7 +96,7 @@ export default function DriverAppDocuments() {
         }}
       >
         {tab === 'profile' ? (
-          <DriverProfile driver={driver} trips={trips} />
+          <DriverProfile driver={driver} />
         ) : (
           <DriverUploadDocuments user={user} />
         )}

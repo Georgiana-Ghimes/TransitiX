@@ -7,15 +7,22 @@ const SOURCE_LABEL = {
   vision: 'Vision',
   paddle: 'Paddle',
   stub: 'Stub',
+  // `none` is what the extractor stores when a read failed. Without a label the badge printed
+  // the raw column value at the operator.
+  none: 'Fără OCR',
+};
+
+const SOURCE_TONE = {
+  'pdf-text': 'bg-sky-50 text-sky-800',
+  vision: 'bg-violet-50 text-violet-800',
+  paddle: 'bg-indigo-50 text-indigo-800',
+  none: 'bg-rose-50 text-rose-800',
+  stub: 'bg-amber-50 text-amber-800',
 };
 
 export function SourceBadge({ source }) {
   const key = source || 'stub';
-  const tone = key === 'pdf-text'
-    ? 'bg-sky-50 text-sky-800'
-    : key === 'vision'
-      ? 'bg-violet-50 text-violet-800'
-      : 'bg-amber-50 text-amber-800';
+  const tone = SOURCE_TONE[key] || SOURCE_TONE.stub;
   return (
     <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${tone}`}>
       {SOURCE_LABEL[key] || key}

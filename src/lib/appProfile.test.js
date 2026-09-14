@@ -22,7 +22,10 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/avize')).toBe(true);
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
     expect(isCompanionOfficePath('/settings')).toBe(true);
+    // An admin who cannot reach /users has to invite and link drivers by seeding the database.
+    expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
+    expect(isCompanionOfficePath('/finance')).toBe(false);
   });
 
   it('companionTagline defaults for documents profile', async () => {

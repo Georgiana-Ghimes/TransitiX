@@ -72,6 +72,7 @@ function OfficeRoutes() {
         <Route path="/avize" element={<AvizeReports />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/users" element={<Users />} />
         <Route path="/driver-app" element={<DriverAppDocuments />} />
         <Route path="*" element={<Navigate to="/avize" replace />} />
       </>

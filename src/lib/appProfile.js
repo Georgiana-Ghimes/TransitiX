@@ -1,5 +1,9 @@
-/** Office routes exposed when VITE_APP_PROFILE=documents (RAI companion). */
-export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/settings'];
+/**
+ * Office routes exposed when VITE_APP_PROFILE=documents (RAI companion).
+ * `/users` is here because an admin who cannot invite and link a driver from the UI has to
+ * seed the database by hand — the screen itself is already role-gated to admin.
+ */
+export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/settings', '/users'];
 
 export function appProfile() {
   const raw = String(import.meta.env.VITE_APP_PROFILE || 'full').trim().toLowerCase();
