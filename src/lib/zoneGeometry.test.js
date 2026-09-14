@@ -5,6 +5,8 @@ import {
   geometryBounds,
   geometrySummary,
   geometryToRings,
+  boundsContain,
+  ringsWithCutouts,
   looksLikePlausibleOutline,
   parseKmlCoordinates,
   parseKmlPolygons,
@@ -76,6 +78,78 @@ describe('bounds', () => {
 
   it('counts rings and points for the sidebar', () => {
     expect(geometrySummary(square)).toEqual({ rings: 1, points: 5 });
+  });
+});
+
+describe('boundsContain', () => {
+  const big = square; // 44.4–44.5 N, 26.0–26.2 E
+  const small = {
+    type: 'Polygon',
+    coordinates: [[[26.05, 44.42], [26.1, 44.42], [26.1, 44.45], [26.05, 44.45], [26.05, 44.42]]],
+  };
+
+  it('sees a nested zone as inside', () => {
+    expect(boundsContain(big, small)).toBe(true);
+  });
+
+  it('is not symmetric', () => {
+    expect(boundsContain(small, big)).toBe(false);
+  });
+
+  it('rejects a neighbour that merely overlaps', () => {
+    const overlapping = {
+      type: 'Polygon',
+      coordinates: [[[26.1, 44.45], [26.4, 44.45], [26.4, 44.6], [26.1, 44.6], [26.1, 44.45]]],
+    };
+    expect(boundsContain(big, overlapping)).toBe(false);
+  });
+
+  it('is false when either side has no extent', () => {
+    expect(boundsContain(big, null)).toBe(false);
+    expect(boundsContain(null, small)).toBe(false);
+  });
+});
+
+describe('ringsWithCutouts', () => {
+  const outer = square;
+  const inner = {
+    type: 'Polygon',
+    coordinates: [[[26.05, 44.42], [26.1, 44.42], [26.1, 44.45], [26.05, 44.45], [26.05, 44.42]]],
+  };
+
+  it('punches a nested zone out as a hole', () => {
+    // Leaflet reads every ring after the first as a hole, so Zone B stops being painted over
+    // Zone A and the inner zone keeps its own colour.
+    const rings = ringsWithCutouts(outer, [inner]);
+    expect(rings).toHaveLength(2);
+    expect(rings[0]).toEqual(geometryToRings(outer)[0]);
+    expect(rings[1]).toEqual(geometryToRings(inner)[0]);
+  });
+
+  it('ignores a zone that is not inside', () => {
+    const elsewhere = {
+      type: 'Polygon',
+      coordinates: [[[27.0, 45.0], [27.1, 45.0], [27.1, 45.1], [27.0, 45.1], [27.0, 45.0]]],
+    };
+    expect(ringsWithCutouts(outer, [elsewhere])).toHaveLength(1);
+  });
+
+  it('never cuts a zone out of itself', () => {
+    // A zone contains its own bounds, so the guard has to be the caller excluding it — this
+    // asserts what happens if it does not: the fill would vanish entirely.
+    expect(ringsWithCutouts(outer, [outer])).toHaveLength(2);
+  });
+
+  it('takes only the outer ring of a cutout', () => {
+    const holed = { type: 'Polygon', coordinates: [inner.coordinates[0], [
+      [26.06, 44.43], [26.08, 44.43], [26.08, 44.44], [26.06, 44.44], [26.06, 44.43],
+    ]] };
+    // A hole inside the zone being cut out is not a hole in the zone doing the cutting.
+    expect(ringsWithCutouts(outer, [holed])).toHaveLength(2);
+  });
+
+  it('is empty when there is nothing to draw', () => {
+    expect(ringsWithCutouts(null, [inner])).toEqual([]);
   });
 });
 

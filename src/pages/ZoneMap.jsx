@@ -28,6 +28,7 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   ZoneImportError,
   combinedBounds,
+  ringsWithCutouts,
   geometryBounds,
   geometrySummary,
   geometryToRings,
@@ -116,6 +117,27 @@ export default function ZoneMap() {
   const ratesFor = (zoneId) => (zoneId ? rates.filter((r) => r.tax_zone_id === zoneId) : []);
 
   const visible = useMemo(() => city.zones.filter((z) => !hidden.has(z.code)), [city, hidden]);
+
+  /**
+   * What each visible zone draws: its own outline, with the zones nested inside it punched out.
+   *
+   * Zone B's perimeter really does enclose Zone A, so filling both paints the inner zone twice
+   * and the strictest zone ends up the muddiest on screen. The cutout is display only — the
+   * stored outline stays the official one and `resolveZone` still separates them on priority.
+   *
+   * Drawn outermost first, so the inner zone's border sits on top of the hole its neighbour
+   * leaves behind rather than under it.
+   */
+  const drawable = useMemo(() => {
+    const ordered = [...visible].sort((a, b) => a.priority - b.priority);
+    return ordered.map((zone) => ({
+      zone,
+      rings: ringsWithCutouts(
+        zone.outline,
+        visible.filter((other) => other.code !== zone.code).map((other) => other.outline),
+      ),
+    }));
+  }, [visible]);
   const bounds = useMemo(() => combinedBounds(visible.map((z) => z.outline)), [visible]);
 
   const toggle = (code) => {
@@ -343,10 +365,10 @@ export default function ZoneMap() {
             <FitBounds bounds={bounds} />
             <FlyTo point={hit?.point} />
 
-            {visible.map((zone) => (
+            {drawable.map(({ zone, rings }) => (
               <Polygon
                 key={zone.code}
-                positions={geometryToRings(zone.outline)}
+                positions={rings}
                 pathOptions={{
                   color: zone.color, weight: 2, fillColor: zone.color, fillOpacity: 0.16,
                 }}

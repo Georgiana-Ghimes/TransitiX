@@ -75,6 +75,36 @@ export function combinedBounds(geometries = []) {
   ]);
 }
 
+/** Whether one geometry's extent sits entirely inside another's. */
+export function boundsContain(outer, inner) {
+  const o = geometryBounds(outer);
+  const i = geometryBounds(inner);
+  if (!o || !i) return false;
+  return i[0][0] >= o[0][0] && i[0][1] >= o[0][1]
+    && i[1][0] <= o[1][0] && i[1][1] <= o[1][1];
+}
+
+/**
+ * Rings for drawing a zone with the zones nested inside it punched out.
+ *
+ * Display only. The stored outline stays the one the decision defines — Zone B's perimeter
+ * genuinely encloses Zone A, and `resolveZone` already picks A inside it on priority. Cutting
+ * A out of B's stored polygon would make the data disagree with the official delimitation and
+ * would have to be redone every time either outline is corrected.
+ *
+ * Filling B over A instead paints the inner zone twice, so the strictest zone on the map is the
+ * one whose colour is hardest to read. Leaflet treats every ring after the first as a hole,
+ * which is all this has to produce.
+ */
+export function ringsWithCutouts(geometry, cutouts = []) {
+  const own = geometryToRings(geometry);
+  if (!own.length) return [];
+  const holes = cutouts
+    .filter((c) => boundsContain(geometry, c))
+    .flatMap((c) => geometryToRings(c).slice(0, 1));
+  return [...own, ...holes];
+}
+
 /** A rough count for the UI: "Zona A · 1 contur, 412 puncte". */
 export function geometrySummary(geometry) {
   const rings = geometryToRings(geometry);
