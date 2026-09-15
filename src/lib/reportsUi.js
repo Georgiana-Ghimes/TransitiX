@@ -15,7 +15,7 @@ export const WARNING_LABELS = {
   missing_invoice_date: 'Fără dată de facturare',
   weight_not_exported: 'Greutatea nu ajunge în raport',
   missing_quantity_weight: 'Cantitate (tone) goală',
-  duplicate_tpo: 'TPO duplicat',
+  duplicate_tpo: 'Aviz duplicat',
 };
 
 export const WARNING_HINTS = {
@@ -27,7 +27,8 @@ export const WARNING_HINTS = {
   missing_quantity_weight:
     'Coloana Cantitate marfa (tone) rămâne goală pe aceste rânduri, pentru că avizul nu are '
     + 'greutate brută. Numărul de saci nu poate lua locul tonelor sub același antet.',
-  duplicate_tpo: 'Același număr de TPO apare pe mai multe documente din selecție.',
+  duplicate_tpo: 'Același transport apare de mai multe ori în selecție, deci ar fi facturat dublu. '
+    + 'Un TPO cu mai multe curse nu intră aici, acelea sunt rânduri diferite.',
   missing_invoice_date:
     'Coloana de dată facturare rămâne goală pe aceste rânduri. O poți completa pentru toată '
     + 'selecția deodată, din câmpul de deasupra tabelului.',

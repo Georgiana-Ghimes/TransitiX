@@ -207,6 +207,11 @@ TPO-0025803
     // described a journey between two of the customer's own premises that no lorry made.
     expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
     expect(parsed.numar_auto).toBe('B-34-BAU');
+    // The same block, kept apart from the route code, is what the zone fee is read from.
+    // "Viilor52" cannot be looked up in a street index; "viilor" plus "52" can.
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Bucuresti', streetName: 'viilor', streetType: 'sosea', houseNumber: '52',
+    });
   });
 
   it('ignores the client billing address, which no lorry ever visits', () => {
@@ -266,6 +271,10 @@ Aviz de expeditie TRO-0008053
     expect(parsed.numar_auto).toBe('B-112-VFM / B-475-AGR');
     expect(parsed.ruta_transport).toBe('Mil-Bucuresti/IuliuManiu600A');
     expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
+    // A two-word street name survives the split, glued only in the route code.
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Bucuresti', streetName: 'iuliu maniu', houseNumber: '600A',
+    });
   });
 
   it('reads NUMAR AUTO from synthetic test avize instead of dumping the PDF text', () => {
@@ -364,6 +373,8 @@ TPO-0025803`,
       },
     });
     expect(repaired.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
+    // Derived on every read, so a stored row that predates this column still answers.
+    expect(repaired.delivery_address?.streetName).toBe('viilor');
   });
 
   it('keeps an office-edited plate and document number', () => {
@@ -580,6 +591,29 @@ describe('mapAnnexRows', () => {
       gross_weight_kg: 9964.15,
     }]);
     expect(mapped[0].cantitate_marfa).toBe(9.96);
+  });
+
+  it('keeps each cursă of one TPO on its own row, with its own route', () => {
+    // TPO-0025803 driven twice: two avize, two days, two destinations. One row per cursă is
+    // what the customer's sheet wants, and Numar curse says 2 on both so the pair reads as one
+    // order rather than as two orders that happen to share a number.
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [
+      {
+        numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044633',
+        data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+        ruta_transport: 'Bol-Bucuresti/Viilor52', gross_weight_kg: 15744,
+      },
+      {
+        numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044701',
+        data_efectuare_cursa: '2026-08-11', numar_auto: 'B-34-BAU',
+        ruta_transport: 'Bol-Bucuresti/IuliuManiu600A', gross_weight_kg: 12300,
+      },
+    ]);
+    expect(mapped).toHaveLength(2);
+    expect(mapped.map((r) => r.ruta_transport))
+      .toEqual(['Bol-Bucuresti/Viilor52', 'Bol-Bucuresti/IuliuManiu600A']);
+    expect(mapped.map((r) => r.numar_curse)).toEqual([2, 2]);
+    expect(mapped.map((r) => r.cantitate_marfa)).toEqual([15.74, 12.3]);
   });
 
   it('leaves Cantitate empty when there is no greutate brută', () => {

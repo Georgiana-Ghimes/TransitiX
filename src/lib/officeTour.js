@@ -70,13 +70,13 @@ export const OFFICE_TOUR_STEPS = [
     id: 'again',
     title: 'Ghidul rămâne la un click',
     body:
-      'Gata pentru acum. Dacă uiți un pas, apasă Ghid jos în meniu, îl reparcurgi oricând. La următorul sync cu RAI actualizăm ghidul dacă apare ceva nou.',
+      'Gata pentru acum. Ghid, jos în meniu, deschide manualul complet al aplicației: fiecare ecran, fiecare câmp și ce înseamnă fiecare avertisment, cu o căutare în capul paginii. Tot de acolo reiei turul ăsta, dacă vrei.',
     mobileBody:
-      'Gata! Deschide meniul ☰ → jos găsești Ghid, lângă Setări. Îl poți relua oricând.',
+      'Gata! Meniul ☰ → jos găsești Ghid, lângă Setări. Acolo e manualul complet, cu căutare, și butonul care reia turul.',
     highlightTarget: 'ghid',
     cta: 'Ghid',
     hint: 'Butonul Ghid e jos în meniu, lângă Setări.',
-    mobileHint: 'Ține minte: Meniu ☰ → Ghid (jos, lângă Setări).',
+    mobileHint: 'Ține minte: Meniu ☰ → Ghid (jos, lângă Setări).'
   },
 ];
 

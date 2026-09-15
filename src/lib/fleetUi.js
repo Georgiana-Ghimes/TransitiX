@@ -30,7 +30,7 @@ export function canonicalPlateClient(value) {
  * The mass, in kilograms.
  *
  * Tonnes are what people say out loud, so "40" gets typed where 40000 was meant. A figure that
- * small cannot be a lorry's authorised mass — the zone fee itself starts above 5 t — so it is
+ * small cannot be a lorry's authorised mass (the zone fee itself starts above 5 t), so it is
  * read as tonnes rather than stored as a number that would put every trip in the cheapest
  * bracket. Thousands separators are accepted because the registration prints them.
  */
@@ -47,7 +47,7 @@ export function parseMmaKg(value) {
 /** "40.000 kg (40 t)", the way the figure reads on a screen next to a tariff table. */
 export function mmaLabel(kg) {
   const n = toFiniteNumber(kg);
-  if (n == null) return '—';
+  if (n == null) return 'necompletat';
   const tonnes = n / 1000;
   return `${n.toLocaleString('ro-RO')} kg (${tonnes.toLocaleString('ro-RO', { maximumFractionDigits: 1 })} t)`;
 }

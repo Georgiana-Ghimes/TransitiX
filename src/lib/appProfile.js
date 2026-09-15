@@ -10,6 +10,7 @@ export const COMPANION_OFFICE_PATHS = [
   '/fleet',
   '/settings',
   '/users',
+  '/ghid',
 ];
 
 export function appProfile() {

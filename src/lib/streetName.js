@@ -29,7 +29,7 @@ export function plainText(value) {
  */
 const STREET_TYPES = [
   ['bulevardul', 'bulevard', 'b-dul', 'bdul', 'b dul', 'bd', 'blvd'],
-  ['soseaua', 'sos'],
+  ['soseaua', 'sosea', 'sos'],
   ['calea', 'cal'],
   ['strada', 'str'],
   ['piata', 'pta', 'pt'],

@@ -15,8 +15,10 @@ import {
 } from '@/lib/utils';
 import {
   Route, Package, Truck, ChevronRight, Loader2, CheckCircle2,
-  CircleDot, Navigation, MessageSquare, User, Bell, Phone, ListOrdered,
+  CircleDot, Navigation, MessageSquare, User, Bell, Phone, ListOrdered, HelpCircle, X,
 } from 'lucide-react';
+import GuideView from '@/components/GuideView';
+import { DRIVER_GUIDE } from '@/lib/guide';
 import { notifyError } from '@/lib/notify';
 
 /** One primary action per status, TMS driver pattern */
@@ -36,6 +38,7 @@ export default function DriverApp() {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [tab, setTab] = useState('trips');
+  const [guideOpen, setGuideOpen] = useState(false);
   const [listMode, setListMode] = useState('active'); // active | history
   const [unreadCount, setUnreadCount] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
@@ -156,6 +159,22 @@ export default function DriverApp() {
       .slice(0, 2)
       .toUpperCase();
 
+  if (guideOpen) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-[#F8F9FA]">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#0A2B4E] px-4 py-3 text-white">
+          <p className="font-bold">Ghid</p>
+          <button type="button" onClick={() => setGuideOpen(false)} aria-label="Închide ghidul">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="mx-auto w-full max-w-md px-4 py-4">
+          <GuideView guide={DRIVER_GUIDE} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto pb-24">
       <div className="bg-[#0A2B4E] text-white px-5 py-4 -mx-4 lg:-mx-6 lg:rounded-t-xl sticky top-0 z-10">
@@ -168,8 +187,20 @@ export default function DriverApp() {
                 : selectedTrip && tab === 'trips' ? selectedTrip.cmr_number : 'Cursele mele'}
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
-            {initials}
+          <div className="flex items-center gap-2">
+            {/* The bottom bar already carries five tabs; a sixth would shrink every label past
+                reading. The guide is a thing you reach for once, so it sits in the header. */}
+            <button
+              type="button"
+              onClick={() => setGuideOpen(true)}
+              aria-label="Ghidul șoferului"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
+            <div className="w-9 h-9 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
+              {initials}
+            </div>
           </div>
         </div>
         {previewMode && tab === 'trips' && !selectedTrip && (

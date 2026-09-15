@@ -195,11 +195,6 @@ export default function Layout() {
     setTourOpen(false);
   };
 
-  const openTour = () => {
-    setTourStep(0);
-    setTourOpen(true);
-  };
-
   useEffect(() => {
     try {
       localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
@@ -361,22 +356,21 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
-          {!documentsCompanion && (
-          <button
-            type="button"
+          <Link
+            to="/ghid"
             data-tour-ghid
-            title="Ghid platformă"
-            onClick={openTour}
+            title="Ghid"
+            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center w-full rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
               showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+              location.pathname === '/ghid' && 'bg-white/10 text-white',
               tourHighlightGhid && isDesktop && TOUR_NAV_HIGHLIGHT
             )}
           >
             <HelpCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Ghid</span>}
-          </button>
-          )}
+          </Link>
           {!documentsCompanion && (
           <Link
             to="/settings"

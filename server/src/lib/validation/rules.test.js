@@ -230,6 +230,21 @@ describe('document rules', () => {
       { ...CONFIRMED, id: 'b', numar_tpo: ' tpo 2026-0311 ' },
     ])).toHaveLength(1);
   });
+
+  it('says nothing about a TPO driven twice, those are two curse', () => {
+    // The order is the same; the loads, the days and the destinations are not. Raising this
+    // on every multi-cursă TPO is how the bell stops being read.
+    expect(checkDuplicateTpo([
+      {
+        ...CONFIRMED, id: 'a', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044633',
+        data_efectuare_cursa: '2026-08-10', ruta_transport: 'Bol-Bucuresti/Viilor52',
+      },
+      {
+        ...CONFIRMED, id: 'b', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044701',
+        data_efectuare_cursa: '2026-08-11', ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      },
+    ])).toEqual([]);
+  });
 });
 
 // ----------------------------------------------------------------- rollups
@@ -304,7 +319,10 @@ describe('catalog', () => {
         status: 'livrata', cmr_source: 'digital' }, () => []).map((f) => f.rule),
       checkDocumentWeight({ id: 'd', status: 'confirmed', gross_weight_kg: null }).rule,
       checkDocumentLinked({ id: 'd', status: 'confirmed', trip_id: null }).rule,
-      checkDuplicateTpo([{ id: 'a', numar_tpo: 'X' }, { id: 'b', numar_tpo: 'X' }])[0].rule,
+      checkDuplicateTpo([
+        { id: 'a', numar_tpo: 'X', numar_document_marfa: 'PSL-1' },
+        { id: 'b', numar_tpo: 'X', numar_document_marfa: 'PSL-1' },
+      ])[0].rule,
     ]);
     for (const rule of raised) expect(getRule(rule), `catalog entry for ${rule}`).not.toBeNull();
   });

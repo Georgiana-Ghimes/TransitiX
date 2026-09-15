@@ -60,8 +60,8 @@ describe('mmaLabel', () => {
   });
 
   it('has something to show for nothing', () => {
-    expect(mmaLabel(null)).toBe('—');
-    expect(mmaLabel('')).toBe('—');
+    expect(mmaLabel(null)).toBe('necompletat');
+    expect(mmaLabel('')).toBe('necompletat');
   });
 });
 

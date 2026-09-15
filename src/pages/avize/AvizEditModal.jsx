@@ -3,6 +3,7 @@ import ModalShell from '@/components/ModalShell';
 import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
 import { Loader2, Pencil, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
+import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import { inputCls, labelCls, lowField } from './avizeUi';
 
 export default function AvizEditModal({
@@ -45,6 +46,7 @@ export default function AvizEditModal({
                   />
                 </div>
               ))}
+              <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />
               <div className="sm:col-span-2">
                 <label className={labelCls}>Rută birou (nu merge în Excel)</label>
                 <input className={inputCls} value={form.ruta_display ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, ruta_display: e.target.value }))} />
@@ -54,7 +56,7 @@ export default function AvizEditModal({
                 <select className={inputCls} value={form.trip_id || ''} onChange={(e) => setForm((prev) => ({ ...prev, trip_id: e.target.value }))}>
                   <option value="">Fără cursă</option>
                   {trips.map((t) => (
-                    <option key={t.id} value={t.id}>{t.cmr_number} · {t.vehicle_plate || '—'} · {t.loading_date || ''}</option>
+                    <option key={t.id} value={t.id}>{t.cmr_number} · {t.vehicle_plate || 'fără auto'} · {t.loading_date || ''}</option>
                   ))}
                 </select>
                 {trips.length === 0 && (

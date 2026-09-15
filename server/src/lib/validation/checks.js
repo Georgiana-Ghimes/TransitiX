@@ -91,7 +91,12 @@ async function loadVehicles(companyId) {
 
 async function loadDocuments(companyId, windowDays) {
   const found = await query(
-    `SELECT id, original_filename, status, numar_tpo, gross_weight_kg, trip_id, data_efectuare_cursa
+    // numar_document_marfa, numar_auto and ruta_transport are here for `consignmentKey`, which
+    // decides whether two rows are one transport or two curse of one TPO. Leaving them out does
+    // not make the rule wrong in an obvious way, it makes it silent: every row gets a key of
+    // its own and nothing is ever a duplicate.
+    `SELECT id, original_filename, status, numar_tpo, gross_weight_kg, trip_id,
+            data_efectuare_cursa, numar_document_marfa, numar_auto, ruta_transport
      FROM aviz_documents
      WHERE company_id = $1
        AND (data_efectuare_cursa IS NULL OR data_efectuare_cursa >= CURRENT_DATE - $2::int)

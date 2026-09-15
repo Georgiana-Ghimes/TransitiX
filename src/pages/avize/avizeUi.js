@@ -25,8 +25,8 @@ export const AVIZ_ACTION_LEGEND = [
     text: 'Scoate avizul din listă. Folosește-l pentru dubluri, teste sau documente încărcate greșit. Nu se poate anula.',
   },
   {
-    name: 'TPO duplicat',
-    text: 'Același număr TPO există deja pe alt rând. Eticheta este un semnal vizual, nu blochează acțiunile, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
+    name: 'Aviz duplicat',
+    text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta nu blochează nimic, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
   },
   {
     name: 'Unește în Anexa XLSX',

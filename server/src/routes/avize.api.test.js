@@ -193,3 +193,99 @@ describe('the list and the export agree about a route', () => {
     }
   });
 });
+
+describe('GET /api/avize, un TPO cu mai multe curse', () => {
+  /**
+   * A TPO is an order and an order can be driven more than once. Flagging every repeated TPO
+   * as a duplicate put a double-billing warning on legitimate work, and a warning that fires
+   * on the normal case stops being read before it ever meets the abnormal one.
+   */
+  it('does not call the second cursă of a TPO a duplicate', async () => {
+    const tpo = `TPO-MULTI-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10',
+      numar_auto: 'B-34-BAU',
+    });
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044701',
+      ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      data_efectuare_cursa: '2026-08-11',
+      numar_auto: 'B-34-BAU',
+    });
+
+    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    expect(res.status).toBe(200);
+    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    expect(mine).toHaveLength(2);
+    expect(mine.map((r) => r.duplicate_tpo)).toEqual([false, false]);
+    // Two rows, two routes, and both say the order was driven twice.
+    expect(mine.map((r) => r.numar_curse)).toEqual([2, 2]);
+    expect(new Set(mine.map((r) => r.ruta_transport)).size).toBe(2);
+  });
+
+  it('still catches the same aviz uploaded twice under that TPO', async () => {
+    const tpo = `TPO-DUP-${Date.now()}`;
+    for (const name of ['prima.pdf', 'aceeasi-din-greseala.pdf']) {
+      await makeAviz(ctx.company.id, {
+        numar_tpo: tpo,
+        original_filename: name,
+        numar_document_marfa: 'PSL-0044633',
+        ruta_transport: 'Bol-Bucuresti/Viilor52',
+        data_efectuare_cursa: '2026-08-10',
+        numar_auto: 'B-34-BAU',
+      });
+    }
+
+    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    expect(mine).toHaveLength(2);
+    expect(mine.map((r) => r.duplicate_tpo)).toEqual([true, true]);
+  });
+});
+
+describe('PUT /api/entities/AvizDocument, avertismentul de la Salvează', () => {
+  /**
+   * The single-row check runs against the database rather than against a loaded list, so it is
+   * a second implementation of the same question and has to give the same answer. It used to
+   * ask only "does another row carry this TPO", which is what put "există deja un aviz cu
+   * același TPO" on the screen every time an operator saved the second cursă.
+   */
+  it('stays quiet when the other row is a different cursă of the same TPO', async () => {
+    const tpo = `TPO-SAVE-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+    });
+    const second = await makeAviz(ctx.company.id, {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044701',
+      ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      data_efectuare_cursa: '2026-08-11', numar_auto: 'B-34-BAU',
+    });
+
+    const res = await api().put(`/api/entities/AvizDocument/${second.id}`)
+      .set(auth(ctx.adminToken)).send({ km_parcursi: 51 });
+    expect(res.status).toBe(200);
+    expect(res.body.duplicate_tpo).toBe(false);
+  });
+
+  it('warns when the other row is the same aviz', async () => {
+    const tpo = `TPO-SAVE-DUP-${Date.now()}`;
+    const common = {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+    };
+    await makeAviz(ctx.company.id, common);
+    const second = await makeAviz(ctx.company.id, common);
+
+    const res = await api().put(`/api/entities/AvizDocument/${second.id}`)
+      .set(auth(ctx.adminToken)).send({ km_parcursi: 51 });
+    expect(res.status).toBe(200);
+    expect(res.body.duplicate_tpo).toBe(true);
+  });
+});

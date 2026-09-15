@@ -19,7 +19,8 @@ import {
   isPgUniqueViolation,
   nextAvizStatusOnSave,
 } from '../lib/concurrency.js';
-import { tpoExistsForOther } from '../lib/avizQuery.js';
+import { duplicateConsignmentExists } from '../lib/avizQuery.js';
+import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
@@ -419,10 +420,10 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     const row = serializeRow(result.rows[0]);
 
     if (req.params.entity === 'AvizDocument') {
-      row.duplicate_tpo = await tpoExistsForOther(query, {
+      row.duplicate_tpo = await duplicateConsignmentExists(query, {
         companyId: req.user.company_id,
-        tpo: row.numar_tpo,
-        exceptId: row.id,
+        row: repairAvizFromStored(row),
+        decorate: (other) => repairAvizFromStored(serializeRow(other)),
       });
     }
 

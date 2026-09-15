@@ -38,7 +38,7 @@ import {
   pickConfirmedAvize,
   templateDeleteDecision,
   templateUpdateDecision,
-  tpoExistsForOther,
+  duplicateConsignmentExists,
   uniqueZipEntry,
 } from '../lib/avizQuery.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
@@ -593,10 +593,12 @@ router.post('/extract', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
 
     const row = decorateAviz(result.rows[0]);
-    row.duplicate_tpo = await tpoExistsForOther(query, {
+    row.duplicate_tpo = await duplicateConsignmentExists(query, {
       companyId: req.user.company_id,
-      tpo: row.numar_tpo,
-      exceptId: row.id,
+      row,
+      // Candidates are repaired too, so a stored row whose aviz number lives only in the OCR
+      // text is compared by that number and not by the blank column.
+      decorate: (other) => repairAvizFromStored(serializeRow(other)),
     });
     res.json(row);
   } catch (err) {

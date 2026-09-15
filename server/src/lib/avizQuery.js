@@ -27,16 +27,51 @@ export function isLockedRaiTemplate(row) {
   return String(row?.name || '').trim() === 'Anexa Factura RAI';
 }
 
+/**
+ * What makes two rows the same delivery, rather than two curse of one TPO.
+ *
+ * A TPO is an order, and an order can legitimately be driven several times: the same
+ * TPO-0025803 covers PSL-0044633 to Șos. Viilor on Monday and PSL-0044701 to Bd. Iuliu Maniu on
+ * Tuesday. Treating a repeated TPO as a duplicate warned about double billing on every one of
+ * those, which trains an operator to click past the warning, and a warning nobody reads is
+ * worse than no warning: the real double upload goes through with the same shrug.
+ *
+ * The aviz number is the discriminator, because that is what the consignment is: two different
+ * PSL numbers are two different loads whatever TPO paid for them, and the same PSL number twice
+ * is the same paper counted twice.
+ *
+ * Without an aviz number there is nothing that precise, so the run plus where it went stands in.
+ * Two rows that agree on the day, the lorry and the destination, and carry no document number
+ * to tell them apart, have nothing left that distinguishes them.
+ */
+export function consignmentKey(row) {
+  const doc = String(row?.numar_document_marfa || '').trim().toLowerCase();
+  if (doc) return `doc:${doc}`;
+  const route = String(row?.ruta_transport || '').trim().toLowerCase();
+  return `run:${runIdentity(row)}|${route}`;
+}
+
+/**
+ * Marks the rows that are the same consignment as another row in the set, under the same TPO.
+ *
+ * Still scoped to the TPO, which is where an operator looks when the annex totals are wrong.
+ * The same aviz number appearing under two different TPOs is a different mistake and is not
+ * what this flag has ever meant.
+ */
 export function flagDuplicateTpos(rows) {
   const counts = new Map();
+  const keyOf = (row) => {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    return tpo ? `${tpo}::${consignmentKey(row)}` : null;
+  };
   for (const row of rows) {
-    const tpo = String(row.numar_tpo || '').trim().toLowerCase();
-    if (!tpo) continue;
-    counts.set(tpo, (counts.get(tpo) || 0) + 1);
+    const key = keyOf(row);
+    if (!key) continue;
+    counts.set(key, (counts.get(key) || 0) + 1);
   }
   return rows.map((row) => {
-    const tpo = String(row.numar_tpo || '').trim().toLowerCase();
-    return { ...row, duplicate_tpo: Boolean(tpo && counts.get(tpo) > 1) };
+    const key = keyOf(row);
+    return { ...row, duplicate_tpo: Boolean(key && counts.get(key) > 1) };
   });
 }
 
@@ -77,16 +112,32 @@ export function applyNumarCurseByRuns(rows) {
   });
 }
 
-export async function tpoExistsForOther(queryFn, { companyId, tpo, exceptId }) {
-  const term = String(tpo || '').trim();
-  if (!term) return false;
+/**
+ * Whether another stored document is the same consignment as this one.
+ *
+ * The candidates are fetched and compared in JavaScript rather than matched in SQL, so this
+ * and `flagDuplicateTpos` cannot drift apart: the list view and the single row would otherwise
+ * each have their own opinion about what a duplicate is, and an operator would see a row
+ * labelled duplicate in the table and not in the modal.
+ *
+ * `decorate` is how a caller hands over rows repaired from the stored OCR text. Comparing a
+ * repaired row against raw candidates can only miss a duplicate, never invent one, but a
+ * caller that can repair both should.
+ */
+export async function duplicateConsignmentExists(queryFn, { companyId, row, decorate }) {
+  const tpo = String(row?.numar_tpo || '').trim();
+  if (!tpo) return false;
   const result = await queryFn(
-    `SELECT 1 FROM aviz_documents
+    `SELECT id, numar_tpo, numar_document_marfa, ruta_transport, data_efectuare_cursa,
+            numar_auto, trip_id, extracted_data
+     FROM aviz_documents
      WHERE company_id = $1 AND LOWER(numar_tpo) = LOWER($2) AND id <> $3
-     LIMIT 1`,
-    [companyId, term, exceptId]
+     LIMIT 50`,
+    [companyId, tpo, row.id]
   );
-  return Boolean(result.rows[0]);
+  const shape = typeof decorate === 'function' ? decorate : (x) => x;
+  const key = consignmentKey(row);
+  return result.rows.some((other) => consignmentKey(shape(other)) === key);
 }
 
 export const AVIZ_ID_CAP = 200;

@@ -102,15 +102,63 @@ describe('avizQuery', () => {
     expect(uniqueZipEntry('originale/a.pdf', used)).toBe('originale/a-1.pdf');
   });
 
-  it('flags duplicate TPO in a list without UNIQUE', () => {
+  it('flags the same aviz uploaded twice under one TPO', () => {
     const flagged = flagDuplicateTpos([
-      { id: '1', numar_tpo: 'TPO-1' },
-      { id: '2', numar_tpo: 'TPO-1' },
-      { id: '3', numar_tpo: 'TPO-2' },
+      { id: '1', numar_tpo: 'TPO-1', numar_document_marfa: 'PSL-0044633' },
+      { id: '2', numar_tpo: 'TPO-1', numar_document_marfa: 'PSL-0044633' },
+      { id: '3', numar_tpo: 'TPO-2', numar_document_marfa: 'PSL-0044701' },
     ]);
     expect(flagged[0].duplicate_tpo).toBe(true);
     expect(flagged[1].duplicate_tpo).toBe(true);
     expect(flagged[2].duplicate_tpo).toBe(false);
+  });
+
+  it('leaves a TPO driven twice alone, those are two curse and not a duplicate', () => {
+    // TPO-0025803 covers a Monday delivery to Viilor and a Tuesday one to Iuliu Maniu. Warning
+    // about double billing on both is how an operator learns to click past the warning.
+    const flagged = flagDuplicateTpos([
+      {
+        id: '1', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044633',
+        data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+        ruta_transport: 'Bol-Bucuresti/Viilor52',
+      },
+      {
+        id: '2', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044701',
+        data_efectuare_cursa: '2026-08-11', numar_auto: 'B-34-BAU',
+        ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      },
+    ]);
+    expect(flagged.map((r) => r.duplicate_tpo)).toEqual([false, false]);
+  });
+
+  it('falls back to the run and the destination when no aviz number was read', () => {
+    const rows = [
+      {
+        id: '1', numar_tpo: 'TPO-1', data_efectuare_cursa: '2026-08-10',
+        numar_auto: 'B-34-BAU', ruta_transport: 'Bol-Bucuresti/Viilor52',
+      },
+      {
+        id: '2', numar_tpo: 'TPO-1', data_efectuare_cursa: '2026-08-10',
+        numar_auto: 'B-34-BAU', ruta_transport: 'Bol-Bucuresti/Viilor52',
+      },
+      {
+        id: '3', numar_tpo: 'TPO-1', data_efectuare_cursa: '2026-08-10',
+        numar_auto: 'B-34-BAU', ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      },
+    ];
+    // Same day, same lorry, same destination, nothing to tell them apart: duplicate.
+    // A different destination is a second drop, not the same paper twice.
+    expect(flagDuplicateTpos(rows).map((r) => r.duplicate_tpo)).toEqual([true, true, false]);
+  });
+
+  it('does not call two bare rows duplicates just because they share a TPO', () => {
+    // Freshly uploaded, nothing extracted yet. There is no evidence either way, and inventing
+    // a duplicate here is what made the warning worthless on the rows that matter.
+    const flagged = flagDuplicateTpos([
+      { id: '1', numar_tpo: 'TPO-1' },
+      { id: '2', numar_tpo: 'TPO-1' },
+    ]);
+    expect(flagged.map((r) => r.duplicate_tpo)).toEqual([false, false]);
   });
 
   it('counts distinct runs per TPO, not avize', () => {

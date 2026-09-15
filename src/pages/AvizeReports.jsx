@@ -330,7 +330,7 @@ export default function AvizeReports() {
       notifySuccess(
         'Aviz salvat',
         saved?.duplicate_tpo
-          ? 'Atenție: există deja un aviz cu același TPO. Salvarea a rămas.'
+          ? 'Atenție: același transport există deja pe alt rând. Salvarea a rămas.'
           : 'Câmpurile au fost actualizate.'
       );
       setEditRow(null);
@@ -910,7 +910,7 @@ export default function AvizeReports() {
                       <div className="min-w-0 flex-1">
                         <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`}>
                           {row.numar_tpo || 'Fără TPO'}
-                          {row.duplicate_tpo ? <span className="ml-2 text-[11px] font-normal text-amber-700">TPO duplicat</span> : null}
+                          {row.duplicate_tpo ? <span className="ml-2 text-[11px] font-normal text-amber-700">aviz duplicat</span> : null}
                         </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
@@ -1241,7 +1241,7 @@ export default function AvizeReports() {
         onConfirm={runDuplicateConfirm}
         busy={busy || Boolean(busyId)}
         variant="warning"
-        title={confirmDuplicate?.mode === 'export' ? 'Export cu TPO duplicat?' : 'TPO duplicat'}
+        title={confirmDuplicate?.mode === 'export' ? 'Export cu aviz duplicat?' : 'Aviz duplicat'}
         description={
           confirmDuplicate?.mode === 'export'
             ? (confirmDuplicate.dupCount === 1
@@ -1250,10 +1250,10 @@ export default function AvizeReports() {
               : `${confirmDuplicate.dupCount} avize marcate „duplicat” sunt în selecție, risc de facturare dublă. `
                 + 'Verifică lista sau exportă oricum.')
             : confirmDuplicate?.mode === 'bulk'
-              ? `${confirmDuplicate.dupCount} din rândurile selectate au același TPO ca alt document. `
+              ? `${confirmDuplicate.dupCount} din rândurile selectate sunt același transport ca alt document. `
                 + 'Dacă sunt încărcări greșite, folosește Șterge înainte de confirmare. Confirmi oricum?'
               : `„${confirmDuplicate?.row?.numar_tpo || confirmDuplicate?.row?.original_filename || 'Acest aviz'}” `
-                + 'are același TPO ca alt rând. Dacă e o încărcare greșită, folosește Șterge. Confirmi oricum?'
+                + 'este același transport ca alt rând. Dacă e o încărcare greșită, folosește Șterge. Confirmi oricum?'
         }
         confirmLabel={confirmDuplicate?.mode === 'export' ? 'Exportă oricum' : 'Confirmă oricum'}
       />

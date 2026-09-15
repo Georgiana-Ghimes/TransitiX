@@ -6,6 +6,7 @@
  * what it exported before. What is new is that the report knows what it is missing.
  */
 import { mapAnnexRows, normalizeTemplateColumns } from '../avizTemplate.js';
+import { consignmentKey } from '../avizQuery.js';
 import { canTotal, getSource, isNumericSource, WEIGHT_SOURCES } from './sources.js';
 
 function toNumber(value) {
@@ -112,15 +113,18 @@ export function reportWarnings(columns, documents) {
       docs.filter((d) => toNumber(d.gross_weight_kg) !== null).map((d) => d.id));
   }
 
-  const seenTpo = new Map();
+  // Same rule as the list view, from the same function. A TPO driven twice is two curse and
+  // not a warning; the same aviz counted twice is.
+  const seen = new Map();
   for (const doc of docs) {
     const tpo = String(doc.numar_tpo || '').trim().toLowerCase();
     if (!tpo) continue;
-    seenTpo.set(tpo, [...(seenTpo.get(tpo) || []), doc.id]);
+    const key = `${tpo}::${consignmentKey(doc)}`;
+    seen.set(key, [...(seen.get(key) || []), doc.id]);
   }
   warn(found, 'duplicate_tpo', 'warning',
-    'Același TPO apare pe mai multe documente.',
-    [...seenTpo.values()].filter((ids) => ids.length > 1).flat());
+    'Același aviz apare de mai multe ori în selecție.',
+    [...seen.values()].filter((ids) => ids.length > 1).flat());
 
   return found;
 }

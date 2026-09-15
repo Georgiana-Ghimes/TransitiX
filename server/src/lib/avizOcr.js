@@ -282,21 +282,28 @@ function sliceSection(blob, startLabels, stopLabels) {
 }
 
 function parseDestBlock(section) {
-  if (!section || !String(section).trim()) return { locality: null, street: null };
+  if (!section || !String(section).trim()) {
+    return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
+  }
   const folded = fold(section)
     .replace(/bucurestisector/g, 'bucuresti sector')
     .replace(/([a-z])sector(\d)/g, '$1 sector $2');
   const skipLocality = /^(bolintin|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
   const streetStop = /^(nr|numar|sector|ro|rou|romania|bucuresti|domnesti|dobroesti|militari|fundeni|comanesti|popesti)$/;
+  // The type word is captured, not just skipped. Bucharest has an Intrarea, a Șoseaua and a
+  // Strada Viilor, and they do not agree about the zone: one is in B, one is outside. The aviz
+  // prints "Șosea Viilor" and dropping that first word turned an address the document states
+  // plainly into a question for the operator.
   const typeMatch = folded.match(
-    /(?:strada|str\.?|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+([a-z]+)(?:\s+([a-z]+))?/
+    /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+(?<first>[a-z]+)(?:\s+(?<second>[a-z]+))?/
   );
   const nrMatch = folded.match(/\bnr\.?\s*(\d+[a-z\-]*)/);
   let streetName = null;
   if (typeMatch) {
-    streetName = typeMatch[1];
-    if (typeMatch[2] && !streetStop.test(typeMatch[2])) {
-      streetName = `${typeMatch[1]} ${typeMatch[2]}`;
+    const { first, second } = typeMatch.groups;
+    streetName = first;
+    if (second && !streetStop.test(second)) {
+      streetName = `${first} ${second}`;
     }
   } else if (nrMatch) {
     const loose = folded.match(/([a-z]{4,})(?:\s+([a-z]{3,}))?\s+nr\.?\s*\d+/);
@@ -323,9 +330,21 @@ function parseDestBlock(section) {
     }
   }
 
+  const streetType = typeMatch?.groups?.type?.replace(/\.$/, '') || null;
+
   const locality = localityRaw ? prettyPlace(localityRaw) : null;
   const street = compactStreet(streetName, nrMatch?.[1]);
-  return { locality, street };
+  // `street` is the compact route code ("IuliuManiu600A"): words glued, number appended, which
+  // is what the customer's annex prints. The zone lookup needs the opposite, a spaced name and
+  // a separate number, so both come back rather than having the screen unglue the code and
+  // guess where the name ended.
+  return {
+    locality,
+    street,
+    streetName: streetName || null,
+    streetType,
+    houseNumber: nrMatch?.[1] ? formatHouseNumber(nrMatch[1]) : null,
+  };
 }
 
 function formatRouteLeg(block) {
@@ -370,14 +389,9 @@ function originFromSite(blob) {
   return null;
 }
 
-/**
- * Start = Client address (e.g. Aeroportului 120-T).
- * End = Adresă de livrare (e.g. Viilor 52).
- * Site BOL/MIL is only a fallback when the Client block has no street (TRO).
- * Never use Expeditor Bolintin-Deal.
- */
-function parseRoute(blob) {
-  const delivery = sliceSection(
+/** The `Adresă de livrare` block, parsed. Where the lorry ends up, and what a zone is read from. */
+export function parseDeliveryAddress(blob) {
+  const section = sliceSection(
     blob,
     ['adresa de livrare', 'adresa livrare'],
     [
@@ -392,7 +406,17 @@ function parseRoute(blob) {
       'termeni de livrare',
     ]
   );
-  const destLeg = formatRouteLeg(parseDestBlock(delivery));
+  return parseDestBlock(section);
+}
+
+/**
+ * Origin = the Baumit site the lorry loads at (`Expeditor / Site: BOL`).
+ * End = Adresă de livrare (e.g. Viilor 52).
+ * The Client block is only a fallback, on documents that name no site.
+ */
+function parseRoute(blob) {
+  const destBlock = parseDeliveryAddress(blob);
+  const destLeg = formatRouteLeg(destBlock);
   const originLeg = formatRouteLeg(findClientOrigin(blob));
   const site = originFromSite(blob);
 
@@ -442,6 +466,7 @@ export function parseBaumitAviz(rawText) {
     data_efectuare_cursa,
     numar_auto,
     ruta_transport: parseRoute(blob),
+    delivery_address: parseDeliveryAddress(blob),
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
     gross_weight_kg: gross.value ?? null,
@@ -528,6 +553,10 @@ export function repairAvizFromStored(row) {
     cantitate_marfa: preferQuantity(row, parsed),
     gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
     numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
+    // Derived, never stored and never edited: the delivery address exists only to answer
+    // "which zone", and re-reading it from the OCR text each time means a document whose text
+    // improves on re-extraction improves here too, with no column to keep in step.
+    delivery_address: parsed?.delivery_address ?? null,
   };
 }
 

@@ -14,6 +14,7 @@ import Dashboard from '@/pages/Dashboard';
 import Trips from '@/pages/Trips';
 import Vehicles from '@/pages/Vehicles';
 import Drivers from '@/pages/Drivers';
+import Guide from '@/pages/Guide';
 import Clients from '@/pages/Clients';
 import Settings from '@/pages/Settings';
 import Warehouse from '@/pages/Warehouse';
@@ -77,6 +78,7 @@ function OfficeRoutes() {
         <Route path="/fleet" element={<Fleet />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
+        <Route path="/ghid" element={<Guide />} />
         <Route path="/driver-app" element={<DriverAppDocuments />} />
         <Route path="*" element={<Navigate to="/avize" replace />} />
       </>
@@ -111,6 +113,7 @@ function OfficeRoutes() {
       <Route path="/users" element={<Users />} />
       <Route path="/driver-app" element={<DriverApp />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/ghid" element={<Guide />} />
     </>
   );
 }

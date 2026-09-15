@@ -66,9 +66,9 @@ export const RULES = [
   {
     id: 'document_duplicate_tpo',
     severity: 'warning',
-    label: 'Același TPO pe mai multe documente',
-    consequence: 'Anexa va conține același număr de mai multe ori și nu se mai poate reconcilia.',
-    fix: 'Corectează numărul pe documentele greșite.',
+    label: 'Același aviz încărcat de mai multe ori',
+    consequence: 'Anexa va conține de două ori același transport, deci clientul e facturat dublu.',
+    fix: 'Șterge încărcarea în plus. Un TPO cu mai multe curse nu intră aici.',
   },
 ];
 

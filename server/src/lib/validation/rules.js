@@ -10,6 +10,7 @@
  * rule can be tested against a hand-written row without a database.
  */
 import { findTariff } from '../pricing/tariffs.js';
+import { consignmentKey } from '../avizQuery.js';
 
 /** A finding severe enough to change an invoice, versus one worth a look. */
 export const SEVERITIES = ['error', 'warning'];
@@ -189,29 +190,37 @@ export function checkDocumentLinked(doc) {
 }
 
 /**
- * The same TPO number on more than one document.
+ * The same consignment on more than one document.
  *
- * One finding per number, not per document: the operator has one thing to resolve, not three.
+ * Not the same TPO: an order can be driven several times, and one finding per repeated TPO
+ * fired on every legitimate multi-cursă order. `consignmentKey` is what separates the second
+ * cursă from the second upload of the first, and it is shared with the list view so the bell
+ * and the table cannot disagree.
+ *
+ * One finding per repeated consignment, not per document: the operator has one thing to
+ * resolve, not three.
  */
 export function checkDuplicateTpo(documents = []) {
-  const byTpo = new Map();
+  const byConsignment = new Map();
   for (const doc of documents) {
     const tpo = String(doc.numar_tpo || '').trim().toLowerCase();
     if (!tpo) continue;
-    byTpo.set(tpo, [...(byTpo.get(tpo) ?? []), doc]);
+    const key = `${tpo}::${consignmentKey(doc)}`;
+    byConsignment.set(key, [...(byConsignment.get(key) ?? []), doc]);
   }
   const found = [];
-  for (const [tpo, docs] of byTpo) {
+  for (const [key, docs] of byConsignment) {
     if (docs.length < 2) continue;
     found.push(finding({
       rule: 'document_duplicate_tpo',
       severity: 'warning',
-      key: `document_duplicate_tpo:${tpo}`,
-      title: `TPO pe mai multe documente, ${docs[0].numar_tpo}`,
-      message: `${docs.length} documente poartă același număr de TPO: `
+      key: `document_duplicate_tpo:${key}`,
+      title: `Același aviz de mai multe ori, ${docs[0].numar_tpo}`,
+      message: `${docs.length} documente sunt același transport `
+        + `(${docs[0].numar_document_marfa || 'fără număr de aviz'}): `
         + `${docs.map((d) => d.original_filename || d.id).join(', ')}.`,
       link: '/reports',
-      subject: { type: 'tpo', id: tpo, label: docs[0].numar_tpo },
+      subject: { type: 'tpo', id: key, label: docs[0].numar_tpo },
     }));
   }
   return found;
