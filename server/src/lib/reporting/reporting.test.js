@@ -225,6 +225,19 @@ describe('reportWarnings', () => {
     expect(codes([UNWEIGHED], getPreset('rai_anexa'))).not.toContain('missing_gross_weight');
   });
 
+  it('says which documents will have an empty Cantitate (tone) cell', () => {
+    // Anexa RAI has no weight column, so `missing_gross_weight` never fires on it. Without this
+    // warning an unweighed aviz left a blank cell on the customer's sheet and said nothing.
+    const found = reportWarnings(getPreset('rai_anexa').columns, [CONFIRMED, UNWEIGHED]);
+    const gap = found.find((w) => w.code === 'missing_quantity_weight');
+    expect(gap.count).toBe(1);
+    expect(gap.document_ids).toEqual([UNWEIGHED.id]);
+  });
+
+  it('stays quiet about Cantitate when every document was weighed', () => {
+    expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('missing_quantity_weight');
+  });
+
   it('flags the same TPO appearing twice', () => {
     const found = reportWarnings(getPreset('rai_anexa').columns, [CONFIRMED, { ...CONFIRMED, id: 'doc-4' }]);
     const dup = found.find((w) => w.code === 'duplicate_tpo');

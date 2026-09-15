@@ -173,7 +173,8 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
     expect(rows[1]['Numar auto']).toBe('B-112-VFM / B-475-AGR');
     expect(rows[1]['Ruta transport']).toBe('Mil-Bucuresti/IuliuManiu600A');
     expect(rows[1]['Tip marfa']).toBe('galeti');
-    expect(rows[1]['Cantitate marfa (tone)']).toBe(768);
+    // TRO aviz carries no greutate brută, so the tonnes column is blank rather than 768 galeti.
+    expect(rows[1]['Cantitate marfa (tone)'] ?? '').toBe('');
     expect(rows[1]['Numar document marfa (aviz/factura)']).toBe('TRO-0008053');
   });
 

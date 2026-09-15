@@ -78,7 +78,7 @@ describe('parseBaumitAviz', () => {
     expect(parsed.numar_auto).toBe('B-330-SRS');
     expect(parsed.tip_marfa).toBe('saci');
     expect(parsed.cantitate_marfa).toBe(245);
-    expect(parsed.ruta_transport).toBe('Bucuresti/Aeroportului120-T-Domnesti/Independentei121');
+    expect(parsed.ruta_transport).toBe('Bol-Domnesti/Independentei121');
     expect(parsed.layout).toBe('psl');
     expect(parsed.numar_curse).toBe(1);
     expect(parsed.valoare_tpo).toBe(0);
@@ -189,7 +189,7 @@ VFM
     expect(parsed.numar_tpo).toBe('TPO-0025813');
   });
 
-  it('builds Ruta transport from Client start to Adresa de livrare end', () => {
+  it('starts the route at the Expeditor site, not at a customer address', () => {
     const raw = `
 Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
 Aviz de expeditie: PSL-0044633
@@ -200,13 +200,16 @@ Placuta de inmatriculare B 34 BAU / B 34 BAU
 TPO-0025803
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Bucuresti/Aeroportului120-T-Bucuresti/Viilor52');
+    expect(parsed.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
+    // The site code, not the town it sits in: the customer's own annex writes "Bol-…".
     expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
-    expect(parsed.ruta_transport).not.toMatch(/^Bol-/);
+    // Aeroportului 120-T is a second address belonging to the buyer. Starting the route there
+    // described a journey between two of the customer's own premises that no lorry made.
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
     expect(parsed.numar_auto).toBe('B-34-BAU');
   });
 
-  it('uses Client Locotenent street as start when delivery is Ciresului', () => {
+  it('ignores the client billing address, which no lorry ever visits', () => {
     const raw = `
 Expeditor Site: BOL Bolintin
 Adresă de livrare CS-DEMOS-OBI CIRESULUI STR CIRESULUI, NR 31B Dobroești RO 077085
@@ -218,11 +221,11 @@ TPO-0025629
 PSL-0044362
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Fundeni/LocotenentMoga18-Dobroesti/Ciresului31B');
+    expect(parsed.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
     expect(parsed.numar_auto).toBe('B-330-SRS');
   });
 
-  it('parses Blvd, Aleea and Piata street types into Client to Livrare route', () => {
+  it('parses Blvd, Aleea and Piata street types on the delivery leg', () => {
     const raw = `
 Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal
 Aviz de expeditie: PSL-26080101
@@ -232,9 +235,11 @@ Placuta de inmatriculare B 111 ABC
 TPO-00110011
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toMatch(/Unirii/i);
+    expect(parsed.ruta_transport).toBe('Bol-Domnesti/Teilor5');
+    // "Aleea Teilor" is read as a street type plus a name, which is what this case is about.
     expect(parsed.ruta_transport).toMatch(/Teilor/i);
-    expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
+    // Blvd Unirii is the buyer's registered address, not a stop on this run.
+    expect(parsed.ruta_transport).not.toMatch(/Unirii/i);
   });
 
   it('parses Pta / Piata abbreviations', () => {
@@ -350,7 +355,7 @@ describe('repairAvizFromStored', () => {
   it('keeps an office-edited route instead of re-parsing the PDF', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-0025803',
-      ruta_transport: 'Bucuresti/Aeroportului120-T-Bucuresti/Viilor52',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
       extracted_data: {
         raw_text: `Expeditor Site: BOL Bolintin str. Republicii Bolintin-Deal
 Adresă de livrare CS-CONCELEX Șosea Viilor nr. 52 București Sector 5 RO 050151
@@ -358,7 +363,7 @@ Client C23000014 AP-CONCELEX Stradă Aeroportului nr. 120-T București Sector 1 
 TPO-0025803`,
       },
     });
-    expect(repaired.ruta_transport).toBe('Bucuresti/Aeroportului120-T-Bucuresti/Viilor52');
+    expect(repaired.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
   });
 
   it('keeps an office-edited plate and document number', () => {
@@ -577,13 +582,16 @@ describe('mapAnnexRows', () => {
     expect(mapped[0].cantitate_marfa).toBe(9.96);
   });
 
-  it('keeps package count in Cantitate when there is no greutate brută', () => {
+  it('leaves Cantitate empty when there is no greutate brută', () => {
+    // The header says tone. 768 galeti is not 768 tonnes, and once that number is in the cell
+    // nobody downstream can tell it from a real weight, so the column stays empty and
+    // `missing_quantity_weight` names the document instead.
     const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
       numar_tpo: 'TPO-1',
       cantitate_marfa: 768,
       tip_marfa: 'galeti',
     }]);
-    expect(mapped[0].cantitate_marfa).toBe(768);
+    expect(mapped[0].cantitate_marfa).toBe('');
   });
 
   it('applies template Default for tax and tarif when the aviz still has 0', () => {

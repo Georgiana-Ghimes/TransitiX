@@ -138,10 +138,15 @@ export function annexQuantityValue(row) {
   if (Number.isFinite(kg) && kg > 0) {
     return Math.round((kg / 1000) * 100) / 100;
   }
-  const qty = row?.cantitate_marfa;
-  if (qty === undefined || qty === null || qty === '') return null;
-  const n = Number(qty);
-  return Number.isFinite(n) ? n : qty;
+  // No weight, no number. Falling back to the line count filled a column headed "(tone)" with
+  // a count of sacks, so one sheet carried two units under one heading: 378 sitting beside
+  // 21.00 and 16.20. Twenty times too large is obvious to anyone who looks, and invisible to
+  // anyone who does not, and nothing in the file says which rows are which.
+  //
+  // Blank instead, with `missing_quantity_weight` naming the documents. The operator can type
+  // the weighbridge figure on the row; a number in the wrong unit cannot be corrected by
+  // anybody downstream, because it does not look wrong until it is added up.
+  return null;
 }
 
 /**

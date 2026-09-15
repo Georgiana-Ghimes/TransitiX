@@ -482,12 +482,13 @@ export default function ZoneMap() {
       {hit?.point ? <LocateResult hit={hit} fromPlate={fromPlate} /> : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
-        <div className={`${cardCls} overflow-hidden`} style={{ height: '62vh', minHeight: 380 }}>
+        <div className={`${cardCls} relative z-0 overflow-hidden`} style={{ height: '62vh', minHeight: 380 }}>
           <MapContainer
             key={city.id}
             center={city.center}
             zoom={city.zoom}
             scrollWheelZoom
+            className="z-0 h-full w-full"
             style={{ height: '100%', width: '100%' }}
           >
             <TileLayer

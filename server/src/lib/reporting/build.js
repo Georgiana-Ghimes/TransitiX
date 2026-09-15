@@ -87,6 +87,16 @@ export function reportWarnings(columns, documents) {
       ? docs.filter((d) => isBlank(d.data_facturare)).map((d) => d.id)
       : []);
 
+  // "Cantitate marfa (tone)" is the weighbridge figure in tonnes, so a document without one
+  // leaves the cell blank. It used to print the sack count there instead, which put two units
+  // under one heading. Blank is the honest answer, but a blank nobody explains is a blank
+  // nobody fills in.
+  if (sources.has('cantitate_marfa')) {
+    warn(found, 'missing_quantity_weight', 'warning',
+      'Documente fără greutate brută, deci coloana de cantitate rămâne goală pe ele.',
+      docs.filter((d) => toNumber(d.gross_weight_kg) === null).map((d) => d.id));
+  }
+
   const exportsWeight = WEIGHT_SOURCES.some((key) => sources.has(key));
   if (exportsWeight) {
     warn(found, 'missing_gross_weight', 'warning',

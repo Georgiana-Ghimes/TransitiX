@@ -14,6 +14,7 @@ export const WARNING_LABELS = {
   missing_gross_weight: 'Fără greutate brută',
   missing_invoice_date: 'Fără dată de facturare',
   weight_not_exported: 'Greutatea nu ajunge în raport',
+  missing_quantity_weight: 'Cantitate (tone) goală',
   duplicate_tpo: 'TPO duplicat',
 };
 
@@ -23,6 +24,9 @@ export const WARNING_HINTS = {
     + 'Raportul nu va putea fi verificat cu bonul de cântar.',
   missing_gross_weight:
     'Coloana de greutate rămâne goală pe aceste rânduri. Un zero ar arăta ca o mașină plecată goală.',
+  missing_quantity_weight:
+    'Coloana Cantitate marfa (tone) rămâne goală pe aceste rânduri, pentru că avizul nu are '
+    + 'greutate brută. Numărul de saci nu poate lua locul tonelor sub același antet.',
   duplicate_tpo: 'Același număr de TPO apare pe mai multe documente din selecție.',
   missing_invoice_date:
     'Coloana de dată facturare rămâne goală pe aceste rânduri. O poți completa pentru toată '

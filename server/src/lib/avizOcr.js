@@ -396,8 +396,14 @@ function parseRoute(blob) {
   const originLeg = formatRouteLeg(findClientOrigin(blob));
   const site = originFromSite(blob);
 
-  if (originLeg && destLeg && originLeg !== destLeg) return `${originLeg}-${destLeg}`;
+  // The lorry leaves the Baumit site, so `Expeditor / Site: BOL` is the origin whenever the
+  // document names one. The Client block used to win, and on a PSL aviz that block is a second
+  // address belonging to the buyer: one document produced
+  // "Bucuresti/Aeroportului120-T-Bucuresti/Viilor52", a route between two of the customer's own
+  // premises that no lorry drove. The customer's own annex reads "Bol-…" and "Buc/I.Maniu600a-…",
+  // both depots, which is the same rule stated from the other side.
   if (site && destLeg) return `${site}-${destLeg}`;
+  if (originLeg && destLeg && originLeg !== destLeg) return `${originLeg}-${destLeg}`;
   if (destLeg) return destLeg;
   if (originLeg) return originLeg;
   return site;
