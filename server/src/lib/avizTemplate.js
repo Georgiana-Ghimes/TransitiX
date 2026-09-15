@@ -1,6 +1,7 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
 import { getSource } from './reporting/sources.js';
 import { applyNumarCurseByRuns, isLockedRaiTemplate } from './avizQuery.js';
+import { isGenericCountUnit } from './ocr/fields.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -188,16 +189,25 @@ export function normalizeGoodsUnit(raw) {
 }
 
 /**
- * Tip marfa for export: prefer quantity_unit (saci/galeti), then a tip that is itself a unit,
- * then whatever tip_marfa already holds (product name).
+ * Tip marfa for export: packaging the document / operator named, never a bare count word.
+ *
+ * `quantity_unit` often stays on "buc" from `Cantitate … buc` even after Tip marfa was
+ * corrected to "galeti" on screen — preferring the unit column blindly put "bucati" back
+ * onto the customer's annex. A tip that is itself a packaging unit wins; otherwise a
+ * non-generic quantity_unit; otherwise free-text tip (product name). "bucati" alone never
+ * reaches the sheet.
  */
 export function annexTipMarfa(row) {
-  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
-  if (fromUnit) return fromUnit;
   const fromTip = normalizeGoodsUnit(row?.tip_marfa);
-  if (fromTip) return fromTip;
+  if (fromTip && !isGenericCountUnit(fromTip)) return fromTip;
+
+  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
+  if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
+
   const tip = String(row?.tip_marfa || '').trim();
-  return tip || '';
+  if (!tip) return '';
+  if (fromTip && isGenericCountUnit(fromTip)) return '';
+  return tip;
 }
 
 /** Use the saved template as-is. Only fall back when it has no columns. */

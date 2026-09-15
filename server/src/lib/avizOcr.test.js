@@ -515,6 +515,26 @@ describe('mapAnnexRows', () => {
     expect(mapped[0].tip_marfa).toBe('saci');
   });
 
+  it('keeps an edited packaging tip over a stale bucati quantity_unit', () => {
+    // Screen shows galeti after Editează / re-extract; quantity_unit often still holds the
+    // bare "buc" from Cantitate … buc. The annex must not put that count word back.
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      tip_marfa: 'galeti',
+      quantity_unit: 'bucati',
+      cantitate_marfa: 768,
+    }]);
+    expect(mapped[0].tip_marfa).toBe('galeti');
+  });
+
+  it('does not write bucati onto Tip marfa from quantity_unit alone', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      tip_marfa: null,
+      quantity_unit: 'buc',
+      cantitate_marfa: 768,
+    }]);
+    expect(mapped[0].tip_marfa).toBe('');
+  });
+
   it('puts weighbridge tons into Cantitate when greutate brută is present', () => {
     const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
       numar_tpo: 'TPO-1',
