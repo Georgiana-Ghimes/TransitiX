@@ -47,6 +47,70 @@ function dirSize(dir) {
 
 const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
+/** The database name out of a connection URL, for the container fallback. */
+function databaseName(url) {
+  return String(url || '').split('/').pop()?.split('?')[0] ?? '';
+}
+
+/**
+ * Writes the dump, from the host or from inside the compose stack.
+ *
+ * The VM runs Postgres in a container and nothing else, so `pg_dump` is usually absent from the
+ * host PATH. Telling somebody to go and read a comment at that point is telling them to skip the
+ * backup, which is the one step of a deploy that cannot be redone afterwards.
+ *
+ * The container's own `pg_dump` is also the right version for the server it is dumping, which
+ * the host's may not be.
+ */
+function dumpDatabase(databaseUrl, dumpPath) {
+  const direct = spawnSync('pg_dump', ['--no-owner', '--no-acl', '--file', dumpPath, databaseUrl], {
+    stdio: ['ignore', 'inherit', 'inherit'],
+  });
+  if (!direct.error && direct.status === 0) return true;
+  if (direct.error && direct.error.code !== 'ENOENT') {
+    console.error(`pg_dump failed: ${direct.error.message}`);
+    return false;
+  }
+  if (!direct.error) {
+    console.error(`pg_dump exited with ${direct.status}. Nothing was kept.`);
+    return false;
+  }
+
+  const db = databaseName(databaseUrl);
+  const compose = path.join(ROOT, 'docker-compose.companion.yml');
+  if (!db || !fs.existsSync(compose)) {
+    console.error('pg_dump not found on PATH, and no companion compose stack to fall back on.');
+    return false;
+  }
+
+  console.warn('[backup] pg_dump not on PATH, dumping from the companion container instead.');
+  const out = fs.openSync(dumpPath, 'w');
+  try {
+    const viaDocker = spawnSync(
+      'docker',
+      ['compose', '-f', compose, 'exec', '-T', 'db',
+        'pg_dump', '--no-owner', '--no-acl', '-U', process.env.POSTGRES_USER || 'postgres', db],
+      { stdio: ['ignore', out, 'inherit'] },
+    );
+    if (viaDocker.error?.code === 'ENOENT') {
+      console.error('Neither pg_dump nor docker is available. Cannot back up.');
+      return false;
+    }
+    if (viaDocker.status !== 0) {
+      console.error(`docker compose pg_dump exited with ${viaDocker.status}. Nothing was kept.`);
+      return false;
+    }
+  } finally {
+    fs.closeSync(out);
+  }
+  // An empty dump is a failure that exited zero. Better caught here than on a restore.
+  if (fs.statSync(dumpPath).size === 0) {
+    console.error('The dump came back empty. Nothing was kept.');
+    return false;
+  }
+  return true;
+}
+
 function main() {
   const fileEnv = readEnvFile(path.join(SERVER_ROOT, '.env'));
   const databaseUrl = process.env.DATABASE_URL || fileEnv.DATABASE_URL || '';
@@ -65,16 +129,7 @@ function main() {
   fs.mkdirSync(target, { recursive: true });
 
   const dumpPath = path.join(target, 'db.sql');
-  const dump = spawnSync('pg_dump', ['--no-owner', '--no-acl', '--file', dumpPath, databaseUrl], {
-    stdio: ['ignore', 'inherit', 'inherit'],
-  });
-  if (dump.error?.code === 'ENOENT') {
-    console.error('pg_dump not found on PATH. See the docker command in this file’s header.');
-    fs.rmSync(target, { recursive: true, force: true });
-    process.exit(1);
-  }
-  if (dump.status !== 0) {
-    console.error(`pg_dump exited with ${dump.status}. Nothing was kept.`);
+  if (!dumpDatabase(databaseUrl, dumpPath)) {
     fs.rmSync(target, { recursive: true, force: true });
     process.exit(1);
   }

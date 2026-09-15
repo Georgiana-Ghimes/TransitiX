@@ -29,6 +29,7 @@
     "db:backfill:locations": "npm run backfill:locations --prefix server --",
     "db:geocode:locations": "npm run geocode:locations --prefix server --",
     "db:backup": "node scripts/backup-companion.js",
+    "deploy:companion": "node scripts/deploy-companion.js",
     "uploads:prune": "npm run prune:uploads --prefix server --",
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
