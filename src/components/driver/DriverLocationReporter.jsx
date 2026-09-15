@@ -21,7 +21,7 @@ function haversineM(a, b) {
 
 /**
  * Quietly streams the phone's GPS to the server while the driver has an active route.
- * No UI chrome — a toast on hard failure would only annoy someone driving.
+ * No UI chrome, a toast on hard failure would only annoy someone driving.
  */
 export default function DriverLocationReporter({ enabled = true, routeId = null, vehicleId = null }) {
   const [supported] = useState(() => typeof navigator !== 'undefined' && Boolean(navigator.geolocation));
@@ -63,7 +63,7 @@ export default function DriverLocationReporter({ enabled = true, routeId = null,
         await api.telematics.reportPosition(sample);
         lastSent.current = sample;
       } catch {
-        // Offline / no vehicle yet — buffer is the next successful fix.
+        // Offline / no vehicle yet, buffer is the next successful fix.
       }
     };
 

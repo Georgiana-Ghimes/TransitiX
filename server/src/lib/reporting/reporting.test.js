@@ -213,7 +213,7 @@ describe('reportWarnings', () => {
     expect(codes).not.toContain('missing_invoice_date');
   });
 
-  it('does not treat Anexa RAI as dropping weight — Cantitate maps weighbridge tons', () => {
+  it('does not treat Anexa RAI as dropping weight, Cantitate maps weighbridge tons', () => {
     expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('weight_not_exported');
   });
 

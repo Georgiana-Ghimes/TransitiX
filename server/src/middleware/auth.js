@@ -16,7 +16,7 @@ export function signAccessToken(user) {
 /**
  * A refresh token carries a `jti` so the session behind it can be revoked.
  *
- * Without one, signing out is only the client forgetting its copy — the token keeps working
+ * Without one, signing out is only the client forgetting its copy, the token keeps working
  * until it expires, and there is nothing to point at to take it away.
  */
 export function signRefreshToken(user, jti) {
@@ -73,7 +73,7 @@ export function optionalAuth(req, _res, next) {
 
 const OFFICE_ROLES = new Set(['admin', 'dispatcher', 'finance']);
 
-/** Office inbox / dispatcher tools — drivers stay on the driver app. */
+/** Office inbox / dispatcher tools, drivers stay on the driver app. */
 export function officeRequired(req, res, next) {
   if (!req.user) {
     return res.status(401).json({ message: 'Autentificare necesară. Conectează-te din nou.' });

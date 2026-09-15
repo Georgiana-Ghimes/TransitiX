@@ -14,7 +14,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat). Nu blochează exportul — poți uni și rânduri neverificate, dar Confirmă e semnul că datele sunt gata de factură.',
+    text: 'Marchează rândul ca verificat (status Confirmat). Nu blochează exportul, poți uni și rânduri neverificate, dar Confirmă e semnul că datele sunt gata de factură.',
   },
   {
     name: 'Re-extrage',
@@ -26,7 +26,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'TPO duplicat',
-    text: 'Același număr TPO există deja pe alt rând. Eticheta este un semnal vizual — nu blochează acțiunile, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
+    text: 'Același număr TPO există deja pe alt rând. Eticheta este un semnal vizual, nu blochează acțiunile, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
   },
   {
     name: 'Unește în Anexa XLSX',
@@ -37,11 +37,11 @@ export const AVIZ_ACTION_LEGEND = [
 export const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX — îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie — duplică-l ca șablon nou.',
+    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie, duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei — șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
   },
   {
     name: 'Șterge șablon',
@@ -62,7 +62,7 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
 }
 
 /**
- * The fields Re-extrage rewrites from the file — mirrors `EXTRACT_COLUMNS` on the server, narrowed
+ * The fields Re-extrage rewrites from the file, mirrors `EXTRACT_COLUMNS` on the server, narrowed
  * to the ones the edit form can actually change. Km, taxe, valoare TPO and observations are absent
  * on purpose: extraction never touches them, so they are never at risk.
  */

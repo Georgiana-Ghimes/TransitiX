@@ -71,7 +71,7 @@ async function readSheet(file) {
  * Import orders from a spreadsheet.
  *
  * Always returns the full plan, line by line. With `dry_run` the dispatcher sees exactly
- * what would be created; without it, only the clean lines are written — in one transaction,
+ * what would be created; without it, only the clean lines are written, in one transaction,
  * so a file that is half broken never leaves half an import behind.
  */
 router.post('/import', (req, res) => {

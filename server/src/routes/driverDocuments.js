@@ -2,7 +2,7 @@
  * Documents sent from the road.
  *
  * Photos / PDFs land in the same aviz_documents + document_batches pipeline as office
- * uploads (created_from: driver). Trip is optional — the cab can send paperwork before
+ * uploads (created_from: driver). Trip is optional, the cab can send paperwork before
  * the office links a cursă on /avize.
  */
 import { Router } from 'express';
@@ -169,7 +169,7 @@ router.post('/', (req, res) => {
 
       const { notifyCmrPending, notifyDriverUpload } = await import('../lib/officeNotifications.js');
       const driverName = req.user.name || req.user.full_name;
-      // Always ping the office bell — including uploads without a trip (previous gap).
+      // Always ping the office bell, including uploads without a trip (previous gap).
       await notifyDriverUpload(req.user.company_id, {
         driverName,
         documentType,

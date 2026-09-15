@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   }, [checkUserAuth]);
 
   const logout = (shouldRedirect = true) => {
-    // Hard redirect first — clearing auth while still on /driver-app fights the
+    // Hard redirect first, clearing auth while still on /driver-app fights the
     // driver↔office Navigate guards and can flash a blank page.
     if (shouldRedirect) {
       api.auth.logout('/login');

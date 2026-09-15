@@ -1,7 +1,7 @@
 /**
  * Display logic for the geocoding review screen.
  *
- * Thresholds mirror `server/src/lib/geo/geocode.js` — if they drift, the screen tells the
+ * Thresholds mirror `server/src/lib/geo/geocode.js`, if they drift, the screen tells the
  * dispatcher a different story than the batch geocoder did.
  */
 
@@ -68,7 +68,7 @@ export function tierMeta(tier) {
   return TIER_META[tier] || TIER_META.missing;
 }
 
-/** Worst first — the review queue should open on what actually needs attention. */
+/** Worst first, the review queue should open on what actually needs attention. */
 const TIER_ORDER = { missing: 0, poor: 1, review: 2, good: 3, verified: 4 };
 
 export function compareByUrgency(a, b) {
@@ -159,7 +159,7 @@ export function pinMoved(location, draft, tolerance = 1e-6) {
 
 /**
  * Payload for confirming a pin.
- * A dragged pin becomes `manual` with full confidence — a person looked at it, which is a
+ * A dragged pin becomes `manual` with full confidence, a person looked at it, which is a
  * stronger signal than any geocoder score.
  */
 export function confirmPayload(location, draft) {

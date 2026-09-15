@@ -2,9 +2,9 @@
  * 3D extreme-point bin packer for a truck cargo bay.
  *
  * Coordinates (metres):
- *   x — nose (cab) → rear door
- *   y — left → right
- *   z — floor → roof
+ *   x, nose (cab) → rear door
+ *   y, left → right
+ *   z, floor → roof
  *
  * Driver-friendly (LIFO): last delivery is loaded first and ends up toward the nose,
  * so the first stop of the day is near the door. Warehouse-friendly groups by picking
@@ -305,7 +305,7 @@ export function computeAxleLoads(placements, bay) {
       rear_kg: Math.round(half * 10) / 10,
       front_max_kg: bay.axle_front_max_kg ?? null,
       rear_max_kg: bay.axle_rear_max_kg ?? null,
-      warnings: ['Pozițiile axelor nu sunt configurate — sarcina e împărțită egal.'],
+      warnings: ['Pozițiile axelor nu sunt configurate, sarcina e împărțită egal.'],
     };
   }
 
@@ -364,7 +364,7 @@ function overlapLength(aFrom, aTo, bFrom, bTo) {
 }
 
 /**
- * Fill per compartment along the bay length — the numbered bars above the truck profile.
+ * Fill per compartment along the bay length, the numbered bars above the truck profile.
  *
  * A pallet straddling two compartments is split by how much of it lies in each, rather than
  * being credited entirely to whichever compartment its origin falls in. Otherwise the bars
@@ -401,7 +401,7 @@ export function segmentFill(placements = [], bay, { count = DEFAULT_SEGMENTS } =
 
     segments.push({
       index: i,
-      // FleetLoader numbers compartments 001, 002, … — kept because crews read them aloud.
+      // FleetLoader numbers compartments 001, 002, …, kept because crews read them aloud.
       label: String(i + 1).padStart(3, '0'),
       from_m: Math.round(from * 1000) / 1000,
       to_m: Math.round(to * 1000) / 1000,

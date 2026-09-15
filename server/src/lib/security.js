@@ -12,7 +12,7 @@
  *
  * Off by default on purpose. Trusting those headers with no proxy in front lets any client
  * claim any address, which turns `req.ip` into whatever an attacker types. Set `TRUST_PROXY=1`
- * only when something really does sit in front — the tunnel, or a reverse proxy.
+ * only when something really does sit in front, the tunnel, or a reverse proxy.
  *
  * A number is passed through as the hop count, which is what you want with more than one proxy.
  */
@@ -30,7 +30,7 @@ export const HSTS_MAX_AGE = 15_552_000;
 /**
  * The headers to send for one request.
  *
- * `Strict-Transport-Security` is only sent over HTTPS — announcing it on a plain-HTTP request
+ * `Strict-Transport-Security` is only sent over HTTPS, announcing it on a plain-HTTP request
  * is meaningless, and on `localhost` it would pin a developer's browser to a scheme the dev
  * server does not speak.
  *
@@ -42,7 +42,7 @@ export const HSTS_MAX_AGE = 15_552_000;
  */
 export function securityHeaders(req) {
   const headers = {
-    // Stops a browser second-guessing a declared type — the uploads route serves user files.
+    // Stops a browser second-guessing a declared type, the uploads route serves user files.
     'X-Content-Type-Options': 'nosniff',
     // Clickjacking: nothing here is meant to be framed. Both, because older browsers ignore CSP.
     'X-Frame-Options': 'DENY',

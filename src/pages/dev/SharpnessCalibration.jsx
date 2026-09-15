@@ -11,8 +11,8 @@ import {
  * Where `SHARPNESS_MIN` gets its number.
  *
  * The threshold was a guess, and a guess is either annoying (warns on readable photos) or useless
- * (misses blurred ones). This measures real avize with the same code the app runs — same decode,
- * same downscale, same Laplacian — so the number it suggests is the number that will behave.
+ * (misses blurred ones). This measures real avize with the same code the app runs (same decode,
+ * same downscale, same Laplacian) so the number it suggests is the number that will behave.
  *
  * Development only: never routed in a production build.
  */
@@ -51,7 +51,7 @@ export default function SharpnessCalibration() {
   const labelled = rows.filter((r) => r.readable !== null && Number.isFinite(r.score));
   const suggestion = useMemo(() => suggestThreshold(labelled), [labelled]);
 
-  // How the threshold in the code today would do on the same photos — the comparison that
+  // How the threshold in the code today would do on the same photos, the comparison that
   // decides whether changing it is worth anything.
   const current = useMemo(() => ({
     falseWarnings: labelled.filter((r) => r.readable && r.score < SHARPNESS_MIN).length,
@@ -65,7 +65,7 @@ export default function SharpnessCalibration() {
       <div>
         <h1 className="text-xl font-bold text-[#0A2B4E]">Calibrare prag claritate</h1>
         <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-          Adaugă avize fotografiate — și clare, și mișcate. Marchează fiecare după cum îl vede un
+          Adaugă avize fotografiate, și clare, și mișcate. Marchează fiecare după cum îl vede un
           om: <strong>Citibil</strong> dacă ai putea prelua datele de pe el, <strong>Neclar</strong>
           {' '}dacă nu. Pragul sugerat mai jos e cel care greșește cel mai puțin.
         </p>
@@ -116,7 +116,7 @@ export default function SharpnessCalibration() {
           </p>
           {!suggestion.separable && (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-              Grupele se suprapun — nicio valoare nu le separă curat. Numărul de mai sus e un
+              Grupele se suprapun, nicio valoare nu le separă curat. Numărul de mai sus e un
               compromis, nu o linie. Mai multe poze îl fac mai sigur.
             </p>
           )}

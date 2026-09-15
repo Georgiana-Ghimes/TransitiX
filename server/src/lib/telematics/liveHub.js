@@ -1,6 +1,6 @@
 /**
  * In-process pub/sub for the office live board (SSE).
- * Fine for a single API node — same limit as the idle clocks in evaluate.js.
+ * Fine for a single API node, same limit as the idle clocks in evaluate.js.
  */
 
 const companies = new Map(); // companyId → Set<res>

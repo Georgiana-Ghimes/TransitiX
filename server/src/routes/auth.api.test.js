@@ -50,7 +50,7 @@ describe('login', () => {
 describe('logout actually ends the session', () => {
   it('stops the refresh token from working again', async () => {
     // This is the whole point: before sessions were tracked, logout was `{ ok: true }` and the
-    // token kept working for a week — a lost phone stayed signed in.
+    // token kept working for a week, a lost phone stayed signed in.
     const { body } = await login();
 
     const out = await api().post('/api/auth/logout').send({ refresh_token: body.refresh_token });
@@ -130,7 +130,7 @@ describe('session list and sign out everywhere', () => {
     expect(res.body.sessions.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('cuts off every device at once — what a lost phone needs', async () => {
+  it('cuts off every device at once, what a lost phone needs', async () => {
     const phone = (await login()).body;
     const laptop = (await login()).body;
 

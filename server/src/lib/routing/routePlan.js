@@ -2,7 +2,7 @@
  * Route mechanics: sequencing, scheduling, capacity.
  *
  * All pure. The optimizer in P2 will produce sequences instead of a dispatcher dragging
- * them, but everything downstream of "here is an ordered list of stops" is this module —
+ * them, but everything downstream of "here is an ordered list of stops" is this module,
  * so the solver plugs in without any of it changing.
  *
  * Times are handled as epoch milliseconds and only converted at the edges; doing arithmetic
@@ -233,7 +233,7 @@ export function routeTotals(stops = []) {
 
 /**
  * Capacity check against the assigned vehicle.
- * A missing capacity column is not treated as zero — it means "unknown", and inventing a
+ * A missing capacity column is not treated as zero, it means "unknown", and inventing a
  * limit would block a dispatcher for no reason.
  */
 export function checkCapacity(totals, vehicle) {

@@ -140,7 +140,7 @@ export default function Locations() {
           await api.geo.geocodeLocation(location.id);
           done += 1;
         } catch {
-          // keep going — one bad address must not stop the run
+          // keep going, one bad address must not stop the run
         }
       }
       await loadData();

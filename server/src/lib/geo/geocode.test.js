@@ -140,7 +140,7 @@ describe('geocodeAddress', () => {
   });
 
   it('still caches a request the provider rejected as malformed', async () => {
-    // A 4xx means the provider looked at this query and refused it — that is about the address,
+    // A 4xx means the provider looked at this query and refused it, that is about the address,
     // so re-sending it every run buys nothing.
     const db = fakeDb();
     const bad = Object.assign(new Error('Query invalid'), { status: 400 });
@@ -295,7 +295,7 @@ describe('activeGeocodeProvider', () => {
     if (url === undefined) delete process.env.PHOTON_URL; else process.env.PHOTON_URL = url;
   });
 
-  it('labels the strategy, not the vendor — so turning TomTom on retires the old cache', () => {
+  it('labels the strategy, not the vendor, so turning TomTom on retires the old cache', () => {
     process.env.PHOTON_URL = 'http://photon:2322';
     delete process.env.TOMTOM_API_KEY;
     expect(activeGeocodeProvider()).toBe('photon');

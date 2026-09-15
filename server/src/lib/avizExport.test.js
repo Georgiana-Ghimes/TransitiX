@@ -136,7 +136,7 @@ describe('exportColumnsFor', () => {
   });
 });
 
-describe('anexa exportată — default Anexa Factura RAI', () => {
+describe('anexa exportată, default Anexa Factura RAI', () => {
   it('writes all 14 headers and extracted fields into the xlsx', async () => {
     const sheet = await loadSheet({ name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
@@ -185,7 +185,7 @@ describe('anexa exportată — default Anexa Factura RAI', () => {
   });
 });
 
-describe('anexa exportată — custom Șablon nou defaults', () => {
+describe('anexa exportată, custom Șablon nou defaults', () => {
   it('writes Taxa 100 and Tarif km 20 when aviz fields are still 0', async () => {
     const sheet = await loadSheet({ name: 'Șablon nou', columns: sablonNouColumns() }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);

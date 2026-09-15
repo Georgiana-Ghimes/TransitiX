@@ -52,7 +52,7 @@ function pairKey(from, to) {
 /**
  * Which cells still have to be measured, and how to ask for them.
  *
- * The naive answer — one rectangle spanning every row and column that contains a miss —
+ * The naive answer, one rectangle spanning every row and column that contains a miss,
  * degenerates the moment a single new point appears: that point misses against everything,
  * so every row and every column is dirty and we re-measure the whole matrix. The saving is
  * lost exactly in the case the cache exists for.
@@ -113,7 +113,7 @@ export function planFetch(count, nodeKeys = [], cached = new Map()) {
 
 /**
  * The matrix as the caller expects it. A cell we could not measure stays null rather than
- * zero — the planner already knows how to stop the clock on a gap, and a zero would look
+ * zero, the planner already knows how to stop the clock on a gap, and a zero would look
  * like two points at the same address.
  */
 export function assembleMatrix(count, nodeKeys = [], cached = new Map()) {
@@ -148,7 +148,7 @@ export function assembleMatrix(count, nodeKeys = [], cached = new Map()) {
  * Folds a sub-matrix response back into the caches.
  *
  * OSRM returns the snapped location of every point it was given, so a `table` call teaches
- * us the node mapping for free — no `nearest` round trip is ever needed.
+ * us the node mapping for free, no `nearest` round trip is ever needed.
  */
 export function mergeTableResponse(response, { rows, cols, nodeKeys, cached }) {
   const learnedSnaps = [];

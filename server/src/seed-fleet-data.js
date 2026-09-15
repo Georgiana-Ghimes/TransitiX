@@ -1,6 +1,6 @@
 /**
  * Incremental dummy data for Flotă, Șoferi, and Clienți.
- * Safe to re-run — skips rows that already exist (plate / email / CUI).
+ * Safe to re-run, skips rows that already exist (plate / email / CUI).
  *
  * Usage:
  *   npm run seed:fleet --prefix server
@@ -56,7 +56,7 @@ const CLIENTS = [
 async function getCompanyId(client) {
   const company = await client.query(`SELECT id FROM companies ORDER BY created_at ASC LIMIT 1`);
   if (!company.rows[0]) {
-    throw new Error('No company found — run npm run migrate && npm run seed first.');
+    throw new Error('No company found, run npm run migrate && npm run seed first.');
   }
   return company.rows[0].id;
 }

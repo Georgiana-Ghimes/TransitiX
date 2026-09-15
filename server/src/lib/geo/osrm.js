@@ -1,5 +1,5 @@
 /**
- * OSRM client — real road-network distances, durations and geometry.
+ * OSRM client, real road-network distances, durations and geometry.
  *
  * The server is a sidecar (see docker-compose.osrm.yml). Nothing here falls back
  * to a stub: when OSRM_URL is unset the callers return 503 so the UI never shows
@@ -56,7 +56,7 @@ export function toCoordinate(point) {
   return { latitude, longitude };
 }
 
-/** OSRM takes lon,lat pairs separated by semicolons — the reverse of the usual order. */
+/** OSRM takes lon,lat pairs separated by semicolons, the reverse of the usual order. */
 export function formatCoordinates(points, { min = 1, max = MAX_MATRIX_POINTS } = {}) {
   if (!Array.isArray(points) || points.length < min) {
     throw badRequest(`Sunt necesare cel puțin ${min} puncte`);
@@ -210,13 +210,13 @@ export async function osrmRoute(points, options = {}) {
   return parseRouteResponse(await osrmFetch(url, options));
 }
 
-/** Full distance/duration matrix — the input the VRP solver needs in P2. */
+/** Full distance/duration matrix, the input the VRP solver needs in P2. */
 export async function osrmTable(points, options = {}) {
   const url = buildTableUrl(requireBaseUrl(), points, { profile: osrmProfile(), ...options });
   return parseTableResponse(await osrmFetch(url, options));
 }
 
-/** Snap a point to the road network — tells us whether a geocode landed somewhere drivable. */
+/** Snap a point to the road network, tells us whether a geocode landed somewhere drivable. */
 export async function osrmNearest(point, options = {}) {
   const url = buildNearestUrl(requireBaseUrl(), point, { profile: osrmProfile(), ...options });
   return parseNearestResponse(await osrmFetch(url, options));
@@ -228,7 +228,7 @@ export async function osrmPing(options = {}) {
     return { configured: false, ok: false, message: 'OSRM_URL nu este setat' };
   }
   try {
-    // Two points a few hundred metres apart in Bucharest — enough to prove the graph is loaded.
+    // Two points a few hundred metres apart in Bucharest, enough to prove the graph is loaded.
     await osrmRoute(
       [{ latitude: 44.4268, longitude: 26.1025 }, { latitude: 44.4325, longitude: 26.1039 }],
       { timeoutMs: 5000, ...options }

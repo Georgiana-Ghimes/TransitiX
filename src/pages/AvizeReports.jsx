@@ -215,12 +215,12 @@ export default function AvizeReports() {
     let listFilters = filters;
     try {
       // Photos taken at a desk blur too. Unlike the cab, a batch of scans is not interrupted for
-      // it — the operator is told which file may not read and the upload carries on.
+      // it, the operator is told which file may not read and the upload carries on.
       const worst = await findBlurriest(files).catch(() => null);
       if (worst) {
         notifyError(
           'O poză pare mișcată',
-          `„${worst.file.name}" iese neclară — s-ar putea să nu se extragă nimic din ea. Restul se încarcă normal.`
+          `„${worst.file.name}" iese neclară, s-ar putea să nu se extragă nimic din ea. Restul se încarcă normal.`
         );
       }
       for (const file of files) {
@@ -268,7 +268,7 @@ export default function AvizeReports() {
       }
       if (failed.length === 0) {
         const pendingNote = pending
-          ? ` ${pending} document(e) — OCR-ul rulează în fundal; statusul se actualizează singur.`
+          ? ` ${pending} document(e), OCR-ul rulează în fundal; statusul se actualizează singur.`
           : '';
         notifySuccess(
           'Avize încărcate',
@@ -411,7 +411,7 @@ export default function AvizeReports() {
     }
     const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
     if (dupCount > 0) {
-      // Warn before download — a post-export toast was easy to miss under „Export gata”.
+      // Warn before download, a post-export toast was easy to miss under „Export gata”.
       setConfirmDuplicate({ mode: 'export', ids, dupCount });
       return;
     }
@@ -425,10 +425,10 @@ export default function AvizeReports() {
       const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
       // Naming the template here is the only place the operator can tell which layout landed
-      // in the file — the filename alone reads the same for every export of the day.
+      // in the file, the filename alone reads the same for every export of the day.
       notifySuccess(
         'Export gata',
-        `${filename} — șablon ${selectedTemplate?.name || 'selectat'}, `
+        `${filename}, șablon ${selectedTemplate?.name || 'selectat'}, `
         + `${columnCountOf(selectedTemplate)} coloane.`
       );
     } catch (e) {
@@ -469,7 +469,7 @@ export default function AvizeReports() {
   const reextract = async (row) => {
     if (busyId) return;
     setBusyId(row.id);
-    // Immediate feedback — don't wait for the round-trip to flip status.
+    // Immediate feedback, don't wait for the round-trip to flip status.
     setRows((prev) => prev.map((r) => (
       r.id === row.id ? { ...r, status: 'uploaded' } : r
     )));
@@ -481,7 +481,7 @@ export default function AvizeReports() {
         notifySuccess(
           'Extragere pornită',
           result.pages > 1
-            ? `Documentul are ${result.pages} pagini — OCR-ul rulează în fundal. Lista se actualizează singură.`
+            ? `Documentul are ${result.pages} pagini, OCR-ul rulează în fundal. Lista se actualizează singură.`
             : 'OCR-ul rulează în fundal. Rândul rămâne pe „Se procesează…” până termină.'
         );
       } else if (!String(result?.numar_tpo || '').trim()) {
@@ -492,7 +492,7 @@ export default function AvizeReports() {
       } else {
         notifySuccess(
           'Re-extras',
-          `${result.numar_tpo} — TPO/auto/rută din document; km, taxe și ruta de birou rămân.`
+          `${result.numar_tpo}, TPO/auto/rută din document; km, taxe și ruta de birou rămân.`
         );
       }
       await load();
@@ -564,7 +564,7 @@ export default function AvizeReports() {
           notifyError(
             'Email netrimis',
             result?.message
-              || 'Resend nu este configurat — anexa s-a descărcat o dată. Nu apăsa Trimite din nou doar pentru alt fișier.'
+              || 'Resend nu este configurat, anexa s-a descărcat o dată. Nu apăsa Trimite din nou doar pentru alt fișier.'
           );
         } else {
           notifyError(
@@ -572,7 +572,7 @@ export default function AvizeReports() {
             emailFallbackDownloadedRef.current
               ? 'Anexa a fost deja descărcată pentru această trimitere. Folosește fișierul din Downloads sau „Unește în Anexa XLSX”.'
               : (result?.message
-                || 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.')
+                || 'Resend nu este configurat, emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.')
           );
         }
       } else {
@@ -600,7 +600,7 @@ export default function AvizeReports() {
       // operator the invoice is itemised, not a single re-derived figure.
       notifySuccess(
         'Ciornă factură',
-        `${inv.series || 'TRX'}-${inv.number} — ${inv.lines?.length ?? 0} linii din TPO. `
+        `${inv.series || 'TRX'}-${inv.number}, ${inv.lines?.length ?? 0} linii din TPO. `
         + 'Deschide Financiar. Fără e-Factura.'
       );
       for (const warning of inv.warnings ?? []) {
@@ -626,7 +626,7 @@ export default function AvizeReports() {
     }
     const columns = editTemplate.columns || [];
     if (columns.length === 0) {
-      notifyError('Fără coloane', 'Adaugă cel puțin o coloană — altfel exportul nu ar avea ce scrie.');
+      notifyError('Fără coloane', 'Adaugă cel puțin o coloană, altfel exportul nu ar avea ce scrie.');
       return;
     }
     setSaving(true);
@@ -649,9 +649,9 @@ export default function AvizeReports() {
       // said "e selectat" unconditionally, which is how an export could silently use another one.
       if (keepId) {
         setTemplateId(keepId);
-        notifySuccess('Șablon salvat', `${name} — ${columns.length} coloane, folosit la următorul export.`);
+        notifySuccess('Șablon salvat', `${name}, ${columns.length} coloane, folosit la următorul export.`);
       } else {
-        notifySuccess('Șablon salvat', `${name} — ${columns.length} coloane. Alege-l cu „Folosește la export”.`);
+        notifySuccess('Șablon salvat', `${name}, ${columns.length} coloane. Alege-l cu „Folosește la export”.`);
       }
     } catch (e) {
       notifyError('Salvare șablon eșuată', e);
@@ -687,7 +687,7 @@ export default function AvizeReports() {
       setNewLabel('');
       const codes = await api.avize.observationCodes();
       setObsCodes(codes);
-      notifySuccess('Cod adăugat', `${checked.code} — ${checked.label}`);
+      notifySuccess('Cod adăugat', `${checked.code}, ${checked.label}`);
     } catch (e) {
       notifyError('Codul nu s-a salvat', e);
     }
@@ -697,7 +697,7 @@ export default function AvizeReports() {
     const chosen = templates.find((t) => t.id === id);
     if (!chosen) return;
     setTemplateId(id);
-    notifySuccess('Șablon activ', `${chosen.name} — ${columnCountOf(chosen)} coloane la următorul export.`);
+    notifySuccess('Șablon activ', `${chosen.name}, ${columnCountOf(chosen)} coloane la următorul export.`);
   };
 
   const newTemplate = () => {
@@ -735,7 +735,7 @@ export default function AvizeReports() {
   const ocrBanner = ocrDown ? (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
       Serviciul OCR nu răspunde. Documentele se încarcă în continuare, dar ajung fără câmpuri
-      completate — pornește sidecar-ul PaddleOCR și apasă „Re-extrage".
+      completate, pornește sidecar-ul PaddleOCR și apasă „Re-extrage".
     </div>
   ) : null;
 
@@ -864,7 +864,7 @@ export default function AvizeReports() {
             >
               <Archive className="w-4 h-4" /> Zip
             </button>
-            {/* The draft lands in Financiar, and the companion has no /finance — a button whose
+            {/* The draft lands in Financiar, and the companion has no /finance, a button whose
                 result the operator cannot open anywhere is worse than no button. */}
             {!isDocumentsProfile() && (
               <button
@@ -880,7 +880,7 @@ export default function AvizeReports() {
 
           {ocrBanner}
           {filterBar}
-          <AvizLegend title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
+          <AvizLegend id="avize-actiuni" title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
 
           {rows.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm">
@@ -953,7 +953,7 @@ export default function AvizeReports() {
 
               <div className="hidden xl:block bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
                 <p className="px-4 py-2 text-[11px] text-slate-500 border-b border-slate-100 xl:block 2xl:hidden">
-                  Marfă și Document apar pe ecrane late (≥1536px). Pe laptop derulează ușor spre dreapta dacă e nevoie — coloana Acțiuni rămâne fixă.
+                  Marfă și Document apar pe ecrane late (≥1536px). Pe laptop derulează ușor spre dreapta dacă e nevoie, coloana Acțiuni rămâne fixă.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="text-sm w-full">
@@ -1245,9 +1245,9 @@ export default function AvizeReports() {
         description={
           confirmDuplicate?.mode === 'export'
             ? (confirmDuplicate.dupCount === 1
-              ? 'Un aviz marcat „duplicat” e în selecție — risc de facturare dublă dacă e o încărcare greșită. '
+              ? 'Un aviz marcat „duplicat” e în selecție, risc de facturare dublă dacă e o încărcare greșită. '
                 + 'Verifică lista (Șterge rândul greșit) sau exportă oricum.'
-              : `${confirmDuplicate.dupCount} avize marcate „duplicat” sunt în selecție — risc de facturare dublă. `
+              : `${confirmDuplicate.dupCount} avize marcate „duplicat” sunt în selecție, risc de facturare dublă. `
                 + 'Verifică lista sau exportă oricum.')
             : confirmDuplicate?.mode === 'bulk'
               ? `${confirmDuplicate.dupCount} din rândurile selectate au același TPO ca alt document. `

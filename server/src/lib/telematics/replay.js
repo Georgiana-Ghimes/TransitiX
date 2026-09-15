@@ -1,5 +1,5 @@
 /**
- * Historical replay helpers — pure.
+ * Historical replay helpers, pure.
  * Planned geometry comes from OSRM; the actual trail is the telematics breadcrumb.
  */
 
@@ -44,7 +44,7 @@ function normalizePoint(p) {
   };
 }
 
-/** Sum of consecutive haversine segments — realized path length, not road network. */
+/** Sum of consecutive haversine segments, realized path length, not road network. */
 export function trailLengthM(points = []) {
   let total = 0;
   for (let i = 1; i < points.length; i += 1) {
@@ -75,7 +75,7 @@ export function toLatLngPath(points = []) {
 
 /**
  * Compare planned road km (from OSRM) with realized trail km.
- * Both may be null when data is missing — never invent a number.
+ * Both may be null when data is missing, never invent a number.
  */
 export function replayKpis({ plannedDistanceM = null, actualDistanceM = null, stops = [] } = {}) {
   const planned_km = plannedDistanceM != null ? Math.round((plannedDistanceM / 1000) * 10) / 10 : null;

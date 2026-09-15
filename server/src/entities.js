@@ -223,7 +223,7 @@ export const ENTITY_MAP = {
     companyScoped: true,
     jsonFields: ['columns'],
     // `preset_id` records which built-in layout a template came from and is set by the server
-    // when a preset is instantiated — it is provenance, not something a client may claim.
+    // when a preset is instantiated, it is provenance, not something a client may claim.
     writable: ['name', 'columns', 'is_default', 'description'],
   },
   AvizDocument: {
@@ -259,7 +259,7 @@ export function parseOrder(order) {
  * Which columns are calendar days rather than instants.
  *
  * A DATE that misses this list is serialized with `toISOString()`, and pg hands DATE back as
- * *local* midnight — so east of Greenwich it lands in the previous evening and the whole column
+ * *local* midnight, so east of Greenwich it lands in the previous evening and the whole column
  * shifts a day. `data_facturare` did exactly that on a customer's annex before the `data_`
  * prefix was recognised here, so the Romanian naming convention is matched by pattern rather
  * than remembered column by column.

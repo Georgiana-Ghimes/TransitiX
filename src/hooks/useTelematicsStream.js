@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '@/api/client';
 
 /**
- * Office live board via SSE. Falls back silently when the stream cannot open —
+ * Office live board via SSE. Falls back silently when the stream cannot open,
  * callers keep their existing poll as a safety net.
  *
  * Events: hello | ping | position | exception | exception_ack | exception_resolved | eta | pod

@@ -26,7 +26,7 @@ export const CHARGE_LABELS = {
 /**
  * Builds the charge lines for one trip.
  *
- * Nothing here reads the database — everything it needs is passed in, so the whole pricing
+ * Nothing here reads the database, everything it needs is passed in, so the whole pricing
  * rulebook is testable without a server and a report can be recomputed for any past date by
  * feeding it the rates that were valid then.
  *
@@ -67,7 +67,7 @@ export function calculateTpo({
       code: 'fara_tarif',
       message: vehicleClass
         ? `Nu există tarif contractual valabil la ${date} pentru clasa ${vehicleClass}`
-        : `Vehiculul nu are clasă comercială setată — nu se poate alege tariful`,
+        : `Vehiculul nu are clasă comercială setată, nu se poate alege tariful`,
     });
   }
 
@@ -111,7 +111,7 @@ export function calculateTpo({
     if (kmSummary.complete === false) {
       warnings.push({
         code: 'km_incompleti',
-        message: `${kmSummary.missing_legs ?? '?'} segmente nu au distanță — kilometrii sunt incompleți`,
+        message: `${kmSummary.missing_legs ?? '?'} segmente nu au distanță, kilometrii sunt incompleți`,
       });
     }
   }
@@ -139,7 +139,7 @@ export function calculateTpo({
   if (mmaKg == null && zones.length) {
     warnings.push({
       code: 'fara_mma',
-      message: 'Vehiculul nu are MMA — taxele de zonă se calculează după MMA din talon, nu după marfă',
+      message: 'Vehiculul nu are MMA, taxele de zonă se calculează după MMA din talon, nu după marfă',
     });
   }
 

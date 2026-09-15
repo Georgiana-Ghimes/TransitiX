@@ -46,7 +46,7 @@ function WarningCard({ warning }) {
       <TriangleAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
       <div className="text-sm">
         <span className="font-medium text-amber-900">{warningLabel(warning.code)}</span>
-        <span className="text-amber-800"> — {warning.count} document{warning.count === 1 ? '' : 'e'}</span>
+        <span className="text-amber-800">, {warning.count} document{warning.count === 1 ? '' : 'e'}</span>
         {hint ? <p className="text-[12px] text-amber-700 mt-0.5">{hint}</p> : null}
       </div>
     </div>
@@ -287,7 +287,7 @@ export default function Reports() {
    * Stamps one billing date across the whole selection.
    *
    * An annex is invoiced on a single date; typing it onto eighty documents by hand is how the
-   * column ends up half empty. The trip date is deliberately left alone — the tariff is read as
+   * column ends up half empty. The trip date is deliberately left alone, the tariff is read as
    * of the day the trip ran.
    */
   async function handleInvoiceDate() {
@@ -384,7 +384,7 @@ export default function Reports() {
           </p>
         ) : (
           <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-slate-100">
-            <Field label="Dată facturare pentru toată selecția" hint="Nu schimbă data cursei — tariful se citește tot după ziua în care s-a rulat cursa.">
+            <Field label="Dată facturare pentru toată selecția" hint="Nu schimbă data cursei, tariful se citește tot după ziua în care s-a rulat cursa.">
               <input
                 type="date"
                 className={inputClass}
@@ -434,7 +434,7 @@ export default function Reports() {
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200">
           <Layers className="w-4 h-4 text-slate-400" />
           <h2 className="text-sm font-semibold text-slate-700">
-            Previzualizare {preview ? `— ${preview.row_count} rânduri` : ''}
+            Previzualizare {preview ? `(${preview.row_count} rânduri)` : ''}
           </h2>
           {preview?.selection?.description ? (
             <span className="text-xs text-slate-500">{preview.selection.description}</span>

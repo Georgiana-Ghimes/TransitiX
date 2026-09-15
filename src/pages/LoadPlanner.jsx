@@ -19,8 +19,8 @@ import {
 } from '@/lib/loadPlannerUi';
 
 const STRATEGIES = [
-  { key: 'lifo', label: 'Ordine șofer', hint: 'Ultima oprire se încarcă prima — se descarcă în ordinea livrării.' },
-  { key: 'warehouse', label: 'Ordine depozit', hint: 'Grupat pe SKU și zonă de picking — mai rapid la încărcare.' },
+  { key: 'lifo', label: 'Ordine șofer', hint: 'Ultima oprire se încarcă prima, se descarcă în ordinea livrării.' },
+  { key: 'warehouse', label: 'Ordine depozit', hint: 'Grupat pe SKU și zonă de picking, mai rapid la încărcare.' },
 ];
 
 function Panel({ title, icon: Icon, count, children, className = '' }) {

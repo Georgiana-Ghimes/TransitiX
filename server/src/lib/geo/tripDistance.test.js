@@ -203,7 +203,7 @@ describe('refreshTripDistance', () => {
     expect(db.calls.some((c) => c.text.startsWith('UPDATE trips'))).toBe(false);
   });
 
-  it('never throws when OSRM is unreachable — the trip is still saved', async () => {
+  it('never throws when OSRM is unreachable, the trip is still saved', async () => {
     process.env.OSRM_URL = 'http://osrm:5000';
     const db = geoDb();
     const result = await refreshTripDistance(db, 'co', trip, {

@@ -23,7 +23,7 @@ function sendError(res, err, fallback) {
 /**
  * The lines an invoice is made of.
  *
- * A customer disputes a component, not a total — "why 120 for the crane". The invoice is built
+ * A customer disputes a component, not a total, "why 120 for the crane". The invoice is built
  * from `trip_charges`, so the breakdown exists; without this it would exist only in the database.
  */
 router.get('/:id/lines', async (req, res) => {

@@ -1,7 +1,7 @@
 /**
  * Importing the customer's own observation codes.
  *
- * The codes on the delivery notes (`DM`, `Z:B`, `IF`) are theirs, not ours — the brief is
+ * The codes on the delivery notes (`DM`, `Z:B`, `IF`) are theirs, not ours, the brief is
  * explicit that we must not invent the list. So this reads their sheet and takes what is there,
  * rather than mapping it onto a vocabulary we made up.
  */

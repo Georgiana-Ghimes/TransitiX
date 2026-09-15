@@ -1,4 +1,4 @@
-/** Baked in by vite/vitest `define` — the companion carries its own number. */
+/** Baked in by vite/vitest `define`, the companion carries its own number. */
 export const APP_VERSION =
   typeof __APP_VERSION__ !== 'undefined' ? String(__APP_VERSION__).trim() : '0.0.0';
 

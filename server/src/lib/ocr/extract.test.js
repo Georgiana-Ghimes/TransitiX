@@ -135,7 +135,7 @@ describe('extractDate', () => {
   });
 });
 
-describe('gross weight — the field the report actually needs', () => {
+describe('gross weight, the field the report actually needs', () => {
   it('reads a labelled gross weight and trusts it', () => {
     const found = extractGrossWeight('Greutate bruta: 9.000 kg');
     expect(found.value).toBe(9000);
@@ -171,7 +171,7 @@ describe('quantity stays separate from weight', () => {
   });
 
   it('rejects OCR magnitudes that cannot fit one truck', () => {
-    // Romanian thousands / glued digits from poor photos — not a real bag count.
+    // Romanian thousands / glued digits from poor photos, not a real bag count.
     expect(extractQuantity('Cantitate: 245.000 saci').value).toBeNull();
     expect(extractQuantity('245090 saci').value).toBeNull();
     expect(isPlausibleQuantity(245000, 'saci')).toBe(false);

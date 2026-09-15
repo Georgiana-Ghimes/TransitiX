@@ -1,8 +1,8 @@
 /**
  * One reading of "which documents are expiring" for the whole office UI.
  *
- * Dashboard, Documente and the notification bell used to each count this differently — different
- * horizons, different rules about inactive fleet — so the same day could show 5 alerts on one
+ * Dashboard, Documente and the notification bell used to each count this differently (different
+ * horizons, different rules about inactive fleet) so the same day could show 5 alerts on one
  * screen and 3 on another. The bell computes server-side (`server/src/lib/officeNotifications.js`)
  * against the same setting and the same is_active rule; this module is its client twin.
  */

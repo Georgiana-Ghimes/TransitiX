@@ -2,7 +2,7 @@
  * Geometry helpers for the zone map and for importing a zone outline into `tax_zones.polygon`.
  *
  * `tax_zones.polygon` stores a bare GeoJSON **geometry** (`{ type, coordinates }`), not a
- * Feature — that is what `pointInPolygon` in `server/src/lib/pricing/taxes.js` reads, and the
+ * Feature, that is what `pointInPolygon` in `server/src/lib/pricing/taxes.js` reads, and the
  * map has to draw exactly what the invoice measures. `territories.polygon` is a Feature, so
  * the two are not interchangeable and the helpers here deliberately do not accept one.
  *
@@ -10,7 +10,7 @@
  * `geometryToRings` so the swap happens in one place.
  *
  * Coordinates are read with `toFiniteNumber`, never `Number()`: `Number(null)` is 0 and passes
- * `Number.isFinite`, so a missing ordinate would not be dropped — it would be silently pulled
+ * `Number.isFinite`, so a missing ordinate would not be dropped, it would be silently pulled
  * onto the equator and stitched into the outline as a real vertex.
  */
 import { toFiniteNumber } from './utils.js';
@@ -65,7 +65,7 @@ export function geometryBounds(geometry) {
   return [[south, west], [north, east]];
 }
 
-/** Bounds covering several zones at once — what the map fits on load. */
+/** Bounds covering several zones at once, what the map fits on load. */
 export function combinedBounds(geometries = []) {
   const boxes = geometries.map(geometryBounds).filter(Boolean);
   if (!boxes.length) return null;
@@ -78,7 +78,7 @@ export function combinedBounds(geometries = []) {
 /**
  * Whether a point falls inside a drawn outline.
  *
- * This answers a display question — which shape on screen contains this pin — and never what
+ * This answers a display question, which shape on screen contains this pin, and never what
  * an address costs. Pricing is resolved by `resolveZone` on the server, against `tax_zones`,
  * and that stays the only authority: the two are asked different questions on purpose, so a
  * zone drawn on the map but not yet linked to pricing can be reported as exactly that instead
@@ -131,7 +131,7 @@ export function boundsContain(outer, inner) {
 /**
  * Rings for drawing a zone with the zones nested inside it punched out.
  *
- * Display only. The stored outline stays the one the decision defines — Zone B's perimeter
+ * Display only. The stored outline stays the one the decision defines, Zone B's perimeter
  * genuinely encloses Zone A, and `resolveZone` already picks A inside it on priority. Cutting
  * A out of B's stored polygon would make the data disagree with the official delimitation and
  * would have to be redone every time either outline is corrected.
@@ -200,7 +200,7 @@ function tagBodies(xml, tag) {
 /**
  * Polygons out of a KML document.
  *
- * This reads the subset an administrative zone export actually uses — `<Polygon>` with an
+ * This reads the subset an administrative zone export actually uses, `<Polygon>` with an
  * `<outerBoundaryIs>` and optional `<innerBoundaryIs>` holes, including the ones nested in a
  * `<MultiGeometry>`. Anything else (LineString, Point, overlays) is ignored rather than
  * guessed at: a boundary read wrongly is a zone charged wrongly, and silence there would
@@ -238,7 +238,7 @@ function polygonsToGeometry(polygons) {
   return { type: 'MultiPolygon', coordinates: polygons };
 }
 
-/** Pulls every polygon out of any GeoJSON container — geometry, Feature or FeatureCollection. */
+/** Pulls every polygon out of any GeoJSON container, geometry, Feature or FeatureCollection. */
 function geoJsonPolygons(node, depth = 0) {
   if (!node || typeof node !== 'object' || depth > 6) return [];
   if (node.type === 'FeatureCollection') {
@@ -262,7 +262,7 @@ const SLIVER_AREA_M2 = 10_000;
 /**
  * Area, perimeter and compactness of a ring, in metres.
  *
- * Equirectangular around the ring's own latitude — accurate enough over a city, and this is
+ * Equirectangular around the ring's own latitude, accurate enough over a city, and this is
  * used to tell a shape from a scribble, never to report a figure to anyone.
  */
 export function ringMetrics(ring = []) {
@@ -296,7 +296,7 @@ function isSliver(ring) {
  * Removes inner rings that enclose nothing.
  *
  * Editors like Google My Maps resolve a self-intersection by emitting a hole that doubles back
- * along its own path — hundreds of metres of perimeter around a few hundred square metres. They
+ * along its own path, hundreds of metres of perimeter around a few hundred square metres. They
  * are not exclusions, and carrying them forward would put "4 excluderi" on a screen where an
  * operator has to decide whether a boundary is right. Only inner rings are considered: a
  * degenerate outer ring is a broken file, not something to quietly tidy away.
@@ -329,14 +329,14 @@ export function dropSliverHoles(geometry) {
 }
 
 // A vertex the path leaves and returns along almost the same line. Both legs have to be long
-// enough to matter on the ground — a tight angle between two short segments is just detail.
+// enough to matter on the ground, a tight angle between two short segments is just detail.
 const SPIKE_ANGLE_DEG = 20;
 const SPIKE_MIN_LEG_M = 50;
 
 /**
  * Needle vertices: places where a boundary shoots out and comes straight back.
  *
- * These are digitising slips, and on an outer ring they are never corrected automatically —
+ * These are digitising slips, and on an outer ring they are never corrected automatically,
  * silently reshaping a zone boundary is how an address starts being charged differently with
  * nobody able to say when it changed. They are reported so a person can look and decide.
  */
@@ -379,8 +379,8 @@ export class ZoneImportError extends Error {}
  * Named outlines out of a KML, one per `<Placemark>`.
  *
  * Per-placemark matters for the real files: a My Maps export of the Bucharest zones carries
- * Zone A and Zone B as two placemarks in one document. Merging them — which is what reading
- * the document as a flat list of polygons does — would give whichever zone was being imported
+ * Zone A and Zone B as two placemarks in one document. Merging them, which is what reading
+ * the document as a flat list of polygons does, would give whichever zone was being imported
  * the union of both, so every address in the outer ring would resolve to the inner zone's
  * stricter tariff. The caller picks which outline goes where; nothing here guesses from a name.
  */
@@ -402,7 +402,7 @@ export function parseKmlOutlines(xml) {
   return loose.length ? [{ name: null, geometry: polygonsToGeometry(loose) }] : [];
 }
 
-/** Named outlines out of GeoJSON — one per Feature, so a collection is not silently merged. */
+/** Named outlines out of GeoJSON, one per Feature, so a collection is not silently merged. */
 export function parseGeoJsonOutlines(node) {
   if (node?.type === 'FeatureCollection' && Array.isArray(node.features)) {
     const named = node.features.map((f) => {
@@ -437,7 +437,7 @@ export function parseZoneOutlines(text, filename = '') {
 
   if (looksKml) {
     if (/\.kmz$/i.test(filename)) {
-      throw new ZoneImportError('KMZ este o arhivă — dezarhiveaz-o și încarcă fișierul .kml din ea.');
+      throw new ZoneImportError('KMZ este o arhivă, dezarhiveaz-o și încarcă fișierul .kml din ea.');
     }
     outlines = parseKmlOutlines(raw);
     if (!outlines.length) {
@@ -446,7 +446,7 @@ export function parseZoneOutlines(text, filename = '') {
       const href = tagText(raw, 'href');
       if (href) {
         throw new ZoneImportError(
-          `Acest KML nu conține contururi — e doar un link către ${href} . `
+          `Acest KML nu conține contururi, e doar un link către ${href} . `
           + 'Deschide adresa, descarcă fișierul KML de acolo și încarcă-l pe acela.',
         );
       }

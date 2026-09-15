@@ -3,7 +3,7 @@
  *
  * Picking rows by hand works for five avize and stops working at eighty, which is the volume the
  * client actually has at month end. A selection is therefore a set of criteria the operator can
- * state once — period, vehicle, lot, status — and re-state next month.
+ * state once (period, vehicle, lot, status) and re-state next month.
  */
 
 import { avizDateClauses } from '../avizQuery.js';

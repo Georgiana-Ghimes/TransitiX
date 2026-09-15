@@ -4,7 +4,7 @@ import { STUB_PREFIX as SERVER_PREFIX } from '../../server/src/lib/compliance/et
 
 describe('the client and the server agree on what a placeholder looks like', () => {
   it('shares one prefix', () => {
-    // If these drift, the screen starts presenting development codes as real ones — on a
+    // If these drift, the screen starts presenting development codes as real ones, on a
     // document that gets checked at the roadside.
     expect(STUB_PREFIX).toBe(SERVER_PREFIX);
   });

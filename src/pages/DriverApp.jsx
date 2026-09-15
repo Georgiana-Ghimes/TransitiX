@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
 
-/** One primary action per status — TMS driver pattern */
+/** One primary action per status, TMS driver pattern */
 const STATUS_FLOW = [
   { key: 'alocata', label: 'Alocată', icon: CircleDot, next: 'incarcata', actionLabel: '📦 Am încărcat' },
   { key: 'incarcata', label: 'Încărcată', icon: Package, next: 'in_tranzit', actionLabel: '🚛 Am plecat' },
@@ -174,7 +174,7 @@ export default function DriverApp() {
         </div>
         {previewMode && tab === 'trips' && !selectedTrip && (
           <p className="mt-2 text-xs text-amber-200/90 bg-white/10 rounded-lg px-3 py-2">
-            Mod previzualizare dispecer — vezi cursele din firmă. Pentru experiența reală de șofer, autentifică-te cu <strong>sofer@transitix.ro</strong>.
+            Mod previzualizare dispecer, vezi cursele din firmă. Pentru experiența reală de șofer, autentifică-te cu <strong>sofer@transitix.ro</strong>.
           </p>
         )}
       </div>

@@ -96,7 +96,7 @@ function toColumns(values) {
   return out;
 }
 
-/** One batch at a time — parallel driver uploads must not OCR the same rows twice. */
+/** One batch at a time, parallel driver uploads must not OCR the same rows twice. */
 const batchExtractChains = new Map();
 
 function runBatchExtract(batchKey, fn) {
@@ -126,7 +126,7 @@ async function markExtractFailed(companyId, docId, err) {
  * Runs OCR over every document in a batch that has not been extracted yet.
  * Shared by the office extract endpoint and the driver upload path.
  *
- * @param {string[]} [options.documentIds]  When set (driver upload), only these rows are OCR'd —
+ * @param {string[]} [options.documentIds]  When set (driver upload), only these rows are OCR'd,
  *   not every other stuck `uploaded` row still sitting in the open batch.
  */
 export async function extractBatchDocuments(companyId, batchId, userId, {
@@ -168,7 +168,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       continue;
     }
 
-    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed must drop too —
+    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed must drop too,
     // rewriting OCR fields while leaving "Confirmat" would let unreviewed data go to billing.
     if (force && (doc.status === 'extracted' || doc.status === 'confirmed')) {
       await query(
@@ -256,7 +256,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 
   // A batch only ever moves forward. Extraction now runs in the background for driver uploads,
   // so a confirmation that lands while OCR is still working would otherwise be undone by this
-  // line the moment the last page finishes — the operator's decision quietly reverted.
+  // line the moment the last page finishes, the operator's decision quietly reverted.
   await query(
     `UPDATE document_batches SET status = 'extracted', updated_at = NOW()
      WHERE id = $1 AND company_id = $2 AND status IN ('uploaded', 'extracted')`,
@@ -355,7 +355,7 @@ router.post('/batches/:id/extract', async (req, res) => {
   }
 });
 
-/** Batch with its documents — the review list. */
+/** Batch with its documents, the review list. */
 router.get('/batches/:id', async (req, res) => {
   try {
     const batch = (await query(
@@ -474,7 +474,7 @@ router.get('/:id/history', async (req, res) => {
 
 /**
  * Confirms selected documents from a batch.
- * Only what the operator ticked is confirmed — the rest stay in review.
+ * Only what the operator ticked is confirmed, the rest stay in review.
  */
 router.post('/batches/:id/confirm', async (req, res) => {
   try {

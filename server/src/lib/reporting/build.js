@@ -56,7 +56,7 @@ function warn(list, code, severity, message, ids) {
 /**
  * What an operator should know before this file leaves the building.
  *
- * None of these block the export — a dispatcher sometimes has to send an incomplete sheet and
+ * None of these block the export, a dispatcher sometimes has to send an incomplete sheet and
  * say so on the phone. They exist so that choice is deliberate rather than accidental.
  */
 export function reportWarnings(columns, documents) {
@@ -94,7 +94,7 @@ export function reportWarnings(columns, documents) {
       docs.filter((d) => toNumber(d.gross_weight_kg) === null).map((d) => d.id));
   } else if (!sources.has('cantitate_marfa')) {
     // The report the client asked for is checked against a weighbridge ticket. If the documents
-    // carry that figure and the template drops it, the sheet cannot be reconciled — so say so
+    // carry that figure and the template drops it, the sheet cannot be reconciled, so say so
     // rather than quietly exporting a sack count in its place.
     // Anexa RAI “Cantitate marfa (t/…)” already maps from gross_weight_kg → tons when present.
     warn(found, 'weight_not_exported', 'warning',

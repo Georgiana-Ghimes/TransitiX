@@ -6,7 +6,7 @@
  * password, deactivation so nobody is deleted, and a role change that refuses to strip the last
  * administrator.
  *
- * Admin-only throughout, and every write is recorded on the audit trail — a screen that can hand
+ * Admin-only throughout, and every write is recorded on the audit trail, a screen that can hand
  * out administrator rights and leave no trace would undo the point of having a trail at all.
  */
 import { Router } from 'express';
@@ -38,7 +38,7 @@ function fail(res, err, fallback) {
   res.status(status).json({ message: err?.message || fallback });
 }
 
-/** Never returns password_hash, reset_token or the 2FA secret — not even to an admin. */
+/** Never returns password_hash, reset_token or the 2FA secret, not even to an admin. */
 function serializeUser(row) {
   return {
     id: row.id,
@@ -115,7 +115,7 @@ router.get('/', async (req, res) => {
       [req.user.company_id]
     );
 
-    // Driver profiles nobody is signed in as — the candidates for linking a driver account.
+    // Driver profiles nobody is signed in as, the candidates for linking a driver account.
     const unlinked = await query(
       `SELECT id, name, email FROM drivers
        WHERE company_id = $1 AND user_id IS NULL AND is_active = TRUE
@@ -278,7 +278,7 @@ router.put('/:id/role', async (req, res) => {
  * Turns an account off or back on.
  *
  * Deactivation revokes every session, which stops the account being renewed. An access token
- * already issued keeps working until it expires — `JWT_EXPIRES_IN` is that bound, and the
+ * already issued keeps working until it expires, `JWT_EXPIRES_IN` is that bound, and the
  * response says so rather than letting an admin believe the cut is instant.
  */
 router.put('/:id/active', async (req, res) => {
@@ -377,7 +377,7 @@ function inviteLink(req, token) {
 /**
  * Sends the invitation, reporting whether it actually went.
  *
- * `sendEmail` resolves happily without a mail provider — it logs the message and returns
+ * `sendEmail` resolves happily without a mail provider, it logs the message and returns
  * `{ stub: true }`. Reporting that as sent would leave an admin waiting for an email nobody will
  * ever receive, so a stubbed send counts as not sent and the caller hands back the link instead.
  */

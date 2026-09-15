@@ -1,7 +1,7 @@
 /**
  * Observation codes for avize (DM, ZA, ZB, IF…).
  *
- * `*` is only a join separator when several codes land in the Observații cell —
+ * `*` is only a join separator when several codes land in the Observații cell,
  * it must never be stored as part of the catalog code.
  */
 

@@ -114,7 +114,7 @@ export function normalizePlate(value) {
   return null;
 }
 
-/** Synthetic office/driver fixtures — not RO format, but intentional and short. */
+/** Synthetic office/driver fixtures, not RO format, but intentional and short. */
 function syntheticLabeledPlate(labeled) {
   const text = normalizeWs(labeled).toUpperCase();
   if (!text) return null;
@@ -404,7 +404,7 @@ function parseRoute(blob) {
 
 /**
  * Parse OCR / PDF plain text into Anexa Factura RAI fields.
- * Baumit PDFs often emit one word per line — join before matching.
+ * Baumit PDFs often emit one word per line, join before matching.
  */
 export function parseBaumitAviz(rawText) {
   const lines = String(rawText || '')
@@ -466,7 +466,7 @@ function isGarbageQuantity(value, tip) {
 function preferStored(stored, parsedValue, isGarbage) {
   if (fieldFilled(stored) && !(isGarbage && isGarbage(stored))) return stored;
   if (parsedValue != null && String(parsedValue).trim() !== '') return parsedValue;
-  // Do not keep a poisoned stored plate when we have nothing better — leave empty for review.
+  // Do not keep a poisoned stored plate when we have nothing better, leave empty for review.
   return null;
 }
 

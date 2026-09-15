@@ -24,7 +24,7 @@ async function upsertUser(client, { companyId, name, email, password, role }) {
     [companyId, email]
   );
   if (existing.rows[0]) {
-    // Dev seed accounts must stay login-able after a re-run — never skip password refresh.
+    // Dev seed accounts must stay login-able after a re-run, never skip password refresh.
     await client.query(
       `UPDATE users
        SET name = $1, password_hash = $2, role = $3, is_active = TRUE, updated_at = NOW()
@@ -75,7 +75,7 @@ async function seed() {
       role: 'driver',
     });
 
-    // Demo fleet — only if empty
+    // Demo fleet, only if empty
     const vehicleCount = await client.query(
       `SELECT COUNT(*)::int AS c FROM vehicles WHERE company_id = $1`,
       [companyId]
@@ -201,7 +201,7 @@ async function seed() {
         `INSERT INTO driver_notifications (company_id, title, message, type, cmr_number, is_read)
          VALUES
            ($1, 'Cursă nouă alocată', 'Ai o cursă nouă: CMR-2026-0727-1001 (Cluj → București).', 'trip_assigned', 'CMR-2026-0727-1001', FALSE),
-           ($1, 'Atenție documente', 'Verifică rovinieta pe B-202-TRX — expiră în curând.', 'warning', NULL, FALSE)`,
+           ($1, 'Atenție documente', 'Verifică rovinieta pe B-202-TRX, expiră în curând.', 'warning', NULL, FALSE)`,
         [companyId]
       );
 
@@ -221,7 +221,7 @@ async function seed() {
          WHERE company_id = $2 AND LOWER(email) = 'sofer@transitix.ro' AND user_id IS NULL`,
         [driverUserId, companyId]
       );
-      console.log('Fleet already present — ensured driver user link.');
+      console.log('Fleet already present, ensured driver user link.');
     }
 
     await client.query('COMMIT');

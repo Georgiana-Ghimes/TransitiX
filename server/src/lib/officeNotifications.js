@@ -51,7 +51,7 @@ export async function notifyCmrPending(companyId, trip) {
      ON CONFLICT (company_id, trip_id) WHERE type = 'cmr_pending' AND is_read = FALSE DO NOTHING`,
     [
       companyId,
-      `CMR de confirmat — ${trip.cmr_number || 'Cursă'}`,
+      `CMR de confirmat, ${trip.cmr_number || 'Cursă'}`,
       `${driver} a încărcat documentul CMR. Verifică datele OCR pe cursă.`,
       `/trips/${trip.id}`,
       trip.id,
@@ -61,7 +61,7 @@ export async function notifyCmrPending(companyId, trip) {
 }
 
 /**
- * Bell ping when a driver sends paperwork — with or without a trip.
+ * Bell ping when a driver sends paperwork, with or without a trip.
  *
  * Uploads without a cursă used to stay silent; the office only noticed them by
  * opening /avize. Always land on /avize (companion has no trips menu).
@@ -84,7 +84,7 @@ export async function notifyDriverUpload(companyId, {
   await createOfficeNotification({
     company_id: companyId,
     type: 'driver_upload',
-    title: `De pe drum — ${filesLabel}`,
+    title: `De pe drum, ${filesLabel}`,
     message: `${who} a încărcat ${filesLabel} (${kind})${tripBit}.`,
     link: '/avize',
     trip_id: trip?.id || null,
@@ -108,8 +108,8 @@ export async function notifyClientConfirmed(companyId, trip, { has_damage, confi
     company_id: companyId,
     type,
     title: has_damage
-      ? `Avarii raportate — ${trip?.cmr_number || 'CMR'}`
-      : `Livrare confirmată — ${trip?.cmr_number || 'CMR'}`,
+      ? `Avarii raportate, ${trip?.cmr_number || 'CMR'}`
+      : `Livrare confirmată, ${trip?.cmr_number || 'CMR'}`,
     message: has_damage
       ? `${confirmed_by_name || 'Clientul'} a raportat avarii la recepție.`
       : `${confirmed_by_name || 'Clientul'} a confirmat recepția mărfii.`,
@@ -180,7 +180,7 @@ function checkExpiry(dateStr, type, { id, name, link, horizonDays }) {
     id: `computed:document_expiry:${type}:${id}:${dateKey}`,
     type: 'document_expiry',
     title: expired ? `${type} expirat` : `${type} expiră curând`,
-    message: `${name} — ${expired ? 'expirat' : 'expiră'} ${d.toLocaleDateString('ro-RO')}`,
+    message: `${name}, ${expired ? 'expirat' : 'expiră'} ${d.toLocaleDateString('ro-RO')}`,
     link,
     trip_id: null,
     cmr_number: null,
@@ -312,7 +312,7 @@ async function buildComputedNotifications(companyId) {
     items.push({
       id: `computed:unassigned:${t.id}`,
       type: 'trip_unassigned',
-      title: `Cursă nealocată — ${t.cmr_number || 'CMR'}`,
+      title: `Cursă nealocată, ${t.cmr_number || 'CMR'}`,
       message: 'Cursa este în așteptare. Alocă un șofer și vehicul.',
       link: `/trips/${t.id}`,
       trip_id: t.id,
@@ -331,7 +331,7 @@ async function buildComputedNotifications(companyId) {
 }
 
 /**
- * Only the errors reach the bell — the ones that end in a wrong invoice.
+ * Only the errors reach the bell, the ones that end in a wrong invoice.
  *
  * The warnings live on `/checks`, where there is room to explain them. Putting all of them here
  * would bury the trip and document alerts the bell exists for.

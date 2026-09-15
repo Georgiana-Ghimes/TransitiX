@@ -1,7 +1,7 @@
 import path from 'path';
 import crypto from 'crypto';
 
-/** Annex fields the office types in Editează — re-extract must not wipe them. */
+/** Annex fields the office types in Editează, re-extract must not wipe them. */
 export const OCR_AVIZ_FIELDS = [
   'numar_tpo',
   'data_efectuare_cursa',

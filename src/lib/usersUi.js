@@ -3,7 +3,7 @@
  *
  * The screen has to make three states obvious that the columns do not: an invitation still
  * waiting, an invitation that has gone stale, and a driver account that will sign in to an empty
- * app. All three are silent failures otherwise — somebody finds out weeks later, usually the
+ * app. All three are silent failures otherwise, somebody finds out weeks later, usually the
  * person affected.
  */
 
@@ -114,7 +114,7 @@ export function lastSeen(user) {
 /**
  * What to tell an admin after deactivating somebody.
  *
- * Sessions are revoked immediately, which stops renewal — but an access token already in a
+ * Sessions are revoked immediately, which stops renewal, but an access token already in a
  * browser keeps working until it expires. Saying so is the difference between an admin who knows
  * the cut takes effect within the hour and one who believes it was instant.
  */

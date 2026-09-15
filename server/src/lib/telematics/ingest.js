@@ -1,5 +1,5 @@
 /**
- * Telematics helpers — keys, sample validation, and the write that keeps gps_logs in sync.
+ * Telematics helpers, keys, sample validation, and the write that keeps gps_logs in sync.
  *
  * gps_logs is deliberately not deleted: the map page already filters on is_current. Every
  * real position lands in telematics_positions (history) and is projected onto one current
@@ -55,7 +55,7 @@ export function normalizePositionSample(raw = {}, { defaultSource = 'webhook' } 
   if (!Number.isFinite(recordedAt.getTime())) {
     return { ok: false, error: 'recorded_at invalid' };
   }
-  // Reject samples more than a day in the future — clock skew, not prophecy.
+  // Reject samples more than a day in the future, clock skew, not prophecy.
   if (recordedAt.getTime() - Date.now() > 24 * 3600 * 1000) {
     return { ok: false, error: 'recorded_at este în viitor' };
   }
@@ -190,7 +190,7 @@ export async function ingestPosition(db, companyId, rawSample, {
           });
         }
       } catch {
-        // Live board is optional — never fail ingest on a hung subscriber.
+        // Live board is optional, never fail ingest on a hung subscriber.
       }
     } catch (err) {
       console.error('[telematics evaluate]', err.message);
@@ -199,7 +199,7 @@ export async function ingestPosition(db, companyId, rawSample, {
   return row;
 }
 
-/** Batch ingest — continues past unresolved vehicles, reports counts. */
+/** Batch ingest, continues past unresolved vehicles, reports counts. */
 export async function ingestPositions(db, companyId, samples, opts = {}) {
   const list = Array.isArray(samples) ? samples : [];
   const accepted = [];

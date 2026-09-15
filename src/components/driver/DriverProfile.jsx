@@ -17,7 +17,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
   useEffect(() => {
     api.auth.me().then((u) => setUser(u)).catch(() => {});
     // Nothing renders the counts on the companion, and the fallback below is an unscoped
-    // list of every trip — the most expensive way to compute a number nobody reads.
+    // list of every trip, the most expensive way to compute a number nobody reads.
     if (!showTripStats) {
       setLoading(false);
       return;

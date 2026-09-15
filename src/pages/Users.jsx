@@ -3,7 +3,7 @@
  *
  * This existed only as SQL until now, which meant three things at once: only whoever had database
  * access could add a colleague, nobody could see who held which role, and an admin ended up
- * choosing somebody else's password. The screen removes all three — an invitation carries a link,
+ * choosing somebody else's password. The screen removes all three, an invitation carries a link,
  * the person picks their own password, and every change lands on the audit trail.
  *
  * The buttons offered come from `actionsFor`, not from guesswork in the markup, so what an admin
@@ -46,7 +46,7 @@ function InviteLink({ link, onDone }) {
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
       <p className="text-sm text-blue-900 font-medium">
-        Emailul nu e configurat — trimite tu linkul de invitație.
+        Emailul nu e configurat, trimite tu linkul de invitație.
       </p>
       <p className="text-[12px] text-blue-800">
         Valabil 7 zile. Persoana își alege singură parola; tu nu o afli niciodată.
@@ -95,7 +95,7 @@ function InviteForm({ roles, onInvited, onLink }) {
       const res = await api.users.invite(form);
       notifySuccess(
         'Invitație creată',
-        res.email_sent ? `Email trimis către ${form.email}.` : 'Emailul nu e configurat — copiază linkul.'
+        res.email_sent ? `Email trimis către ${form.email}.` : 'Emailul nu e configurat, copiază linkul.'
       );
       if (res.invite_link) onLink(res.invite_link);
       setForm({ name: '', email: '', role: 'dispatcher', phone: '' });
@@ -278,7 +278,7 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
 }
 
 /**
- * The people list — used as its own page on Transitix full, and as a Setări tab on companion.
+ * The people list, used as its own page on Transitix full, and as a Setări tab on companion.
  * `embedded` drops the page chrome when the parent already provides a title.
  */
 export function UsersPanel({ embedded = false } = {}) {
@@ -361,7 +361,7 @@ export function UsersPanel({ embedded = false } = {}) {
         <p className="text-[12px] text-slate-500 bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-start gap-2">
           <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           Există un singur administrator activ. Cât timp e singurul, nu poate fi retrogradat sau
-          dezactivat — altfel firma ar rămâne fără acces la utilizatori, tarife și jurnal.
+          dezactivat, altfel firma ar rămâne fără acces la utilizatori, tarife și jurnal.
         </p>
       )}
 

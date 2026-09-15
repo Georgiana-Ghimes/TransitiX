@@ -1,7 +1,7 @@
 /**
  * The zone map: the access zones a city defines, and what they cost here.
  *
- * The outlines are shipped with the app (`lib/zoneReference.js`), not configured per company —
+ * The outlines are shipped with the app (`lib/zoneReference.js`), not configured per company,
  * Bucharest's A and B are the same public fact for every operator, so the screen draws them
  * with no setup at all. What is company-specific is whether a zone charges anything, and that
  * lives in `tax_zones`, reaching the invoice through `resolveZone`.
@@ -38,7 +38,7 @@ import {
 } from '@/lib/zoneGeometry';
 import { ZONE_CITIES, cityById, referenceZone } from '@/lib/zoneReference';
 import {
-  effectiveZone, hasStreetIndex, loadStreetIndex, lookupStreet,
+  hasStreetIndex, loadStreetIndex, lookupAddress, resolveAddress,
 } from '@/lib/streetZones';
 
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
@@ -136,7 +136,7 @@ export default function ZoneMap() {
    * What each visible zone draws: its own outline, with the zones nested inside it punched out.
    *
    * Zone B's perimeter really does enclose Zone A, so filling both paints the inner zone twice
-   * and the strictest zone ends up the muddiest on screen. The cutout is display only — the
+   * and the strictest zone ends up the muddiest on screen. The cutout is display only, the
    * stored outline stays the official one and `resolveZone` still separates them on priority.
    *
    * Drawn outermost first, so the inner zone's border sits on top of the hole its neighbour
@@ -188,7 +188,7 @@ export default function ZoneMap() {
     try {
       const index = await ensureIndex();
       if (index) {
-        const found = lookupStreet(index, q);
+        const found = lookupAddress(index, q);
         if (found.status !== 'unknown') {
           setLookup(found);
           setSearching(false);
@@ -240,7 +240,7 @@ export default function ZoneMap() {
 
   /**
    * Gives a reference zone the power to charge, by putting its outline into `tax_zones`.
-   * The priority comes from the reference, because it is what encodes that A sits inside B —
+   * The priority comes from the reference, because it is what encodes that A sits inside B,
    * leaving it to whoever creates the row is how a central address ends up on B's cheaper rate.
    */
   const linkForPricing = async (zone) => {
@@ -320,7 +320,7 @@ export default function ZoneMap() {
         // what an address is charged with nothing on screen saying it happened.
         notifyError(
           'Verifică conturul',
-          `${spikes.length} vârf(uri) ies și revin pe aceeași linie — de obicei o scăpare la `
+          `${spikes.length} vârf(uri) ies și revin pe aceeași linie, de obicei o scăpare la `
           + `desenare. Primul e la ${spikes[0].position[1].toFixed(5)}, `
           + `${spikes[0].position[0].toFixed(5)}. Conturul a fost salvat neschimbat.`,
         );
@@ -392,7 +392,7 @@ export default function ZoneMap() {
             className={inputCls}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder={`Strada — ex. Calea Victoriei ${city.label ? `(${city.label})` : ''}`}
+            placeholder="Strada și numărul, ex. Calea 13 Septembrie 102"
           />
         </div>
         <div className="w-36">
@@ -409,7 +409,7 @@ export default function ZoneMap() {
               onClick={() => setMma(String(Math.round(Number(mma) * 1000)))}
               className="mt-1 text-[11px] text-amber-700 hover:underline"
             >
-              {mma} pare în tone — pune {Number(mma) * 1000} kg?
+              {mma} pare în tone, pune {Number(mma) * 1000} kg?
             </button>
           ) : null}
         </div>
@@ -427,6 +427,7 @@ export default function ZoneMap() {
         <StreetResult
           lookup={lookup}
           city={city}
+          index={streetIndex}
           mmaKg={mma === '' ? null : mmaNumber}
           taxZoneFor={taxZoneFor}
           ratesFor={ratesFor}
@@ -526,7 +527,7 @@ export default function ZoneMap() {
                 {extraZones.map((z) => (
                   <li key={z.id} className="text-[11px] text-slate-600">
                     {z.code} · {z.name}
-                    {geometryToRings(z.polygon).length ? '' : ' — fără contur'}
+                    {geometryToRings(z.polygon).length ? '' : ', fără contur'}
                   </li>
                 ))}
               </ul>
@@ -570,8 +571,8 @@ export default function ZoneMap() {
 /**
  * Two separate facts, never merged: where the pin fell, and what the calculation will charge.
  *
- * They can legitimately differ — a zone drawn on the map charges nothing until it is linked to
- * pricing — and collapsing them into one line would either hide a zone the operator can see or
+ * They can legitimately differ, a zone drawn on the map charges nothing until it is linked to
+ * pricing, and collapsing them into one line would either hide a zone the operator can see or
  * promise a tax that will not appear on the invoice.
  */
 /**
@@ -581,7 +582,7 @@ export default function ZoneMap() {
  * on the map charges nothing until it is linked to pricing, and a street that only partly lies
  * in its zone has no single answer at all.
  */
-function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
+function StreetResult({ lookup, city, index, mmaKg, taxZoneFor, ratesFor, onPick }) {
   if (lookup.status === 'ambiguous') {
     return (
       <div className={`${cardCls} p-3 text-sm`}>
@@ -611,25 +612,26 @@ function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
   }
 
   const entry = lookup.found;
-  const effective = effectiveZone(entry, city.zones);
-  const zone = effective ? city.zones.find((z) => z.code === effective.code) : null;
+  const answer = resolveAddress(index, lookup, city.zones);
+  const zone = answer?.zone ? city.zones.find((z) => z.code === answer.zone) : null;
   const taxZone = zone ? taxZoneFor(zone.code) : null;
-  const rate = taxZone && mmaKg != null
-    ? pickRate(ratesFor(taxZone.id), mmaKg)
-    : null;
+  const rate = taxZone && mmaKg != null ? pickRate(ratesFor(taxZone.id), mmaKg) : null;
+  const settled = answer?.certain === true;
 
   return (
     <div className={`${cardCls} p-3 space-y-2 text-sm`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <MapPin className="w-4 h-4 text-[#1D4E89] shrink-0" />
-        <span className="text-slate-700 font-medium">{entry.label}</span>
+        <span className="text-slate-700 font-medium">
+          {entry.label}{lookup.number ? ` ${lookup.number}` : ''}
+        </span>
         {lookup.sharedWith > 1 ? (
           <span className="text-[11px] text-slate-400">
             {lookup.sharedWith} străzi cu acest nume, toate în aceeași zonă
           </span>
         ) : lookup.status === 'without-type' ? (
           <span className="text-[11px] text-slate-400">
-            potrivit după nume — verifică dacă e strada corectă
+            potrivit după nume, verifică dacă e strada corectă
           </span>
         ) : null}
         <span className="text-[11px] text-slate-400">din indexul {city.label}</span>
@@ -637,8 +639,14 @@ function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Zonă</span>
-        {!zone ? (
+        {!zone && settled ? (
           <span className="text-slate-500">În afara zonelor restricționate.</span>
+        ) : !zone ? (
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <TriangleAlert className="w-3.5 h-3.5" />
+            Numărul cade între {answer.between.map((z) => z || 'zonă liberă').join(' și ')},
+            verifică pe hartă.
+          </span>
         ) : (
           <>
             <span
@@ -648,12 +656,19 @@ function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
               {zone.code}
             </span>
             <span className="text-slate-600">{zone.name}</span>
-            {effective.certain ? (
-              <span className="text-[11px] text-slate-400">{zone.threshold}</span>
+            {settled ? (
+              <span className="text-[11px] text-slate-400">
+                {answer.source === 'number' ? 'după numărul stradal' : zone.threshold}
+              </span>
+            ) : answer.needsNumber ? (
+              <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
+                <TriangleAlert className="w-3.5 h-3.5" />
+                strada traversează limita, adaugă numărul pentru un răspuns exact
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-[11px] text-amber-700">
                 <TriangleAlert className="w-3.5 h-3.5" />
-                strada traversează limita — numărul poștal decide, verifică pe hartă
+                nu am numărul {lookup.number} în index, verifică pe hartă
               </span>
             )}
           </>
@@ -663,11 +678,13 @@ function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Calcul</span>
         {!zone ? (
-          <span className="text-slate-500">Nicio taxă de zonă.</span>
+          <span className="text-slate-500">
+            {settled ? 'Nicio taxă de zonă.' : 'Nedecis, nicio sumă de arătat.'}
+          </span>
         ) : !taxZone ? (
           <span className="inline-flex items-center gap-1 text-amber-700">
             <TriangleAlert className="w-3.5 h-3.5" />
-            {zone.code} nu e activată pentru calcul — TPO-ul nu va adăuga nicio taxă aici.
+            {zone.code} nu e activată pentru calcul, TPO-ul nu va adăuga nicio taxă aici.
           </span>
         ) : mmaKg == null ? (
           <span className="text-slate-500">Completează MMA ca să vezi taxa.</span>
@@ -676,7 +693,7 @@ function StreetResult({ lookup, city, mmaKg, taxZoneFor, ratesFor, onPick }) {
             <span className="text-slate-800 font-semibold">{formatAmount(rate)}</span>
             <span className="text-[11px] text-slate-400">
               {zone.code} · {mmaKg.toLocaleString('ro-RO')} kg
-              {effective.certain ? '' : ' · dacă adresa e în zonă'}
+              {settled ? '' : ' · dacă adresa e în zonă'}
             </span>
           </>
         ) : (
@@ -724,7 +741,7 @@ function LocateResult({ hit }) {
         ) : null}
         {hit.outcome?.action === 'review' ? (
           <span className="text-[11px] text-amber-700">
-            Geocodare incertă — verifică pinul pe hartă.
+            Geocodare incertă, verifică pinul pe hartă.
           </span>
         ) : null}
       </div>
@@ -767,7 +784,7 @@ function LocateResult({ hit }) {
         ) : drawn ? (
           <span className="inline-flex items-center gap-1 text-amber-700">
             <TriangleAlert className="w-3.5 h-3.5" />
-            {drawn.code} nu e activată pentru calcul — TPO-ul nu va adăuga nicio taxă aici.
+            {drawn.code} nu e activată pentru calcul, TPO-ul nu va adăuga nicio taxă aici.
           </span>
         ) : (
           <span className="text-slate-500">Nicio taxă de zonă.</span>
@@ -791,7 +808,7 @@ function ZonePopup({ zone, rates }) {
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500 pt-1">Fără tarife — nu produce nicio taxă.</p>
+        <p className="text-slate-500 pt-1">Fără tarife, nu produce nicio taxă.</p>
       )}
     </div>
   );
@@ -806,7 +823,7 @@ function OutlinePicker({ taxZone, outlines, onCancel, onPick }) {
         </h2>
         <p className="text-xs text-slate-500">
           Fișierul conține {outlines.length} contururi. Numele din fișier nu spune sigur care e
-          care — mărimea și întinderea de mai jos te lasă să distingi interiorul de exterior.
+          care, mărimea și întinderea de mai jos te lasă să distingi interiorul de exterior.
         </p>
 
         <ul className="space-y-2">
@@ -891,7 +908,7 @@ function ZoneCard({
             <p className="text-[11px] text-amber-900">
               {!linked
                 ? <>Se vede pe hartă, dar <strong>nu intră în calcul</strong>. TPO-ul citește zonele din tarifare, unde această zonă nu există încă.</>
-                : <>Zona există în tarifare, dar <strong>fără contur</strong> — se potrivește pe text, nu pe poziție.</>}
+                : <>Zona există în tarifare, dar <strong>fără contur</strong>, se potrivește pe text, nu pe poziție.</>}
             </p>
             <button
               type="button"
@@ -921,7 +938,7 @@ function ZoneCard({
         </ul>
       ) : linked ? (
         <p className="mt-2 text-[11px] text-amber-700">
-          Fără tranșe de MMA — zona nu produce nicio taxă.
+          Fără tranșe de MMA, zona nu produce nicio taxă.
         </p>
       ) : null}
 
@@ -954,7 +971,7 @@ function ZoneCard({
             </tbody>
           </table>
           <p className="mt-1 text-[10px] text-slate-400">
-            Calculul folosește taxa pe zi — o zonă se taxează o dată pe cursă. Abonamentul lunar
+            Calculul folosește taxa pe zi, o zonă se taxează o dată pe cursă. Abonamentul lunar
             e afișat doar informativ; dacă îl ai, taxa pe cursă nu mai reflectă costul real.
           </p>
         </div>

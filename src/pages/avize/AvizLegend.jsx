@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { HelpCircle } from 'lucide-react';
+import { readCollapsed, writeCollapsed } from '@/lib/collapsePreference';
 
-export default function AvizLegend({ title, items }) {
+/**
+ * A collapsible legend that stays the way it was left.
+ *
+ * `<details open>` reopened on every render, so closing it lasted until the next refresh and had
+ * to be repeated all day. The open state is React's now, and it is keyed by `id` rather than by
+ * the title: rewording "Legendă acțiuni" should not silently reopen a panel everybody had shut.
+ */
+export default function AvizLegend({ id, title, items }) {
+  const [open, setOpen] = useState(() => !readCollapsed(id, false));
+
+  useEffect(() => {
+    writeCollapsed(id, !open);
+  }, [id, open]);
+
   return (
-    <details className="bg-sky-50/80 rounded-xl border border-sky-100 group" open>
+    <details
+      className="bg-sky-50/80 rounded-xl border border-sky-100 group"
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
       <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-[#0A2B4E] flex items-center justify-between gap-2 list-none [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2 min-w-0">
           <HelpCircle className="w-4 h-4 text-sky-700 shrink-0" />

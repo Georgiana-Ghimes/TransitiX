@@ -130,7 +130,7 @@ function formatDateCell(value) {
 
 /**
  * Anexa Factura RAI column “Cantitate marfa (t/m3/galeti)” must carry weighbridge tons when
- * we have greutate brută — not the sack/bucket line count OCR also finds on the same page.
+ * we have greutate brută, not the sack/bucket line count OCR also finds on the same page.
  */
 export function annexQuantityValue(row) {
   const kg = Number(row?.gross_weight_kg);

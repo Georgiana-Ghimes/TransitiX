@@ -1,6 +1,6 @@
 /**
  * How a stored row was read. `vision` stays in the table for rows extracted before Google Vision
- * was removed — dropping it would relabel their history rather than erase a dependency.
+ * was removed, dropping it would relabel their history rather than erase a dependency.
  *
  * `paddle` and `none` are named explicitly because they are what the extractor actually writes
  * today: falling through to `stub` labelled a real PaddleOCR read, and a failed one, as though
@@ -58,7 +58,7 @@ export function runIdentity(row) {
 
 /**
  * Sets `numar_curse` on each row to the count of distinct runs sharing its TPO
- * (within the given set — typically the list view or the export selection).
+ * (within the given set, typically the list view or the export selection).
  */
 export function applyNumarCurseByRuns(rows) {
   const list = Array.isArray(rows) ? rows : [];
@@ -132,7 +132,7 @@ export function uniqueZipEntry(name, used) {
 /**
  * Which calendar date the `from`/`to` filters mean, as clauses rather than a bare expression.
  *
- * `cursa` is the trip date read off the aviz — the one a monthly annex is built on. `incarcare`
+ * `cursa` is the trip date read off the aviz, the one a monthly annex is built on. `incarcare`
  * is when the file reached us, expressed in Bucharest so a 23:30 upload does not count as the
  * next day. They are far apart in practice: an aviz photographed today can carry a trip date
  * from two weeks ago, which is why a week preset on the trip date can come back empty while the
@@ -146,7 +146,7 @@ export function uniqueZipEntry(name, used) {
  * functional index could not stand in for that: `AT TIME ZONE` is STABLE, not IMMUTABLE, and
  * Postgres refuses it in an index.
  *
- * Each clause carries a single `$n` placeholder, repeated where needed — callers substitute their
+ * Each clause carries a single `$n` placeholder, repeated where needed, callers substitute their
  * own parameter index and push one value.
  */
 export function avizDateClauses(dateField, alias = '') {

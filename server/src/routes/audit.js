@@ -1,7 +1,7 @@
 /**
  * Reading the trail.
  *
- * Two doors, on purpose. The history of one record — "what happened to this trip" — is ordinary
+ * Two doors, on purpose. The history of one record, "what happened to this trip", is ordinary
  * operational context, so any office user can open it. The searchable log across everybody is a
  * different thing: it answers "what has this person been doing", and that is an owner's question,
  * so it is admin-only.
@@ -45,7 +45,7 @@ function serializeEvent(row) {
 /**
  * The searchable log.
  *
- * Every filter is optional and every one is a bound parameter — the entity name arrives from the
+ * Every filter is optional and every one is a bound parameter, the entity name arrives from the
  * client and is compared, never interpolated.
  */
 router.get('/', adminRequired, async (req, res) => {
@@ -65,7 +65,7 @@ router.get('/', adminRequired, async (req, res) => {
     // The end of the range is inclusive: a person filtering "to 31 March" means that day too.
     if (req.query.to) add("created_at < ($?::date + INTERVAL '1 day')", String(req.query.to));
     if (req.query.q) {
-      // One value, three columns — built directly rather than through `add`, which fills a
+      // One value, three columns, built directly rather than through `add`, which fills a
       // single placeholder.
       params.push(`%${req.query.q}%`);
       const idx = `$${params.length}`;

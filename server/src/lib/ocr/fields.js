@@ -3,7 +3,7 @@
  *
  * Each extractor returns `{ value, confidence, matched }` rather than a bare value.
  * Confidence is what decides whether a field is written unattended or lands in front of an
- * operator, so every extractor has to be honest about how sure it is — a regex that matched
+ * operator, so every extractor has to be honest about how sure it is, a regex that matched
  * a well-formed, labelled value is worth more than one that grabbed a loose number.
  */
 
@@ -55,7 +55,7 @@ export function isAcceptableAutoField(value) {
   return parts.every((p) => RO_PLATE_TOKEN.test(p) || SYNTHETIC_PLATE_TOKEN.test(p));
 }
 
-/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ — county required, no loose shape matches. */
+/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ, county required, no loose shape matches. */
 export function extractPlate(text) {
   const found = matchPatterns(text, [
     new RegExp(`\\b((?:${RO_PLATE_COUNTIES})\\s?\\d{2,3}\\s?[A-Z]{3})\\b`, 'i'),
@@ -133,7 +133,7 @@ export function parseNumber(raw) {
 const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000, tone_: 1000 };
 
 /**
- * Gross weight — what the weighbridge shows, goods plus pallets.
+ * Gross weight, what the weighbridge shows, goods plus pallets.
  *
  * This is the field the client corrected us on: a report needs "9.000 kg", not "378 saci".
  * A labelled "greutate brută" is trusted; a bare weight with no label is not, because it
@@ -179,7 +179,7 @@ export function extractNetWeight(text) {
 }
 
 /**
- * Hard ceilings — only drop OCR noise that is orders of magnitude wrong
+ * Hard ceilings, only drop OCR noise that is orders of magnitude wrong
  * ("245.000 saci" / "245090 saci"). Real loads of 10_000+ bags must still pass.
  */
 export const QUANTITY_CEILING = Object.freeze({
@@ -233,7 +233,7 @@ export function isPlausibleQuantity(value, unit) {
   return n <= max;
 }
 
-/** Quantity with its unit — kept separate from weight, never used in its place. */
+/** Quantity with its unit, kept separate from weight, never used in its place. */
 export function extractQuantity(text) {
   const blob = String(text || '');
   // A labelled quantity is worth more than a loose number followed by a unit.
@@ -247,7 +247,7 @@ export function extractQuantity(text) {
       return result({ quantity: value, unit }, 0.9, labelled[0]);
     }
   }
-  // An unlabelled number in a weight unit is almost always the weight, not the quantity —
+  // An unlabelled number in a weight unit is almost always the weight, not the quantity,
   // "Greutate 4200 kg" must not come back as "4200 kg of goods". Reading a weight as a
   // quantity is exactly the confusion the report has to avoid.
   const bare = blob.match(
@@ -264,12 +264,12 @@ export function extractQuantity(text) {
 }
 
 /**
- * Pallet count. Documents write it both ways round — "18 paleti" and "Paleti: 18" — and
+ * Pallet count. Documents write it both ways round, "18 paleti" and "Paleti: 18", and
  * handling only one of them loses the field on half the layouts.
  */
 export function extractPalletCount(text) {
   const blob = String(text || '');
-  // Only same-line whitespace — `\s` would jump to the next article code after "7.00 pal".
+  // Only same-line whitespace, `\s` would jump to the next article code after "7.00 pal".
   const labelled = blob.match(/(?:paleti|paleți|palete?)\b[^\S\n]*[:\-]?[^\S\n]*([\d.,]+)/i);
   if (labelled) {
     const value = parseNumber(labelled[1]);

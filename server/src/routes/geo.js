@@ -51,7 +51,7 @@ router.get('/health', async (_req, res) => {
   });
 });
 
-/** Ranked candidates for one address — what the map review screen shows the dispatcher. */
+/** Ranked candidates for one address, what the map review screen shows the dispatcher. */
 router.post('/geocode', async (req, res) => {
   try {
     const { address, refresh } = req.body || {};
@@ -69,7 +69,7 @@ router.post('/geocode', async (req, res) => {
 
 /**
  * Geocodes one stored location and saves the pin when the result is usable.
- * `geocode_verified` is deliberately untouched — only a person confirming on the map sets it,
+ * `geocode_verified` is deliberately untouched, only a person confirming on the map sets it,
  * which is what `PUT /api/entities/Location/:id` is for.
  */
 router.post('/locations/:id/geocode', async (req, res) => {
@@ -93,7 +93,7 @@ router.post('/locations/:id/geocode', async (req, res) => {
 });
 
 /**
- * Recomputes one trip's distance on demand. `force` overrides a manual value — the only way
+ * Recomputes one trip's distance on demand. `force` overrides a manual value, the only way
  * to hand a hand-typed distance back to the geocoder without clearing the field first.
  */
 router.post('/trips/:id/distance', async (req, res) => {
@@ -149,7 +149,7 @@ router.post('/matrix', async (req, res) => {
   }
 });
 
-/** Snaps a point to the road network — how we tell a good geocode from one in a field. */
+/** Snaps a point to the road network, how we tell a good geocode from one in a field. */
 router.post('/nearest', async (req, res) => {
   try {
     const { point, number } = req.body || {};

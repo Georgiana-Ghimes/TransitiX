@@ -3,7 +3,7 @@
  *
  * The server stores column names and raw values because that is what is true. A screen that
  * shows `tarif_km: 2.5000 → 2.8000` next to `default_depot_location_id` is technically complete
- * and practically useless, so the translation happens here — and falls back to a humanised
+ * and practically useless, so the translation happens here, and falls back to a humanised
  * column name rather than hiding a field it does not recognise. A trail with holes in it is
  * exactly the thing this feature exists to avoid.
  */
@@ -99,7 +99,7 @@ export function formatValue(value) {
   const text = String(value);
   // Timestamps come back as ISO; the date alone is what a reader wants.
   if (/^\d{4}-\d{2}-\d{2}T/.test(text)) return text.slice(0, 10);
-  // NUMERIC arrives as "2.5000" — trailing zeros are formatting, not information.
+  // NUMERIC arrives as "2.5000", trailing zeros are formatting, not information.
   if (/^-?\d+\.\d+$/.test(text)) return String(Number(text));
   return text;
 }
@@ -154,7 +154,7 @@ export function groupByDay(events) {
   return days;
 }
 
-/** Local time, to the minute — the trail is read by people, not parsed. */
+/** Local time, to the minute, the trail is read by people, not parsed. */
 export function formatTime(iso) {
   if (!iso) return '';
   const date = new Date(iso);

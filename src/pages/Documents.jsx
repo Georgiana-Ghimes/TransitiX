@@ -150,7 +150,7 @@ export default function Documents() {
             <h2 className="font-semibold text-[#0A2B4E]">Import tahograf (.ddd)</h2>
             <p className="text-xs text-slate-500 mt-1">
               Arhivăm download-ul VU/card și detectăm tipul TLV. Analiza completă Reg. 561/2006
-              vine mai târziu — nu inventăm încălcări din fișierul brut.
+              vine mai târziu, nu inventăm încălcări din fișierul brut.
             </p>
           </div>
         </div>

@@ -26,7 +26,7 @@ async function placeUpload(name, body = '%PDF-1.4 test\n%%EOF\n') {
   return `/uploads/${name}`;
 }
 
-/** A real PDF of `pages` pages — pdf-parse has to be able to count them. */
+/** A real PDF of `pages` pages, pdf-parse has to be able to count them. */
 async function placeMultiPagePdf(name, pages) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
@@ -42,7 +42,7 @@ async function placeMultiPagePdf(name, pages) {
 describe('POST /api/avize/extract', () => {
   /**
    * The avize screen uploads a file and asks for it to be read in one call. There is one
-   * extractor now, and it works per batch, so the row it creates has to belong to one —
+   * extractor now, and it works per batch, so the row it creates has to belong to one,
    * otherwise nothing would ever read it again.
    */
   it('files a freshly uploaded aviz into a batch and extracts it', async () => {

@@ -10,7 +10,7 @@ export default function AvizTemplatesTab({
 }) {
   return (
     <div className="space-y-4">
-      <AvizLegend title="Legendă șabloane" items={TEMPLATE_ACTION_LEGEND} />
+      <AvizLegend id="avize-sabloane" title="Legendă șabloane" items={TEMPLATE_ACTION_LEGEND} />
       <div className="flex justify-end">
         <button
           type="button"
@@ -70,7 +70,7 @@ export default function AvizTemplatesTab({
       <div className="bg-white rounded-xl border border-slate-200/80 p-4">
         <p className="text-sm font-medium text-[#0A2B4E] mb-1">Coduri observații</p>
         <p className="text-xs text-slate-500 mb-3">
-          Cod + descriere. Fără * în catalog — * se pune automat între coduri la Observații / export (ex. IF*Z:B).
+          Cod + descriere. Fără * în catalog, * se pune automat între coduri la Observații / export (ex. IF*Z:B).
         </p>
         <div className="flex flex-wrap gap-2 mb-3">
           {obsCodes.map((c) => (

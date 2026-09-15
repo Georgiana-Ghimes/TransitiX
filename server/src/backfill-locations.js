@@ -2,14 +2,14 @@
 /**
  * Backfills `locations` from the addresses already held on `clients` and `trips`.
  *
- *   npm run backfill:locations --prefix server              # dry run — reports, writes nothing
+ *   npm run backfill:locations --prefix server              # dry run, reports, writes nothing
  *   npm run backfill:locations --prefix server -- --apply   # writes the rows
  *   npm run backfill:locations --prefix server -- --apply --company <uuid>
  *
  * Dry run is the default on purpose: the report tells you how geocodable the existing data
  * is before anything is inserted, which is the question P0 exists to answer.
  *
- * Idempotent — the unique index on (company_id, address_key) plus ON CONFLICT DO NOTHING
+ * Idempotent, the unique index on (company_id, address_key) plus ON CONFLICT DO NOTHING
  * means re-running only ever adds addresses that appeared since the last run.
  */
 import dotenv from 'dotenv';
@@ -167,7 +167,7 @@ async function processCompany(company, { apply, limitExamples }) {
   if (!report.candidates) return { inserted: 0, unique: 0 };
 
   if (!apply) {
-    console.log(`\n  DRY RUN — nimic scris. Adaugă --apply pentru a insera ${dedupe.rows.length} locații.`);
+    console.log(`\n  DRY RUN, nimic scris. Adaugă --apply pentru a insera ${dedupe.rows.length} locații.`);
     return { inserted: 0, unique: dedupe.rows.length };
   }
 

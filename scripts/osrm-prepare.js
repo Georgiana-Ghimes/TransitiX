@@ -10,7 +10,7 @@
  * build stages in the official container. Safe to re-run: the download is
  * skipped when the .osm.pbf is already there, and --force rebuilds the graph.
  *
- * Truck restrictions (height, tonnage, ADR) need Valhalla instead — that lands
+ * Truck restrictions (height, tonnage, ADR) need Valhalla instead, that lands
  * with the optimizer in P2. The car profile is what P0 measures distances with.
  */
 import fs from 'fs';
@@ -85,11 +85,11 @@ async function download(url, target) {
   const partial = `${target}.part`;
   await pipeline(body, fs.createWriteStream(partial));
   fs.renameSync(partial, target);
-  console.log(`Salvat ${path.basename(target)} — ${formatMB(fs.statSync(target).size)}`);
+  console.log(`Salvat ${path.basename(target)}, ${formatMB(fs.statSync(target).size)}`);
 }
 
 function runOsrm(step, args) {
-  console.log(`\n[${step}] pornit — poate dura câteva minute`);
+  console.log(`\n[${step}] pornit, poate dura câteva minute`);
   const result = spawnSync(
     'docker',
     ['run', '--rm', '-v', `${dataDir}:/data`, OSRM_IMAGE, step, ...args],
@@ -116,7 +116,7 @@ async function main() {
   }
 
   if (fs.existsSync(pbfPath)) {
-    console.log(`${pbfName} există deja (${formatMB(fs.statSync(pbfPath).size)}) — sar peste descărcare.`);
+    console.log(`${pbfName} există deja (${formatMB(fs.statSync(pbfPath).size)}), sar peste descărcare.`);
   } else {
     await download(`${GEOFABRIK}/${region}-latest.osm.pbf`, pbfPath);
   }

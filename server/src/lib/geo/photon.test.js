@@ -40,7 +40,7 @@ describe('buildSearchUrl', () => {
     const url = buildSearchUrl('http://photon:2322', parseRomanianAddress('Iași, str. Unirii 4'));
     expect(url).toContain('http://photon:2322/api?');
     expect(url).toContain('bbox=20.26%2C43.62%2C29.72%2C48.27');
-    // 'ro' is NOT a supported Photon language — sending it 400s every request.
+    // 'ro' is NOT a supported Photon language, sending it 400s every request.
     expect(url).toContain('lang=default');
     expect(url).not.toContain('lang=ro');
   });
@@ -144,7 +144,7 @@ describe('scoreCandidate', () => {
     expect(result.reasons).toContain('strada_potrivita');
   });
 
-  it('scores a bare locality low — a village centroid is not a delivery point', () => {
+  it('scores a bare locality low, a village centroid is not a delivery point', () => {
     const rural = parseRomanianAddress('Sat Cornu, com. Brebu, jud. Prahova');
     const result = scoreCandidate(rural, toCandidate(feature({
       name: 'Cornu', osm_key: 'place', osm_value: 'village', county: 'Prahova',

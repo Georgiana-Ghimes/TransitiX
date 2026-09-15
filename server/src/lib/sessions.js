@@ -2,13 +2,13 @@
  * Refresh-token sessions, so that logging out actually ends one.
  *
  * A signed JWT is valid until it expires; nothing about holding one proves the holder is still
- * allowed in. Before this table, `POST /auth/logout` returned `{ ok: true }` and did nothing —
+ * allowed in. Before this table, `POST /auth/logout` returned `{ ok: true }` and did nothing,
  * the client dropped its copy while the token kept working for a week. A lost phone or a
  * departed employee kept access, and there was no way to take it away.
  *
  * Each refresh token now carries a `jti` backed by a row here. Refreshing checks the row; logging
- * out revokes it. Access tokens are deliberately *not* checked per request — that would put a
- * database read in front of every call — so the exposure window after a revocation is however
+ * out revokes it. Access tokens are deliberately *not* checked per request, that would put a
+ * database read in front of every call, so the exposure window after a revocation is however
  * long an access token lives (`JWT_EXPIRES_IN`). Keep that short.
  */
 import crypto from 'crypto';
@@ -75,7 +75,7 @@ export async function revokeSession(jti) {
   return res.rowCount;
 }
 
-/** Every session for one person — what "sign out everywhere" means, and what a lost phone needs. */
+/** Every session for one person, what "sign out everywhere" means, and what a lost phone needs. */
 export async function revokeAllForUser(userId) {
   const res = await query(
     'UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL',

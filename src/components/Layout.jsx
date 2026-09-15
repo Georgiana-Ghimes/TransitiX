@@ -117,7 +117,7 @@ export default function Layout() {
   const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
   const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
-  // Office tour is for the full sidebar app only — never driver or documents companion.
+  // Office tour is for the full sidebar app only, never driver or documents companion.
   useEffect(() => {
     if (isDriver || documentsCompanion) {
       setTourOpen(false);
@@ -129,7 +129,7 @@ export default function Layout() {
     }
   }, [isDriver, documentsCompanion]);
 
-  // Navigate when the tour *step* changes — not whenever the user leaves the step path.
+  // Navigate when the tour *step* changes, not whenever the user leaves the step path.
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
   // so the rest of the app looked broken (and racing lazy loads could surface ErrorBoundary).
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function Layout() {
     if (current.path && !tourAtPath(location.pathname, current.path)) {
       navigate(current.path);
     }
-    // intentionally omit location.pathname — user may explore freely during the tour
+    // intentionally omit location.pathname, user may explore freely during the tour
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [isDriver, tourOpen, tourStep, navigate]);
 

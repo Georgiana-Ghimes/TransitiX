@@ -125,7 +125,7 @@ describe('GET /api/commercial/contracts/:id/history', () => {
 describe('PUT /api/commercial/depot', () => {
   it('refuses a location with no coordinates', async () => {
     // Without coordinates the round trip cannot be measured and the TPO silently loses its
-    // kilometre component — better to refuse than to accept a depot that cannot be routed.
+    // kilometre component, better to refuse than to accept a depot that cannot be routed.
     const bare = (await query(
       `INSERT INTO locations (company_id, name) VALUES ($1, 'Fără pin') RETURNING *`,
       [ctx.company.id]

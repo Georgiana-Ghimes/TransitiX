@@ -7,12 +7,12 @@ const FALLBACK_IMAGE_URL =
 
 // Wix Media Platform hosts whose images support /v1/ transform URLs
 // (resize, focal-point crop, and format conversion via the OUTPUT FILENAME
-// EXTENSION — a .webp output re-encodes JPG/PNG uploads to WebP on the fly).
+// EXTENSION, a .webp output re-encodes JPG/PNG uploads to WebP on the fly).
 const WIX_MEDIA_HOSTS = ["static.wixstatic.com"]
 // First-paint width before the container is measured.
 const DEFAULT_TRANSFORM_WIDTH = 1024
 const DEVICE_PIXEL_RATIOS = [1, 2, 3]
-// Not a documented CDN limit — verified live that w_/h_ up to 10000 succeed
+// Not a documented CDN limit, verified live that w_/h_ up to 10000 succeed
 // and requests start failing somewhere between 10000 and 15000. This is a
 // defensive ceiling with generous headroom (a 3x DPR request needs a
 // ~2000px container to reach it), not a real constraint we expect to hit.
@@ -20,7 +20,7 @@ const MAX_DIMENSION = 6000
 
 /**
  * Detects a Wix Media URL and strips any existing /v1/ transform so it can be
- * rebuilt. Returns null for other hosts and for SVGs (vectors — a raster
+ * rebuilt. Returns null for other hosts and for SVGs (vectors, a raster
  * transform only downgrades them).
  */
 function parseWixMediaUrl(src) {
@@ -99,7 +99,7 @@ const ResponsiveImage = React.forwardRef(
 
     const crop = fittingType !== "fit"
     // `size` is null exactly once: the pre-measurement first render, which we
-    // never let reach the network (see below — useSize measures before paint).
+    // never let reach the network (see below, useSize measures before paint).
     // A *measured* zero (content-sized wrapper with no CSS dimensions) falls
     // back to a fixed transform width so the image itself can size the box.
     const options = size && {
@@ -111,7 +111,7 @@ const ResponsiveImage = React.forwardRef(
     }
 
     // Both layers render only once the container is measured, so the first
-    // URL the browser ever fetches is already the right size — never a
+    // URL the browser ever fetches is already the right size, never a
     // DEFAULT_TRANSFORM_WIDTH guess that gets replaced a frame later (a
     // wasted full-size download per image). useSize measures in
     // useLayoutEffect, so nothing is lost: measurement lands before the
@@ -120,7 +120,7 @@ const ResponsiveImage = React.forwardRef(
       <ImageWrapper ref={wrapperRef} aspectRatio={aspectRatio} className={className} style={style}>
         {/* Tiny blurred placeholder (a few hundred bytes) covering the main
             image's load time. Same crop shape and focal anchor as the main
-            image — fp_ is relative to the crop box, so a square or centered
+            image, fp_ is relative to the crop box, so a square or centered
             placeholder would blur-preview a different region. */}
         {options && !loaded && (
           <img
@@ -198,7 +198,7 @@ const Image = React.forwardRef(
     }
 
     if (!src) {
-      // Renders as a real <img> (not a <div>) — the visual editor's
+      // Renders as a real <img> (not a <div>), the visual editor's
       // click-to-edit toolbar keys its "Replace Image" action off the DOM
       // tag being `img`, so a placeholder div would be unrecoverable in the
       // editor. FALLBACK_IMAGE_URL doubles as the "no image chosen" graphic.
@@ -220,7 +220,7 @@ const Image = React.forwardRef(
       typeof focalPointX === "number" && typeof focalPointY === "number"
         ? { x: focalPointX, y: focalPointY }
         : undefined
-    // Origin dimensions are optional — when known they stabilize layout via
+    // Origin dimensions are optional, when known they stabilize layout via
     // the wrapper's aspect-ratio before the image loads.
     const aspectRatio =
       originWidth && originHeight ? `${originWidth} / ${originHeight}` : undefined

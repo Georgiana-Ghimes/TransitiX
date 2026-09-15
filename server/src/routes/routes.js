@@ -147,7 +147,7 @@ const OFFICE_ROLES = new Set(['admin', 'dispatcher', 'finance']);
 
 /**
  * The driver profile behind the signed-in user. Matched by `user_id` first and by email as
- * a fallback, the same rule the driver app uses — a profile created before the account was
+ * a fallback, the same rule the driver app uses, a profile created before the account was
  * linked still resolves.
  */
 async function driverForUser(db, user) {
@@ -286,7 +286,7 @@ router.put('/:id/stops/:stopId/status', async (req, res) => {
 });
 
 /**
- * ePOD for one stop — signature / photos / refusal. Closes the stop as finalizat or esuat.
+ * ePOD for one stop, signature / photos / refusal. Closes the stop as finalizat or esuat.
  * Drivers may only write on their assigned route; office may write any company route.
  */
 router.post('/:id/stops/:stopId/pod', async (req, res) => {
@@ -478,7 +478,7 @@ router.get('/:id/stops/:stopId/pod', async (req, res) => {
 
 router.use(officeRequired);
 
-/** Full plan for one route — stops, ETAs, totals and every warning. */
+/** Full plan for one route, stops, ETAs, totals and every warning. */
 router.get('/:id/plan', async (req, res) => {
   try {
     const route = await loadRoute(pool, req.user.company_id, req.params.id);
@@ -646,7 +646,7 @@ router.post('/:id/trips', async (req, res) => {
     });
     const eligible = cmrEligibleStops(stops);
     if (!eligible.length) {
-      return res.status(400).json({ message: 'Ruta nu are opriri cu comenzi — nu e nimic de emis' });
+      return res.status(400).json({ message: 'Ruta nu are opriri cu comenzi, nu e nimic de emis' });
     }
 
     const day = String(route.route_date || '').slice(0, 10).replace(/-/g, '');
@@ -680,7 +680,7 @@ router.post('/:id/trips', async (req, res) => {
       });
     }
     if (drafts.some((draft) => !draft.cmr_number)) {
-      return res.status(400).json({ message: 'Ruta nu are o dată validă — nu pot numerota CMR-urile' });
+      return res.status(400).json({ message: 'Ruta nu are o dată validă, nu pot numerota CMR-urile' });
     }
 
     const placeholders = TRIP_COLUMNS.map((_, i) => `$${i + 2}`).join(', ');
@@ -728,7 +728,7 @@ router.post('/:id/launch', async (req, res) => {
     const route = await loadRoute(pool, req.user.company_id, req.params.id);
     if (!route) return res.status(404).json({ message: 'Rută inexistentă' });
     if (['anulata', 'finalizata'].includes(route.status)) {
-      return res.status(409).json({ message: `Ruta e ${route.status} — nu o poți lansa` });
+      return res.status(409).json({ message: `Ruta e ${route.status}, nu o poți lansa` });
     }
 
     await query(

@@ -3,11 +3,11 @@
  *
  * A driver could already photograph a paper CMR. This is the other case: there is no paper, and
  * the consignment note has to be written. It is the same document either way, so it lands in the
- * same `trip_documents` row — `source` says which, and there is never a second place claiming to
+ * same `trip_documents` row, `source` says which, and there is never a second place claiming to
  * hold "the CMR for this trip".
  *
  * The form is not twenty-four empty boxes on a phone. Most of a CMR is already known to the TMS
- * before the truck leaves; the driver is asked only for what only the driver can see — what was
+ * before the truck leaves; the driver is asked only for what only the driver can see, what was
  * actually loaded, what it weighed, and what was wrong with it.
  */
 
@@ -91,7 +91,7 @@ function isoDate(value) {
  */
 export function prefillFromTrip(trip = {}, company = {}) {
   // Run through the same coercion the write path uses. pg returns NUMERIC columns as strings,
-  // so a weight read straight off the trip would land in the box as "9000.00" — shown that way
+  // so a weight read straight off the trip would land in the box as "9000.00", shown that way
   // on the form and stored that way in the note.
   return sanitiseCmr({
     expeditor: joinLines(trip.shipper_name, trip.shipper_address),
@@ -135,7 +135,7 @@ export function sanitiseCmr(input = {}) {
 /**
  * Prefill under the saved draft.
  *
- * A value the driver typed always wins, including a deliberate blank — re-applying the prefill
+ * A value the driver typed always wins, including a deliberate blank, re-applying the prefill
  * over a cleared box would silently undo the correction.
  */
 export function mergeCmr(prefill = {}, saved = null) {

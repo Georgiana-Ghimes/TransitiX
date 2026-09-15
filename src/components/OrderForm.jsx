@@ -15,7 +15,7 @@ const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg fo
 const errorCls = 'w-full px-3 py-2 text-sm border border-red-300 rounded-lg focus:outline-none focus:border-red-500 transition-colors';
 const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
 
-/** Numbers go to the API as numbers or null — never as the empty string a form produces. */
+/** Numbers go to the API as numbers or null, never as the empty string a form produces. */
 function numberOrNull(value) {
   if (value === '' || value == null) return null;
   const parsed = Number(value);
@@ -25,7 +25,7 @@ function numberOrNull(value) {
 export default function OrderForm({ order, defaultDate, clients, locations, orders, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
-  // The suggested number encodes the date, so it must follow the date field — but only
+  // The suggested number encodes the date, so it must follow the date field, but only
   // until the dispatcher types their own, after which it is theirs and we stop touching it.
   const numberIsOurs = useRef(!order?.order_number);
   const [form, setForm] = useState(() => ({

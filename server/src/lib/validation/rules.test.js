@@ -115,7 +115,7 @@ describe('checkTripDistance', () => {
     expect(found.severity).toBe('warning');
   });
 
-  it('is quiet about an unpriced trip — that is unfinished, not wrong', () => {
+  it('is quiet about an unpriced trip, that is unfinished, not wrong', () => {
     expect(checkTripDistance({ ...TRIP, tpo_total: null, distance_km: null })).toBeNull();
   });
 
@@ -178,7 +178,7 @@ describe('checkCmrUnsigned', () => {
   });
 
   it('never fires on a company that runs on paper CMRs', () => {
-    // No digital note exists, so there is nothing abandoned — warning on every one of their
+    // No digital note exists, so there is nothing abandoned, warning on every one of their
     // trips would make the screen useless to them.
     expect(checkCmrUnsigned({ ...DELIVERED, cmr_source: null })).toBeNull();
     expect(checkCmrUnsigned({ ...DELIVERED, cmr_source: 'scan' })).toBeNull();

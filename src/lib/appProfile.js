@@ -1,6 +1,6 @@
 /**
  * Office routes exposed when VITE_APP_PROFILE=documents (RAI companion).
- * Utilizatori lives under Setări (tab), not as its own sidebar item — `/users` still
+ * Utilizatori lives under Setări (tab), not as its own sidebar item, `/users` still
  * redirects there so old bookmarks keep working. Harta zonelor is shared with full TMS.
  */
 export const COMPANION_OFFICE_PATHS = [

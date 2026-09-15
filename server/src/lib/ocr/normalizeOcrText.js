@@ -3,7 +3,7 @@
  *
  * Photo OCR (especially handwriting) mangles logistics codes and plates in
  * predictable ways: missing L in PSL, O/0 in TPO, glued plates without spaces.
- * These fixes are conservative — only rewrite when the shape already looks like
+ * These fixes are conservative, only rewrite when the shape already looks like
  * a known document code or Romanian plate.
  */
 

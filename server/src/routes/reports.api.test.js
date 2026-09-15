@@ -40,7 +40,7 @@ describe('GET /api/reports/sources', () => {
     expect((await api().get('/api/reports/sources')).status).toBe(401);
   });
 
-  it('refuses a driver — reporting is an office screen', async () => {
+  it('refuses a driver, reporting is an office screen', async () => {
     expect((await api().get('/api/reports/sources').set(auth(ctx.driverToken))).status).toBe(403);
   });
 });
@@ -104,7 +104,7 @@ describe('POST /api/reports/preview', () => {
     expect(history.body.total).toBe(0);
   });
 
-  it('does not warn weight_not_exported on Anexa RAI — Cantitate already carries weighbridge tons', async () => {
+  it('does not warn weight_not_exported on Anexa RAI, Cantitate already carries weighbridge tons', async () => {
     // Same contract as reportWarnings unit tests: cantitate_marfa maps gross_weight_kg → t,
     // so the sheet is reconcilable without a separate weight column.
     const res = await api().post('/api/reports/preview').set(auth(ctx.adminToken))

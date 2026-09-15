@@ -76,7 +76,7 @@ router.post('/routes/:routeId/pack', async (req, res) => {
     const items = itemsFromStops(stops, { productsById });
     if (!items.length) {
       return res.status(422).json({
-        message: 'Nicio încărcătură pe opriri — setează paleți, volum sau greutate pe comenzi',
+        message: 'Nicio încărcătură pe opriri, setează paleți, volum sau greutate pe comenzi',
       });
     }
 
@@ -108,7 +108,7 @@ router.post('/routes/:routeId/pack', async (req, res) => {
 /**
  * Fleet list for the load planner, searchable by plate, brand or model.
  * Each vehicle carries its resolved cargo bay so the screen can draw the profile before any
- * route is chosen — and can say plainly when the dimensions are assumed rather than measured.
+ * route is chosen, and can say plainly when the dimensions are assumed rather than measured.
  */
 router.get('/vehicles', async (req, res) => {
   try {
@@ -132,7 +132,7 @@ router.get('/vehicles', async (req, res) => {
   }
 });
 
-/** Routes that a given vehicle is assigned to, newest first — what it has to load. */
+/** Routes that a given vehicle is assigned to, newest first, what it has to load. */
 router.get('/vehicles/:id/routes', async (req, res) => {
   try {
     const result = await query(

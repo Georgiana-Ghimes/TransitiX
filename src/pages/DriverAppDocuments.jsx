@@ -13,7 +13,7 @@ const SHELL =
 /**
  * The driver shell for the documents companion: send paperwork, see your profile.
  *
- * Deliberately not the full driver app — the companion's job is the document queue, and a
+ * Deliberately not the full driver app, the companion's job is the document queue, and a
  * driver on it has no routes to execute. `DriverApp.jsx` remains the Transitix one.
  * Sized for Chrome device presets (iPhone SE → iPad Pro / Fold / Surface).
  */

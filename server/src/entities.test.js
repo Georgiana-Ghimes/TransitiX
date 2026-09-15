@@ -93,7 +93,7 @@ describe('ENTITY_MAP', () => {
 
   it('keeps every calendar-day column out of the UTC path', () => {
     // pg returns DATE as *local* midnight. Anything serialized with toISOString() lands in the
-    // previous evening east of Greenwich, shifting a whole column by a day — which is exactly
+    // previous evening east of Greenwich, shifting a whole column by a day, which is exactly
     // what happened to `data_facturare` on a customer's annex.
     const day = new Date(2026, 2, 31, 0, 0, 0);
     const out = serializeRow({

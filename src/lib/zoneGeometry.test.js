@@ -93,7 +93,7 @@ describe('pointInGeometry', () => {
   });
 
   it('agrees with the server’s pointInPolygon everywhere it is asked', () => {
-    // The two answer different questions — what is drawn here, versus what is charged here —
+    // The two answer different questions (what is drawn here, versus what is charged here),
     // but they must never disagree about where a boundary is, or the screen contradicts the
     // invoice. This runs both over the real Bucharest outlines.
     const points = [
@@ -200,7 +200,7 @@ describe('ringsWithCutouts', () => {
   });
 
   it('never cuts a zone out of itself', () => {
-    // A zone contains its own bounds, so the guard has to be the caller excluding it — this
+    // A zone contains its own bounds, so the guard has to be the caller excluding it, this
     // asserts what happens if it does not: the fill would vanish entirely.
     expect(ringsWithCutouts(outer, [outer])).toHaveLength(2);
   });
@@ -225,7 +225,7 @@ describe('parseKmlCoordinates', () => {
 
   it('keeps altitude out of the stored position', () => {
     // pointInPolygon reads coordinates positionally, so a stray third ordinate would not just
-    // be ignored — it would shift nothing and silently pass, which is worse than failing.
+    // be ignored, it would shift nothing and silently pass, which is worse than failing.
     expect(parseKmlCoordinates('26.0,44.4,120').every((p) => p.length === 2)).toBe(true);
   });
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Banner inside a modal/form — stays visible on mobile (unlike toasts under overlays). */
+/** Banner inside a modal/form, stays visible on mobile (unlike toasts under overlays). */
 export function FormErrorBanner({ message, className }) {
   if (!message) return null;
   return (

@@ -2,7 +2,7 @@
  * The road sheet ("foaie de parcurs") a driver takes with them.
  *
  * This module turns a route plan into the exact rows and labels that get printed, and
- * nothing else — no DOM, no PDF library. The renderer only walks the structure, so what
+ * nothing else, no DOM, no PDF library. The renderer only walks the structure, so what
  * appears on paper is decided here, where it can be tested.
  *
  * It is a working document, not a fiscal one: the driver writes the real arrival time and
@@ -122,7 +122,7 @@ export function buildRouteSheet(plan, { company = null, date = null } = {}) {
 
 /**
  * Rows are split into fixed-size pages rather than letting the renderer cut wherever the
- * paper ends — a stop sliced in half across two pages is a stop nobody signs.
+ * paper ends, a stop sliced in half across two pages is a stop nobody signs.
  */
 export const ROWS_PER_PAGE = 12;
 
@@ -145,7 +145,7 @@ export function sheetWarnings(plan) {
     out.push(`Depășire ${problem.label}: +${problem.over} ${problem.unit}`);
   }
   if (plan?.totals && plan.totals.complete === false) {
-    out.push('Unele segmente nu au distanță calculată — orele estimate sunt incomplete');
+    out.push('Unele segmente nu au distanță calculată; orele estimate sunt incomplete');
   }
   return out;
 }

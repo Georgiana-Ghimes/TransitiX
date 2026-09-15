@@ -267,7 +267,7 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
               onChange: (e) => set('capabilities', e.target.value),
               placeholder: 'ADR, frigo, lift-hidraulic',
             })}
-            <p className="text-[11px] text-slate-400 mt-1">Separate prin virgulă — trebuie să acopere cerințele comenzilor.</p>
+            <p className="text-[11px] text-slate-400 mt-1">Separate prin virgulă, trebuie să acopere cerințele comenzilor.</p>
           </div>
           <div className="sm:col-span-2 border-t border-slate-100 pt-3">
             <p className="text-xs font-medium text-slate-500 mb-2">Spațiu marfă (plan încărcare)</p>

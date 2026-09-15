@@ -1,5 +1,5 @@
 /**
- * Digital tachograph .ddd / .tgd / .c1b / .v1b — foundation parser.
+ * Digital tachograph .ddd / .tgd / .c1b / .v1b, foundation parser.
  *
  * EU 2016/799 download files are TLV concatenations. Full activity decode
  * (Reg. 561 analysis) is a later increment. Here we:
@@ -210,7 +210,7 @@ export function analyseTachographBuffer(buf, { filename } = {}) {
     status: partial ? 'partial' : 'stored',
     message: partial
       ? 'Fișier arhivat; tip detectat. Analiza completă 561/2006 vine mai târziu.'
-      : 'Fișier arhivat; tip necunoscut — TLV-urile nu s-au potrivit pe schema VU/card.',
+      : 'Fișier arhivat; tip necunoscut, TLV-urile nu s-au potrivit pe schema VU/card.',
     size_bytes: buffer.length,
     sha256,
     filename: filename || null,

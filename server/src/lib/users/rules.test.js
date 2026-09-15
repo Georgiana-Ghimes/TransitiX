@@ -89,7 +89,7 @@ describe('checkRoleChange', () => {
 
   it('refuses demoting the last active admin', () => {
     // A company that does this locks itself out of user administration, tariffs and the audit
-    // trail, and the only way back is SQL — which is what this screen exists to remove.
+    // trail, and the only way back is SQL, which is what this screen exists to remove.
     const res = checkRoleChange({
       actorId: 'u1', target: { id: 'u2', role: 'admin', is_active: true },
       nextRole: 'dispatcher', adminCount: 1,

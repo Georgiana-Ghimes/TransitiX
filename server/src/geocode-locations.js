@@ -2,13 +2,13 @@
 /**
  * Geocodes `locations` rows that have no coordinates yet.
  *
- *   npm run geocode:locations --prefix server              # dry run — reports, writes nothing
+ *   npm run geocode:locations --prefix server              # dry run, reports, writes nothing
  *   npm run geocode:locations --prefix server -- --apply
  *   npm run geocode:locations --prefix server -- --apply --limit 200 --delay 200
  *   npm run geocode:locations --prefix server -- --apply --refresh   # ignore cached results
  *
  * Coordinates are written for both accept and review outcomes, but `geocode_verified` stays
- * false until a person confirms the pin. Rejected addresses keep no coordinates at all —
+ * false until a person confirms the pin. Rejected addresses keep no coordinates at all,
  * an empty map marker is honest, a wrong one is not.
  */
 import dotenv from 'dotenv';
@@ -63,7 +63,7 @@ async function processCompany(company, args) {
   );
 
   console.log(`\n${'='.repeat(64)}`);
-  console.log(`  ${company.name} — ${pending.rowCount} locații fără coordonate`);
+  console.log(`  ${company.name}, ${pending.rowCount} locații fără coordonate`);
   console.log('='.repeat(64));
 
   if (!pending.rowCount) return emptyStats();
@@ -83,7 +83,7 @@ async function processCompany(company, args) {
     if (result.best?.label) console.log(`        →  ${result.best.label}`);
     if (result.error) console.log(`        !  ${result.error}`);
     if (result.outcome.action === 'reject' && !result.error) {
-      console.log(`        !  ${result.outcome.reason} — necesită pin manual`);
+      console.log(`        !  ${result.outcome.reason}, necesită pin manual`);
     }
 
     if (args.apply) await applyToLocation(pool, company.id, location.id, result);
@@ -93,7 +93,7 @@ async function processCompany(company, args) {
 
   console.log(`\n  Rezultat: ${stats.accepted} acceptate · ${stats.review} de verificat · ${stats.rejected} respinse`);
   console.log(`            ${stats.cached} din cache · ${stats.errors} erori`);
-  if (!args.apply) console.log('\n  DRY RUN — nicio coordonată scrisă. Adaugă --apply.');
+  if (!args.apply) console.log('\n  DRY RUN, nicio coordonată scrisă. Adaugă --apply.');
   return stats;
 }
 
@@ -101,7 +101,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   if (!photonConfigured()) {
-    console.error('\n  PHOTON_URL nu este setat în server/.env — geocodarea nu poate rula.');
+    console.error('\n  PHOTON_URL nu este setat în server/.env, geocodarea nu poate rula.');
     console.error('  Self-host Photon, sau pentru development pune https://photon.komoot.io');
     console.error('  (instanță publică, rate-limited, fără date reale de clienți).\n');
     process.exitCode = 1;
@@ -122,7 +122,7 @@ async function main() {
   }
 
   console.log(`\n${'='.repeat(64)}`);
-  console.log(`  Total: ${totals.total} adrese — ${totals.accepted} acceptate, ` +
+  console.log(`  Total: ${totals.total} adrese, ${totals.accepted} acceptate, ` +
               `${totals.review} de verificat, ${totals.rejected} respinse`);
   if (args.apply && (totals.review || totals.rejected)) {
     console.log(`  ${totals.review + totals.rejected} locații au nevoie de confirmare pe hartă.`);

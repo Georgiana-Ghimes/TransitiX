@@ -2,8 +2,8 @@
  * The rules for administering people.
  *
  * Until now a colleague was added with an `INSERT`, which meant three things: only whoever had
- * database access could do it, nobody could see who had been given which role, and — because the
- * password hash had to come from somewhere — an admin ended up knowing another person's password.
+ * database access could do it, nobody could see who had been given which role, and, because the
+ * password hash had to come from somewhere, an admin ended up knowing another person's password.
  *
  * Two decisions run through this file:
  *
@@ -69,7 +69,7 @@ export function validateInvite({ name, email, role }) {
  * Whether a role change is allowed, and why not when it is not.
  *
  * `adminCount` counts the *active* admins. A company that demotes its last one locks itself out
- * of user administration, tariffs and the audit trail, and the only way back is SQL — which is
+ * of user administration, tariffs and the audit trail, and the only way back is SQL, which is
  * exactly what this screen exists to remove.
  */
 export function checkRoleChange({ actorId, target, nextRole, adminCount }) {
@@ -85,7 +85,7 @@ export function checkRoleChange({ actorId, target, nextRole, adminCount }) {
   return { ok: true };
 }
 
-/** Whether an account may be deactivated — same last-admin and self rules. */
+/** Whether an account may be deactivated, same last-admin and self rules. */
 export function checkDeactivate({ actorId, target, adminCount }) {
   if (!target.is_active) return { ok: false, reason: 'Contul este deja dezactivat.' };
   if (target.id === actorId) {
@@ -105,7 +105,7 @@ export function checkActivate({ target }) {
 /**
  * How long an invitation link stays usable.
  *
- * Longer than a password reset — a reset is asked for by somebody sitting at the screen, while
+ * Longer than a password reset, a reset is asked for by somebody sitting at the screen, while
  * an invitation waits for a person who may be driving today and reading email on Monday.
  */
 export const INVITE_TTL_HOURS = 168;
@@ -114,7 +114,7 @@ export const INVITE_TTL_HOURS = 168;
  * A password nobody knows, for an account waiting on its invitation.
  *
  * `password_hash` is NOT NULL, so the row needs something. It must never be a value anyone could
- * guess or reuse — the account is reachable only through the invitation link.
+ * guess or reuse, the account is reachable only through the invitation link.
  */
 export function unusablePasswordSeed(randomHex) {
   return `invite:${randomHex}`;

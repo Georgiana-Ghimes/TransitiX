@@ -23,7 +23,7 @@ import {
 const router = Router();
 const authAttemptLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
-/** Postgres down or unreachable — say so plainly instead of a generic 500. */
+/** Postgres down or unreachable, say so plainly instead of a generic 500. */
 function isDbUnavailable(err) {
   const code = err?.code;
   if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' || code === '57P03') {
@@ -66,7 +66,7 @@ async function issueTokens(user, req) {
  * Security events, recorded without ever failing the request that produced them.
  *
  * A sign-in that returns 500 because logging it did not work is a worse outcome than a missing
- * line in the trail — so this swallows its own errors and says so in the log instead.
+ * line in the trail, so this swallows its own errors and says so in the log instead.
  */
 async function auditSecurity(req, { user, action, detail = null }) {
   if (!user?.company_id) return;
@@ -219,7 +219,7 @@ router.post('/refresh', async (req, res) => {
  * Ends the session the caller presents.
  *
  * Deliberately tolerant: a client logging out with an already-expired token still gets `ok`,
- * because the outcome it wants — this session no longer works — is true either way.
+ * because the outcome it wants, this session no longer works, is true either way.
  */
 router.post('/logout', async (req, res) => {
   try {
@@ -244,7 +244,7 @@ router.post('/logout', async (req, res) => {
   }
 });
 
-/** The sessions signed in right now — what a lost phone needs in order to be cut off. */
+/** The sessions signed in right now, what a lost phone needs in order to be cut off. */
 router.get('/sessions', authRequired, async (req, res) => {
   try {
     res.json({ sessions: await listSessions(req.user.id) });
@@ -254,7 +254,7 @@ router.get('/sessions', authRequired, async (req, res) => {
   }
 });
 
-/** Signs out everywhere. The caller's own session goes too — that is the point. */
+/** Signs out everywhere. The caller's own session goes too, that is the point. */
 router.post('/sessions/revoke-all', authRequired, async (req, res) => {
   try {
     const revoked = await revokeAllForUser(req.user.id);

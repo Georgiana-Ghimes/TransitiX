@@ -6,7 +6,7 @@ import {
   locationWeight,
 } from './territories.js';
 
-/** Mulberry32 — deterministic PRNG for stable clustering tests. */
+/** Mulberry32, deterministic PRNG for stable clustering tests. */
 function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {

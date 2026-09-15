@@ -3,7 +3,7 @@
  *
  * Both halves are needed and neither is enough on its own. `aviz_export_log.snapshot` can
  * reproduce an annex that was already sent, but the scanned document behind a figure lives only
- * in `uploads/` — losing that directory loses the evidence for every export ever made.
+ * in `uploads/`, losing that directory loses the evidence for every export ever made.
  *
  *   node scripts/backup-companion.js [--out DIR] [--keep N]
  *
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVER_ROOT = path.join(ROOT, 'server');
 
-/** Minimal .env reader — the same shape server/src/test/testEnv.js uses. */
+/** Minimal .env reader, the same shape server/src/test/testEnv.js uses. */
 function readEnvFile(file) {
   if (!fs.existsSync(file)) return {};
   const out = {};
@@ -55,7 +55,7 @@ function main() {
     process.exit(1);
   }
 
-  // UPLOAD_DIR is relative to server/ — that is the cwd the API runs with.
+  // UPLOAD_DIR is relative to server/, that is the cwd the API runs with.
   const rawUploads = process.env.UPLOAD_DIR || fileEnv.UPLOAD_DIR || 'uploads';
   const uploadDir = path.isAbsolute(rawUploads) ? rawUploads : path.join(SERVER_ROOT, rawUploads);
 
@@ -84,7 +84,7 @@ function main() {
     fs.cpSync(uploadDir, path.join(target, 'uploads'), { recursive: true });
     uploadBytes = dirSize(path.join(target, 'uploads'));
   } else {
-    console.warn(`[backup] ${uploadDir} does not exist — database only.`);
+    console.warn(`[backup] ${uploadDir} does not exist, database only.`);
   }
 
   console.log(`[backup] ${target}`);

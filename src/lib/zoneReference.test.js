@@ -123,7 +123,7 @@ describe('the shipped tariffs', () => {
   it('reads an inclusive upper bound the way the decision states it', () => {
     // The brackets cannot be written as the table prints them. Sharing a boundary makes both
     // brackets match at that exact weight, and findZoneRate breaks the tie on the narrowest
-    // span — which picks the HIGHER bracket. A 12,5 t truck in Zona A would have been charged
+    // span, which picks the HIGHER bracket. A 12,5 t truck in Zona A would have been charged
     // 1421 lei where the decision says 711.
     expect(dayRate(za, 12500)).toBe(711);
     expect(dayRate(za, 12501)).toBe(1421);

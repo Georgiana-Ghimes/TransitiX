@@ -2,7 +2,7 @@
  * Display logic for the reporting screen, kept out of the component so it can be tested.
  *
  * The server decides what a report contains; this file only decides how it reads. The one rule
- * it shares with the server is that a missing figure is shown as missing — never as a zero that
+ * it shares with the server is that a missing figure is shown as missing, never as a zero that
  * a customer would take for a real measurement.
  */
 
@@ -101,13 +101,13 @@ export function formatDateTime(value) {
 /**
  * What an export's history row should say about whether it can still be trusted.
  *
- * An export whose documents were corrected afterwards is not wrong — it is what was sent. The
+ * An export whose documents were corrected afterwards is not wrong, it is what was sent. The
  * distinction that matters is whether the sheet still matches today's data.
  */
 export function driftSummary(drift) {
   if (!drift) return { tone: 'unknown', text: 'Stare necunoscută' };
   if (!drift.reproducible) {
-    return { tone: 'warn', text: 'Conținutul nu a fost salvat — nu poate fi reprodus identic' };
+    return { tone: 'warn', text: 'Conținutul nu a fost salvat și nu poate fi reprodus identic' };
   }
   const changed = drift.changed_since?.length ?? 0;
   const missing = drift.missing_documents?.length ?? 0;

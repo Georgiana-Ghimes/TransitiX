@@ -1,7 +1,7 @@
 /**
  * A durable outbox for the driver app.
  *
- * The driver is the one user guaranteed to lose signal — in a warehouse, at a ramp, on a village
+ * The driver is the one user guaranteed to lose signal, in a warehouse, at a ramp, on a village
  * road. Before this, pressing "Sign" without coverage threw away both finger-drawn signatures and
  * whatever reservations had been written at the ramp, with nothing to recover from. Work is now
  * written to a local store first and sent when there is a connection.
@@ -135,7 +135,7 @@ export function queueSummary({ pending = 0, parked = 0 }) {
 /**
  * The half-written form, kept apart from the outbox.
  *
- * A draft is not an action to replay — it is what the driver has typed so far, and it must
+ * A draft is not an action to replay, it is what the driver has typed so far, and it must
  * survive the app being closed, the phone dying, or a page reload at the ramp. It is overwritten
  * freely; the outbox is not.
  */

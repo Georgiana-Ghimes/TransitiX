@@ -190,7 +190,7 @@ if (fs.existsSync(path.join(distDir, 'index.html'))) {
     res.sendFile(path.join(distDir, 'index.html'));
   });
 } else {
-  console.warn('[app] dist/ not built — serving API only (run `npm run build`)');
+  console.warn('[app] dist/ not built, serving API only (run `npm run build`)');
 }
 
 app.use((err, _req, res, _next) => {

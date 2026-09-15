@@ -55,7 +55,7 @@ function run(storeName, mode, work) {
 /**
  * The store the queue talks to.
  *
- * Every method resolves rather than throwing when IndexedDB is unavailable — a private window or
+ * Every method resolves rather than throwing when IndexedDB is unavailable, a private window or
  * a browser with storage disabled must degrade to "no offline support", never to a driver app
  * that will not open.
  */

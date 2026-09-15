@@ -17,7 +17,7 @@ export const RULES = [
     id: 'tpo_total_mismatch',
     severity: 'error',
     label: 'Total TPO diferit de suma liniilor',
-    consequence: 'Documentul nu-și mai explică propria cifră — una dintre cele două a fost editată separat.',
+    consequence: 'Documentul nu-și mai explică propria cifră, una dintre cele două a fost editată separat.',
     fix: 'Recalculează TPO-ul sau verifică liniile adăugate manual.',
   },
   {

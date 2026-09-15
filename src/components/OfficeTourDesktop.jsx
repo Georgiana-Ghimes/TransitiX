@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { OFFICE_TOUR_STEPS, clampTourStep } from '@/lib/officeTour';
 
-/** Desktop coach panel — sidebar stays visible; main content dimmed by Layout. */
+/** Desktop coach panel, sidebar stays visible; main content dimmed by Layout. */
 export default function OfficeTourDesktop({ step, onStepChange, onClose }) {
   const total = OFFICE_TOUR_STEPS.length;
   const index = clampTourStep(step, total);

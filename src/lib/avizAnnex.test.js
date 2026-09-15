@@ -12,7 +12,7 @@ describe('avizAnnex field map', () => {
       'ruta_transport',
       'tip_marfa',
       'cantitate_marfa',
-      // Weighbridge figure: editable on the form, fed into Anexa “Cantitate” as tons — not a
+      // Weighbridge figure: editable on the form, fed into Anexa “Cantitate” as tons, not a
       // separate column on the locked RAI A–N layout.
       'gross_weight_kg',
       'numar_document_marfa',

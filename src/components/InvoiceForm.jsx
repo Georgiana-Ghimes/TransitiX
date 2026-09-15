@@ -115,7 +115,7 @@ export default function InvoiceForm({ invoice, trips, onClose, onSave }) {
         <div>
           <label className={labelCls} htmlFor={fieldId('trip_id')}>Generează din cursă</label>
           <select id={fieldId('trip_id')} className={inputCls} value={form.trip_id} onChange={(e) => onTripChange(e.target.value)}>
-            <option value="">— Selectează cursă (opțional) —</option>
+            <option value="">Selectează cursă (opțional)</option>
             {trips.map((t) => <option key={t.id} value={t.id}>{t.cmr_number} · {t.shipper_name} → {t.consignee_name}</option>)}
           </select>
         </div>

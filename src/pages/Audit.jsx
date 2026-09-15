@@ -116,7 +116,7 @@ function EventRow({ event }) {
   );
 }
 
-/** What the log does not cover, and why — so a gap reads as a decision, not a bug. */
+/** What the log does not cover, and why, so a gap reads as a decision, not a bug. */
 function Coverage({ meta }) {
   const [open, setOpen] = useState(false);
   if (!meta) return null;
@@ -139,7 +139,7 @@ function Coverage({ meta }) {
             <ul className="space-y-1">
               {Object.entries(meta.audited || {}).map(([entity, reason]) => (
                 <li key={entity} className="text-slate-500">
-                  <span className="text-slate-700">{entityLabel(entity)}</span> — {reason}
+                  <span className="text-slate-700">{entityLabel(entity)}</span>, {reason}
                 </li>
               ))}
             </ul>
@@ -149,7 +149,7 @@ function Coverage({ meta }) {
             <ul className="space-y-1">
               {notAudited.map(([entity, reason]) => (
                 <li key={entity} className="text-slate-500">
-                  <span className="text-slate-700">{entityLabel(entity)}</span> — {reason}
+                  <span className="text-slate-700">{entityLabel(entity)}</span>, {reason}
                 </li>
               ))}
             </ul>

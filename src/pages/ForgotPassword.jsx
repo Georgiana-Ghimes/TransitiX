@@ -58,7 +58,7 @@ export default function ForgotPassword() {
           {resetLink ? (
             <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs text-muted-foreground">
-                Email nu e configurat încă — folosește linkul local:
+                Email nu e configurat încă, folosește linkul local:
               </p>
               <p className="text-xs break-all text-foreground">{resetLink}</p>
               <div className="flex gap-2">

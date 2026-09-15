@@ -23,7 +23,7 @@ function norm(value) {
 
 /**
  * Ray casting against a GeoJSON ring. Coordinates are [lon, lat] as GeoJSON stores them.
- * A point exactly on an edge counts as inside — a delivery on the zone boundary is charged.
+ * A point exactly on an edge counts as inside, a delivery on the zone boundary is charged.
  */
 export function pointInRing(point, ring) {
   const { latitude, longitude } = point;
@@ -82,7 +82,7 @@ export function matchesTextually(zone, place) {
 /**
  * The zone a place falls in.
  *
- * Polygons win over text, and a higher `priority` wins over a lower one — that is how a
+ * Polygons win over text, and a higher `priority` wins over a lower one, that is how a
  * small inner zone beats the county-wide zone containing it.
  */
 export function resolveZone(zones = [], place) {
@@ -120,7 +120,7 @@ export function findZoneRate(rates = [], { mmaKg, onDate }) {
 
 /**
  * Zone charges for a set of places, one per distinct zone.
- * The same zone entered twice on one trip is charged once — it is an entry fee, not a toll.
+ * The same zone entered twice on one trip is charged once, it is an entry fee, not a toll.
  */
 export function zoneCharges(zones, ratesByZoneId, places = [], { mmaKg, onDate }) {
   const charges = [];

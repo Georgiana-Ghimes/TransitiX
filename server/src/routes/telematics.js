@@ -39,7 +39,7 @@ async function companyFromApiKey(key) {
 }
 
 /**
- * Provider webhook — no JWT. Authenticate with the company telematics key.
+ * Provider webhook, no JWT. Authenticate with the company telematics key.
  * Body: { positions: [...] } or a single position object.
  */
 router.post('/ingest', async (req, res) => {
@@ -127,7 +127,7 @@ router.post('/position', authRequired, async (req, res) => {
 
     if (!body.vehicle_id && !body.vehicle_plate) {
       return res.status(422).json({
-        message: 'Nu am un vehicul pe ruta de azi — trimite vehicle_id sau așteaptă alocarea',
+        message: 'Nu am un vehicul pe ruta de azi, trimite vehicle_id sau așteaptă alocarea',
       });
     }
 
@@ -143,7 +143,7 @@ router.post('/position', authRequired, async (req, res) => {
   }
 });
 
-/** Current positions for the live board — same shape the map already expects, plus source. */
+/** Current positions for the live board, same shape the map already expects, plus source. */
 router.get('/live', authRequired, officeRequired, async (req, res) => {
   try {
     const result = await query(
@@ -250,7 +250,7 @@ router.get('/replay/:routeId', authRequired, officeRequired, async (req, res) =>
     const route = routeRes.rows[0];
     if (!route) return res.status(404).json({ message: 'Rută inexistentă' });
     if (!route.vehicle_id) {
-      return res.status(422).json({ message: 'Ruta nu are vehicul — nu există traseu de reluat' });
+      return res.status(422).json({ message: 'Ruta nu are vehicul, nu există traseu de reluat' });
     }
 
     const stopsRes = await query(
@@ -341,7 +341,7 @@ router.get('/replay/:routeId', authRequired, officeRequired, async (req, res) =>
 
 /**
  * Live board SSE. EventSource cannot set Authorization headers, so the access token
- * may arrive as ?access_token= — same pattern as /uploads preview.
+ * may arrive as ?access_token=, same pattern as /uploads preview.
  */
 router.get('/stream', (req, res, next) => {
   if (!req.headers.authorization && req.query?.access_token) {
@@ -479,7 +479,7 @@ router.post('/key', authRequired, officeRequired, async (req, res) => {
       api_key: key,
       header: 'X-Telematics-Key',
       ingest_url: '/api/telematics/ingest',
-      message: 'Salvează cheia acum — nu o mai afișăm.',
+      message: 'Salvează cheia acum, nu o mai afișăm.',
     });
   } catch (err) {
     sendError(res, err, 'Generarea cheii a eșuat');

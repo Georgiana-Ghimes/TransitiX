@@ -28,7 +28,7 @@ function HealthPill({ label, ok, configured, message }) {
     >
       <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-500' : configured ? 'bg-amber-500' : 'bg-slate-400'}`} />
       {label}
-      {!configured ? ' — neconfigurat' : ok ? ' — ok' : ' — indisponibil'}
+      {!configured ? ', neconfigurat' : ok ? ', ok' : ', indisponibil'}
     </span>
   );
 }
@@ -397,7 +397,7 @@ export default function PlanningAI() {
                         <ul className="text-xs text-amber-800 space-y-0.5">
                           {detail.solution.unassigned.map((u, i) => (
                             <li key={u.order_id || i}>
-                              {u.order_number || u.order_id || 'comandă'} — {u.reason}
+                              {u.order_number || u.order_id || 'comandă'}, {u.reason}
                             </li>
                           ))}
                         </ul>

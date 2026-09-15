@@ -1,5 +1,5 @@
 /**
- * Live exception detection — pure.
+ * Live exception detection, pure.
  *
  * Given where the truck is and what the plan said, decide which exceptions to raise.
  * Persistence, dedupe and ETA cascading live next door in evaluate.js.
@@ -31,7 +31,7 @@ export const DEFAULT_THRESHOLDS = {
   atStopM: 150,
   /** Far from every stop on the route. */
   offRouteM: 800,
-  /** km/h — Romanian A-road soft cap for the alert, not the legal limit. */
+  /** km/h, Romanian A-road soft cap for the alert, not the legal limit. */
   maxSpeedKmh: 90,
   /** Minutes nearly stationary away from a stop. */
   idleMin: 20,
@@ -59,7 +59,7 @@ function openStops(stops = []) {
 }
 
 /**
- * Next stop the driver still owes — delivery/pickup/depot_end that is not closed.
+ * Next stop the driver still owes, delivery/pickup/depot_end that is not closed.
  */
 export function nextOpenStop(stops = []) {
   return openStops(stops)[0] || null;
@@ -68,7 +68,7 @@ export function nextOpenStop(stops = []) {
 /**
  * Detect exceptions for one position against one route plan.
  *
- * `idleSinceMs` — when the truck first dropped below idleSpeed while away from stops;
+ * `idleSinceMs`, when the truck first dropped below idleSpeed while away from stops;
  * null means "not idle". The caller tracks this across positions.
  */
 export function detectExceptions({

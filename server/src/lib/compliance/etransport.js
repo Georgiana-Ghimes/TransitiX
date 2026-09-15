@@ -3,14 +3,14 @@
  *
  * A UIT is a legal requirement: for the goods categories the law names, a vehicle without one is
  * stopped and the carrier is fined. That makes this the one adapter where a convincing
- * placeholder is more dangerous than no feature at all — a code that *looks* like a UIT and is
+ * placeholder is more dangerous than no feature at all, a code that *looks* like a UIT and is
  * not one gets discovered at the roadside, by a driver who has no way to tell.
  *
  * So there are three modes and no silent fallback between them:
  *
- *   off   — do not request anything; the route launches without a UIT and says so
- *   stub  — issue a local, deliberately-marked placeholder for development
- *   anaf  — call ANAF for a real one, and fail loudly if it cannot
+ *   off: do not request anything; the route launches without a UIT and says so
+ *   stub: issue a local, deliberately-marked placeholder for development
+ *   anaf: call ANAF for a real one, and fail loudly if it cannot
  *
  * `anaf` with missing credentials is an error, never a quiet downgrade to `stub`.
  */
@@ -22,7 +22,7 @@ import crypto from 'crypto';
  *
  * A real UIT never starts with this. It is on the code itself rather than on a flag beside it,
  * because the code is what gets printed on a road sheet, read over the phone, and typed into
- * someone else's system — every one of which drops the flag and keeps the string.
+ * someone else's system, every one of which drops the flag and keeps the string.
  */
 export const STUB_PREFIX = 'STUB-';
 
@@ -59,7 +59,7 @@ function anafCredentials() {
  * The declaration ANAF expects, built from a route.
  *
  * Kept as a pure function so its shape can be tested and reviewed against the spec without a
- * certificate — the part that needs ANAF to verify is the transport, not the content.
+ * certificate, the part that needs ANAF to verify is the transport, not the content.
  */
 export function buildUitDeclaration(route, { company, stops = [] } = {}) {
   return {
@@ -155,7 +155,7 @@ export async function requestUitForRoute(route, { company, stops = [] } = {}) {
     uit_code: `${STUB_PREFIX}RO${hash}`,
     stub: true,
     source: 'stub',
-    message: 'Cod local de test, NU un UIT valid. Nu îl folosi pe documente de transport — '
+    message: 'Cod local de test, NU un UIT valid. Nu îl folosi pe documente de transport, '
       + 'setează ETRANSPORT_MODE=anaf și credențialele ANAF pentru coduri reale.',
   };
 }

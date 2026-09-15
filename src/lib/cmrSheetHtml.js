@@ -2,7 +2,7 @@
  * The consignment note as a printable page.
  *
  * Kept apart from the PDF writer so the layout can be tested without a browser, and so the
- * rasterizer has one job. Styles are inline and deliberately plain — the renderer understands
+ * rasterizer has one job. Styles are inline and deliberately plain, the renderer understands
  * only basic CSS, and nothing here may depend on the app's stylesheet.
  *
  * The point of the sheet is that a driver can hand it over or show it at a check. That is also
@@ -55,7 +55,7 @@ function formatDate(value) {
 /**
  * What the sheet must say about itself at the top.
  *
- * A note signed at both ends is a document. Anything less is a draft, and the page says which —
+ * A note signed at both ends is a document. Anything less is a draft, and the page says which,
  * printed and handed over, the difference is the whole point.
  */
 export function sheetState(model) {
@@ -63,7 +63,7 @@ export function sheetState(model) {
   const delivery = Boolean(model?.stages?.livrare?.signed_at);
   if (loading && delivery) return { kind: 'complete', label: 'Semnat la încărcare și la livrare' };
   if (loading) return { kind: 'partial', label: 'Semnat la încărcare · livrarea nesemnată' };
-  return { kind: 'draft', label: 'CIORNĂ — nesemnată' };
+  return { kind: 'draft', label: 'CIORNĂ nesemnată' };
 }
 
 function box(number, label, content, { grow = false, minHeight = 54 } = {}) {
@@ -129,7 +129,7 @@ export function cmrSheetHtml(model, { signatureUrl = (u) => u, printedAt = new D
   return `<div style="width:${PAGE.width}px;min-height:${PAGE.height}px;background:#fff;padding:24px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div>
-        <div style="font-size:16px;font-weight:700;color:${COLORS.ink}">SCRISOARE DE TRANSPORT — CMR</div>
+        <div style="font-size:16px;font-weight:700;color:${COLORS.ink}">SCRISOARE DE TRANSPORT, CMR</div>
         <div style="font-size:10px;color:${COLORS.muted}">Lettre de voiture internationale · Convenția CMR</div>
       </div>
       <div style="text-align:right">

@@ -1,8 +1,8 @@
 /**
  * Housekeeping for the tables that only ever grow.
  *
- * Nothing in this system deleted anything. `telematics_positions` takes a row per GPS ping — ten
- * trucks pinging once a minute is roughly five million rows a year — and there was no policy at
+ * Nothing in this system deleted anything. `telematics_positions` takes a row per GPS ping, ten
+ * trucks pinging once a minute is roughly five million rows a year, and there was no policy at
  * all, so the table would grow until somebody noticed the disk.
  *
  * The line this file will not cross: **a record of what we sent a customer, or of what a person
@@ -77,14 +77,14 @@ export const POLICIES = [
   },
 ];
 
-/** Tables this file will not touch, and why — so the next person does not add them by reflex. */
+/** Tables this file will not touch, and why, so the next person does not add them by reflex. */
 export const NEVER_PRUNED = [
   { table: 'aviz_export_log', reason: 'Conține foile exact cum au plecat la client. Fără ele, un export nu se mai poate reproduce.' },
   { table: 'audit_events', reason: 'Cine ce a schimbat. Un jurnal cu goluri nu se distinge de „nu s-a întâmplat nimic".' },
   { table: 'document_events', reason: 'Urma care explică o corecție OCR peste luni. Asta e explicabilitatea sistemului.' },
   { table: 'trip_charges', reason: 'Componentele unui TPO deja facturat.' },
   { table: 'invoice_lines', reason: 'Din ce e făcută o factură emisă.' },
-  { table: 'delivery_proofs', reason: 'Semnături de predare — dovada livrării.' },
+  { table: 'delivery_proofs', reason: 'Semnături de predare, dovada livrării.' },
   { table: 'trip_documents', reason: 'Scrisorile de transport, scanate sau semnate digital.' },
 ];
 
@@ -135,8 +135,8 @@ export async function previewRetention(overrides = {}) {
 /**
  * Runs the policies once.
  *
- * Guarded by a Postgres advisory lock so two instances — or a manual run landing on top of the
- * scheduled one — cannot delete concurrently and fight over the same pages.
+ * Guarded by a Postgres advisory lock so two instances, or a manual run landing on top of the
+ * scheduled one, cannot delete concurrently and fight over the same pages.
  */
 export async function runRetention({ batch = DEFAULT_BATCH, overrides = {} } = {}) {
   const lock = await query('SELECT pg_try_advisory_lock($1) AS got', [LOCK_ID]);

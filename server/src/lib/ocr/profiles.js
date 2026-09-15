@@ -1,5 +1,5 @@
 /**
- * OCR profiles — one per document layout, not one per document type.
+ * OCR profiles, one per document layout, not one per document type.
  *
  * The client was explicit: do not assume every document has the same format. A profile
  * declares how to recognise a layout and how to pull each field out of it, so supporting a
@@ -33,7 +33,7 @@ function scoreMarkers(text, markers) {
 /**
  * Paddle (and other photo OCR) often glues codes to the previous word
  * (`expeditiePSL-0044362`) or uses `_` instead of space (`transport_TPO-…`).
- * Do not require `\b` before the code — letters/`_` are word chars, so `\b`
+ * Do not require `\b` before the code, letters/`_` are word chars, so `\b`
  * misses the glued forms. Requiring digits after the prefix keeps false hits low.
  */
 const TPO_CODE = /(TPO[\s\-._]*\d{3,}[\d./-]*)/i;
@@ -109,13 +109,13 @@ const goodsField = (text) => {
  * The built-in profiles.
  *
  * `fields` maps a target column to an extractor. `weights` says which fields decide the
- * document's overall confidence — a missing TPO number matters far more than a missing route.
+ * document's overall confidence, a missing TPO number matters far more than a missing route.
  */
 export const OCR_PROFILES = [
   {
     id: 'aviz_baumit_psl',
     documentType: 'aviz',
-    name: 'Aviz Baumit — PSL',
+    name: 'Aviz Baumit, PSL',
     markers: [/\bpsl\b/, /baumit/, /aviz/],
     fields: {
       numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
@@ -138,7 +138,7 @@ export const OCR_PROFILES = [
   {
     id: 'aviz_baumit_tro',
     documentType: 'aviz',
-    name: 'Aviz Baumit — TRO',
+    name: 'Aviz Baumit, TRO',
     markers: [/\btro\b/, /baumit/, /aviz/],
     fields: {
       numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
@@ -233,7 +233,7 @@ export function profilesFor(documentType) {
 /**
  * Best-matching profile for a text.
  *
- * Returns the ranked list too, so an operator can override the guess when a scan is poor —
+ * Returns the ranked list too, so an operator can override the guess when a scan is poor,
  * detection is a hint, not a verdict.
  */
 export function detectProfile(text, { documentType, profiles = OCR_PROFILES } = {}) {

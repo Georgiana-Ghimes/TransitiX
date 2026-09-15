@@ -9,7 +9,7 @@ import {
   tourStepMobileHint,
 } from '@/lib/officeTour';
 
-/** Mobile-only full-width bottom sheet — no sidebar drawer required. */
+/** Mobile-only full-width bottom sheet, no sidebar drawer required. */
 export default function OfficeTourMobile({ step, onStepChange, onClose }) {
   const total = OFFICE_TOUR_STEPS.length;
   const index = clampTourStep(step, total);
@@ -100,7 +100,7 @@ export default function OfficeTourMobile({ step, onStepChange, onClose }) {
 
             {current.demo ? (
               <p className="mt-3 text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Pagină demo — nu folosi pentru date reale.
+                Pagină demo, nu folosi pentru date reale.
               </p>
             ) : null}
 

@@ -83,7 +83,7 @@ export default function AvizFilePreview({ fileUrl, fill = false }) {
           setSrc(objectUrl);
           return;
         }
-        // Bearer fetch failed (proxy/session) — query-token URL still works for <img>/<iframe>.
+        // Bearer fetch failed (proxy/session), query-token URL still works for <img>/<iframe>.
         if (tokenUrl && tokenUrl !== fileUrl) {
           setSrc(tokenUrl);
           return;

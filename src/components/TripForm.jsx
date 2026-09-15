@@ -166,7 +166,7 @@ export default function TripForm({ trip, onClose, onSave }) {
               <label className={labelCls}>Vehicul</label>
               <select className={inputCls} value={form.vehicle_id} onChange={e => onVehicleChange(e.target.value)}>
                 <option value="">Selectează vehicul</option>
-                {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate} — {v.brand} {v.model}</option>)}
+                {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate}, {v.brand} {v.model}</option>)}
               </select>
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function TripForm({ trip, onClose, onSave }) {
                 <input type="number" className={inputCls} value={form.distance_km} onChange={e => set('distance_km', e.target.value)} />
                 <p className="text-[11px] text-slate-400 mt-1">
                   {trip?.distance_source === 'manual'
-                    ? 'Introdusă manual — nu se recalculează automat. Golește câmpul ca să revină la calculul pe hartă.'
+                    ? 'Introdusă manual, nu se recalculează automat. Golește câmpul ca să revină la calculul pe hartă.'
                     : trip?.distance_source === 'osrm'
                       ? 'Calculată pe rețeaua rutieră. Scrie altă valoare ca s-o fixezi manual.'
                       : 'Se calculează automat dacă ambele adrese au coordonate.'}
@@ -247,7 +247,7 @@ export default function TripForm({ trip, onClose, onSave }) {
 
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-[#0A2B4E] border-l-2 border-amber-500 pl-2">e-Transport și marjă</h3>
-            <p className="text-xs text-slate-500">Cod UIT din SPV ANAF — Transitix nu îl generează încă. Venit/cost sunt pentru marja pe cursă, nu factură ANAF.</p>
+            <p className="text-xs text-slate-500">Cod UIT din SPV ANAF. Transitix nu îl generează încă. Venit/cost sunt pentru marja pe cursă, nu factură ANAF.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div><label className={labelCls}>Cod UIT</label><input className={inputCls} value={form.uit_code || ''} onChange={e => set('uit_code', e.target.value)} placeholder="Din e-Transport" maxLength={36} /></div>
               <div><label className={labelCls}>Venit agreat (RON)</label><input type="number" step="0.01" className={inputCls} value={form.agreed_revenue ?? ''} onChange={e => set('agreed_revenue', e.target.value)} /></div>

@@ -64,7 +64,7 @@ const TABLE = [
   ['WarehouseProduct', PRODUCT_CASES, validateWarehouseProduct, normalizeWarehouseProduct],
 ];
 
-// The form and the API validate separately — the API image does not ship `src/`. A rule that
+// The form and the API validate separately, the API image does not ship `src/`. A rule that
 // drifts to one side turns into "the modal refuses it but curl saves it", which is how the
 // whitespace-only client got in.
 describe.each(TABLE)('%s parity between form and API', (entity, cases, clientValidate, clientNormalize) => {

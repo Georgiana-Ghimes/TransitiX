@@ -208,7 +208,7 @@ export default function DriverPodModal({
             <span className="text-xs font-medium text-slate-600">Poză (opțional)</span>
             <label className="mt-1 flex items-center gap-2 px-3 py-2.5 border border-dashed border-slate-300 rounded-lg text-sm text-slate-600 cursor-pointer hover:bg-slate-50 min-h-[44px]">
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-              {photoUrl ? 'Poză atașată — schimbă' : 'Fă / alege o poză'}
+              {photoUrl ? 'Schimbă poza' : 'Fă / alege o poză'}
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onPhoto} />
             </label>
           </div>

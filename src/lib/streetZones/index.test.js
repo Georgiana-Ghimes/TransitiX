@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  effectiveZone, hasStreetIndex, loadStreetIndex, lookupStreet, suggestStreets,
+  effectiveZone, hasStreetIndex, loadStreetIndex, lookupAddress, lookupStreet,
+  resolveAddress, suggestStreets, zoneForNumber,
 } from './index.js';
 import { ZONE_CITIES } from '../zoneReference.js';
 
@@ -171,5 +172,85 @@ describe('effectiveZone', () => {
     const outside = index.all.find((e) => e.zones.length === 0);
     expect(effectiveZone(outside, cityZones)).toBeNull();
     expect(effectiveZone(null, cityZones)).toBeNull();
+  });
+});
+
+describe('house numbers', () => {
+  const resolve = (query) => resolveAddress(index, lookupAddress(index, query), cityZones);
+
+  it('lets the number decide on a street the boundary runs through', () => {
+    // Calea 13 Septembrie is named in both official perimeters. 102 is inside Zone A; 250 is
+    // far enough out to be Zone B. The street alone cannot say either.
+    expect(resolve('Calea 13 Septembrie 102')).toMatchObject({ zone: 'ZA', source: 'number' });
+    expect(resolve('Calea 13 Septembrie 250')).toMatchObject({ zone: 'ZB', source: 'number' });
+  });
+
+  it('reads the two sides of a street separately', () => {
+    // Prelungirea Ferentari has the boundary along it: odd side in Zone B, even side outside.
+    // Grouping the numbers without parity would answer one of them wrongly.
+    expect(resolve('Prelungirea Ferentari 21')).toMatchObject({ zone: 'ZB', certain: true });
+    expect(resolve('Prelungirea Ferentari 22')).toMatchObject({ zone: null, certain: true });
+  });
+
+  it('does not ask for a number it does not need', () => {
+    // Calea Victoriei lies wholly inside Zone A. Demanding a house number there is busywork.
+    const res = resolve('Calea Victoriei');
+    expect(res).toMatchObject({ zone: 'ZA', certain: true, source: 'street' });
+    expect(res.needsNumber).toBeUndefined();
+  });
+
+  it('asks for one where it would settle the answer', () => {
+    expect(resolve('Șoseaua Colentina')).toMatchObject({ needsNumber: true, certain: false });
+  });
+
+  it('says it has no data rather than guessing past the last known number', () => {
+    // Answering 9999 from the nearest range would invent a building.
+    expect(resolve('Șoseaua Colentina 9999')).toMatchObject({ numberUnknown: true, certain: false });
+  });
+
+  it('fills a gap only when both neighbours agree', () => {
+    const sides = index.numbers.get('soseaua colentina');
+    const gap = sides.odd[0][1] + 2;
+    const res = zoneForNumber(index, 'soseaua colentina', gap);
+    // Either a confident interpolation or an explicit "between two different answers", never
+    // a quiet pick of one side.
+    if (res && !res.certain) expect(res.between).toHaveLength(2);
+    else if (res) expect(res.zone === null || typeof res.zone === 'string').toBe(true);
+  });
+
+  it('has nothing for a street the index carries no numbers for', () => {
+    expect(zoneForNumber(index, 'calea victoriei', 12)).toBeNull();
+    expect(zoneForNumber(index, 'strada inexistenta', 1)).toBeNull();
+    expect(zoneForNumber(index, 'soseaua colentina', 'bis')).toBeNull();
+  });
+});
+
+describe('telling a street name from a street plus number', () => {
+  it('keeps a number that is part of the name', () => {
+    // "Bulevardul 1 Decembrie 1918" is a street. Splitting 1918 off looks up one that does not
+    // exist, which is why the whole string is tried against the index first.
+    const res = lookupAddress(index, 'Bulevardul 1 Decembrie 1918');
+    expect(res.number).toBeNull();
+    expect(res.found?.label).toMatch(/1 Decembrie 1918/);
+  });
+
+  it('splits a trailing house number off', () => {
+    const res = lookupAddress(index, 'Calea Victoriei 12');
+    expect(res.number).toBe('12');
+    expect(res.found.key).toBe('calea victoriei');
+  });
+
+  it('does not let the fuzzy pass swallow the number', () => {
+    // "Bd. Dacia 5" matched Bulevardul Dacia through the suggestion pass, which drops
+    // single characters, and the 5 is the part that decides the answer.
+    const res = lookupAddress(index, 'Bd. Dacia 5');
+    expect(res.number).toBe('5');
+    expect(resolveAddress(index, res, cityZones).source).toBe('number');
+  });
+
+  it('accepts the ways a number gets written', () => {
+    for (const form of ['Calea Victoriei 12', 'Calea Victoriei nr. 12', 'Calea Victoriei, 12']) {
+      expect(lookupAddress(index, form).number, form).toBe('12');
+    }
   });
 });

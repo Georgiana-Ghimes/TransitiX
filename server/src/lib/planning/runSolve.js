@@ -159,7 +159,7 @@ async function markFailed(db, companyId, scenarioId, message) {
  * Runs the optimizer for one calendar day and stores the result as a route_scenario.
  *
  * Failures after the draft row exists leave it with status `esuat`, so the dispatcher can
- * see what was tried. A 503 (solver / routing not configured) does not write — there was
+ * see what was tried. A 503 (solver / routing not configured) does not write, there was
  * nothing to try.
  */
 export async function runSolve(db, {

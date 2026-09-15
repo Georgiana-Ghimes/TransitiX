@@ -53,7 +53,7 @@ function SessionsCard() {
     setRevoking(true);
     try {
       await api.auth.revokeAllSessions();
-      // The current session is gone too — that is the point — so go to the login screen.
+      // The current session is gone too, that is the point, so go to the login screen.
       await api.auth.logout();
     } catch (err) {
       notifyError('Sesiunile nu au putut fi închise', err);

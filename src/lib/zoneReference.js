@@ -2,8 +2,8 @@
  * Built-in zone reference: the access zones a city defines, shipped with the app.
  *
  * These are not company configuration. The Bucharest A/B outlines are the same for every
- * operator, so making each one draw them by hand — or import a file before the screen shows
- * anything — would be asking people to re-enter a public fact. They are read-only here and the
+ * operator, so making each one draw them by hand, or import a file before the screen shows
+ * anything, would be asking people to re-enter a public fact. They are read-only here and the
  * map draws them with no setup at all.
  *
  * What they deliberately do NOT do is charge anything. The TPO reads `tax_zones`, and a zone
@@ -14,7 +14,7 @@
  * Outlines: digitised from the PMB zone map, cleaned of the zero-area rings the source carried.
  * Delimitation: HCGMB 134/2004, modified by HCGMB 132/2005.
  *
- * Adding a city is adding an entry to `ZONE_CITIES` — the map builds its tabs from this list.
+ * Adding a city is adding an entry to `ZONE_CITIES`, the map builds its tabs from this list.
  */
 
 const BUCHAREST_ZA_OUTLINE = {
@@ -113,7 +113,7 @@ export const ZONE_CITIES = [
     zoom: 11,
     note: 'Accesul autovehiculelor grele: HCGMB 134/2004, 132/2005, 300/2006, 236/2018, '
       + '244/2019, 139/2020. Taxele sunt cele din HCGMB 514/2025, în vigoare de la '
-      + '01.01.2026, și se plătesc la Primăria Capitalei — autorizația se ia online.',
+      + '01.01.2026, și se plătesc la Primăria Capitalei, autorizația se ia online.',
     zones: [
       {
         code: 'ZA',
@@ -189,7 +189,7 @@ export function cityById(id) {
   return ZONE_CITIES.find((c) => c.id === id) ?? ZONE_CITIES[0];
 }
 
-/** Every built-in zone, flattened — used to tell a reference code from a company-only one. */
+/** Every built-in zone, flattened, used to tell a reference code from a company-only one. */
 export function allReferenceZones() {
   return ZONE_CITIES.flatMap((city) => city.zones.map((z) => ({ ...z, cityId: city.id })));
 }

@@ -1,5 +1,5 @@
 /**
- * The consignment note for a trip — written, not photographed.
+ * The consignment note for a trip, written, not photographed.
  *
  * Office and driver share these endpoints. A driver may only touch a trip assigned to them; the
  * office may see and correct any of them, which is what happens when a note comes back with a
@@ -41,7 +41,7 @@ function httpError(message, status) {
 /**
  * The trip, and the right to touch it.
  *
- * A driver reaching a trip that is not theirs gets the same 404 as one that does not exist —
+ * A driver reaching a trip that is not theirs gets the same 404 as one that does not exist,
  * a 403 would confirm the trip exists, which is not theirs to learn.
  */
 async function loadTrip(user, tripId) {
@@ -61,7 +61,7 @@ async function loadTrip(user, tripId) {
 /**
  * The carrier, for box 16, plus a place for box 21.
  *
- * `companies` has no city of its own, so "drawn up at" comes from the default depot — the place
+ * `companies` has no city of its own, so "drawn up at" comes from the default depot, the place
  * the company actually dispatches from. With no depot set the box stays blank for the driver to
  * fill; a guessed town on a consignment note is worse than an empty line.
  */
@@ -123,7 +123,7 @@ router.get('/trips/:tripId', async (req, res) => {
   }
 });
 
-/** Saves a draft. Never signs — signing is a separate, deliberate act. */
+/** Saves a draft. Never signs, signing is a separate, deliberate act. */
 router.put('/trips/:tripId', async (req, res) => {
   try {
     const trip = await loadTrip(req.user, req.params.tripId);
@@ -137,7 +137,7 @@ router.put('/trips/:tripId', async (req, res) => {
       )).rows[0];
 
       if (conflictsWithScan(existing)) {
-        throw httpError('Cursa are deja un CMR scanat — formularul digital e dezactivat', 409);
+        throw httpError('Cursa are deja un CMR scanat, formularul digital e dezactivat', 409);
       }
       if (existing?.signed_delivery_at) {
         throw httpError('CMR-ul a fost semnat la livrare și nu mai poate fi modificat', 409);
@@ -187,7 +187,7 @@ router.post('/trips/:tripId/sign', async (req, res) => {
       )).rows[0];
 
       if (conflictsWithScan(existing)) {
-        throw httpError('Cursa are deja un CMR scanat — formularul digital e dezactivat', 409);
+        throw httpError('Cursa are deja un CMR scanat, formularul digital e dezactivat', 409);
       }
       if (stage === 'livrare' && !existing?.signed_loading_at) {
         throw httpError('Semnează mai întâi etapa de încărcare', 409);

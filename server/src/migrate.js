@@ -3,7 +3,7 @@ import { pool } from './db.js';
 const sql = `
 -- gen_random_uuid() is built into PostgreSQL 13 and later, which is the floor this schema
 -- targets (compose pins 16). pgcrypto used to be pulled in for it and nothing else, and on a
--- locked-down host the extension can be blocked from loading at all — which failed the whole
+-- locked-down host the extension can be blocked from loading at all, which failed the whole
 -- migration for a function the server already provides.
 
 CREATE TABLE IF NOT EXISTS companies (
@@ -596,7 +596,7 @@ UPDATE trips SET distance_source = 'manual'
   WHERE distance_km IS NOT NULL AND distance_source IS NULL;
 
 -- ---------------------------------------------------------------------------
--- P1: the distribution layer — orders become stops, stops become routes.
+-- P1: the distribution layer, orders become stops, stops become routes.
 --
 -- Strictly additive. The trips table stays exactly what it is (the CMR transport
 -- document, which is what Romanian FTL actually needs); a route can generate one trip
@@ -686,7 +686,7 @@ CREATE INDEX IF NOT EXISTS idx_route_stops_company ON route_stops(company_id);
 CREATE INDEX IF NOT EXISTS idx_route_stops_route ON route_stops(route_id, seq);
 
 -- Reordering rewrites every seq in one statement, so the uniqueness check has to wait
--- until commit — otherwise any swap collides mid-update.
+-- until commit, otherwise any swap collides mid-update.
 ALTER TABLE route_stops DROP CONSTRAINT IF EXISTS route_stops_route_seq_uniq;
 ALTER TABLE route_stops ADD CONSTRAINT route_stops_route_seq_uniq
   UNIQUE (route_id, seq) DEFERRABLE INITIALLY DEFERRED;
@@ -812,7 +812,7 @@ ALTER TABLE routes ADD COLUMN IF NOT EXISTS planned_cost NUMERIC(12,2);
 ALTER TABLE routes ADD COLUMN IF NOT EXISTS actual_cost NUMERIC(12,2);
 
 -- ---------------------------------------------------------------------------
--- P3: live execution — telematics history + exceptions.
+-- P3: live execution, telematics history + exceptions.
 --
 -- gps_logs stays as the "last known position" projection the existing map already reads.
 -- telematics_positions is the full trail. Every ingest writes both.

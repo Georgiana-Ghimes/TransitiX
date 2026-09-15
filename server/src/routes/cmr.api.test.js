@@ -3,7 +3,7 @@ import app from '../app.js';
 import { query } from '../db.js';
 import { auth, closePool, dropCompany, makeTrip, request, seedCompany } from '../test/harness.js';
 
-/** A 1×1 PNG — enough for the signature store to accept and write. */
+/** A 1×1 PNG, enough for the signature store to accept and write. */
 const INK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
   + 'AAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 

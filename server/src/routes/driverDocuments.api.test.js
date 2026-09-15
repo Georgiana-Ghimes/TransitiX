@@ -3,7 +3,7 @@ import app from '../app.js';
 import { query } from '../db.js';
 import { auth, closePool, dropCompany, makeTrip, request, seedCompany } from '../test/harness.js';
 
-/** A minimal PDF body — the pipeline only needs bytes and a mimetype here. */
+/** A minimal PDF body, the pipeline only needs bytes and a mimetype here. */
 const PDF = Buffer.from('%PDF-1.4 test\n%%EOF\n');
 
 let ctx;
@@ -190,7 +190,7 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
   /**
    * `/avize` lists office scans and driver photos in one table, but the two arrived through
    * different extractors. Re-extracting a driver photo on the avize/Vision path rewrote it with
-   * a stub wherever no Vision key is configured — the default in the documents companion, where
+   * a stub wherever no Vision key is configured, the default in the documents companion, where
    * paddle is the only provider. The suite runs with no key, so this is that configuration.
    */
   it('re-runs the batch extractor instead of stubbing the row', async () => {
@@ -223,7 +223,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
   /**
    * Paddle on a CPU VM can take minutes, which is fine for a background pass and not fine for
    * somebody holding a button down. The interactive path gives up early, then hands the same
-   * document to the background pass — an error would have left the operator to press
+   * document to the background pass, an error would have left the operator to press
    * Re-extrage by hand for a document that is perfectly readable, just slow.
    */
   const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
@@ -280,7 +280,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
   /**
    * A scan reaches the sidecar as a PDF and is rasterized there. Node used to skip PDFs, so the
-   * sidecar was never called for one — reaching the clock at all is what proves it is now.
+   * sidecar was never called for one, reaching the clock at all is what proves it is now.
    */
   it('sends a text-poor PDF to the sidecar instead of giving up on it', async () => {
     const uploaded = await upload(ctx.driverToken, trip.id, 'scanata.pdf');

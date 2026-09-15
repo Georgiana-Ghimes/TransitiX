@@ -1,8 +1,8 @@
 /**
  * Building an invoice out of what the pricing engine actually computed.
  *
- * There used to be two money paths. The engine decomposed a trip into `trip_charges` — trip rate,
- * kilometres, zone tax, crane — and stored the total on the trip. The invoice draft ignored all
+ * There used to be two money paths. The engine decomposed a trip into `trip_charges` (trip rate,
+ * kilometres, zone tax, crane) and stored the total on the trip. The invoice draft ignored all
  * of that and summed `aviz_documents.valoare_tpo`, a column an operator can type into and OCR can
  * fill. The two could disagree, and nothing checked them against each other, so an invoice could
  * go out on a figure nothing had recalculated.
@@ -110,7 +110,7 @@ export function buildInvoiceDraft(trips = [], chargesByTrip = new Map(), options
 /**
  * Which trip the invoice header points at.
  *
- * One trip means the header can name it. Several means it cannot — pinning the invoice to
+ * One trip means the header can name it. Several means it cannot, pinning the invoice to
  * whichever happened to sort first is how a document ends up filed against the wrong trip, so it
  * is left unset and the lines carry the detail instead.
  */
@@ -123,8 +123,8 @@ export function headerTripId(tripIds = []) {
 export function describeDraft(trips = []) {
   const refs = trips.map((t) => t.tpo_number || t.cmr_number).filter(Boolean);
   if (!refs.length) return 'Servicii transport';
-  if (refs.length <= 6) return `Servicii transport — ${refs.join(', ')}`;
-  return `Servicii transport — ${refs.slice(0, 6).join(', ')} și încă ${refs.length - 6}`;
+  if (refs.length <= 6) return `Servicii transport, ${refs.join(', ')}`;
+  return `Servicii transport, ${refs.slice(0, 6).join(', ')} și încă ${refs.length - 6}`;
 }
 
 /**

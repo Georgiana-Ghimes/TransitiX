@@ -142,8 +142,8 @@ function decorateAviz(row) {
 }
 
 /**
- * Records an export through the shared recorder, so history from this screen is as complete —
- * and as re-downloadable — as history from `/reports`. Before this the two paths wrote different
+ * Records an export through the shared recorder, so history from this screen is as complete,
+ * and as re-downloadable, as history from `/reports`. Before this the two paths wrote different
  * amounts of detail, and only one of them could reproduce its own file.
  */
 async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename, built }) {
@@ -191,7 +191,7 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
   const template = serializeRow(tmpl.rows[0]);
   const columns = exportColumnsFor(template);
   const report = buildReport({ template, documents: avize });
-  // The annex keeps its exact agreed shape here — no totals row on the legacy path.
+  // The annex keeps its exact agreed shape here, no totals row on the legacy path.
   const workbook = renderReportWorkbook({
     name: template.name || 'Anexa',
     columns,
@@ -444,7 +444,7 @@ router.post('/extract', async (req, res) => {
     }
 
     // Every aviz is read by one extractor: the profile engine in documents.js, over PaddleOCR.
-    // A document therefore has to belong to a batch before it can be read — rows uploaded from
+    // A document therefore has to belong to a batch before it can be read, rows uploaded from
     // this screen get one here, and rows that predate batches are attached to one on first use.
     let docId = id;
     let batchId = null;
@@ -534,7 +534,7 @@ router.post('/extract', async (req, res) => {
       force: true,
       profileId: req.body?.profile_id,
       documentIds: [docId],
-      // Somebody is watching a spinner — this one does not get the background budget.
+      // Somebody is watching a spinner, this one does not get the background budget.
       timeoutMs: interactiveOcrTimeoutMs(pages),
     });
 
@@ -720,7 +720,7 @@ router.post('/email', async (req, res) => {
       download: Boolean(sent.stub),
       content_base64: sent.stub ? buffer.toString('base64') : undefined,
       message: sent.stub
-        ? 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa manual.'
+        ? 'Resend nu este configurat, emailul nu a fost trimis. Descarcă anexa manual.'
         : undefined,
     });
   } catch (err) {
@@ -807,7 +807,7 @@ router.get('/trip-suggestions', async (req, res) => {
 /**
  * A draft invoice built from what the pricing engine computed.
  *
- * The amounts are the trip's `trip_charges` — the same lines the TPO is made of — not a figure
+ * The amounts are the trip's `trip_charges`, the same lines the TPO is made of, not a figure
  * re-derived here. There used to be two money paths: the engine decomposed a trip into charges
  * while this endpoint summed `aviz_documents.valoare_tpo`, a column an operator types into. They
  * could disagree, and nothing compared them, so an invoice could go out on a number nothing had

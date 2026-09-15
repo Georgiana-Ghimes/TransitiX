@@ -96,7 +96,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData } = 
  * Fetches a file rather than JSON, keeping the filename the server chose.
  *
  * `request` parses every response as text, which would corrupt a workbook, so binary downloads
- * go through their own path — including the 401 retry, so a long-open report screen does not
+ * go through their own path, including the 401 retry, so a long-open report screen does not
  * lose an export to an expired token.
  */
 async function downloadFile(url, opts, retried, retry, fallbackName) {
@@ -203,7 +203,7 @@ export const api = {
     health() {
       return request('/geo/health');
     },
-    /** Ranked candidates for a free-text address — feeds the review screen. */
+    /** Ranked candidates for a free-text address, feeds the review screen. */
     geocode(address, { refresh = false } = {}) {
       return request('/geo/geocode', { method: 'POST', body: { address, refresh } });
     },
@@ -386,11 +386,11 @@ export const api = {
   },
 
   invoices: {
-    /** What an invoice is made of — the charges the pricing engine produced. */
+    /** What an invoice is made of, the charges the pricing engine produced. */
     lines(id) {
       return request(`/invoices/${encodeURIComponent(id)}/lines`);
     },
-    /** Local UBL XML — never claims SPV send. */
+    /** Local UBL XML, never claims SPV send. */
     async downloadUbl(id, retried = false) {
       const token = getToken();
       const res = await fetch(`/api/invoices/${encodeURIComponent(id)}/ubl`, {
@@ -513,7 +513,7 @@ export const api = {
     reportPosition(sample) {
       return request('/telematics/position', { method: 'POST', body: sample });
     },
-    /** Admin: rotate webhook key — plaintext returned once. */
+    /** Admin: rotate webhook key, plaintext returned once. */
     rotateKey() {
       return request('/telematics/key', { method: 'POST' });
     },
@@ -532,7 +532,7 @@ export const api = {
     resolveException(id) {
       return request(`/telematics/exceptions/${encodeURIComponent(id)}/resolve`, { method: 'POST' });
     },
-    /** Routes with a vehicle on a day — for the replay picker. */
+    /** Routes with a vehicle on a day, for the replay picker. */
     replayList(date) {
       return request(`/telematics/replay?date=${encodeURIComponent(date)}`);
     },
@@ -541,7 +541,7 @@ export const api = {
       return request(`/telematics/replay/${encodeURIComponent(routeId)}`);
     },
     /**
-     * Absolute EventSource URL (token in query — browsers cannot set Authorization on SSE).
+     * Absolute EventSource URL (token in query, browsers cannot set Authorization on SSE).
      */
     streamUrl() {
       const token = getToken();
@@ -573,7 +573,7 @@ export const api = {
         { method: 'PUT', body: { status } }
       );
     },
-    /** ePOD — closes the stop with signature / photos / refusal. */
+    /** ePOD, closes the stop with signature / photos / refusal. */
     submitPod(routeId, stopId, body) {
       return request(
         `/routes/${encodeURIComponent(routeId)}/stops/${encodeURIComponent(stopId)}/pod`,
@@ -619,7 +619,7 @@ export const api = {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       return request(`/documents/profiles${qs}`);
     },
-    /** Multi-file upload — the whole batch goes up in one request. */
+    /** Multi-file upload, the whole batch goes up in one request. */
     async uploadBatch(files, { documentType = 'aviz', label } = {}) {
       const form = new FormData();
       for (const file of files) form.append('files', file);
@@ -793,7 +793,7 @@ export const api = {
     setDepot(locationId) {
       return request('/commercial/depot', { method: 'PUT', body: { location_id: locationId } });
     },
-    /** Only the tax zones and their MMA brackets — what the zone map needs, nothing else. */
+    /** Only the tax zones and their MMA brackets, what the zone map needs, nothing else. */
     zones() {
       return request('/commercial/zones');
     },

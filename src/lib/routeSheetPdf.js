@@ -2,7 +2,7 @@
  * Renders a road sheet to a downloadable PDF.
  *
  * The page is built as HTML and rasterized, rather than drawn with jsPDF's text API,
- * because the standard PDF fonts cannot encode `ș`, `ț` and `ă` — a vector sheet would
+ * because the standard PDF fonts cannot encode `ș`, `ț` and `ă`, a vector sheet would
  * misspell half the Romanian on every line. An image of correct text beats selectable text
  * that is wrong.
  */

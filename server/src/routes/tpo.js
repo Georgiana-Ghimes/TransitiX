@@ -66,8 +66,8 @@ async function resolveDepot(companyId, trip) {
 }
 
 /**
- * Unloading points for a trip. A trip attached to a route uses the route's stops — several
- * drops on one trip is still ONE trip — otherwise it falls back to the consignee address.
+ * Unloading points for a trip. A trip attached to a route uses the route's stops, several
+ * drops on one trip is still ONE trip, otherwise it falls back to the consignee address.
  */
 async function resolveUnloadings(companyId, trip) {
   if (trip.route_id) {
@@ -177,7 +177,7 @@ async function computeForTrip(companyId, trip, { persist = false } = {}) {
   if (!depot) {
     result.warnings.push({
       code: 'fara_garaj',
-      message: 'Nu există garaj configurat — kilometrii dus-întors la bază nu pot fi calculați',
+      message: 'Nu există garaj configurat, kilometrii dus-întors la bază nu pot fi calculați',
     });
   }
 
@@ -194,7 +194,7 @@ async function computeForTrip(companyId, trip, { persist = false } = {}) {
         );
       }
 
-      // Manual lines are the operator's, not ours — only the auto ones are replaced.
+      // Manual lines are the operator's, not ours, only the auto ones are replaced.
       await client.query(
         `DELETE FROM trip_charges WHERE trip_id = $1 AND company_id = $2 AND source = 'auto'`,
         [trip.id, companyId]
@@ -255,7 +255,7 @@ router.post('/trips/:id/calculate', async (req, res) => {
 /**
  * Everything filed under one TPO number.
  *
- * One TPO commonly covers several trips — the goods did not fit in one truck, or the site
+ * One TPO commonly covers several trips, the goods did not fit in one truck, or the site
  * could not take a big one. Two unloading points on one trip is NOT two trips.
  */
 router.get('/:tpoNumber', async (req, res) => {

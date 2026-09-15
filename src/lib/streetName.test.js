@@ -25,7 +25,7 @@ describe('normalizeStreetName', () => {
 
   it('keeps the type word rather than dropping it', () => {
     // "Strada Nicolae Iorga" and "Calea Nicolae Iorga" would be different streets. Collapsing
-    // them would hand one street's zone — and its tariff — to the other.
+    // them would hand one street's zone, and its tariff, to the other.
     expect(normalizeStreetName('Strada Nicolae Iorga'))
       .not.toBe(normalizeStreetName('Calea Nicolae Iorga'));
   });

@@ -4,7 +4,7 @@
  *
  * All of it was already editable through the generic entities API and through nothing else,
  * which meant the pricing engine was configurable only by whoever could write SQL. This route
- * exists so one screen can load the whole picture, and — more importantly — so the warnings it
+ * exists so one screen can load the whole picture, and, more importantly, so the warnings it
  * shows come from the same functions the calculation uses. A tariff screen that decides for
  * itself what "valid" means is how a rate reads as active on screen and is skipped in the TPO.
  */
@@ -46,7 +46,7 @@ function plainText(value) {
  * Everything the configuration screen needs, in one call.
  *
  * Overlapping validity periods are computed here with `findOverlaps` rather than in the browser:
- * an overlap is not an error — the newest still wins — but it is almost always a forgotten
+ * an overlap is not an error, the newest still wins, but it is almost always a forgotten
  * `valid_to`, and the screen has to name it in the same terms the calculation would.
  */
 router.get('/overview', async (req, res) => {
@@ -136,7 +136,7 @@ router.get('/contracts/:id/history', async (req, res) => {
  * Just the zones and their rates.
  *
  * The zone map used to call `/overview`, which loads contracts, tariffs, surcharges,
- * observation codes, locations and the fleet's vehicle classes — eleven queries to read two
+ * observation codes, locations and the fleet's vehicle classes, eleven queries to read two
  * tables. On the documents companion none of the rest exists, and a screen that drags the whole
  * commercial configuration behind it is a screen that breaks when any part of it does.
  */
@@ -164,7 +164,7 @@ router.get('/zones', async (req, res) => {
  * figure the invoice will actually carry. A screen that reimplemented the lookup would be free
  * to disagree with the calculation, and the disagreement would surface as a customer query.
  *
- * Geocoding stays on the shared path in `geo/geocode.js` — confidence is the provider-agnostic
+ * Geocoding stays on the shared path in `geo/geocode.js`, confidence is the provider-agnostic
  * score, and a low one is reported rather than quietly treated as a hit.
  */
 router.post('/zones/locate', async (req, res) => {
@@ -175,7 +175,7 @@ router.post('/zones/locate', async (req, res) => {
 
     // The screen knows which city's tab is open, so an operator types a street and nothing
     // else. Without this a bare "Calea Victoriei" is geocoded country-wide and lands on the
-    // first street of that name anywhere in Romania — a confident pin in the wrong county.
+    // first street of that name anywhere in Romania, a confident pin in the wrong county.
     const cityHint = String(req.body?.city || '').trim();
     const address = cityHint && !plainText(street).includes(plainText(cityHint))
       ? street + ', ' + cityHint
@@ -214,7 +214,7 @@ router.post('/zones/locate', async (req, res) => {
     // `best` is not enough on its own: a fresh geocode carries city/county/postcode, but a
     // cached one is rebuilt by `fromCacheRow` from the stored columns and loses them. Reading
     // the textual fields off `best` would make a zone with a city matcher resolve on the first
-    // lookup of an address and stop resolving on every later one — the same screen giving two
+    // lookup of an address and stop resolving on every later one, the same screen giving two
     // answers depending on whether somebody had searched that street before. The candidates
     // are cached in full, and the typed address is parsed the same way either way.
     const parsed = parseRomanianAddress(address);
@@ -240,7 +240,7 @@ router.post('/zones/locate', async (req, res) => {
     const zone = resolveZone(zonesRes.rows, place);
     // Say how the zone was decided: a polygon hit is a fact about the point, a textual match is
     // a fact about the address text, and an operator checking a boundary needs to tell them
-    // apart. This re-tests the point rather than inferring from "the zone has a polygon" — a
+    // apart. This re-tests the point rather than inferring from "the zone has a polygon", a
     // zone can carry an outline the point falls outside of and still win on its matcher.
     const matchedBy = zone
       ? (zone.polygon && pointInPolygon(place, zone.polygon) ? 'polygon' : 'text')
@@ -280,10 +280,10 @@ router.put('/depot', adminRequired, async (req, res) => {
       if (!found.rows[0]) return res.status(404).json({ message: 'Locație inexistentă' });
       if (found.rows[0].latitude == null || found.rows[0].longitude == null) {
         // Without coordinates the round trip cannot be measured, and the TPO silently loses its
-        // kilometre component — better to refuse than to accept a depot that cannot be routed.
+        // kilometre component, better to refuse than to accept a depot that cannot be routed.
         return res.status(422).json({
           message: 'Locația nu are coordonate. Geocodeaz-o din ecranul Locații înainte de a o '
-            + 'seta ca garaj — fără coordonate nu se pot calcula kilometrii.',
+            + 'seta ca garaj, fără coordonate nu se pot calcula kilometrii.',
         });
       }
     }

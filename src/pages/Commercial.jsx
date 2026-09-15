@@ -104,7 +104,7 @@ function TariffForm({ contracts, classes, initial, onClose, onSaved }) {
     <ModalShell open onClose={onClose} title={initial?.id ? 'Editează tariful' : 'Tarif nou'}>
       <form onSubmit={submit} className="p-5 space-y-4">
         <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">
-          Un tarif nu se editează în loc — se închide și se adaugă altul de la data actului
+          Un tarif nu se editează în loc, se închide și se adaugă altul de la data actului
           adițional. Rapoartele vechi trebuie să rămână recalculabile cu tariful de atunci.
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -112,7 +112,7 @@ function TariffForm({ contracts, classes, initial, onClose, onSaved }) {
             <select className={inputCls} value={form.contract_id} onChange={(e) => set('contract_id', e.target.value)}>
               <option value="">Alege…</option>
               {contracts.map((c) => (
-                <option key={c.id} value={c.id}>{c.code} — {c.name || 'fără nume'}</option>
+                <option key={c.id} value={c.id}>{c.code}, {c.name || 'fără nume'}</option>
               ))}
             </select>
           </Field>
@@ -209,7 +209,7 @@ function TariffsTab({ data, reload }) {
           >
             {data.contracts.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code} — {c.name || 'fără nume'} ({c.tariff_count} tarife)
+                {c.code}, {c.name || 'fără nume'} ({c.tariff_count} tarife)
               </option>
             ))}
           </select>
@@ -236,7 +236,7 @@ function TariffsTab({ data, reload }) {
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800">
             Perioade suprapuse pe {[...new Set(contract.overlaps.map((o) => o.vehicle_class))].join(', ')}.
-            Se aplică cel mai nou — de obicei înseamnă un „valabil până la” uitat.
+            Se aplică cel mai nou, de obicei înseamnă un „valabil până la” uitat.
           </p>
         </div>
       ) : null}
@@ -393,7 +393,7 @@ function ZonesTab({ data, reload }) {
           </div>
           {ratesFor(zone.id).length === 0 ? (
             <p className="px-4 py-3 text-sm text-slate-500">
-              Zona nu are niciun tarif — nu va produce nicio taxă.
+              Zona nu are niciun tarif, nu va produce nicio taxă.
             </p>
           ) : (
             <table className="min-w-full text-sm">
@@ -446,7 +446,7 @@ function ZoneModal({ initial, onClose, onSave }) {
         </div>
         <Field
           label="Potrivire textuală (JSON)"
-          hint='Ex.: {"counties":["IF"],"cities":["Otopeni","Voluntari"]} — funcționează înainte de a desena un poligon'
+          hint='Ex.: {"counties":["IF"],"cities":["Otopeni","Voluntari"]}, funcționează înainte de a desena un poligon'
         >
           <textarea rows={3} className={`${inputCls} font-mono text-xs`} value={form.matcher || ''} onChange={(e) => set('matcher', e.target.value)} />
         </Field>
@@ -575,7 +575,7 @@ function SurchargesTab({ data, reload }) {
             </div>
           </div>
           {ratesFor(type.id).length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-500">Fără tarif — taxa nu se va aplica.</p>
+            <p className="px-4 py-3 text-sm text-slate-500">Fără tarif, taxa nu se va aplica.</p>
           ) : (
             <table className="min-w-full text-sm">
               <tbody>
@@ -814,17 +814,17 @@ function DepotTab({ data, reload }) {
         <div className="flex-1">
           <span className={labelCls}>Locație</span>
           <select className={inputCls} value={selected} onChange={(e) => setSelected(e.target.value)}>
-            <option value="">— fără garaj —</option>
+            <option value="">fără garaj</option>
             {data.locations.map((l) => (
               <option key={l.id} value={l.id} disabled={l.latitude == null}>
                 {l.name}
                 {[l.city, l.county].filter(Boolean).length ? ` (${[l.city, l.county].filter(Boolean).join(', ')})` : ''}
-                {l.latitude == null ? ' — fără coordonate' : ''}
+                {l.latitude == null ? ', fără coordonate' : ''}
               </option>
             ))}
           </select>
           <p className="text-[11px] text-slate-400 mt-1">
-            O locație fără coordonate nu poate fi garaj — geocodeaz-o întâi din ecranul Locații.
+            O locație fără coordonate nu poate fi garaj, geocodeaz-o întâi din ecranul Locații.
           </p>
         </div>
         <button type="button" className={btnPrimary} onClick={save} disabled={saving}>
@@ -871,7 +871,7 @@ export default function Commercial() {
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold text-slate-800">Configurare comercială</h1>
           <p className="text-sm text-slate-500">
-            Tarifele negociate, taxele de zonă și codurile clientului — tot ce stă în spatele
+            Tarifele negociate, taxele de zonă și codurile clientului, tot ce stă în spatele
             calculului de TPO.
           </p>
         </div>

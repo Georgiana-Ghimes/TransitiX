@@ -1,9 +1,9 @@
 /**
- * `POST /api/commercial/zones/locate` — the lookup behind the zone map.
+ * `POST /api/commercial/zones/locate`, the lookup behind the zone map.
  *
  * Geocoding is never called here: every address is pre-seeded into `geocode_cache`, which is
  * the same short-circuit `geocodeAddress` takes in production. That keeps the suite off the
- * network and lets each case place a point exactly where the assertion needs it — on either
+ * network and lets each case place a point exactly where the assertion needs it, on either
  * side of a boundary, which is the whole point of the endpoint.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -206,7 +206,7 @@ describe('resolving a point against zones', () => {
 
   it('never reports a polygon match for a point outside the polygon', async () => {
     // The zone carries an outline AND a matcher that catches the address by city. It must win
-    // on the matcher and say `text` — claiming `polygon` would tell the operator the boundary
+    // on the matcher and say `text`, claiming `polygon` would tell the operator the boundary
     // had been checked against this point when it had not.
     const both = await makeZone({
       code: 'ZB', name: 'Zona B', polygon: SQUARE, matcher: { cities: ['bucuresti'] }, priority: 1,

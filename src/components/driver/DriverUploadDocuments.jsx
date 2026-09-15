@@ -19,7 +19,7 @@ const STATUS_LABEL = {
   failed: 'Eșuat',
 };
 
-/** Driver list never showed fields — "OCR gata" looked like success even when TPO was empty. */
+/** Driver list never showed fields, "OCR gata" looked like success even when TPO was empty. */
 function driverStatusDetail(doc, online = true) {
   if (doc.status === 'uploaded' && !online) {
     return 'Procesare întreruptă · reluăm la reconectare';
@@ -117,7 +117,7 @@ export default function DriverUploadDocuments({ user }) {
     await refreshQueued();
     notifySuccess(
       'Salvat pe telefon',
-      `${files.length} fișier(e) — se trimite automat când prinzi semnal`
+      `${files.length} fișier(e), se trimite automat când prinzi semnal`
     );
     return true;
   }, [userId, outbox, tripId, docType, refreshQueued]);
@@ -167,7 +167,7 @@ export default function DriverUploadDocuments({ user }) {
   /**
    * OCR runs after the upload responds, so a row sent a moment ago still says "Se procesează…".
    * Refresh only the document list, only while something is still pending, and only while the
-   * tab is visible — a phone in a cab should not poll from a pocket.
+   * tab is visible, a phone in a cab should not poll from a pocket.
    */
   const pending = docs.some((d) => d.status === 'uploaded');
   const hasQueuedUploads = queuedUploads.length > 0;
@@ -189,7 +189,7 @@ export default function DriverUploadDocuments({ user }) {
     prevOutboxPending.current = outbox.counts.pending;
   }, [outbox.counts.pending, refreshDocs, refreshQueued]);
 
-  /** When coverage drops mid-OCR, stop the spinner immediately — don't wait for the next poll. */
+  /** When coverage drops mid-OCR, stop the spinner immediately, don't wait for the next poll. */
   useEffect(() => {
     const onOffline = () => setOnline(false);
     window.addEventListener('offline', onOffline);
@@ -206,7 +206,7 @@ export default function DriverUploadDocuments({ user }) {
     };
   }, [pending, refreshDocs]);
 
-  /** When coverage returns, pull the list right away — don't wait for the next poll tick. */
+  /** When coverage returns, pull the list right away, don't wait for the next poll tick. */
   const wasOnline = useRef(online);
   useEffect(() => {
     const cameBack = online && !wasOnline.current;
@@ -223,7 +223,7 @@ export default function DriverUploadDocuments({ user }) {
     if (files.length > maxFiles) {
       notifyError(
         'Prea multe fișiere',
-        `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length} — trimite-le în două rânduri.`
+        `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length}. Trimite-le în două rânduri.`
       );
       return;
     }
@@ -377,7 +377,7 @@ export default function DriverUploadDocuments({ user }) {
               onChange={(e) => setTripId(e.target.value)}
               className={fieldCls}
             >
-              <option value="">— Fără cursă (biroul leagă ulterior) —</option>
+              <option value="">Fără cursă (biroul leagă ulterior)</option>
               {trips.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.cmr_number || t.id.slice(0, 8)} · {t.status}

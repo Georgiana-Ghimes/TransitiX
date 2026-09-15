@@ -90,7 +90,7 @@ async function insertEntity(client, cfg, data) {
 
 /**
  * Decides who owns trips.distance_km for this write. `distance_source` is server-controlled
- * on purpose — it is not in the Trip writable list, so a client cannot claim a value is ours.
+ * on purpose, it is not in the Trip writable list, so a client cannot claim a value is ours.
  */
 function applyTripDistance(data, previous) {
   if (!Object.prototype.hasOwnProperty.call(data, 'distance_km')) return;
