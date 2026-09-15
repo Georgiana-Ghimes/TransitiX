@@ -56,11 +56,42 @@ export function isAcceptableAutoField(value) {
 }
 
 /** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ, county required, no loose shape matches. */
+/**
+ * The one way a plate is written down: `B-112-VFM`.
+ *
+ * There used to be two. This extractor returned `B 112 VFM` and `normalizePlate` in avizOcr
+ * returned `B-112-VFM`, so the same lorry was stored two ways depending on which path had run.
+ * On a screen that is untidy; as the key of a vehicle registry it is two vehicles, one of which
+ * never gets its MTMA filled in. Hyphens win because that is the form the customer's own sheet
+ * uses.
+ *
+ * A string this does not recognise as a plate comes back unchanged rather than emptied: the
+ * fleet holds deliberate non-standard entries (`B-900-DEMO`, `B TEST 1`) and losing them would
+ * be a worse outcome than leaving them inconsistent.
+ */
+export function canonicalPlate(value) {
+  const text = String(value || '').toUpperCase().replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  const re = new RegExp(`\\b(${RO_PLATE_COUNTIES})[-\\s]?(\\d{2,3})[-\\s]?([A-Z]{2,3})\\b`, 'gi');
+  const parts = [];
+  const seen = new Set();
+  let m = re.exec(text);
+  while (m) {
+    const plate = `${m[1].toUpperCase()}-${m[2]}-${m[3].toUpperCase()}`;
+    if (!seen.has(plate)) {
+      seen.add(plate);
+      parts.push(plate);
+    }
+    m = re.exec(text);
+  }
+  return parts.length ? parts.join(' / ') : text;
+}
+
 export function extractPlate(text) {
   const found = matchPatterns(text, [
     new RegExp(`\\b((?:${RO_PLATE_COUNTIES})\\s?\\d{2,3}\\s?[A-Z]{3})\\b`, 'i'),
   ], {
-    transform: (raw) => String(raw).toUpperCase().replace(/\s+/g, ' ').trim(),
+    transform: (raw) => canonicalPlate(raw),
   });
   if (!found.value || !isAcceptableAutoField(found.value)) return NO_MATCH;
   return result(found.value, found.confidence, found.matched);
@@ -139,43 +170,54 @@ const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000,
  * A labelled "greutate brută" is trusted; a bare weight with no label is not, because it
  * could just as easily be the net.
  */
+/**
+ * A labelled weight, with the unit on either side of the number.
+ *
+ * Baumit's own avize print `Greutate bruta, kg  15,744.00` — the unit sits in the label and the
+ * figure follows it. Only the `number unit` order was matched, so on those documents the weight
+ * came back empty, and the annex fell back to the bucket count: "Cantitate marfa (tone)" read
+ * 768 where the weighbridge said 15.74. That is the mistake the client corrected us on once
+ * already, arriving again through a different door.
+ *
+ * The digits are matched without `\s`, so a number cannot swallow the following line on a PDF
+ * that puts every token on its own row. A literal space still allows "15 744,00".
+ */
+function matchLabelledWeight(blob, label) {
+  const after = blob.match(new RegExp(`(?:${label})\\s*[:\\-]?\\s*([\\d][\\d., ]*)\\s*(kg|to?ne?|t)\\b`, 'i'));
+  if (after) return { raw: after[1], unit: after[2], matched: after[0] };
+
+  const before = blob.match(new RegExp(`(?:${label})\\s*[,:\\-]?\\s*(kg|to?ne?|t)\\b\\s*[:\\-]?\\s*([\\d][\\d., ]*)`, 'i'));
+  if (before) return { raw: before[2], unit: before[1], matched: before[0] };
+
+  return null;
+}
+
+function weightFrom(hit, confidence) {
+  if (!hit) return null;
+  const value = parseNumber(hit.raw);
+  if (value == null) return null;
+  const factor = String(hit.unit || 'kg').toLowerCase().startsWith('t') ? 1000 : 1;
+  return result(Math.round(value * factor * 100) / 100, confidence, hit.matched);
+}
+
+const GROSS_LABEL = 'greutate\\s*(?:bruta|brută)|masa\\s*(?:bruta|brută)|gross\\s*weight|g\\.?\\s*bruta';
+const NET_LABEL = 'greutate\\s*(?:neta|netă)|masa\\s*(?:neta|netă)|net\\s*weight';
+
 export function extractGrossWeight(text) {
   const blob = String(text || '');
 
-  const labelled = blob.match(
-    /(?:greutate\s*(?:bruta|brută)|masa\s*(?:bruta|brută)|gross\s*weight|g\.?\s*bruta)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
-  );
-  if (labelled) {
-    const value = parseNumber(labelled[1]);
-    if (value != null) {
-      const unit = String(labelled[2] || 'kg').toLowerCase();
-      const factor = unit.startsWith('t') ? 1000 : 1;
-      return result(Math.round(value * factor * 100) / 100, 0.95, labelled[0]);
-    }
-  }
+  const labelled = weightFrom(matchLabelledWeight(blob, GROSS_LABEL), 0.95);
+  if (labelled) return labelled;
 
-  const anyWeight = blob.match(/(?:greutate|masa|weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i);
-  if (anyWeight) {
-    const value = parseNumber(anyWeight[1]);
-    if (value != null) {
-      const factor = String(anyWeight[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-      // Unlabelled: it may be the net weight, so an operator should confirm.
-      return result(Math.round(value * factor * 100) / 100, 0.55, anyWeight[0]);
-    }
-  }
+  // Unlabelled: it may be the net weight, so an operator should confirm.
+  const any = weightFrom(matchLabelledWeight(blob, 'greutate|masa|weight'), 0.55);
+  if (any) return any;
 
   return NO_MATCH;
 }
 
 export function extractNetWeight(text) {
-  const hit = String(text || '').match(
-    /(?:greutate\s*(?:neta|netă)|masa\s*(?:neta|netă)|net\s*weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
-  );
-  if (!hit) return NO_MATCH;
-  const value = parseNumber(hit[1]);
-  if (value == null) return NO_MATCH;
-  const factor = String(hit[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-  return result(Math.round(value * factor * 100) / 100, 0.9, hit[0]);
+  return weightFrom(matchLabelledWeight(String(text || ''), NET_LABEL), 0.9) ?? NO_MATCH;
 }
 
 /**

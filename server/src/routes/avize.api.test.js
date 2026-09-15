@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import app from '../app.js';
 import { query } from '../db.js';
 import { uploadRoot } from '../uploadPath.js';
-import { auth, closePool, dropCompany, request, seedCompany } from '../test/harness.js';
+import { auth, closePool, dropCompany, makeAviz, request, seedCompany } from '../test/harness.js';
 
 let ctx;
 
@@ -132,5 +132,64 @@ describe('POST /api/avize/extract', () => {
       .send({ id: mine.id });
     expect(res.status).toBe(404);
     await dropCompany(other.company.id);
+  });
+});
+
+describe('the list and the export agree about a route', () => {
+  // PaddleOCR regularly leaves ruta_transport empty on the row while the route is plainly
+  // there in the OCR text. Export repaired it and the list did not, so the same document
+  // showed no route on screen and the right one in the XLSX.
+  const RAW = [
+    'Expeditor: Baumit Romania SRL, Bolintin-Deal',
+    'Adresa de livrare',
+    'Strada Independentei 121',
+    'Domnesti, Ilfov',
+    'Client',
+    'SC Test SRL',
+  ].join('\n');
+
+  async function avizWithoutRoute() {
+    const doc = await makeAviz(ctx.company.id, { ruta_transport: null });
+    await query(
+      `UPDATE aviz_documents SET extracted_data = $1::jsonb WHERE id = $2`,
+      [JSON.stringify({ raw_text: RAW, provider: 'paddle' }), doc.id],
+    );
+    return doc;
+  }
+
+  it('shows the route the OCR text carries, not an empty cell', async () => {
+    const doc = await avizWithoutRoute();
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      const row = res.body.find((r) => r.id === doc.id);
+      expect(row.ruta_transport).toBe('Domnesti/Independentei');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
+  });
+
+  it('reports the route as present rather than low confidence', async () => {
+    const doc = await avizWithoutRoute();
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      const row = res.body.find((r) => r.id === doc.id);
+      expect(row.field_confidence.ruta_transport).toBe('ok');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
+  });
+
+  it('never overwrites a route the office typed', async () => {
+    const doc = await makeAviz(ctx.company.id, { ruta_transport: 'Ruta de birou' });
+    await query(
+      `UPDATE aviz_documents SET extracted_data = $1::jsonb WHERE id = $2`,
+      [JSON.stringify({ raw_text: RAW, provider: 'paddle' }), doc.id],
+    );
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      expect(res.body.find((r) => r.id === doc.id).ruta_transport).toBe('Ruta de birou');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
   });
 });

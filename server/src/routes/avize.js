@@ -130,8 +130,20 @@ const DEFAULT_OBS_CODES = [
   { code: 'DM', label: 'Descărcare macara', sort_order: 4 },
 ];
 
+/**
+ * One aviz as the screen should see it.
+ *
+ * The repair runs here for the same reason it runs on export: PaddleOCR regularly leaves
+ * `ruta_transport` empty on the row while the route is plainly there in the stored OCR text.
+ * Export repaired it and the list did not, so the same document showed no route in the table
+ * and the right one in the XLSX. A screen that disagrees with the file it produces is worse
+ * than either being wrong alone, because neither can be trusted afterwards.
+ *
+ * `repairAvizFromStored` only fills blanks, so an office edit is never overwritten, and nothing
+ * is written back here: this decorates a response, it does not change the document.
+ */
 function decorateAviz(row) {
-  const serialized = serializeRow(row);
+  const serialized = repairAvizFromStored(serializeRow(row));
   const source = serialized.extraction_source
     || mapProviderToSource(serialized.extracted_data?.provider);
   return {

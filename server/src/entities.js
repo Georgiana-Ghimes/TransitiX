@@ -8,7 +8,7 @@ export const ENTITY_MAP = {
       'fuel_type', 'chassis_number', 'engine_number', 'mileage', 'last_maintenance_mileage',
       'itp_number', 'itp_expiry', 'rca_number', 'rca_expiry', 'rovinieta_number', 'rovinieta_expiry',
       'casco_number', 'casco_expiry', 'is_active', 'status',
-      'vehicle_class', 'mma_kg', 'body_type',
+      'vehicle_class', 'mma_kg', 'body_type', 'added_by_ocr',
       'capacity_pallets', 'capabilities', 'home_location_id', 'cost_per_km', 'cost_per_hour',
       'cargo_length_m', 'cargo_width_m', 'cargo_height_m',
       'axle_front_m', 'axle_rear_m', 'axle_front_max_kg', 'axle_rear_max_kg',

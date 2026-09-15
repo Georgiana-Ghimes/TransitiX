@@ -278,3 +278,30 @@ export function summariseFindings(findings = []) {
   }
   return { total: findings.length, by_rule: byRule, by_severity: bySeverity };
 }
+
+/**
+ * A lorry nobody has given an MTMA to.
+ *
+ * The Bucharest zone fee is charged on the mass in the registration document, so without it no
+ * tariff bracket can be chosen at all, and the brackets are hundreds of lei apart. Plates now
+ * arrive on their own from the OCR, which is exactly when this is easiest to forget.
+ *
+ * Keyed on how many are missing, not on a vehicle id: one alert for the whole backlog rather
+ * than one per lorry, and dismissing it while three are outstanding brings it back when a
+ * fourth turns up, instead of hiding the next one forever.
+ */
+export function checkVehiclesWithoutMma(vehicles) {
+  const missing = (vehicles ?? []).filter((v) => v.mma_kg == null);
+  if (!missing.length) return null;
+  const plates = missing.slice(0, 4).map((v) => v.plate).join(', ');
+  const rest = missing.length > 4 ? ' și încă ' + (missing.length - 4) : '';
+  return finding({
+    rule: 'vehicle_no_mma',
+    severity: 'error',
+    key: 'vehicle_no_mma:' + missing.length,
+    title: missing.length === 1 ? 'Un vehicul fără MTMA' : missing.length + ' vehicule fără MTMA',
+    message: plates + rest + '. Fără masa din talon nu se poate calcula taxa de zonă București.',
+    link: '/fleet',
+    subject: { type: 'vehicle', id: missing[0].id },
+  });
+}

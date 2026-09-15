@@ -86,6 +86,7 @@ export default function ZoneMap() {
 
   const [address, setAddress] = useState('');
   const [mma, setMma] = useState('');
+  const [plate, setPlate] = useState('');
   const [searching, setSearching] = useState(false);
   const [hit, setHit] = useState(null);
 
@@ -203,6 +204,7 @@ export default function ZoneMap() {
         address: q,
         city: city.label,
         mmaKg: mma === '' ? null : mmaNumber,
+        plate: plate.trim() || null,
       });
       // Which drawn outline holds the pin. Asked here because the server answers about
       // pricing, and a zone on the map that is not linked yet would otherwise come back as
@@ -395,13 +397,21 @@ export default function ZoneMap() {
             placeholder="Strada și numărul, ex. Calea 13 Septembrie 102"
           />
         </div>
+        <div className="w-32">
+          <input
+            className={inputCls}
+            value={plate}
+            onChange={(e) => setPlate(e.target.value)}
+            placeholder="Nr. auto"
+          />
+        </div>
         <div className="w-36">
           <input
             className={inputCls}
             value={mma}
             onChange={(e) => setMma(e.target.value)}
             inputMode="numeric"
-            placeholder="MMA (kg)"
+            placeholder="MTMA (kg)"
           />
           {tonnesLikely ? (
             <button

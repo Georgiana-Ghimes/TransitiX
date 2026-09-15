@@ -18,6 +18,7 @@ import { findOverlaps, findTariff, tariffHistory } from '../lib/pricing/tariffs.
 import { findZoneRate, pointInPolygon, resolveZone } from '../lib/pricing/taxes.js';
 import { geocodeAddress } from '../lib/geo/geocode.js';
 import { parseRomanianAddress } from '../lib/geo/address.js';
+import { mmaForPlate } from '../lib/fleet/plateRegistry.js';
 import { parseCodeRows } from '../lib/pricing/codeImport.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
 
@@ -181,11 +182,21 @@ router.post('/zones/locate', async (req, res) => {
       ? street + ', ' + cityHint
       : street;
 
-    const mmaKg = req.body?.mma_kg == null || req.body.mma_kg === ''
+    let mmaKg = req.body?.mma_kg == null || req.body.mma_kg === ''
       ? null
       : Number(req.body.mma_kg);
     if (mmaKg != null && !Number.isFinite(mmaKg)) {
       return res.status(400).json({ message: 'MMA trebuie să fie un număr, în kilograme' });
+    }
+
+    // A plate is enough. The mass the fee is charged on is a fact about the lorry, recorded
+    // once in Autoturisme, not something to retype per trip. A figure typed here still wins:
+    // somebody checking a hypothetical is asking about that number, not about the fleet.
+    const plate = String(req.body?.plate || '').trim();
+    let mmaFromPlate = null;
+    if (mmaKg == null && plate) {
+      mmaFromPlate = await mmaForPlate(pool, companyId, plate);
+      if (mmaFromPlate != null) mmaKg = mmaFromPlate;
     }
     const onDate = String(req.body?.date || today()).slice(0, 10);
 
@@ -261,6 +272,7 @@ router.post('/zones/locate', async (req, res) => {
       matched_by: matchedBy,
       rate: rate ? serializeRow(rate) : null,
       mma_kg: mmaKg,
+      mma_from_plate: mmaFromPlate != null ? plate : null,
       date: onDate,
     });
   } catch (err) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canonicalPlate,
   extractDate,
   extractGrossWeight,
   extractNetWeight,
@@ -95,14 +96,43 @@ describe('parseNumber', () => {
   });
 });
 
+describe('canonicalPlate', () => {
+  it('writes every plate the one way, whatever the separator was', () => {
+    // Two formats used to coexist: this extractor produced "B 123 ABC" and normalizePlate in
+    // avizOcr produced "B-123-ABC". As the key of a vehicle registry that is two lorries, and
+    // one of them never gets its MTMA filled in.
+    for (const form of ['B 123 ABC', 'B-123-ABC', 'B123ABC', 'b 123 abc']) {
+      expect(canonicalPlate(form), form).toBe('B-123-ABC');
+    }
+  });
+
+  it('keeps a tractor and its trailer, in order, without repeating one', () => {
+    expect(canonicalPlate('B 112 VFM / B 475AGR')).toBe('B-112-VFM / B-475-AGR');
+    expect(canonicalPlate('B 112 VFM / B 112 VFM')).toBe('B-112-VFM');
+  });
+
+  it('returns a string it does not recognise unchanged, never empty', () => {
+    // The fleet holds deliberate non-standard entries. Emptying them would be worse than
+    // leaving them inconsistent, and `vehicles.plate` is NOT NULL.
+    expect(canonicalPlate('B-900-DEMO')).toBe('B-900-DEMO');
+    expect(canonicalPlate('B TEST 1')).toBe('B TEST 1');
+    expect(canonicalPlate('')).toBe('');
+    expect(canonicalPlate(null)).toBe('');
+  });
+
+  it('is idempotent', () => {
+    expect(canonicalPlate(canonicalPlate('B 123 ABC'))).toBe('B-123-ABC');
+  });
+});
+
 describe('extractPlate', () => {
   it('reads a spaced Romanian plate', () => {
-    expect(extractPlate('Auto: B 123 ABC').value).toBe('B 123 ABC');
+    expect(extractPlate('Auto: B 123 ABC').value).toBe('B-123-ABC');
   });
 
   it('rejects a plate-shaped string without a real county', () => {
     expect(extractPlate('QQ 12 XYZ').value).toBeNull();
-    expect(extractPlate('CJ 12 XYZ').value).toBe('CJ 12 XYZ');
+    expect(extractPlate('CJ 12 XYZ').value).toBe('CJ-12-XYZ');
   });
 
   it('does not keep bookmark/UI noise glued to a partial plate', () => {
@@ -136,6 +166,40 @@ describe('extractDate', () => {
 });
 
 describe('gross weight, the field the report actually needs', () => {
+  it('reads the unit-in-the-label form Baumit actually prints', () => {
+    // `Greutate bruta, kg  15,744.00`. Only `number unit` was matched, so on a real Baumit
+    // aviz the weight came back empty and the annex printed the bucket count in the tonnes
+    // column: 768 where the weighbridge said 15.74.
+    expect(extractGrossWeight('Greutate bruta, kg 15,744.00').value).toBe(15744);
+    expect(extractNetWeight('Greutate neta, kg 15,360.00').value).toBe(15360);
+  });
+
+  it('reads it across the line breaks a PDF puts between tokens', () => {
+    const asPdfGivesIt = 'Greutate\nbruta,\nkg\n15,744.00\npce / preluare';
+    expect(extractGrossWeight(asPdfGivesIt).value).toBe(15744);
+  });
+
+  it('does not let a number swallow the next line', () => {
+    // Every token on its own row is what pdf-parse hands back. A digit class including \s
+    // would run straight through the newline into the following figure.
+    const two = 'Greutate bruta, kg 15,744.00\n768.00\nbuc';
+    expect(extractGrossWeight(two).value).toBe(15744);
+  });
+
+  it('keeps net and gross apart in the unit-first form', () => {
+    const both = 'Greutate neta, kg 15,360.00 Greutate bruta, kg 15,744.00';
+    expect(extractGrossWeight(both).value).toBe(15744);
+    expect(extractNetWeight(both).value).toBe(15360);
+  });
+
+  it('does not read a net-only document as a gross weight', () => {
+    expect(extractGrossWeight('Greutate neta, kg 15,360.00').value).toBeNull();
+  });
+
+  it('still accepts a space as the thousands separator', () => {
+    expect(extractGrossWeight('Greutate bruta, kg 15 744,00').value).toBe(15744);
+  });
+
   it('reads a labelled gross weight and trusts it', () => {
     const found = extractGrossWeight('Greutate bruta: 9.000 kg');
     expect(found.value).toBe(9000);
@@ -240,7 +304,7 @@ describe('extractDocument', () => {
     const result = extractDocument(PSL_AVIZ);
     expect(result.profile_id).toBe('aviz_baumit_psl');
     expect(result.values).toMatchObject({
-      numar_auto: 'B 123 ABC',
+      numar_auto: 'B-123-ABC',
       data_efectuare_cursa: '2026-03-10',
       gross_weight_kg: 9000,
       net_weight_kg: 8244,
@@ -253,7 +317,7 @@ describe('extractDocument', () => {
     expect(result.profile_id).toBe('aviz_baumit_psl');
     expect(result.values.numar_tpo).toBe('TPO-0025629');
     expect(result.values.numar_document_marfa).toBe('PSL-0044362');
-    expect(result.values.numar_auto).toBe('B 330 SRS');
+    expect(result.values.numar_auto).toBe('B-330-SRS');
     expect(result.values.data_efectuare_cursa).toBe('2026-08-10');
     expect(result.values.gross_weight_kg).toBe(9964.15);
     expect(result.values.net_weight_kg).toBe(9800);
@@ -307,7 +371,7 @@ TW
       'Aviz de expeditie PSL-0044362\nPlacuta de inmatriculare B 33o SRS',
       { documentType: 'aviz' }
     );
-    expect(result.values.numar_auto).toBe('B 330 SRS');
+    expect(result.values.numar_auto).toBe('B-330-SRS');
   });
 
   it('keeps quantity and its unit apart from the weight', () => {

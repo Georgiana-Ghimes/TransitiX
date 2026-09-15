@@ -12,6 +12,7 @@ import {
   templateUpdateDecision,
   uniqueZipEntry,
 } from './avizQuery.js';
+import { DEFAULT_RAI_COLUMNS, exportColumnsFor } from './avizTemplate.js';
 
 describe('avizQuery', () => {
   it('maps providers to extraction_source', () => {
@@ -164,5 +165,39 @@ describe('avizQuery', () => {
     expect(templateDeleteDecision({ count: 2, existing: { name: 'Altul' } })).toBe('ok');
     expect(templateUpdateDecision(locked)).toBe('locked_rai');
     expect(templateUpdateDecision({ name: 'Custom' })).toBe('ok');
+  });
+});
+
+describe('the locked annex layout', () => {
+  it('is the fourteen columns the customer sheet prints, in that order', () => {
+    expect(DEFAULT_RAI_COLUMNS.map((c) => c.header)).toEqual([
+      'Nr. Crt.', 'Numar TPO', 'Data efectuare cursa', 'Valoare TPO', 'Numar auto',
+      'Ruta transport', 'Tip marfa', 'Cantitate marfa (tone)',
+      'Numar document marfa (aviz/factura)', 'Numar curse', 'Taxe suplimentare',
+      'Km parcursi', 'Tarif Km', 'Observatii',
+    ]);
+  });
+
+  it('ignores stored columns for the locked template', () => {
+    // report_templates rows are seeded once and never updated, so a company seeded before a
+    // header fix would keep sending the old sheet. The locked layout lives in code.
+    const stale = {
+      name: 'Anexa Factura RAI',
+      columns: [{ key: 'numar_tpo', header: 'TPO vechi', source: 'numar_tpo' }],
+    };
+    expect(exportColumnsFor(stale).map((c) => c.header))
+      .toEqual(DEFAULT_RAI_COLUMNS.map((c) => c.header));
+  });
+
+  it('still honours a custom template with its own columns', () => {
+    const custom = {
+      name: 'Raport intern',
+      columns: [{ key: 'numar_tpo', header: 'TPO', source: 'numar_tpo' }],
+    };
+    expect(exportColumnsFor(custom).map((c) => c.header)).toEqual(['TPO']);
+  });
+
+  it('still refuses a custom template with no columns', () => {
+    expect(() => exportColumnsFor({ name: 'Gol', columns: [] })).toThrow(/nicio coloană/);
   });
 });

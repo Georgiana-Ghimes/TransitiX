@@ -1,6 +1,6 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
 import { getSource } from './reporting/sources.js';
-import { applyNumarCurseByRuns } from './avizQuery.js';
+import { applyNumarCurseByRuns, isLockedRaiTemplate } from './avizQuery.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -30,19 +30,19 @@ export const NUMERIC_SOURCES = new Set([
 ]);
 
 export const DEFAULT_RAI_COLUMNS = [
-  { key: 'nr_crt', header: 'Nr. crt', source: 'nr_crt', default_value: '' },
+  { key: 'nr_crt', header: 'Nr. Crt.', source: 'nr_crt', default_value: '' },
   { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
   { key: 'data_efectuare_cursa', header: 'Data efectuare cursa', source: 'data_efectuare_cursa', default_value: '' },
   { key: 'valoare_tpo', header: 'Valoare TPO', source: 'valoare_tpo', default_value: 0 },
   { key: 'numar_auto', header: 'Numar auto', source: 'numar_auto', default_value: '' },
   { key: 'ruta_transport', header: 'Ruta transport', source: 'ruta_transport', default_value: '' },
   { key: 'tip_marfa', header: 'Tip marfa', source: 'tip_marfa', default_value: '' },
-  { key: 'cantitate_marfa', header: 'Cantitate marfa (t/m3/galeti)', source: 'cantitate_marfa', default_value: '' },
+  { key: 'cantitate_marfa', header: 'Cantitate marfa (tone)', source: 'cantitate_marfa', default_value: '' },
   { key: 'numar_document_marfa', header: 'Numar document marfa (aviz/factura)', source: 'numar_document_marfa', default_value: '' },
   { key: 'numar_curse', header: 'Numar curse', source: 'numar_curse', default_value: 1 },
-  { key: 'taxe_suplimentare', header: 'Taxa suplimentara', source: 'taxe_suplimentare', default_value: 0 },
+  { key: 'taxe_suplimentare', header: 'Taxe suplimentare', source: 'taxe_suplimentare', default_value: 0 },
   { key: 'km_parcursi', header: 'Km parcursi', source: 'km_parcursi', default_value: 0 },
-  { key: 'tarif_km', header: 'Tarif km', source: 'tarif_km', default_value: 0 },
+  { key: 'tarif_km', header: 'Tarif Km', source: 'tarif_km', default_value: 0 },
   { key: 'observatii', header: 'Observatii', source: 'observatii', default_value: '' },
 ];
 
@@ -129,7 +129,7 @@ function formatDateCell(value) {
 }
 
 /**
- * Anexa Factura RAI column “Cantitate marfa (t/m3/galeti)” must carry weighbridge tons when
+ * Anexa Factura RAI column “Cantitate marfa (tone)” must carry weighbridge tons when
  * we have greutate brută, not the sack/bucket line count OCR also finds on the same page.
  */
 export function annexQuantityValue(row) {
@@ -217,6 +217,12 @@ export function hasUsableColumns(columns) {
  * ignoring the template they picked. Fail loudly instead.
  */
 export function exportColumnsFor(template) {
+  // The locked annex is defined here, not by whatever was written into `report_templates` the
+  // day a company was seeded. Those rows are never updated afterwards, so a header corrected in
+  // code would reach new installs only, and two companies on the same version would send the
+  // customer two different sheets. Nobody can edit this template anyway.
+  if (isLockedRaiTemplate(template)) return DEFAULT_RAI_COLUMNS.map((c) => ({ ...c }));
+
   if (!hasUsableColumns(template?.columns)) {
     const err = new Error(
       `Șablonul „${template?.name || 'selectat'}” nu are nicio coloană salvată. `

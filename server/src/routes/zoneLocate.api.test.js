@@ -293,3 +293,56 @@ describe('resolving a point against zones', () => {
     }
   });
 });
+
+describe('the MTMA comes from the lorry, not from retyping', () => {
+  const PLATE = 'B-112-VFM';
+
+  beforeAll(async () => {
+    await seedGeocode('Calea Victoriei, Bucuresti', INSIDE);
+    await query(
+      `INSERT INTO vehicles (company_id, plate, mma_kg, is_active)
+       VALUES ($1, $2, 26000, TRUE)`,
+      [ctx.company.id, PLATE],
+    );
+  });
+
+  it('picks the bracket from the plate alone', async () => {
+    // The mass a zone fee is charged on is a fact about the lorry, recorded once in
+    // Autoturisme. Retyping it per trip is how a 26 t lorry ends up billed as a 12 t one.
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: PLATE });
+    expect(res.body.mma_kg).toBe(26000);
+    expect(res.body.mma_from_plate).toBe(PLATE);
+  });
+
+  it('recognises the lorry however the plate was written', async () => {
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: 'b 112 vfm' });
+    expect(res.body.mma_kg).toBe(26000);
+  });
+
+  it('takes the tractor when the aviz carried a trailer too', async () => {
+    const res = await locate({
+      address: 'Calea Victoriei, Bucuresti', plate: 'B-112-VFM / B-475-AGR',
+    });
+    expect(res.body.mma_kg).toBe(26000);
+  });
+
+  it('lets a typed figure win over the registry', async () => {
+    // Somebody checking a hypothetical is asking about that number, not about the fleet.
+    const res = await locate({
+      address: 'Calea Victoriei, Bucuresti', plate: PLATE, mma_kg: 40000,
+    });
+    expect(res.body.mma_kg).toBe(40000);
+    expect(res.body.mma_from_plate).toBeNull();
+  });
+
+  it('stays null for a lorry with no MTMA recorded', async () => {
+    // Guessing would pick a tariff bracket, and the brackets are hundreds of lei apart.
+    await query(
+      `INSERT INTO vehicles (company_id, plate, is_active) VALUES ($1, 'B-777-NEW', TRUE)`,
+      [ctx.company.id],
+    );
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: 'B-777-NEW' });
+    expect(res.body.mma_kg).toBeNull();
+    expect(res.body.mma_from_plate).toBeNull();
+  });
+});

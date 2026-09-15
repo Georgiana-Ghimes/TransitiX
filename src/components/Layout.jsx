@@ -41,6 +41,7 @@ const NAV = [
   { label: 'Locații', path: '/locations', icon: MapPinned },
   { label: 'Teritorii', path: '/territories', icon: Layers },
   { label: 'Harta zonelor', path: '/zone-map', icon: Map },
+  { label: 'Autoturisme', path: '/fleet', icon: Truck },
   { label: 'Tracking GPS', path: '/gps', icon: MapPin },
   { label: 'Planning AI', path: '/planning', icon: Brain },
   { label: 'Clienți', path: '/clients', icon: Building2 },
@@ -61,6 +62,7 @@ const COMPANION_OFFICE_NAV = [
   { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Harta zonelor', path: '/zone-map', icon: Map },
+  { label: 'Autoturisme', path: '/fleet', icon: Truck },
   { label: 'Setări', path: '/settings', icon: Settings, roles: ['admin'] },
 ];
 

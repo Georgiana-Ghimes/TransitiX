@@ -7,6 +7,14 @@
  */
 export const RULES = [
   {
+    id: 'vehicle_no_mma',
+    severity: 'error',
+    label: 'Vehicul fără MTMA',
+    consequence: 'Taxa de zonă București nu poate fi calculată pentru cursele lui, fiindcă '
+      + 'tranșa PMB se alege după masa totală maximă autorizată din talon.',
+    fix: 'Deschide Autoturisme și completează MTMA pentru vehiculul semnalat.',
+  },
+  {
     id: 'trip_no_tariff',
     severity: 'error',
     label: 'Cursă fără tarif valabil',

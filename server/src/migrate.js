@@ -1022,6 +1022,32 @@ ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_class TEXT;
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS mma_kg NUMERIC(10,2);
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS body_type TEXT;
 CREATE INDEX IF NOT EXISTS idx_vehicles_class ON vehicles(company_id, vehicle_class);
+-- One spelling per plate: B-112-VFM.
+-- Two coexisted, because extractPlate wrote a spaced form and normalizePlate a hyphenated
+-- one. Untidy on a screen; as the key of a vehicle registry it is two lorries, and one of
+-- them never gets its MTMA filled in. The county list here is the one canonicalPlate() uses,
+-- so the backfill and the code cannot disagree about what counts as a plate.
+-- Anything unrecognised is left exactly as it is: the fleet holds deliberate non-standard
+-- entries (B-900-DEMO, B TEST 1) and plate is NOT NULL.
+UPDATE vehicles SET plate = regexp_replace(upper(btrim(plate)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3')
+ WHERE upper(btrim(plate)) ~ '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?[0-9]{2,3}[ -]?[A-Z]{2,3}$'
+   AND plate <> regexp_replace(upper(btrim(plate)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3');
+
+UPDATE aviz_documents SET numar_auto = regexp_replace(upper(btrim(numar_auto)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3')
+ WHERE numar_auto IS NOT NULL
+   AND upper(btrim(numar_auto)) ~ '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?[0-9]{2,3}[ -]?[A-Z]{2,3}$'
+   AND numar_auto <> regexp_replace(upper(btrim(numar_auto)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3');
+
+-- A plate read off an aviz is enough to open a vehicle record. The make and model are not
+-- known at that point, and waiting for them would mean losing the plate.
+ALTER TABLE vehicles ALTER COLUMN brand DROP NOT NULL;
+ALTER TABLE vehicles ALTER COLUMN model DROP NOT NULL;
+
+-- Rows the OCR opened on its own. They may be a misread, so the screen can say "this one
+-- arrived by itself, check it" instead of presenting it as fleet the office entered.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS added_by_ocr BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_vehicles_plate ON vehicles(company_id, plate);
+
 
 -- The depot every route leaves from and returns to. Kept as a location so it is geocoded
 -- like any other point; more than one per company is already possible.

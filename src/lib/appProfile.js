@@ -7,6 +7,7 @@ export const COMPANION_OFFICE_PATHS = [
   '/avize',
   '/reports',
   '/zone-map',
+  '/fleet',
   '/settings',
   '/users',
 ];

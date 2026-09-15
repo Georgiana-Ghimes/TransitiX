@@ -10,6 +10,7 @@ import { readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
+import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -225,6 +226,19 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             doc.id, companyId,
           ]
         );
+        // A plate the OCR just read opens a vehicle record, inside this transaction, so a
+        // document and the lorry it names cannot land on opposite sides of a failure. A filing
+        // problem never fails the extraction though: the document is what the operator sent.
+        let registeredPlate = null;
+        try {
+          const { vehicle, created } = await ensureVehicleForPlate(
+            client, companyId, columns.numar_auto,
+          );
+          if (created) registeredPlate = vehicle.plate;
+        } catch (err) {
+          console.error('[documents] plăcuța nu a putut fi înregistrată', err);
+        }
+
         await logEvent(client, {
           companyId, documentId: doc.id, batchId,
           userId, kind: doc.ocr_profile_id ? 're_extracted' : 'extracted',
@@ -235,6 +249,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             text_source: text.source,
             pages: text.pages ?? null,
             pages_truncated: Boolean(text.truncated),
+            ...(registeredPlate ? { vehicle_registered: registeredPlate } : {}),
           },
         });
       });
