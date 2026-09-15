@@ -84,16 +84,35 @@ export async function vehiclesMissingMma(db, companyId) {
   return res.rows;
 }
 
-/** The MTMA to charge a zone tax on for a plate written on an aviz. */
-export async function mmaForPlate(db, companyId, numarAuto) {
+/**
+ * What the registry knows about a plate written on an aviz.
+ *
+ * Three answers, not two. "No MTMA" reaches a screen as the same silence whether the lorry is
+ * unknown or merely incomplete, and those need different sentences: one is "add the vehicle",
+ * the other is "open this vehicle and fill in one field". Collapsing them is how an operator
+ * ends up retyping a figure that was already supposed to be recorded once.
+ */
+export async function vehicleForPlate(db, companyId, numarAuto) {
   const plate = primaryPlate(numarAuto);
-  if (!plate) return null;
+  if (!plate) return { plate: null, known: false, mmaKg: null, vehicleId: null };
+
   const res = await db.query(
-    `SELECT mma_kg FROM vehicles
-     WHERE company_id = $1 AND upper(btrim(plate)) = upper($2) AND mma_kg IS NOT NULL
+    `SELECT id, mma_kg FROM vehicles
+     WHERE company_id = $1 AND upper(btrim(plate)) = upper($2)
+     ORDER BY mma_kg IS NULL, created_at
      LIMIT 1`,
     [companyId, plate],
   );
-  const value = res.rows[0]?.mma_kg;
-  return value == null ? null : Number(value);
+  const row = res.rows[0];
+  return {
+    plate,
+    known: Boolean(row),
+    vehicleId: row?.id ?? null,
+    mmaKg: row?.mma_kg == null ? null : Number(row.mma_kg),
+  };
+}
+
+/** The MTMA to charge a zone tax on for a plate written on an aviz. */
+export async function mmaForPlate(db, companyId, numarAuto) {
+  return (await vehicleForPlate(db, companyId, numarAuto)).mmaKg;
 }

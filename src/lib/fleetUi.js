@@ -51,3 +51,32 @@ export function mmaLabel(kg) {
   const tonnes = n / 1000;
   return `${n.toLocaleString('ro-RO')} kg (${tonnes.toLocaleString('ro-RO', { maximumFractionDigits: 1 })} t)`;
 }
+
+/**
+ * What a typed plate says about the mass to charge on.
+ *
+ * Resolved here, on the client, because the zone map answers from the shipped street index
+ * without calling the server at all. Doing this lookup server-side would work on one of the two
+ * paths and quietly not on the other, which is worse than not doing it.
+ *
+ * Five outcomes, and the screen needs every one of them:
+ *   none     no plate typed, so nothing to say
+ *   invalid  typed, but not a plate
+ *   unknown  a plate, but no such lorry on file
+ *   missing  the lorry is on file with no MTMA, which is one field away from an answer
+ *   found    the figure
+ */
+export function resolveVehicleMma(vehicles, typedPlate) {
+  const plate = canonicalPlateClient(typedPlate);
+  if (!String(typedPlate || '').trim()) return { status: 'none', plate: null, mmaKg: null };
+  if (!plate) return { status: 'invalid', plate: null, mmaKg: null };
+
+  const match = (vehicles ?? []).find(
+    (v) => String(v.plate || '').trim().toUpperCase() === plate && v.is_active !== false,
+  );
+  if (!match) return { status: 'unknown', plate, mmaKg: null };
+
+  const kg = toFiniteNumber(match.mma_kg);
+  if (kg == null) return { status: 'missing', plate, mmaKg: null, vehicleId: match.id };
+  return { status: 'found', plate, mmaKg: kg, vehicleId: match.id };
+}

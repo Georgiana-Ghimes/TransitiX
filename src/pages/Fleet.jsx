@@ -11,7 +11,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Loader2, Truck, Plus, Check, TriangleAlert, ScanLine, Trash2, Search,
+  Loader2, Truck, Plus, Check, TriangleAlert, ScanLine, Trash2, Search, Pencil, X,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
@@ -233,10 +233,26 @@ export default function Fleet() {
   );
 }
 
+/**
+ * One lorry, with its MTMA locked once it has one.
+ *
+ * The figure is entered once and then read for years. Leaving it in an open box means a stray
+ * keystroke on a list somebody is scrolling can change which PMB bracket every future trip is
+ * charged at, and nothing on the screen would look wrong afterwards. Editing is deliberate:
+ * the pencil unlocks it, Escape puts it back.
+ */
 function VehicleRow({ vehicle, busy, onSave, onRemove }) {
-  const [value, setValue] = useState(vehicle.mma_kg == null ? '' : String(Math.round(Number(vehicle.mma_kg))));
+  const stored = vehicle.mma_kg == null ? '' : String(Math.round(Number(vehicle.mma_kg)));
   const missing = vehicle.mma_kg == null;
-  const dirty = value.trim() !== (vehicle.mma_kg == null ? '' : String(Math.round(Number(vehicle.mma_kg))));
+  // A lorry with no MTMA yet is the thing this screen exists for, so that one starts open.
+  const [editing, setEditing] = useState(missing);
+  const [value, setValue] = useState(stored);
+  const dirty = value.trim() !== stored;
+
+  const cancel = () => {
+    setValue(stored);
+    setEditing(false);
+  };
 
   return (
     <div className={`${cardCls} p-3 flex flex-wrap items-center gap-x-4 gap-y-2 ${missing ? 'ring-1 ring-amber-200' : ''}`}>
@@ -255,21 +271,52 @@ function VehicleRow({ vehicle, busy, onSave, onRemove }) {
       <div className="ml-auto flex items-center gap-2">
         <label className="text-[11px] text-slate-500 whitespace-nowrap">MTMA (kg)</label>
         <input
-          className="w-28 h-9 px-2 text-sm text-right border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30"
+          className={`w-28 h-9 px-2 text-sm text-right border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30 ${
+            editing
+              ? 'border-slate-200 bg-white text-slate-800'
+              : 'border-transparent bg-slate-50 text-slate-500 cursor-default'
+          }`}
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') cancel();
+            if (e.key === 'Enter' && dirty) onSave(value);
+          }}
+          readOnly={!editing}
           inputMode="numeric"
           placeholder="—"
         />
-        <button
-          type="button"
-          onClick={() => onSave(value)}
-          disabled={busy || !dirty}
-          className="inline-flex h-9 items-center gap-1.5 px-3 text-xs font-medium border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40"
-        >
-          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-          Salvează
-        </button>
+
+        {editing ? (
+          <>
+            <button
+              type="button"
+              onClick={() => onSave(value)}
+              disabled={busy || !dirty}
+              className="inline-flex h-9 items-center gap-1.5 px-3 text-xs font-medium border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40"
+            >
+              {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              Salvează
+            </button>
+            {missing ? null : (
+              <button type="button" onClick={cancel} disabled={busy} title="Renunță"
+                className="p-2 text-slate-400 hover:text-slate-700 disabled:opacity-40">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            disabled={busy}
+            title="Editează MTMA"
+            className="p-2 text-slate-400 hover:text-[#1D4E89] disabled:opacity-40"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onRemove}

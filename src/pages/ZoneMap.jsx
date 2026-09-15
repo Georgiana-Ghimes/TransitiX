@@ -14,6 +14,7 @@
  * screen gives is the answer the TPO would give.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   MapContainer, TileLayer, Polygon, CircleMarker, Tooltip, Popup, useMap,
 } from 'react-leaflet';
@@ -37,6 +38,7 @@ import {
   parseZoneOutlines,
 } from '@/lib/zoneGeometry';
 import { ZONE_CITIES, cityById, referenceZone } from '@/lib/zoneReference';
+import { mmaLabel, resolveVehicleMma } from '@/lib/fleetUi';
 import {
   hasStreetIndex, loadStreetIndex, lookupAddress, resolveAddress,
 } from '@/lib/streetZones';
@@ -79,6 +81,7 @@ function bracketLabel(rate) {
 export default function ZoneMap() {
   const [cityId, setCityId] = useState(ZONE_CITIES[0].id);
   const [taxZones, setTaxZones] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [rates, setRates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(() => new Set());
@@ -106,6 +109,12 @@ export default function ZoneMap() {
   const tonnesLikely = mma !== '' && Number.isFinite(mmaNumber)
     && mmaNumber > 0 && mmaNumber < 100;
 
+  // The plate is the normal way in: the mass is recorded once per lorry in Autoturisme, and
+  // retyping it per lookup is exactly what that screen exists to stop. A figure typed here
+  // still wins, because somebody checking a hypothetical means that number.
+  const fromPlate = resolveVehicleMma(vehicles, plate);
+  const effectiveMma = mma === '' ? fromPlate.mmaKg : mmaNumber;
+
   useEffect(() => {
     load();
   }, []);
@@ -113,9 +122,15 @@ export default function ZoneMap() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await api.commercial.zones();
+      const [data, fleet] = await Promise.all([
+        api.commercial.zones(),
+        // The street index answers without the server, so the plate has to resolve here too.
+        // A fleet is a few dozen rows; fetching it once beats a round trip per lookup.
+        api.entities.Vehicle.list('plate', 500).catch(() => []),
+      ]);
       setTaxZones(data?.zones ?? []);
       setRates(data?.zone_rates ?? []);
+      setVehicles(Array.isArray(fleet) ? fleet : []);
     } catch (err) {
       // The outlines still draw without this. The map stays useful as a reference even when
       // the pricing side cannot be read.
@@ -203,7 +218,7 @@ export default function ZoneMap() {
       const res = await api.commercial.locateZone({
         address: q,
         city: city.label,
-        mmaKg: mma === '' ? null : mmaNumber,
+        mmaKg: effectiveMma,
         plate: plate.trim() || null,
       });
       // Which drawn outline holds the pin. Asked here because the server answers about
@@ -438,7 +453,8 @@ export default function ZoneMap() {
           lookup={lookup}
           city={city}
           index={streetIndex}
-          mmaKg={mma === '' ? null : mmaNumber}
+          mmaKg={effectiveMma}
+          fromPlate={fromPlate}
           taxZoneFor={taxZoneFor}
           ratesFor={ratesFor}
           onPick={pickSuggestion}
@@ -463,7 +479,7 @@ export default function ZoneMap() {
         </div>
       ) : null}
 
-      {hit?.point ? <LocateResult hit={hit} /> : null}
+      {hit?.point ? <LocateResult hit={hit} fromPlate={fromPlate} /> : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
         <div className={`${cardCls} overflow-hidden`} style={{ height: '62vh', minHeight: 380 }}>
@@ -592,7 +608,56 @@ export default function ZoneMap() {
  * on the map charges nothing until it is linked to pricing, and a street that only partly lies
  * in its zone has no single answer at all.
  */
-function StreetResult({ lookup, city, index, mmaKg, taxZoneFor, ratesFor, onPick }) {
+/**
+ * Why there is no figure to charge on, and what would fix it.
+ *
+ * The plate is the normal way in, so "completează MTMA" on its own is the wrong instruction
+ * most of the time: the mass belongs on the lorry, entered once, and the sentence has to point
+ * at the place it lives rather than at a box on this screen.
+ */
+function MissingMma({ fromPlate }) {
+  const status = fromPlate?.status ?? 'none';
+
+  if (status === 'missing') {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1 text-amber-700">
+        <TriangleAlert className="w-3.5 h-3.5" />
+        <span>{fromPlate.plate} nu are MTMA completat.</span>
+        <Link to="/fleet" className="underline font-medium hover:text-amber-900">
+          Completează în Autoturisme
+        </Link>
+      </span>
+    );
+  }
+
+  if (status === 'unknown') {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1 text-amber-700">
+        <TriangleAlert className="w-3.5 h-3.5" />
+        <span>{fromPlate.plate} nu e în Autoturisme.</span>
+        <Link to="/fleet" className="underline font-medium hover:text-amber-900">
+          Adaugă mașina
+        </Link>
+      </span>
+    );
+  }
+
+  if (status === 'invalid') {
+    return (
+      <span className="text-slate-500">
+        Numărul de înmatriculare nu e valid. Scrie-l ca B 112 VFM, sau completează MTMA direct.
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-slate-500">
+      Scrie numărul de înmatriculare și iau MTMA din Autoturisme, sau completează-l direct.
+    </span>
+  );
+}
+
+function StreetResult({ lookup, city, index, mmaKg, fromPlate, taxZoneFor, ratesFor, onPick }) {
   if (lookup.status === 'ambiguous') {
     return (
       <div className={`${cardCls} p-3 text-sm`}>
@@ -697,12 +762,13 @@ function StreetResult({ lookup, city, index, mmaKg, taxZoneFor, ratesFor, onPick
             {zone.code} nu e activată pentru calcul, TPO-ul nu va adăuga nicio taxă aici.
           </span>
         ) : mmaKg == null ? (
-          <span className="text-slate-500">Completează MMA ca să vezi taxa.</span>
+          <MissingMma fromPlate={fromPlate} />
         ) : rate ? (
           <>
             <span className="text-slate-800 font-semibold">{formatAmount(rate)}</span>
             <span className="text-[11px] text-slate-400">
-              {zone.code} · {mmaKg.toLocaleString('ro-RO')} kg
+              {zone.code} · {mmaLabel(mmaKg)}
+              {fromPlate?.status === 'found' ? ` · ${fromPlate.plate}` : ''}
               {settled ? '' : ' · dacă adresa e în zonă'}
             </span>
           </>
@@ -736,7 +802,7 @@ function pickRate(rates, mmaKg) {
   })[0] ?? null;
 }
 
-function LocateResult({ hit }) {
+function LocateResult({ hit, fromPlate }) {
   const drawn = hit.drawn;
   const charged = hit.zone;
   const amount = formatAmount(hit.rate);
@@ -781,15 +847,18 @@ function LocateResult({ hit }) {
             <span className="text-slate-800 font-semibold">{amount}</span>
             <span className="text-[11px] text-slate-400">
               {charged.code} · {hit.matched_by === 'polygon' ? 'după contur' : 'după text'}
-              {hit.mma_kg != null ? ` · ${hit.mma_kg.toLocaleString('ro-RO')} kg` : ''}
+              {hit.mma_kg != null ? ` · ${mmaLabel(hit.mma_kg)}` : ''}
+              {fromPlate?.status === 'found' ? ` · ${fromPlate.plate}` : ''}
             </span>
           </>
+        ) : charged && hit.mma_kg == null ? (
+          // Same sentence as the index path uses. The two disagreeing about what is missing
+          // would send the same operator to two different places for one problem.
+          <MissingMma fromPlate={fromPlate} />
         ) : charged ? (
           <span className="inline-flex items-center gap-1 text-amber-700">
             <TriangleAlert className="w-3.5 h-3.5" />
-            {hit.mma_kg == null
-              ? `${charged.code} intră în calcul, dar fără MMA nu se poate alege tranșa.`
-              : `${charged.code} nu are tarif valabil la ${hit.date} pentru ${hit.mma_kg.toLocaleString('ro-RO')} kg.`}
+            {`${charged.code} nu are tarif valabil la ${hit.date} pentru ${mmaLabel(hit.mma_kg)}.`}
           </span>
         ) : drawn ? (
           <span className="inline-flex items-center gap-1 text-amber-700">

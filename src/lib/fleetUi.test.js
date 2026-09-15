@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalPlateClient, mmaLabel, parseMmaKg } from './fleetUi.js';
+import { canonicalPlateClient, mmaLabel, parseMmaKg, resolveVehicleMma } from './fleetUi.js';
 
 describe('canonicalPlateClient', () => {
   it('stores one form, whatever was typed', () => {
@@ -62,5 +62,45 @@ describe('mmaLabel', () => {
   it('has something to show for nothing', () => {
     expect(mmaLabel(null)).toBe('—');
     expect(mmaLabel('')).toBe('—');
+  });
+});
+
+describe('resolveVehicleMma', () => {
+  const fleet = [
+    { id: 'a', plate: 'B-112-VFM', mma_kg: 26000 },
+    { id: 'b', plate: 'B-200-AAA', mma_kg: null },
+    { id: 'c', plate: 'B-300-OLD', mma_kg: 40000, is_active: false },
+  ];
+
+  it('finds the mass from the plate, however it was typed', () => {
+    for (const form of ['B-112-VFM', 'b 112 vfm', 'B112VFM']) {
+      expect(resolveVehicleMma(fleet, form), form)
+        .toMatchObject({ status: 'found', mmaKg: 26000 });
+    }
+  });
+
+  it('separates a lorry with no MTMA from one nobody has entered', () => {
+    // The two need different sentences: one is "add the vehicle", the other is "open it and
+    // fill in one field". Collapsing them is how somebody retypes a figure already on file.
+    expect(resolveVehicleMma(fleet, 'B-200-AAA').status).toBe('missing');
+    expect(resolveVehicleMma(fleet, 'B-999-ZZZ').status).toBe('unknown');
+  });
+
+  it('says nothing when no plate was typed', () => {
+    expect(resolveVehicleMma(fleet, '').status).toBe('none');
+    expect(resolveVehicleMma(fleet, '   ').status).toBe('none');
+  });
+
+  it('calls out text that is not a plate', () => {
+    expect(resolveVehicleMma(fleet, 'masina lui Gigi').status).toBe('invalid');
+  });
+
+  it('ignores a retired lorry', () => {
+    expect(resolveVehicleMma(fleet, 'B-300-OLD').status).toBe('unknown');
+  });
+
+  it('survives an empty fleet', () => {
+    expect(resolveVehicleMma([], 'B-112-VFM').status).toBe('unknown');
+    expect(resolveVehicleMma(null, 'B-112-VFM').status).toBe('unknown');
   });
 });

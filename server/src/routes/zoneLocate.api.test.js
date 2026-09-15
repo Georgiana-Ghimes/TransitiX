@@ -311,7 +311,7 @@ describe('the MTMA comes from the lorry, not from retyping', () => {
     // Autoturisme. Retyping it per trip is how a 26 t lorry ends up billed as a 12 t one.
     const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: PLATE });
     expect(res.body.mma_kg).toBe(26000);
-    expect(res.body.mma_from_plate).toBe(PLATE);
+    expect(res.body.vehicle).toMatchObject({ plate: PLATE, known: true, has_mma: true });
   });
 
   it('recognises the lorry however the plate was written', async () => {
@@ -332,7 +332,8 @@ describe('the MTMA comes from the lorry, not from retyping', () => {
       address: 'Calea Victoriei, Bucuresti', plate: PLATE, mma_kg: 40000,
     });
     expect(res.body.mma_kg).toBe(40000);
-    expect(res.body.mma_from_plate).toBeNull();
+    // The lorry is still reported, so the screen can say where the figure did not come from.
+    expect(res.body.vehicle).toMatchObject({ known: true, has_mma: true });
   });
 
   it('stays null for a lorry with no MTMA recorded', async () => {
@@ -343,6 +344,23 @@ describe('the MTMA comes from the lorry, not from retyping', () => {
     );
     const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: 'B-777-NEW' });
     expect(res.body.mma_kg).toBeNull();
-    expect(res.body.mma_from_plate).toBeNull();
+    expect(res.body.vehicle).toMatchObject({ known: true, has_mma: false });
+  });
+});
+
+describe('telling an unknown lorry from an incomplete one', () => {
+  it('says the plate is not on file at all', async () => {
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: 'B-888-XXX' });
+    expect(res.body.vehicle).toMatchObject({ plate: 'B-888-XXX', known: false, has_mma: false });
+  });
+
+  it('reports nothing about a vehicle when no plate was given', async () => {
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti' });
+    expect(res.body.vehicle).toBeNull();
+  });
+
+  it('reports nothing for text that is not a plate', async () => {
+    const res = await locate({ address: 'Calea Victoriei, Bucuresti', plate: 'masina lui Gigi' });
+    expect(res.body.vehicle).toBeNull();
   });
 });

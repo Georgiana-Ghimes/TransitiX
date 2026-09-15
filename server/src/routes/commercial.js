@@ -18,7 +18,7 @@ import { findOverlaps, findTariff, tariffHistory } from '../lib/pricing/tariffs.
 import { findZoneRate, pointInPolygon, resolveZone } from '../lib/pricing/taxes.js';
 import { geocodeAddress } from '../lib/geo/geocode.js';
 import { parseRomanianAddress } from '../lib/geo/address.js';
-import { mmaForPlate } from '../lib/fleet/plateRegistry.js';
+import { vehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { parseCodeRows } from '../lib/pricing/codeImport.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
 
@@ -193,10 +193,10 @@ router.post('/zones/locate', async (req, res) => {
     // once in Autoturisme, not something to retype per trip. A figure typed here still wins:
     // somebody checking a hypothetical is asking about that number, not about the fleet.
     const plate = String(req.body?.plate || '').trim();
-    let mmaFromPlate = null;
-    if (mmaKg == null && plate) {
-      mmaFromPlate = await mmaForPlate(pool, companyId, plate);
-      if (mmaFromPlate != null) mmaKg = mmaFromPlate;
+    let vehicle = null;
+    if (plate) {
+      vehicle = await vehicleForPlate(pool, companyId, plate);
+      if (mmaKg == null && vehicle.mmaKg != null) mmaKg = vehicle.mmaKg;
     }
     const onDate = String(req.body?.date || today()).slice(0, 10);
 
@@ -272,7 +272,13 @@ router.post('/zones/locate', async (req, res) => {
       matched_by: matchedBy,
       rate: rate ? serializeRow(rate) : null,
       mma_kg: mmaKg,
-      mma_from_plate: mmaFromPlate != null ? plate : null,
+      // What the screen needs to write a sentence: whether the lorry is on file at all, and
+      // whether the figure shown came from there rather than from the box. "No MTMA" reaching
+      // the screen as one silence, for both an unknown lorry and an incomplete one, is how an
+      // operator ends up retyping a number that was supposed to be recorded once.
+      vehicle: vehicle?.plate
+        ? { plate: vehicle.plate, known: vehicle.known, has_mma: vehicle.mmaKg != null }
+        : null,
       date: onDate,
     });
   } catch (err) {
