@@ -11,6 +11,7 @@
 import {
   NO_MATCH,
   extractDate,
+  extractGoodsUnit,
   extractGrossWeight,
   extractNetWeight,
   extractPalletCount,
@@ -102,7 +103,11 @@ const goodsField = (text) => {
       value: String(product.value).replace(/\s+/g, ' ').trim().slice(0, 60),
     };
   }
-  return NO_MATCH;
+
+  // The packaging a document names is a goods type too, and on a transfer aviz it is the only
+  // one present: `Numarul de galeti 768.00` says buckets, where the `Cantitate 768.00 buc` two
+  // lines above is merely counting them. RAI's annex wants the word that names something.
+  return extractGoodsUnit(text);
 };
 
 /**

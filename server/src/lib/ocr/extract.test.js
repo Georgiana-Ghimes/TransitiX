@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalPlate,
   extractDate,
+  extractGoodsUnit,
   extractGrossWeight,
   extractNetWeight,
   extractPalletCount,
   extractPlate,
   extractQuantity,
+  isGenericCountUnit,
   isPlausibleQuantity,
   overallConfidence,
   parseNumber,
@@ -555,5 +557,46 @@ describe('the operator corrects what is on the screen, not what the extractor ca
       correctedFields: fixed.corrected_fields,
     });
     expect(again.values.quantity).toBe(400);
+  });
+});
+
+describe('tip marfa: the word that names something', () => {
+  it('prefers the packaging the document names over the count', () => {
+    // A Baumit transfer aviz prints `Cantitate 768.00 buc` and, two lines down, `Numarul de
+    // galeti 768.00`. Both describe buckets; only the second says so. Writing "bucati" onto the
+    // customer's annex puts a word in front of them that names nothing.
+    const aviz = 'Cantitate 768.00 buc BetonKontakt 20 kg Numarul de galeti 768.00';
+    expect(extractGoodsUnit(aviz).value).toBe('galeti');
+  });
+
+  it('reads the label whichever way it is spelled', () => {
+    expect(extractGoodsUnit('Numărul de găleți 768').value).toBe('galeti');
+    expect(extractGoodsUnit('numarul de saci 420').value).toBe('saci');
+  });
+
+  it('ranks a named packaging above a bare count wherever they appear', () => {
+    expect(extractGoodsUnit('768 buc, 420 saci').value).toBe('saci');
+    expect(extractGoodsUnit('18 paleti si 768 buc').value).toBe('paleti');
+  });
+
+  it('offers a bare count for review rather than writing it unattended', () => {
+    // 0.4 sits under ACCEPT_CONFIDENCE, so "bucati" reaches an operator instead of the annex.
+    const bare = extractGoodsUnit('Cantitate 768.00 buc');
+    expect(bare.value).toBe('bucati');
+    expect(bare.confidence).toBeLessThan(ACCEPT_CONFIDENCE);
+  });
+
+  it('never reads a weight as a kind of goods', () => {
+    expect(extractGoodsUnit('Greutate bruta, kg 15,744.00').value).toBeNull();
+    expect(extractGoodsUnit('9,5 t').value).toBeNull();
+  });
+
+  it('knows which words only count', () => {
+    for (const unit of ['buc', 'bucati', 'bucăți', 'pcs', 'PCE']) {
+      expect(isGenericCountUnit(unit), unit).toBe(true);
+    }
+    for (const unit of ['saci', 'galeti', 'paleti', '']) {
+      expect(isGenericCountUnit(unit), unit).toBe(false);
+    }
   });
 });

@@ -275,6 +275,73 @@ export function isPlausibleQuantity(value, unit) {
   return n <= max;
 }
 
+/**
+ * How much a unit says about what is on the lorry.
+ *
+ * "buc" is a counting word, not a kind of goods: an aviz reading `Cantitate 768.00 buc` and
+ * `Numarul de galeti 768.00` is describing buckets both times, and only the second says so.
+ * Writing "bucati" into Tip marfa puts a word on the customer's annex that names nothing.
+ *
+ * Shared with `avizOcr.parseQty`, which ranks the same way. One table, because two would drift
+ * and the two readers of the same document would then disagree about its goods.
+ */
+export const GOODS_UNIT_RANK = Object.freeze({
+  galeti: 4, saci: 3, paleti: 2, bucati: 1,
+});
+
+/** True when a unit only counts things, without saying what they are. */
+export function isGenericCountUnit(unit) {
+  const folded = String(unit || '').toLowerCase().trim();
+  return /^(buc|bucati|bucăți|bucati\.|pcs|pce|pc)$/.test(folded);
+}
+
+// Matched against folded text, so the diacritic spellings are already gone by this point and
+// listing them here would only add dead alternatives.
+const GOODS_UNIT_SOURCE = '(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?)';
+
+/**
+ * A packaging word, or null.
+ *
+ * Built on `quantityKey`, which already maps every spelling onto the same four names and is
+ * what the plausibility ceilings key off. A second mapping would be a second opinion about
+ * what "gal" means. Weights are rejected here: tonnes are how much, not what.
+ */
+function goodsUnitOf(raw) {
+  const key = quantityKey(raw);
+  return GOODS_UNIT_RANK[key] ? key : null;
+}
+
+/**
+ * The packaging the document actually names, preferring the word that says the most.
+ *
+ * A label like `Numarul de galeti` is taken first: it exists on the page precisely to name the
+ * packaging, where a bare `768 buc` is only counting. Failing that, every `N unit` pair is
+ * ranked and the most specific wins.
+ */
+export function extractGoodsUnit(text) {
+  const folded = foldUnit(text);
+
+  const labelled = folded.match(new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'));
+  if (labelled) {
+    const unit = goodsUnitOf(labelled[1]);
+    if (unit) return result(unit, 0.9, labelled[0]);
+  }
+
+  let best = null;
+  const re = new RegExp(`\\d[\\d.,]*\\s*${GOODS_UNIT_SOURCE}\\b`, 'gi');
+  let match = re.exec(folded);
+  while (match) {
+    const unit = goodsUnitOf(match[1]);
+    const rank = GOODS_UNIT_RANK[unit] ?? 0;
+    if (unit && (!best || rank > best.rank)) best = { unit, rank, matched: match[0] };
+    match = re.exec(folded);
+  }
+  if (!best) return NO_MATCH;
+  // A bare count is the weakest thing a document can say, so it is offered for review rather
+  // than written unattended.
+  return result(best.unit, best.rank > 1 ? 0.8 : 0.4, best.matched);
+}
+
 /** Quantity with its unit, kept separate from weight, never used in its place. */
 export function extractQuantity(text) {
   const blob = String(text || '');

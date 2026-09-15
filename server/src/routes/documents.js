@@ -10,6 +10,7 @@ import { readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
+import { isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 
 const storage = multer.diskStorage({
@@ -91,7 +92,12 @@ function toColumns(values) {
     else if (EXTRACT_COLUMNS.includes(name)) out[name] = value;
   }
   // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
-  if ((out.tip_marfa == null || String(out.tip_marfa).trim() === '') && out.quantity_unit) {
+  // A bare count is not a packaging unit, though. An aviz reading `Cantitate 768.00 buc` two
+  // lines above `Numarul de galeti 768.00` is describing buckets both times, and only the
+  // second says so — writing "bucati" onto the customer's annex puts a word there that names
+  // nothing. Left empty instead, so the repair pass and the operator each still get a turn.
+  if ((out.tip_marfa == null || String(out.tip_marfa).trim() === '')
+      && out.quantity_unit && !isGenericCountUnit(out.quantity_unit)) {
     out.tip_marfa = normalizeGoodsUnit(out.quantity_unit) || String(out.quantity_unit).trim();
   }
   return out;
