@@ -442,6 +442,38 @@ NUMAR AUTO TEST-101
     expect(repaired.cantitate_marfa).toBeNull();
     expect(avizFieldConfidence(repaired).cantitate_marfa).toBe('low');
   });
+
+  it('upgrades a stored bucati tip from Numarul de galeti in raw_text', () => {
+    // Rows extracted before the packaging-aware tip still have tip_marfa / quantity_unit =
+    // bucati. List and export must re-read the stored OCR, not wait for a re-scan.
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'bucati',
+      quantity_unit: 'buc',
+      cantitate_marfa: 768,
+      extracted_data: {
+        raw_text: 'Cantitate 768.00 buc BetonKontakt 20 kg Numarul de galeti 768.00',
+      },
+    });
+    expect(repaired.tip_marfa).toBe('galeti');
+  });
+
+  it('keeps an office-edited packaging tip over a weaker parse', () => {
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'galeti',
+      quantity_unit: 'bucati',
+      extracted_data: { raw_text: 'Cantitate 768.00 buc' },
+    });
+    expect(repaired.tip_marfa).toBe('galeti');
+  });
+
+  it('fills tip from quantity_unit when raw_text has no packaging word', () => {
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'bucati',
+      quantity_unit: 'saci',
+      extracted_data: { raw_text: 'Cantitate 245 buc' },
+    });
+    expect(repaired.tip_marfa).toBe('saci');
+  });
 });
 
 describe('mapAnnexRows', () => {

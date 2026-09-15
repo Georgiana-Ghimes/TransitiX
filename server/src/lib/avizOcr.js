@@ -9,6 +9,7 @@ import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
 import {
   extractGrossWeight,
   isAcceptableAutoField,
+  isGenericCountUnit,
   isPlausibleQuantity,
   parseNumber,
   RO_PLATE_COUNTIES,
@@ -483,12 +484,28 @@ function preferQuantity(row, parsed) {
   return null;
 }
 
+/**
+ * Tip marfa for list / export / repair.
+ *
+ * A bare count ("bucati") on the row is OCR noise from `Cantitate … buc`, not an office edit.
+ * Prefer a packaging word from the stored raw text (or a non-generic quantity_unit) so old
+ * rows upgrade on the next list/export without a re-scan. A real packaging tip already on
+ * the row (Editează → găleți) is kept.
+ */
 function preferTipMarfa(row, parsed) {
-  const stored = preferStored(row?.tip_marfa, parsed?.tip_marfa);
-  if (fieldFilled(stored)) return stored;
-  return normalizeGoodsUnit(row?.quantity_unit)
-    || normalizeGoodsUnit(parsed?.tip_marfa)
-    || null;
+  const storedRaw = row?.tip_marfa;
+  const storedUnit = normalizeGoodsUnit(storedRaw);
+  if (storedUnit && !isGenericCountUnit(storedUnit)) return storedUnit;
+
+  const fromParsed = normalizeGoodsUnit(parsed?.tip_marfa);
+  if (fromParsed && !isGenericCountUnit(fromParsed)) return fromParsed;
+
+  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
+  if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
+
+  // Free-text product name (not a unit spelling) stays; bare "bucati" does not.
+  if (fieldFilled(storedRaw) && !storedUnit) return String(storedRaw).trim();
+  return null;
 }
 
 /** Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values. */
