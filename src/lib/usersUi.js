@@ -18,6 +18,11 @@ export const STATES = {
     badge: 'bg-blue-50 text-blue-700 border-blue-200',
     hint: 'Are o invitație validă, dar nu și-a ales încă parola.',
   },
+  manual: {
+    label: 'Creat manual',
+    badge: 'bg-violet-50 text-violet-700 border-violet-200',
+    hint: 'Adăugat de un administrator cu parolă temporară. Nu s-a autentificat încă.',
+  },
   expired: {
     label: 'Invitație expirată',
     badge: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -66,6 +71,14 @@ export function warningsFor(user, { adminCount } = {}) {
     warnings.push({
       code: 'driver_unlinked',
       text: 'Fără profil de șofer: se poate autentifica, dar aplicația de șofer va fi goală.',
+    });
+  }
+  if (user.is_active && user.must_change_password) {
+    warnings.push({
+      code: 'temporary_password',
+      text: user.state === 'manual'
+        ? 'Are parolă temporară: la prima autentificare va fi obligat să-și aleagă alta.'
+        : 'Folosește încă parola temporară: nu poate lucra până nu și-o schimbă.',
     });
   }
   if (user.is_active && user.state === 'expired') {

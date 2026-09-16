@@ -22,6 +22,8 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import VerifyEmail from '@/pages/VerifyEmail';
+import ChangePassword from '@/pages/ChangePassword';
 
 const TripDetail = lazy(() => import('@/pages/TripDetail'));
 const GPSMap = lazy(() => import('@/pages/GPSMap'));
@@ -136,11 +138,10 @@ const AuthenticatedApp = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
         <Route path="/login" element={<Login />} />
-        {!isDocumentsProfile() && (
-          <>
-            <Route path="/register" element={<Register />} />
-          </>
-        )}
+        {/* Offered on both profiles; the page itself asks the server whether sign-up is open. */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/confirm/:token" element={<ClientPortal />} />

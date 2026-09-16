@@ -132,6 +132,8 @@ export function inviteState(row, now = new Date()) {
   if (row.reset_token && row.reset_token_expires_at && new Date(row.reset_token_expires_at) > now) {
     return 'invited';
   }
+  // Created by hand with a temporary password: nothing has expired, nobody has signed in yet.
+  if (row.created_via === 'manual' && row.must_change_password) return 'manual';
   return 'expired';
 }
 

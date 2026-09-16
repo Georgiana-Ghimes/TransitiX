@@ -1441,6 +1441,31 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_entity
 CREATE INDEX IF NOT EXISTS idx_audit_events_user
   ON audit_events(company_id, user_id, created_at DESC);
 
+-- Self sign-up, Google sign-in and accounts an admin adds by hand.
+--
+-- created_via says how the row came to exist: signup, google, invite, manual. NULL means it
+-- predates this column, and only those rows are backfilled as verified below. The backfill runs on
+-- every start, so it must never touch a row created since: a self sign-up waiting on its link would
+-- otherwise be verified by the next restart.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_via TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+-- Only the hash is stored; the plaintext exists in the email and nowhere else.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_expires_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT;
+-- Set for an account an admin created with a temporary password. Every API call except /api/auth
+-- is refused until the person has chosen their own.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE users SET email_verified_at = COALESCE(last_login, created_at)
+WHERE email_verified_at IS NULL AND created_via IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_users_verify_token ON users (email_verify_token_hash)
+  WHERE email_verify_token_hash IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users (google_sub)
+  WHERE google_sub IS NOT NULL;
+
 `
 
 async function migrate() {

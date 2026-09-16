@@ -94,6 +94,14 @@ describe('warningsFor', () => {
     expect(warningsFor(user({ role: 'admin' }), { adminCount: 2 })).toEqual([]);
   });
 
+  it('says a hand-made account still has its temporary password', () => {
+    const fresh = warningsFor(user({ state: 'manual', must_change_password: true }));
+    expect(fresh.map((w) => w.code)).toEqual(['temporary_password']);
+    expect(fresh[0].text).toMatch(/prima autentificare/);
+    const signedIn = warningsFor(user({ state: 'active', must_change_password: true }));
+    expect(signedIn[0].text).toMatch(/nu poate lucra/);
+  });
+
   it('does not nag about a deactivated account', () => {
     // An expired invitation on somebody who has left is not a problem to solve.
     expect(warningsFor(user({ state: 'expired', is_active: false }))).toEqual([]);

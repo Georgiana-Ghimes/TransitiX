@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from '@/api/client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleSignInButton, { OrDivider } from "@/components/GoogleSignInButton";
+import { CheckEmailPanel, ErrorBox, useAuthProviders } from "@/components/auth/AuthNotices";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { isDocumentsProfile, companionAppTitle } from '@/lib/appProfile';
 import { postLoginPath } from "@/lib/roles";
@@ -17,7 +19,11 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [existingSession, setExistingSession] = useState(null);
+  const [unverified, setUnverified] = useState(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const returnTo = safeReturnTo();
+  const navigate = useNavigate();
+  const providers = useAuthProviders();
 
   useEffect(() => {
     if (!api.auth.getToken()) return;
@@ -32,11 +38,40 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await api.auth.loginViaEmailPassword(email, password);
-      window.location.href = postLoginPath(data?.user, returnTo);
+      window.location.href = afterSignIn(data?.user);
     } catch (err) {
-      setError(friendlyErrorMessage(err));
+      if (err?.data?.code === "EMAIL_NOT_VERIFIED") {
+        setUnverified(err.data.email || email);
+      } else {
+        setError(friendlyErrorMessage(err));
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // A temporary password has to be replaced before anything else; the server enforces it too.
+  const afterSignIn = (user) => (user?.must_change_password
+    ? `/change-password${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
+    : postLoginPath(user, returnTo));
+
+  const handleGoogle = async (credential) => {
+    setError("");
+    setGoogleBusy(true);
+    try {
+      const data = await api.auth.google({ credential });
+      window.location.href = afterSignIn(data?.user);
+    } catch (err) {
+      if (err?.data?.code === "GOOGLE_NEEDS_COMPANY") {
+        // No account for this address yet: creating one is the sign-up screen's job.
+        navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
+          state: { googlePending: { ...err.data, credential } },
+        });
+      } else {
+        setError(friendlyErrorMessage(err));
+      }
+    } finally {
+      setGoogleBusy(false);
     }
   };
 
@@ -54,7 +89,7 @@ export default function Login() {
       title="Bine ai revenit"
       subtitle={documentsCompanion ? `Autentifică-te în ${appTitle}` : 'Autentifică-te în Transitix'}
       footer={
-        documentsCompanion ? null : (
+        !providers?.signup_enabled ? null : (
         <>
           Nu ai cont?{" "}
           <Link
@@ -83,11 +118,31 @@ export default function Login() {
         </div>
       )}
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
+      {unverified ? (
+        <div className="space-y-4">
+          <CheckEmailPanel email={unverified} emailSent={false} />
+          <button
+            type="button"
+            onClick={() => setUnverified(null)}
+            className="w-full text-xs text-muted-foreground hover:underline"
+          >
+            Înapoi la autentificare
+          </button>
         </div>
+      ) : (
+      <>
+      {providers?.google_client_id && (
+        <>
+          <GoogleSignInButton
+            clientId={providers.google_client_id}
+            onCredential={handleGoogle}
+            disabled={googleBusy}
+          />
+          <OrDivider />
+        </>
       )}
+
+      <ErrorBox message={error} />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
@@ -139,6 +194,8 @@ export default function Login() {
           )}
         </Button>
       </form>
+      </>
+      )}
     </AuthLayout>
   );
 }

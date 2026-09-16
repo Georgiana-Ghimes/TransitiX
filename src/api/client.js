@@ -16,7 +16,7 @@ function setRefreshToken(token) {
 }
 
 function skipAuthRefresh(path) {
-  return /^\/auth\/(login|register|refresh|logout|reset-password)/.test(path);
+  return /^\/auth\/(login|register|refresh|logout|reset-password|verify-email|resend-verification|google|check-email|providers)/.test(path);
 }
 
 let refreshInFlight = null;
@@ -339,6 +339,13 @@ export const api = {
         method: 'POST',
         body: { ...body, origin: window.location.origin },
       });
+    },
+    /**
+     * Adds somebody by hand with a temporary password. The server returns the password only when
+     * it generated it, and refuses the person everything but choosing their own until they do.
+     */
+    createManual(body) {
+      return request('/users/manual', { method: 'POST', body });
     },
     resendInvite(id) {
       return request(`/users/${encodeURIComponent(id)}/resend-invite`, {
@@ -698,10 +705,52 @@ export const api = {
       setRefreshToken(data.refresh_token);
       return data;
     },
-    async register({ email, password, name, company_name } = {}) {
-      const data = await request('/auth/register', {
+    /** What this server offers: sign-up, Google, whether email actually goes out. */
+    providers() {
+      return request('/auth/providers');
+    },
+    checkEmail(email) {
+      return request('/auth/check-email', { method: 'POST', body: { email } });
+    },
+    /**
+     * Creates the company and its admin. No session comes back: the address has to be confirmed
+     * first, so the caller shows "check your email" (or the link, when email is not configured).
+     */
+    async register({ email, password, name, company_name, account_type, confirm_domain } = {}) {
+      return request('/auth/register', {
         method: 'POST',
-        body: { email, password, name: name || undefined, company_name },
+        body: {
+          email, password, name, company_name, account_type, confirm_domain,
+          origin: window.location.origin,
+        },
+      });
+    },
+    async verifyEmail(token) {
+      const data = await request('/auth/verify-email', { method: 'POST', body: { token } });
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      return data;
+    },
+    resendVerification(email) {
+      return request('/auth/resend-verification', {
+        method: 'POST',
+        body: { email, origin: window.location.origin },
+      });
+    },
+    /** Signs in (or creates the company, with `company_name`) from a Google ID token. */
+    async google({ credential, company_name, confirm_domain } = {}) {
+      const data = await request('/auth/google', {
+        method: 'POST',
+        body: { credential, company_name, confirm_domain },
+      });
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      return data;
+    },
+    async changePassword({ current_password, new_password }) {
+      const data = await request('/auth/change-password', {
+        method: 'POST',
+        body: { current_password, new_password },
       });
       setToken(data.access_token);
       setRefreshToken(data.refresh_token);
@@ -751,10 +800,6 @@ export const api = {
     },
     async resetPassword(payload) {
       return request('/auth/reset-password', { method: 'POST', body: payload });
-    },
-    // Google / OTP stubs removed for MVP
-    loginWithProvider() {
-      throw new Error('Google login is not configured yet');
     },
     verifyOtp() {
       throw new Error('OTP verification is not configured yet');

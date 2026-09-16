@@ -14,7 +14,9 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { pool, query } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
-import { sendEmail, emailConfigured } from '../lib/email.js';
+import { emailConfigured } from '../lib/email.js';
+import { appLink, deliverAccountEmail, invitationEmail } from '../lib/auth/mail.js';
+import { passwordProblem, temporaryPassword } from '../lib/auth/signup.js';
 import { revokeAllForUser } from '../lib/sessions.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
 import {
@@ -54,7 +56,52 @@ function serializeUser(row) {
     driver_name: row.driver_name || null,
     driver_ready: driverReady(row),
     active_sessions: row.active_sessions ?? 0,
+    created_via: row.created_via || null,
+    must_change_password: Boolean(row.must_change_password),
+    google_linked: Boolean(row.google_sub),
   };
+}
+
+/**
+ * Refuses an address that already has an account anywhere.
+ *
+ * Sign-in looks an address up across every company, so the same address in two companies means
+ * one of the two people can never sign in, and nobody would know which.
+ */
+async function assertEmailFree(companyId, email) {
+  const existing = (await query(
+    `SELECT company_id, is_active FROM users WHERE LOWER(email) = $1
+     ORDER BY (company_id = $2) DESC LIMIT 1`,
+    [email, companyId]
+  )).rows[0];
+  if (!existing) return;
+  let message;
+  if (existing.company_id !== companyId) {
+    message = 'Adresa este deja folosită de un cont din altă firmă. Folosește altă adresă pentru această persoană.';
+  } else if (existing.is_active) {
+    message = 'Există deja un cont cu acest email.';
+  } else {
+    message = 'Există un cont dezactivat cu acest email. Reactivează-l în loc să creezi altul.';
+  }
+  const err = new Error(message);
+  err.status = 409;
+  throw err;
+}
+
+async function companyName(companyId) {
+  const res = await query('SELECT name FROM companies WHERE id = $1', [companyId]);
+  return res.rows[0]?.name || null;
+}
+
+/** A driver profile already carrying this email is the same person; link it. */
+async function linkDriverByEmail(companyId, userId, role, email) {
+  if (role !== 'driver') return null;
+  return (await query(
+    `UPDATE drivers SET user_id = $1, updated_at = NOW()
+     WHERE company_id = $2 AND user_id IS NULL AND LOWER(email) = $3
+     RETURNING id, name`,
+    [userId, companyId, email]
+  )).rows[0] || null;
 }
 
 /** Active administrators, for the two rules that depend on there being another one. */
@@ -148,17 +195,7 @@ router.post('/invite', async (req, res) => {
     if (!check.ok) return res.status(400).json({ message: check.errors.join(' ') });
     const { name, email, role } = check.value;
 
-    const existing = await query(
-      `SELECT id, is_active FROM users WHERE company_id = $1 AND LOWER(email) = $2`,
-      [req.user.company_id, email]
-    );
-    if (existing.rows[0]) {
-      return res.status(409).json({
-        message: existing.rows[0].is_active
-          ? 'Există deja un cont cu acest email.'
-          : 'Există un cont dezactivat cu acest email. Reactivează-l în loc să creezi altul.',
-      });
-    }
+    await assertEmailFree(req.user.company_id, email);
 
     const token = crypto.randomBytes(32).toString('hex');
     // NOT NULL needs a value, and it must be one nobody can guess or reuse.
@@ -168,27 +205,18 @@ router.post('/invite', async (req, res) => {
 
     const created = (await query(
       `INSERT INTO users (company_id, name, email, password_hash, role, phone,
-                          reset_token, reset_token_expires_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7, NOW() + ($8::int || ' hours')::interval)
+                          reset_token, reset_token_expires_at, created_via)
+       VALUES ($1,$2,$3,$4,$5,$6,$7, NOW() + ($8::int || ' hours')::interval, 'invite')
        RETURNING *`,
       [req.user.company_id, name, email, password_hash, role,
         String(req.body?.phone || '').trim() || null, token, INVITE_TTL_HOURS]
     )).rows[0];
 
-    // A driver profile already carrying this email is the same person; link it rather than
-    // leaving an account that signs in to an empty driver app.
-    let linked = null;
-    if (role === 'driver') {
-      linked = (await query(
-        `UPDATE drivers SET user_id = $1, updated_at = NOW()
-         WHERE company_id = $2 AND user_id IS NULL AND LOWER(email) = $3
-         RETURNING id, name`,
-        [created.id, req.user.company_id, email]
-      )).rows[0] || null;
-    }
+    // Linked rather than leaving an account that signs in to an empty driver app.
+    const linked = await linkDriverByEmail(req.user.company_id, created.id, role, email);
 
-    const invite_link = inviteLink(req, token);
-    const sent = await deliverInvite({ to: email, name, link: invite_link, company: req.user });
+    const invite_link = appLink(req, '/reset-password', token);
+    const sent = await deliverInvite(req, { to: email, name, link: invite_link });
 
     await auditUser(req, {
       action: 'create',
@@ -200,11 +228,61 @@ router.post('/invite', async (req, res) => {
     res.status(201).json({
       user: serializeUser({ ...created, driver_id: linked?.id, driver_name: linked?.name }),
       email_sent: sent,
-      // Without a mail provider the link is the only way to pass the invitation on.
+      email_configured: emailConfigured(),
+      // Without a mail provider (or when it refused) the link is the only way to pass it on.
       invite_link: sent ? undefined : invite_link,
     });
   } catch (err) {
     fail(res, err, 'Invitația nu a putut fi trimisă.');
+  }
+});
+
+/**
+ * Adds an employee by hand, for somebody who cannot receive an invitation right now.
+ *
+ * The admin sets (or is given) a **temporary** password, and the account is marked so that every
+ * API call outside /api/auth is refused until the person chooses their own. That keeps the rule
+ * this file started from: the admin may know a password for one sign-in, never the one the person
+ * goes on using. The password never reaches the trail and is returned only when generated.
+ */
+router.post('/manual', async (req, res) => {
+  try {
+    const check = validateInvite(req.body || {});
+    if (!check.ok) return res.status(400).json({ message: check.errors.join(' ') });
+    const { name, email, role } = check.value;
+
+    const typed = String(req.body?.temporary_password || '');
+    const generated = !typed;
+    const password = generated ? temporaryPassword() : typed;
+    const problem = passwordProblem(password, { email });
+    if (problem) return res.status(400).json({ message: `Parola temporară: ${problem}` });
+
+    await assertEmailFree(req.user.company_id, email);
+
+    const created = (await query(
+      `INSERT INTO users (company_id, name, email, password_hash, role, phone,
+                          created_via, must_change_password, email_verified_at)
+       VALUES ($1,$2,$3,$4,$5,$6,'manual',TRUE,NOW())
+       RETURNING *`,
+      [req.user.company_id, name, email, await bcrypt.hash(password, 12), role,
+        String(req.body?.phone || '').trim() || null]
+    )).rows[0];
+
+    const linked = await linkDriverByEmail(req.user.company_id, created.id, role, email);
+
+    await auditUser(req, {
+      action: 'create',
+      target: created,
+      changes: { name, email, role, creat_manual: 'da', parola_temporara: 'da' },
+      detail: linked ? { driver_linked: linked.name } : null,
+    });
+
+    res.status(201).json({
+      user: serializeUser({ ...created, driver_id: linked?.id, driver_name: linked?.name }),
+      temporary_password: generated ? password : undefined,
+    });
+  } catch (err) {
+    fail(res, err, 'Contul nu a putut fi creat.');
   }
 });
 
@@ -226,10 +304,8 @@ router.post('/:id/resend-invite', async (req, res) => {
       [token, INVITE_TTL_HOURS, target.id, req.user.company_id]
     );
 
-    const invite_link = inviteLink(req, token);
-    const sent = await deliverInvite({
-      to: target.email, name: target.name, link: invite_link, company: req.user,
-    });
+    const invite_link = appLink(req, '/reset-password', token);
+    const sent = await deliverInvite(req, { to: target.email, name: target.name, link: invite_link });
     await auditUser(req, { action: 'update', target, changes: { invitatie: { from: null, to: 'retrimisă' } } });
 
     res.json({ email_sent: sent, invite_link: sent ? undefined : invite_link });
@@ -367,36 +443,24 @@ router.put('/:id/driver', async (req, res) => {
   }
 });
 
-function inviteLink(req, token) {
-  const origin = req.body?.origin
-    || process.env.CLIENT_ORIGIN
-    || `${req.protocol}://${req.get('host')}`;
-  return `${String(origin).replace(/\/$/, '')}/reset-password?token=${token}`;
-}
-
 /**
  * Sends the invitation, reporting whether it actually went.
  *
  * `sendEmail` resolves happily without a mail provider, it logs the message and returns
  * `{ stub: true }`. Reporting that as sent would leave an admin waiting for an email nobody will
  * ever receive, so a stubbed send counts as not sent and the caller hands back the link instead.
+ * The link's host is `CLIENT_ORIGIN`, see `lib/auth/mail.js`.
  */
-async function deliverInvite({ to, name, link }) {
-  try {
-    const result = await sendEmail({
-      to,
-      subject: 'Invitație în Transitix',
-      text: `Salut, ${name}.\n\nAi fost invitat în Transitix. Alege-ți parola aici (link valabil `
-        + `${INVITE_TTL_HOURS / 24} zile):\n${link}\n`,
-      html: `<p>Salut, ${name}.</p><p>Ai fost invitat în Transitix. Alege-ți parola aici `
-        + `(link valabil ${INVITE_TTL_HOURS / 24} zile):</p><p><a href="${link}">${link}</a></p>`,
-    });
-    return Boolean(result?.ok && !result.stub);
-  } catch (err) {
-    // The account exists either way; the admin can pass the link on by hand.
-    console.error('[invite email]', err.message);
-    return false;
-  }
+async function deliverInvite(req, { to, name, link }) {
+  return deliverAccountEmail({
+    to,
+    ...invitationEmail({
+      name,
+      link,
+      days: INVITE_TTL_HOURS / 24,
+      companyName: await companyName(req.user.company_id),
+    }),
+  });
 }
 
 export default router;

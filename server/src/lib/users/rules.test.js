@@ -184,6 +184,12 @@ describe('inviteState', () => {
     expect(inviteState({ last_login: null, reset_token: null }, now)).toBe('expired');
   });
 
+  it('calls a hand-made account waiting for its first sign-in manual, not expired', () => {
+    expect(inviteState({
+      last_login: null, reset_token: null, created_via: 'manual', must_change_password: true,
+    }, now)).toBe('manual');
+  });
+
   it('stays active once used, even after the token is cleared', () => {
     expect(inviteState({ last_login: '2026-08-20T00:00:00Z', reset_token: null }, now))
       .toBe('active');
