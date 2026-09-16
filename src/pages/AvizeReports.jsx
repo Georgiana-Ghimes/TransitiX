@@ -562,10 +562,14 @@ export default function AvizeReports() {
           downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
           emailFallbackDownloadedRef.current = true;
           notifyError(
-            'Email netrimis',
+            'Email netrimis — anexa descărcată',
             result?.message
-              || 'Resend nu este configurat, anexa s-a descărcat o dată. Nu apăsa Trimite din nou doar pentru alt fișier.'
+              || 'Resend nu este configurat. Fișierul s-a salvat în Downloads; poți să-l trimiți tu din mail.'
           );
+          // Same end-state as a successful send: the action finished (download as fallback).
+          // Leaving the modal open with Trimite still active looked like nothing happened.
+          setEmailOpen(false);
+          emailFallbackDownloadedRef.current = false;
         } else {
           notifyError(
             'Email netrimis',
@@ -574,6 +578,8 @@ export default function AvizeReports() {
               : (result?.message
                 || 'Resend nu este configurat, emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.')
           );
+          setEmailOpen(false);
+          emailFallbackDownloadedRef.current = false;
         }
       } else {
         notifySuccess('Email trimis', result?.filename || emailTo);
@@ -909,7 +915,9 @@ export default function AvizeReports() {
                       <input type="checkbox" className="mt-1" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                       <div className="min-w-0 flex-1">
                         <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`}>
-                          {row.numar_tpo || 'Fără TPO'}
+                          {row.status === 'uploaded'
+                            ? <span className="font-normal text-sky-800">Se procesează…</span>
+                            : (row.numar_tpo || 'Fără TPO')}
                           {row.duplicate_tpo ? <span className="ml-2 text-[11px] font-normal text-amber-700">aviz duplicat</span> : null}
                         </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
@@ -991,6 +999,11 @@ export default function AvizeReports() {
                               <span className="inline-flex items-center gap-1.5 font-normal text-sky-800">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                                 Se re-extrage…
+                              </span>
+                            ) : row.status === 'uploaded' ? (
+                              <span className="font-normal text-sky-800 inline-flex items-center gap-1.5">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                                Se procesează…
                               </span>
                             ) : row.numar_tpo ? (
                               row.numar_tpo

@@ -269,13 +269,17 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     expect(res.status).toBe(202);
     expect(res.body.extraction_pending).toBe(true);
     expect(res.body.reason).toBe('ocr_timeout_retry');
+    // Figures from the earlier pass are still on the 202 body / row until a better read replaces them.
+    expect(res.body.numar_tpo).toBe('TPO-0025629');
 
-    // Pending on the row too, so the list shows "Se procesează…" rather than a finished read,
-    // and the figures from the earlier pass stay put until a better one replaces them.
+    // Hanging sidecar: background budget expires too. Mark failed so the list does not spin forever.
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
-    expect(after.status).toBe('uploaded');
-    expect(after.extraction_source).toBe('paddle');
+    expect(after.status).toBe('extracted');
+    expect(after.needs_review).toBe(true);
+    expect(after.extraction_source).toBe('none');
+    expect(after.extracted_data?.extract_error).toMatch(/timpul alocat/i);
   });
 
   /**

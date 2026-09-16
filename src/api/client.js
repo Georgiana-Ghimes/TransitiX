@@ -455,7 +455,7 @@ export const api = {
       });
       if (res.status === 401 && !retried) {
         await refreshAccessToken();
-        return api.driverDocuments.upload({ tripId, files, document_type }, true);
+        return api.driverDocuments.upload({ tripId, files, document_type, signal }, true);
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

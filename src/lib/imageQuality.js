@@ -113,16 +113,35 @@ export async function measurePhotoSharpness(file) {
 /**
  * The blurriest of a set, so a driver sending four photos hears about the one that needs redoing.
  * Files the check could not read are skipped, never counted as blurred.
+ *
+ * `timeoutMs`: after a long pause the first `createImageBitmap` can hang on some phones. The
+ * check must never block the send — a late warning is worse than a photo that reaches the office.
  */
-export async function findBlurriest(files, threshold = SHARPNESS_MIN) {
-  let worst = null;
-  for (const file of files) {
-    const score = await measurePhotoSharpness(file);
-    if (score == null) continue;
-    if (!worst || score < worst.score) worst = { file, score };
+export async function findBlurriest(files, threshold = SHARPNESS_MIN, { timeoutMs = 2_500 } = {}) {
+  const work = (async () => {
+    let worst = null;
+    for (const file of files) {
+      const score = await measurePhotoSharpness(file);
+      if (score == null) continue;
+      if (!worst || score < worst.score) worst = { file, score };
+    }
+    if (!worst || !isBlurry(worst.score, threshold)) return null;
+    return worst;
+  })();
+
+  if (!timeoutMs || timeoutMs <= 0) return work;
+
+  let timer;
+  try {
+    return await Promise.race([
+      work,
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
-  if (!worst || !isBlurry(worst.score, threshold)) return null;
-  return worst;
 }
 
 /**

@@ -4,7 +4,7 @@ import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
-  UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
+  LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
   MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map,
 } from 'lucide-react';
@@ -63,7 +63,6 @@ const COMPANION_OFFICE_NAV = [
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Harta zonelor', path: '/zone-map', icon: Map },
   { label: 'Autoturisme', path: '/fleet', icon: Truck },
-  { label: 'Setări', path: '/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
@@ -259,7 +258,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex">
       {!isDesktop && mobileOpen && !tourOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 bg-black/40 z-[55]" onClick={() => setMobileOpen(false)} />
       )}
 
       {!isDesktop && tourOpen && mobileOpen && (
@@ -271,7 +270,8 @@ export default function Layout() {
         className={cn(
           'h-screen bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
           'transition-[width,transform] duration-300 ease-in-out',
-          tourOpen ? 'z-50' : 'z-40',
+          // Mobile drawer must sit above the sticky white header (z-50), or branding is clipped.
+          tourOpen ? 'z-50' : isDesktop ? 'z-40' : 'z-[60]',
           isDesktop
             ? 'sticky top-0 translate-x-0'
             : cn(
@@ -371,18 +371,19 @@ export default function Layout() {
             <HelpCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Ghid</span>}
           </Link>
-          {!documentsCompanion && (
+          {user?.role === 'admin' && (
           <Link
             to="/settings"
-            title="Setări"
+            title="Setări companie"
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
-              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5'
+              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+              location.pathname.startsWith('/settings') && 'bg-white/10 text-white'
             )}
           >
-            <UserCircle className="w-5 h-5 shrink-0" />
-            {!showIconsOnly && <span>Setări</span>}
+            <Settings className="w-5 h-5 shrink-0" />
+            {!showIconsOnly && <span>Setări companie</span>}
           </Link>
           )}
           {!documentsCompanion && (

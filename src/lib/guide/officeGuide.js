@@ -237,7 +237,7 @@ const COMPANION_ONLY = [
     title: 'Despre această aplicație',
     lead: 'Companionul RAI pentru documente, nu platforma completă.',
     blocks: [
-      p('Are cinci ecrane, și atât: Avize / Rapoarte, Rapoarte, Harta zonelor, Autoturisme și Setări. Restul modulelor Transitix nu sunt aici, deliberat, ca fluxul de documente să nu fie îngropat sub ce nu folosești.'),
+      p('Are cinci ecrane, și atât: Avize / Rapoarte, Rapoarte, Harta zonelor, Autoturisme, plus Setări companie jos lângă Ghid (doar admin). Restul modulelor Transitix nu sunt aici, deliberat, ca fluxul de documente să nu fie îngropat sub ce nu folosești.'),
       p('Șoferii au aplicația lor pe telefon, cu un singur lucru de făcut: trimiterea documentelor de pe drum.'),
     ],
   },

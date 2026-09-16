@@ -6,7 +6,7 @@ import { serializeRow } from '../entities.js';
 import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
-import { readDocumentText } from '../lib/ocr/readText.js';
+import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
@@ -116,7 +116,9 @@ function runBatchExtract(batchKey, fn) {
 }
 
 async function markExtractFailed(companyId, docId, err) {
-  const message = err?.message || String(err);
+  const message = err?.code === 'OCR_TIMEOUT'
+    ? 'OCR a depășit timpul alocat. Folosește Re-extrage.'
+    : (err?.message || String(err));
   await query(
     `UPDATE aviz_documents SET
        status = 'extracted',
@@ -127,6 +129,32 @@ async function markExtractFailed(companyId, docId, err) {
      WHERE id = $2 AND company_id = $3 AND status = 'uploaded'`,
     [JSON.stringify({ extract_error: message }), docId, companyId]
   );
+}
+
+/**
+ * Uploads whose OCR job never came back (process restart, hung sidecar) stay on
+ * „Se procesează…” forever. After the background budget + grace, treat them as failed
+ * so the office and the driver see a final status and can Re-extrage.
+ */
+export async function failStaleUploadedAvize(companyId, {
+  olderThanMs = backgroundOcrTimeoutMs() + 60_000,
+} = {}) {
+  if (!companyId) return { failed: 0 };
+  const message = 'OCR nu a terminat la timp. Folosește Re-extrage.';
+  const result = await query(
+    `UPDATE aviz_documents SET
+       status = 'extracted',
+       needs_review = TRUE,
+       extraction_source = 'none',
+       extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $1::jsonb,
+       updated_at = NOW()
+     WHERE company_id = $2
+       AND status = 'uploaded'
+       AND created_at < NOW() - ($3 * INTERVAL '1 millisecond')
+     RETURNING id`,
+    [JSON.stringify({ extract_error: message }), companyId, olderThanMs]
+  );
+  return { failed: result.rowCount || 0 };
 }
 
 /**
@@ -144,6 +172,9 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 } = {}) {
   const batchKey = `${companyId}:${batchId}`;
   return runBatchExtract(batchKey, async () => {
+  // Opportunistic: clear rows that never left „Se procesează…” after the budget window.
+  await failStaleUploadedAvize(companyId).catch(() => {});
+
   let docs = (await query(
     `SELECT * FROM aviz_documents WHERE company_id = $1 AND batch_id = $2 ORDER BY created_at`,
     [companyId, batchId]
@@ -262,10 +293,16 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 
       results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
     } catch (err) {
-      console.error('[documents] extract doc', doc.id, err);
-      // A timeout is us giving up on the clock, not a page nobody can read. Marking it would
-      // move it out of `uploaded` and the queue would stop offering it.
-      if (err?.code !== 'OCR_TIMEOUT') await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      const timedOut = err?.code === 'OCR_TIMEOUT';
+      // Interactive path pins a short `timeoutMs` and /avize/extract retries in background.
+      // Background path leaves `timeoutMs` unset — if that clock also expires, mark failed or
+      // the row stays on „Se procesează…” forever.
+      const backgroundBudget = timeoutMs == null;
+      if (timedOut) console.warn('[documents] extract doc', doc.id, err);
+      else console.error('[documents] extract doc', doc.id, err);
+      if (!timedOut || backgroundBudget) {
+        await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      }
       results.push({
         id: doc.id,
         filename: doc.original_filename,

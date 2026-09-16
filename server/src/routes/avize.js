@@ -11,7 +11,7 @@ import {
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
 import { avizFieldConfidence, repairAvizFromStored } from '../lib/avizOcr.js';
-import { extractBatchDocuments, logEvent } from './documents.js';
+import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
   interactiveOcrMaxPages,
@@ -270,6 +270,7 @@ async function ensureObservationCodes(companyId) {
 
 router.get('/', async (req, res) => {
   try {
+    await failStaleUploadedAvize(req.user.company_id).catch(() => {});
     const { sql, params } = buildAvizListQuery({
       companyId: req.user.company_id,
       from: req.query.from,
