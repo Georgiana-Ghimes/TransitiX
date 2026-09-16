@@ -101,7 +101,7 @@ function GoogleCompanyStep({ pending, onCancel, returnTo }) {
     } catch (err) {
       if (err?.data?.code === 'DOMAIN_IN_USE') setDomainInUse(true);
       setError(err?.status === 401
-        ? 'Sesiunea Google a expirat. Apasă din nou „Continuă cu Google”.'
+        ? 'Sesiunea Google a expirat. Apasă din nou „Înregistrează-te cu Google”.'
         : friendlyErrorMessage(err));
     } finally {
       setLoading(false);
@@ -296,12 +296,12 @@ export default function Register() {
 
   return (
     <AuthLayout icon={UserPlus} title="Creează cont" subtitle="Înregistrează firma pe Transitix" footer={footer}>
-      {providers.google_client_id && (
+      {(providers.google_client_id || import.meta.env.DEV) && (
         <>
           <GoogleSignInButton
             clientId={providers.google_client_id}
             onCredential={handleGoogle}
-            text="signup_with"
+            mode="signup"
             disabled={googleBusy}
           />
           <OrDivider />

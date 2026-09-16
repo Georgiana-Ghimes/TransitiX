@@ -1,12 +1,18 @@
 /**
- * "Continuă cu Google", through Google Identity Services.
+ * "Autentifică-te cu Google", through Google Identity Services.
  *
- * Google renders its own button (their branding rules require it) and hands back an ID token;
- * the server verifies it. Nothing here is trusted: the credential is only passed on.
+ * The visible button is ours, so it matches the rest of the auth screens and says exactly what we
+ * want. The click lands on Google's own button, rendered on top of it and made transparent: that
+ * is what hands back a signed ID token, which the server verifies. Nothing here is trusted, the
+ * credential is only passed on.
  *
- * Renders nothing without a client id, so a server with Google switched off shows no dead button.
+ * Without a client id the button is hidden in a production build (a button that can only fail is
+ * worse than none). In development it stays visible and says what is missing.
  */
 import React, { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import GoogleIcon from '@/components/GoogleIcon';
+import { cn } from '@/lib/utils';
 
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 let scriptPromise = null;
@@ -29,54 +35,106 @@ function loadScript() {
   return scriptPromise;
 }
 
-export default function GoogleSignInButton({ clientId, onCredential, text = 'continue_with', disabled = false }) {
-  const holder = useRef(null);
+export const GOOGLE_LABELS = {
+  signin: 'Autentifică-te cu Google',
+  signup: 'Înregistrează-te cu Google',
+};
+
+function FaceButton({ label, busy, disabled, className, onClick }) {
+  return (
+    <button
+      type="button"
+      tabIndex={onClick ? 0 : -1}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'w-full h-12 rounded-md border border-input bg-background text-sm font-medium text-foreground',
+        'inline-flex items-center justify-center gap-3 transition-colors',
+        'group-hover:bg-muted/60 disabled:opacity-50',
+        className,
+      )}
+    >
+      {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <GoogleIcon className="w-5 h-5" />}
+      {label}
+    </button>
+  );
+}
+
+export default function GoogleSignInButton({ clientId, onCredential, mode = 'signin', disabled = false }) {
+  const wrapper = useRef(null);
+  const overlay = useRef(null);
   const callback = useRef(onCredential);
+  const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [hint, setHint] = useState('');
   callback.current = onCredential;
+  const label = GOOGLE_LABELS[mode] || GOOGLE_LABELS.signin;
 
   useEffect(() => {
     if (!clientId) return undefined;
     let cancelled = false;
     loadScript()
       .then(() => {
-        if (cancelled || !holder.current) return;
+        if (cancelled || !overlay.current) return;
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: (response) => callback.current?.(response.credential),
           ux_mode: 'popup',
-          context: text === 'signup_with' ? 'signup' : 'signin',
+          context: mode === 'signup' ? 'signup' : 'signin',
         });
-        holder.current.innerHTML = '';
-        window.google.accounts.id.renderButton(holder.current, {
+        overlay.current.innerHTML = '';
+        // Google caps the rendered width at 400px; the face button is never wider on these screens.
+        const width = Math.min(Math.max(wrapper.current?.offsetWidth || 320, 200), 400);
+        window.google.accounts.id.renderButton(overlay.current, {
           type: 'standard',
-          theme: 'outline',
           size: 'large',
-          text,
-          shape: 'rectangular',
-          logo_alignment: 'center',
+          text: mode === 'signup' ? 'signup_with' : 'signin_with',
           locale: 'ro',
-          width: Math.min(holder.current.offsetWidth || 320, 400),
+          width,
         });
+        setReady(true);
       })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; };
-  }, [clientId, text]);
+  }, [clientId, mode]);
 
-  if (!clientId) return null;
-  if (failed) {
+  if (!clientId) {
+    if (!import.meta.env.DEV) return null;
     return (
-      <p className="text-xs text-muted-foreground text-center">
-        Butonul Google nu s-a putut încărca (conexiune sau blocare de reclame). Folosește emailul și parola.
-      </p>
+      <div className="space-y-1.5">
+        <FaceButton
+          label={label}
+          onClick={() => setHint(
+            'Google nu e configurat pe server: setează GOOGLE_CLIENT_ID în server/.env și repornește API-ul. '
+            + '(Butonul e vizibil doar în development.)'
+          )}
+        />
+        {hint && <p className="text-xs text-amber-700 text-center">{hint}</p>}
+      </div>
     );
   }
+
+  if (failed) {
+    return (
+      <div className="space-y-1.5">
+        <FaceButton label={label} disabled />
+        <p className="text-xs text-muted-foreground text-center">
+          Serviciul Google nu s-a putut încărca (conexiune sau blocare de reclame). Folosește emailul și parola.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div
-      ref={holder}
-      aria-disabled={disabled}
-      className={`w-full min-h-[44px] flex justify-center ${disabled ? 'pointer-events-none opacity-50' : ''}`}
-    />
+    <div ref={wrapper} className={cn('group relative w-full', disabled && 'pointer-events-none')}>
+      <FaceButton label={label} busy={disabled} disabled={disabled || !ready} />
+      {/* Google's button, on top and transparent: it receives the click and opens the popup. */}
+      <div
+        ref={overlay}
+        aria-label={label}
+        className="absolute inset-0 flex items-center justify-center overflow-hidden opacity-[0.01] cursor-pointer"
+      />
+    </div>
   );
 }
 

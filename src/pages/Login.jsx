@@ -131,7 +131,7 @@ export default function Login() {
         </div>
       ) : (
       <>
-      {providers?.google_client_id && (
+      {providers && (providers.google_client_id || import.meta.env.DEV) && (
         <>
           <GoogleSignInButton
             clientId={providers.google_client_id}
