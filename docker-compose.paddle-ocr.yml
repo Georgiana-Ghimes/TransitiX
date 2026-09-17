@@ -12,6 +12,9 @@ services:
       PADDLE_OCR_LANG: ${PADDLE_OCR_LANG:-latin}
       PADDLE_OCR_USE_GPU: "0"
       PADDLE_OCR_AUTO_ROTATE: ${PADDLE_OCR_AUTO_ROTATE:-1}
+      # Longest side the text detector may see. PaddleOCR's default is 960, which squashes a
+      # handwritten carnet line to ~22px and finds nothing. Turn DOWN if the VM runs out of CPU.
+      PADDLE_OCR_DET_SIDE_LEN: ${PADDLE_OCR_DET_SIDE_LEN:-1920}
     restart: unless-stopped
     volumes:
       # Persist downloaded OCR models between rebuilds

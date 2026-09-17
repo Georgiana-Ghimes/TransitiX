@@ -58,6 +58,10 @@ _PDF_MAX_PAGES = int(os.environ.get("PADDLE_OCR_PDF_PAGES", "40") or 40)
 # 200dpi was fine for speed; small print on Baumit avize (street, postal code) needs more pixels.
 _PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "280") or 280)
 _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0", "false", "False")
+# Longest side the detector may see. PaddleOCR's own default is 960, which is below what a
+# handwritten carnet needs (see get_engine). Costs CPU roughly with the square of this number,
+# so it is the first knob to turn down if the VM cannot keep up.
+_DET_SIDE_LEN = int(os.environ.get("PADDLE_OCR_DET_SIDE_LEN", "1920") or 1920)
 
 
 def looks_upright_enough(text: str, score: float) -> bool:
@@ -77,28 +81,50 @@ def get_engine():
 
         use_gpu = os.environ.get("PADDLE_OCR_USE_GPU", "0").strip() in ("1", "true", "True")
         lang = os.environ.get("PADDLE_OCR_LANG", "latin").strip() or "latin"
-        log.info("Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s)", lang, use_gpu, _AUTO_ROTATE)
-        try:
-            _engine = PaddleOCR(
-                use_angle_cls=True,
-                lang=lang,
-                use_gpu=use_gpu,
-                show_log=False,
-                # Defaults (~0.6) drop faint blue ballpoint on cream paper under monitor glare.
-                det_db_box_thresh=float(os.environ.get("PADDLE_OCR_DET_THRESH", "0.3") or 0.3),
-                drop_score=float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.35") or 0.35),
-            )
-        except TypeError:
+        log.info(
+            "Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s, det_side=%s)",
+            lang, use_gpu, _AUTO_ROTATE, _DET_SIDE_LEN,
+        )
+
+        # Detector geometry first, because it is what decided that handwriting was invisible:
+        # PaddleOCR resizes the page so its LONG side is at most det_limit_side_len (960 by
+        # default) before detection runs. A carnet line is ~23 px tall in a 1024 px photo and
+        # ~120 px in a 4000 px one — both land near 25 px after that cap, which is under what DB
+        # needs to close a box around a thin ballpoint stroke. Every upscale this file does was
+        # being thrown away one call later.
+        tuned = {
+            "det_limit_side_len": _DET_SIDE_LEN,
+            "det_limit_type": "max",
+            # Faint ink: lower both the pixel map and the box gate (defaults 0.3 / 0.6).
+            "det_db_thresh": float(os.environ.get("PADDLE_OCR_DET_PIXEL_THRESH", "0.2") or 0.2),
+            "det_db_box_thresh": float(os.environ.get("PADDLE_OCR_DET_THRESH", "0.3") or 0.3),
+            # Handwriting has ascenders and descenders a tight box clips; 1.5 is the printed default.
+            "det_db_unclip_ratio": float(os.environ.get("PADDLE_OCR_UNCLIP", "2.0") or 2.0),
+            # Thickens strokes on the probability map before boxing — built for thin text.
+            "use_dilation": True,
+            "drop_score": float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.35") or 0.35),
+        }
+        base = {"use_angle_cls": True, "lang": lang, "use_gpu": use_gpu, "show_log": False}
+
+        # Degrade one step at a time. The old two-step fallback dropped *all* tuning the moment
+        # any single kwarg was unknown, so a version bump could silently restore printed-text
+        # defaults and nobody would see it in the logs.
+        for attempt, kwargs in (
+            ("tuned", {**base, **tuned}),
+            ("thresholds-only", {**base, "det_db_box_thresh": tuned["det_db_box_thresh"],
+                                 "drop_score": tuned["drop_score"]}),
+            ("base", base),
+            ("minimal", {"lang": lang}),
+        ):
             try:
-                _engine = PaddleOCR(
-                    use_angle_cls=True,
-                    lang=lang,
-                    use_gpu=use_gpu,
-                    show_log=False,
-                )
-            except TypeError:
-                _engine = PaddleOCR(lang=lang)
-        return _engine
+                _engine = PaddleOCR(**kwargs)
+                if attempt != "tuned":
+                    log.warning("PaddleOCR rejected tuned args — running %s", attempt)
+                return _engine
+            except TypeError as exc:
+                log.warning("PaddleOCR(%s) not accepted: %s", attempt, exc)
+                continue
+        raise RuntimeError("no accepted PaddleOCR constructor signature")
     except Exception as exc:  # noqa: BLE001
         log.exception("Failed to load PaddleOCR")
         raise RuntimeError(f"PaddleOCR unavailable: {exc}") from exc
@@ -394,7 +420,7 @@ def enhance_aggressive(image):
     """
     from PIL import Image
 
-    frame = upscale_for_ocr(image, 1600, 2.0)
+    frame = fit_for_detector(image)
     try:
         import cv2
         import numpy as np
@@ -410,24 +436,79 @@ def enhance_aggressive(image):
     return Image.fromarray(cv2.cvtColor(merged, cv2.COLOR_LAB2RGB))
 
 
+def fit_for_detector(image, side: Optional[int] = None):
+    """
+    Put the page at the size the detector actually reads, in one good resample.
+
+    Paddle will resize to `det_limit_side_len` regardless; doing it here means a small photo is
+    enlarged with LANCZOS instead of being enlarged by us and then shrunk by a cheap bilinear,
+    and a 12 MP phone photo is reduced once with INTER_AREA rather than carried through every
+    preprocessing pass at full size.
+    """
+    from PIL import Image
+
+    target = int(side or _DET_SIDE_LEN)
+    frame = image.convert("RGB")
+    w, h = frame.size
+    longest = max(w, h)
+    if longest == target or longest <= 0:
+        return frame
+    scale = target / float(longest)
+    size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
+    # LANCZOS sharpens thin strokes when enlarging; BOX averages cleanly when reducing.
+    return frame.resize(size, Image.Resampling.LANCZOS if scale > 1 else Image.Resampling.BOX)
+
+
+def gray_world(arr):
+    """
+    Neutralise the illuminant so ink extraction stops depending on the light in the cab.
+
+    A driver's photo is lit by whatever is there — a green monitor, sodium street light, a phone
+    torch. In this sample the monitor puts R=61 G=217 B=185 on the background while the shaded
+    page sits at R=92 G=105 B=100, so a fixed channel choice is guessing.
+    """
+    import numpy as np
+
+    values = arr.astype("float32")
+    means = values.reshape(-1, 3).mean(axis=0)
+    return np.clip(values * (means.mean() / np.maximum(means, 1e-3)), 0, 255).astype("uint8")
+
+
 def emphasize_ink(image):
     """
-    Blue ballpoint on cream paper under a green monitor cast.
+    Ink on paper, independent of the light that fell on it.
 
-    The green glow lifts the paper toward the ink's chroma; a plain RGB OCR pass then sees
-    low contrast. Taking the darker of R/G (where blue ink is darkest) before grayscale
-    recovers the strokes without a hard binarize that kills handwriting.
+    White-balance, then divide lightness by its own heavy blur. The division is what makes this
+    illuminant-invariant: it measures each pixel against the paper immediately around it, so a
+    hand's shadow over half the sheet stops mattering, and no global threshold has to be right
+    for both halves.
+
+    Replaces `min(R, G)`, which assumed the paper was brighter in red than the ink. Under a green
+    cast there is barely any red light to be bright in, so on this sample it separated ink from
+    paper by 84 gray levels while calling 31% of the frame ink — smearing shadow into the stroke
+    class. This separates by 134 and calls 6% ink, which is about the real ink coverage of a
+    nine-line note.
     """
     from PIL import Image
     import numpy as np
 
-    frame = upscale_for_ocr(image.convert("RGB"), 2200, 3.0)
+    frame = fit_for_detector(image)
     try:
-        arr = np.asarray(frame).astype("float32")
-        ink = np.min(arr[:, :, :2], axis=2)  # R and G; blue ink sinks both
-        ink = np.clip(ink, 0, 255).astype("uint8")
-        return Image.fromarray(ink).convert("RGB")
-    except Exception:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — falling back to plain grayscale ink pass")
+        return frame
+
+    try:
+        arr = np.asarray(frame)
+        lightness = cv2.cvtColor(gray_world(arr), cv2.COLOR_RGB2LAB)[:, :, 0].astype("float32")
+        # sigma scales with the page so the "background" stays paper, never a whole word.
+        sigma = max(15.0, min(frame.size) / 45.0)
+        background = cv2.GaussianBlur(lightness, (0, 0), sigmaX=sigma, sigmaY=sigma)
+        flat = np.clip(lightness / np.maximum(background, 1e-3) * 200.0, 0, 255).astype("uint8")
+        return Image.fromarray(flat).convert("RGB")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ink emphasis failed: %s", exc)
         return frame
 
 
@@ -440,7 +521,7 @@ def flatten_shadow(image):
     """
     from PIL import Image
 
-    frame = upscale_for_ocr(image, 1600, 2.0)
+    frame = fit_for_detector(image)
     try:
         import cv2
         import numpy as np
@@ -544,9 +625,12 @@ def ocr_photo_page(image) -> tuple[str, int]:
 
     if _AGGRESSIVE:
         passes = (
-            ("enhance", enhance_for_ocr),
+            # Untouched pixels at detector size: the ink map assumes ballpoint on paper, and a
+            # printed aviz photographed in daylight does not need it.
+            ("plain", fit_for_detector),
             ("shadow", flatten_shadow),
             ("clahe", enhance_aggressive),
+            ("enhance", enhance_for_ocr),
         )
         for name, transform in passes:
             if not missing_from_text(best_text):

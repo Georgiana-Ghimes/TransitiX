@@ -144,6 +144,40 @@ def main() -> int:
           f"size={app_module.upscale_for_ocr(tiny).size}")
     check("an already large page is left at its own size",
           app_module.upscale_for_ocr(PILImage.new("RGB", (2400, 3000))).size == (2400, 3000))
+
+    # Every photo pass must hand the detector exactly the size it will read at. Preprocessing
+    # that enlarges past PADDLE_OCR_DET_SIDE_LEN is silently undone by Paddle's own resize —
+    # that is how a handwritten carnet reached the detector at ~22px and returned nothing.
+    side = app_module._DET_SIDE_LEN
+    for name, source in (
+        ("a small phone frame", PILImage.new("RGB", (576, 1024), (180, 180, 180))),
+        ("a 12MP phone photo", PILImage.new("RGB", (3024, 4032), (180, 180, 180))),
+    ):
+        for pass_name, transform in (
+            ("emphasize_ink", app_module.emphasize_ink),
+            ("plain", app_module.fit_for_detector),
+            ("shadow", app_module.flatten_shadow),
+            ("clahe", app_module.enhance_aggressive),
+        ):
+            size = transform(source).size
+            check(f"{name} reaches the detector at its working size ({pass_name})",
+                  max(size) == side, f"{source.size} -> {size}, expected long side {side}")
+
+    check("the detector cap is above PaddleOCR's own 960 default",
+          side > 960, f"PADDLE_OCR_DET_SIDE_LEN={side}")
+
+    # Ink emphasis must survive an illuminant it was not tuned for. A frame lit green (monitor)
+    # has almost no red channel to work with, which is what min(R, G) got wrong.
+    import numpy as _np
+    lit = _np.dstack([
+        _np.full((200, 300), 60, "uint8"),    # R starved
+        _np.full((200, 300), 210, "uint8"),   # G from the screen
+        _np.full((200, 300), 180, "uint8"),
+    ]).copy()
+    lit[80:120, 40:260] = 30  # a dark stroke
+    inked = _np.asarray(app_module.emphasize_ink(PILImage.fromarray(lit)).convert("L"))
+    check("ink emphasis leaves paper bright under a green cast",
+          inked.mean() > 120, f"mean={inked.mean():.1f}")
     check("short garbage does not trigger a second OCR pass",
           app_module.needs_aggressive_pass("iiii") is False)
     check("longer text without a code does trigger it",
