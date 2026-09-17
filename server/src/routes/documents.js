@@ -82,6 +82,9 @@ const EXTRACT_COLUMNS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
   'cantitate_marfa', 'numar_document_marfa', 'gross_weight_kg', 'net_weight_kg',
   'pallets', 'quantity_unit',
+  // The carnet writes `NR. CURSE` on the page. Without this the profile read it and `toColumns`
+  // dropped it, so the row kept the column default and the driver's own count never arrived.
+  'numar_curse',
 ];
 
 /** Maps extractor field names onto the document columns. */

@@ -625,3 +625,85 @@ describe('tip marfa: the word that names something', () => {
     }
   });
 });
+
+// ------------------------------------------------------- carnet de bord
+
+/**
+ * A driver's handwritten notebook page. Written as the sidecar tends to return it: the codes
+ * confused (`TP0`, `TR0`, letter O for zero), the label colons lost, the route wrapped onto a
+ * second line, and `DATA` punctuated with a colon where the hand wrote a dot.
+ */
+const CARNET_OCR = `TP0 - OO25813
+DATA 11:08.2026
+NR AUTO B-112-VFM
+RUTA TRANS. MIC NEAMTIUMILI
+TARI
+BUD.IULIU MANIU 600
+TIP MARFA GALETI
+CANT MARFA 15,744,00
+NR DOCUMENT TR0-0008053
+NR CURSE 1`;
+
+describe('carnet de bord profile', () => {
+  it('is detected on a carnet and never steals a printed aviz', () => {
+    expect(detectProfile(CARNET_OCR).profile?.id).toBe('carnet_bord');
+    // The carnet's labels must not outrank Baumit's own markers on a printed page, or every
+    // aviz starts extracting through the handwriting layout.
+    expect(detectProfile(PADDLE_BAUMIT_PSL).profile?.id).toBe('aviz_baumit_psl');
+    expect(detectProfile(CMR_TEXT).profile?.id).toBe('cmr_standard');
+  });
+
+  it('reads every field off the page', () => {
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.numar_tpo).toBe('TPO-0025813');
+    expect(values.data_efectuare_cursa).toBe('2026-08-11');
+    expect(values.numar_auto).toBe('B-112-VFM');
+    expect(values.numar_document_marfa).toBe('TRO-0008053');
+    expect(values.tip_marfa).toBe('GALETI');
+    expect(values.quantity).toBe(15744);
+    expect(values.numar_curse).toBe(1);
+  });
+
+  it('keeps the delivery address, which sits on the line below the label', () => {
+    // Reading only the labelled line drops the destination — the half the annex needs.
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.ruta_transport).toContain('IULIU MANIU 600');
+    expect(values.ruta_transport).toContain('→');
+    // The label itself is not part of the route.
+    expect(values.ruta_transport).not.toMatch(/ruta|trans\./i);
+  });
+
+  it('reads a number whose separator does both jobs', () => {
+    // `15,744,00` is a comma for thousands and for the decimal. parseNumber returns null for
+    // it and must not change — it decides what a weight means everywhere else.
+    expect(parseNumber('15,744,00')).toBeNull();
+    const { values } = extractDocument('CANT MARFA: 15,744,00', { profileId: 'carnet_bord' });
+    expect(values.quantity).toBe(15744);
+    // Grouping all the way down is still grouping. Were the rightmost separator taken as the
+    // decimal here, `1,234,567` would become 1234.567 — a plausible-looking number, under the
+    // ceiling, written unattended. It reads as 1234567 instead, which the quantity ceiling
+    // then refuses, so the figure reaches an operator rather than the annex.
+    const grouped = extractDocument('CANT MARFA: 1,234,567', { profileId: 'carnet_bord' });
+    expect(grouped.values.quantity ?? null).toBeNull();
+    expect(grouped.values.quantity).not.toBe(1234.567);
+  });
+
+  it('does not take the next line as the unit', () => {
+    // `\s*` before the unit reaches across the newline and reads the `NR` of `NR. DOCUMENT`.
+    // toColumns then copies that into Tip marfa when it is empty, putting a word on the
+    // customer's annex that names nothing.
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.quantity_unit ?? null).toBeNull();
+  });
+
+  it('will not invent a date out of a time of day', () => {
+    // The colon form is accepted only behind the DATA label and only as three parts.
+    const bare = extractDocument('Plecare 11:08 din depozit', { profileId: 'carnet_bord' });
+    expect(bare.values.data_efectuare_cursa ?? null).toBeNull();
+  });
+
+  it('leaves a trip count it cannot believe to an operator', () => {
+    const none = extractDocument('NR CURSE: 0', { profileId: 'carnet_bord' });
+    expect(none.values.numar_curse ?? null).toBeNull();
+  });
+});

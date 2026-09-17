@@ -17,6 +17,7 @@ import {
   extractPalletCount,
   extractPlate,
   extractQuantity,
+  isPlausibleQuantity,
   matchPatterns,
   parseNumber,
 } from './fields.js';
@@ -132,7 +133,158 @@ const goodsField = (text) => {
  * `fields` maps a target column to an extractor. `weights` says which fields decide the
  * document's overall confidence, a missing TPO number matters far more than a missing route.
  */
+/**
+ * Carnet de bord: the driver's own handwritten notebook page, photographed in the cab.
+ *
+ * Its vocabulary is not the printed aviz vocabulary. That is why `aviz_generic` reads only the
+ * fields whose patterns happen to be layout-independent — the plate and the TRO code — and
+ * leaves the rest blank however well the OCR performed: `CANT MARFĂ` is not `cantitate`, and
+ * `NR. CURSE` had no extractor in any profile.
+ */
+const CARNET_LABEL = /\b(?:tip\s*marf|cant\.?\s*marf|nr\.?\s*document|nr\.?\s*curse|nr\.?\s*auto|data|tpo)/i;
+
+/**
+ * A number written the way a hand writes it, where one separator does both jobs.
+ *
+ * `15,744,00` is on the page with a comma for thousands and for the decimal, and the shared
+ * `parseNumber` returns null for it. That parser must not change — it decides what a weight
+ * means everywhere else — so the rule lives here, with the layout that needs it.
+ */
+function carnetNumber(raw) {
+  const text = String(raw ?? '').trim();
+  const separators = text.match(/[.,]/g) ?? [];
+  // None or one: the shared parser already knows the Romanian rules.
+  if (separators.length < 2) return parseNumber(text);
+
+  const cut = Math.max(text.lastIndexOf('.'), text.lastIndexOf(','));
+  const fraction = text.slice(cut + 1).replace(/\D/g, '');
+  const oneKind = new Set(separators).size === 1;
+  // `1,234,567` is thousands all the way down; `15,744,00` ends in a two-digit remainder and
+  // cannot be. Three digits after the last separator means grouping, not a decimal.
+  if (fraction.length === 3 && oneKind) {
+    const digits = text.replace(/[.,\s]/g, '');
+    return /^\d+$/.test(digits) ? Number(digits) : null;
+  }
+
+  const whole = text.slice(0, cut).replace(/[.,\s]/g, '');
+  if (!/^\d+$/.test(whole)) return null;
+  const value = Number(`${whole}.${fraction || '0'}`);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** `TPO` in ballpoint reads back as `TP0`, `TPQ`, `IPO`. Fix the prefix, keep the digits. */
+const carnetTpoField = (text) => {
+  const found = String(text || '').match(/\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)[\s\-._:]*(\d{3,})/i);
+  if (!found) return NO_MATCH;
+  const value = `TPO-${found[1]}`;
+  const penalty = codeLengthPenalty(value);
+  return { value, confidence: Math.max(0, 0.88 - penalty), matched: found[0] };
+};
+
+/**
+ * `DATA: 11.08.2026`, where the hand's dots photograph as colons.
+ *
+ * Accepted only behind the `DATA` label and only as three parts. Without that, `11:08` is a
+ * time of day and this would invent a date out of one.
+ */
+const carnetDateField = (text) => {
+  const found = String(text || '').match(
+    /\bdata\s*[:.\-]?\s*(\d{1,2})\s*[.:\-/]\s*(\d{1,2})\s*[.:\-/]\s*(\d{2,4})\b/i
+  );
+  if (found) {
+    const day = Number(found[1]);
+    const month = Number(found[2]);
+    let year = Number(found[3]);
+    if (year < 100) year += 2000;
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+      const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return { value: iso, confidence: 0.88, matched: found[0] };
+    }
+  }
+  return extractDate(text);
+};
+
+/**
+ * The route runs over more than one line: the origin after `RUTA TRANS.`, the delivery address
+ * on the line below. Reading only the labelled line drops the destination, which is the half
+ * the annex actually needs.
+ */
+const carnetRouteField = (text) => {
+  const lines = String(text || '').split(/\n/);
+  const start = lines.findIndex((line) => /\bruta\s*trans/i.test(line));
+  if (start < 0) return routeField(text);
+
+  const parts = [lines[start].replace(/^.*?\bruta\s*trans[.\s]*:?\s*/i, '')];
+  for (const line of lines.slice(start + 1)) {
+    if (!line.trim() || CARNET_LABEL.test(line)) break;
+    parts.push(line);
+  }
+  const joined = parts.join(' ').replace(/\s+/g, ' ').trim();
+  if (joined.length < 3) return NO_MATCH;
+
+  // A street word starts the delivery half. Say so with an arrow rather than running the two
+  // together, because "origin destination" reads as a single place name on the sheet.
+  const split = joined.match(/^(.*?)\s*\b((?:b-?dul|bd|bud|str|sos|șos|calea|aleea)\b.*)$/i);
+  const value = split && split[1].trim() ? `${split[1].trim()} → ${split[2].trim()}` : joined;
+  return { value: value.slice(0, 120), confidence: split ? 0.8 : 0.65, matched: joined };
+};
+
+const carnetGoodsField = (text) => {
+  const found = String(text || '').match(/\btip\s*marf[aăá]?\s*[:.\-]?\s*([^\n;]{3,60})/i);
+  if (!found) return goodsField(text);
+  const value = found[1].replace(/\s+/g, ' ').trim();
+  return value ? { value: value.slice(0, 60), confidence: 0.85, matched: found[0] } : NO_MATCH;
+};
+
+/** `CANT MARFĂ`, which `extractQuantity` never matched — it only knows `cantitate`. */
+const carnetQuantityField = (text) => {
+  // The unit must stay on the number's own line. With `\s*` it reaches the next line and takes
+  // the `NR` of `NR. DOCUMENT` as a unit — which `toColumns` then copies into Tip marfă when
+  // that field is empty, putting a word on the customer's annex that names nothing.
+  const found = String(text || '').match(
+    /\bcant(?:itate)?\.?[^\S\n]*marf[aăá]?[^\S\n]*[:.\-]?[^\S\n]*([\d.,]+)[^\S\n]*([a-zăâîșț]{2,8})?/i
+  );
+  if (!found) return extractQuantity(text);
+  const value = carnetNumber(found[1]);
+  const unit = (found[2] || '').toLowerCase() || null;
+  if (value == null || !isPlausibleQuantity(value, unit)) return NO_MATCH;
+  return { value: { quantity: value, unit }, confidence: 0.85, matched: found[0] };
+};
+
+/** `NR. CURSE: 1`. A TPO may cover several trips; nothing extracted this before. */
+const carnetTripCountField = (text) => {
+  const found = String(text || '').match(/\bnr\.?\s*curse\s*[:.\-]?\s*(\d{1,2})\b/i);
+  if (!found) return NO_MATCH;
+  const value = Number(found[1]);
+  if (!Number.isFinite(value) || value < 1 || value > 99) return NO_MATCH;
+  return { value, confidence: 0.85, matched: found[0] };
+};
+
 export const OCR_PROFILES = [
+  {
+    id: 'carnet_bord',
+    documentType: 'aviz',
+    name: 'Carnet de bord, scris de mână',
+    markers: [
+      /nr\.?\s*auto/, /cant\.?\s*marf/, /nr\.?\s*curse/,
+      /tip\s*marf/, /ruta\s*trans/, /nr\.?\s*document/,
+    ],
+    fields: {
+      numar_tpo: carnetTpoField,
+      data_efectuare_cursa: carnetDateField,
+      numar_auto: extractPlate,
+      numar_document_marfa: docNoField([TRO_CODE, PSL_CODE]),
+      ruta_transport: carnetRouteField,
+      tip_marfa: carnetGoodsField,
+      quantity: carnetQuantityField,
+      numar_curse: carnetTripCountField,
+    },
+    weights: {
+      numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
+      numar_document_marfa: 2, quantity: 2, ruta_transport: 1,
+      tip_marfa: 1, numar_curse: 1,
+    },
+  },
   {
     id: 'aviz_baumit_psl',
     documentType: 'aviz',
