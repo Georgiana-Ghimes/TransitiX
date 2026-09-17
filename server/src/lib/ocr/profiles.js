@@ -20,6 +20,7 @@ import {
   matchPatterns,
   parseNumber,
 } from './fields.js';
+import { parseBaumitAviz } from '../avizOcr.js';
 
 /** How strongly a text looks like this layout, 0..1. */
 function scoreMarkers(text, markers) {
@@ -71,18 +72,33 @@ const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
 
 const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf/i;
 
+/**
+ * Loose "City - City" needs spaces (or an arrow / "către") around the separator.
+ * A glued hyphen is a compound place name ("Bolintin-Deal"), not a route — treating it as one
+ * wrote the Expeditor's town onto the annex while the delivery address sat unused on the page.
+ */
+const LOOSE_CITY_ROUTE = /\b([A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2}\s+(?:-|–|→|catre|către)\s+[A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2})\b/;
+
 const routeField = (text) => {
   const labelled = matchPatterns(text, [
     /(?:ruta|traseu|route)\s*[:\-]?\s*([A-ZĂÂÎȘȚ][^\n;]{3,80})/i,
   ], { baseConfidence: 0.8 });
   if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
 
-  // Loose "City - City" only when both sides look like places, not goods lines.
-  const loose = matchPatterns(text, [
-    /\b([A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2}\s*(?:-|–|→|catre|către)\s*[A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2})\b/,
-  ], { baseConfidence: 0.65 });
+  const loose = matchPatterns(text, [LOOSE_CITY_ROUTE], { baseConfidence: 0.65 });
   if (loose.value && !ROUTE_NOISE.test(loose.value)) return loose;
   return NO_MATCH;
+};
+
+/** Baumit annex route: Site (Bol/Mil) → Adresă de livrare. Falls back to the generic matcher. */
+const baumitRouteField = (text) => {
+  try {
+    const route = parseBaumitAviz(text)?.ruta_transport;
+    if (route) return { value: route, confidence: 0.92, matched: route };
+  } catch {
+    // Profile extractors must not throw the whole document; fall through.
+  }
+  return routeField(text);
 };
 
 const goodsField = (text) => {
@@ -127,7 +143,7 @@ export const OCR_PROFILES = [
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([PSL_CODE]),
-      ruta_transport: routeField,
+      ruta_transport: baumitRouteField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
       net_weight_kg: extractNetWeight,
@@ -150,7 +166,7 @@ export const OCR_PROFILES = [
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([TRO_CODE]),
-      ruta_transport: routeField,
+      ruta_transport: baumitRouteField,
       tip_marfa: goodsField,
       gross_weight_kg: extractGrossWeight,
       net_weight_kg: extractNetWeight,

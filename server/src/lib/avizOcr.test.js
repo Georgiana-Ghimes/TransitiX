@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence } from './avizOcr.js';
+import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, isFalseRoute } from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
 
 const PSL_FIXTURE = `
@@ -375,6 +375,29 @@ TPO-0025803`,
     expect(repaired.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
     // Derived on every read, so a stored row that predates this column still answers.
     expect(repaired.delivery_address?.streetName).toBe('viilor');
+  });
+
+  it('replaces a false Bolintin-Deal route with Site→livrare from the stored OCR text', () => {
+    // Ticket 35: OCR profile treated the Expeditor town as City-City; export kept it because
+    // preferStored never overwrites a non-empty field.
+    expect(isFalseRoute('Bolintin-Deal')).toBe(true);
+    expect(isFalseRoute('Bol-Dobroesti/Ciresului31B')).toBe(false);
+
+    const repaired = repairAvizFromStored({
+      numar_tpo: 'TPO-0025629',
+      ruta_transport: 'Bolintin-Deal',
+      extracted_data: {
+        raw_text: `Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
+Adresă de livrare CS-DEMOS-OBI CIRESULUI STR CIRESULUI, NR 31B Dobroești RO 077085
+Client factură: C23901185 DEMOS INTERMED SRL
+Placuta de inmatriculare B 330 SRS
+TPO-0025629
+PSL-0044362`,
+      },
+    });
+    expect(repaired.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
+    expect(repaired.ruta_transport).not.toMatch(/Bolintin/i);
+    expect(repaired.delivery_address?.locality).toBe('Dobroesti');
   });
 
   it('keeps an office-edited plate and document number', () => {

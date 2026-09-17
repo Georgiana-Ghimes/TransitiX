@@ -139,8 +139,9 @@ const DEFAULT_OBS_CODES = [
  * and the right one in the XLSX. A screen that disagrees with the file it produces is worse
  * than either being wrong alone, because neither can be trusted afterwards.
  *
- * `repairAvizFromStored` only fills blanks, so an office edit is never overwritten, and nothing
- * is written back here: this decorates a response, it does not change the document.
+ * `repairAvizFromStored` fills blanks (and replaces a false route like "Bolintin-Deal"), so an
+ * office edit of a real route is never overwritten, and nothing is written back here: this
+ * decorates a response, it does not change the document.
  */
 function decorateAviz(row) {
   const serialized = repairAvizFromStored(serializeRow(row));

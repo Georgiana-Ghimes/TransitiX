@@ -330,6 +330,31 @@ describe('extractDocument', () => {
     expect(String(result.values.tip_marfa || '')).not.toMatch(/^38245090$/);
   });
 
+  it('does not treat Bolintin-Deal as the route when Adresa de livrare is Dobroești', () => {
+    // Ticket 35: loose City-City matched the Expeditor town; annex showed Bolintin-Deal.
+    const text = `
+BAUMIT ROMANIA SRL
+AVIZ DE INSOTIRE A MARFII
+Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
+Aviz de expeditie: PSL-0044362
+Adresă de livrare CS-DEMOS-OBI CIRESULUI STR CIRESULUI, NR 31B Dobroești RO 077085
+Client factură: C23901185 DEMOS INTERMED SRL
+Placuta de inmatriculare B 330 SRS
+TPO-0025629
+Data: 10.08.2026
+Greutate bruta: 9964 kg
+`;
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_baumit_psl');
+    expect(result.values.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
+    expect(result.values.ruta_transport).not.toMatch(/Bolintin/i);
+  });
+
+  it('still accepts an explicit City - City route with spaces around the dash', () => {
+    const result = extractDocument(PSL_AVIZ);
+    expect(result.values.ruta_transport).toMatch(/Bucuresti\s*-\s*Chiajna/i);
+  });
+
   /**
    * Real Paddle output from a handwritten notebook photo (wrong rotation often wins,
    * "aviz" is mangled). Previously profile detection scored 0 and TPO was discarded.

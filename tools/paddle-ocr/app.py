@@ -55,7 +55,8 @@ _GOOD_ENOUGH_SCORE = 12.0
 # A scanned dossier runs to a dozen pages or more. The cap is a guard against a mis-sent
 # archive, not an editorial decision — whatever it drops is reported back, never silently.
 _PDF_MAX_PAGES = int(os.environ.get("PADDLE_OCR_PDF_PAGES", "40") or 40)
-_PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "200") or 200)
+# 200dpi was fine for speed; small print on Baumit avize (street, postal code) needs more pixels.
+_PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "280") or 280)
 _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0", "false", "False")
 
 
@@ -302,6 +303,11 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
     so trying it first turns a four-orientation search per page into one — which is the
     difference between a ten-page scan finishing and timing out.
 
+    Printed avize / clean scans read best on the pixels as-is. Autocontrast and sharpening were
+    added for notebook photos and, when applied to every page, made Paddle less accurate on the
+    documents that used to extract cleanly. So orientation search runs on the raw frame; photo
+    enhancements only kick in when that read is still missing logistics fields.
+
     `extra_passes` re-renders the page when fields are missing. Reserved for single-page photos:
     on a dossier it would multiply every page by three for documents that are simply printed
     without a plate on them.
@@ -318,13 +324,12 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
 
     for degrees in rotations:
         frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
-        # Autocontrast helps uneven phone lighting; run on a copy so rotation stays cheap.
-        enhanced = enhance_for_ocr(frame)
-        text, confs = ocr_array(np.array(enhanced))
+        # Raw first: printed PDFs and clear phone shots of printed paper stay accurate.
+        text, confs = ocr_array(np.array(frame.convert("RGB")))
         w, h = frame.size
         portrait_bonus = 1.5 if h >= w else -1.0
         score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
-        log.info("OCR rotation=%s score=%.2f chars=%s", degrees, score, len(text))
+        log.info("OCR rotation=%s score=%.2f chars=%s (raw)", degrees, score, len(text))
         if score > best_score:
             best_score = score
             best_text = text
@@ -333,6 +338,25 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
         # Fast path: a page that already reads like an upright document skips other angles.
         if degrees == rotations[0] and looks_upright_enough(text, score):
             break
+
+    # Phone photos of notebooks: one light contrast pass on the winning orientation when the
+    # raw read still has no usable logistics fields. Only on the single-page path — a multi-page
+    # scan is printed paper, and re-enhancing every sheet costs CPU without helping.
+    if extra_passes and missing_from_text(best_text):
+        try:
+            enhanced = enhance_for_ocr(best_frame)
+            text, confs = ocr_array(np.array(enhanced))
+            w, h = best_frame.size
+            portrait_bonus = 1.5 if h >= w else -1.0
+            score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
+            log.info("OCR pass=enhance score=%.2f chars=%s", score, len(text))
+            if text and score > best_score:
+                best_text, best_score = text, score
+            elif text and missing_from_text(best_text):
+                # Keep both: extractor takes the first strong match per field.
+                best_text = f"{best_text}\n{text}".strip() if best_text else text
+        except Exception as exc:  # noqa: BLE001
+            log.warning("OCR enhance pass failed: %s", exc)
 
     # Printed avize usually already carry both a code and a plate, and stop here. Photos often
     # give up one field per rendering: native size reads the printed code, an upscale reads the

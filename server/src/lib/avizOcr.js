@@ -288,7 +288,7 @@ function parseDestBlock(section) {
   const folded = fold(section)
     .replace(/bucurestisector/g, 'bucuresti sector')
     .replace(/([a-z])sector(\d)/g, '$1 sector $2');
-  const skipLocality = /^(bolintin|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
+  const skipLocality = /^(bolintin|bolintin-deal|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
   const streetStop = /^(nr|numar|sector|ro|rou|romania|bucuresti|domnesti|dobroesti|militari|fundeni|comanesti|popesti)$/;
   // The type word is captured, not just skipped. Bucharest has an Intrarea, a Șoseaua and a
   // Strada Viilor, and they do not agree about the zone: one is in B, one is outside. The aviz
@@ -516,6 +516,28 @@ function preferQuantity(row, parsed) {
 }
 
 /**
+ * True when a stored "route" is really a compound place name (or bare site code), not
+ * Site→delivery. Those values came from treating "Bolintin-Deal" as City-City in the OCR
+ * profile; preferStored would keep them forever because the field is non-empty.
+ */
+export function isFalseRoute(value) {
+  const s = String(value || '').trim();
+  if (!s) return true;
+  if (/^(Bol|Mil)$/i.test(s)) return true;
+  // Glued hyphen, no slash: compound locality, not Bol-Dest/Street.
+  if (/^[A-Za-zĂÂÎȘȚăâîșț]+-[A-Za-zĂÂÎȘȚăâîșț]+$/u.test(s) && !/^(Bol|Mil)-/i.test(s)) {
+    return true;
+  }
+  return false;
+}
+
+function preferRoute(stored, parsed) {
+  if (fieldFilled(stored) && !isFalseRoute(stored)) return stored;
+  if (fieldFilled(parsed)) return parsed;
+  return fieldFilled(stored) ? stored : null;
+}
+
+/**
  * Tip marfa for list / export / repair.
  *
  * A bare count ("bucati") on the row is OCR noise from `Cantitate … buc`, not an office edit.
@@ -539,7 +561,10 @@ function preferTipMarfa(row, parsed) {
   return null;
 }
 
-/** Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values. */
+/**
+ * Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values —
+ * except a false route (compound place name) which is OCR poison, not an edit.
+ */
 export function repairAvizFromStored(row) {
   const raw = row?.extracted_data?.raw_text;
   const parsed = raw ? parseBaumitAviz(raw) : null;
@@ -548,7 +573,7 @@ export function repairAvizFromStored(row) {
     numar_tpo: resolveStoredTpo(row, parsed),
     data_efectuare_cursa: preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
     numar_auto: preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
-    ruta_transport: preferStored(row?.ruta_transport, parsed?.ruta_transport),
+    ruta_transport: preferRoute(row?.ruta_transport, parsed?.ruta_transport),
     tip_marfa: preferTipMarfa(row, parsed),
     cantitate_marfa: preferQuantity(row, parsed),
     gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
