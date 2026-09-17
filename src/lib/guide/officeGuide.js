@@ -18,7 +18,7 @@ const FLUX = {
   lead: 'De la hârtia primită de la șantier până la fișierul trimis clientului.',
   blocks: [
     steps([
-      'Șoferul fotografiază avizul din cabină, sau tu încarci PDF-ul în Avize / Rapoarte.',
+      'Șoferul fotografiază avizul din cabină, sau tu încarci PDF-ul în Avize OCR.',
       'Aplicația citește documentul (OCR) și completează ce recunoaște: TPO, data cursei, numărul auto, ruta, tipul mărfii, numărul avizului și greutatea brută.',
       'Deschizi Editează pe fiecare rând, verifici ce a citit și completezi restul: km, tarif, valoare TPO, observații.',
       'Rândul primește statusul Confirmat când l-ai verificat.',
@@ -237,7 +237,7 @@ const COMPANION_ONLY = [
     title: 'Despre această aplicație',
     lead: 'Companionul RAI pentru documente, nu platforma completă.',
     blocks: [
-      p('Are cinci ecrane, și atât: Avize / Rapoarte, Rapoarte, Harta zonelor, Autoturisme, plus Setări companie jos lângă Ghid (doar admin). Restul modulelor Transitix nu sunt aici, deliberat, ca fluxul de documente să nu fie îngropat sub ce nu folosești.'),
+      p('Are cinci ecrane, și atât: Avize OCR, Rapoarte, Harta zonelor, Autoturisme, plus Setări companie jos lângă Ghid (doar admin). Restul modulelor Transitix nu sunt aici, deliberat, ca fluxul de documente să nu fie îngropat sub ce nu folosești.'),
       p('Șoferii au aplicația lor pe telefon, cu un singur lucru de făcut: trimiterea documentelor de pe drum.'),
     ],
   },

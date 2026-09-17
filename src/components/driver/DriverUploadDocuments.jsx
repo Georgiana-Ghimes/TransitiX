@@ -341,7 +341,7 @@ export default function DriverUploadDocuments({ user }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-        Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize / Rapoarte.
+        Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize OCR.
       </p>
 
       {!online ? (

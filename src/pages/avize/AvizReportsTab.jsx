@@ -9,7 +9,7 @@ export default function AvizReportsTab({ filterBar, reportData }) {
     <div className="space-y-4">
       {filterBar}
       <p className="text-xs text-slate-500">
-        Rapoartele nu modifică șablonul Anexa Factura RAI. Unește rămâne pe tab-ul Avize.
+        Sintezele nu modifică șablonul Anexa Factura RAI. Unește rămâne pe tab-ul Avize OCR.
       </p>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">

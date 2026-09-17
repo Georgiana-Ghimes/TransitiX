@@ -25,8 +25,8 @@ export const OFFICE_TOUR_STEPS = [
     mobileBody:
       'Fluxul principal RAI: încarci aviz (PDF/poză), corectezi rândurile, bifezi și exporți Anexa Excel. Km, taxe și observații le completezi tu. IT: Default în Excel = doar când câmpul e gol.',
     path: '/avize',
-    cta: 'Avize / Rapoarte',
-    hint: 'În meniul din stânga: Avize / Rapoarte: fluxul principal pentru RAI.',
+    cta: 'Avize OCR',
+    hint: 'În meniul din stânga: Avize OCR: fluxul principal pentru RAI.',
     mobileHint: 'Am deschis pagina Avize în spate. Poți închide ghidul și explora după tur.',
   },
   {

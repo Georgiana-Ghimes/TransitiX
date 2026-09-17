@@ -37,7 +37,7 @@ export const AVIZ_ACTION_LEGEND = [
 export const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie, duplică-l ca șablon nou.',
+    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize OCR. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie, duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',

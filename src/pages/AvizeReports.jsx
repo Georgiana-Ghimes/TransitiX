@@ -762,11 +762,11 @@ export default function AvizeReports() {
     <div className="space-y-5 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Avize / Rapoarte</h1>
+          <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Avize OCR</h1>
           <p className="text-sm text-slate-500 mt-1">Extrage câmpuri din avize și unește-le într-o Anexă Factură XLSX</p>
         </div>
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg self-start">
-          {[['avize', 'Avize'], ['sabloane', 'Șabloane'], ['rapoarte', 'Rapoarte']].map(([id, label]) => (
+          {[['avize', 'Avize OCR'], ['sabloane', 'Șabloane'], ['rapoarte', 'Sinteze']].map(([id, label]) => (
             <button
               key={id}
               type="button"

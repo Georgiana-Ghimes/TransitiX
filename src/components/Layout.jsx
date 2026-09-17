@@ -48,7 +48,7 @@ const NAV = [
   { label: 'Financiar', path: '/finance', icon: Wallet },
   { label: 'Depozit', path: '/warehouse', icon: Package },
   { label: 'Documente', path: '/documents', icon: FileText },
-  { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Verificări date', path: '/checks', icon: ShieldCheck },
   { label: 'Config. comercială', path: '/commercial', icon: Receipt },
@@ -59,7 +59,7 @@ const NAV = [
 ];
 
 const COMPANION_OFFICE_NAV = [
-  { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList },
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Harta zonelor', path: '/zone-map', icon: Map },
   { label: 'Autoturisme', path: '/fleet', icon: Truck },
@@ -289,7 +289,7 @@ export default function Layout() {
         >
           <Link
             to={documentsCompanion ? '/avize' : '/'}
-            title={documentsCompanion ? 'Avize / Rapoarte' : 'Dashboard'}
+            title={documentsCompanion ? 'Avize OCR' : 'Dashboard'}
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center min-w-0',
