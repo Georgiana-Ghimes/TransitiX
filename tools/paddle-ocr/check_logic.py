@@ -154,6 +154,10 @@ def main() -> int:
           app_module.missing_from_text("Aviz de expeditie TPO-0025813 catre depozit") is True)
     check("a page with both a code and a plate is done",
           app_module.missing_from_text("Aviz TPO-0025813 auto B 330 SRS livrare") is False)
+    check("empty OCR still asks for photo passes (notebook under glare)",
+          app_module.missing_from_text("") is True)
+    check("short junk still asks for photo passes",
+          app_module.missing_from_text("iiii") is True)
 
     # The photo path re-renders; the dossier path must stay at one pass per page after the first.
     calls.clear()

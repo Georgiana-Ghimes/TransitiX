@@ -250,6 +250,27 @@ def enhance_aggressive(image):
     return Image.fromarray(cv2.cvtColor(merged, cv2.COLOR_LAB2RGB))
 
 
+def emphasize_ink(image):
+    """
+    Blue ballpoint on cream paper under a green monitor cast.
+
+    The green glow lifts the paper toward the ink's chroma; a plain RGB OCR pass then sees
+    low contrast. Taking the darker of R/G (where blue ink is darkest) before grayscale
+    recovers the strokes without a hard binarize that kills handwriting.
+    """
+    from PIL import Image
+    import numpy as np
+
+    frame = upscale_for_ocr(image.convert("RGB"), 2200, 3.0)
+    try:
+        arr = np.asarray(frame).astype("float32")
+        ink = np.min(arr[:, :, :2], axis=2)  # R and G; blue ink sinks both
+        ink = np.clip(ink, 0, 255).astype("uint8")
+        return Image.fromarray(ink).convert("RGB")
+    except Exception:
+        return frame
+
+
 def flatten_shadow(image):
     """
     Divide the page by its own blur, which removes the hand / phone shadow a driver casts.
@@ -274,18 +295,27 @@ def flatten_shadow(image):
 
 def missing_from_text(text: str) -> bool:
     """
-    Whether another pass is worth its CPU: a page with content but no code, or no plate.
+    Whether another pass is worth its CPU.
 
-    A printed aviz that already yielded both stops here, which is why clean PDFs stay fast.
+    Empty / near-empty means the raw pass failed — notebook photos with green monitor glare
+    often return nothing until upscale + shadow flattening run. That used to be skipped because
+    a short blob was treated as "not worth it", so a hard photo stayed blank forever.
+
+    A printed aviz that already yielded both a logistics code and a plate stops here.
     """
     blob = (text or "").strip()
     if len(blob) < 24:
-        return False
+        return True
     return not (_CODE_RE.search(blob) and _PLATE_RE.search(blob))
 
 
 def needs_aggressive_pass(text: str) -> bool:
-    """Kept for the offline checks: content on the page but no logistics code at all."""
+    """
+    Offline-check helper: content on the page but no logistics code.
+
+    Unlike missing_from_text, short junk ("iiii") stays False — that gate is for deciding
+    whether a second *kind* of pass is meaningful when some text already came back.
+    """
     blob = (text or "").strip()
     if len(blob) < 24:
         return False
@@ -365,7 +395,12 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
     if _AGGRESSIVE and extra_passes:
         w, h = best_frame.size
         portrait_bonus = 1.5 if h >= w else -1.0
-        passes = (("upscale", upscale_for_ocr), ("shadow", flatten_shadow), ("clahe", enhance_aggressive))
+        passes = (
+            ("ink", emphasize_ink),
+            ("upscale", upscale_for_ocr),
+            ("shadow", flatten_shadow),
+            ("clahe", enhance_aggressive),
+        )
         for name, transform in passes:
             if not missing_from_text(best_text):
                 break
