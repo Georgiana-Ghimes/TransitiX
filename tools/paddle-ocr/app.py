@@ -203,6 +203,155 @@ def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list
     return pages, total
 
 
+_PERSPECTIVE = os.environ.get("PADDLE_OCR_PERSPECTIVE", "1").strip() not in ("0", "false", "False")
+
+
+def order_quad_points(pts):
+    """TL, TR, BR, BL — getPerspectiveTransform needs a stable corner order."""
+    import numpy as np
+
+    points = np.asarray(pts, dtype="float32").reshape(4, 2)
+    ordered = np.zeros((4, 2), dtype="float32")
+    sums = points.sum(axis=1)
+    ordered[0] = points[np.argmin(sums)]  # top-left
+    ordered[2] = points[np.argmax(sums)]  # bottom-right
+    diffs = np.diff(points, axis=1).reshape(4)
+    ordered[1] = points[np.argmin(diffs)]  # top-right
+    ordered[3] = points[np.argmax(diffs)]  # bottom-left
+    return ordered
+
+
+def _quad_candidates_from_edges(edged, img_area: float):
+    """Largest convex quads that look like a page, not a tiny sticker or the frame itself."""
+    import cv2
+
+    contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:12]
+    found = []
+    for contour in contours:
+        peri = cv2.arcLength(contour, True)
+        if peri < 40:
+            continue
+        approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
+        if len(approx) != 4 or not cv2.isContourConvex(approx):
+            continue
+        area = float(cv2.contourArea(approx))
+        if area < 0.18 * img_area or area > 0.97 * img_area:
+            continue
+        found.append(approx.reshape(4, 2))
+    return found
+
+
+def find_page_quad(arr_rgb):
+    """
+    Best-effort page corners in a phone photo.
+
+    Returns a 4×2 float32 array (unordered) or None when the sheet fills the frame /
+    OpenCV is missing / no contour is page-like. A false warp is worse than no warp, so
+    the area band is deliberate.
+    """
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return None
+
+    h, w = arr_rgb.shape[:2]
+    img_area = float(h * w)
+    if img_area < 10_000:
+        return None
+
+    # Work on a modest copy — contour quality is fine at ~900px short side.
+    scale = 1.0
+    short = min(h, w)
+    if short > 900:
+        scale = 900.0 / float(short)
+        work = cv2.resize(arr_rgb, (max(1, int(w * scale)), max(1, int(h * scale))))
+    else:
+        work = arr_rgb
+
+    gray = cv2.cvtColor(work, cv2.COLOR_RGB2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    edge_maps = [
+        cv2.Canny(gray, 40, 140),
+        cv2.Canny(gray, 20, 80),
+    ]
+    # Adaptive threshold helps cream paper under a green monitor cast (edges wash out).
+    adaptive = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 7
+    )
+    edge_maps.append(cv2.bitwise_not(adaptive) if adaptive.mean() > 127 else adaptive)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    candidates = []
+    for edged in edge_maps:
+        closed = cv2.dilate(edged, kernel, iterations=2)
+        closed = cv2.morphologyEx(closed, cv2.MORPH_CLOSE, kernel, iterations=2)
+        candidates.extend(_quad_candidates_from_edges(closed, float(work.shape[0] * work.shape[1])))
+
+    if not candidates:
+        return None
+
+    # Prefer the largest page-like quad (notebook usually dominates the shot).
+    best = max(candidates, key=lambda q: float(cv2.contourArea(q.astype("float32"))))
+    if scale != 1.0:
+        best = best / scale
+    return best.astype("float32")
+
+
+def correct_perspective(image):
+    """
+    Warp a phone photo so the notebook page is frontal.
+
+    No-op when the page cannot be found safely (full-bleed scans, busy backgrounds).
+    Disable with PADDLE_OCR_PERSPECTIVE=0.
+    """
+    from PIL import Image
+    import numpy as np
+
+    if not _PERSPECTIVE:
+        return image.convert("RGB")
+
+    try:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — skipping perspective correction")
+        return image.convert("RGB")
+
+    frame = image.convert("RGB")
+    arr = np.asarray(frame)
+    quad = find_page_quad(arr)
+    if quad is None:
+        return frame
+
+    rect = order_quad_points(quad)
+    (tl, tr, br, bl) = rect
+    width_a = float(np.linalg.norm(br - bl))
+    width_b = float(np.linalg.norm(tr - tl))
+    height_a = float(np.linalg.norm(tr - br))
+    height_b = float(np.linalg.norm(tl - bl))
+    max_w = int(max(width_a, width_b))
+    max_h = int(max(height_a, height_b))
+    if max_w < 120 or max_h < 160:
+        return frame
+
+    aspect = max_w / float(max_h)
+    # Notebook / A4-ish; reject wild quads (desk corners, monitor bezels).
+    if aspect < 0.35 or aspect > 2.8:
+        log.info("perspective skipped — aspect %.2f out of band", aspect)
+        return frame
+
+    dst = np.array(
+        [[0, 0], [max_w - 1, 0], [max_w - 1, max_h - 1], [0, max_h - 1]],
+        dtype="float32",
+    )
+    matrix = cv2.getPerspectiveTransform(rect, dst)
+    warped = cv2.warpPerspective(arr, matrix, (max_w, max_h), flags=cv2.INTER_CUBIC)
+    log.info("perspective corrected → %sx%s (was %sx%s)", max_w, max_h, frame.size[0], frame.size[1])
+    return Image.fromarray(warped)
+
+
 def enhance_for_ocr(image):
     """
     Light contrast lift for shadowed notebook photos.
@@ -356,20 +505,28 @@ def ocr_photo_page(image) -> tuple[str, int]:
     """
     Phone photo of a notebook (or any single-page hard shot).
 
-    Raw RGB under a green monitor cast often returns *nothing*. Spending four orientations on
-    that empty read burns the interactive budget and never reaches the ink/upscale passes.
-    So photos start on an ink-emphasised, upscaled frame, then rotate that prepared image.
+    Order of work:
+      1. Perspective warp (page frontal) — oblique phone shots kill line detection.
+      2. Ink-emphasised, upscaled frame per orientation — raw RGB under monitor glare
+         often returns nothing and burns the interactive budget on empty reads.
+      3. Extra enhance / shadow / CLAHE only while the best text is still thin.
     """
     import numpy as np
+
+    try:
+        base = correct_perspective(image)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("perspective correction failed: %s", exc)
+        base = image.convert("RGB") if hasattr(image, "convert") else image
 
     rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
     best_text = ""
     best_score = -1.0
     best_rot = 0
-    best_source = image
+    best_source = base
 
     for degrees in rotations:
-        frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
+        frame = base if degrees == 0 else base.rotate(-degrees, expand=True)
         prepared = emphasize_ink(frame)
         text, confs = ocr_array(np.array(prepared))
         score = _score_frame(text, confs, frame)

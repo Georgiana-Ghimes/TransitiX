@@ -45,6 +45,12 @@ By default the service tries page orientations `0 → 90 → 270 → 180` when t
 first pass scores poorly (missing TPO/PSL/keywords). Disable with
 `PADDLE_OCR_AUTO_ROTATE=0`. Response includes `rotation` (degrees clockwise).
 
+## Phone photos (perspective)
+
+Single-page uploads (driver phone shots) run OpenCV page detection first and
+warp the notebook to a frontal rectangle before ink/OCR. Full-bleed scans are
+left alone. Disable with `PADDLE_OCR_PERSPECTIVE=0`.
+
 Transitix Node also post-corrects codes/plates (`PS-…` → `PSL-…`, `B330SRS` →
 `B 330 SRS`) in `server/src/lib/ocr/normalizeOcrText.js`.
 

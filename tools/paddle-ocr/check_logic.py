@@ -159,6 +159,36 @@ def main() -> int:
     check("short junk still asks for photo passes",
           app_module.missing_from_text("iiii") is True)
 
+    # Perspective: a white page on a dark desk must warp; a full-bleed sheet must not invent corners.
+    # OpenCV is in the Docker image; a bare host may only have pillow/numpy — skip, don't fail.
+    try:
+        import cv2
+        import numpy as np
+        from PIL import Image as PILImageCheck
+        has_cv2 = True
+    except ImportError:
+        has_cv2 = False
+
+    if has_cv2:
+        desk = np.full((800, 600, 3), 30, dtype=np.uint8)
+        # Trapezoid page (phone-oblique): wider at the bottom.
+        page_pts = np.array([[120, 80], [480, 100], [540, 720], [60, 700]], dtype=np.int32)
+        cv2.fillConvexPoly(desk, page_pts, (230, 225, 210))
+        warped = app_module.correct_perspective(PILImageCheck.fromarray(desk))
+        check("oblique page photo is perspective-warped",
+              warped.size != (600, 800) and warped.size[0] > 200 and warped.size[1] > 200,
+              f"size={warped.size}")
+        ordered = app_module.order_quad_points(page_pts.astype("float32"))
+        check("quad corners are ordered TL-TR-BR-BL",
+              ordered[0][1] < ordered[3][1] and ordered[0][0] < ordered[1][0],
+              f"ordered={ordered.tolist()}")
+        full = PILImageCheck.new("RGB", (600, 800), (240, 240, 240))
+        same = app_module.correct_perspective(full)
+        check("full-bleed page is left alone (no false warp)",
+              same.size == (600, 800), f"size={same.size}")
+    else:
+        print("  SKIP  perspective checks (opencv not installed on host)")
+
     # The photo path re-renders; the dossier path must stay at one pass per page after the first.
     calls.clear()
     photo = io.BytesIO()
