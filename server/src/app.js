@@ -67,9 +67,25 @@ const app = express();
 const trustProxy = trustProxySetting();
 if (trustProxy !== false) app.set('trust proxy', trustProxy);
 
+/** Comma-separated CLIENT_ORIGIN (e.g. localhost + 127.0.0.1 for local companion). */
+function corsOriginOption() {
+  const list = String(process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+  if (list.length === 0) return 'http://localhost:5173';
+  if (list.length === 1) return list[0];
+  return (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = String(origin).replace(/\/$/, '');
+    if (list.includes(normalized)) return callback(null, origin);
+    return callback(new Error('Not allowed by CORS'));
+  };
+}
+
 app.use(securityHeadersMiddleware);
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: corsOriginOption(),
   credentials: true,
 }));
 app.use(compression({
