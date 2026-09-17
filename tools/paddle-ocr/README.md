@@ -79,6 +79,50 @@ coverage, against 84 levels at 31% for the old `min(R, G)` — which assumed the
 paper was brighter in red than the ink, and under a green monitor cast there is
 barely any red light to be bright in.
 
+### The scan pass (`scan_like_document`)
+
+Runs the treatment a phone scanner app applies, in the order that matters:
+
+1. White-balance and divide out the lighting (`emphasize_ink`), so nothing
+   downstream is reading a shadow.
+2. **Deskew off the notebook's own ruled lines.** They are a better baseline
+   reference than the writing: there are more of them and they are straight. On
+   `sample-carnet.jpg` this finds −4.0° from 86 Hough segments. Connected
+   components cannot do this — handwriting crosses every rule and breaks it into
+   pieces (3 components where there are 18 lines).
+3. Adaptive binarize.
+4. **Erase the rules, keep the letters crossing them.** A rule pixel with ink
+   running vertically through it belongs to a character, not the rule. Without
+   that test a horizontal open takes the writing along with the line.
+5. Drop specks and blobs, sized against the median component.
+
+It deliberately **does not crop to the page**. Two content-detection heuristics
+were tried and both failed on the sample: quad detection finds nothing (the page
+runs out of frame, so no closed contour) and a saturation mask cut the digits off
+the right-hand side, because the lit half of the sheet is as green as the monitor
+behind it. Background left in costs one wasted detection box; a wrong crop costs
+the number that ends up on an invoice — the same trade `correct_perspective`
+already settled.
+
+### What a clean image cannot fix
+
+`drop_score` is the filter that turns "read badly" into "read nothing".
+PaddleOCR discards any line it recognised below that confidence, and **0.35 is a
+printed-text number** — handwriting comes back at 0.1–0.3 even when the
+characters are right, so a whole carnet is deleted and the caller sees an empty
+read rather than a poor one. The default here is now **0.10**. Filtering belongs
+downstream, where it is per field against `corrected_fields` and a review queue,
+not per line with no appeal.
+
+If a photo returns *exactly nothing*, check that before touching preprocessing:
+
+```bash
+docker compose -f docker-compose.paddle-ocr.yml run --rm   -e PADDLE_OCR_DROP_SCORE=0 paddle-ocr python bench.py sample-carnet.jpg
+```
+
+Text appearing at 0 and nothing at 0.35 means detection works and the filter was
+eating it. Nothing at either means detection is the problem.
+
 ### The ceiling
 
 `PADDLE_OCR_LANG=latin` loads `latin_PP-OCRv3_mobile_rec`, a small model trained

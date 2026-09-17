@@ -15,6 +15,10 @@ services:
       # Longest side the text detector may see. PaddleOCR's default is 960, which squashes a
       # handwritten carnet line to ~22px and finds nothing. Turn DOWN if the VM runs out of CPU.
       PADDLE_OCR_DET_SIDE_LEN: ${PADDLE_OCR_DET_SIDE_LEN:-1920}
+      # PaddleOCR throws away any line it read below this confidence. Handwriting comes back at
+      # 0.1-0.3 even when correct, so the printed-text default of 0.35 deletes a whole carnet
+      # and the caller sees an empty read instead of a poor one.
+      PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
     restart: unless-stopped
     volumes:
       # Persist downloaded OCR models between rebuilds

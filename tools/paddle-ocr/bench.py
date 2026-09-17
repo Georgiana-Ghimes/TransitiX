@@ -41,6 +41,7 @@ _IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".
 
 # Order is the order the service tries them in.
 VARIANTS = (
+    ("scan", lambda im: app.scan_like_document(im)),
     ("emphasize_ink", lambda im: app.emphasize_ink(im)),
     ("plain", lambda im: app.fit_for_detector(im)),
     ("shadow", lambda im: app.flatten_shadow(im)),

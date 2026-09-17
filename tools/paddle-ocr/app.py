@@ -102,7 +102,12 @@ def get_engine():
             "det_db_unclip_ratio": float(os.environ.get("PADDLE_OCR_UNCLIP", "2.0") or 2.0),
             # Thickens strokes on the probability map before boxing — built for thin text.
             "use_dilation": True,
-            "drop_score": float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.35") or 0.35),
+            # PaddleOCR discards any line it recognised below this confidence. 0.35 is a
+            # printed-text number: handwriting comes back at 0.1-0.3 even when the characters
+            # are right, so that filter deletes a whole carnet and the caller sees an empty
+            # read rather than a poor one. Filtering belongs downstream, where it is per field
+            # against `corrected_fields` and a review queue, not per line with no appeal.
+            "drop_score": float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.10") or 0.10),
         }
         base = {"use_angle_cls": True, "lang": lang, "use_gpu": use_gpu, "show_log": False}
 
@@ -512,6 +517,178 @@ def emphasize_ink(image):
         return frame
 
 
+def _ink_mask(gray, block: int = 25, c: int = 10):
+    """Ink as white-on-black, adaptively — no global threshold has to suit the whole sheet."""
+    import cv2
+
+    block = block if block % 2 else block + 1
+    return cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block, c
+    )
+
+
+def rule_segments(binary, min_fraction: float = 0.30):
+    """
+    The notebook's own ruled lines, as Hough segments.
+
+    Connected components do not find them: handwriting crosses every rule and breaks it into
+    pieces (3 components where there are 18 lines, measured). Hough does not care about breaks.
+    Returns [] for unruled paper, which is the usual case for a printed aviz.
+    """
+    import cv2
+    import numpy as np
+
+    height, width = binary.shape[:2]
+    lines = cv2.HoughLinesP(
+        binary, 1, np.pi / 360, threshold=80,
+        minLineLength=int(width * min_fraction), maxLineGap=12,
+    )
+    if lines is None:
+        return []
+    found = []
+    for x1, y1, x2, y2 in lines[:, 0]:
+        if abs(np.degrees(np.arctan2(float(y2 - y1), float(x2 - x1)))) < 30:
+            found.append((int(x1), int(y1), int(x2), int(y2)))
+    return found
+
+
+def rotate_gray(gray, degrees: float):
+    """Rotate about the centre, growing the canvas so nothing is cut off."""
+    import cv2
+
+    if abs(degrees) < 0.2:
+        return gray
+    height, width = gray.shape[:2]
+    matrix = cv2.getRotationMatrix2D((width / 2, height / 2), degrees, 1.0)
+    cos, sin = abs(matrix[0, 0]), abs(matrix[0, 1])
+    new_w, new_h = int(height * sin + width * cos), int(height * cos + width * sin)
+    matrix[0, 2] += new_w / 2 - width / 2
+    matrix[1, 2] += new_h / 2 - height / 2
+    return cv2.warpAffine(
+        gray, matrix, (new_w, new_h),
+        flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE,
+    )
+
+
+def strip_rules(binary, segments):
+    """
+    Erase the ruled lines and keep the letters crossing them.
+
+    A rule pixel with ink extending vertically through it belongs to a character, not to the
+    rule. That test is the whole trick — a plain horizontal morphological open takes the
+    writing with the line, which is why de-ruling is usually skipped and the detector is left
+    to box a word and its underline together.
+    """
+    import cv2
+    import numpy as np
+
+    if not segments:
+        return binary, 0.0
+
+    height, width = binary.shape[:2]
+    rules = np.zeros_like(binary)
+    for x1, y1, x2, y2 in segments:
+        cv2.line(rules, (x1, y1), (x2, y2), 255, 3)
+
+    vertical = cv2.morphologyEx(
+        binary, cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(5, height // 120))),
+    )
+    protect = cv2.dilate(vertical, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 11)))
+    erase = cv2.bitwise_and(rules, cv2.bitwise_not(protect))
+    cleaned = cv2.bitwise_and(binary, cv2.bitwise_not(erase))
+    return cleaned, float((erase > 0).mean())
+
+
+def despeckle(binary):
+    """
+    Drop what is far too big or far too small to be a written character.
+
+    Sized against the median component, so it adapts to the photo instead of carrying a pixel
+    constant that is wrong at another resolution. Nothing is cropped — a blob left in costs one
+    wasted detection box, while a wrong crop loses the digits, and this file already settled
+    that trade once for the perspective warp.
+    """
+    import cv2
+    import numpy as np
+
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+    if count < 2:
+        return binary, 0.0
+    height = binary.shape[0]
+    heights = [stats[i, 3] for i in range(1, count) if 4 < stats[i, 3] < height // 6]
+    median = float(np.median(heights)) if heights else 18.0
+
+    out = binary.copy()
+    for i in range(1, count):
+        too_tall = stats[i, 3] > 4.5 * median
+        too_small = stats[i, 4] < max(5, 0.02 * median * median)
+        if too_tall or too_small:
+            out[labels == i] = 0
+    return out, median
+
+
+def scan_like_document(image):
+    """
+    Make a phone photo look like a flatbed scan: flat lighting, straight lines, ink on white.
+
+    This is the pipeline a scanner app runs, in the order that matters:
+
+      1. White-balance and divide out the lighting (`emphasize_ink`), so the rest is not
+         reading a shadow.
+      2. Deskew off the notebook's own ruled lines. They are a better baseline reference than
+         the text — there are more of them and they are perfectly straight. On the sample this
+         finds -4.5 degrees from 65 segments.
+      3. Adaptive binarize.
+      4. Erase the rules, keeping the letters that cross them.
+      5. Drop specks and blobs.
+
+    Deliberately does NOT crop to the page. Every content-detection heuristic tried on the
+    sample either found nothing (page runs out of frame, so no closed quad) or cut the digits
+    off the right-hand side (the lit half of the sheet is as saturated as the monitor behind
+    it). Leaving background in costs a wasted detection box; cropping it wrong costs the
+    number that ends up on an invoice.
+
+    Returns the frame unchanged when OpenCV is missing.
+    """
+    from PIL import Image
+    import numpy as np
+
+    try:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — skipping scan pass")
+        return fit_for_detector(image)
+
+    flat = np.asarray(emphasize_ink(image).convert("L"))
+
+    segments = rule_segments(_ink_mask(flat))
+    if segments:
+        angles = [
+            np.degrees(np.arctan2(float(y2 - y1), float(x2 - x1)))
+            for x1, y1, x2, y2 in segments
+        ]
+        angle = float(np.median(angles))
+        flat = rotate_gray(flat, angle)
+        log.info("scan: deskew %.2f deg from %d ruled segments", angle, len(segments))
+    else:
+        angle = 0.0
+
+    binary = _ink_mask(cv2.bilateralFilter(flat, 7, 60, 60), 41, 12)
+    # Re-find on the straightened frame; the mask has to match the pixels being erased.
+    binary, erased = strip_rules(binary, rule_segments(binary))
+    binary, median = despeckle(binary)
+    log.info(
+        "scan: erased %.2f%% as rules, median glyph %.0fpx, ink %.1f%%",
+        100 * erased, median, 100 * float((binary > 0).mean()),
+    )
+
+    # Back to dark ink on white paper, which is what the recognizer was trained on. Re-fit,
+    # because deskewing grew the canvas past the detector's cap and Paddle would shrink it
+    # again — the very thing this pipeline exists to stop.
+    return fit_for_detector(Image.fromarray(255 - binary).convert("RGB"))
+
+
 def flatten_shadow(image):
     """
     Divide the page by its own blur, which removes the hand / phone shadow a driver casts.
@@ -625,6 +802,9 @@ def ocr_photo_page(image) -> tuple[str, int]:
 
     if _AGGRESSIVE:
         passes = (
+            # Deskew + de-rule + binarize: the scanner-app treatment, and the only pass that
+            # addresses the ruled lines running through every word.
+            ("scan", scan_like_document),
             # Untouched pixels at detector size: the ink map assumes ballpoint on paper, and a
             # printed aviz photographed in daylight does not need it.
             ("plain", fit_for_detector),

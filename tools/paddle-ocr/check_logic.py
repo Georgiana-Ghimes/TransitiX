@@ -178,6 +178,49 @@ def main() -> int:
     inked = _np.asarray(app_module.emphasize_ink(PILImage.fromarray(lit)).convert("L"))
     check("ink emphasis leaves paper bright under a green cast",
           inked.mean() > 120, f"mean={inked.mean():.1f}")
+
+    # The scan pass: deskew off the ruled lines, erase them, keep the letters crossing them.
+    import cv2 as _cv2
+
+    ruled = _np.full((900, 700), 240, "uint8")
+    for y in range(120, 860, 48):                      # the notebook's rules
+        _cv2.line(ruled, (40, y), (660, y), 120, 2)
+    for x in range(90, 600, 60):                       # writing that crosses them
+        _cv2.line(ruled, (x, 150), (x + 8, 210), 40, 5)
+    tilted = app_module.rotate_gray(ruled, 4.0)        # as if photographed askew
+    page = PILImage.fromarray(_cv2.cvtColor(tilted, _cv2.COLOR_GRAY2RGB))
+
+    segments = app_module.rule_segments(app_module._ink_mask(tilted))
+    check("ruled lines are found as Hough segments", len(segments) >= 5,
+          f"{len(segments)} segments")
+
+    angles = [_np.degrees(_np.arctan2(float(y2 - y1), float(x2 - x1)))
+              for x1, y1, x2, y2 in segments] if segments else [0.0]
+    check("the skew angle is recovered from the rules",
+          abs(abs(float(_np.median(angles))) - 4.0) < 1.5,
+          f"found {float(_np.median(angles)):.2f}deg, planted 4.0deg counter-clockwise")
+
+    scanned = app_module.scan_like_document(page)
+    check("the scan pass returns ink on white paper at detector size",
+          max(scanned.size) == app_module._DET_SIDE_LEN and scanned.mode == "RGB",
+          f"{scanned.size} {scanned.mode}")
+
+    scan_ink = (_np.asarray(scanned.convert("L")) < 128).mean()
+    check("de-ruling does not erase the writing with the lines",
+          0.0005 < scan_ink < 0.30, f"ink={scan_ink:.4f}")
+
+    # Unruled paper is the common case (a printed aviz) and must survive untouched-ish.
+    blank = _np.full((1200, 900), 235, "uint8")
+    blank[300:340, 100:700] = 40
+    kept = app_module.scan_like_document(
+        PILImage.fromarray(_cv2.cvtColor(blank, _cv2.COLOR_GRAY2RGB)))
+    check("a page with no rules still comes back with its text",
+          (_np.asarray(kept.convert("L")) < 128).mean() > 0.0001,
+          f"ink={(_np.asarray(kept.convert('L')) < 128).mean():.5f}")
+
+    check("the line filter is below what handwriting scores",
+          float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.10") or 0.10) <= 0.15,
+          "handwriting recognises at 0.1-0.3; 0.35 deletes the whole page")
     check("short garbage does not trigger a second OCR pass",
           app_module.needs_aggressive_pass("iiii") is False)
     check("longer text without a code does trigger it",
