@@ -51,7 +51,10 @@ export function backgroundOcrTimeoutMs(pages = 1) {
  * background rather than under a spinner (see `interactiveOcrMaxPages`).
  */
 export function interactiveOcrTimeoutMs(pages = 1) {
-  const base = Number(process.env.OCR_INTERACTIVE_TIMEOUT_MS) || 45_000;
+  // Phone notebook photos run several heavy CPU passes (ink + orientations). 45s was enough
+  // for a clean printed page and too short for a hard carnet shot — the request aborted with
+  // empty text before those passes finished. Background still has the long budget.
+  const base = Number(process.env.OCR_INTERACTIVE_TIMEOUT_MS) || 120_000;
   const count = Math.max(1, Number(pages) || 1);
   return Math.min(base * count, base * 2);
 }

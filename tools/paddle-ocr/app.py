@@ -84,9 +84,20 @@ def get_engine():
                 lang=lang,
                 use_gpu=use_gpu,
                 show_log=False,
+                # Defaults (~0.6) drop faint blue ballpoint on cream paper under monitor glare.
+                det_db_box_thresh=float(os.environ.get("PADDLE_OCR_DET_THRESH", "0.3") or 0.3),
+                drop_score=float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.35") or 0.35),
             )
         except TypeError:
-            _engine = PaddleOCR(lang=lang)
+            try:
+                _engine = PaddleOCR(
+                    use_angle_cls=True,
+                    lang=lang,
+                    use_gpu=use_gpu,
+                    show_log=False,
+                )
+            except TypeError:
+                _engine = PaddleOCR(lang=lang)
         return _engine
     except Exception as exc:  # noqa: BLE001
         log.exception("Failed to load PaddleOCR")
@@ -325,23 +336,78 @@ def needs_aggressive_pass(text: str) -> bool:
 _AGGRESSIVE = os.environ.get("PADDLE_OCR_AGGRESSIVE", "1").strip() not in ("0", "false", "False")
 
 
-def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
+def _score_frame(text: str, confs: list[float], frame) -> float:
+    w, h = frame.size
+    portrait_bonus = 1.5 if h >= w else -1.0
+    return score_ocr(text, confs, portrait_bonus=portrait_bonus)
+
+
+def _merge_ocr_text(best_text: str, best_score: float, text: str, score: float) -> tuple[str, float]:
+    if not text:
+        return best_text, best_score
+    if score > best_score:
+        return (f"{text}\n{best_text}".strip() if best_text else text), score
+    if missing_from_text(best_text):
+        return (f"{best_text}\n{text}".strip() if best_text else text), best_score
+    return best_text, best_score
+
+
+def ocr_photo_page(image) -> tuple[str, int]:
     """
-    OCR one page, trying other orientations when the first pass looks weak.
+    Phone photo of a notebook (or any single-page hard shot).
 
-    `prefer` is the angle that won on an earlier page. A scanner feeds every sheet the same way,
-    so trying it first turns a four-orientation search per page into one — which is the
-    difference between a ten-page scan finishing and timing out.
-
-    Printed avize / clean scans read best on the pixels as-is. Autocontrast and sharpening were
-    added for notebook photos and, when applied to every page, made Paddle less accurate on the
-    documents that used to extract cleanly. So orientation search runs on the raw frame; photo
-    enhancements only kick in when that read is still missing logistics fields.
-
-    `extra_passes` re-renders the page when fields are missing. Reserved for single-page photos:
-    on a dossier it would multiply every page by three for documents that are simply printed
-    without a plate on them.
+    Raw RGB under a green monitor cast often returns *nothing*. Spending four orientations on
+    that empty read burns the interactive budget and never reaches the ink/upscale passes.
+    So photos start on an ink-emphasised, upscaled frame, then rotate that prepared image.
     """
+    import numpy as np
+
+    rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
+    best_text = ""
+    best_score = -1.0
+    best_rot = 0
+    best_source = image
+
+    for degrees in rotations:
+        frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
+        prepared = emphasize_ink(frame)
+        text, confs = ocr_array(np.array(prepared))
+        score = _score_frame(text, confs, frame)
+        log.info("OCR photo rotation=%s score=%.2f chars=%s (ink)", degrees, score, len(text))
+        if score > best_score:
+            best_score = score
+            best_text = text
+            best_rot = degrees
+            best_source = frame
+        # Phone notebooks are almost always upright; stop when TPO/PSL already reads.
+        if degrees == rotations[0] and looks_upright_enough(text, score):
+            break
+        if looks_upright_enough(text, score) and degrees != 0:
+            break
+
+    if _AGGRESSIVE:
+        passes = (
+            ("enhance", enhance_for_ocr),
+            ("shadow", flatten_shadow),
+            ("clahe", enhance_aggressive),
+        )
+        for name, transform in passes:
+            if not missing_from_text(best_text):
+                break
+            try:
+                text, confs = ocr_array(np.array(transform(best_source)))
+            except Exception as exc:  # noqa: BLE001
+                log.warning("OCR photo pass %s failed: %s", name, exc)
+                continue
+            score = _score_frame(text, confs, best_source)
+            log.info("OCR photo pass=%s score=%.2f chars=%s", name, score, len(text))
+            best_text, best_score = _merge_ocr_text(best_text, best_score, text, score)
+
+    return best_text, best_rot
+
+
+def ocr_printed_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
+    """Scanned / printed pages: raw pixels first, no phone-photo preprocess."""
     import numpy as np
 
     rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
@@ -350,75 +416,32 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
     best_text = ""
     best_score = -1.0
     best_rot = 0
-    best_frame = image
 
     for degrees in rotations:
         frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
-        # Raw first: printed PDFs and clear phone shots of printed paper stay accurate.
         text, confs = ocr_array(np.array(frame.convert("RGB")))
-        w, h = frame.size
-        portrait_bonus = 1.5 if h >= w else -1.0
-        score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
+        score = _score_frame(text, confs, frame)
         log.info("OCR rotation=%s score=%.2f chars=%s (raw)", degrees, score, len(text))
         if score > best_score:
             best_score = score
             best_text = text
             best_rot = degrees
-            best_frame = frame
-        # Fast path: a page that already reads like an upright document skips other angles.
         if degrees == rotations[0] and looks_upright_enough(text, score):
             break
 
-    # Phone photos of notebooks: one light contrast pass on the winning orientation when the
-    # raw read still has no usable logistics fields. Only on the single-page path — a multi-page
-    # scan is printed paper, and re-enhancing every sheet costs CPU without helping.
-    if extra_passes and missing_from_text(best_text):
-        try:
-            enhanced = enhance_for_ocr(best_frame)
-            text, confs = ocr_array(np.array(enhanced))
-            w, h = best_frame.size
-            portrait_bonus = 1.5 if h >= w else -1.0
-            score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
-            log.info("OCR pass=enhance score=%.2f chars=%s", score, len(text))
-            if text and score > best_score:
-                best_text, best_score = text, score
-            elif text and missing_from_text(best_text):
-                # Keep both: extractor takes the first strong match per field.
-                best_text = f"{best_text}\n{text}".strip() if best_text else text
-        except Exception as exc:  # noqa: BLE001
-            log.warning("OCR enhance pass failed: %s", exc)
-
-    # Printed avize usually already carry both a code and a plate, and stop here. Photos often
-    # give up one field per rendering: native size reads the printed code, an upscale reads the
-    # handwritten plate. Extra passes are therefore appended rather than compared — the field
-    # extractor downstream takes the first match per field, so the strongest text stays first.
-    if _AGGRESSIVE and extra_passes:
-        w, h = best_frame.size
-        portrait_bonus = 1.5 if h >= w else -1.0
-        passes = (
-            ("ink", emphasize_ink),
-            ("upscale", upscale_for_ocr),
-            ("shadow", flatten_shadow),
-            ("clahe", enhance_aggressive),
-        )
-        for name, transform in passes:
-            if not missing_from_text(best_text):
-                break
-            try:
-                text, confs = ocr_array(np.array(transform(best_frame)))
-            except Exception as exc:  # noqa: BLE001
-                log.warning("OCR pass %s failed: %s", name, exc)
-                continue
-            score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
-            log.info("OCR pass=%s score=%.2f chars=%s", name, score, len(text))
-            if not text:
-                continue
-            if score > best_score:
-                best_text, best_score = f"{text}\n{best_text}".strip(), score
-            else:
-                best_text = f"{best_text}\n{text}".strip()
-
     return best_text, best_rot
+
+
+def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
+    """
+    OCR one page.
+
+    `extra_passes` means a single phone photo — use the notebook path (ink first).
+    Multi-page scans stay on the printed path so clean PDFs stay fast and accurate.
+    """
+    if extra_passes:
+        return ocr_photo_page(image)
+    return ocr_printed_page(image, prefer=prefer)
 
 
 def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str, int, int, int]:
