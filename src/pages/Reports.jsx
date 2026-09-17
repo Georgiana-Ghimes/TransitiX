@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarCheck, Download, FileSpreadsheet, History, Layers, Loader2, RefreshCw, Search,
-  Sparkles, TriangleAlert,
+  Sparkles, Trash2, TriangleAlert,
 } from 'lucide-react';
 import { api } from '@/api/client';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   EMPTY_FILTERS,
@@ -118,7 +119,7 @@ function PreviewTable({ preview }) {
   );
 }
 
-function ExportHistory({ rows, onRedownload, onInspect, busyId, detail }) {
+function ExportHistory({ rows, onRedownload, onInspect, onDelete, busyId, detail }) {
   if (!rows.length) {
     return <p className="text-sm text-slate-500 p-4">Niciun raport generat încă.</p>;
   }
@@ -163,6 +164,16 @@ function ExportHistory({ rows, onRedownload, onInspect, busyId, detail }) {
                     : <Download className="w-3 h-3" />}
                   Re-descarcă
                 </button>
+                <button
+                  type="button"
+                  disabled={busyId === row.id}
+                  onClick={() => onDelete(row)}
+                  className="text-xs px-2 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+                  title="Șterge din istoric (nu mai poți re-descărca)"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Șterge
+                </button>
               </div>
             </div>
             {row.note ? <p className="text-xs text-slate-500 mt-1 ml-7">„{row.note}”</p> : null}
@@ -197,6 +208,8 @@ export default function Reports() {
   const [detail, setDetail] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [creatingPreset, setCreatingPreset] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null); // { type: 'one'|'all', row? }
+  const [deleting, setDeleting] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState('');
   const [stamping, setStamping] = useState(false);
 
@@ -280,6 +293,29 @@ export default function Reports() {
       setDetail(await api.reports.exportDetail(id));
     } catch (err) {
       notifyError('Detaliile nu au putut fi citite', err);
+    }
+  }
+
+  async function confirmDeleteHistory() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      if (pendingDelete.type === 'all') {
+        const res = await api.reports.clearExports();
+        notifySuccess(res.deleted
+          ? `Istoric șters (${res.deleted} export${res.deleted === 1 ? '' : 'uri'})`
+          : 'Istoricul era deja gol');
+      } else {
+        await api.reports.deleteExport(pendingDelete.row.id);
+        notifySuccess('Export șters din istoric');
+        if (detail?.export?.id === pendingDelete.row.id) setDetail(null);
+      }
+      setPendingDelete(null);
+      await loadHistory();
+    } catch (err) {
+      notifyError('Ștergerea din istoric a eșuat', err);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -479,16 +515,27 @@ export default function Reports() {
       </section>
 
       <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-slate-200">
           <History className="w-4 h-4 text-slate-400" />
           <h2 className="text-sm font-semibold text-slate-700">Istoric exporturi</h2>
-          <button
-            type="button"
-            onClick={loadHistory}
-            className="ml-auto text-xs px-2 py-1 rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
-          >
-            Reîncarcă
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={loadHistory}
+              className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
+              Reîncarcă
+            </button>
+            <button
+              type="button"
+              disabled={history.length === 0}
+              onClick={() => setPendingDelete({ type: 'all' })}
+              className="text-xs px-2 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Șterge tot istoricul
+            </button>
+          </div>
         </div>
         <ExportHistory
           rows={history}
@@ -496,8 +543,21 @@ export default function Reports() {
           busyId={busyId}
           onRedownload={handleRedownload}
           onInspect={handleInspect}
+          onDelete={(row) => setPendingDelete({ type: 'one', row })}
         />
       </section>
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onClose={() => { if (!deleting) setPendingDelete(null); }}
+        onConfirm={confirmDeleteHistory}
+        busy={deleting}
+        title={pendingDelete?.type === 'all' ? 'Ștergi tot istoricul de exporturi?' : 'Ștergi exportul din istoric?'}
+        description={pendingDelete?.type === 'all'
+          ? 'Se șterg toate înregistrările firmei. Nu vei mai putea re-descărca foile trimise. Avizele rămân neschimbate.'
+          : `„${pendingDelete?.row?.template_name || pendingDelete?.row?.filename || 'Export'}” dispare din istoric. Re-descărcarea nu mai e posibilă.`}
+        confirmLabel="Șterge"
+      />
     </div>
   );
 }

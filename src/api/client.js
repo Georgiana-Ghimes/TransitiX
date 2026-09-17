@@ -932,6 +932,12 @@ export const api = {
       return downloadFile(`/api/reports/exports/${encodeURIComponent(id)}/file`, { method: 'GET' },
         retried, () => api.reports.redownload(id, true), 'raport.xlsx');
     },
+    deleteExport(id) {
+      return request(`/reports/exports/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
+    clearExports() {
+      return request('/reports/exports', { method: 'DELETE' });
+    },
   },
   avize: {
     list({ from, to, status, q, uploaded_from, date_field } = {}) {

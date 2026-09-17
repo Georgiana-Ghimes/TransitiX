@@ -358,4 +358,36 @@ router.get('/exports/:id/file', async (req, res) => {
   }
 });
 
+/**
+ * Manual delete of one history row. Retention never prunes this table; an operator choosing to
+ * remove a row is different from an automatic scrub that would leave no way to reproduce a sheet.
+ */
+router.delete('/exports/:id', async (req, res) => {
+  try {
+    const deleted = await query(
+      `DELETE FROM aviz_export_log
+       WHERE id = $1 AND company_id = $2
+       RETURNING id`,
+      [req.params.id, req.user.company_id]
+    );
+    if (!deleted.rows[0]) throw httpError('Export inexistent', 404);
+    res.json({ ok: true, id: deleted.rows[0].id });
+  } catch (err) {
+    fail(res, err, 'Exportul nu a putut fi șters din istoric');
+  }
+});
+
+/** Clears the whole export history for this company. Irreversible: re-download is gone with it. */
+router.delete('/exports', async (req, res) => {
+  try {
+    const deleted = await query(
+      `DELETE FROM aviz_export_log WHERE company_id = $1 RETURNING id`,
+      [req.user.company_id]
+    );
+    res.json({ ok: true, deleted: deleted.rowCount });
+  } catch (err) {
+    fail(res, err, 'Istoricul exporturilor nu a putut fi șters');
+  }
+});
+
 export default router;

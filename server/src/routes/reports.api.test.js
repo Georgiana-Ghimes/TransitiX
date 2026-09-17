@@ -299,4 +299,41 @@ describe('export history', () => {
       await dropCompany(other.company.id);
     }
   });
+
+  it('deletes one export and can clear the rest', async () => {
+    const template = (await api().post('/api/reports/templates/from-preset')
+      .set(auth(ctx.adminToken))
+      .send({ preset_id: 'baumit_greutati', name: `Del ${Date.now()}` })).body;
+    await makeAviz(ctx.company.id, {
+      original_filename: 'del-a.pdf', numar_auto: 'B 111 DEL', gross_weight_kg: 1000,
+    });
+    await makeAviz(ctx.company.id, {
+      original_filename: 'del-b.pdf', numar_auto: 'B 222 DEL', gross_weight_kg: 2000,
+    });
+
+    for (const plate of ['B 111 DEL', 'B 222 DEL']) {
+      await api().post('/api/reports/export').set(auth(ctx.adminToken))
+        .send({ template_id: template.id, filters: { plate } })
+        .buffer(true).parse((r, cb) => { r.on('data', () => {}); r.on('end', () => cb(null, null)); });
+    }
+
+    const before = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(before.body.exports.length).toBeGreaterThanOrEqual(2);
+    const firstId = before.body.exports[0].id;
+
+    const one = await api().delete(`/api/reports/exports/${firstId}`).set(auth(ctx.adminToken));
+    expect(one.status).toBe(200);
+    expect(one.body.id).toBe(firstId);
+
+    const mid = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(mid.body.exports.some((e) => e.id === firstId)).toBe(false);
+
+    const clear = await api().delete('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(clear.status).toBe(200);
+    expect(clear.body.deleted).toBeGreaterThanOrEqual(1);
+
+    const after = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(after.body.exports).toEqual([]);
+    expect(after.body.total).toBe(0);
+  });
 });

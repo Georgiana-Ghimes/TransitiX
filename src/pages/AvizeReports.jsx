@@ -1077,7 +1077,7 @@ export default function AvizeReports() {
           onUseForExport={useTemplateForExport}
         />
       ) : (
-        <AvizReportsTab filterBar={filterBar} reportData={reportData} />
+        <AvizReportsTab filterBar={filterBar} reportData={reportData} onRefresh={loadReports} />
       )}
 
       {editRow && (
