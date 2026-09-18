@@ -80,11 +80,21 @@ export default function AvizeReports() {
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
   // With no fallback provider, a stopped sidecar means uploads land with no OCR and nothing
-  // on screen would say why.
+  // on screen would say why. Re-check while this page is open — a restarted sidecar should
+  // clear the banner without a full reload.
   useEffect(() => {
-    api.system.health()
-      .then((h) => setOcrDown(h?.capabilities?.ocr === 'paddle-down'))
-      .catch(() => setOcrDown(false));
+    let cancelled = false;
+    const probe = () => {
+      api.system.health()
+        .then((h) => { if (!cancelled) setOcrDown(h?.capabilities?.ocr === 'paddle-down'); })
+        .catch(() => { if (!cancelled) setOcrDown(false); });
+    };
+    probe();
+    const timer = setInterval(probe, 15_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   const load = async (filterOverride) => {
@@ -452,6 +462,13 @@ export default function AvizeReports() {
   };
 
   const requestReextract = (row) => {
+    if (ocrDown) {
+      notifyError(
+        'OCR indisponibil',
+        'Serviciul PaddleOCR nu răspunde. Pornește sidecar-ul pe VM, apoi încearcă din nou.'
+      );
+      return;
+    }
     if (hasManualAvizEdits(row)) {
       setConfirmReextract(row);
       return;
@@ -497,7 +514,16 @@ export default function AvizeReports() {
       }
       await load();
     } catch (e) {
-      notifyError('Extragere eșuată', e);
+      if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
+        notifyError(
+          'Extragere întreruptă',
+          'OCR-ul a durat prea mult sau conexiunea s-a întrerupt. Verifică sidecar-ul PaddleOCR și încearcă din nou.'
+        );
+        setOcrDown(true);
+      } else {
+        notifyError('Extragere eșuată', e);
+        if (e?.status === 503 || e?.data?.code === 'OCR_DOWN') setOcrDown(true);
+      }
       await load();
     } finally {
       setBusyId(null);
@@ -950,7 +976,7 @@ export default function AvizeReports() {
                       {row.status !== 'confirmed' && (
                         <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
-                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => requestReextract(row)}>
+                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id) || ocrDown} onClick={() => requestReextract(row)} title={ocrDown ? 'OCR indisponibil' : undefined}>
                         {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                       </button>
                       <button type="button" className="text-red-500 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
@@ -1045,7 +1071,7 @@ export default function AvizeReports() {
                               {row.status !== 'confirmed' && (
                                 <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                               )}
-                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id)} onClick={() => requestReextract(row)}>
+                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id) || ocrDown} onClick={() => requestReextract(row)} title={ocrDown ? 'OCR indisponibil' : undefined}>
                                 {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
                               </button>
                               <button type="button" className="text-red-500 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>

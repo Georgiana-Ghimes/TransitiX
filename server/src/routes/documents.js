@@ -144,6 +144,9 @@ export async function failStaleUploadedAvize(companyId, {
 } = {}) {
   if (!companyId) return { failed: 0 };
   const message = 'OCR nu a terminat la timp. Folosește Re-extrage.';
+  // `updated_at`, not `created_at`: a re-extract flips an old row back to `uploaded`, and the
+  // original upload day would otherwise make this fire immediately — or never, if we keyed
+  // only on create and a hung re-extract left „Se procesează…” forever.
   const result = await query(
     `UPDATE aviz_documents SET
        status = 'extracted',
@@ -153,7 +156,7 @@ export async function failStaleUploadedAvize(companyId, {
        updated_at = NOW()
      WHERE company_id = $2
        AND status = 'uploaded'
-       AND created_at < NOW() - ($3 * INTERVAL '1 millisecond')
+       AND updated_at < NOW() - ($3 * INTERVAL '1 millisecond')
      RETURNING id`,
     [JSON.stringify({ extract_error: message }), companyId, olderThanMs]
   );

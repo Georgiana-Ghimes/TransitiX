@@ -16,6 +16,7 @@ import {
   documentPageCount,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  ocrCapability,
 } from '../lib/ocr/readText.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { buildReport } from '../lib/reporting/build.js';
@@ -515,15 +516,25 @@ router.post('/extract', async (req, res) => {
       batchId = created.batchId;
     }
 
-    // A scanned dossier is a job, not a spinner. Every page is a full OCR pass, so past a few
-    // of them the request would be held open for minutes and time out on a document that is
-    // perfectly readable. Those run in the background, the same way a driver's upload does.
+    // A dead sidecar used to hold the spinner for the full interactive budget (and longer
+    // behind a tunnel that drops the answer). Health already knows; refuse before the wait.
+    if ((await ocrCapability()) === 'paddle-down') {
+      return res.status(503).json({
+        code: 'OCR_DOWN',
+        message: 'Serviciul OCR nu răspunde. Pornește sidecar-ul PaddleOCR și încearcă din nou.',
+      });
+    }
+
     const pages = await documentPageCount(storedFileUrl);
-    if (pages > interactiveOcrMaxPages()) {
-      // Flip before the background job is scheduled so the list shows "Se procesează…" immediately.
+    // Re-extract (client sent `id`) and long scans never hold the HTTP request. A hard carnet
+    // photo routinely hits OCR_TIMEOUT at the interactive budget; behind Cloudflare the tunnel
+    // often drops earlier, so the UI never receives the 202 retry and stays on „Se re-extrage…”.
+    // Background uses the full OCR_TIMEOUT_MS budget and the list polls until fields appear.
+    const reextract = Boolean(req.body?.id);
+    if (reextract || pages > interactiveOcrMaxPages()) {
       await query(
         `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
-         WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed')`,
+         WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed', 'uploaded')`,
         [docId, req.user.company_id]
       );
       extractBatchDocuments(req.user.company_id, batchId, req.user.id, {
@@ -541,6 +552,7 @@ router.post('/extract', async (req, res) => {
         ...decorateAviz(pending.rows[0]),
         extraction_pending: true,
         pages,
+        reason: reextract ? 'reextract_background' : 'long_document',
       });
     }
 

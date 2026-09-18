@@ -50,10 +50,11 @@ async function refreshAccessToken() {
   }
 }
 
-async function request(path, { method = 'GET', body, headers = {}, formData } = {}, retried = false) {
+async function request(path, { method = 'GET', body, headers = {}, formData, signal } = {}, retried = false) {
   const opts = {
     method,
     headers: { ...headers },
+    signal,
   };
   const token = getToken();
   if (token) opts.headers.Authorization = `Bearer ${token}`;
@@ -77,7 +78,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData } = 
   if (res.status === 401 && !retried && !skipAuthRefresh(path)) {
     try {
       await refreshAccessToken();
-      return request(path, { method, body, headers, formData }, true);
+      return request(path, { method, body, headers, formData, signal }, true);
     } catch {
       // fall through to original 401
     }
@@ -952,9 +953,12 @@ export const api = {
       return request(`/avize${qs ? `?${qs}` : ''}`);
     },
     extract({ file_url, original_filename, id } = {}) {
+      // Interactive OCR budget is 120s; abort a bit later so a hung tunnel cannot leave the
+      // Avize row stuck on „Se re-extrage…” forever.
       return request('/avize/extract', {
         method: 'POST',
         body: { file_url, original_filename, id },
+        signal: AbortSignal.timeout(130_000),
       });
     },
     templates() {
