@@ -76,14 +76,19 @@ describe('POST /api/avize/extract', () => {
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ id: legacy.id });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('reextract_background');
 
+    // Re-extract runs in the background (tunnel-safe). Wait for the batch pass to settle.
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query(
-      'SELECT batch_id, numar_tpo FROM aviz_documents WHERE id = $1', [legacy.id]
+      'SELECT batch_id, numar_tpo, status FROM aviz_documents WHERE id = $1', [legacy.id]
     )).rows[0];
     expect(after.batch_id).toBeTruthy();
     // Nothing was read out of the fixture, so the figure already on the row must survive.
     expect(after.numar_tpo).toBe('TPO-0011111');
+    expect(after.status).toBe('extracted');
   });
 
   /**

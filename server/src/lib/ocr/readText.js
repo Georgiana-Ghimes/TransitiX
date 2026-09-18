@@ -85,6 +85,11 @@ function assertNotTimedOut(ocr) {
 let ocrProbe = { at: 0, value: null };
 const OCR_PROBE_TTL_MS = 15_000;
 
+/** Drop the cached health probe (tests that swap PADDLE_OCR_URL mid-suite). */
+export function resetOcrCapabilityCache() {
+  ocrProbe = { at: 0, value: null };
+}
+
 export async function ocrCapability() {
   const base = paddleOcrUrl();
   if (ocrProvider() !== 'paddle' || !base) return false;

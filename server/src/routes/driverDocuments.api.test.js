@@ -210,8 +210,11 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
     );
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('reextract_background');
 
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
     expect(after.status).toBe('extracted');
@@ -221,10 +224,9 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
 
 describe('POST /api/avize/extract when OCR runs long', () => {
   /**
-   * Paddle on a CPU VM can take minutes, which is fine for a background pass and not fine for
-   * somebody holding a button down. The interactive path gives up early, then hands the same
-   * document to the background pass, an error would have left the operator to press
-   * Re-extrage by hand for a document that is perfectly readable, just slow.
+   * Re-extract always answers 202 and runs in the background (tunnel-safe). A sidecar that
+   * accepts /health but never finishes /ocr still exhausts the background budget and is marked
+   * failed — the list must not spin forever.
    */
   const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
   const saved = {};
@@ -232,7 +234,16 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
   beforeAll(async () => {
     const http = await import('node:http');
-    hanging = http.createServer(() => { /* stands in for paddle: never answers */ });
+    const { resetOcrCapabilityCache } = await import('../lib/ocr/readText.js');
+    // Health must succeed (otherwise extract refuses with OCR_DOWN). OCR itself never answers.
+    hanging = http.createServer((req, res) => {
+      if ((req.url || '').startsWith('/health')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      // /ocr/json — hang until the client aborts
+    });
     await new Promise((resolve) => hanging.listen(0, '127.0.0.1', resolve));
 
     for (const key of KEYS) saved[key] = process.env[key];
@@ -240,6 +251,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     process.env.PADDLE_OCR_URL = `http://127.0.0.1:${hanging.address().port}`;
     process.env.OCR_TIMEOUT_MS = '80';
     process.env.OCR_INTERACTIVE_TIMEOUT_MS = '80';
+    resetOcrCapabilityCache();
   });
 
   afterAll(async () => {
@@ -247,6 +259,8 @@ describe('POST /api/avize/extract when OCR runs long', () => {
       if (saved[key] === undefined) delete process.env[key];
       else process.env[key] = saved[key];
     }
+    const { resetOcrCapabilityCache } = await import('../lib/ocr/readText.js');
+    resetOcrCapabilityCache();
     hanging?.closeAllConnections?.();
     await new Promise((resolve) => hanging.close(resolve));
   });
@@ -268,7 +282,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
     expect(res.status).toBe(202);
     expect(res.body.extraction_pending).toBe(true);
-    expect(res.body.reason).toBe('ocr_timeout_retry');
+    expect(res.body.reason).toBe('reextract_background');
     // Figures from the earlier pass are still on the 202 body / row until a better read replaces them.
     expect(res.body.numar_tpo).toBe('TPO-0025629');
 
@@ -292,6 +306,6 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
     expect(res.status).toBe(202);
-    expect(res.body.reason).toBe('ocr_timeout_retry');
+    expect(res.body.reason).toBe('reextract_background');
   });
 });
