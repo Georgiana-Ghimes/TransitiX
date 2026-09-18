@@ -87,9 +87,22 @@ function httpError(status, message, extra = {}) {
 
 /** One address, one account, across every company: login looks the address up globally. */
 async function findByEmail(db, email) {
+  const clean = normaliseEmail(email);
+  if (!clean) return null;
   const res = await db.query(
     `SELECT * FROM users WHERE LOWER(email) = LOWER($1) ORDER BY is_active DESC, created_at LIMIT 1`,
-    [email]
+    [clean]
+  );
+  return res.rows[0] || null;
+}
+
+/** A Google account already linked to a row, even if the mailbox was renamed on Google's side. */
+async function findByGoogleSub(db, sub) {
+  const id = String(sub || '').trim();
+  if (!id) return null;
+  const res = await db.query(
+    `SELECT * FROM users WHERE google_sub = $1 ORDER BY is_active DESC, created_at LIMIT 1`,
+    [id]
   );
   return res.rows[0] || null;
 }
@@ -375,17 +388,22 @@ router.post('/resend-verification', mailLimit, async (req, res) => {
 /**
  * Sign in or sign up with Google.
  *
- * An existing account with the same address signs in: Google has just proved the mailbox, which
- * is the same proof a reset link gives, so it also claims a pending invitation and confirms an
- * unverified sign-up. A new address needs a company name, answered with GOOGLE_NEEDS_COMPANY the
- * first time so the screen can ask for it.
+ * An existing account signs in when either the Google subject is already linked or the address
+ * matches: Google has just proved the mailbox, which is the same proof a reset link gives, so it
+ * also claims a pending invitation and confirms an unverified sign-up.
+ *
+ * A brand-new address needs a company name (`GOOGLE_NEEDS_COMPANY`). When the domain already has
+ * people on Transitix but this mailbox does not, Login must not open "create a company": that is
+ * `GOOGLE_NEEDS_INVITE`. Register may still create a second company with an explicit confirmation.
  *
  * A temporary password set by an admin is not cleared: whoever typed it still knows it.
  */
 router.post('/google', attemptLimit(), async (req, res) => {
   try {
     const identity = await verifyGoogleIdToken(req.body?.credential);
-    const existing = await findByEmail({ query }, identity.email);
+    const email = normaliseEmail(identity.email);
+    const existing = (await findByGoogleSub({ query }, identity.sub))
+      || (await findByEmail({ query }, email));
 
     if (existing) {
       if (!existing.is_active) {
@@ -412,21 +430,38 @@ router.post('/google', attemptLimit(), async (req, res) => {
     if (!signupEnabled()) {
       return res.status(403).json({
         ...SIGNUP_CLOSED,
-        message: `Nu există niciun cont pentru ${identity.email}. ${SIGNUP_CLOSED.message}`,
+        message: `Nu există niciun cont pentru ${email}. ${SIGNUP_CLOSED.message}`,
       });
     }
 
-    const { domain, personal } = classifyEmail(identity.email);
+    const { domain, personal } = classifyEmail(email);
     const companyName = String(req.body?.company_name || '').trim();
+    const domainTaken = !personal && await domainInUse({ query }, domain);
+    // Login must not open "create a company" when colleagues already use this domain. Register
+    // still gets GOOGLE_NEEDS_COMPANY so it can ask for a deliberate second firm.
+    const fromSignIn = String(req.body?.intent || '').trim().toLowerCase() !== 'signup';
+
     if (companyName.length < 2) {
-      return res.status(404).json({
+      if (domainTaken && fromSignIn) {
+        return res.status(403).json({
+          code: 'GOOGLE_NEEDS_INVITE',
+          message: `Există deja conturi Transitix pe @${domain}, dar nu și pentru ${email}. `
+            + 'Cere o invitație administratorului firmei (Setări › Utilizatori), apoi intră din nou cu Google.',
+          email,
+          name: identity.name,
+          personal,
+          domain,
+          domain_in_use: true,
+        });
+      }
+      return res.status(409).json({
         code: 'GOOGLE_NEEDS_COMPANY',
         message: 'Nu există încă un cont pentru această adresă. Completează numele firmei ca să-l creezi.',
-        email: identity.email,
+        email,
         name: identity.name,
         personal,
         domain,
-        domain_in_use: personal ? false : await domainInUse({ query }, domain),
+        domain_in_use: domainTaken,
       });
     }
 
@@ -434,8 +469,11 @@ router.post('/google', attemptLimit(), async (req, res) => {
       unusablePasswordSeed(crypto.randomBytes(32).toString('hex')), 12
     );
     const { user } = await withTransaction(async (client) => {
-      if (await findByEmail(client, identity.email)) {
+      if (await findByEmail(client, email)) {
         throw httpError(409, 'Există deja un cont cu acest email.', { code: 'EMAIL_TAKEN' });
+      }
+      if (await findByGoogleSub(client, identity.sub)) {
+        throw httpError(409, 'Contul Google este deja legat de alt utilizator.', { code: 'GOOGLE_TAKEN' });
       }
       if (!personal && req.body?.confirm_domain !== true && await domainInUse(client, domain)) {
         throw httpError(409,
@@ -445,8 +483,8 @@ router.post('/google', attemptLimit(), async (req, res) => {
       }
       return createCompanyWithAdmin(client, {
         companyName,
-        email: identity.email,
-        name: identity.name || identity.email.split('@')[0],
+        email,
+        name: identity.name || email.split('@')[0],
         passwordHash,
         createdVia: 'google',
         verified: true,

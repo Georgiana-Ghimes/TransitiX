@@ -96,6 +96,7 @@ function GoogleCompanyStep({ pending, onCancel, returnTo }) {
         credential: pending.credential,
         company_name: companyName.trim(),
         confirm_domain: confirmDomain || undefined,
+        intent: 'signup',
       });
       window.location.href = postLoginPath(data?.user, returnTo);
     } catch (err) {
@@ -234,7 +235,7 @@ export default function Register() {
     setError('');
     setGoogleBusy(true);
     try {
-      const data = await api.auth.google({ credential });
+      const data = await api.auth.google({ credential, intent: 'signup' });
       window.location.href = postLoginPath(data?.user, returnTo);
     } catch (err) {
       if (err?.data?.code === 'GOOGLE_NEEDS_COMPANY') {

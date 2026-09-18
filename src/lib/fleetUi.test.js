@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalPlateClient, mmaLabel, parseMmaKg, resolveVehicleMma } from './fleetUi.js';
+import {
+  canonicalPlateClient, mmaLabel, parseMmaKg, resolveVehicleMma, sanitizeMmaInput,
+} from './fleetUi.js';
 
 describe('canonicalPlateClient', () => {
   it('stores one form, whatever was typed', () => {
@@ -19,6 +21,17 @@ describe('canonicalPlateClient', () => {
 
   it('takes a two-letter county', () => {
     expect(canonicalPlateClient('CJ 12 ABC')).toBe('CJ-12-ABC');
+  });
+});
+
+describe('sanitizeMmaInput', () => {
+  it('keeps only digits and mass punctuation', () => {
+    expect(sanitizeMmaInput('40.000')).toBe('40.000');
+    expect(sanitizeMmaInput('7,5')).toBe('7,5');
+    expect(sanitizeMmaInput(' 26 000 ')).toBe(' 26 000 ');
+    expect(sanitizeMmaInput('abc40kg')).toBe('40');
+    expect(sanitizeMmaInput('40t')).toBe('40');
+    expect(sanitizeMmaInput('-5000')).toBe('5000');
   });
 });
 

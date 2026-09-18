@@ -27,6 +27,18 @@ export function canonicalPlateClient(value) {
 }
 
 /**
+ * What may appear in an MTMA box while somebody is typing.
+ *
+ * Digits, spaces, dots and a comma cover kilograms ("40.000"), tonnes ("40") and a half-tonne
+ * figure ("7,5"). Letters and symbols never become a mass, so they never reach the box: the
+ * save path already refused them, but seeing "abc" sit in the field until you press Save is
+ * the wrong kind of feedback.
+ */
+export function sanitizeMmaInput(value) {
+  return String(value ?? '').replace(/[^\d\s.,]/g, '');
+}
+
+/**
  * The mass, in kilograms.
  *
  * Tonnes are what people say out loud, so "40" gets typed where 40000 was meant. A figure that

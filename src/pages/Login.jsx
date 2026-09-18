@@ -59,14 +59,25 @@ export default function Login() {
     setError("");
     setGoogleBusy(true);
     try {
-      const data = await api.auth.google({ credential });
+      const data = await api.auth.google({ credential, intent: "signin" });
       window.location.href = afterSignIn(data?.user);
     } catch (err) {
-      if (err?.data?.code === "GOOGLE_NEEDS_COMPANY") {
-        // No account for this address yet: creating one is the sign-up screen's job.
-        navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
-          state: { googlePending: { ...err.data, credential } },
-        });
+      if (err?.data?.code === "GOOGLE_NEEDS_INVITE") {
+        // Domain already has a company, this mailbox does not: creating another firm from Login
+        // is how people end up locked out of the one their colleagues use.
+        setError(err.data.message || friendlyErrorMessage(err));
+      } else if (err?.data?.code === "GOOGLE_NEEDS_COMPANY") {
+        if (err.data.domain_in_use) {
+          setError(
+            `Există deja conturi pe @${err.data.domain}, dar nu pentru ${err.data.email}. `
+            + "Cere o invitație administratorului, apoi încearcă din nou cu Google."
+          );
+        } else {
+          // No account for this address yet: creating one is the sign-up screen's job.
+          navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
+            state: { googlePending: { ...err.data, credential } },
+          });
+        }
       } else {
         setError(friendlyErrorMessage(err));
       }

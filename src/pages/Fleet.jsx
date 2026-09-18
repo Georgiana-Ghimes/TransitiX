@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { canonicalPlateClient, parseMmaKg, mmaLabel } from '@/lib/fleetUi';
+import { canonicalPlateClient, parseMmaKg, mmaLabel, sanitizeMmaInput } from '@/lib/fleetUi';
 
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
 const inputCls = 'w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30';
@@ -172,8 +172,9 @@ export default function Fleet() {
             <input
               className={inputCls}
               value={newMma}
-              onChange={(e) => setNewMma(e.target.value)}
+              onChange={(e) => setNewMma(sanitizeMmaInput(e.target.value))}
               inputMode="numeric"
+              pattern="[0-9 .,]*"
               placeholder="40000"
             />
           </div>
@@ -277,13 +278,14 @@ function VehicleRow({ vehicle, busy, onSave, onRemove }) {
               : 'border-transparent bg-slate-50 text-slate-500 cursor-default'
           }`}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setValue(sanitizeMmaInput(e.target.value))}
           onKeyDown={(e) => {
             if (e.key === 'Escape') cancel();
             if (e.key === 'Enter' && dirty) onSave(value);
           }}
           readOnly={!editing}
           inputMode="numeric"
+          pattern="[0-9 .,]*"
           placeholder="—"
         />
 

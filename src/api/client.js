@@ -738,10 +738,10 @@ export const api = {
       });
     },
     /** Signs in (or creates the company, with `company_name`) from a Google ID token. */
-    async google({ credential, company_name, confirm_domain } = {}) {
+    async google({ credential, company_name, confirm_domain, intent } = {}) {
       const data = await request('/auth/google', {
         method: 'POST',
-        body: { credential, company_name, confirm_domain },
+        body: { credential, company_name, confirm_domain, intent },
       });
       setToken(data.access_token);
       setRefreshToken(data.refresh_token);

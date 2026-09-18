@@ -38,7 +38,7 @@ import {
   parseZoneOutlines,
 } from '@/lib/zoneGeometry';
 import { ZONE_CITIES, cityById, referenceZone } from '@/lib/zoneReference';
-import { mmaLabel, resolveVehicleMma } from '@/lib/fleetUi';
+import { mmaLabel, resolveVehicleMma, sanitizeMmaInput } from '@/lib/fleetUi';
 import {
   hasStreetIndex, loadStreetIndex, lookupAddress, resolveAddress,
 } from '@/lib/streetZones';
@@ -424,8 +424,9 @@ export default function ZoneMap() {
           <input
             className={inputCls}
             value={mma}
-            onChange={(e) => setMma(e.target.value)}
+            onChange={(e) => setMma(sanitizeMmaInput(e.target.value))}
             inputMode="numeric"
+            pattern="[0-9 .,]*"
             placeholder="MTMA (kg)"
           />
           {tonnesLikely ? (

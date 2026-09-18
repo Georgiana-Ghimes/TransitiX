@@ -210,7 +210,7 @@ describe('Google', () => {
   it('asks for a company name the first time an address is seen', async () => {
     const email = personalEmail();
     const res = await google({ credential: `g-${seq}|${email}|Ana Google` });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ code: 'GOOGLE_NEEDS_COMPANY', email, name: 'Ana Google', personal: true });
   });
 
@@ -241,6 +241,46 @@ describe('Google', () => {
     const link = await api().post('/api/auth/reset-password')
       .send({ resetToken: tokenFrom(invite.body.invite_link), newPassword: PASSWORD });
     expect(link.status).toBe(400);
+  });
+
+  it('signs in an email/password account with the same address', async () => {
+    const email = `parola-apoi-google-${run}@firma-${run}.test`;
+    const reg = await register({
+      email, account_type: 'institution', company_name: 'Parola SRL', password: PASSWORD,
+    });
+    expect(reg.status).toBe(201);
+    expect(reg.body.verify_link).toBeTruthy();
+    await api().post('/api/auth/verify-email').send({ token: tokenFrom(reg.body.verify_link) });
+
+    const res = await google({ credential: `g-pwd-${run}|${email}|Ion Parola`, intent: 'signin' });
+    expect(res.status).toBe(200);
+    expect(res.body.user.email).toBe(email);
+    expect(res.body.user.company_id).toBeTruthy();
+  });
+
+  it('from Login, refuses a new company when the domain already has people', async () => {
+    const domain = `colegi-${run}.test`;
+    await register({ email: `admin@${domain}`, account_type: 'institution', company_name: 'Colegi SRL' });
+    const stranger = `altcineva@${domain}`;
+    const res = await google({
+      credential: `g-dom-${run}|${stranger}|Alt Cineva`,
+      intent: 'signin',
+    });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('GOOGLE_NEEDS_INVITE');
+    expect(res.body.domain_in_use).toBe(true);
+  });
+
+  it('from Register, still asks for a company name when the domain is taken', async () => {
+    const domain = `reg-colegi-${run}.test`;
+    await register({ email: `admin@${domain}`, account_type: 'institution', company_name: 'Reg Colegi SRL' });
+    const res = await google({
+      credential: `g-reg-dom-${run}|alt@${domain}|Alt Reg`,
+      intent: 'signup',
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('GOOGLE_NEEDS_COMPANY');
+    expect(res.body.domain_in_use).toBe(true);
   });
 
   it('refuses the same address from a different Google account', async () => {
