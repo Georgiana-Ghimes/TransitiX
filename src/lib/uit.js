@@ -29,7 +29,7 @@ export function uitBadge(route) {
     return {
       label: 'UIT DE TEST',
       tone: 'warn',
-      title: 'Cod local de test — NU este un UIT valid pentru transport',
+      title: 'Cod local de test, NU este un UIT valid pentru transport',
     };
   }
   return {

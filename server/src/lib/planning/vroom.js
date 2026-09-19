@@ -1,5 +1,5 @@
 /**
- * VROOM client — the VRP solver behind the optimizer.
+ * VROOM client, the VRP solver behind the optimizer.
  *
  * Same discipline as the OSRM client next door: the solver is a sidecar, and when
  * VROOM_URL is unset the callers get a 503. A plan nobody solved is not a plan we invent.
@@ -62,7 +62,7 @@ function requireBaseUrl() {
 }
 
 /**
- * Runs the solver. `problem` is a VROOM input document — see buildSolverInput in solver.js,
+ * Runs the solver. `problem` is a VROOM input document, see buildSolverInput in solver.js,
  * which is the only thing that should be producing one.
  */
 export async function vroomSolve(problem, {

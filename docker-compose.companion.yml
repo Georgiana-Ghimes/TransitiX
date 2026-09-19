@@ -33,6 +33,10 @@ services:
       PADDLE_OCR_LANG: ${PADDLE_OCR_LANG:-latin}
       PADDLE_OCR_USE_GPU: "0"
       PADDLE_OCR_AUTO_ROTATE: ${PADDLE_OCR_AUTO_ROTATE:-1}
+      # Default 960 squashes handwritten carnet lines below what the detector can see.
+      PADDLE_OCR_DET_SIDE_LEN: ${PADDLE_OCR_DET_SIDE_LEN:-1920}
+      # Handwriting scores 0.1–0.3; printed default 0.35 deleted whole pages.
+      PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
     restart: unless-stopped
     volumes:
       - transitix_rai_paddle_models:/root/.paddleocr

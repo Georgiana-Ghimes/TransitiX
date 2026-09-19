@@ -27,7 +27,7 @@ const STATUS_COPY = {
 
 /**
  * Text that reached us from a library or a status line rather than from someone writing for a
- * reader. Recognised so the status copy wins over it — never shown as-is.
+ * reader. Recognised so the status copy wins over it, never shown as-is.
  */
 const BOILERPLATE = new RegExp([
   'failed to fetch',
@@ -53,11 +53,11 @@ const BOILERPLATE = new RegExp([
  * Statuses where the status copy always wins.
  *
  * "Not signed in" and "not allowed here" mean exactly one thing to a reader, and no phrasing the
- * server invents improves on it — `Invalid or expired token` describes a token, not a next step.
+ * server invents improves on it, `Invalid or expired token` describes a token, not a next step.
  */
 const STATUS_WINS = new Set([401, 403]);
 
-/** No response at all — the phone lost signal, or the API is not running. */
+/** No response at all, the phone lost signal, or the API is not running. */
 const OFFLINE = /failed to fetch|networkerror|load failed|network request failed/i;
 
 export function isOfflineError(errorOrMessage) {
@@ -103,7 +103,7 @@ export function friendlyErrorMessage(errorOrMessage) {
     return 'Format invalid pentru unul din câmpuri. Verifică datele și numerele introduse.';
   }
 
-  // A message written for a reader beats generic status copy — that is the whole point of the
+  // A message written for a reader beats generic status copy, that is the whole point of the
   // server bothering to write one. Boilerplate does not count as one, and neither does anything
   // arriving with a status that already says all there is to say.
   if (!STATUS_WINS.has(status) && msg && msg !== 'Eroare necunoscută' && !BOILERPLATE.test(msg)) {

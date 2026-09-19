@@ -5,7 +5,7 @@ const STOP_COLORS = [
 ];
 
 /**
- * Lateral profile of the cargo bay — length × height, nose on the left, door on the right.
+ * Lateral profile of the cargo bay, length × height, nose on the left, door on the right.
  */
 export default function LoadingSideView({ bay, sideView = [], className = '' }) {
   if (!bay) return null;

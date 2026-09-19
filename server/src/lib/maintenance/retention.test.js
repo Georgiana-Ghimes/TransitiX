@@ -84,7 +84,7 @@ describe('policyDays', () => {
   });
 
   it('ignores nonsense rather than deleting everything', () => {
-    // A misconfigured `RETAIN_..._DAYS=0` read literally means "older than now" — the whole
+    // A misconfigured `RETAIN_..._DAYS=0` read literally means "older than now", the whole
     // table. Anything not a positive number falls back to the default.
     for (const bad of ['0', '-5', 'forever', '', 'NaN']) {
       expect(policyDays(policy, {}, { RETAIN_CHAT_MESSAGES_DAYS: bad }), bad).toBe(365);

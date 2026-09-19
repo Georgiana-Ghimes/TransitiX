@@ -29,7 +29,7 @@ function downloadTemplate(date) {
  *
  * The preview is not cosmetic: the server runs the same plan for the dry run and for the
  * real import, so what the dispatcher approves is exactly what gets written. Lines with
- * problems are never imported silently — they stay listed with the reason.
+ * problems are never imported silently, they stay listed with the reason.
  */
 export default function OrderImportModal({ date, onClose, onImported }) {
   const [file, setFile] = useState(null);
@@ -90,7 +90,7 @@ export default function OrderImportModal({ date, onClose, onImported }) {
             recunoaștem denumirile uzuale („Număr comandă”, „Locație”, „Data”, „Greutate”, „Paleți”…).
           </p>
           <p>
-            <strong>Locația trebuie să existe deja</strong> — o potrivim după nume sau adresă. Liniile fără
+            <strong>Locația trebuie să existe deja</strong>, o potrivim după nume sau adresă. Liniile fără
             locație nu se importă. Fără coloana Data, comenzile primesc data selectată pe board ({date}).
           </p>
           <button
@@ -152,7 +152,7 @@ export default function OrderImportModal({ date, onClose, onImported }) {
 
         {plan?.rows?.length > 0 && (
           <>
-            {/* Cards under md, table from md up — the same pattern as the rest of the office UI. */}
+            {/* Cards under md, table from md up, the same pattern as the rest of the office UI. */}
             <div className="md:hidden space-y-2 max-h-[45vh] overflow-y-auto">
               {plan.rows.map((row) => (
                 <article

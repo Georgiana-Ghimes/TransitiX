@@ -15,7 +15,7 @@ import { getDismissalState, markNotificationRead } from '../lib/officeNotificati
 const router = Router();
 router.use(authRequired, officeRequired);
 
-/** What each rule looks for — so the screen can explain itself without hard-coded copy. */
+/** What each rule looks for, so the screen can explain itself without hard-coded copy. */
 router.get('/rules', (_req, res) => {
   res.json({ rules: RULES });
 });

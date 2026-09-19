@@ -5,7 +5,7 @@
  *
  * Confidence decides what happens next. Above the accept threshold a field is filled in;
  * below it the field is still filled but flagged, so an operator sees a pre-filled form
- * rather than an empty one — and knows exactly which boxes to check.
+ * rather than an empty one, and knows exactly which boxes to check.
  */
 
 import { overallConfidence } from './fields.js';
@@ -28,7 +28,7 @@ export function fieldStatus(confidence) {
  * Runs one profile over a text.
  *
  * A field whose extractor throws is reported as missing rather than taking the whole
- * document down — one bad regex must not lose the other eleven fields.
+ * document down, one bad regex must not lose the other eleven fields.
  */
 export function extractWithProfile(text, profile) {
   const fields = {};
@@ -62,7 +62,7 @@ export function extractDocument(text, { documentType, profileId } = {}) {
   const forced = profileId ? getProfile(profileId) : null;
   const detection = detectProfile(raw, { documentType });
   // Photo handwriting often keeps TPO/PSL but mangles "aviz" so marker detection scores 0.
-  // Without a profile the codes stay on the floor — fall back to the generic aviz layout.
+  // Without a profile the codes stay on the floor, fall back to the generic aviz layout.
   let profile = forced ?? detection.profile;
   if (!profile && (!documentType || documentType === 'aviz')) {
     const hasLogisticsCode = /\b(?:TPO|PSL|TRO)-?\d{4,}\b/i.test(raw);
@@ -119,7 +119,7 @@ export function extractDocument(text, { documentType, profileId } = {}) {
  * The extractor calls it `quantity`; it is stored in the column `cantitate_marfa`, which is what
  * the operator sees and therefore what the operator corrects. Without this mapping the
  * correction landed on a field the extractor had never heard of, the original `quantity` stayed
- * `missing`, and the document could never leave review — a dead end on every aviz whose quantity
+ * `missing`, and the document could never leave review, a dead end on every aviz whose quantity
  * failed to extract.
  */
 export const FIELD_ALIASES = Object.freeze({ cantitate_marfa: 'quantity' });
@@ -170,7 +170,7 @@ export function applyCorrections(extraction, corrections = {}, { previouslyCorre
 
 /**
  * Re-extraction that keeps human corrections.
- * This is what "Re-extrage" must do — otherwise it silently discards an operator's work.
+ * This is what "Re-extrage" must do, otherwise it silently discards an operator's work.
  */
 export function reExtract(text, { documentType, profileId, corrections = {}, correctedFields = [] } = {}) {
   const fresh = extractDocument(text, { documentType, profileId });

@@ -21,6 +21,7 @@ import Dashboard from '@/pages/Dashboard';
 import Trips from '@/pages/Trips';
 import Vehicles from '@/pages/Vehicles';
 import Drivers from '@/pages/Drivers';
+import Guide from '@/pages/Guide';
 import Clients from '@/pages/Clients';
 import Settings from '@/pages/Settings';
 import Warehouse from '@/pages/Warehouse';
@@ -29,11 +30,15 @@ import Register from '@/pages/Register';
 import RequestAccess from '@/pages/RequestAccess';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import VerifyEmail from '@/pages/VerifyEmail';
+import ChangePassword from '@/pages/ChangePassword';
 
 const TripDetail = lazy(() => import('@/pages/TripDetail'));
 const GPSMap = lazy(() => import('@/pages/GPSMap'));
 const Locations = lazy(() => import('@/pages/Locations'));
 const Territories = lazy(() => import('@/pages/Territories'));
+const ZoneMap = lazy(() => import('@/pages/ZoneMap'));
+const Fleet = lazy(() => import('@/pages/Fleet'));
 const Dispatch = lazy(() => import('@/pages/Dispatch'));
 const LoadPlanner = lazy(() => import('@/pages/LoadPlanner'));
 const LoadPlanner2D = lazy(() => import('@/loadplanner/LoadPlannerPage'));
@@ -45,7 +50,6 @@ const Reports = lazy(() => import('@/pages/Reports'));
 const Checks = lazy(() => import('@/pages/Checks'));
 const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
-const Users = lazy(() => import('@/pages/Users'));
 const PlatformAdmin = lazy(() => import('@/pages/PlatformAdmin'));
 const PlatformCompanies = lazy(() => import('@/pages/PlatformCompanies'));
 const PlatformLeads = lazy(() => import('@/pages/PlatformLeads'));
@@ -102,6 +106,8 @@ function OfficeRoutes() {
       <Route path="/gps" element={<GPSMap />} />
       <Route path="/locations" element={<Locations />} />
       <Route path="/territories" element={<Territories />} />
+      <Route path="/zone-map" element={<ZoneMap />} />
+      <Route path="/fleet" element={<Fleet />} />
       <Route path="/dispatch" element={<Dispatch />} />
       <Route path="/loading" element={<LoadPlanner />} />
       <Route path="/load-planner" element={<LoadPlanner2D />} />
@@ -115,9 +121,10 @@ function OfficeRoutes() {
       <Route path="/checks" element={<Checks />} />
       <Route path="/commercial" element={<Commercial />} />
       <Route path="/audit" element={<Audit />} />
-      <Route path="/users" element={<Users />} />
+      <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
       <Route path="/driver-app" element={<TenantDriverApp />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/ghid" element={<Guide />} />
     </>
   );
 }
@@ -139,7 +146,10 @@ const AuthenticatedApp = () => {
         <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/request-access" element={<RequestAccess />} />
+        {/* Offered on both profiles; the page itself asks the server whether sign-up is open. */}
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/confirm/:token" element={<ClientPortal />} />

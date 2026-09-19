@@ -16,7 +16,7 @@ import { num } from './tariffs.js';
  * Ordered legs for a trip.
  * @param {{latitude?:number, longitude?:number, label?:string, locationId?:string}|null} depot
  * @param {object|null} loading
- * @param {Array} unloadings — one or more delivery points, in visiting order
+ * @param {Array} unloadings, one or more delivery points, in visiting order
  */
 export function buildLegs(depot, loading, unloadings = []) {
   const stops = unloadings.filter(Boolean);

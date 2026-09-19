@@ -2,25 +2,33 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { isActiveTripStatus } from '@/lib/utils';
+import { isDocumentsProfile } from '@/lib/appProfile';
 import { formatAppVersion } from '@/lib/appVersion';
 import { Truck, CheckCircle, Clock, Mail, Phone, LogOut } from 'lucide-react';
 
 export default function DriverProfile({ driver: driverProp, trips: tripsProp }) {
   const { logout } = useAuth();
   const [user, setUser] = useState(null);
+  const showTripStats = !isDocumentsProfile();
   const [trips, setTrips] = useState(tripsProp || []);
-  const [loading, setLoading] = useState(!tripsProp);
+  const [loading, setLoading] = useState(showTripStats && !tripsProp);
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     api.auth.me().then((u) => setUser(u)).catch(() => {});
+    // Nothing renders the counts on the companion, and the fallback below is an unscoped
+    // list of every trip, the most expensive way to compute a number nobody reads.
+    if (!showTripStats) {
+      setLoading(false);
+      return;
+    }
     if (!tripsProp) {
       api.entities.Trip.list('-created_date', 100).then(setTrips).catch(() => {}).finally(() => setLoading(false));
     } else {
       setTrips(tripsProp);
       setLoading(false);
     }
-  }, [tripsProp]);
+  }, [tripsProp, showTripStats]);
 
   const stats = useMemo(() => ({
     total: trips.length,
@@ -60,6 +68,9 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
         </div>
       </div>
 
+      {/* The companion does not dispatch trips, so these three would read 0/0/0 forever and
+          suggest the driver had done nothing. Say nothing instead of saying zero. */}
+      {showTripStats && (
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { icon: Truck, color: 'text-[#1D4E89]', value: stats.total, label: 'Total' },
@@ -81,6 +92,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
           );
         })}
       </div>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm divide-y divide-slate-100">
         <div className="flex items-center gap-3 p-3.5 sm:p-4 min-w-0">

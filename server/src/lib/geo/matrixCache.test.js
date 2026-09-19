@@ -156,7 +156,7 @@ describe('planFetch', () => {
     expect(cells).toBeLessThan(5 * 5);
   });
 
-  it('scales that saving — five new points among two hundred stay two thin rectangles', () => {
+  it('scales that saving, five new points among two hundred stay two thin rectangles', () => {
     const keys = nodes(200);
     const cached = pairsFor(keys);
     const nodeKeys = keys.map((key, i) => (i < 195 ? key : null));
@@ -245,7 +245,7 @@ describe('mergeTableResponse', () => {
       {
         distances_km: [[0, 8.4]],
         durations_min: [[0, 11]],
-        // OSRM snapped the first point a few metres away this time — a rebuilt graph.
+        // OSRM snapped the first point a few metres away this time, a rebuilt graph.
         sources: [{ latitude: 44.10004, longitude: 26.1 }],
         destinations: [{ latitude: 44.10004, longitude: 26.1 }, { latitude: 44.2, longitude: 26.2 }],
       },

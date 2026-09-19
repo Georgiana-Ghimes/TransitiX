@@ -37,14 +37,8 @@ server/node_modules/
 # OSRM graph data (OSM extracts + build output, hundreds of MB)
 /docker/osrm/
 
-# Local notes (kept on disk, not published)
-/docs/*
-!/docs/CHANGELOGS/
-/docs/CHANGELOGS/*
-!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app*.html
-!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app*.pdf
-!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-Sprint2.html
-!/docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-Sprint2.pdf
+# Local notes, changelogs, manuals — kept on disk, not published
+/docs/
 /AGENTS.md
 /CLAUDE.md
 /CHANGELOG.md

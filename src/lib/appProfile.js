@@ -1,7 +1,21 @@
 import { isPathAllowedForCompany, moduleForPath } from './companyModules.js';
 
-/** Baseline office routes on VITE_APP_PROFILE=documents (always on for companion). */
-export const COMPANION_OFFICE_PATHS = ['/avize', '/reports', '/platform', '/settings'];
+/**
+ * Office routes exposed when VITE_APP_PROFILE=documents (RAI companion).
+ * Utilizatori lives under Setări (tab), not as its own sidebar item; `/users` still
+ * redirects there so old bookmarks keep working. Harta zonelor is shared with full TMS.
+ * `/platform` is for GOD operators on the same host.
+ */
+export const COMPANION_OFFICE_PATHS = [
+  '/avize',
+  '/reports',
+  '/zone-map',
+  '/fleet',
+  '/settings',
+  '/users',
+  '/ghid',
+  '/platform',
+];
 
 export function appProfile() {
   const raw = String(import.meta.env.VITE_APP_PROFILE || 'full').trim().toLowerCase();

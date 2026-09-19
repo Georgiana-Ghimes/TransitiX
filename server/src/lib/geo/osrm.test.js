@@ -50,7 +50,7 @@ describe('toCoordinate', () => {
 });
 
 describe('formatCoordinates', () => {
-  it('emits lon,lat pairs — the reverse of the stored order', () => {
+  it('emits lon,lat pairs, the reverse of the stored order', () => {
     expect(formatCoordinates([BUCHAREST, CLUJ])).toBe('26.1025,44.4268;23.6236,46.7712');
   });
 

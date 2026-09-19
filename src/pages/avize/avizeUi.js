@@ -6,7 +6,7 @@ export const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
 export const AVIZ_ACTION_LEGEND = [
   {
     name: 'Încarcă avize / Foto',
-    text: 'Adaugă PDF-ul sau poza avizului. Sistemul citește TPO, PSL/TRO, SOR, dată, auto, rută, cantitate și greutate brută. Km, taxe, valoare TPO și observații se completează manual.',
+    text: 'Adaugă PDF-ul sau poza avizului. Sistemul citește TPO, dată, auto, rută, cantitate. Km, taxe, valoare TPO și observații se completează manual.',
   },
   {
     name: 'Editează',
@@ -14,7 +14,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat). Nu blochează exportul — poți uni și rânduri neverificate, dar Confirmă e semnul că datele sunt gata de factură.',
+    text: 'Marchează rândul ca verificat (status Confirmat). Nu blochează exportul, poți uni și rânduri neverificate, dar Confirmă e semnul că datele sunt gata de factură.',
   },
   {
     name: 'Re-extrage',
@@ -25,8 +25,8 @@ export const AVIZ_ACTION_LEGEND = [
     text: 'Scoate avizul din listă. Folosește-l pentru dubluri, teste sau documente încărcate greșit. Nu se poate anula.',
   },
   {
-    name: 'TPO duplicat',
-    text: 'Același număr TPO există deja pe alt rând. Eticheta este un semnal vizual — nu blochează acțiunile, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
+    name: 'Aviz duplicat',
+    text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta nu blochează nimic, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
   },
   {
     name: 'Unește în Anexa XLSX',
@@ -37,11 +37,11 @@ export const AVIZ_ACTION_LEGEND = [
 export const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX — îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie — duplică-l ca șablon nou.',
+    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize OCR. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie, duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei — șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
   },
   {
     name: 'Șterge șablon',
@@ -62,14 +62,13 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
 }
 
 /**
- * The fields Re-extrage rewrites from the file — mirrors `EXTRACT_COLUMNS` on the server, narrowed
+ * The fields Re-extrage rewrites from the file, mirrors `EXTRACT_COLUMNS` on the server, narrowed
  * to the ones the edit form can actually change. Km, taxe, valoare TPO and observations are absent
  * on purpose: extraction never touches them, so they are never at risk.
  */
 const OCR_OWNED_FIELDS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
-  'cantitate_marfa', 'numar_document_marfa', 'numar_sor',
-  'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg', 'pallets', 'quantity_unit',
+  'cantitate_marfa', 'gross_weight_kg', 'numar_document_marfa',
 ];
 
 function ocrValueFor(values, key) {
@@ -148,6 +147,13 @@ export function downloadBlob(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Email stub fallback: download the annex once per modal attempt, not on every Trimite click.
+ */
+export function shouldAutoDownloadEmailFallback({ alreadyDownloaded, hasContent }) {
+  return Boolean(hasContent) && !alreadyDownloaded;
 }
 
 export function displayRoute(row) {

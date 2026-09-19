@@ -3,7 +3,7 @@ import { FORM_ERROR_BANNER, firstErrorKey } from '@/lib/entityValidation';
 import { friendlyErrorMessage } from '@/lib/notify';
 
 /**
- * The save path shared by the office modals — Client, Șofer, Factură, Produs depozit.
+ * The save path shared by the office modals, Client, Șofer, Factură, Produs depozit.
  *
  * Each of them used to trust `required` on the input, which counts a string of spaces as filled
  * in, and reported failures through a toast that a modal on a phone covers. This keeps the three
@@ -38,7 +38,7 @@ export function useEntityForm({ initial, validate, normalize, idPrefix, save }) 
     clearFeedback([key]);
   }, [clearFeedback]);
 
-  /** Several fields at once — picking a trip, recomputing totals. */
+  /** Several fields at once, picking a trip, recomputing totals. */
   const patch = useCallback((changes) => {
     setForm((f) => ({ ...f, ...changes }));
     clearFeedback(Object.keys(changes));

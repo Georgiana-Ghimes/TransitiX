@@ -4,7 +4,9 @@ import { useAuth } from '@/lib/AuthContext';
 import DriverProfile from '@/components/driver/DriverProfile';
 import DriverUploadDocuments from '@/components/driver/DriverUploadDocuments';
 import { findDriverForUser } from '@/lib/utils';
-import { Upload, User } from 'lucide-react';
+import { HelpCircle, Upload, User } from 'lucide-react';
+import GuideView from '@/components/GuideView';
+import { DRIVER_GUIDE } from '@/lib/guide';
 
 /** Shared column: phone → tablet → fold / Surface without looking like a thin strip. */
 const SHELL =
@@ -13,7 +15,7 @@ const SHELL =
 /**
  * The driver shell for the documents companion: send paperwork, see your profile.
  *
- * Deliberately not the full driver app — the companion's job is the document queue, and a
+ * Deliberately not the full driver app, the companion's job is the document queue, and a
  * driver on it has no routes to execute. `DriverApp.jsx` remains the Transitix one.
  * Sized for Chrome device presets (iPhone SE → iPad Pro / Fold / Surface).
  */
@@ -21,7 +23,6 @@ export default function DriverAppDocuments() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
-  const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('upload');
 
@@ -37,17 +38,9 @@ export default function DriverAppDocuments() {
       const drivers = await api.entities.Driver.list().catch(() => []);
       const myDriver = findDriverForUser(drivers, me);
       setDriver(myDriver);
-
-      if (myDriver) {
-        const scoped = await api.entities.Trip.filter(
-          { driver_id: myDriver.id },
-          '-created_date',
-          50
-        ).catch(() => []);
-        setTrips(Array.isArray(scoped) ? scoped : []);
-      } else {
-        setTrips([]);
-      }
+      // No trip list here: the companion does not dispatch trips, and the profile no longer
+      // shows trip counts. Fetching 50 rows over a cab's connection to render nothing is a
+      // cost the driver pays for us.
     } catch (e) {
       console.error(e);
     } finally {
@@ -71,7 +64,8 @@ export default function DriverAppDocuments() {
       .slice(0, 2)
       .toUpperCase();
 
-  const title = tab === 'profile' ? 'Profil' : 'Încarcă documente';
+  const TITLES = { profile: 'Profil', ghid: 'Ghid', upload: 'Încarcă documente' };
+  const title = TITLES[tab] || TITLES.upload;
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-[#F8F9FA]">
@@ -104,11 +98,9 @@ export default function DriverAppDocuments() {
           paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))',
         }}
       >
-        {tab === 'profile' ? (
-          <DriverProfile driver={driver} trips={trips} />
-        ) : (
-          <DriverUploadDocuments user={user} />
-        )}
+        {tab === 'profile' && <DriverProfile driver={driver} />}
+        {tab === 'ghid' && <GuideView guide={DRIVER_GUIDE} />}
+        {tab === 'upload' && <DriverUploadDocuments user={user} />}
       </main>
 
       <nav
@@ -116,7 +108,7 @@ export default function DriverAppDocuments() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div
-          className={`${SHELL} grid grid-cols-2`}
+          className={`${SHELL} grid grid-cols-3`}
           style={{
             paddingLeft: 'max(0px, env(safe-area-inset-left))',
             paddingRight: 'max(0px, env(safe-area-inset-right))',
@@ -124,6 +116,7 @@ export default function DriverAppDocuments() {
         >
           {[
             { key: 'upload', icon: Upload, label: 'Încarcă documente' },
+            { key: 'ghid', icon: HelpCircle, label: 'Ghid' },
             { key: 'profile', icon: User, label: 'Profil' },
           ].map((t) => {
             const Icon = t.icon;

@@ -1,5 +1,5 @@
 /**
- * Territory generation — capacitated geographic clustering + convex-hull polygons.
+ * Territory generation, capacitated geographic clustering + convex-hull polygons.
  * Pure: no DB. Drive time is approximated by haversine km (OSRM optional later).
  */
 
@@ -71,7 +71,7 @@ function seedCentroids(points, k, random = Math.random) {
 
 /**
  * Capacitated k-means: assign each point to nearest under-capacity cluster when possible.
- * @param {object[]} locations — need id, latitude, longitude; optional weight fields
+ * @param {object[]} locations, need id, latitude, longitude; optional weight fields
  * @param {{ k?: number, iterations?: number, seed?: number }} opts
  */
 export function clusterLocations(locations = [], { k = 5, iterations = 25, random = Math.random } = {}) {
@@ -282,7 +282,7 @@ export function balanceReport(clusters = []) {
       weight: Math.round(c.weight * 10) / 10,
       weight_kg: Math.round((c.weight_kg || 0) * 10) / 10,
       volume_mc: Math.round((c.volume_mc || 0) * 100) / 100,
-      // Rough hours: 15 min / stop + 2 min / km of radius-ish — keep simple.
+      // Rough hours: 15 min / stop + 2 min / km of radius-ish, keep simple.
       hours_est: Math.round(((c.stop_count || 0) * 0.35 + (c.weight || 0) * 0.05) * 10) / 10,
       deviation_pct,
     };

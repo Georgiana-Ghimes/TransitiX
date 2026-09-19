@@ -20,7 +20,7 @@ afterEach(() => {
 
 /**
  * Fixture in the shape TomTom's Geocode endpoint documents. The live API was never
- * reachable during development, so this fixture *is* the contract — if a real key returns
+ * reachable during development, so this fixture *is* the contract, if a real key returns
  * different field names, fix it here first and the parser follows.
  */
 function tomtomResult(over = {}) {
@@ -140,7 +140,7 @@ describe('parseSearchResponse', () => {
     expect(out.best.confidence).toBeGreaterThanOrEqual(0.8);
   });
 
-  it('uses the same scale as Photon — a wrong street cannot auto-accept', () => {
+  it('uses the same scale as Photon, a wrong street cannot auto-accept', () => {
     const wrong = tomtomResult({
       address: { ...tomtomResult().address, streetName: 'Calea Torontalului' },
     });

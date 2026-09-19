@@ -6,9 +6,12 @@ import { serializeRow } from '../entities.js';
 import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
-import { readDocumentText } from '../lib/ocr/readText.js';
+import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
+import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
+import { isGenericCountUnit } from '../lib/ocr/fields.js';
+import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -79,6 +82,9 @@ const EXTRACT_COLUMNS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
   'cantitate_marfa', 'numar_document_marfa', 'numar_sor', 'gross_weight_kg', 'net_weight_kg',
   'pallet_weight_kg', 'pallets', 'quantity_unit',
+  // The carnet writes `NR. CURSE` on the page. Without this the profile read it and `toColumns`
+  // dropped it, so the row kept the column default and the driver's own count never arrived.
+  'numar_curse',
 ];
 
 /** Maps extractor field names onto the document columns. */
@@ -88,10 +94,19 @@ function toColumns(values) {
     if (name === 'quantity') out.cantitate_marfa = value;
     else if (EXTRACT_COLUMNS.includes(name)) out[name] = value;
   }
+  // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
+  // A bare count is not a packaging unit, though. An aviz reading `Cantitate 768.00 buc` two
+  // lines above `Numarul de galeti 768.00` is describing buckets both times, and only the
+  // second says so — writing "bucati" onto the customer's annex puts a word there that names
+  // nothing. Left empty instead, so the repair pass and the operator each still get a turn.
+  if ((out.tip_marfa == null || String(out.tip_marfa).trim() === '')
+      && out.quantity_unit && !isGenericCountUnit(out.quantity_unit)) {
+    out.tip_marfa = normalizeGoodsUnit(out.quantity_unit) || String(out.quantity_unit).trim();
+  }
   return out;
 }
 
-/** One batch at a time — parallel driver uploads must not OCR the same rows twice. */
+/** One batch at a time, parallel driver uploads must not OCR the same rows twice. */
 const batchExtractChains = new Map();
 
 function runBatchExtract(batchKey, fn) {
@@ -104,7 +119,9 @@ function runBatchExtract(batchKey, fn) {
 }
 
 async function markExtractFailed(companyId, docId, err) {
-  const message = err?.message || String(err);
+  const message = err?.code === 'OCR_TIMEOUT'
+    ? 'OCR a depășit timpul alocat. Folosește Re-extrage.'
+    : (err?.message || String(err));
   await query(
     `UPDATE aviz_documents SET
        status = 'extracted',
@@ -118,10 +135,39 @@ async function markExtractFailed(companyId, docId, err) {
 }
 
 /**
+ * Uploads whose OCR job never came back (process restart, hung sidecar) stay on
+ * „Se procesează…” forever. After the background budget + grace, treat them as failed
+ * so the office and the driver see a final status and can Re-extrage.
+ */
+export async function failStaleUploadedAvize(companyId, {
+  olderThanMs = backgroundOcrTimeoutMs() + 60_000,
+} = {}) {
+  if (!companyId) return { failed: 0 };
+  const message = 'OCR nu a terminat la timp. Folosește Re-extrage.';
+  // `updated_at`, not `created_at`: a re-extract flips an old row back to `uploaded`, and the
+  // original upload day would otherwise make this fire immediately — or never, if we keyed
+  // only on create and a hung re-extract left „Se procesează…” forever.
+  const result = await query(
+    `UPDATE aviz_documents SET
+       status = 'extracted',
+       needs_review = TRUE,
+       extraction_source = 'none',
+       extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $1::jsonb,
+       updated_at = NOW()
+     WHERE company_id = $2
+       AND status = 'uploaded'
+       AND updated_at < NOW() - ($3 * INTERVAL '1 millisecond')
+     RETURNING id`,
+    [JSON.stringify({ extract_error: message }), companyId, olderThanMs]
+  );
+  return { failed: result.rowCount || 0 };
+}
+
+/**
  * Runs OCR over every document in a batch that has not been extracted yet.
  * Shared by the office extract endpoint and the driver upload path.
  *
- * @param {string[]} [options.documentIds]  When set (driver upload), only these rows are OCR'd —
+ * @param {string[]} [options.documentIds]  When set (driver upload), only these rows are OCR'd,
  *   not every other stuck `uploaded` row still sitting in the open batch.
  */
 export async function extractBatchDocuments(companyId, batchId, userId, {
@@ -132,6 +178,9 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 } = {}) {
   const batchKey = `${companyId}:${batchId}`;
   return runBatchExtract(batchKey, async () => {
+  // Opportunistic: clear rows that never left „Se procesează…” after the budget window.
+  await failStaleUploadedAvize(companyId).catch(() => {});
+
   let docs = (await query(
     `SELECT * FROM aviz_documents WHERE company_id = $1 AND batch_id = $2 ORDER BY created_at`,
     [companyId, batchId]
@@ -163,12 +212,12 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       continue;
     }
 
-    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed rows stay put —
-    // only a finished-but-empty extract needs to look pending again.
-    if (force && doc.status === 'extracted') {
+    // Re-extract: show "Se procesează…" and let the office list poll. Confirmed must drop too,
+    // rewriting OCR fields while leaving "Confirmat" would let unreviewed data go to billing.
+    if (force && (doc.status === 'extracted' || doc.status === 'confirmed')) {
       await query(
         `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
-         WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+         WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed')`,
         [doc.id, companyId]
       );
       doc.status = 'uploaded';
@@ -220,6 +269,19 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             doc.id, companyId,
           ]
         );
+        // A plate the OCR just read opens a vehicle record, inside this transaction, so a
+        // document and the lorry it names cannot land on opposite sides of a failure. A filing
+        // problem never fails the extraction though: the document is what the operator sent.
+        let registeredPlate = null;
+        try {
+          const { vehicle, created } = await ensureVehicleForPlate(
+            client, companyId, columns.numar_auto,
+          );
+          if (created) registeredPlate = vehicle.plate;
+        } catch (err) {
+          console.error('[documents] plăcuța nu a putut fi înregistrată', err);
+        }
+
         await logEvent(client, {
           companyId, documentId: doc.id, batchId,
           userId, kind: doc.ocr_profile_id ? 're_extracted' : 'extracted',
@@ -230,16 +292,23 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             text_source: text.source,
             pages: text.pages ?? null,
             pages_truncated: Boolean(text.truncated),
+            ...(registeredPlate ? { vehicle_registered: registeredPlate } : {}),
           },
         });
       });
 
       results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
     } catch (err) {
-      console.error('[documents] extract doc', doc.id, err);
-      // A timeout is us giving up on the clock, not a page nobody can read. Marking it would
-      // move it out of `uploaded` and the queue would stop offering it.
-      if (err?.code !== 'OCR_TIMEOUT') await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      const timedOut = err?.code === 'OCR_TIMEOUT';
+      // Interactive path pins a short `timeoutMs` and /avize/extract retries in background.
+      // Background path leaves `timeoutMs` unset — if that clock also expires, mark failed or
+      // the row stays on „Se procesează…” forever.
+      const backgroundBudget = timeoutMs == null;
+      if (timedOut) console.warn('[documents] extract doc', doc.id, err);
+      else console.error('[documents] extract doc', doc.id, err);
+      if (!timedOut || backgroundBudget) {
+        await markExtractFailed(companyId, doc.id, err).catch(() => {});
+      }
       results.push({
         id: doc.id,
         filename: doc.original_filename,
@@ -251,7 +320,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 
   // A batch only ever moves forward. Extraction now runs in the background for driver uploads,
   // so a confirmation that lands while OCR is still working would otherwise be undone by this
-  // line the moment the last page finishes — the operator's decision quietly reverted.
+  // line the moment the last page finishes, the operator's decision quietly reverted.
   await query(
     `UPDATE document_batches SET status = 'extracted', updated_at = NOW()
      WHERE id = $1 AND company_id = $2 AND status IN ('uploaded', 'extracted')`,
@@ -350,7 +419,7 @@ router.post('/batches/:id/extract', async (req, res) => {
   }
 });
 
-/** Batch with its documents — the review list. */
+/** Batch with its documents, the review list. */
 router.get('/batches/:id', async (req, res) => {
   try {
     const batch = (await query(
@@ -469,7 +538,7 @@ router.get('/:id/history', async (req, res) => {
 
 /**
  * Confirms selected documents from a batch.
- * Only what the operator ticked is confirmed — the rest stay in review.
+ * Only what the operator ticked is confirmed, the rest stay in review.
  */
 router.post('/batches/:id/confirm', async (req, res) => {
   try {

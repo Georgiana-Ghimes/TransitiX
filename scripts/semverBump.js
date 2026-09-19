@@ -1,8 +1,8 @@
 /**
  * SemVer bump from conventional-commit messages (Transitix AGENTS.md):
- * major — breaking API/schema
- * minor — user-visible features (feat)
- * patch — fixes, docs, tooling
+ * major, breaking API/schema
+ * minor, user-visible features (feat)
+ * patch, fixes, docs, tooling
  */
 
 const SKIP_RE = /\[skip version\]|\[skip-version\]/i;

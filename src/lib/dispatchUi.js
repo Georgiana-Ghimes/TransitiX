@@ -21,7 +21,7 @@ export function routeStatusMeta(status) {
   return ROUTE_STATUS_META[status] || ROUTE_STATUS_META.draft;
 }
 
-/** Colour ramp for stop markers — worst state wins. */
+/** Colour ramp for stop markers, worst state wins. */
 export function stopMarkerColor(stop, violations = []) {
   const hit = violations.find((v) => v.stop_id === stop.id);
   if (hit?.type === 'intarziere') return '#C0392B';
@@ -118,7 +118,7 @@ export function orderLocationOptions(locations = [], clientId) {
     .filter((l) => !clientId || l.client_id === clientId || l.client_id == null)
     .map((l) => ({
       id: l.id,
-      label: [l.name, l.city].filter(Boolean).join(' — '),
+      label: [l.name, l.city].filter(Boolean).join(', '),
       geocoded: l.latitude != null && l.longitude != null,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, 'ro'));
@@ -131,7 +131,7 @@ export function orderLocationOptions(locations = [], clientId) {
 export function validateOrder(form = {}) {
   const errors = {};
   if (!String(form.order_number || '').trim()) errors.order_number = 'Numărul comenzii e obligatoriu';
-  if (!form.location_id) errors.location_id = 'Alege o locație — fără ea comanda nu poate intra pe o rută';
+  if (!form.location_id) errors.location_id = 'Alege o locație; fără ea comanda nu poate intra pe o rută';
   if (!String(form.requested_date || '').trim()) errors.requested_date = 'Alege data';
 
   const start = String(form.window_start || '').trim();
@@ -209,7 +209,7 @@ export function routeWarnings(plan) {
     });
   }
   if (plan?.totals && plan.totals.complete === false) {
-    out.push({ level: 'warn', text: 'Unele segmente nu au distanță — ETA-urile sunt incomplete' });
+    out.push({ level: 'warn', text: 'Unele segmente nu au distanță; ETA-urile sunt incomplete' });
   }
   return out;
 }

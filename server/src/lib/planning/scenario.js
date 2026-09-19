@@ -9,7 +9,7 @@
  * Attach a driver to each vehicle.
  *
  * Preferred pairings (from routes already drafted for the day) win. Remaining vehicles take
- * remaining drivers in the order they were listed — a dispatcher who sorted the fleet by
+ * remaining drivers in the order they were listed, a dispatcher who sorted the fleet by
  * preference gets that preference reflected in the solve.
  */
 export function assignDrivers(vehicles = [], drivers = [], preferred = []) {
@@ -40,7 +40,7 @@ export function assignDrivers(vehicles = [], drivers = [], preferred = []) {
   });
 }
 
-/** YYYY-MM-DD only — the planner works in calendar days, not instants. */
+/** YYYY-MM-DD only, the planner works in calendar days, not instants. */
 export function parseRouteDate(value) {
   if (value instanceof Date && Number.isFinite(value.getTime())) {
     // DATE columns come back as midnight UTC from node-pg.
@@ -69,7 +69,7 @@ export function defaultScenarioName(routeDate, existingCount = 0) {
 }
 
 /**
- * What we store in route_scenarios.solution — plain JSON, no Map leftovers from the index.
+ * What we store in route_scenarios.solution, plain JSON, no Map leftovers from the index.
  * Arrival times stay as seconds-from-midnight; the promoter turns them into timestamps.
  */
 export function shapeSolution(plan) {

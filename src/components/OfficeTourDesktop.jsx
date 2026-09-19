@@ -2,12 +2,11 @@ import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { OFFICE_TOUR_STEPS, clampTourStep } from '@/lib/officeTour';
 
-/** Desktop coach panel — sidebar stays visible; main content dimmed by Layout. */
-export default function OfficeTourDesktop({ step, steps, onStepChange, onClose }) {
-  const script = steps?.length ? steps : OFFICE_TOUR_STEPS;
-  const total = script.length;
+/** Desktop coach panel, sidebar stays visible; main content dimmed by Layout. */
+export default function OfficeTourDesktop({ step, onStepChange, onClose }) {
+  const total = OFFICE_TOUR_STEPS.length;
   const index = clampTourStep(step, total);
-  const current = script[index];
+  const current = OFFICE_TOUR_STEPS[index];
   const last = index === total - 1;
 
   useEffect(() => {
@@ -62,7 +61,7 @@ export default function OfficeTourDesktop({ step, steps, onStepChange, onClose }
         ) : null}
 
         <div className="flex items-center justify-center gap-1.5 mt-6" aria-hidden="true">
-          {script.map((s, i) => (
+          {OFFICE_TOUR_STEPS.map((s, i) => (
             <span
               key={s.id}
               className={

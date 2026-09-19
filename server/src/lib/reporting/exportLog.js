@@ -2,7 +2,7 @@
  * One recorder for every export, whichever screen produced it.
  *
  * There were two export paths for a while, and only the newer one stored the rendered rows. That
- * meant an export made from the older screen could never be re-downloaded — and nobody would find
+ * meant an export made from the older screen could never be re-downloaded, and nobody would find
  * out until a customer asked for the March file again. Both paths now come through here, so the
  * history is uniform regardless of where the button was.
  */

@@ -2,7 +2,7 @@
  * Display logic for the data-quality screen.
  *
  * The server decides what is wrong and why; this file decides how the list reads. The ordering
- * rule it shares with the server is that errors — the ones that change an invoice — come first.
+ * rule it shares with the server is that errors, the ones that change an invoice, come first.
  */
 
 export const SEVERITY_META = {
@@ -64,7 +64,7 @@ export function groupByRule(findings = [], rules = []) {
  * Recounts the header after a dismissal, without a round trip.
  *
  * The header has to follow the list. Leaving it at the server's original count would have it
- * claiming a problem that is no longer on screen — the screen contradicting itself.
+ * claiming a problem that is no longer on screen, the screen contradicting itself.
  */
 export function summarise(findings = []) {
   const bySeverity = { error: 0, warning: 0 };
@@ -76,7 +76,7 @@ export function summarise(findings = []) {
   return { total: findings.length, by_rule: byRule, by_severity: bySeverity };
 }
 
-/** One sentence for the header — what the operator is actually facing. */
+/** One sentence for the header, what the operator is actually facing. */
 export function headline(summary) {
   const errors = summary?.by_severity?.error ?? 0;
   const warnings = summary?.by_severity?.warning ?? 0;

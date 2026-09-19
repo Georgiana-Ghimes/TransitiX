@@ -2,7 +2,7 @@
  * Who changed what.
  *
  * `document_events` already explained a corrected aviz. Nothing explained a tariff that moved,
- * a depot that changed — which silently changes every billable kilometre afterwards — or a trip
+ * a depot that changed, which silently changes every billable kilometre afterwards, or a trip
  * edited after it had been invoiced. Those are the questions asked months later, usually by
  * somebody who was not in the room, and until now the honest answer was "the database does not
  * know".
@@ -26,16 +26,16 @@ export const AUDITED_ENTITIES = {
   Contract: 'Contractul comercial în baza căruia se facturează.',
   ContractTariff: 'Tariful. Cine l-a schimbat și de când e cea mai scumpă întrebare din sistem.',
   TaxZone: 'Definiția zonei care intră în preț.',
-  TaxZoneRate: 'Taxa de zonă — component direct în TPO.',
+  TaxZoneRate: 'Taxa de zonă, component direct în TPO.',
   SurchargeType: 'Definiția unei taxe suplimentare.',
   SurchargeRate: 'Valoarea taxei suplimentare facturate.',
   ObservationCode: 'Codurile clientului; un import greșit se vede în toate avizele.',
   Location: 'Coordonatele decid kilometrii facturabili.',
   Client: 'Datele de facturare ale clientului.',
   Vehicle: 'Clasa comercială decide tariful; MMA decide legalitatea.',
-  Driver: 'Cine conduce și din ce dată — contează la orice reconstituire a unei curse.',
+  Driver: 'Cine conduce și din ce dată, contează la orice reconstituire a unei curse.',
   Trip: 'Cursa. Editarea ei după facturare e exact ce trebuie explicat.',
-  TripCharge: 'Componentele TPO — din ele se face factura.',
+  TripCharge: 'Componentele TPO, din ele se face factura.',
   TripLeg: 'Etapele din care ies kilometrii facturabili.',
   Invoice: 'Document fiscal emis; o modificare după emitere trebuie explicată.',
   ReportTemplate: 'Forma în care pleacă raportul la client.',
@@ -45,7 +45,7 @@ export const AUDITED_ENTITIES = {
 };
 
 /**
- * Deliberately not audited, and why — so the next person does not add them by reflex.
+ * Deliberately not audited, and why, so the next person does not add them by reflex.
  *
  * These are either high-volume telemetry or already covered by a better, purpose-built trail.
  */
@@ -55,7 +55,7 @@ export const NOT_AUDITED = {
   DriverNotification: 'Efect, nu decizie.',
   OptimizationSuggestion: 'Generat automat, nu de un om.',
   AvizDocument: 'Are deja document_events, cu detaliu per câmp OCR.',
-  DocumentBatch: 'La fel — document_events.',
+  DocumentBatch: 'La fel, document_events.',
   DocumentEvent: 'Este el însuși jurnal.',
   TripDocument: 'Încărcările și semnăturile au propriul traseu.',
   ClientConfirmation: 'Confirmarea e propria ei dovadă.',
@@ -70,7 +70,7 @@ export function isAudited(entity) {
 /**
  * Fields whose value must never land in the trail, matched by pattern rather than by a list.
  *
- * A hand-maintained list of names where a pattern belongs is a recurring bug in this codebase —
+ * A hand-maintained list of names where a pattern belongs is a recurring bug in this codebase,
  * it was how a date column stopped being formatted as a date. Here the cost of missing one is a
  * password hash written to a table built to be read by people, so the pattern errs wide: an
  * over-redacted field is a small annoyance, a leaked one is not.
@@ -91,7 +91,7 @@ export function isSecretField(field) {
  * Turns a stored value into something comparable and printable.
  *
  * pg hands back `Date` objects for timestamps and **strings** for NUMERIC, so a tariff saved as
- * 2.5 comes back as "2.5000" — compared naively, every save of an untouched row would look like
+ * 2.5 comes back as "2.5000", compared naively, every save of an untouched row would look like
  * a change.
  */
 export function normaliseValue(value) {
@@ -132,7 +132,7 @@ export function presentValue(field, value) {
  * The fields that actually differ, as `{ field: { from, to } }`.
  *
  * Driven off the rows themselves rather than off the request payload, so a value the server
- * derived — `distance_source`, an allocated invoice number — shows up too. Sending a field
+ * derived, `distance_source`, an allocated invoice number, shows up too. Sending a field
  * unchanged produces no entry at all, which is why an empty result means "nothing happened"
  * rather than "nothing was submitted".
  */
@@ -149,7 +149,7 @@ export function diffRows(before, after) {
   return changes;
 }
 
-/** A whole row, redacted and truncated — for a delete, where nothing else will hold it. */
+/** A whole row, redacted and truncated, for a delete, where nothing else will hold it. */
 export function snapshotRow(row) {
   const out = {};
   for (const [field, value] of Object.entries(row || {})) {
@@ -191,7 +191,7 @@ export function labelFor(entity, row) {
   }
 }
 
-/** The caller's address, first hop only — the rest of an X-Forwarded-For chain is unverified. */
+/** The caller's address, first hop only, the rest of an X-Forwarded-For chain is unverified. */
 export function ipFrom(req) {
   const forwarded = req?.headers?.['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.trim()) return forwarded.split(',')[0].trim();
@@ -245,7 +245,7 @@ export async function recordAudit(client, entry) {
  * Records an entity change, skipping what is not audited and updates that changed nothing.
  *
  * Never throws. The business write has already succeeded by the time this runs, and refusing to
- * save a legitimate tariff because the trail was briefly unavailable would be the worse failure —
+ * save a legitimate tariff because the trail was briefly unavailable would be the worse failure,
  * so the error is logged loudly and the write stands.
  */
 export async function auditEntityChange(client, req, { action, entity, before, after }) {

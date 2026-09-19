@@ -11,7 +11,7 @@ const pkg = JSON.parse(
  *
  * The companion is numbered separately from Transitix: it is the same codebase but a different
  * product to the customer, and rewriting `version` for it would have reset the whole product's
- * semver line — the release hook bumps from whatever it finds there.
+ * semver line, the release hook bumps from whatever it finds there.
  */
 export function resolveAppBuild(mode) {
   const fromEnv = String(process.env.VITE_APP_BUILD || '').trim();
@@ -41,7 +41,7 @@ export function resolveAppTitle(mode) {
  *
  * Derived from the build mode, not from a `.env.companion` somebody has to remember to create:
  * `vite build --mode companion` without that file silently produced the full Transitix app, and
- * nothing failed — the wrong product just shipped. Env still wins, for one-off builds.
+ * nothing failed, the wrong product just shipped. Env still wins, for one-off builds.
  */
 export function resolveAppProfile(mode) {
   const fromEnv = String(process.env.VITE_APP_PROFILE || '').trim().toLowerCase();

@@ -55,8 +55,13 @@ _GOOD_ENOUGH_SCORE = 12.0
 # A scanned dossier runs to a dozen pages or more. The cap is a guard against a mis-sent
 # archive, not an editorial decision — whatever it drops is reported back, never silently.
 _PDF_MAX_PAGES = int(os.environ.get("PADDLE_OCR_PDF_PAGES", "40") or 40)
-_PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "200") or 200)
+# 200dpi was fine for speed; small print on Baumit avize (street, postal code) needs more pixels.
+_PDF_DPI = int(os.environ.get("PADDLE_OCR_PDF_DPI", "280") or 280)
 _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0", "false", "False")
+# Longest side the detector may see. PaddleOCR's own default is 960, which is below what a
+# handwritten carnet needs (see get_engine). Costs CPU roughly with the square of this number,
+# so it is the first knob to turn down if the VM cannot keep up.
+_DET_SIDE_LEN = int(os.environ.get("PADDLE_OCR_DET_SIDE_LEN", "1920") or 1920)
 
 
 def looks_upright_enough(text: str, score: float) -> bool:
@@ -76,17 +81,55 @@ def get_engine():
 
         use_gpu = os.environ.get("PADDLE_OCR_USE_GPU", "0").strip() in ("1", "true", "True")
         lang = os.environ.get("PADDLE_OCR_LANG", "latin").strip() or "latin"
-        log.info("Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s)", lang, use_gpu, _AUTO_ROTATE)
-        try:
-            _engine = PaddleOCR(
-                use_angle_cls=True,
-                lang=lang,
-                use_gpu=use_gpu,
-                show_log=False,
-            )
-        except TypeError:
-            _engine = PaddleOCR(lang=lang)
-        return _engine
+        log.info(
+            "Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s, det_side=%s)",
+            lang, use_gpu, _AUTO_ROTATE, _DET_SIDE_LEN,
+        )
+
+        # Detector geometry first, because it is what decided that handwriting was invisible:
+        # PaddleOCR resizes the page so its LONG side is at most det_limit_side_len (960 by
+        # default) before detection runs. A carnet line is ~23 px tall in a 1024 px photo and
+        # ~120 px in a 4000 px one — both land near 25 px after that cap, which is under what DB
+        # needs to close a box around a thin ballpoint stroke. Every upscale this file does was
+        # being thrown away one call later.
+        tuned = {
+            "det_limit_side_len": _DET_SIDE_LEN,
+            "det_limit_type": "max",
+            # Faint ink: lower both the pixel map and the box gate (defaults 0.3 / 0.6).
+            "det_db_thresh": float(os.environ.get("PADDLE_OCR_DET_PIXEL_THRESH", "0.2") or 0.2),
+            "det_db_box_thresh": float(os.environ.get("PADDLE_OCR_DET_THRESH", "0.3") or 0.3),
+            # Handwriting has ascenders and descenders a tight box clips; 1.5 is the printed default.
+            "det_db_unclip_ratio": float(os.environ.get("PADDLE_OCR_UNCLIP", "2.0") or 2.0),
+            # Thickens strokes on the probability map before boxing — built for thin text.
+            "use_dilation": True,
+            # PaddleOCR discards any line it recognised below this confidence. 0.35 is a
+            # printed-text number: handwriting comes back at 0.1-0.3 even when the characters
+            # are right, so that filter deletes a whole carnet and the caller sees an empty
+            # read rather than a poor one. Filtering belongs downstream, where it is per field
+            # against `corrected_fields` and a review queue, not per line with no appeal.
+            "drop_score": float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.10") or 0.10),
+        }
+        base = {"use_angle_cls": True, "lang": lang, "use_gpu": use_gpu, "show_log": False}
+
+        # Degrade one step at a time. The old two-step fallback dropped *all* tuning the moment
+        # any single kwarg was unknown, so a version bump could silently restore printed-text
+        # defaults and nobody would see it in the logs.
+        for attempt, kwargs in (
+            ("tuned", {**base, **tuned}),
+            ("thresholds-only", {**base, "det_db_box_thresh": tuned["det_db_box_thresh"],
+                                 "drop_score": tuned["drop_score"]}),
+            ("base", base),
+            ("minimal", {"lang": lang}),
+        ):
+            try:
+                _engine = PaddleOCR(**kwargs)
+                if attempt != "tuned":
+                    log.warning("PaddleOCR rejected tuned args — running %s", attempt)
+                return _engine
+            except TypeError as exc:
+                log.warning("PaddleOCR(%s) not accepted: %s", attempt, exc)
+                continue
+        raise RuntimeError("no accepted PaddleOCR constructor signature")
     except Exception as exc:  # noqa: BLE001
         log.exception("Failed to load PaddleOCR")
         raise RuntimeError(f"PaddleOCR unavailable: {exc}") from exc
@@ -191,6 +234,155 @@ def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list
     return pages, total
 
 
+_PERSPECTIVE = os.environ.get("PADDLE_OCR_PERSPECTIVE", "1").strip() not in ("0", "false", "False")
+
+
+def order_quad_points(pts):
+    """TL, TR, BR, BL — getPerspectiveTransform needs a stable corner order."""
+    import numpy as np
+
+    points = np.asarray(pts, dtype="float32").reshape(4, 2)
+    ordered = np.zeros((4, 2), dtype="float32")
+    sums = points.sum(axis=1)
+    ordered[0] = points[np.argmin(sums)]  # top-left
+    ordered[2] = points[np.argmax(sums)]  # bottom-right
+    diffs = np.diff(points, axis=1).reshape(4)
+    ordered[1] = points[np.argmin(diffs)]  # top-right
+    ordered[3] = points[np.argmax(diffs)]  # bottom-left
+    return ordered
+
+
+def _quad_candidates_from_edges(edged, img_area: float):
+    """Largest convex quads that look like a page, not a tiny sticker or the frame itself."""
+    import cv2
+
+    contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:12]
+    found = []
+    for contour in contours:
+        peri = cv2.arcLength(contour, True)
+        if peri < 40:
+            continue
+        approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
+        if len(approx) != 4 or not cv2.isContourConvex(approx):
+            continue
+        area = float(cv2.contourArea(approx))
+        if area < 0.18 * img_area or area > 0.97 * img_area:
+            continue
+        found.append(approx.reshape(4, 2))
+    return found
+
+
+def find_page_quad(arr_rgb):
+    """
+    Best-effort page corners in a phone photo.
+
+    Returns a 4×2 float32 array (unordered) or None when the sheet fills the frame /
+    OpenCV is missing / no contour is page-like. A false warp is worse than no warp, so
+    the area band is deliberate.
+    """
+    try:
+        import cv2
+        import numpy as np
+    except ImportError:
+        return None
+
+    h, w = arr_rgb.shape[:2]
+    img_area = float(h * w)
+    if img_area < 10_000:
+        return None
+
+    # Work on a modest copy — contour quality is fine at ~900px short side.
+    scale = 1.0
+    short = min(h, w)
+    if short > 900:
+        scale = 900.0 / float(short)
+        work = cv2.resize(arr_rgb, (max(1, int(w * scale)), max(1, int(h * scale))))
+    else:
+        work = arr_rgb
+
+    gray = cv2.cvtColor(work, cv2.COLOR_RGB2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    edge_maps = [
+        cv2.Canny(gray, 40, 140),
+        cv2.Canny(gray, 20, 80),
+    ]
+    # Adaptive threshold helps cream paper under a green monitor cast (edges wash out).
+    adaptive = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 7
+    )
+    edge_maps.append(cv2.bitwise_not(adaptive) if adaptive.mean() > 127 else adaptive)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    candidates = []
+    for edged in edge_maps:
+        closed = cv2.dilate(edged, kernel, iterations=2)
+        closed = cv2.morphologyEx(closed, cv2.MORPH_CLOSE, kernel, iterations=2)
+        candidates.extend(_quad_candidates_from_edges(closed, float(work.shape[0] * work.shape[1])))
+
+    if not candidates:
+        return None
+
+    # Prefer the largest page-like quad (notebook usually dominates the shot).
+    best = max(candidates, key=lambda q: float(cv2.contourArea(q.astype("float32"))))
+    if scale != 1.0:
+        best = best / scale
+    return best.astype("float32")
+
+
+def correct_perspective(image):
+    """
+    Warp a phone photo so the notebook page is frontal.
+
+    No-op when the page cannot be found safely (full-bleed scans, busy backgrounds).
+    Disable with PADDLE_OCR_PERSPECTIVE=0.
+    """
+    from PIL import Image
+    import numpy as np
+
+    if not _PERSPECTIVE:
+        return image.convert("RGB")
+
+    try:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — skipping perspective correction")
+        return image.convert("RGB")
+
+    frame = image.convert("RGB")
+    arr = np.asarray(frame)
+    quad = find_page_quad(arr)
+    if quad is None:
+        return frame
+
+    rect = order_quad_points(quad)
+    (tl, tr, br, bl) = rect
+    width_a = float(np.linalg.norm(br - bl))
+    width_b = float(np.linalg.norm(tr - tl))
+    height_a = float(np.linalg.norm(tr - br))
+    height_b = float(np.linalg.norm(tl - bl))
+    max_w = int(max(width_a, width_b))
+    max_h = int(max(height_a, height_b))
+    if max_w < 120 or max_h < 160:
+        return frame
+
+    aspect = max_w / float(max_h)
+    # Notebook / A4-ish; reject wild quads (desk corners, monitor bezels).
+    if aspect < 0.35 or aspect > 2.8:
+        log.info("perspective skipped — aspect %.2f out of band", aspect)
+        return frame
+
+    dst = np.array(
+        [[0, 0], [max_w - 1, 0], [max_w - 1, max_h - 1], [0, max_h - 1]],
+        dtype="float32",
+    )
+    matrix = cv2.getPerspectiveTransform(rect, dst)
+    warped = cv2.warpPerspective(arr, matrix, (max_w, max_h), flags=cv2.INTER_CUBIC)
+    log.info("perspective corrected → %sx%s (was %sx%s)", max_w, max_h, frame.size[0], frame.size[1])
+    return Image.fromarray(warped)
+
+
 def enhance_for_ocr(image):
     """
     Light contrast lift for shadowed notebook photos.
@@ -233,7 +425,7 @@ def enhance_aggressive(image):
     """
     from PIL import Image
 
-    frame = upscale_for_ocr(image, 1600, 2.0)
+    frame = fit_for_detector(image)
     try:
         import cv2
         import numpy as np
@@ -249,6 +441,254 @@ def enhance_aggressive(image):
     return Image.fromarray(cv2.cvtColor(merged, cv2.COLOR_LAB2RGB))
 
 
+def fit_for_detector(image, side: Optional[int] = None):
+    """
+    Put the page at the size the detector actually reads, in one good resample.
+
+    Paddle will resize to `det_limit_side_len` regardless; doing it here means a small photo is
+    enlarged with LANCZOS instead of being enlarged by us and then shrunk by a cheap bilinear,
+    and a 12 MP phone photo is reduced once with INTER_AREA rather than carried through every
+    preprocessing pass at full size.
+    """
+    from PIL import Image
+
+    target = int(side or _DET_SIDE_LEN)
+    frame = image.convert("RGB")
+    w, h = frame.size
+    longest = max(w, h)
+    if longest == target or longest <= 0:
+        return frame
+    scale = target / float(longest)
+    size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
+    # LANCZOS sharpens thin strokes when enlarging; BOX averages cleanly when reducing.
+    return frame.resize(size, Image.Resampling.LANCZOS if scale > 1 else Image.Resampling.BOX)
+
+
+def gray_world(arr):
+    """
+    Neutralise the illuminant so ink extraction stops depending on the light in the cab.
+
+    A driver's photo is lit by whatever is there — a green monitor, sodium street light, a phone
+    torch. In this sample the monitor puts R=61 G=217 B=185 on the background while the shaded
+    page sits at R=92 G=105 B=100, so a fixed channel choice is guessing.
+    """
+    import numpy as np
+
+    values = arr.astype("float32")
+    means = values.reshape(-1, 3).mean(axis=0)
+    return np.clip(values * (means.mean() / np.maximum(means, 1e-3)), 0, 255).astype("uint8")
+
+
+def emphasize_ink(image):
+    """
+    Ink on paper, independent of the light that fell on it.
+
+    White-balance, then divide lightness by its own heavy blur. The division is what makes this
+    illuminant-invariant: it measures each pixel against the paper immediately around it, so a
+    hand's shadow over half the sheet stops mattering, and no global threshold has to be right
+    for both halves.
+
+    Replaces `min(R, G)`, which assumed the paper was brighter in red than the ink. Under a green
+    cast there is barely any red light to be bright in, so on this sample it separated ink from
+    paper by 84 gray levels while calling 31% of the frame ink — smearing shadow into the stroke
+    class. This separates by 134 and calls 6% ink, which is about the real ink coverage of a
+    nine-line note.
+    """
+    from PIL import Image
+    import numpy as np
+
+    frame = fit_for_detector(image)
+    try:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — falling back to plain grayscale ink pass")
+        return frame
+
+    try:
+        arr = np.asarray(frame)
+        lightness = cv2.cvtColor(gray_world(arr), cv2.COLOR_RGB2LAB)[:, :, 0].astype("float32")
+        # sigma scales with the page so the "background" stays paper, never a whole word.
+        sigma = max(15.0, min(frame.size) / 45.0)
+        background = cv2.GaussianBlur(lightness, (0, 0), sigmaX=sigma, sigmaY=sigma)
+        flat = np.clip(lightness / np.maximum(background, 1e-3) * 200.0, 0, 255).astype("uint8")
+        return Image.fromarray(flat).convert("RGB")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ink emphasis failed: %s", exc)
+        return frame
+
+
+def _ink_mask(gray, block: int = 25, c: int = 10):
+    """Ink as white-on-black, adaptively — no global threshold has to suit the whole sheet."""
+    import cv2
+
+    block = block if block % 2 else block + 1
+    return cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block, c
+    )
+
+
+def rule_segments(binary, min_fraction: float = 0.30):
+    """
+    The notebook's own ruled lines, as Hough segments.
+
+    Connected components do not find them: handwriting crosses every rule and breaks it into
+    pieces (3 components where there are 18 lines, measured). Hough does not care about breaks.
+    Returns [] for unruled paper, which is the usual case for a printed aviz.
+    """
+    import cv2
+    import numpy as np
+
+    height, width = binary.shape[:2]
+    lines = cv2.HoughLinesP(
+        binary, 1, np.pi / 360, threshold=80,
+        minLineLength=int(width * min_fraction), maxLineGap=12,
+    )
+    if lines is None:
+        return []
+    found = []
+    for x1, y1, x2, y2 in lines[:, 0]:
+        if abs(np.degrees(np.arctan2(float(y2 - y1), float(x2 - x1)))) < 30:
+            found.append((int(x1), int(y1), int(x2), int(y2)))
+    return found
+
+
+def rotate_gray(gray, degrees: float):
+    """Rotate about the centre, growing the canvas so nothing is cut off."""
+    import cv2
+
+    if abs(degrees) < 0.2:
+        return gray
+    height, width = gray.shape[:2]
+    matrix = cv2.getRotationMatrix2D((width / 2, height / 2), degrees, 1.0)
+    cos, sin = abs(matrix[0, 0]), abs(matrix[0, 1])
+    new_w, new_h = int(height * sin + width * cos), int(height * cos + width * sin)
+    matrix[0, 2] += new_w / 2 - width / 2
+    matrix[1, 2] += new_h / 2 - height / 2
+    return cv2.warpAffine(
+        gray, matrix, (new_w, new_h),
+        flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE,
+    )
+
+
+def strip_rules(binary, segments):
+    """
+    Erase the ruled lines and keep the letters crossing them.
+
+    A rule pixel with ink extending vertically through it belongs to a character, not to the
+    rule. That test is the whole trick — a plain horizontal morphological open takes the
+    writing with the line, which is why de-ruling is usually skipped and the detector is left
+    to box a word and its underline together.
+    """
+    import cv2
+    import numpy as np
+
+    if not segments:
+        return binary, 0.0
+
+    height, width = binary.shape[:2]
+    rules = np.zeros_like(binary)
+    for x1, y1, x2, y2 in segments:
+        cv2.line(rules, (x1, y1), (x2, y2), 255, 3)
+
+    vertical = cv2.morphologyEx(
+        binary, cv2.MORPH_OPEN,
+        cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(5, height // 120))),
+    )
+    protect = cv2.dilate(vertical, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 11)))
+    erase = cv2.bitwise_and(rules, cv2.bitwise_not(protect))
+    cleaned = cv2.bitwise_and(binary, cv2.bitwise_not(erase))
+    return cleaned, float((erase > 0).mean())
+
+
+def despeckle(binary):
+    """
+    Drop what is far too big or far too small to be a written character.
+
+    Sized against the median component, so it adapts to the photo instead of carrying a pixel
+    constant that is wrong at another resolution. Nothing is cropped — a blob left in costs one
+    wasted detection box, while a wrong crop loses the digits, and this file already settled
+    that trade once for the perspective warp.
+    """
+    import cv2
+    import numpy as np
+
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+    if count < 2:
+        return binary, 0.0
+    height = binary.shape[0]
+    heights = [stats[i, 3] for i in range(1, count) if 4 < stats[i, 3] < height // 6]
+    median = float(np.median(heights)) if heights else 18.0
+
+    out = binary.copy()
+    for i in range(1, count):
+        too_tall = stats[i, 3] > 4.5 * median
+        too_small = stats[i, 4] < max(5, 0.02 * median * median)
+        if too_tall or too_small:
+            out[labels == i] = 0
+    return out, median
+
+
+def scan_like_document(image):
+    """
+    Make a phone photo look like a flatbed scan: flat lighting, straight lines, ink on white.
+
+    This is the pipeline a scanner app runs, in the order that matters:
+
+      1. White-balance and divide out the lighting (`emphasize_ink`), so the rest is not
+         reading a shadow.
+      2. Deskew off the notebook's own ruled lines. They are a better baseline reference than
+         the text — there are more of them and they are perfectly straight. On the sample this
+         finds -4.5 degrees from 65 segments.
+      3. Adaptive binarize.
+      4. Erase the rules, keeping the letters that cross them.
+      5. Drop specks and blobs.
+
+    Deliberately does NOT crop to the page. Every content-detection heuristic tried on the
+    sample either found nothing (page runs out of frame, so no closed quad) or cut the digits
+    off the right-hand side (the lit half of the sheet is as saturated as the monitor behind
+    it). Leaving background in costs a wasted detection box; cropping it wrong costs the
+    number that ends up on an invoice.
+
+    Returns the frame unchanged when OpenCV is missing.
+    """
+    from PIL import Image
+    import numpy as np
+
+    try:
+        import cv2
+    except ImportError:
+        log.warning("opencv not installed — skipping scan pass")
+        return fit_for_detector(image)
+
+    flat = np.asarray(emphasize_ink(image).convert("L"))
+
+    segments = rule_segments(_ink_mask(flat))
+    if segments:
+        angles = [
+            np.degrees(np.arctan2(float(y2 - y1), float(x2 - x1)))
+            for x1, y1, x2, y2 in segments
+        ]
+        angle = float(np.median(angles))
+        flat = rotate_gray(flat, angle)
+        log.info("scan: deskew %.2f deg from %d ruled segments", angle, len(segments))
+    else:
+        angle = 0.0
+
+    binary = _ink_mask(cv2.bilateralFilter(flat, 7, 60, 60), 41, 12)
+    # Re-find on the straightened frame; the mask has to match the pixels being erased.
+    binary, erased = strip_rules(binary, rule_segments(binary))
+    binary, median = despeckle(binary)
+    log.info(
+        "scan: erased %.2f%% as rules, median glyph %.0fpx, ink %.1f%%",
+        100 * erased, median, 100 * float((binary > 0).mean()),
+    )
+
+    # Back to dark ink on white paper, which is what the recognizer was trained on. Re-fit,
+    # because deskewing grew the canvas past the detector's cap and Paddle would shrink it
+    # again — the very thing this pipeline exists to stop.
+    return fit_for_detector(Image.fromarray(255 - binary).convert("RGB"))
+
+
 def flatten_shadow(image):
     """
     Divide the page by its own blur, which removes the hand / phone shadow a driver casts.
@@ -258,7 +698,7 @@ def flatten_shadow(image):
     """
     from PIL import Image
 
-    frame = upscale_for_ocr(image, 1600, 2.0)
+    frame = fit_for_detector(image)
     try:
         import cv2
         import numpy as np
@@ -273,18 +713,27 @@ def flatten_shadow(image):
 
 def missing_from_text(text: str) -> bool:
     """
-    Whether another pass is worth its CPU: a page with content but no code, or no plate.
+    Whether another pass is worth its CPU.
 
-    A printed aviz that already yielded both stops here, which is why clean PDFs stay fast.
+    Empty / near-empty means the raw pass failed — notebook photos with green monitor glare
+    often return nothing until upscale + shadow flattening run. That used to be skipped because
+    a short blob was treated as "not worth it", so a hard photo stayed blank forever.
+
+    A printed aviz that already yielded both a logistics code and a plate stops here.
     """
     blob = (text or "").strip()
     if len(blob) < 24:
-        return False
+        return True
     return not (_CODE_RE.search(blob) and _PLATE_RE.search(blob))
 
 
 def needs_aggressive_pass(text: str) -> bool:
-    """Kept for the offline checks: content on the page but no logistics code at all."""
+    """
+    Offline-check helper: content on the page but no logistics code.
+
+    Unlike missing_from_text, short junk ("iiii") stays False — that gate is for deciding
+    whether a second *kind* of pass is meaningful when some text already came back.
+    """
     blob = (text or "").strip()
     if len(blob) < 24:
         return False
@@ -294,18 +743,92 @@ def needs_aggressive_pass(text: str) -> bool:
 _AGGRESSIVE = os.environ.get("PADDLE_OCR_AGGRESSIVE", "1").strip() not in ("0", "false", "False")
 
 
-def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
-    """
-    OCR one page, trying other orientations when the first pass looks weak.
+def _score_frame(text: str, confs: list[float], frame) -> float:
+    w, h = frame.size
+    portrait_bonus = 1.5 if h >= w else -1.0
+    return score_ocr(text, confs, portrait_bonus=portrait_bonus)
 
-    `prefer` is the angle that won on an earlier page. A scanner feeds every sheet the same way,
-    so trying it first turns a four-orientation search per page into one — which is the
-    difference between a ten-page scan finishing and timing out.
 
-    `extra_passes` re-renders the page when fields are missing. Reserved for single-page photos:
-    on a dossier it would multiply every page by three for documents that are simply printed
-    without a plate on them.
+def _merge_ocr_text(best_text: str, best_score: float, text: str, score: float) -> tuple[str, float]:
+    if not text:
+        return best_text, best_score
+    if score > best_score:
+        return (f"{text}\n{best_text}".strip() if best_text else text), score
+    if missing_from_text(best_text):
+        return (f"{best_text}\n{text}".strip() if best_text else text), best_score
+    return best_text, best_score
+
+
+def ocr_photo_page(image) -> tuple[str, int]:
     """
+    Phone photo of a notebook (or any single-page hard shot).
+
+    Order of work:
+      1. Perspective warp (page frontal) — oblique phone shots kill line detection.
+      2. Ink-emphasised, upscaled frame per orientation — raw RGB under monitor glare
+         often returns nothing and burns the interactive budget on empty reads.
+      3. Extra enhance / shadow / CLAHE only while the best text is still thin.
+    """
+    import numpy as np
+
+    try:
+        base = correct_perspective(image)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("perspective correction failed: %s", exc)
+        base = image.convert("RGB") if hasattr(image, "convert") else image
+
+    rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
+    best_text = ""
+    best_score = -1.0
+    best_rot = 0
+    best_source = base
+
+    for degrees in rotations:
+        frame = base if degrees == 0 else base.rotate(-degrees, expand=True)
+        prepared = emphasize_ink(frame)
+        text, confs = ocr_array(np.array(prepared))
+        score = _score_frame(text, confs, frame)
+        log.info("OCR photo rotation=%s score=%.2f chars=%s (ink)", degrees, score, len(text))
+        if score > best_score:
+            best_score = score
+            best_text = text
+            best_rot = degrees
+            best_source = frame
+        # Phone notebooks are almost always upright; stop when TPO/PSL already reads.
+        if degrees == rotations[0] and looks_upright_enough(text, score):
+            break
+        if looks_upright_enough(text, score) and degrees != 0:
+            break
+
+    if _AGGRESSIVE:
+        passes = (
+            # Deskew + de-rule + binarize: the scanner-app treatment, and the only pass that
+            # addresses the ruled lines running through every word.
+            ("scan", scan_like_document),
+            # Untouched pixels at detector size: the ink map assumes ballpoint on paper, and a
+            # printed aviz photographed in daylight does not need it.
+            ("plain", fit_for_detector),
+            ("shadow", flatten_shadow),
+            ("clahe", enhance_aggressive),
+            ("enhance", enhance_for_ocr),
+        )
+        for name, transform in passes:
+            if not missing_from_text(best_text):
+                break
+            try:
+                text, confs = ocr_array(np.array(transform(best_source)))
+            except Exception as exc:  # noqa: BLE001
+                log.warning("OCR photo pass %s failed: %s", name, exc)
+                continue
+            score = _score_frame(text, confs, best_source)
+            log.info("OCR photo pass=%s score=%.2f chars=%s", name, score, len(text))
+            best_text, best_score = _merge_ocr_text(best_text, best_score, text, score)
+
+    return best_text, best_rot
+
+
+def ocr_printed_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
+    """Scanned / printed pages: raw pixels first, no phone-photo preprocess."""
     import numpy as np
 
     rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
@@ -314,52 +837,32 @@ def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) ->
     best_text = ""
     best_score = -1.0
     best_rot = 0
-    best_frame = image
 
     for degrees in rotations:
         frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
-        # Autocontrast helps uneven phone lighting; run on a copy so rotation stays cheap.
-        enhanced = enhance_for_ocr(frame)
-        text, confs = ocr_array(np.array(enhanced))
-        w, h = frame.size
-        portrait_bonus = 1.5 if h >= w else -1.0
-        score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
-        log.info("OCR rotation=%s score=%.2f chars=%s", degrees, score, len(text))
+        text, confs = ocr_array(np.array(frame.convert("RGB")))
+        score = _score_frame(text, confs, frame)
+        log.info("OCR rotation=%s score=%.2f chars=%s (raw)", degrees, score, len(text))
         if score > best_score:
             best_score = score
             best_text = text
             best_rot = degrees
-            best_frame = frame
-        # Fast path: a page that already reads like an upright document skips other angles.
         if degrees == rotations[0] and looks_upright_enough(text, score):
             break
 
-    # Printed avize usually already carry both a code and a plate, and stop here. Photos often
-    # give up one field per rendering: native size reads the printed code, an upscale reads the
-    # handwritten plate. Extra passes are therefore appended rather than compared — the field
-    # extractor downstream takes the first match per field, so the strongest text stays first.
-    if _AGGRESSIVE and extra_passes:
-        w, h = best_frame.size
-        portrait_bonus = 1.5 if h >= w else -1.0
-        passes = (("upscale", upscale_for_ocr), ("shadow", flatten_shadow), ("clahe", enhance_aggressive))
-        for name, transform in passes:
-            if not missing_from_text(best_text):
-                break
-            try:
-                text, confs = ocr_array(np.array(transform(best_frame)))
-            except Exception as exc:  # noqa: BLE001
-                log.warning("OCR pass %s failed: %s", name, exc)
-                continue
-            score = score_ocr(text, confs, portrait_bonus=portrait_bonus)
-            log.info("OCR pass=%s score=%.2f chars=%s", name, score, len(text))
-            if not text:
-                continue
-            if score > best_score:
-                best_text, best_score = f"{text}\n{best_text}".strip(), score
-            else:
-                best_text = f"{best_text}\n{text}".strip()
-
     return best_text, best_rot
+
+
+def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
+    """
+    OCR one page.
+
+    `extra_passes` means a single phone photo — use the notebook path (ink first).
+    Multi-page scans stay on the printed path so clean PDFs stay fast and accurate.
+    """
+    if extra_passes:
+        return ocr_photo_page(image)
+    return ocr_printed_page(image, prefer=prefer)
 
 
 def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str, int, int, int]:

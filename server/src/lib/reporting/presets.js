@@ -12,8 +12,8 @@ import { getSource } from './sources.js';
  *
  * A missing weighing printed as `0` reads on a customer's sheet as a truck that went out empty,
  * and it drags the column total down while still looking complete. Blank is the honest cell for
- * "we do not have this figure"; only a column that genuinely has a neutral value — the RAI annex
- * zeros, one trip per aviz — says so explicitly.
+ * "we do not have this figure"; only a column that genuinely has a neutral value (the RAI annex
+ * zeros, one trip per aviz) says so explicitly.
  */
 function col(source, overrides = {}) {
   const meta = getSource(source);
@@ -53,7 +53,7 @@ export const REPORT_PRESETS = [
     // gross weight is a column of its own and the sack/pallet count sits beside it rather than
     // standing in for it.
     id: 'baumit_greutati',
-    name: 'Centralizator Baumit — greutăți',
+    name: 'Centralizator Baumit, greutăți',
     description: 'Livrări cu greutate brută și netă pe fiecare aviz, pentru verificare cu cântarul.',
     columns: [
       col('nr_crt', { header: 'Nr. crt', default_value: '' }),

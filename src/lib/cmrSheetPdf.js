@@ -3,7 +3,7 @@
  *
  * Same approach as the road sheet: the page is built as HTML and rasterized rather than drawn
  * with jsPDF's text API, because the standard PDF fonts cannot encode `ș`, `ț` and `ă`. An image
- * of correct text beats selectable text that is wrong — on a document a driver may have to hand
+ * of correct text beats selectable text that is wrong, on a document a driver may have to hand
  * to an inspector, a misspelled consignee is not a cosmetic problem.
  */
 
@@ -28,7 +28,7 @@ function readAsDataUrl(blob) {
  *
  * The rasterizer clones the document and loads images itself, with no chance to set an
  * Authorization header, and `/uploads` is protected. Fetching them first and inlining is the
- * only way the signatures reach the page — and a signature that silently failed to load would
+ * only way the signatures reach the page, and a signature that silently failed to load would
  * turn a signed note into one that prints blank.
  */
 async function inlineSignatures(signatures = {}) {

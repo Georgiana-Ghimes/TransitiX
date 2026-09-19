@@ -9,6 +9,7 @@ import {
   checkTrip,
   checkTripDistance,
   checkTripTariff,
+  checkVehiclesWithoutMma,
   sortFindings,
   summariseFindings,
 } from './rules.js';
@@ -115,7 +116,7 @@ describe('checkTripDistance', () => {
     expect(found.severity).toBe('warning');
   });
 
-  it('is quiet about an unpriced trip — that is unfinished, not wrong', () => {
+  it('is quiet about an unpriced trip, that is unfinished, not wrong', () => {
     expect(checkTripDistance({ ...TRIP, tpo_total: null, distance_km: null })).toBeNull();
   });
 
@@ -178,7 +179,7 @@ describe('checkCmrUnsigned', () => {
   });
 
   it('never fires on a company that runs on paper CMRs', () => {
-    // No digital note exists, so there is nothing abandoned — warning on every one of their
+    // No digital note exists, so there is nothing abandoned, warning on every one of their
     // trips would make the screen useless to them.
     expect(checkCmrUnsigned({ ...DELIVERED, cmr_source: null })).toBeNull();
     expect(checkCmrUnsigned({ ...DELIVERED, cmr_source: 'scan' })).toBeNull();
@@ -228,6 +229,21 @@ describe('document rules', () => {
       { ...CONFIRMED, id: 'a', numar_tpo: 'TPO 2026-0311' },
       { ...CONFIRMED, id: 'b', numar_tpo: ' tpo 2026-0311 ' },
     ])).toHaveLength(1);
+  });
+
+  it('says nothing about a TPO driven twice, those are two curse', () => {
+    // The order is the same; the loads, the days and the destinations are not. Raising this
+    // on every multi-cursă TPO is how the bell stops being read.
+    expect(checkDuplicateTpo([
+      {
+        ...CONFIRMED, id: 'a', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044633',
+        data_efectuare_cursa: '2026-08-10', ruta_transport: 'Bol-Bucuresti/Viilor52',
+      },
+      {
+        ...CONFIRMED, id: 'b', numar_tpo: 'TPO-0025803', numar_document_marfa: 'PSL-0044701',
+        data_efectuare_cursa: '2026-08-11', ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      },
+    ])).toEqual([]);
   });
 });
 
@@ -303,7 +319,10 @@ describe('catalog', () => {
         status: 'livrata', cmr_source: 'digital' }, () => []).map((f) => f.rule),
       checkDocumentWeight({ id: 'd', status: 'confirmed', gross_weight_kg: null }).rule,
       checkDocumentLinked({ id: 'd', status: 'confirmed', trip_id: null }).rule,
-      checkDuplicateTpo([{ id: 'a', numar_tpo: 'X' }, { id: 'b', numar_tpo: 'X' }])[0].rule,
+      checkDuplicateTpo([
+        { id: 'a', numar_tpo: 'X', numar_document_marfa: 'PSL-1' },
+        { id: 'b', numar_tpo: 'X', numar_document_marfa: 'PSL-1' },
+      ])[0].rule,
     ]);
     for (const rule of raised) expect(getRule(rule), `catalog entry for ${rule}`).not.toBeNull();
   });
@@ -319,5 +338,50 @@ describe('catalog', () => {
       expect(rule.consequence, rule.id).toBeTruthy();
       expect(rule.fix, rule.id).toBeTruthy();
     }
+  });
+});
+
+describe('checkVehiclesWithoutMma', () => {
+  it('says nothing when every lorry has its mass', () => {
+    expect(checkVehiclesWithoutMma([
+      { id: 'a', plate: 'B-112-VFM', mma_kg: 40000 },
+      { id: 'b', plate: 'B-200-AAA', mma_kg: 26000 },
+    ])).toBeNull();
+    expect(checkVehiclesWithoutMma([])).toBeNull();
+    expect(checkVehiclesWithoutMma(null)).toBeNull();
+  });
+
+  it('is an error, because the fee cannot be computed at all without it', () => {
+    // The PMB bracket is chosen on the mass in the registration, and the brackets are hundreds
+    // of lei apart. A missing figure is not a tidiness problem.
+    const found = checkVehiclesWithoutMma([{ id: 'a', plate: 'B-112-VFM', mma_kg: null }]);
+    expect(found.severity).toBe('error');
+    expect(found.message).toMatch(/B-112-VFM/);
+  });
+
+  it('raises one alert for the whole backlog, keyed on how many are missing', () => {
+    // One per lorry would bury the bell. Keying on the count means dismissing it while three
+    // are outstanding brings it back when a fourth arrives, rather than hiding that one too.
+    const three = checkVehiclesWithoutMma([
+      { id: 'a', plate: 'B-1-AAA', mma_kg: null },
+      { id: 'b', plate: 'B-2-BBB', mma_kg: null },
+      { id: 'c', plate: 'B-3-CCC', mma_kg: null },
+    ]);
+    expect(three.key).toBe('vehicle_no_mma:3');
+
+    const four = checkVehiclesWithoutMma([
+      { id: 'a', plate: 'B-1-AAA', mma_kg: null },
+      { id: 'b', plate: 'B-2-BBB', mma_kg: null },
+      { id: 'c', plate: 'B-3-CCC', mma_kg: null },
+      { id: 'd', plate: 'B-4-DDD', mma_kg: null },
+    ]);
+    expect(four.key).not.toBe(three.key);
+  });
+
+  it('names a few plates and counts the rest', () => {
+    const many = checkVehiclesWithoutMma(
+      Array.from({ length: 7 }, (_, i) => ({ id: String(i), plate: `B-${i}-AAA`, mma_kg: null })),
+    );
+    expect(many.message).toMatch(/și încă 3/);
   });
 });

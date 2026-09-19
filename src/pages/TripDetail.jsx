@@ -159,7 +159,7 @@ export default function TripDetail() {
           body: `Pentru a confirma recepția mărfii pentru CMR ${trip.cmr_number}, accesați linkul:\n${link}\n\nExpeditor: ${trip.shipper_name}\nDestinatar: ${trip.consignee_name}\nMarfă: ${trip.goods_description || '-'}\nGreutate: ${trip.weight_kg || '-'} kg`,
         });
       } catch {
-        // email is stub — link still works
+        // email is stub, link still works
       }
     } catch (err) {
       console.error(err);
@@ -287,7 +287,7 @@ export default function TripDetail() {
           <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
             <p className="text-xs text-slate-400">Cod UIT (e-Transport)</p>
             <p className="text-sm font-medium text-slate-800 mt-1 break-all">{trip.uit_code || '—'}</p>
-            <p className="text-xs text-slate-400 mt-1">Introdus manual — nu e generat de ANAF</p>
+            <p className="text-xs text-slate-400 mt-1">Introdus manual, nu e generat de ANAF</p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm">
             <p className="text-xs text-slate-400">Venit / cost</p>
@@ -320,12 +320,12 @@ export default function TripDetail() {
         </div>
       )}
 
-      {/* Digital CMR (office) — scan path below when paper already exists */}
+      {/* Digital CMR (office), scan path below when paper already exists */}
       {!cmrHasScan && trip && (
         <DriverCmrPanel trip={trip} showBatchUpload={false} />
       )}
 
-      {/* OCR / Document — paper scan */}
+      {/* OCR / Document, paper scan */}
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 p-5 border-b border-slate-100">
           <FileText className="w-5 h-5 text-[#1D4E89]" />
@@ -498,7 +498,7 @@ export default function TripDetail() {
                     </a>
                   </div>
                   <p className="text-xs text-slate-400">
-                    Email-ul e stub în MVP — copiază linkul și trimite-l manual clientului.
+                    Email-ul e stub în MVP, copiază linkul și trimite-l manual clientului.
                   </p>
                 </div>
               )}
@@ -523,7 +523,7 @@ export default function TripDetail() {
           ) : (
             <div className="text-center py-4">
               <p className="text-sm text-slate-500 mb-3">
-                Generează un link securizat pentru destinatar — confirmă recepția fără cont.
+                Generează un link securizat pentru destinatar, confirmă recepția fără cont.
               </p>
               <button
                 onClick={sendClientLink}

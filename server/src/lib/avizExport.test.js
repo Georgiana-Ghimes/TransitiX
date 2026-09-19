@@ -19,6 +19,7 @@ const EXTRACTED_AVIZ = {
   ruta_transport: 'Bucuresti/Aeroportului120-T-Bucuresti/Viilor52',
   tip_marfa: 'saci',
   cantitate_marfa: 378,
+  gross_weight_kg: 9000,
   numar_document_marfa: 'PSL-0044633',
 };
 
@@ -130,12 +131,12 @@ describe('exportColumnsFor', () => {
     const sheet = await loadSheet({ name: 'Doar două', columns }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
     expect(headers).toEqual(['Numar TPO', 'Tip marfa']);
-    expect(headers).not.toContain('Nr. crt');
+    expect(headers).not.toContain('Nr. Crt.');
     expect(rows[0]['Numar TPO']).toBe('TPO-0025803');
   });
 });
 
-describe('anexa exportată — default Anexa Factura RAI', () => {
+describe('anexa exportată, default Anexa Factura RAI', () => {
   it('writes all 14 headers and extracted fields into the xlsx', async () => {
     const sheet = await loadSheet({ name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
@@ -144,19 +145,19 @@ describe('anexa exportată — default Anexa Factura RAI', () => {
     expect(rows).toHaveLength(1);
 
     const row = rows[0];
-    expect(row['Nr. crt']).toBe(1);
+    expect(row['Nr. Crt.']).toBe(1);
     expect(row['Numar TPO']).toBe('TPO-0025803');
     expect(row['Data efectuare cursa']).toBe('11.08.2026');
     expect(row['Valoare TPO']).toBe(0);
     expect(row['Numar auto']).toBe('B-34-BAU');
     expect(row['Ruta transport']).toBe('Bucuresti/Aeroportului120-T-Bucuresti/Viilor52');
     expect(row['Tip marfa']).toBe('saci');
-    expect(row['Cantitate marfa (t/m3/galeti)']).toBe(378);
+    expect(row['Cantitate marfa (tone)']).toBe(9);
     expect(row['Numar document marfa (aviz/factura)']).toBe('PSL-0044633');
     expect(row['Numar curse']).toBe(1);
-    expect(row['Taxa suplimentara']).toBe(0);
+    expect(row['Taxe suplimentare']).toBe(0);
     expect(row['Km parcursi']).toBe(0);
-    expect(row['Tarif km']).toBe(0);
+    expect(row['Tarif Km']).toBe(0);
     expect(row['Observatii'] ?? '').toBe('');
   });
 
@@ -166,13 +167,14 @@ describe('anexa exportată — default Anexa Factura RAI', () => {
       [EXTRACTED_AVIZ, DUAL_PLATE_AVIZ]
     );
     const { rows } = tableFromSheet(sheet);
-    expect(rows[0]['Nr. crt']).toBe(1);
-    expect(rows[1]['Nr. crt']).toBe(2);
+    expect(rows[0]['Nr. Crt.']).toBe(1);
+    expect(rows[1]['Nr. Crt.']).toBe(2);
     expect(rows[1]['Numar TPO']).toBe('TPO-0025813');
     expect(rows[1]['Numar auto']).toBe('B-112-VFM / B-475-AGR');
     expect(rows[1]['Ruta transport']).toBe('Mil-Bucuresti/IuliuManiu600A');
     expect(rows[1]['Tip marfa']).toBe('galeti');
-    expect(rows[1]['Cantitate marfa (t/m3/galeti)']).toBe(768);
+    // TRO aviz carries no greutate brută, so the tonnes column is blank rather than 768 galeti.
+    expect(rows[1]['Cantitate marfa (tone)'] ?? '').toBe('');
     expect(rows[1]['Numar document marfa (aviz/factura)']).toBe('TRO-0008053');
   });
 
@@ -184,19 +186,19 @@ describe('anexa exportată — default Anexa Factura RAI', () => {
   });
 });
 
-describe('anexa exportată — custom Șablon nou defaults', () => {
+describe('anexa exportată, custom Șablon nou defaults', () => {
   it('writes Taxa 100 and Tarif km 20 when aviz fields are still 0', async () => {
     const sheet = await loadSheet({ name: 'Șablon nou', columns: sablonNouColumns() }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
 
-    expect(headers).not.toContain('Nr. crt');
+    expect(headers).not.toContain('Nr. Crt.');
     expect(headers[0]).toBe('Numar TPO');
-    expect(headers).toContain('Taxa suplimentara');
-    expect(headers).toContain('Tarif km');
+    expect(headers).toContain('Taxe suplimentare');
+    expect(headers).toContain('Tarif Km');
 
     expect(rows[0]['Numar TPO']).toBe('TPO-0025803');
-    expect(rows[0]['Taxa suplimentara']).toBe(100);
-    expect(rows[0]['Tarif km']).toBe(20);
+    expect(rows[0]['Taxe suplimentare']).toBe(100);
+    expect(rows[0]['Tarif Km']).toBe(20);
     expect(rows[0]['Km parcursi']).toBe(0);
     expect(rows[0]['Valoare TPO']).toBe(0);
     expect(rows[0]['Numar curse']).toBe(1);
@@ -216,9 +218,9 @@ describe('anexa exportată — custom Șablon nou defaults', () => {
     const sheet = await loadSheet({ name: 'Șablon nou', columns: sablonNouColumns() }, [filled]);
     const { rows } = tableFromSheet(sheet);
     expect(rows[0]['Valoare TPO']).toBe(450);
-    expect(rows[0]['Taxa suplimentara']).toBe(40);
+    expect(rows[0]['Taxe suplimentare']).toBe(40);
     expect(rows[0]['Km parcursi']).toBe(32.5);
-    expect(rows[0]['Tarif km']).toBe(15);
+    expect(rows[0]['Tarif Km']).toBe(15);
     expect(rows[0]['Observatii']).toBe('IF*');
   });
 
@@ -229,10 +231,10 @@ describe('anexa exportată — custom Șablon nou defaults', () => {
       [EXTRACTED_AVIZ, edited]
     );
     const { rows } = tableFromSheet(sheet);
-    expect(rows[0]['Taxa suplimentara']).toBe(100);
-    expect(rows[0]['Tarif km']).toBe(20);
-    expect(rows[1]['Taxa suplimentara']).toBe(40);
-    expect(rows[1]['Tarif km']).toBe(15);
+    expect(rows[0]['Taxe suplimentare']).toBe(100);
+    expect(rows[0]['Tarif Km']).toBe(20);
+    expect(rows[1]['Taxe suplimentare']).toBe(40);
+    expect(rows[1]['Tarif Km']).toBe(15);
     expect(rows[1]['Numar auto']).toBe('B-112-VFM / B-475-AGR');
   });
 
@@ -252,8 +254,8 @@ describe('anexa exportată — custom Șablon nou defaults', () => {
     expect(rows[0]['Valoare TPO']).toBe(250);
     expect(rows[0]['Observatii']).toBe('Z:B*');
     expect(rows[0]['Notă fixă']).toBe('RAI');
-    expect(rows[0]['Taxa suplimentara']).toBe(100);
-    expect(rows[0]['Tarif km']).toBe(20);
+    expect(rows[0]['Taxe suplimentare']).toBe(100);
+    expect(rows[0]['Tarif Km']).toBe(20);
   });
 
   it('round-trips custom defaults through an xlsx buffer the same way Unește downloads', async () => {
@@ -268,7 +270,7 @@ describe('anexa exportată — custom Șablon nou defaults', () => {
     await loaded.xlsx.load(buffer);
     const { rows, headers } = tableFromSheet(loaded.worksheets[0]);
     expect(headers).toHaveLength(13);
-    expect(rows[0]['Taxa suplimentara']).toBe(100);
-    expect(rows[0]['Tarif km']).toBe(20);
+    expect(rows[0]['Taxe suplimentare']).toBe(100);
+    expect(rows[0]['Tarif Km']).toBe(20);
   });
 });

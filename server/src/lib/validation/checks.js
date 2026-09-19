@@ -10,6 +10,7 @@ import {
   checkDocument,
   checkDuplicateTpo,
   checkTrip,
+  checkVehiclesWithoutMma,
   sortFindings,
   summariseFindings,
 } from './rules.js';
@@ -71,9 +72,31 @@ async function loadTariffsByContract(companyId, trips) {
   return byContract;
 }
 
+/**
+ * Active vehicles and the mass their zone fee is charged on.
+ *
+ * Not windowed like the rest: a lorry without an MTMA is outstanding work whether it was
+ * entered today or last year, and the fee cannot be computed for any trip it makes.
+ */
+async function loadVehicles(companyId) {
+  const found = await query(
+    `SELECT id, plate, mma_kg FROM vehicles
+     WHERE company_id = $1 AND is_active IS NOT FALSE
+     ORDER BY plate
+     LIMIT ${ROW_CAP}`,
+    [companyId]
+  );
+  return found.rows;
+}
+
 async function loadDocuments(companyId, windowDays) {
   const found = await query(
-    `SELECT id, original_filename, status, numar_tpo, gross_weight_kg, trip_id, data_efectuare_cursa
+    // numar_document_marfa, numar_auto and ruta_transport are here for `consignmentKey`, which
+    // decides whether two rows are one transport or two curse of one TPO. Leaving them out does
+    // not make the rule wrong in an obvious way, it makes it silent: every row gets a key of
+    // its own and nothing is ever a duplicate.
+    `SELECT id, original_filename, status, numar_tpo, gross_weight_kg, trip_id,
+            data_efectuare_cursa, numar_document_marfa, numar_auto, ruta_transport
      FROM aviz_documents
      WHERE company_id = $1
        AND (data_efectuare_cursa IS NULL OR data_efectuare_cursa >= CURRENT_DATE - $2::int)
@@ -93,9 +116,10 @@ async function loadDocuments(companyId, windowDays) {
  */
 export async function collectFindings(companyId, { windowDays = DEFAULT_WINDOW_DAYS } = {}) {
   const days = Math.min(Math.max(Number(windowDays) || DEFAULT_WINDOW_DAYS, 1), 730);
-  const [trips, documents] = await Promise.all([
+  const [trips, documents, vehicles] = await Promise.all([
     loadTrips(companyId, days),
     loadDocuments(companyId, days),
+    loadVehicles(companyId),
   ]);
   const tariffsByContract = await loadTariffsByContract(companyId, trips);
 
@@ -107,11 +131,13 @@ export async function collectFindings(companyId, { windowDays = DEFAULT_WINDOW_D
     findings.push(...checkDocument(doc));
   }
   findings.push(...checkDuplicateTpo(documents));
+  const noMma = checkVehiclesWithoutMma(vehicles);
+  if (noMma) findings.push(noMma);
 
   return {
     findings: sortFindings(findings),
     summary: summariseFindings(findings),
     window_days: days,
-    checked: { trips: trips.length, documents: documents.length },
+    checked: { trips: trips.length, documents: documents.length, vehicles: vehicles.length },
   };
 }

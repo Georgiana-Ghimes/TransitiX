@@ -3,7 +3,7 @@
  *
  * The screen has to make three states obvious that the columns do not: an invitation still
  * waiting, an invitation that has gone stale, and a driver account that will sign in to an empty
- * app. All three are silent failures otherwise — somebody finds out weeks later, usually the
+ * app. All three are silent failures otherwise, somebody finds out weeks later, usually the
  * person affected.
  */
 
@@ -17,6 +17,11 @@ export const STATES = {
     label: 'Invitat',
     badge: 'bg-blue-50 text-blue-700 border-blue-200',
     hint: 'Are o invitație validă, dar nu și-a ales încă parola.',
+  },
+  manual: {
+    label: 'Creat manual',
+    badge: 'bg-violet-50 text-violet-700 border-violet-200',
+    hint: 'Adăugat de un administrator cu parolă temporară. Nu s-a autentificat încă.',
   },
   expired: {
     label: 'Invitație expirată',
@@ -68,6 +73,14 @@ export function warningsFor(user, { adminCount } = {}) {
       text: 'Fără profil de șofer: se poate autentifica, dar aplicația de șofer va fi goală.',
     });
   }
+  if (user.is_active && user.must_change_password) {
+    warnings.push({
+      code: 'temporary_password',
+      text: user.state === 'manual'
+        ? 'Are parolă temporară: la prima autentificare va fi obligat să-și aleagă alta.'
+        : 'Folosește încă parola temporară: nu poate lucra până nu și-o schimbă.',
+    });
+  }
   if (user.is_active && user.state === 'expired') {
     warnings.push({
       code: 'invite_expired',
@@ -114,7 +127,7 @@ export function lastSeen(user) {
 /**
  * What to tell an admin after deactivating somebody.
  *
- * Sessions are revoked immediately, which stops renewal — but an access token already in a
+ * Sessions are revoked immediately, which stops renewal, but an access token already in a
  * browser keeps working until it expires. Saying so is the difference between an admin who knows
  * the cut takes effect within the hour and one who believes it was instant.
  */

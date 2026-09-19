@@ -10,11 +10,12 @@
  * rule can be tested against a hand-written row without a database.
  */
 import { findTariff } from '../pricing/tariffs.js';
+import { consignmentKey } from '../avizQuery.js';
 
 /** A finding severe enough to change an invoice, versus one worth a look. */
 export const SEVERITIES = ['error', 'warning'];
 
-/** Money is compared in bani — floating point makes 0.1 + 0.2 an alert otherwise. */
+/** Money is compared in bani, floating point makes 0.1 + 0.2 an alert otherwise. */
 const MONEY_EPSILON = 0.005;
 
 function toNumber(value) {
@@ -38,8 +39,8 @@ function tripSubject(trip) {
 /**
  * A document is identified by its file, not by its TPO.
  *
- * The TPO reads better, but it is a field on the document that may be missing or — as the
- * duplicate rule exists to catch — shared with another document. Two rows both labelled
+ * The TPO reads better, but it is a field on the document that may be missing or, as the
+ * duplicate rule exists to catch, shared with another document. Two rows both labelled
  * "TPO 2026-0311" leave the operator no way to tell which one to open.
  */
 function documentSubject(doc) {
@@ -54,7 +55,7 @@ function documentSubject(doc) {
  * A trip billed against a contract with no tariff valid on its own date.
  *
  * This is the expensive one. The TPO still calculates, still looks like a number, and simply
- * has no transport line in it — so the trip goes out under-billed and nobody finds out until
+ * has no transport line in it, so the trip goes out under-billed and nobody finds out until
  * someone compares an invoice against the contract.
  *
  * The match uses the same `findTariff` the calculation uses. Reimplementing the lookup here
@@ -73,7 +74,7 @@ export function checkTripTariff(trip, tariffs) {
     rule: 'trip_no_tariff',
     severity: 'error',
     key: `trip_no_tariff:${trip.id}`,
-    title: `Fără tarif valabil — ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
+    title: `Fără tarif valabil, ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
     message: trip.vehicle_class
       ? `Nu există tarif pentru clasa „${trip.vehicle_class}” valabil la ${onDate}. `
         + 'Cursa se va calcula fără linia de transport.'
@@ -98,7 +99,7 @@ export function checkTpoTotal(trip) {
     rule: 'tpo_total_mismatch',
     severity: 'error',
     key: `tpo_total_mismatch:${trip.id}`,
-    title: `Total TPO diferit de suma liniilor — ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
+    title: `Total TPO diferit de suma liniilor, ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
     message: `Totalul este ${total.toFixed(2)}, suma liniilor ${lines.toFixed(2)}. `
       + 'Recalculează TPO-ul sau verifică liniile adăugate manual.',
     link: `/trips/${trip.id}`,
@@ -119,7 +120,7 @@ export function checkTripDistance(trip) {
     rule: 'trip_no_distance',
     severity: 'warning',
     key: `trip_no_distance:${trip.id}`,
-    title: `TPO fără kilometri — ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
+    title: `TPO fără kilometri, ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
     message: 'Cursa a fost calculată fără distanță, deci fără componenta de kilometri. '
       + 'Verifică dacă rutarea este configurată.',
     link: `/trips/${trip.id}`,
@@ -144,7 +145,7 @@ export function checkTpoStale(trip) {
     rule: 'tpo_stale',
     severity: 'warning',
     key: `tpo_stale:${trip.id}:${updated.toISOString()}`,
-    title: `TPO recalculabil — ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
+    title: `TPO recalculabil, ${trip.tpo_number || trip.cmr_number || 'cursă'}`,
     message: 'Cursa a fost modificată după ultimul calcul de TPO.',
     link: `/trips/${trip.id}`,
     subject: tripSubject(trip),
@@ -155,7 +156,7 @@ export function checkTpoStale(trip) {
  * A confirmed aviz with no weighing.
  *
  * Confirmed means a person looked at it. If the weight is still missing after that, the report
- * built from it cannot be reconciled against the weighbridge ticket — which is the whole reason
+ * built from it cannot be reconciled against the weighbridge ticket, which is the whole reason
  * the client asked for the column.
  */
 export function checkDocumentWeight(doc) {
@@ -165,7 +166,7 @@ export function checkDocumentWeight(doc) {
     rule: 'document_no_weight',
     severity: 'warning',
     key: `document_no_weight:${doc.id}`,
-    title: `Aviz confirmat fără greutate — ${doc.numar_tpo || doc.original_filename || 'document'}`,
+    title: `Aviz confirmat fără greutate, ${doc.numar_tpo || doc.original_filename || 'document'}`,
     message: 'Documentul a fost confirmat fără greutate brută, deci raportul nu poate fi '
       + 'confruntat cu bonul de cântar.',
     link: '/reports',
@@ -181,7 +182,7 @@ export function checkDocumentLinked(doc) {
     rule: 'document_unlinked',
     severity: 'warning',
     key: `document_unlinked:${doc.id}`,
-    title: `Aviz nelegat de cursă — ${doc.numar_tpo || doc.original_filename || 'document'}`,
+    title: `Aviz nelegat de cursă, ${doc.numar_tpo || doc.original_filename || 'document'}`,
     message: 'Documentul este confirmat dar nu aparține niciunei curse, deci nu va fi facturat.',
     link: '/reports',
     subject: documentSubject(doc),
@@ -189,29 +190,37 @@ export function checkDocumentLinked(doc) {
 }
 
 /**
- * The same TPO number on more than one document.
+ * The same consignment on more than one document.
  *
- * One finding per number, not per document: the operator has one thing to resolve, not three.
+ * Not the same TPO: an order can be driven several times, and one finding per repeated TPO
+ * fired on every legitimate multi-cursă order. `consignmentKey` is what separates the second
+ * cursă from the second upload of the first, and it is shared with the list view so the bell
+ * and the table cannot disagree.
+ *
+ * One finding per repeated consignment, not per document: the operator has one thing to
+ * resolve, not three.
  */
 export function checkDuplicateTpo(documents = []) {
-  const byTpo = new Map();
+  const byConsignment = new Map();
   for (const doc of documents) {
     const tpo = String(doc.numar_tpo || '').trim().toLowerCase();
     if (!tpo) continue;
-    byTpo.set(tpo, [...(byTpo.get(tpo) ?? []), doc]);
+    const key = `${tpo}::${consignmentKey(doc)}`;
+    byConsignment.set(key, [...(byConsignment.get(key) ?? []), doc]);
   }
   const found = [];
-  for (const [tpo, docs] of byTpo) {
+  for (const [key, docs] of byConsignment) {
     if (docs.length < 2) continue;
     found.push(finding({
       rule: 'document_duplicate_tpo',
       severity: 'warning',
-      key: `document_duplicate_tpo:${tpo}`,
-      title: `TPO pe mai multe documente — ${docs[0].numar_tpo}`,
-      message: `${docs.length} documente poartă același număr de TPO: `
+      key: `document_duplicate_tpo:${key}`,
+      title: `Același aviz de mai multe ori, ${docs[0].numar_tpo}`,
+      message: `${docs.length} documente sunt același transport `
+        + `(${docs[0].numar_document_marfa || 'fără număr de aviz'}): `
         + `${docs.map((d) => d.original_filename || d.id).join(', ')}.`,
       link: '/reports',
-      subject: { type: 'tpo', id: tpo, label: docs[0].numar_tpo },
+      subject: { type: 'tpo', id: key, label: docs[0].numar_tpo },
     }));
   }
   return found;
@@ -221,7 +230,7 @@ export function checkDuplicateTpo(documents = []) {
  * A delivered trip whose written CMR was never closed.
  *
  * Only for notes that were actually started. A company that runs on paper CMRs has no digital
- * note at all, and firing on every one of their trips would make the screen useless to them —
+ * note at all, and firing on every one of their trips would make the screen useless to them,
  * an abandoned half-signed note is the unambiguous case, and it means the handover has no proof.
  */
 export function checkCmrUnsigned(trip) {
@@ -233,10 +242,10 @@ export function checkCmrUnsigned(trip) {
     rule: 'cmr_unsigned',
     severity: 'warning',
     key: `cmr_unsigned:${trip.id}`,
-    title: `CMR nesemnat la livrare — ${trip.cmr_number || trip.tpo_number || 'cursă'}`,
+    title: `CMR nesemnat la livrare, ${trip.cmr_number || trip.tpo_number || 'cursă'}`,
     message: atLoading
       ? 'Cursa este livrată, dar destinatarul nu a semnat CMR-ul digital.'
-      : 'Cursa este livrată, dar CMR-ul digital a rămas ciornă — nesemnat de nimeni.',
+      : 'Cursa este livrată, dar CMR-ul digital a rămas ciornă, nesemnat de nimeni.',
     link: `/trips/${trip.id}`,
     subject: tripSubject(trip),
   });
@@ -277,4 +286,31 @@ export function summariseFindings(findings = []) {
     if (bySeverity[item.severity] !== undefined) bySeverity[item.severity] += 1;
   }
   return { total: findings.length, by_rule: byRule, by_severity: bySeverity };
+}
+
+/**
+ * A lorry nobody has given an MTMA to.
+ *
+ * The Bucharest zone fee is charged on the mass in the registration document, so without it no
+ * tariff bracket can be chosen at all, and the brackets are hundreds of lei apart. Plates now
+ * arrive on their own from the OCR, which is exactly when this is easiest to forget.
+ *
+ * Keyed on how many are missing, not on a vehicle id: one alert for the whole backlog rather
+ * than one per lorry, and dismissing it while three are outstanding brings it back when a
+ * fourth turns up, instead of hiding the next one forever.
+ */
+export function checkVehiclesWithoutMma(vehicles) {
+  const missing = (vehicles ?? []).filter((v) => v.mma_kg == null);
+  if (!missing.length) return null;
+  const plates = missing.slice(0, 4).map((v) => v.plate).join(', ');
+  const rest = missing.length > 4 ? ' și încă ' + (missing.length - 4) : '';
+  return finding({
+    rule: 'vehicle_no_mma',
+    severity: 'error',
+    key: 'vehicle_no_mma:' + missing.length,
+    title: missing.length === 1 ? 'Un vehicul fără MTMA' : missing.length + ' vehicule fără MTMA',
+    message: plates + rest + '. Fără masa din talon nu se poate calcula taxa de zonă București.',
+    link: '/fleet',
+    subject: { type: 'vehicle', id: missing[0].id },
+  });
 }

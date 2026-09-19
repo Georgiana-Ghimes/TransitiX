@@ -2,7 +2,7 @@
  * Server entrypoint: owns the port and nothing else.
  *
  * The Express app itself lives in `app.js` so the route tests can mount it with supertest
- * without binding a socket — an integration suite that has to start a real listener ends up
+ * without binding a socket, an integration suite that has to start a real listener ends up
  * fighting for ports and leaking processes.
  */
 import dotenv from 'dotenv';

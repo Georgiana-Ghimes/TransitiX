@@ -1,5 +1,5 @@
 /**
- * e-Factura — local UBL 2.1 (CIUS-RO inspired) export.
+ * e-Factura, local UBL 2.1 (CIUS-RO inspired) export.
  *
  * Does NOT talk to ANAF SPV. Generating XML is useful for manual upload /
  * future adapters; marking invoices as "sent/accepted" without a real
@@ -43,7 +43,7 @@ function supplierTaxId(company = {}) {
 }
 
 /**
- * Soft validation — returns { ok, errors[] }. Missing supplier CUI is an error.
+ * Soft validation, returns { ok, errors[] }. Missing supplier CUI is an error.
  */
 export function validateInvoiceForUbl(invoice = {}, company = {}) {
   const errors = [];
@@ -58,7 +58,7 @@ export function validateInvoiceForUbl(invoice = {}, company = {}) {
 
 /**
  * Build a minimal UBL 2.1 Invoice XML suitable as a starting point for CIUS-RO.
- * Not a certified Schematron-valid document — labelled as local export.
+ * Not a certified Schematron-valid document, labelled as local export.
  */
 export function buildUblInvoice(invoice = {}, company = {}) {
   const check = validateInvoiceForUbl(invoice, company);
@@ -120,7 +120,7 @@ export function buildUblInvoice(invoice = {}, company = {}) {
   <cbc:IssueDate>${issueDate}</cbc:IssueDate>${dueXml}
   <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>${escapeXml(currency)}</cbc:DocumentCurrencyCode>
-  <cbc:Note>Export local Transitix — nu a fost trimis către SPV ANAF</cbc:Note>
+  <cbc:Note>Export local Transitix, nu a fost trimis către SPV ANAF</cbc:Note>
   <cac:AccountingSupplierParty>
     <cac:Party>
       <cac:PartyName>
@@ -211,6 +211,6 @@ export function buildUblInvoice(invoice = {}, company = {}) {
 }
 
 export function efacturaCapability() {
-  // Local UBL only — never claim SPV.
+  // Local UBL only, never claim SPV.
   return 'ubl';
 }

@@ -3,13 +3,13 @@
  *
  * Used as an *escalation*, not as the default: Photon is self-hosted and free, TomTom is
  * billed per request. `escalatingSearch` in geocode.js only reaches for this when the free
- * provider comes back unsure — which in practice means rural Romanian addresses, the exact
+ * provider comes back unsure, which in practice means rural Romanian addresses, the exact
  * case Photon handles worst.
  *
  * Candidates are normalized into the same shape Photon produces and scored by the shared
  * scorer, so a TomTom 0.82 means what a Photon 0.82 means.
  *
- * NOT YET EXERCISED AGAINST THE LIVE API — no key was available. The response parser is
+ * NOT YET EXERCISED AGAINST THE LIVE API, no key was available. The response parser is
  * written defensively and pinned by fixtures in the tests; correct the field names there
  * first if a real key returns something different.
  */
@@ -56,7 +56,7 @@ export function buildGeocodeUrl(parsed, {
   countrySet = DEFAULT_COUNTRY_SET,
 } = {}) {
   const query = buildQueryText(parsed);
-  if (!query.trim()) throw httpError('Adresă goală — nu se poate geocoda', 400);
+  if (!query.trim()) throw httpError('Adresă goală, nu se poate geocoda', 400);
   const params = new URLSearchParams({ key: apiKey, limit: String(limit) });
   if (countrySet) params.set('countrySet', countrySet);
   // The query sits in the path for this endpoint, so it must be path-encoded.

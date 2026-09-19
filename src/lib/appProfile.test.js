@@ -23,7 +23,12 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
     expect(isCompanionOfficePath('/platform')).toBe(true);
     expect(isCompanionOfficePath('/settings')).toBe(true);
+    expect(isCompanionOfficePath('/zone-map')).toBe(true);
+    expect(isCompanionOfficePath('/fleet')).toBe(true);
+    // Old /users bookmarks still resolve (redirect to Setări → Utilizatori).
+    expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
+    expect(isCompanionOfficePath('/finance')).toBe(false);
     const withTrips = {
       role: 'admin',
       company: { feature_flags: { modules: { trips: true, dispatch: false } } },

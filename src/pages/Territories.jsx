@@ -69,7 +69,7 @@ export default function Territories() {
             ? `Abatere max ${result.balance.max_deviation_pct}% (sub 15%)`
             : `Abatere max ${result.balance?.max_deviation_pct}%`
         );
-        // Show preview polygons without persisting — replace local state temporarily.
+        // Show preview polygons without persisting, replace local state temporarily.
         setTerritories((result.drafts || []).map((d, i) => ({
           id: `preview-${i}`,
           name: d.name,
@@ -85,7 +85,7 @@ export default function Territories() {
         `${result.territories?.length || 0} teritorii generate`,
         result.balance?.balanced
           ? `Echilibru OK · abatere ${result.balance.max_deviation_pct}%`
-          : `Abatere ${result.balance?.max_deviation_pct}% — poți ajusta manual`
+          : `Abatere ${result.balance?.max_deviation_pct}%, poți ajusta manual`
       );
       await load();
     } catch (e) {
@@ -172,7 +172,7 @@ export default function Territories() {
           <p className="flex items-start gap-2">
             {!balance.balanced && <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />}
             Abatere maximă față de medie: <strong className="tabular-nums">{balance.max_deviation_pct}%</strong>
-            {balance.balanced ? ' — în ținta de 15%.' : ' — peste 15%; redistribuie sau regenerază.'}
+            {balance.balanced ? ', în ținta de 15%.' : ', peste 15%; redistribuie sau regenerază.'}
           </p>
         </div>
       )}
@@ -228,7 +228,7 @@ export default function Territories() {
                 {!territories.length && (
                   <tr>
                     <td colSpan={5} className="px-3 py-8 text-center text-slate-400">
-                      Niciun teritoriu încă — generează din locațiile geocodate.
+                      Niciun teritoriu încă, generează din locațiile geocodate.
                     </td>
                   </tr>
                 )}

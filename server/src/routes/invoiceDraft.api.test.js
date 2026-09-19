@@ -110,7 +110,7 @@ describe('the invoice comes from the priced lines', () => {
 
 describe('it refuses to invent a figure', () => {
   it('will not bill a trip nobody priced', async () => {
-    // The old path silently summed `aviz.valoare_tpo` here — a column an operator types into —
+    // The old path silently summed `aviz.valoare_tpo` here, a column an operator types into,
     // so an invoice went out on a number nothing had recalculated.
     const trip = await makeTrip(ctx.company.id, { tpo_number: 'TPO NEPRETUIT' });
     const aviz = await makeAviz(ctx.company.id, {
@@ -158,7 +158,7 @@ describe('it refuses to invent a figure', () => {
     const aviz = await makeAviz(ctx.company.id, { original_filename: 'inv-10.pdf', trip_id: trip.id });
     const res = await draft([aviz.id]);
     expect(res.body.warnings.some((w) => w.code === 'tpo_total_mismatch')).toBe(true);
-    // The lines are still what gets billed — they are what the engine computed.
+    // The lines are still what gets billed, they are what the engine computed.
     expect(Number(res.body.subtotal)).toBe(975);
   });
 });

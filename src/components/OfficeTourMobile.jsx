@@ -9,12 +9,11 @@ import {
   tourStepMobileHint,
 } from '@/lib/officeTour';
 
-/** Mobile-only full-width bottom sheet — no sidebar drawer required. */
-export default function OfficeTourMobile({ step, steps, onStepChange, onClose }) {
-  const script = steps?.length ? steps : OFFICE_TOUR_STEPS;
-  const total = script.length;
+/** Mobile-only full-width bottom sheet, no sidebar drawer required. */
+export default function OfficeTourMobile({ step, onStepChange, onClose }) {
+  const total = OFFICE_TOUR_STEPS.length;
   const index = clampTourStep(step, total);
-  const current = script[index];
+  const current = OFFICE_TOUR_STEPS[index];
   const last = index === total - 1;
   const showMenuCue = tourMobileMenuStep(current) || current.highlightTarget === 'ghid';
 
@@ -101,7 +100,7 @@ export default function OfficeTourMobile({ step, steps, onStepChange, onClose })
 
             {current.demo ? (
               <p className="mt-3 text-xs font-medium text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Pagină demo — nu folosi pentru date reale.
+                Pagină demo, nu folosi pentru date reale.
               </p>
             ) : null}
 
@@ -115,7 +114,7 @@ export default function OfficeTourMobile({ step, steps, onStepChange, onClose })
 
           <div className="shrink-0 px-4 py-3 border-t border-slate-100 bg-white">
             <div className="flex items-center justify-center gap-1 mb-3" aria-hidden="true">
-              {script.map((s, i) => (
+              {OFFICE_TOUR_STEPS.map((s, i) => (
                 <span
                   key={s.id}
                   className={

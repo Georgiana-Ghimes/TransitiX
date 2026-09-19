@@ -1,5 +1,7 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
 import { getSource } from './reporting/sources.js';
+import { applyNumarCurseByRuns, isLockedRaiTemplate } from './avizQuery.js';
+import { isGenericCountUnit } from './ocr/fields.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -29,19 +31,19 @@ export const NUMERIC_SOURCES = new Set([
 ]);
 
 export const DEFAULT_RAI_COLUMNS = [
-  { key: 'nr_crt', header: 'Nr. crt', source: 'nr_crt', default_value: '' },
+  { key: 'nr_crt', header: 'Nr. Crt.', source: 'nr_crt', default_value: '' },
   { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
   { key: 'data_efectuare_cursa', header: 'Data efectuare cursa', source: 'data_efectuare_cursa', default_value: '' },
   { key: 'valoare_tpo', header: 'Valoare TPO', source: 'valoare_tpo', default_value: 0 },
   { key: 'numar_auto', header: 'Numar auto', source: 'numar_auto', default_value: '' },
   { key: 'ruta_transport', header: 'Ruta transport', source: 'ruta_transport', default_value: '' },
   { key: 'tip_marfa', header: 'Tip marfa', source: 'tip_marfa', default_value: '' },
-  { key: 'cantitate_marfa', header: 'Cantitate marfa (t/m3/galeti)', source: 'cantitate_marfa', default_value: '' },
+  { key: 'cantitate_marfa', header: 'Cantitate marfa (tone)', source: 'cantitate_marfa', default_value: '' },
   { key: 'numar_document_marfa', header: 'Numar document marfa (aviz/factura)', source: 'numar_document_marfa', default_value: '' },
   { key: 'numar_curse', header: 'Numar curse', source: 'numar_curse', default_value: 1 },
-  { key: 'taxe_suplimentare', header: 'Taxa suplimentara', source: 'taxe_suplimentare', default_value: 0 },
+  { key: 'taxe_suplimentare', header: 'Taxe suplimentare', source: 'taxe_suplimentare', default_value: 0 },
   { key: 'km_parcursi', header: 'Km parcursi', source: 'km_parcursi', default_value: 0 },
-  { key: 'tarif_km', header: 'Tarif km', source: 'tarif_km', default_value: 0 },
+  { key: 'tarif_km', header: 'Tarif Km', source: 'tarif_km', default_value: 0 },
   { key: 'observatii', header: 'Observatii', source: 'observatii', default_value: '' },
 ];
 
@@ -129,6 +131,92 @@ function formatDateCell(value) {
   return String(value);
 }
 
+/**
+ * Anexa Factura RAI column “Cantitate marfa (tone)” must carry weighbridge tons when
+ * we have greutate brută, not the sack/bucket line count OCR also finds on the same page.
+ */
+export function annexQuantityValue(row) {
+  const kg = Number(row?.gross_weight_kg);
+  if (Number.isFinite(kg) && kg > 0) {
+    return Math.round((kg / 1000) * 100) / 100;
+  }
+  // No weight, no number. Falling back to the line count filled a column headed "(tone)" with
+  // a count of sacks, so one sheet carried two units under one heading: 378 sitting beside
+  // 21.00 and 16.20. Twenty times too large is obvious to anyone who looks, and invisible to
+  // anyone who does not, and nothing in the file says which rows are which.
+  //
+  // Blank instead, with `missing_quantity_weight` naming the documents. The operator can type
+  // the weighbridge figure on the row; a number in the wrong unit cannot be corrected by
+  // anybody downstream, because it does not look wrong until it is added up.
+  return null;
+}
+
+/**
+ * Client Anexa wants Tip marfa = packaging unit (saci / galeti / …), not an empty cell while
+ * the unit sits only in quantity_unit or is glued into Marfă on screen.
+ */
+const GOODS_UNIT_ALIASES = Object.freeze({
+  sac: 'saci',
+  saci: 'saci',
+  galeti: 'galeti',
+  galeti_: 'galeti',
+  galeata: 'galeti',
+  galeate: 'galeti',
+  paleti: 'paleti',
+  palet: 'paleti',
+  palete: 'paleti',
+  bucati: 'bucati',
+  buc: 'bucati',
+  pcs: 'bucati',
+  kg: 'kg',
+  role: 'role',
+  colete: 'colete',
+  mc: 'mc',
+  m3: 'mc',
+});
+
+function foldGoodsToken(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/** Map OCR / tip text onto a canonical packaging unit, or null if it is not a unit. */
+export function normalizeGoodsUnit(raw) {
+  const folded = foldGoodsToken(raw);
+  if (!folded) return null;
+  if (GOODS_UNIT_ALIASES[folded]) return GOODS_UNIT_ALIASES[folded];
+  if (folded.startsWith('sac')) return 'saci';
+  if (folded.startsWith('gal')) return 'galeti';
+  if (folded.startsWith('pal')) return 'paleti';
+  if (folded.startsWith('buc')) return 'bucati';
+  return null;
+}
+
+/**
+ * Tip marfa for export: packaging the document / operator named, never a bare count word.
+ *
+ * `quantity_unit` often stays on "buc" from `Cantitate … buc` even after Tip marfa was
+ * corrected to "galeti" on screen — preferring the unit column blindly put "bucati" back
+ * onto the customer's annex. A tip that is itself a packaging unit wins; otherwise a
+ * non-generic quantity_unit; otherwise free-text tip (product name). "bucati" alone never
+ * reaches the sheet.
+ */
+export function annexTipMarfa(row) {
+  const fromTip = normalizeGoodsUnit(row?.tip_marfa);
+  if (fromTip && !isGenericCountUnit(fromTip)) return fromTip;
+
+  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
+  if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
+
+  const tip = String(row?.tip_marfa || '').trim();
+  if (!tip) return '';
+  if (fromTip && isGenericCountUnit(fromTip)) return '';
+  return tip;
+}
+
 /** Use the saved template as-is. Only fall back when it has no columns. */
 export function resolveExportColumns(template) {
   const cols = normalizeTemplateColumns(template?.columns);
@@ -146,6 +234,12 @@ export function hasUsableColumns(columns) {
  * ignoring the template they picked. Fail loudly instead.
  */
 export function exportColumnsFor(template) {
+  // The locked annex is defined here, not by whatever was written into `report_templates` the
+  // day a company was seeded. Those rows are never updated afterwards, so a header corrected in
+  // code would reach new installs only, and two companies on the same version would send the
+  // customer two different sheets. Nobody can edit this template anyway.
+  if (isLockedRaiTemplate(template)) return DEFAULT_RAI_COLUMNS.map((c) => ({ ...c }));
+
   if (!hasUsableColumns(template?.columns)) {
     const err = new Error(
       `Șablonul „${template?.name || 'selectat'}” nu are nicio coloană salvată. `
@@ -159,14 +253,20 @@ export function exportColumnsFor(template) {
 
 export function mapAnnexRows(columns, avize) {
   const cols = normalizeTemplateColumns(columns);
-  return (avize || []).map((row, idx) => {
+  // Derive Numar curse from distinct runs per TPO (not the stored default of 1).
+  const docs = applyNumarCurseByRuns(avize);
+  return docs.map((row, idx) => {
     const out = {};
     for (const col of cols) {
       if (col.source === 'nr_crt') {
         out[col.key] = idx + 1;
         continue;
       }
-      const raw = col.source ? row?.[col.source] : undefined;
+      const raw = col.source === 'cantitate_marfa'
+        ? annexQuantityValue(row)
+        : col.source === 'tip_marfa'
+          ? annexTipMarfa(row)
+          : (col.source ? row?.[col.source] : undefined);
       if (useTemplateDefault(col, raw)) {
         out[col.key] = coerceCell(col, col.default_value);
       } else if (getSource(col.source)?.type === 'date') {

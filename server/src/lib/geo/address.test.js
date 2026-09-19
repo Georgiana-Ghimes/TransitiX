@@ -59,7 +59,7 @@ describe('parseRomanianAddress', () => {
   it('handles an address with no street type at all', () => {
     const parsed = parseRomanianAddress('Galați, Zona Industrială Est');
     expect(parsed.city).toBe('galati');
-    // "zona" counts as a street type — otherwise industrial-park addresses score as junk
+    // "zona" counts as a street type, otherwise industrial-park addresses score as junk
     expect(parsed.hasStreetType).toBe(true);
     expect(parsed.hasHouseNumber).toBe(false);
   });

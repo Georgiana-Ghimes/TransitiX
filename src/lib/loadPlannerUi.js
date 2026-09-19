@@ -1,7 +1,7 @@
 /**
  * Display logic for the load planner.
  *
- * The screen answers one question — "what is on this truck, and where" — so everything that
+ * The screen answers one question ("what is on this truck, and where") so everything that
  * turns packer output into something a loader can act on lives here, pure and tested.
  */
 
@@ -56,7 +56,7 @@ export function filterVehicles(vehicles = [], search = '') {
     .some((field) => String(field).toLowerCase().includes(needle)));
 }
 
-/** "Mercedes-Benz Actros" — what the crew calls the truck. */
+/** "Mercedes-Benz Actros", what the crew calls the truck. */
 export function vehicleModelLabel(vehicle) {
   return [vehicle?.brand, vehicle?.model].filter(Boolean).join(' ') || '—';
 }
@@ -164,19 +164,19 @@ export function loadWarnings(plan) {
   }
 
   // The warehouse strategy sorts by picking zone then SKU. With neither present it falls
-  // through to the same tiebreaker as LIFO, so the toggle appears to do nothing — say why
+  // through to the same tiebreaker as LIFO, so the toggle appears to do nothing, say why
   // rather than letting it look broken.
   if (strategyIsIndistinguishable(plan)) {
     out.push({
       level: 'warn',
-      text: 'Comenzile nu au SKU sau zonă de picking — „Ordine depozit" dă același rezultat ca „Ordine șofer"',
+      text: 'Comenzile nu au SKU sau zonă de picking, „Ordine depozit" dă același rezultat ca „Ordine șofer"',
     });
   }
 
   if (plan.bay?.assumed) {
     out.push({
       level: 'warn',
-      text: 'Dimensiunile cutiei sunt presupuse — completează cargo_length/width/height pe vehicul',
+      text: 'Dimensiunile cutiei sunt presupuse, completează cargo_length/width/height pe vehicul',
     });
   }
 

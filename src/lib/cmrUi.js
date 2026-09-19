@@ -1,7 +1,7 @@
 /**
  * Which part of the consignment note the driver is looking at.
  *
- * A CMR is filled in two moments — at the ramp and at the handover — and the panel shows one of
+ * A CMR is filled in two moments, at the ramp and at the handover, and the panel shows one of
  * them at a time. The choice is derived from what has already been signed rather than from a
  * tab the driver has to pick, because a driver at the delivery point should not have to find
  * the right screen with a phone in one hand.
@@ -50,7 +50,7 @@ export function editableBoxes(model, stage = currentStage(model)) {
   return sortByBox((model?.boxes ?? []).filter((b) => b.stage === stage));
 }
 
-/** What the office already knew — shown, never typed. */
+/** What the office already knew, shown, never typed. */
 export function prefillBoxes(model) {
   return sortByBox((model?.boxes ?? []).filter((b) => b.stage === 'prefill'));
 }

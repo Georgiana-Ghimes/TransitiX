@@ -1,5 +1,5 @@
 /**
- * Incremental demo seed — safe to re-run.
+ * Incremental demo seed, safe to re-run.
  * Fills missing fleet/trips without wiping user data.
  */
 import bcrypt from 'bcryptjs';
@@ -11,7 +11,7 @@ async function main() {
     await client.query('BEGIN');
 
     const company = await client.query(`SELECT id FROM companies ORDER BY created_at ASC LIMIT 1`);
-    if (!company.rows[0]) throw new Error('No company — run npm run migrate && npm run seed first');
+    if (!company.rows[0]) throw new Error('No company, run npm run migrate && npm run seed first');
     const companyId = company.rows[0].id;
 
     // Ensure sofer user
@@ -148,7 +148,7 @@ async function main() {
 
       console.log('Created 4 demo trips (2 active, 1 planned, 1 delivered).');
     } else {
-      console.log(`Trips already exist (${tripCount.rows[0].c}) — skipped trip insert.`);
+      console.log(`Trips already exist (${tripCount.rows[0].c}), skipped trip insert.`);
     }
 
     await client.query('COMMIT');

@@ -1,5 +1,5 @@
 /**
- * ePOD helpers — persist a canvas signature data-URL as a company-scoped upload.
+ * ePOD helpers, persist a canvas signature data-URL as a company-scoped upload.
  */
 
 import fs from 'fs';

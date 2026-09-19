@@ -15,7 +15,7 @@ import { signAccessToken } from '../middleware/auth.js';
  * Refuses to touch anything that is not obviously a test database.
  *
  * This suite truncates and deletes. Pointed at a development database it would destroy real
- * work, so the name has to say out loud that it is disposable — there is no recovering from
+ * work, so the name has to say out loud that it is disposable, there is no recovering from
  * getting this wrong once.
  */
 export function assertTestDatabase() {
@@ -36,7 +36,7 @@ let counter = 0;
  * A company of its own for each test file, with the users it needs.
  *
  * Everything in this system is scoped by `company_id`, so a private company is the cheapest
- * real isolation available — no shared fixtures to keep in sync, and one file's mess cannot
+ * real isolation available, no shared fixtures to keep in sync, and one file's mess cannot
  * change another file's answer.
  */
 export async function seedCompany(label = 'test') {
@@ -121,7 +121,7 @@ export { request };
  *
  * `overrides.x ?? fallback` cannot express "explicitly nothing", and a fixture that quietly
  * replaces a deliberate null with a default makes the missing-value tests pass for the wrong
- * reason — which is exactly the case this codebase keeps getting wrong.
+ * reason, which is exactly the case this codebase keeps getting wrong.
  */
 function pick(overrides, key, fallback) {
   return key in overrides ? overrides[key] : fallback;

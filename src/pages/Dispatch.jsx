@@ -141,7 +141,7 @@ export default function Dispatch() {
 
   const selectedPlan = selectedRouteId ? plans[selectedRouteId] : null;
 
-  /** Road geometry for the selected route only — one OSRM call, not one per route. */
+  /** Road geometry for the selected route only, one OSRM call, not one per route. */
   useEffect(() => {
     const stops = (selectedPlan?.stops || []).filter((s) => s.latitude != null && s.longitude != null);
     if (!routingReady || stops.length < 2) { setGeometry(null); return; }
@@ -236,7 +236,7 @@ export default function Dispatch() {
 
   /**
    * The sheet is built from the plan already on screen, so it prints what the dispatcher
-   * sees. The PDF renderer is loaded on demand — it is the heaviest thing on this page and
+   * sees. The PDF renderer is loaded on demand, it is the heaviest thing on this page and
    * most sessions never press the button.
    */
   const printRouteSheet = (route) => run(`sheet-${route.id}`, async () => {

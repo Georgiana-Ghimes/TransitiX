@@ -49,7 +49,7 @@ router.get('/retention', async (_req, res) => {
 /**
  * Runs one pass now.
  *
- * `more: true` in the response means the backlog was larger than a single batch — the answer is
+ * `more: true` in the response means the backlog was larger than a single batch, the answer is
  * to call again, not to raise the batch until a delete locks the table for minutes.
  */
 router.post('/retention/run', async (req, res) => {
@@ -65,7 +65,7 @@ router.post('/retention/run', async (req, res) => {
   }
 });
 
-/** The configured policy, without touching the database — useful when something looks wrong. */
+/** The configured policy, without touching the database, useful when something looks wrong. */
 router.get('/retention/policies', (_req, res) => {
   res.json({
     policies: POLICIES.map((p) => ({

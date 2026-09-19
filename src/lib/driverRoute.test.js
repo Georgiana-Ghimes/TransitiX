@@ -54,7 +54,7 @@ describe('stopActions', () => {
     expect(stopActions({ status: 'sosit' }).map((a) => a.status)).toEqual(['finalizat', 'esuat']);
   });
 
-  it('offers nothing on a closed stop — undoing is the dispatcher’s job', () => {
+  it('offers nothing on a closed stop, undoing is the dispatcher’s job', () => {
     expect(stopActions({ status: 'finalizat' })).toEqual([]);
     expect(stopActions({ status: 'esuat' })).toEqual([]);
     expect(stopActions(null)).toEqual([]);

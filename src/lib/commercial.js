@@ -236,7 +236,7 @@ export function isInForce(row, onDate = new Date().toISOString().slice(0, 10)) {
  * Groups tariff rows by vehicle class, newest first.
  *
  * History is the point of this screen: a report from March has to be recomputable with the
- * tariff that was in force in March, so old rows are never edited away — they are shown.
+ * tariff that was in force in March, so old rows are never edited away, they are shown.
  */
 export function groupTariffs(tariffs = []) {
   const byClass = new Map();
@@ -282,7 +282,7 @@ export function validateTariff(form) {
   const trip = parseAmount(form.trip_rate);
   const km = parseAmount(form.km_rate);
   if (trip === null && km === null) {
-    errors.trip_rate = 'Pune cel puțin un tarif — pe cursă sau pe kilometru.';
+    errors.trip_rate = 'Pune cel puțin un tarif: pe cursă sau pe kilometru.';
   }
   if (trip !== null && trip < 0) errors.trip_rate = 'Tariful nu poate fi negativ.';
   if (km !== null && km < 0) errors.km_rate = 'Tariful nu poate fi negativ.';

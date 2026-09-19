@@ -33,7 +33,7 @@ export const REPORT_SOURCES = [
   { key: 'pallets', label: 'Paleți', group: 'marfa', type: 'integer', numFmt: '0', total: 'sum' },
 
   // The figure the weighbridge shows, goods plus pallets. This is what the client asked the
-  // report to carry instead of "378 saci" — a sack count cannot be checked against a weighing.
+  // report to carry instead of "378 saci", a sack count cannot be checked against a weighing.
   { key: 'gross_weight_kg', label: 'Greutate brută (kg)', group: 'greutate', type: 'weight', numFmt: '#,##0', total: 'sum' },
   { key: 'net_weight_kg', label: 'Greutate netă (kg)', group: 'greutate', type: 'weight', numFmt: '#,##0', total: 'sum' },
   { key: 'pallet_weight_kg', label: 'Greutate paleți (kg)', group: 'greutate', type: 'weight', numFmt: '#,##0', total: 'sum' },

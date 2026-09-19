@@ -4,9 +4,9 @@ import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
-  UserCircle, LogOut, Menu, X, Building2, MapPin, Brain, Package,
+  LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Inbox,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Inbox, Settings, Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -42,13 +42,15 @@ const NAV = [
   { label: 'Șoferi', path: '/drivers', icon: Users, module: 'fleet' },
   { label: 'Locații', path: '/locations', icon: MapPinned, module: 'locations' },
   { label: 'Teritorii', path: '/territories', icon: Layers, module: 'territories' },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map, module: 'avize' },
+  { label: 'Autoturisme', path: '/fleet', icon: Truck, module: 'fleet' },
   { label: 'Tracking GPS', path: '/gps', icon: MapPin, module: 'gps' },
   { label: 'Planning AI', path: '/planning', icon: Brain, module: 'planning' },
   { label: 'Clienți', path: '/clients', icon: Building2, module: 'trips' },
   { label: 'Financiar', path: '/finance', icon: Wallet, module: 'finance' },
   { label: 'Depozit', path: '/warehouse', icon: Package, module: 'warehouse' },
   { label: 'Documente', path: '/documents', icon: FileText, module: 'documents_expiry' },
-  { label: 'Avize / Rapoarte', path: '/avize', icon: ClipboardList, module: 'avize' },
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList, module: 'avize' },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet, module: 'reports' },
   { label: 'Verificări date', path: '/checks', icon: ShieldCheck, module: 'avize' },
   { label: 'Config. comercială', path: '/commercial', icon: Receipt, module: 'commercial' },
@@ -64,6 +66,13 @@ const PLATFORM_NAV = [
   { label: 'Companii', path: '/platform/companies', icon: Building2 },
   { label: 'Solicitări', path: '/platform/leads', icon: Inbox },
   { label: 'Utilizatori', path: '/platform/users', icon: UserCog },
+];
+
+const COMPANION_OFFICE_NAV = [
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
+  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map },
+  { label: 'Autoturisme', path: '/fleet', icon: Truck },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
@@ -106,7 +115,7 @@ export default function Layout() {
     || (!companyProfile && documentsCompanion);
   // Full TMS catalog; hide Dashboard home for documents-profile companies.
   const tenantNav = treatAsDocumentsEarly
-    ? NAV.filter((item) => item.path !== '/')
+    ? COMPANION_OFFICE_NAV
     : NAV;
   const navItems = isPlatform ? PLATFORM_NAV : tenantNav;
   const isDesktop = useDesktop();
@@ -132,6 +141,7 @@ export default function Layout() {
   );
   const tourEnabled = !isDriver && !isPlatform && tourSteps.length > 0;
 
+  // Office tour is for the full sidebar app only, never driver or documents companion.
   useEffect(() => {
     // Documents / limited tenants must not auto-run the full TMS script — Layout would
     // bounce `/`, `/trips`, … and fight navigate() (Maximum update depth).
@@ -150,7 +160,7 @@ export default function Layout() {
   const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
   const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
-  // Navigate when the tour *step* changes — not whenever the user leaves the step path.
+  // Navigate when the tour *step* changes, not whenever the user leaves the step path.
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
   // so the rest of the app looked broken (and racing lazy loads could surface ErrorBoundary).
   useEffect(() => {
@@ -164,7 +174,7 @@ export default function Layout() {
     ) {
       navigate(current.path);
     }
-    // intentionally omit location.pathname — user may explore freely during the tour
+    // intentionally omit location.pathname, user may explore freely during the tour
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [tourOpen, tourEnabled, tourStep, tourSteps, treatAsDocuments, user, navigate]);
 
@@ -218,12 +228,6 @@ export default function Layout() {
   const closeTour = () => {
     markOfficeTourSeen();
     setTourOpen(false);
-  };
-
-  const openTour = () => {
-    if (!tourEnabled) return;
-    setTourStep(0);
-    setTourOpen(true);
   };
 
   useEffect(() => {
@@ -339,7 +343,7 @@ export default function Layout() {
 
       <div className="flex flex-1 min-h-0">
       {!isDesktop && mobileOpen && !tourOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 bg-black/40 z-[55]" onClick={() => setMobileOpen(false)} />
       )}
 
       {!isDesktop && tourOpen && mobileOpen && (
@@ -351,7 +355,8 @@ export default function Layout() {
         className={cn(
           'bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
           'transition-[width,transform] duration-300 ease-in-out',
-          tourOpen ? 'z-50' : 'z-40',
+          // Mobile drawer must sit above the sticky white header (z-50), or branding is clipped.
+          tourOpen ? 'z-50' : isDesktop ? 'z-40' : 'z-[60]',
           isDesktop
             ? cn(
                 'sticky top-0 translate-x-0',
@@ -373,7 +378,7 @@ export default function Layout() {
         >
           <Link
             to={documentsCompanion ? '/avize' : '/'}
-            title={documentsCompanion ? 'Avize / Rapoarte' : 'Dashboard'}
+            title={documentsCompanion ? 'Avize OCR' : 'Dashboard'}
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center min-w-0',
@@ -444,22 +449,21 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
-          {tourEnabled && (
-          <button
-            type="button"
+          <Link
+            to="/ghid"
             data-tour-ghid
-            title="Ghid platformă"
-            onClick={openTour}
+            title="Ghid"
+            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center w-full rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
               showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+              location.pathname === '/ghid' && 'bg-white/10 text-white',
               tourHighlightGhid && isDesktop && TOUR_NAV_HIGHLIGHT
             )}
           >
             <HelpCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Ghid</span>}
-          </button>
-          )}
+          </Link>
           {/*
             Company settings: real tenant admins only.
             Hide while GOD is impersonating — firm config belongs to the company's own admin,
@@ -468,15 +472,16 @@ export default function Layout() {
           {!isPlatform && !impersonating && user?.role === 'admin' && (
           <Link
             to="/settings"
-            title="Setări"
+            title="Setări companie"
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
-              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5'
+              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+              location.pathname.startsWith('/settings') && 'bg-white/10 text-white'
             )}
           >
-            <UserCircle className="w-5 h-5 shrink-0" />
-            {!showIconsOnly && <span>Setări</span>}
+            <Settings className="w-5 h-5 shrink-0" />
+            {!showIconsOnly && <span>Setări companie</span>}
           </Link>
           )}
           {!documentsCompanion && (
@@ -503,7 +508,7 @@ export default function Layout() {
         )}
 
         <header className={cn(
-          'sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6',
+          'sticky top-0 z-[50] bg-white/80 backdrop-blur-md border-b border-slate-200 h-16 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6',
           !isDesktop && tourOpen && 'z-[118]'
         )}>
           <div className="flex items-center justify-start min-w-0 shrink-0">

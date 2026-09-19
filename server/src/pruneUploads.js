@@ -1,12 +1,12 @@
 /**
- * Reclaims disk in `uploads/` — orphans only.
+ * Reclaims disk in `uploads/`, orphans only.
  *
  * What this deletes: files no database row points at. They come from uploads abandoned before a
  * row was written (`/api/integrations/upload` hands back a URL the client may never use), and
  * from rows deleted later.
  *
  * What this never deletes: a file a row still references, whatever its age. Those are the avize,
- * CMRs and weighbridge tickets behind every export ever sent — `aviz_export_log.snapshot` can
+ * CMRs and weighbridge tickets behind every export ever sent, `aviz_export_log.snapshot` can
  * reproduce the numbers on a sheet, but only the file shows the customer where they came from.
  * Ageing those out is an accounting decision with a statutory retention period behind it, not a
  * disk-space one, so it is deliberately not implemented here.
@@ -56,7 +56,7 @@ export function basenameOf(value) {
  * Which files may go, given what is on disk and what the database still points at.
  *
  * Kept separate from the filesystem and the database so the decision can be tested without
- * either — deleting the wrong file here is not recoverable.
+ * either, deleting the wrong file here is not recoverable.
  */
 export function planPrune(files, referenced, { now = Date.now(), minAgeMs = 0 } = {}) {
   const orphans = [];
@@ -75,11 +75,11 @@ export function planPrune(files, referenced, { now = Date.now(), minAgeMs = 0 } 
 
 async function main() {
   // Imported lazily so the unit suite, which imports this file for `planPrune`, never pulls in a
-  // database driver — `npm test` has to run on a clean checkout with nothing started.
+  // database driver, `npm test` has to run on a clean checkout with nothing started.
   const { pool } = await import('./db.js');
 
   if (!fs.existsSync(uploadRoot)) {
-    console.log(`[prune] ${uploadRoot} does not exist — nothing to do.`);
+    console.log(`[prune] ${uploadRoot} does not exist, nothing to do.`);
     return;
   }
 
@@ -97,7 +97,7 @@ async function main() {
   const missing = FILE_COLUMNS.map(([t, c]) => `${t}.${c}`).filter((k) => !have.has(k));
   if (missing.length) {
     throw new Error(
-      `schema changed — ${missing.join(', ')} no longer exist. `
+      `schema changed, ${missing.join(', ')} no longer exist. `
       + 'Refusing to run: files they referenced would look orphaned.'
     );
   }
@@ -120,7 +120,7 @@ async function main() {
       return { name: e.name, size: stat.size, mtimeMs: stat.mtimeMs, mtime: stat.mtime };
     });
 
-  // The catastrophic case: a migrated but empty database — a fresh one, or the wrong URL. Every
+  // The catastrophic case: a migrated but empty database, a fresh one, or the wrong URL. Every
   // file on disk would look orphaned. A tenant with no documents *yet* is a different thing and
   // a legitimate prune, so the test is whether the database holds a company at all.
   const tenants = (await pool.query('SELECT COUNT(*)::int AS n FROM companies')).rows[0].n;
@@ -146,7 +146,7 @@ async function main() {
   if (plan.orphans.length > 20) console.log(`[prune]     … and ${plan.orphans.length - 20} more`);
 
   if (!doDelete) {
-    console.log('[prune] Dry run — nothing was deleted. Pass --delete to remove them.');
+    console.log('[prune] Dry run, nothing was deleted. Pass --delete to remove them.');
     return;
   }
 
@@ -162,7 +162,7 @@ async function main() {
   console.log(`[prune] Removed ${removed} file(s), ${mb(plan.bytes)} reclaimed.`);
 }
 
-// Only when run as a script. Importing this file must not start anything — its test does.
+// Only when run as a script. Importing this file must not start anything, its test does.
 const invokedDirectly = process.argv[1]
   && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 

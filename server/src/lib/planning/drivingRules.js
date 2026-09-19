@@ -10,7 +10,7 @@
  * - after 9 h of driving in the day, a daily rest of 11 hours
  *
  * A leg longer than the remaining allowance is split: drive up to the limit, insert the
- * required stop, then finish the leg. That is what "plan the break into the route" means —
+ * required stop, then finish the leg. That is what "plan the break into the route" means,
  * a report that only flags the overrun after the fact is not this.
  *
  * Split breaks (15+30) and the twice-a-week 10 h extension are left for later; a dispatcher

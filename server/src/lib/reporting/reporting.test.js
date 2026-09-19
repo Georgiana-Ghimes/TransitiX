@@ -213,14 +213,29 @@ describe('reportWarnings', () => {
     expect(codes).not.toContain('missing_invoice_date');
   });
 
-  it('says when the documents have a weight the template drops', () => {
-    // The RAI annex is contractual, so we do not rewrite it — but a sheet that cannot be
-    // reconciled against the weighbridge has to say so out loud.
-    expect(codes([CONFIRMED], getPreset('rai_anexa'))).toContain('weight_not_exported');
+  it('does not treat Anexa RAI as dropping weight, Cantitate maps weighbridge tons', () => {
+    expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('weight_not_exported');
+  });
+
+  it('says when the documents have a weight the template drops (no weight column, no Cantitate)', () => {
+    expect(codes([CONFIRMED], getPreset('centralizator_km'))).toContain('weight_not_exported');
   });
 
   it('does not complain about a missing weight when no weight is exported', () => {
     expect(codes([UNWEIGHED], getPreset('rai_anexa'))).not.toContain('missing_gross_weight');
+  });
+
+  it('says which documents will have an empty Cantitate (tone) cell', () => {
+    // Anexa RAI has no weight column, so `missing_gross_weight` never fires on it. Without this
+    // warning an unweighed aviz left a blank cell on the customer's sheet and said nothing.
+    const found = reportWarnings(getPreset('rai_anexa').columns, [CONFIRMED, UNWEIGHED]);
+    const gap = found.find((w) => w.code === 'missing_quantity_weight');
+    expect(gap.count).toBe(1);
+    expect(gap.document_ids).toEqual([UNWEIGHED.id]);
+  });
+
+  it('stays quiet about Cantitate when every document was weighed', () => {
+    expect(codes([CONFIRMED], getPreset('rai_anexa'))).not.toContain('missing_quantity_weight');
   });
 
   it('flags the same TPO appearing twice', () => {

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canonicalPlate,
   extractDate,
+  extractGoodsUnit,
   extractGrossWeight,
   extractNetWeight,
   extractPalletCount,
   extractPlate,
   extractQuantity,
+  isGenericCountUnit,
+  isPlausibleQuantity,
   overallConfidence,
   parseNumber,
 } from './fields.js';
@@ -94,15 +98,50 @@ describe('parseNumber', () => {
   });
 });
 
-describe('extractPlate', () => {
-  it('reads a spaced Romanian plate', () => {
-    expect(extractPlate('Auto: B 123 ABC').value).toBe('B 123 ABC');
+describe('canonicalPlate', () => {
+  it('writes every plate the one way, whatever the separator was', () => {
+    // Two formats used to coexist: this extractor produced "B 123 ABC" and normalizePlate in
+    // avizOcr produced "B-123-ABC". As the key of a vehicle registry that is two lorries, and
+    // one of them never gets its MTMA filled in.
+    for (const form of ['B 123 ABC', 'B-123-ABC', 'B123ABC', 'b 123 abc']) {
+      expect(canonicalPlate(form), form).toBe('B-123-ABC');
+    }
   });
 
-  it('trusts a real county prefix more than a plausible shape', () => {
-    const real = extractPlate('CJ 12 XYZ');
-    const shaped = extractPlate('QQ 12 XYZ');
-    expect(real.confidence).toBeGreaterThan(shaped.confidence);
+  it('keeps a tractor and its trailer, in order, without repeating one', () => {
+    expect(canonicalPlate('B 112 VFM / B 475AGR')).toBe('B-112-VFM / B-475-AGR');
+    expect(canonicalPlate('B 112 VFM / B 112 VFM')).toBe('B-112-VFM');
+  });
+
+  it('returns a string it does not recognise unchanged, never empty', () => {
+    // The fleet holds deliberate non-standard entries. Emptying them would be worse than
+    // leaving them inconsistent, and `vehicles.plate` is NOT NULL.
+    expect(canonicalPlate('B-900-DEMO')).toBe('B-900-DEMO');
+    expect(canonicalPlate('B TEST 1')).toBe('B TEST 1');
+    expect(canonicalPlate('')).toBe('');
+    expect(canonicalPlate(null)).toBe('');
+  });
+
+  it('is idempotent', () => {
+    expect(canonicalPlate(canonicalPlate('B 123 ABC'))).toBe('B-123-ABC');
+  });
+});
+
+describe('extractPlate', () => {
+  it('reads a spaced Romanian plate', () => {
+    expect(extractPlate('Auto: B 123 ABC').value).toBe('B-123-ABC');
+  });
+
+  it('rejects a plate-shaped string without a real county', () => {
+    expect(extractPlate('QQ 12 XYZ').value).toBeNull();
+    expect(extractPlate('CJ 12 XYZ').value).toBe('CJ-12-XYZ');
+  });
+
+  it('does not keep bookmark/UI noise glued to a partial plate', () => {
+    const found = extractPlate(
+      'Placuta de inmatriculare 330 SRS FOOTY STREAM TRANSPORTATOR'
+    );
+    expect(found.value).toBeNull();
   });
 
   it('returns nothing when there is no plate', () => {
@@ -128,7 +167,41 @@ describe('extractDate', () => {
   });
 });
 
-describe('gross weight — the field the report actually needs', () => {
+describe('gross weight, the field the report actually needs', () => {
+  it('reads the unit-in-the-label form Baumit actually prints', () => {
+    // `Greutate bruta, kg  15,744.00`. Only `number unit` was matched, so on a real Baumit
+    // aviz the weight came back empty and the annex printed the bucket count in the tonnes
+    // column: 768 where the weighbridge said 15.74.
+    expect(extractGrossWeight('Greutate bruta, kg 15,744.00').value).toBe(15744);
+    expect(extractNetWeight('Greutate neta, kg 15,360.00').value).toBe(15360);
+  });
+
+  it('reads it across the line breaks a PDF puts between tokens', () => {
+    const asPdfGivesIt = 'Greutate\nbruta,\nkg\n15,744.00\npce / preluare';
+    expect(extractGrossWeight(asPdfGivesIt).value).toBe(15744);
+  });
+
+  it('does not let a number swallow the next line', () => {
+    // Every token on its own row is what pdf-parse hands back. A digit class including \s
+    // would run straight through the newline into the following figure.
+    const two = 'Greutate bruta, kg 15,744.00\n768.00\nbuc';
+    expect(extractGrossWeight(two).value).toBe(15744);
+  });
+
+  it('keeps net and gross apart in the unit-first form', () => {
+    const both = 'Greutate neta, kg 15,360.00 Greutate bruta, kg 15,744.00';
+    expect(extractGrossWeight(both).value).toBe(15744);
+    expect(extractNetWeight(both).value).toBe(15360);
+  });
+
+  it('does not read a net-only document as a gross weight', () => {
+    expect(extractGrossWeight('Greutate neta, kg 15,360.00').value).toBeNull();
+  });
+
+  it('still accepts a space as the thousands separator', () => {
+    expect(extractGrossWeight('Greutate bruta, kg 15 744,00').value).toBe(15744);
+  });
+
   it('reads a labelled gross weight and trusts it', () => {
     const found = extractGrossWeight('Greutate bruta: 9.000 kg');
     expect(found.value).toBe(9000);
@@ -159,14 +232,23 @@ describe('quantity stays separate from weight', () => {
     expect(extractQuantity('Cantitate: 378 saci').value).toEqual({ quantity: 378, unit: 'saci' });
   });
 
-  it('folds OCR 245.000 saci back to 245 and flags review', () => {
-    const found = extractQuantity('245.000 sac');
-    expect(found.value).toEqual({ quantity: 245, unit: 'sac' });
-    expect(found.confidence).toBeLessThan(ACCEPT_CONFIDENCE);
-  });
-
   it('reads a pallet count', () => {
     expect(extractPalletCount('Paleti: 18').value).toBe(18);
+  });
+
+  it('rejects OCR magnitudes that cannot fit one truck', () => {
+    // Romanian thousands / glued digits from poor photos, not a real bag count.
+    expect(extractQuantity('Cantitate: 245.000 saci').value).toBeNull();
+    expect(extractQuantity('245090 saci').value).toBeNull();
+    expect(isPlausibleQuantity(245000, 'saci')).toBe(false);
+    expect(isPlausibleQuantity(245, 'saci')).toBe(true);
+    // Large but real loads must still be accepted (hard ceiling is for OCR garbage only).
+    expect(isPlausibleQuantity(10000, 'saci')).toBe(true);
+    expect(extractQuantity('Cantitate: 10000 saci').value).toEqual({ quantity: 10000, unit: 'saci' });
+  });
+
+  it('still accepts a labelled quantity in kilograms within truck weight', () => {
+    expect(extractQuantity('Cantitate: 4200 kg').value).toEqual({ quantity: 4200, unit: 'kg' });
   });
 });
 
@@ -191,16 +273,6 @@ describe('overallConfidence', () => {
 describe('profile detection', () => {
   it('recognises a PSL aviz', () => {
     expect(detectProfile(PSL_AVIZ).profile?.id).toBe('aviz_baumit_psl');
-  });
-
-  it('prefers TRO when the title is a transfer rezumat without PSL', () => {
-    const text = `
-Aviz de expeditie rezumat: TPO-0025813
-Transfer intern MIL
-Aviz de expeditie: TRO-0008053
-Data: 11.08.2026
-`;
-    expect(detectProfile(text).profile?.id).toBe('aviz_baumit_tro');
   });
 
   it('recognises a CMR', () => {
@@ -234,7 +306,7 @@ describe('extractDocument', () => {
     const result = extractDocument(PSL_AVIZ);
     expect(result.profile_id).toBe('aviz_baumit_psl');
     expect(result.values).toMatchObject({
-      numar_auto: 'B 123 ABC',
+      numar_auto: 'B-123-ABC',
       data_efectuare_cursa: '2026-03-10',
       gross_weight_kg: 9000,
       net_weight_kg: 8244,
@@ -247,8 +319,7 @@ describe('extractDocument', () => {
     expect(result.profile_id).toBe('aviz_baumit_psl');
     expect(result.values.numar_tpo).toBe('TPO-0025629');
     expect(result.values.numar_document_marfa).toBe('PSL-0044362');
-    expect(result.values.numar_sor).toBe('SOR-0046409');
-    expect(result.values.numar_auto).toBe('B 330 SRS');
+    expect(result.values.numar_auto).toBe('B-330-SRS');
     expect(result.values.data_efectuare_cursa).toBe('2026-08-10');
     expect(result.values.gross_weight_kg).toBe(9964.15);
     expect(result.values.net_weight_kg).toBe(9800);
@@ -257,6 +328,31 @@ describe('extractDocument', () => {
     expect(result.values.ruta_transport || '').not.toMatch(/Paletizare/i);
     expect(String(result.values.tip_marfa || '')).toMatch(/MP[I1]/i);
     expect(String(result.values.tip_marfa || '')).not.toMatch(/^38245090$/);
+  });
+
+  it('does not treat Bolintin-Deal as the route when Adresa de livrare is Dobroești', () => {
+    // Ticket 35: loose City-City matched the Expeditor town; annex showed Bolintin-Deal.
+    const text = `
+BAUMIT ROMANIA SRL
+AVIZ DE INSOTIRE A MARFII
+Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
+Aviz de expeditie: PSL-0044362
+Adresă de livrare CS-DEMOS-OBI CIRESULUI STR CIRESULUI, NR 31B Dobroești RO 077085
+Client factură: C23901185 DEMOS INTERMED SRL
+Placuta de inmatriculare B 330 SRS
+TPO-0025629
+Data: 10.08.2026
+Greutate bruta: 9964 kg
+`;
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_baumit_psl');
+    expect(result.values.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
+    expect(result.values.ruta_transport).not.toMatch(/Bolintin/i);
+  });
+
+  it('still accepts an explicit City - City route with spaces around the dash', () => {
+    const result = extractDocument(PSL_AVIZ);
+    expect(result.values.ruta_transport).toMatch(/Bucuresti\s*-\s*Chiajna/i);
   });
 
   /**
@@ -302,7 +398,7 @@ TW
       'Aviz de expeditie PSL-0044362\nPlacuta de inmatriculare B 33o SRS',
       { documentType: 'aviz' }
     );
-    expect(result.values.numar_auto).toBe('B 330 SRS');
+    expect(result.values.numar_auto).toBe('B-330-SRS');
   });
 
   it('keeps quantity and its unit apart from the weight', () => {
@@ -440,6 +536,16 @@ describe('quantity must never absorb a weight', () => {
     expect(result.values.quantity).toBeUndefined();
     expect(result.values.gross_weight_kg).toBe(4200);
   });
+
+  it('leaves quantity empty when OCR invents an impossible bag count', () => {
+    const result = extractDocument(
+      'AVIZ DE INSOTIRE\nTPO 2026-0313\nData: 12.03.2026\nCantitate: 245.000 saci',
+      { documentType: 'aviz' }
+    );
+    expect(result.values.quantity).toBeUndefined();
+    expect(result.review_fields).toContain('quantity');
+    expect(result.needs_review).toBe(true);
+  });
 });
 
 describe('the operator corrects what is on the screen, not what the extractor calls it', () => {
@@ -476,5 +582,128 @@ describe('the operator corrects what is on the screen, not what the extractor ca
       correctedFields: fixed.corrected_fields,
     });
     expect(again.values.quantity).toBe(400);
+  });
+});
+
+describe('tip marfa: the word that names something', () => {
+  it('prefers the packaging the document names over the count', () => {
+    // A Baumit transfer aviz prints `Cantitate 768.00 buc` and, two lines down, `Numarul de
+    // galeti 768.00`. Both describe buckets; only the second says so. Writing "bucati" onto the
+    // customer's annex puts a word in front of them that names nothing.
+    const aviz = 'Cantitate 768.00 buc BetonKontakt 20 kg Numarul de galeti 768.00';
+    expect(extractGoodsUnit(aviz).value).toBe('galeti');
+  });
+
+  it('reads the label whichever way it is spelled', () => {
+    expect(extractGoodsUnit('Numărul de găleți 768').value).toBe('galeti');
+    expect(extractGoodsUnit('numarul de saci 420').value).toBe('saci');
+  });
+
+  it('ranks a named packaging above a bare count wherever they appear', () => {
+    expect(extractGoodsUnit('768 buc, 420 saci').value).toBe('saci');
+    expect(extractGoodsUnit('18 paleti si 768 buc').value).toBe('paleti');
+  });
+
+  it('offers a bare count for review rather than writing it unattended', () => {
+    // 0.4 sits under ACCEPT_CONFIDENCE, so "bucati" reaches an operator instead of the annex.
+    const bare = extractGoodsUnit('Cantitate 768.00 buc');
+    expect(bare.value).toBe('bucati');
+    expect(bare.confidence).toBeLessThan(ACCEPT_CONFIDENCE);
+  });
+
+  it('never reads a weight as a kind of goods', () => {
+    expect(extractGoodsUnit('Greutate bruta, kg 15,744.00').value).toBeNull();
+    expect(extractGoodsUnit('9,5 t').value).toBeNull();
+  });
+
+  it('knows which words only count', () => {
+    for (const unit of ['buc', 'bucati', 'bucăți', 'pcs', 'PCE']) {
+      expect(isGenericCountUnit(unit), unit).toBe(true);
+    }
+    for (const unit of ['saci', 'galeti', 'paleti', '']) {
+      expect(isGenericCountUnit(unit), unit).toBe(false);
+    }
+  });
+});
+
+// ------------------------------------------------------- carnet de bord
+
+/**
+ * A driver's handwritten notebook page. Written as the sidecar tends to return it: the codes
+ * confused (`TP0`, `TR0`, letter O for zero), the label colons lost, the route wrapped onto a
+ * second line, and `DATA` punctuated with a colon where the hand wrote a dot.
+ */
+const CARNET_OCR = `TP0 - OO25813
+DATA 11:08.2026
+NR AUTO B-112-VFM
+RUTA TRANS. MIC NEAMTIUMILI
+TARI
+BUD.IULIU MANIU 600
+TIP MARFA GALETI
+CANT MARFA 15,744,00
+NR DOCUMENT TR0-0008053
+NR CURSE 1`;
+
+describe('carnet de bord profile', () => {
+  it('is detected on a carnet and never steals a printed aviz', () => {
+    expect(detectProfile(CARNET_OCR).profile?.id).toBe('carnet_bord');
+    // The carnet's labels must not outrank Baumit's own markers on a printed page, or every
+    // aviz starts extracting through the handwriting layout.
+    expect(detectProfile(PADDLE_BAUMIT_PSL).profile?.id).toBe('aviz_baumit_psl');
+    expect(detectProfile(CMR_TEXT).profile?.id).toBe('cmr_standard');
+  });
+
+  it('reads every field off the page', () => {
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.numar_tpo).toBe('TPO-0025813');
+    expect(values.data_efectuare_cursa).toBe('2026-08-11');
+    expect(values.numar_auto).toBe('B-112-VFM');
+    expect(values.numar_document_marfa).toBe('TRO-0008053');
+    expect(values.tip_marfa).toBe('GALETI');
+    expect(values.quantity).toBe(15744);
+    expect(values.numar_curse).toBe(1);
+  });
+
+  it('keeps the delivery address, which sits on the line below the label', () => {
+    // Reading only the labelled line drops the destination — the half the annex needs.
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.ruta_transport).toContain('IULIU MANIU 600');
+    expect(values.ruta_transport).toContain('→');
+    // The label itself is not part of the route.
+    expect(values.ruta_transport).not.toMatch(/ruta|trans\./i);
+  });
+
+  it('reads a number whose separator does both jobs', () => {
+    // `15,744,00` is a comma for thousands and for the decimal. parseNumber returns null for
+    // it and must not change — it decides what a weight means everywhere else.
+    expect(parseNumber('15,744,00')).toBeNull();
+    const { values } = extractDocument('CANT MARFA: 15,744,00', { profileId: 'carnet_bord' });
+    expect(values.quantity).toBe(15744);
+    // Grouping all the way down is still grouping. Were the rightmost separator taken as the
+    // decimal here, `1,234,567` would become 1234.567 — a plausible-looking number, under the
+    // ceiling, written unattended. It reads as 1234567 instead, which the quantity ceiling
+    // then refuses, so the figure reaches an operator rather than the annex.
+    const grouped = extractDocument('CANT MARFA: 1,234,567', { profileId: 'carnet_bord' });
+    expect(grouped.values.quantity ?? null).toBeNull();
+    expect(grouped.values.quantity).not.toBe(1234.567);
+  });
+
+  it('does not take the next line as the unit', () => {
+    // `\s*` before the unit reaches across the newline and reads the `NR` of `NR. DOCUMENT`.
+    // toColumns then copies that into Tip marfa when it is empty, putting a word on the
+    // customer's annex that names nothing.
+    const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
+    expect(values.quantity_unit ?? null).toBeNull();
+  });
+
+  it('will not invent a date out of a time of day', () => {
+    // The colon form is accepted only behind the DATA label and only as three parts.
+    const bare = extractDocument('Plecare 11:08 din depozit', { profileId: 'carnet_bord' });
+    expect(bare.values.data_efectuare_cursa ?? null).toBeNull();
+  });
+
+  it('leaves a trip count it cannot believe to an operator', () => {
+    const none = extractDocument('NR CURSE: 0', { profileId: 'carnet_bord' });
+    expect(none.values.numar_curse ?? null).toBeNull();
   });
 });

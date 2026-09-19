@@ -1,5 +1,5 @@
 /**
- * Vehicle operating cost model — lei per km / hour / stop / kg.
+ * Vehicle operating cost model, lei per km / hour / stop / kg.
  * Vehicle fields override company defaults; missing pieces stay null (never invent).
  */
 

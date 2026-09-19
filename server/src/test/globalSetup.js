@@ -2,7 +2,7 @@
  * Creates the test database if it is missing, then brings it up to the current schema.
  *
  * The migration is the same one production uses. A schema built any other way stops catching
- * schema bugs, which is most of what these tests exist for — a route selecting a column that
+ * schema bugs, which is most of what these tests exist for, a route selecting a column that
  * does not exist is invisible until something runs it against the real thing.
  */
 import { spawnSync } from 'child_process';

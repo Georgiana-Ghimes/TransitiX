@@ -2,7 +2,7 @@
  * Documents sent from the road.
  *
  * Photos / PDFs land in the same aviz_documents + document_batches pipeline as office
- * uploads (created_from: driver). Trip is optional — the cab can send paperwork before
+ * uploads (created_from: driver). Trip is optional, the cab can send paperwork before
  * the office links a cursă on /avize.
  */
 import { Router } from 'express';
@@ -11,7 +11,7 @@ import { authRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import { publicUploadUrl } from '../uploadPath.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
-import { logEvent, upload, extractBatchDocuments, uploadErrorMessage } from './documents.js';
+import { logEvent, upload, extractBatchDocuments, failStaleUploadedAvize, uploadErrorMessage } from './documents.js';
 
 const router = Router();
 router.use(authRequired);
@@ -89,10 +89,11 @@ async function batchForUpload(client, { companyId, userId, trip, documentType })
 /** Recent documents this driver uploaded (any trip / none). */
 router.get('/', async (req, res) => {
   try {
+    await failStaleUploadedAvize(req.user.company_id).catch(() => {});
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const docs = await query(
       `SELECT id, original_filename, file_url, document_type, status, needs_review,
-              numar_tpo, trip_id, created_at, uploaded_from
+              numar_tpo, trip_id, created_at, uploaded_from, extraction_source
        FROM aviz_documents
        WHERE company_id = $1 AND uploaded_by = $2 AND uploaded_from = 'driver'
        ORDER BY created_at DESC
@@ -169,7 +170,7 @@ router.post('/', (req, res) => {
 
       const { notifyCmrPending, notifyDriverUpload } = await import('../lib/officeNotifications.js');
       const driverName = req.user.name || req.user.full_name;
-      // Always ping the office bell — including uploads without a trip (previous gap).
+      // Always ping the office bell, including uploads without a trip (previous gap).
       await notifyDriverUpload(req.user.company_id, {
         driverName,
         documentType,

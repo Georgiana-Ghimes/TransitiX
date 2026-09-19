@@ -141,6 +141,25 @@ describe('document findings', () => {
     expect(unlinked[0].subject.label).toBe('dubla-a.pdf');
     expect(found.findings.some((f) => f.rule === 'document_duplicate_tpo')).toBe(true);
   });
+
+  it('does not ring the bell for a TPO that was simply driven twice', async () => {
+    const tpo = `TPO CURSE-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      original_filename: 'cursa-1.pdf', numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044633', numar_auto: 'B-34-BAU',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+    });
+    await makeAviz(ctx.company.id, {
+      original_filename: 'cursa-2.pdf', numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044701', numar_auto: 'B-34-BAU',
+      ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+    });
+    const found = await findings();
+    const mine = found.findings.filter(
+      (f) => f.rule === 'document_duplicate_tpo' && String(f.subject.id).includes(tpo.toLowerCase()),
+    );
+    expect(mine).toEqual([]);
+  });
 });
 
 describe('dismissal', () => {

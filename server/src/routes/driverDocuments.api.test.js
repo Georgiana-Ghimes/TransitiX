@@ -3,7 +3,7 @@ import app from '../app.js';
 import { query } from '../db.js';
 import { auth, closePool, dropCompany, makeTrip, request, seedCompany } from '../test/harness.js';
 
-/** A minimal PDF body — the pipeline only needs bytes and a mimetype here. */
+/** A minimal PDF body, the pipeline only needs bytes and a mimetype here. */
 const PDF = Buffer.from('%PDF-1.4 test\n%%EOF\n');
 
 let ctx;
@@ -190,7 +190,7 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
   /**
    * `/avize` lists office scans and driver photos in one table, but the two arrived through
    * different extractors. Re-extracting a driver photo on the avize/Vision path rewrote it with
-   * a stub wherever no Vision key is configured — the default in the documents companion, where
+   * a stub wherever no Vision key is configured, the default in the documents companion, where
    * paddle is the only provider. The suite runs with no key, so this is that configuration.
    */
   it('re-runs the batch extractor instead of stubbing the row', async () => {
@@ -210,8 +210,11 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
     );
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('reextract_background');
 
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
     expect(after.status).toBe('extracted');
@@ -221,10 +224,9 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
 
 describe('POST /api/avize/extract when OCR runs long', () => {
   /**
-   * Paddle on a CPU VM can take minutes, which is fine for a background pass and not fine for
-   * somebody holding a button down. The interactive path gives up early, then hands the same
-   * document to the background pass — an error would have left the operator to press
-   * Re-extrage by hand for a document that is perfectly readable, just slow.
+   * Re-extract always answers 202 and runs in the background (tunnel-safe). A sidecar that
+   * accepts /health but never finishes /ocr still exhausts the background budget and is marked
+   * failed — the list must not spin forever.
    */
   const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
   const saved = {};
@@ -232,7 +234,16 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
   beforeAll(async () => {
     const http = await import('node:http');
-    hanging = http.createServer(() => { /* stands in for paddle: never answers */ });
+    const { resetOcrCapabilityCache } = await import('../lib/ocr/readText.js');
+    // Health must succeed (otherwise extract refuses with OCR_DOWN). OCR itself never answers.
+    hanging = http.createServer((req, res) => {
+      if ((req.url || '').startsWith('/health')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      // /ocr/json — hang until the client aborts
+    });
     await new Promise((resolve) => hanging.listen(0, '127.0.0.1', resolve));
 
     for (const key of KEYS) saved[key] = process.env[key];
@@ -240,6 +251,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     process.env.PADDLE_OCR_URL = `http://127.0.0.1:${hanging.address().port}`;
     process.env.OCR_TIMEOUT_MS = '80';
     process.env.OCR_INTERACTIVE_TIMEOUT_MS = '80';
+    resetOcrCapabilityCache();
   });
 
   afterAll(async () => {
@@ -247,6 +259,8 @@ describe('POST /api/avize/extract when OCR runs long', () => {
       if (saved[key] === undefined) delete process.env[key];
       else process.env[key] = saved[key];
     }
+    const { resetOcrCapabilityCache } = await import('../lib/ocr/readText.js');
+    resetOcrCapabilityCache();
     hanging?.closeAllConnections?.();
     await new Promise((resolve) => hanging.close(resolve));
   });
@@ -268,19 +282,23 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
     expect(res.status).toBe(202);
     expect(res.body.extraction_pending).toBe(true);
-    expect(res.body.reason).toBe('ocr_timeout_retry');
+    expect(res.body.reason).toBe('reextract_background');
+    // Figures from the earlier pass are still on the 202 body / row until a better read replaces them.
+    expect(res.body.numar_tpo).toBe('TPO-0025629');
 
-    // Pending on the row too, so the list shows "Se procesează…" rather than a finished read,
-    // and the figures from the earlier pass stay put until a better one replaces them.
+    // Hanging sidecar: background budget expires too. Mark failed so the list does not spin forever.
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
-    expect(after.status).toBe('uploaded');
-    expect(after.extraction_source).toBe('paddle');
+    expect(after.status).toBe('extracted');
+    expect(after.needs_review).toBe(true);
+    expect(after.extraction_source).toBe('none');
+    expect(after.extracted_data?.extract_error).toMatch(/timpul alocat/i);
   });
 
   /**
    * A scan reaches the sidecar as a PDF and is rasterized there. Node used to skip PDFs, so the
-   * sidecar was never called for one — reaching the clock at all is what proves it is now.
+   * sidecar was never called for one, reaching the clock at all is what proves it is now.
    */
   it('sends a text-poor PDF to the sidecar instead of giving up on it', async () => {
     const uploaded = await upload(ctx.driverToken, trip.id, 'scanata.pdf');
@@ -288,6 +306,6 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken)).send({ id: docId });
     expect(res.status).toBe(202);
-    expect(res.body.reason).toBe('ocr_timeout_retry');
+    expect(res.body.reason).toBe('reextract_background');
   });
 });

@@ -44,7 +44,7 @@ export function routeProgress(stops = []) {
  * The one button this stop needs next.
  *
  * A stop that has not been reached offers "arrived"; once arrived, the choice is done or
- * failed. A closed stop offers nothing — undoing is the dispatcher's job, not something a
+ * failed. A closed stop offers nothing, undoing is the dispatcher's job, not something a
  * driver should trip over while parking.
  */
 export function stopActions(stop) {
@@ -73,7 +73,7 @@ export function formatWindow(stop) {
   return `${from || '…'}–${to || '…'}`;
 }
 
-/** "1.200 kg · 4 paleți" — only the parts that are actually set. */
+/** "1.200 kg · 4 paleți", only the parts that are actually set. */
 export function formatStopLoad(stop) {
   const parts = [];
   const kg = toFiniteNumber(stop?.weight_kg);

@@ -40,7 +40,7 @@ describe('GET /api/reports/sources', () => {
     expect((await api().get('/api/reports/sources')).status).toBe(401);
   });
 
-  it('refuses a driver — reporting is an office screen', async () => {
+  it('refuses a driver, reporting is an office screen', async () => {
     expect((await api().get('/api/reports/sources').set(auth(ctx.driverToken))).status).toBe(403);
   });
 });
@@ -104,9 +104,22 @@ describe('POST /api/reports/preview', () => {
     expect(history.body.total).toBe(0);
   });
 
-  it('warns that a template without a weight column cannot be reconciled', async () => {
+  it('does not warn weight_not_exported on Anexa RAI, Cantitate already carries weighbridge tons', async () => {
+    // Same contract as reportWarnings unit tests: cantitate_marfa maps gross_weight_kg → t,
+    // so the sheet is reconcilable without a separate weight column.
     const res = await api().post('/api/reports/preview').set(auth(ctx.adminToken))
       .send({ template_id: raiTemplate.id, filters: { status: 'confirmed' } });
+    expect(res.status).toBe(200);
+    expect(res.body.warnings.map((w) => w.code)).not.toContain('weight_not_exported');
+  });
+
+  it('warns that a template without weight or Cantitate cannot be reconciled against the weighbridge', async () => {
+    const created = await api().post('/api/reports/templates/from-preset').set(auth(ctx.adminToken))
+      .send({ preset_id: 'centralizator_km', name: `Km fără greutate ${Date.now()}` });
+    expect(created.status).toBe(201);
+    const res = await api().post('/api/reports/preview').set(auth(ctx.adminToken))
+      .send({ template_id: created.body.id, filters: { status: 'confirmed' } });
+    expect(res.status).toBe(200);
     expect(res.body.warnings.map((w) => w.code)).toContain('weight_not_exported');
   });
 
@@ -285,5 +298,42 @@ describe('export history', () => {
     } finally {
       await dropCompany(other.company.id);
     }
+  });
+
+  it('deletes one export and can clear the rest', async () => {
+    const template = (await api().post('/api/reports/templates/from-preset')
+      .set(auth(ctx.adminToken))
+      .send({ preset_id: 'baumit_greutati', name: `Del ${Date.now()}` })).body;
+    await makeAviz(ctx.company.id, {
+      original_filename: 'del-a.pdf', numar_auto: 'B 111 DEL', gross_weight_kg: 1000,
+    });
+    await makeAviz(ctx.company.id, {
+      original_filename: 'del-b.pdf', numar_auto: 'B 222 DEL', gross_weight_kg: 2000,
+    });
+
+    for (const plate of ['B 111 DEL', 'B 222 DEL']) {
+      await api().post('/api/reports/export').set(auth(ctx.adminToken))
+        .send({ template_id: template.id, filters: { plate } })
+        .buffer(true).parse((r, cb) => { r.on('data', () => {}); r.on('end', () => cb(null, null)); });
+    }
+
+    const before = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(before.body.exports.length).toBeGreaterThanOrEqual(2);
+    const firstId = before.body.exports[0].id;
+
+    const one = await api().delete(`/api/reports/exports/${firstId}`).set(auth(ctx.adminToken));
+    expect(one.status).toBe(200);
+    expect(one.body.id).toBe(firstId);
+
+    const mid = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(mid.body.exports.some((e) => e.id === firstId)).toBe(false);
+
+    const clear = await api().delete('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(clear.status).toBe(200);
+    expect(clear.body.deleted).toBeGreaterThanOrEqual(1);
+
+    const after = await api().get('/api/reports/exports').set(auth(ctx.adminToken));
+    expect(after.body.exports).toEqual([]);
+    expect(after.body.total).toBe(0);
   });
 });

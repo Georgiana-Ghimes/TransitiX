@@ -2,8 +2,8 @@
  * Romanian address parsing and normalization.
  *
  * Addresses in Transitix are one free-text field ("Cluj-Napoca, str. Fabricii 12") with no
- * separate city or county column, so everything downstream — deduping locations, keying the
- * geocode cache, judging whether a geocode is likely to succeed — starts here.
+ * separate city or county column, so everything downstream (deduping locations, keying the
+ * geocode cache, judging whether a geocode is likely to succeed) starts here.
  *
  * The output is deliberately conservative: this module never invents a coordinate, only a
  * normalized shape and an honest score for how geocodable the address looks.
@@ -270,7 +270,7 @@ export function extractHouseNumber(streetTokens) {
 
   const isNumber = (token) => /^\d+[a-z]?$/.test(token);
 
-  // An explicit "nr" wins outright — that is the author telling us which number matters.
+  // An explicit "nr" wins outright, that is the author telling us which number matters.
   const nrIndex = tokens.indexOf('nr');
   if (nrIndex !== -1) {
     const candidate = tokens[nrIndex + 1];
@@ -311,7 +311,7 @@ export function addressKey(input) {
 
 /**
  * How likely is this address to geocode to the right building?
- * Score is a prediction, not a measurement — it decides review priority, nothing more.
+ * Score is a prediction, not a measurement, it decides review priority, nothing more.
  */
 export function assessAddress(input) {
   const parsed = typeof input === 'string' ? parseRomanianAddress(input) : input;
@@ -336,7 +336,7 @@ export function assessAddress(input) {
   else flags.push('fara_judet');
 
   // Without a house number the best any geocoder can do is the middle of the street,
-  // which is not a delivery point — those always need a human to drop the pin.
+  // which is not a delivery point, those always need a human to drop the pin.
   if (!parsed.hasHouseNumber) score = Math.min(score, 0.75);
 
   if (parsed.isRural) {

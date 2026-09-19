@@ -64,7 +64,7 @@ describe('prefillFromTrip', () => {
   });
 
   it('turns a pg NUMERIC string into a number', () => {
-    // pg hands NUMERIC back as a string. Left alone, the weight box would carry "9000.00" —
+    // pg hands NUMERIC back as a string. Left alone, the weight box would carry "9000.00",
     // shown that way on the driver's form and stored that way in the note.
     const data = prefillFromTrip({ ...TRIP, gross_weight_kg: '9000.00' }, COMPANY);
     expect(data.greutate_bruta_kg).toBe(9000);

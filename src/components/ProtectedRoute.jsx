@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 
 const DefaultFallback = () => (
@@ -9,7 +9,8 @@ const DefaultFallback = () => (
 );
 
 export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthenticatedElement }) {
-  const { isAuthenticated, isLoadingAuth, authChecked, checkUserAuth } = useAuth();
+  const { user, isAuthenticated, isLoadingAuth, authChecked, checkUserAuth } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (!authChecked && !isLoadingAuth) {
@@ -23,6 +24,14 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
 
   if (!isAuthenticated) {
     return unauthenticatedElement;
+  }
+
+  // A temporary password set by an admin: nothing else opens until it is replaced. The server
+  // refuses the calls anyway; this only saves the person a screen full of errors.
+  if (user?.must_change_password) {
+    const returnTo = `${location.pathname}${location.search}`;
+    const q = returnTo && returnTo !== '/' ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
+    return <Navigate to={`/change-password${q}`} replace />;
   }
 
   return <Outlet />;

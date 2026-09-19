@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
+    "dev": "node src/migrate.js && node --watch src/index.js",
+    "start": "node src/migrate.js && node src/index.js",
     "migrate": "node src/migrate.js",
     "prune:uploads": "node src/pruneUploads.js",
     "seed": "node src/seed.js",

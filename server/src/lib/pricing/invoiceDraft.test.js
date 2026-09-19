@@ -130,7 +130,7 @@ describe('headerTripId', () => {
 
 describe('describeDraft', () => {
   it('names the TPOs being billed', () => {
-    expect(describeDraft([TRIP])).toBe('Servicii transport — TPO 2026-0311');
+    expect(describeDraft([TRIP])).toBe('Servicii transport, TPO 2026-0311');
   });
 
   it('stops listing once the description would be unreadable', () => {

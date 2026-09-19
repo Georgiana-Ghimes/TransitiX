@@ -1,5 +1,5 @@
 /**
- * Business validation for the office forms — Client, Șofer, Factură, Produs depozit.
+ * Business validation for the office forms, Client, Șofer, Factură, Produs depozit.
  *
  * These rules exist twice on purpose: the API ships without `src/` (see `server/Dockerfile`), so
  * the server keeps its own copy in `server/src/lib/validation/entityInput.js`. The pair is held
@@ -21,7 +21,7 @@ const PHONE_RE = /^[+()\d][\d\s().-]{5,20}$/;
 const PERSON_NAME_RE = /^[\p{L}]+(?:[\s-]+[\p{L}]+)*$/u;
 /**
  * Deliberately loose. A Romanian CUI is `RO` plus digits, but the same column holds the VAT id of
- * any EU partner — `ATU12345678` has three letters, `IE1234567FA` ends in them — so pinning the
+ * any EU partner, `ATU12345678` has three letters, `IE1234567FA` ends in them, so pinning the
  * shape would refuse real clients. This only rules out text that identifies nobody: it has to
  * carry at least one digit.
  */
@@ -87,7 +87,7 @@ function checkVatId(errors, field, value, label) {
   if (text === '') return;
   if (text.length > 20) errors[field] = `${capitalize(label)}: maxim 20 caractere.`;
   else if (!VAT_ID_RE.test(text) || !/\d/.test(text)) {
-    errors[field] = `${capitalize(label)} invalid — litere și cifre (ex. RO12345678).`;
+    errors[field] = `${capitalize(label)} invalid: litere și cifre (ex. RO12345678).`;
   }
 }
 
@@ -253,7 +253,7 @@ export function validateDriver(form = {}) {
   ];
   for (const [numberField, expiryField, label] of pairs) {
     if (!isBlank(form[numberField]) && isBlank(form[expiryField]) && !errors[expiryField]) {
-      errors[expiryField] = `Completează expirarea ${label} — altfel nu intră în alerte.`;
+      errors[expiryField] = `Completează expirarea ${label}, altfel nu intră în alerte.`;
     }
   }
 

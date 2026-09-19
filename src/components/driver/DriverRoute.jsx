@@ -30,7 +30,7 @@ function todayIso() {
 /**
  * The driver's route for one day.
  *
- * Every stop is a card with its own action button — no drag, no menus, and touch targets
+ * Every stop is a card with its own action button, no drag, no menus, and touch targets
  * sized for a hand in a truck. Marking a stop re-reads the route from the response instead
  * of guessing locally: the server also moves the order and the route status, and the screen
  * must not disagree with it.
@@ -137,7 +137,7 @@ export default function DriverRoute() {
 
       {data?.preview && (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Mod previzualizare dispecer — vezi rutele alocate din firmă, așa cum le vede șoferul.
+          Mod previzualizare dispecer: vezi rutele alocate din firmă, așa cum le vede șoferul.
         </p>
       )}
 

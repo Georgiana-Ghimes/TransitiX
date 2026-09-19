@@ -5,7 +5,7 @@ import { AlertTriangle, RotateCw } from 'lucide-react';
  * Catches a render error so one broken screen does not blank the whole app.
  *
  * Without this, a single null dereference in a `.map()` leaves the driver or the dispatcher
- * looking at white — no message, no way back, and nothing in the interface saying what happened.
+ * looking at white, no message, no way back, and nothing in the interface saying what happened.
  * React itself printed "Consider adding an error boundary" in this project's console before this
  * existed.
  *
@@ -51,7 +51,7 @@ export default class ErrorBoundary extends React.Component {
             <h2 className="text-base font-semibold text-slate-800">Ecranul acesta a crăpat</h2>
           </div>
           <p className="text-sm text-slate-600">
-            Restul aplicației funcționează — poți naviga în altă parte din meniu. Nimic din ce ai
+            Restul aplicației funcționează. Poți naviga în altă parte din meniu. Nimic din ce ai
             salvat deja nu s-a pierdut.
           </p>
           <p className="text-xs text-slate-400 font-mono break-words">

@@ -1,8 +1,8 @@
 /**
  * Translation between our model and VROOM's.
  *
- * Everything here is pure. The optimizer is three steps — collect the points, measure them,
- * solve — and only the middle one touches the network, so the interesting decisions (what
+ * Everything here is pure. The optimizer is three steps (collect the points, measure them,
+ * solve) and only the middle one touches the network, so the interesting decisions (what
  * counts as a capacity, what a skill is, how a solved route becomes stops) stay testable.
  *
  * The vocabulary maps like this:
@@ -26,7 +26,7 @@ import { minutesFromTime } from '../routing/routePlan.js';
 
 /**
  * The three numbers a Romanian dispatcher plans on. VROOM amounts are integers, so volume
- * is carried in hundredths of a cubic metre — a centilitre of headroom is not a real
+ * is carried in hundredths of a cubic metre, a centilitre of headroom is not a real
  * constraint, but rounding 2.4 mc down to 2 is.
  */
 export const CAPACITY_DIMENSIONS = [
@@ -62,7 +62,7 @@ function normalizeSkill(value) {
 
 /**
  * Every capability mentioned by either side, numbered. Sorted so the same fleet and the same
- * orders always produce the same problem — a solver run has to be reproducible before a
+ * orders always produce the same problem, a solver run has to be reproducible before a
  * scenario comparison means anything.
  */
 export function skillVocabulary(orders = [], vehicles = []) {
@@ -97,7 +97,7 @@ export function demandVector(order) {
 }
 
 /**
- * What a vehicle can hold. An unset dimension is not zero — it means nobody recorded it, so
+ * What a vehicle can hold. An unset dimension is not zero, it means nobody recorded it, so
  * it must not silently reject every order. It becomes the total on offer, which constrains
  * nothing while still being a real number VROOM can add up.
  */

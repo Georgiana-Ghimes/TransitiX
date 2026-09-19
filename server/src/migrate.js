@@ -3,7 +3,7 @@ import { pool } from './db.js';
 const sql = `
 -- gen_random_uuid() is built into PostgreSQL 13 and later, which is the floor this schema
 -- targets (compose pins 16). pgcrypto used to be pulled in for it and nothing else, and on a
--- locked-down host the extension can be blocked from loading at all — which failed the whole
+-- locked-down host the extension can be blocked from loading at all, which failed the whole
 -- migration for a function the server already provides.
 
 CREATE TABLE IF NOT EXISTS companies (
@@ -596,7 +596,7 @@ UPDATE trips SET distance_source = 'manual'
   WHERE distance_km IS NOT NULL AND distance_source IS NULL;
 
 -- ---------------------------------------------------------------------------
--- P1: the distribution layer — orders become stops, stops become routes.
+-- P1: the distribution layer, orders become stops, stops become routes.
 --
 -- Strictly additive. The trips table stays exactly what it is (the CMR transport
 -- document, which is what Romanian FTL actually needs); a route can generate one trip
@@ -686,7 +686,7 @@ CREATE INDEX IF NOT EXISTS idx_route_stops_company ON route_stops(company_id);
 CREATE INDEX IF NOT EXISTS idx_route_stops_route ON route_stops(route_id, seq);
 
 -- Reordering rewrites every seq in one statement, so the uniqueness check has to wait
--- until commit — otherwise any swap collides mid-update.
+-- until commit, otherwise any swap collides mid-update.
 ALTER TABLE route_stops DROP CONSTRAINT IF EXISTS route_stops_route_seq_uniq;
 ALTER TABLE route_stops ADD CONSTRAINT route_stops_route_seq_uniq
   UNIQUE (route_id, seq) DEFERRABLE INITIALLY DEFERRED;
@@ -812,7 +812,7 @@ ALTER TABLE routes ADD COLUMN IF NOT EXISTS planned_cost NUMERIC(12,2);
 ALTER TABLE routes ADD COLUMN IF NOT EXISTS actual_cost NUMERIC(12,2);
 
 -- ---------------------------------------------------------------------------
--- P3: live execution — telematics history + exceptions.
+-- P3: live execution, telematics history + exceptions.
 --
 -- gps_logs stays as the "last known position" projection the existing map already reads.
 -- telematics_positions is the full trail. Every ingest writes both.
@@ -1022,6 +1022,32 @@ ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS vehicle_class TEXT;
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS mma_kg NUMERIC(10,2);
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS body_type TEXT;
 CREATE INDEX IF NOT EXISTS idx_vehicles_class ON vehicles(company_id, vehicle_class);
+-- One spelling per plate: B-112-VFM.
+-- Two coexisted, because extractPlate wrote a spaced form and normalizePlate a hyphenated
+-- one. Untidy on a screen; as the key of a vehicle registry it is two lorries, and one of
+-- them never gets its MTMA filled in. The county list here is the one canonicalPlate() uses,
+-- so the backfill and the code cannot disagree about what counts as a plate.
+-- Anything unrecognised is left exactly as it is: the fleet holds deliberate non-standard
+-- entries (B-900-DEMO, B TEST 1) and plate is NOT NULL.
+UPDATE vehicles SET plate = regexp_replace(upper(btrim(plate)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3')
+ WHERE upper(btrim(plate)) ~ '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?[0-9]{2,3}[ -]?[A-Z]{2,3}$'
+   AND plate <> regexp_replace(upper(btrim(plate)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3');
+
+UPDATE aviz_documents SET numar_auto = regexp_replace(upper(btrim(numar_auto)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3')
+ WHERE numar_auto IS NOT NULL
+   AND upper(btrim(numar_auto)) ~ '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?[0-9]{2,3}[ -]?[A-Z]{2,3}$'
+   AND numar_auto <> regexp_replace(upper(btrim(numar_auto)), '^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)[ -]?([0-9]{2,3})[ -]?([A-Z]{2,3})$', '\\1-\\2-\\3');
+
+-- A plate read off an aviz is enough to open a vehicle record. The make and model are not
+-- known at that point, and waiting for them would mean losing the plate.
+ALTER TABLE vehicles ALTER COLUMN brand DROP NOT NULL;
+ALTER TABLE vehicles ALTER COLUMN model DROP NOT NULL;
+
+-- Rows the OCR opened on its own. They may be a misread, so the screen can say "this one
+-- arrived by itself, check it" instead of presenting it as fleet the office entered.
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS added_by_ocr BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_vehicles_plate ON vehicles(company_id, plate);
+
 
 -- The depot every route leaves from and returns to. Kept as a location so it is geocoded
 -- like any other point; more than one per company is already possible.
@@ -1463,6 +1489,31 @@ CREATE INDEX IF NOT EXISTS idx_access_leads_status_created
   ON access_leads (status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_access_leads_email
   ON access_leads (LOWER(email));
+
+-- Self sign-up, Google sign-in and accounts an admin adds by hand.
+--
+-- created_via says how the row came to exist: signup, google, invite, manual. NULL means it
+-- predates this column, and only those rows are backfilled as verified below. The backfill runs on
+-- every start, so it must never touch a row created since: a self sign-up waiting on its link would
+-- otherwise be verified by the next restart.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_via TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+-- Only the hash is stored; the plaintext exists in the email and nowhere else.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_token_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verify_expires_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT;
+-- Set for an account an admin created with a temporary password. Every API call except /api/auth
+-- is refused until the person has chosen their own.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+UPDATE users SET email_verified_at = COALESCE(last_login, created_at)
+WHERE email_verified_at IS NULL AND created_via IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_users_verify_token ON users (email_verify_token_hash)
+  WHERE email_verify_token_hash IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users (google_sub)
+  WHERE google_sub IS NOT NULL;
 
 `;
 

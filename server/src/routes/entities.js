@@ -19,7 +19,8 @@ import {
   isPgUniqueViolation,
   nextAvizStatusOnSave,
 } from '../lib/concurrency.js';
-import { tpoExistsForOther } from '../lib/avizQuery.js';
+import { duplicateConsignmentExists } from '../lib/avizQuery.js';
+import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
@@ -90,7 +91,7 @@ async function insertEntity(client, cfg, data) {
 
 /**
  * Decides who owns trips.distance_km for this write. `distance_source` is server-controlled
- * on purpose — it is not in the Trip writable list, so a client cannot claim a value is ours.
+ * on purpose, it is not in the Trip writable list, so a client cannot claim a value is ours.
  */
 function applyTripDistance(data, previous) {
   if (!Object.prototype.hasOwnProperty.call(data, 'distance_km')) return;
@@ -419,10 +420,10 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     const row = serializeRow(result.rows[0]);
 
     if (req.params.entity === 'AvizDocument') {
-      row.duplicate_tpo = await tpoExistsForOther(query, {
+      row.duplicate_tpo = await duplicateConsignmentExists(query, {
         companyId: req.user.company_id,
-        tpo: row.numar_tpo,
-        exceptId: row.id,
+        row: repairAvizFromStored(row),
+        decorate: (other) => repairAvizFromStored(serializeRow(other)),
       });
     }
 

@@ -61,7 +61,7 @@ export function startsAtFromRoute(route) {
 /**
  * Promotes a solved scenario into real routes for that day.
  *
- * Refuses if any route that day is already live — the optimizer proposes, it does not
+ * Refuses if any route that day is already live, the optimizer proposes, it does not
  * yank a truck off the road. Replaces only draft / planificata routes.
  */
 export async function promoteScenario(db, {

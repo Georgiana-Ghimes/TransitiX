@@ -3,7 +3,7 @@
  *
  * Photon returns candidates but no confidence score, so scoring happens here: every
  * candidate is compared against the parsed query and gets a 0–1 number that decides whether
- * the pin lands unattended or goes to a human. That score is the whole point of this module —
+ * the pin lands unattended or goes to a human. That score is the whole point of this module,
  * a geocoder that always answers is worse than one that admits when it guessed.
  */
 
@@ -51,7 +51,7 @@ export function buildQueryText(parsed) {
 export function buildSearchUrl(baseUrl, parsed, { limit = DEFAULT_LIMIT, bbox = RO_BBOX, lang = DEFAULT_LANG } = {}) {
   const q = buildQueryText(parsed);
   if (!q.trim() || q.trim() === 'Romania') {
-    throw httpError('Adresă goală — nu se poate geocoda', 400);
+    throw httpError('Adresă goală, nu se poate geocoda', 400);
   }
   const params = new URLSearchParams({ q, limit: String(limit), lang });
   if (bbox) params.set('bbox', bbox);

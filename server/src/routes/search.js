@@ -11,7 +11,7 @@ function escapeLike(value) {
   return String(value).replace(/[%_\\]/g, '\\$&');
 }
 
-/** Lightweight office search — avoids prefetching hundreds of entities in the browser. */
+/** Lightweight office search, avoids prefetching hundreds of entities in the browser. */
 router.get('/', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();

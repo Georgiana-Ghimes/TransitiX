@@ -7,6 +7,14 @@
  */
 export const RULES = [
   {
+    id: 'vehicle_no_mma',
+    severity: 'error',
+    label: 'Vehicul fără MTMA',
+    consequence: 'Taxa de zonă București nu poate fi calculată pentru cursele lui, fiindcă '
+      + 'tranșa PMB se alege după masa totală maximă autorizată din talon.',
+    fix: 'Deschide Autoturisme și completează MTMA pentru vehiculul semnalat.',
+  },
+  {
     id: 'trip_no_tariff',
     severity: 'error',
     label: 'Cursă fără tarif valabil',
@@ -17,7 +25,7 @@ export const RULES = [
     id: 'tpo_total_mismatch',
     severity: 'error',
     label: 'Total TPO diferit de suma liniilor',
-    consequence: 'Documentul nu-și mai explică propria cifră — una dintre cele două a fost editată separat.',
+    consequence: 'Documentul nu-și mai explică propria cifră, una dintre cele două a fost editată separat.',
     fix: 'Recalculează TPO-ul sau verifică liniile adăugate manual.',
   },
   {
@@ -58,9 +66,9 @@ export const RULES = [
   {
     id: 'document_duplicate_tpo',
     severity: 'warning',
-    label: 'Același TPO pe mai multe documente',
-    consequence: 'Anexa va conține același număr de mai multe ori și nu se mai poate reconcilia.',
-    fix: 'Corectează numărul pe documentele greșite.',
+    label: 'Același aviz încărcat de mai multe ori',
+    consequence: 'Anexa va conține de două ori același transport, deci clientul e facturat dublu.',
+    fix: 'Șterge încărcarea în plus. Un TPO cu mai multe curse nu intră aici.',
   },
 ];
 

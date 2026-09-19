@@ -39,7 +39,7 @@ export async function notifyClientsOfDelay(stops, { fromSeq, delayMin, routeCode
     try {
       await sendEmail({
         to,
-        subject: `Actualizare ETA${routeCode ? ` — ${routeCode}` : ''}`,
+        subject: `Actualizare ETA${routeCode ? `, ${routeCode}` : ''}`,
         text: [
           stop.client_name ? `Bună ziua, ${stop.client_name},` : 'Bună ziua,',
           '',
@@ -57,7 +57,7 @@ export async function notifyClientsOfDelay(stops, { fromSeq, delayMin, routeCode
   return { sent };
 }
 
-/** In-process idle clocks per vehicle — fine for a single API node. */
+/** In-process idle clocks per vehicle, fine for a single API node. */
 const idleSinceByVehicle = new Map();
 
 export function _resetIdleStateForTests() {

@@ -7,9 +7,9 @@ import { normalizeOcrText } from './normalizeOcrText.js';
  * Gets text out of an uploaded file.
  *
  * Sources, in order:
- *   1. PDF text layer — free, exact
- *   2. PaddleOCR, the local sidecar — the only OCR provider
- *   3. nothing — upload still succeeds; office types fields
+ *   1. PDF text layer, free, exact
+ *   2. PaddleOCR, the local sidecar, the only OCR provider
+ *   3. nothing, upload still succeeds; office types fields
  */
 export function ocrProvider() {
   const raw = String(process.env.OCR_PROVIDER || '').trim().toLowerCase();
@@ -33,13 +33,13 @@ export function paddleOcrUrl() {
  *
  * Background extraction rides whatever CPU the VM has and nobody is watching a spinner, so it
  * waits. A person who pressed a button is watching one, and a request that hangs for minutes
- * reads as a broken screen — it gives up early and says so instead.
+ * reads as a broken screen, it gives up early and says so instead.
  */
 export function backgroundOcrTimeoutMs(pages = 1) {
   const base = Number(process.env.OCR_TIMEOUT_MS) || 300_000;
   const count = Math.max(1, Number(pages) || 1);
   // Grows with the document, because a flat budget would fail every long scan the background
-  // path exists to handle — and a failure there just leaves it to be retried forever.
+  // path exists to handle, and a failure there just leaves it to be retried forever.
   return Math.min(base * count, base * 4);
 }
 
@@ -47,11 +47,14 @@ export function backgroundOcrTimeoutMs(pages = 1) {
  * @param {number} [pages] how many pages the document has, when that is known.
  *
  * One page is a photo and finishes quickly. More pages cost roughly linearly, so the budget
- * grows with them — but stays capped, because past a few pages the work belongs in the
+ * grows with them, but stays capped, because past a few pages the work belongs in the
  * background rather than under a spinner (see `interactiveOcrMaxPages`).
  */
 export function interactiveOcrTimeoutMs(pages = 1) {
-  const base = Number(process.env.OCR_INTERACTIVE_TIMEOUT_MS) || 45_000;
+  // Phone notebook photos run several heavy CPU passes (ink + orientations). 45s was enough
+  // for a clean printed page and too short for a hard carnet shot — the request aborted with
+  // empty text before those passes finished. Background still has the long budget.
+  const base = Number(process.env.OCR_INTERACTIVE_TIMEOUT_MS) || 120_000;
   const count = Math.max(1, Number(pages) || 1);
   return Math.min(base * count, base * 2);
 }
@@ -81,6 +84,11 @@ function assertNotTimedOut(ocr) {
  */
 let ocrProbe = { at: 0, value: null };
 const OCR_PROBE_TTL_MS = 15_000;
+
+/** Drop the cached health probe (tests that swap PADDLE_OCR_URL mid-suite). */
+export function resetOcrCapabilityCache() {
+  ocrProbe = { at: 0, value: null };
+}
 
 export async function ocrCapability() {
   const base = paddleOcrUrl();
@@ -172,7 +180,7 @@ export async function documentPageCount(fileUrl) {
   }
 }
 
-/** Runs the configured provider. Never throws — a caller decides what an empty read means. */
+/** Runs the configured provider. Never throws, a caller decides what an empty read means. */
 async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
   const provider = ocrProvider();
   if (provider === 'paddle') {

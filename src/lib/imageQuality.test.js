@@ -22,7 +22,7 @@ function rgbaFrom(gray) {
 
 const flat = (w, h, value = 128) => new Float32Array(w * h).fill(value);
 
-/** Hard alternating pixels — the sharpest edge content an image can have. */
+/** Hard alternating pixels, the sharpest edge content an image can have. */
 function checkerboard(w, h) {
   const out = new Float32Array(w * h);
   for (let y = 0; y < h; y += 1) {
@@ -31,7 +31,7 @@ function checkerboard(w, h) {
   return out;
 }
 
-/** A soft ramp: real content, but no local detail — what a smeared photo looks like. */
+/** A soft ramp: real content, but no local detail, what a smeared photo looks like. */
 function gradient(w, h) {
   const out = new Float32Array(w * h);
   for (let y = 0; y < h; y += 1) {
@@ -50,7 +50,7 @@ describe('toGrayscale', () => {
 });
 
 describe('laplacianVariance', () => {
-  it('is zero on a blank frame — no detail anywhere', () => {
+  it('is zero on a blank frame, no detail anywhere', () => {
     expect(laplacianVariance(flat(32, 32), 32, 32)).toBe(0);
   });
 

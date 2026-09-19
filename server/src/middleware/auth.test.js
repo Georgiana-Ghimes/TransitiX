@@ -117,4 +117,32 @@ describe('auth middleware', () => {
     expect(denied.res.statusCode).toBe(403);
     expect(denied.wasNextCalled()).toBe(false);
   });
+
+  describe('a temporary password', () => {
+    const user = { id: 'u1', company_id: 'c1', role: 'dispatcher', email: 'a@test.ro', must_change_password: true };
+
+    it('opens /api/auth only', () => {
+      const token = signAccessToken(user);
+      const inside = mockReqRes({ authorization: `Bearer ${token}` });
+      inside.req.originalUrl = '/api/auth/change-password';
+      authRequired(inside.req, inside.res, inside.next);
+      expect(inside.wasNextCalled()).toBe(true);
+
+      const outside = mockReqRes({ authorization: `Bearer ${token}` });
+      outside.req.originalUrl = '/api/avize';
+      authRequired(outside.req, outside.res, outside.next);
+      expect(outside.wasNextCalled()).toBe(false);
+      expect(outside.res.statusCode).toBe(403);
+      expect(outside.res.body.code).toBe('PASSWORD_CHANGE_REQUIRED');
+    });
+
+    it('leaves an ordinary token alone', () => {
+      const token = signAccessToken({ ...user, must_change_password: false });
+      expect(jwt.decode(token).pcr).toBeUndefined();
+      const call = mockReqRes({ authorization: `Bearer ${token}` });
+      call.req.originalUrl = '/api/avize';
+      authRequired(call.req, call.res, call.next);
+      expect(call.wasNextCalled()).toBe(true);
+    });
+  });
 });

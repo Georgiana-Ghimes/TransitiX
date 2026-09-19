@@ -5,7 +5,15 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createRequire } from 'module';
-import { annexFieldDefaults } from './avizTemplate.js';
+import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
+import {
+  extractGrossWeight,
+  isAcceptableAutoField,
+  isGenericCountUnit,
+  isPlausibleQuantity,
+  parseNumber,
+  RO_PLATE_COUNTIES,
+} from './ocr/fields.js';
 
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -80,14 +88,17 @@ function findAvizDate(blob) {
   return any ? toIsoDate(any[1]) : null;
 }
 
-const PLATE_RE = /\b([A-Z]{1,2})[-\s]?(\d{2,3})[-\s]?([A-Z]{2,3})\b/g;
+const PLATE_RE = new RegExp(
+  `\\b(${RO_PLATE_COUNTIES})[-\\s]?(\\d{2,3})[-\\s]?([A-Z]{2,3})\\b`,
+  'gi'
+);
 
 export function extractPlates(value) {
   const s = normalizeWs(value).toUpperCase();
   const plates = [];
   const seen = new Set();
   let m;
-  const re = new RegExp(PLATE_RE.source, 'g');
+  const re = new RegExp(PLATE_RE.source, 'gi');
   while ((m = re.exec(s)) !== null) {
     const plate = `${m[1]}-${m[2]}-${m[3]}`;
     if (seen.has(plate)) continue;
@@ -101,6 +112,17 @@ export function extractPlates(value) {
 export function normalizePlate(value) {
   const plates = extractPlates(value);
   if (plates.length) return plates.join(' / ');
+  return null;
+}
+
+/** Synthetic office/driver fixtures, not RO format, but intentional and short. */
+function syntheticLabeledPlate(labeled) {
+  const text = normalizeWs(labeled).toUpperCase();
+  if (!text) return null;
+  const multi = [...text.matchAll(/\bB\s+TEST\s+\d{1,4}\b/g)].map((m) => m[0].replace(/\s+/g, ' '));
+  if (multi.length) return multi.join(' / ');
+  const single = text.match(/\bTEST[-\s]?\d{1,6}\b/);
+  if (single) return single[0].replace(/\s+/g, '').replace(/^TEST(\d)/, 'TEST-$1');
   return null;
 }
 
@@ -131,12 +153,9 @@ function findPlates(blob) {
   const search = labeled == null ? folded : labeled;
   const plates = extractPlates(search);
   if (plates.length) return plates.join(' / ');
-  if (labeled && labeled.length > 0 && labeled.length <= 40) {
-    if (/document de test|fara valoare|materiale demonstrative|aviz de expeditie|buildtest/.test(labeled)) {
-      return null;
-    }
-    return labeled.replace(/\s+/g, ' ').toUpperCase();
-  }
+  // Never dump the labelled window as-is: OCR often glues bookmark/UI noise onto a partial
+  // plate ("330 SRS FOOTY STREAM TRANSPORTATOR"). Empty + review beats a poisoned Excel cell.
+  if (labeled) return syntheticLabeledPlate(labeled);
   return null;
 }
 
@@ -151,7 +170,7 @@ function pickRegex(text, patterns) {
 function normalizeDocNo(value) {
   if (!value) return null;
   const upper = String(value).toUpperCase();
-  const m = upper.match(/\b(PSL|TRO|SOR)[-.\s]*(\d[\d./-]*)/);
+  const m = upper.match(/\b(PSL|TRO)[-.\s]*(\d[\d./-]*)/);
   if (m) return `${m[1]}-${m[2].replace(/[^\d]/g, '')}`;
   const testAvz = upper.match(/\b(TEST-AVZ[-.\s]*\d+)\b/);
   if (testAvz) return testAvz[1].replace(/\s+/g, '');
@@ -198,8 +217,10 @@ function parseQty(blob) {
   const folded = fold(blob);
   const galetiLabel = folded.match(/numarul de galeti\s+([\d.,]+)/);
   if (galetiLabel) {
-    const qty = Number(String(galetiLabel[1]).replace(',', '.'));
-    if (!Number.isNaN(qty) && qty > 0) return { qty, tip: 'galeti', rank: 4 };
+    const qty = parseNumber(galetiLabel[1]);
+    if (qty != null && isPlausibleQuantity(qty, 'galeti')) {
+      return { qty, tip: 'galeti', rank: 4 };
+    }
   }
 
   const re = /(\d+(?:[.,]\d+)?)\s*(saci?|pal(?:eti|et[ie]?)?|buc(?:ati)?|pcs|gal(?:eti)?|gale(?:ti|ata|ata)?)\b/gi;
@@ -211,8 +232,8 @@ function parseQty(blob) {
     if (rawUnit.startsWith('pal')) mapped = 'paleti';
     else if (rawUnit.startsWith('buc') || rawUnit === 'pcs') mapped = 'bucati';
     else if (rawUnit.startsWith('gal')) mapped = 'galeti';
-    const qty = Number(String(match[1]).replace(',', '.'));
-    if (Number.isNaN(qty)) continue;
+    const qty = parseNumber(match[1]);
+    if (qty == null || !isPlausibleQuantity(qty, mapped)) continue;
     const rank = UNIT_RANK[mapped] || 0;
     if (!best || rank > best.rank) best = { qty, tip: mapped, rank };
   }
@@ -261,21 +282,28 @@ function sliceSection(blob, startLabels, stopLabels) {
 }
 
 function parseDestBlock(section) {
-  if (!section || !String(section).trim()) return { locality: null, street: null };
+  if (!section || !String(section).trim()) {
+    return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
+  }
   const folded = fold(section)
     .replace(/bucurestisector/g, 'bucuresti sector')
     .replace(/([a-z])sector(\d)/g, '$1 sector $2');
-  const skipLocality = /^(bolintin|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
+  const skipLocality = /^(bolintin|bolintin-deal|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
   const streetStop = /^(nr|numar|sector|ro|rou|romania|bucuresti|domnesti|dobroesti|militari|fundeni|comanesti|popesti)$/;
+  // The type word is captured, not just skipped. Bucharest has an Intrarea, a Șoseaua and a
+  // Strada Viilor, and they do not agree about the zone: one is in B, one is outside. The aviz
+  // prints "Șosea Viilor" and dropping that first word turned an address the document states
+  // plainly into a question for the operator.
   const typeMatch = folded.match(
-    /(?:strada|str\.?|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+([a-z]+)(?:\s+([a-z]+))?/
+    /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+(?<first>[a-z]+)(?:\s+(?<second>[a-z]+))?/
   );
   const nrMatch = folded.match(/\bnr\.?\s*(\d+[a-z\-]*)/);
   let streetName = null;
   if (typeMatch) {
-    streetName = typeMatch[1];
-    if (typeMatch[2] && !streetStop.test(typeMatch[2])) {
-      streetName = `${typeMatch[1]} ${typeMatch[2]}`;
+    const { first, second } = typeMatch.groups;
+    streetName = first;
+    if (second && !streetStop.test(second)) {
+      streetName = `${first} ${second}`;
     }
   } else if (nrMatch) {
     const loose = folded.match(/([a-z]{4,})(?:\s+([a-z]{3,}))?\s+nr\.?\s*\d+/);
@@ -302,9 +330,21 @@ function parseDestBlock(section) {
     }
   }
 
+  const streetType = typeMatch?.groups?.type?.replace(/\.$/, '') || null;
+
   const locality = localityRaw ? prettyPlace(localityRaw) : null;
   const street = compactStreet(streetName, nrMatch?.[1]);
-  return { locality, street };
+  // `street` is the compact route code ("IuliuManiu600A"): words glued, number appended, which
+  // is what the customer's annex prints. The zone lookup needs the opposite, a spaced name and
+  // a separate number, so both come back rather than having the screen unglue the code and
+  // guess where the name ended.
+  return {
+    locality,
+    street,
+    streetName: streetName || null,
+    streetType,
+    houseNumber: nrMatch?.[1] ? formatHouseNumber(nrMatch[1]) : null,
+  };
 }
 
 function formatRouteLeg(block) {
@@ -349,14 +389,9 @@ function originFromSite(blob) {
   return null;
 }
 
-/**
- * Start = Client address (e.g. Aeroportului 120-T).
- * End = Adresă de livrare (e.g. Viilor 52).
- * Site BOL/MIL is only a fallback when the Client block has no street (TRO).
- * Never use Expeditor Bolintin-Deal.
- */
-function parseRoute(blob) {
-  const delivery = sliceSection(
+/** The `Adresă de livrare` block, parsed. Where the lorry ends up, and what a zone is read from. */
+export function parseDeliveryAddress(blob) {
+  const section = sliceSection(
     blob,
     ['adresa de livrare', 'adresa livrare'],
     [
@@ -371,12 +406,28 @@ function parseRoute(blob) {
       'termeni de livrare',
     ]
   );
-  const destLeg = formatRouteLeg(parseDestBlock(delivery));
+  return parseDestBlock(section);
+}
+
+/**
+ * Origin = the Baumit site the lorry loads at (`Expeditor / Site: BOL`).
+ * End = Adresă de livrare (e.g. Viilor 52).
+ * The Client block is only a fallback, on documents that name no site.
+ */
+function parseRoute(blob) {
+  const destBlock = parseDeliveryAddress(blob);
+  const destLeg = formatRouteLeg(destBlock);
   const originLeg = formatRouteLeg(findClientOrigin(blob));
   const site = originFromSite(blob);
 
-  if (originLeg && destLeg && originLeg !== destLeg) return `${originLeg}-${destLeg}`;
+  // The lorry leaves the Baumit site, so `Expeditor / Site: BOL` is the origin whenever the
+  // document names one. The Client block used to win, and on a PSL aviz that block is a second
+  // address belonging to the buyer: one document produced
+  // "Bucuresti/Aeroportului120-T-Bucuresti/Viilor52", a route between two of the customer's own
+  // premises that no lorry drove. The customer's own annex reads "Bol-…" and "Buc/I.Maniu600a-…",
+  // both depots, which is the same rule stated from the other side.
   if (site && destLeg) return `${site}-${destLeg}`;
+  if (originLeg && destLeg && originLeg !== destLeg) return `${originLeg}-${destLeg}`;
   if (destLeg) return destLeg;
   if (originLeg) return originLeg;
   return site;
@@ -384,7 +435,7 @@ function parseRoute(blob) {
 
 /**
  * Parse OCR / PDF plain text into Anexa Factura RAI fields.
- * Baumit PDFs often emit one word per line — join before matching.
+ * Baumit PDFs often emit one word per line, join before matching.
  */
 export function parseBaumitAviz(rawText) {
   const lines = String(rawText || '')
@@ -402,38 +453,12 @@ export function parseBaumitAviz(rawText) {
 
   const psl = normalizeDocNo(pickRegex(blob, [/\b(PSL[\s\-\.]*\d[\d./-]*)\b/i]));
   const tro = normalizeDocNo(pickRegex(blob, [/\b(TRO[\s\-\.]*\d[\d./-]*)\b/i]));
-  const sor = normalizeDocNo(pickRegex(blob, [/\b(SOR[\s\-\.]*\d[\d./-]*)\b/i]));
   const testAvz = normalizeDocNo(pickRegex(blob, [/\b(TEST-AVZ[\s\-\.]*\d+)\b/i]));
-  // Goods document: PSL (sale) wins over TRO when both appear; TPO is never the goods id.
   const numar_document_marfa = psl || tro || testAvz;
-  const transferCue = /rezumat|transfer\s+intern/i.test(blob);
-  const layout = psl ? 'psl' : (tro || transferCue) ? 'tro' : null;
 
   const qty = parseQty(blob);
+  const gross = extractGrossWeight(blob);
   const defaults = annexFieldDefaults();
-
-  // Prefer labelled gross weight — Baumit report column is brută, not saci.
-  const grossMatch = blob.match(
-    /(?:greutate\s*(?:bruta|brută)|masa\s*(?:bruta|brută))\s*[:\-]?\s*([\d.,\s]+)\s*(kg|t)\b/i
-  );
-  let gross_weight_kg = null;
-  if (grossMatch) {
-    const raw = String(grossMatch[1]).replace(/\s/g, '');
-    let parsed;
-    if (/\d,\d{2}$/.test(raw) && raw.includes('.')) {
-      parsed = Number(raw.replace(/\./g, '').replace(',', '.'));
-    } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
-      parsed = Number(raw.replace(/\./g, ''));
-    } else if (raw.includes(',')) {
-      parsed = Number(raw.replace(',', '.'));
-    } else {
-      parsed = Number(raw);
-    }
-    if (Number.isFinite(parsed) && parsed > 0) {
-      const factor = String(grossMatch[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-      gross_weight_kg = Math.round(parsed * factor * 100) / 100;
-    }
-  }
 
   return {
     ...defaults,
@@ -441,12 +466,12 @@ export function parseBaumitAviz(rawText) {
     data_efectuare_cursa,
     numar_auto,
     ruta_transport: parseRoute(blob),
+    delivery_address: parseDeliveryAddress(blob),
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
+    gross_weight_kg: gross.value ?? null,
     numar_document_marfa,
-    numar_sor: sor,
-    gross_weight_kg,
-    layout,
+    layout: psl ? 'psl' : tro ? 'tro' : null,
     _stub: false,
   };
 }
@@ -460,16 +485,86 @@ function fieldFilled(value) {
 function isGarbageAuto(value) {
   const s = String(value || '').trim();
   if (!s) return true;
-  if (s.length > 48) return true;
-  return /document de test|fara valoare|materiale demonstrative|buildtest/i.test(s);
+  if (isAcceptableAutoField(s)) return false;
+  if (normalizePlate(s)) return false;
+  return true;
+}
+
+function isGarbageQuantity(value, tip) {
+  if (!fieldFilled(value)) return true;
+  return !isPlausibleQuantity(value, tip);
 }
 
 function preferStored(stored, parsedValue, isGarbage) {
   if (fieldFilled(stored) && !(isGarbage && isGarbage(stored))) return stored;
-  return parsedValue ?? (fieldFilled(stored) ? stored : null);
+  if (parsedValue != null && String(parsedValue).trim() !== '') return parsedValue;
+  // Do not keep a poisoned stored plate when we have nothing better, leave empty for review.
+  return null;
 }
 
-/** Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values. */
+function preferQuantity(row, parsed) {
+  const tip = row?.tip_marfa || parsed?.tip_marfa || 'saci';
+  if (fieldFilled(row?.cantitate_marfa) && isPlausibleQuantity(row.cantitate_marfa, tip)) {
+    return row.cantitate_marfa;
+  }
+  if (parsed?.cantitate_marfa != null
+    && isPlausibleQuantity(parsed.cantitate_marfa, parsed.tip_marfa || tip)) {
+    return parsed.cantitate_marfa;
+  }
+  // Impossible OCR magnitudes (245000 saci) stay empty so the row is marked for review.
+  return null;
+}
+
+/**
+ * True when a stored "route" is really a compound place name (or bare site code), not
+ * Site→delivery. Those values came from treating "Bolintin-Deal" as City-City in the OCR
+ * profile; preferStored would keep them forever because the field is non-empty.
+ */
+export function isFalseRoute(value) {
+  const s = String(value || '').trim();
+  if (!s) return true;
+  if (/^(Bol|Mil)$/i.test(s)) return true;
+  // Glued hyphen, no slash: compound locality, not Bol-Dest/Street.
+  if (/^[A-Za-zĂÂÎȘȚăâîșț]+-[A-Za-zĂÂÎȘȚăâîșț]+$/u.test(s) && !/^(Bol|Mil)-/i.test(s)) {
+    return true;
+  }
+  return false;
+}
+
+function preferRoute(stored, parsed) {
+  if (fieldFilled(stored) && !isFalseRoute(stored)) return stored;
+  if (fieldFilled(parsed)) return parsed;
+  return fieldFilled(stored) ? stored : null;
+}
+
+/**
+ * Tip marfa for list / export / repair.
+ *
+ * A bare count ("bucati") on the row is OCR noise from `Cantitate … buc`, not an office edit.
+ * Prefer a packaging word from the stored raw text (or a non-generic quantity_unit) so old
+ * rows upgrade on the next list/export without a re-scan. A real packaging tip already on
+ * the row (Editează → găleți) is kept.
+ */
+function preferTipMarfa(row, parsed) {
+  const storedRaw = row?.tip_marfa;
+  const storedUnit = normalizeGoodsUnit(storedRaw);
+  if (storedUnit && !isGenericCountUnit(storedUnit)) return storedUnit;
+
+  const fromParsed = normalizeGoodsUnit(parsed?.tip_marfa);
+  if (fromParsed && !isGenericCountUnit(fromParsed)) return fromParsed;
+
+  const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
+  if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
+
+  // Free-text product name (not a unit spelling) stays; bare "bucati" does not.
+  if (fieldFilled(storedRaw) && !storedUnit) return String(storedRaw).trim();
+  return null;
+}
+
+/**
+ * Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values —
+ * except a false route (compound place name) which is OCR poison, not an edit.
+ */
 export function repairAvizFromStored(row) {
   const raw = row?.extracted_data?.raw_text;
   const parsed = raw ? parseBaumitAviz(raw) : null;
@@ -478,12 +573,15 @@ export function repairAvizFromStored(row) {
     numar_tpo: resolveStoredTpo(row, parsed),
     data_efectuare_cursa: preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
     numar_auto: preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
-    ruta_transport: preferStored(row?.ruta_transport, parsed?.ruta_transport),
-    tip_marfa: preferStored(row?.tip_marfa, parsed?.tip_marfa),
-    cantitate_marfa: row?.cantitate_marfa ?? parsed?.cantitate_marfa ?? null,
-    numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
-    numar_sor: preferStored(row?.numar_sor, parsed?.numar_sor),
+    ruta_transport: preferRoute(row?.ruta_transport, parsed?.ruta_transport),
+    tip_marfa: preferTipMarfa(row, parsed),
+    cantitate_marfa: preferQuantity(row, parsed),
     gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
+    numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
+    // Derived, never stored and never edited: the delivery address exists only to answer
+    // "which zone", and re-reading it from the OCR text each time means a document whose text
+    // improves on re-extraction improves here too, with no column to keep in step.
+    delivery_address: parsed?.delivery_address ?? null,
   };
 }
 
@@ -492,5 +590,6 @@ export function avizFieldConfidence(row) {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
     ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
+    cantitate_marfa: isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa) ? 'low' : 'ok',
   };
 }

@@ -202,7 +202,7 @@ describe('confirmPayload', () => {
     });
   });
 
-  it('always sets verified — that is the point of confirming', () => {
+  it('always sets verified, that is the point of confirming', () => {
     expect(confirmPayload(loc({ latitude: null, longitude: null }), { latitude: 1, longitude: 2 }))
       .toMatchObject({ geocode_verified: true, geocode_source: 'manual' });
   });

@@ -125,15 +125,42 @@ describe('geocodeAddress', () => {
     expect(insert.params).toContain('miss');
   });
 
-  it('caches a provider failure instead of letting it throw', async () => {
+  it('reports a provider outage without throwing, and without caching it', async () => {
+    // An unreachable provider says nothing about the address. Caching it outlived the outage:
+    // every address tried while PHOTON_URL was unset stayed "not found" afterwards, because
+    // the cache is consulted before the provider is called.
     const db = fakeDb();
     const result = await geocodeAddress(db, 'co', CLUJ, {
       search: async () => { throw new Error('Photon inaccesibil'); },
     });
     expect(result.error).toBe('Photon inaccesibil');
+    expect(result.providerDown).toBe(true);
+    expect(result.outcome).toMatchObject({ action: 'reject', reason: 'geocoder_indisponibil' });
+    expect(db.calls.find((c) => c.text.startsWith('INSERT INTO geocode_cache'))).toBeUndefined();
+  });
+
+  it('still caches a request the provider rejected as malformed', async () => {
+    // A 4xx means the provider looked at this query and refused it, that is about the address,
+    // so re-sending it every run buys nothing.
+    const db = fakeDb();
+    const bad = Object.assign(new Error('Query invalid'), { status: 400 });
+    const result = await geocodeAddress(db, 'co', CLUJ, {
+      search: async () => { throw bad; },
+    });
+    expect(result.providerDown).toBe(false);
     expect(result.outcome).toMatchObject({ action: 'reject', reason: 'eroare_provider' });
     const insert = db.calls.find((c) => c.text.startsWith('INSERT INTO geocode_cache'));
     expect(insert.params).toContain('error');
+  });
+
+  it('treats an unconfigured geocoder as an outage, not a bad address', async () => {
+    const db = fakeDb();
+    const notSet = Object.assign(new Error('Photon nu este configurat.'), { status: 503 });
+    const result = await geocodeAddress(db, 'co', CLUJ, {
+      search: async () => { throw notSet; },
+    });
+    expect(result.providerDown).toBe(true);
+    expect(db.calls.find((c) => c.text.startsWith('INSERT INTO geocode_cache'))).toBeUndefined();
   });
 
   it('does not retry an address that previously errored', async () => {
@@ -268,7 +295,7 @@ describe('activeGeocodeProvider', () => {
     if (url === undefined) delete process.env.PHOTON_URL; else process.env.PHOTON_URL = url;
   });
 
-  it('labels the strategy, not the vendor — so turning TomTom on retires the old cache', () => {
+  it('labels the strategy, not the vendor, so turning TomTom on retires the old cache', () => {
     process.env.PHOTON_URL = 'http://photon:2322';
     delete process.env.TOMTOM_API_KEY;
     expect(activeGeocodeProvider()).toBe('photon');

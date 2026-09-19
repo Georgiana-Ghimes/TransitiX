@@ -1,7 +1,7 @@
 /**
  * Where the route tests get their database URL.
  *
- * Shared by the vitest config and by `globalSetup`, which run in different processes — vitest's
+ * Shared by the vitest config and by `globalSetup`, which run in different processes, vitest's
  * `test.env` reaches the test workers but not the setup file, so both have to derive the value
  * the same way or the guard and the tests would disagree about which database is in play.
  */
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const SERVER_ROOT = path.resolve(here, '..', '..');
 
-/** Minimal .env reader — no dotenv, so this can be used before any dependency is loaded. */
+/** Minimal .env reader, no dotenv, so this can be used before any dependency is loaded. */
 export function readEnvFile(file = path.join(SERVER_ROOT, '.env')) {
   if (!fs.existsSync(file)) return {};
   const out = {};
@@ -38,7 +38,7 @@ export function databaseName(url) {
 }
 
 /**
- * The suite deletes rows. A database whose name does not say "disposable" is not one we touch —
+ * The suite deletes rows. A database whose name does not say "disposable" is not one we touch,
  * pointed at a development database this would destroy real work, and there is no undo.
  */
 export function assertTestDatabase(url) {

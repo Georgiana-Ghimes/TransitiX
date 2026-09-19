@@ -1,7 +1,7 @@
 /**
  * Turns the addresses already scattered across `clients` and `trips` into `locations` rows.
  *
- * Pure planning only — no database access — so the whole decision path (what becomes a
+ * Pure planning only, no database access, so the whole decision path (what becomes a
  * location, what collapses into an existing one, what the data-quality report says) is
  * testable without a live Postgres. `server/src/backfill-locations.js` supplies the IO.
  */
@@ -170,7 +170,7 @@ export function toLocationRow(candidate, companyId) {
     address_key: candidate.address_key,
     contact_person: candidate.contact_person,
     phone: candidate.phone,
-    // No coordinates yet — geocoding is the next step, and an invented pin is worse than none.
+    // No coordinates yet, geocoding is the next step, and an invented pin is worse than none.
     geocode_source: 'import',
     geocode_verified: false,
   };

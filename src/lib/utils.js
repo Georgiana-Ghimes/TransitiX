@@ -21,7 +21,7 @@ export function formatDate(value) {
  * Number() that tells "not set" apart from zero.
  *
  * Number(null), Number(undefined) and Number('') are all 0, and 0 passes Number.isFinite,
- * so the obvious guard silently turns a missing value into a real one — a null coordinate
+ * so the obvious guard silently turns a missing value into a real one, a null coordinate
  * renders as 0.000000, a missing duration as "0m", an unset service time as no service time.
  * Returns null when there is genuinely no number.
  */

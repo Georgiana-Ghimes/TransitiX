@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import app from '../app.js';
 import { query } from '../db.js';
 import { uploadRoot } from '../uploadPath.js';
-import { auth, closePool, dropCompany, request, seedCompany } from '../test/harness.js';
+import { auth, closePool, dropCompany, makeAviz, request, seedCompany } from '../test/harness.js';
 
 let ctx;
 
@@ -26,7 +26,7 @@ async function placeUpload(name, body = '%PDF-1.4 test\n%%EOF\n') {
   return `/uploads/${name}`;
 }
 
-/** A real PDF of `pages` pages — pdf-parse has to be able to count them. */
+/** A real PDF of `pages` pages, pdf-parse has to be able to count them. */
 async function placeMultiPagePdf(name, pages) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
@@ -42,7 +42,7 @@ async function placeMultiPagePdf(name, pages) {
 describe('POST /api/avize/extract', () => {
   /**
    * The avize screen uploads a file and asks for it to be read in one call. There is one
-   * extractor now, and it works per batch, so the row it creates has to belong to one —
+   * extractor now, and it works per batch, so the row it creates has to belong to one,
    * otherwise nothing would ever read it again.
    */
   it('files a freshly uploaded aviz into a batch and extracts it', async () => {
@@ -76,14 +76,19 @@ describe('POST /api/avize/extract', () => {
 
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ id: legacy.id });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('reextract_background');
 
+    // Re-extract runs in the background (tunnel-safe). Wait for the batch pass to settle.
+    await new Promise((r) => setTimeout(r, 400));
     const after = (await query(
-      'SELECT batch_id, numar_tpo FROM aviz_documents WHERE id = $1', [legacy.id]
+      'SELECT batch_id, numar_tpo, status FROM aviz_documents WHERE id = $1', [legacy.id]
     )).rows[0];
     expect(after.batch_id).toBeTruthy();
     // Nothing was read out of the fixture, so the figure already on the row must survive.
     expect(after.numar_tpo).toBe('TPO-0011111');
+    expect(after.status).toBe('extracted');
   });
 
   /**
@@ -132,5 +137,160 @@ describe('POST /api/avize/extract', () => {
       .send({ id: mine.id });
     expect(res.status).toBe(404);
     await dropCompany(other.company.id);
+  });
+});
+
+describe('the list and the export agree about a route', () => {
+  // PaddleOCR regularly leaves ruta_transport empty on the row while the route is plainly
+  // there in the OCR text. Export repaired it and the list did not, so the same document
+  // showed no route on screen and the right one in the XLSX.
+  const RAW = [
+    'Expeditor: Baumit Romania SRL, Bolintin-Deal',
+    'Adresa de livrare',
+    'Strada Independentei 121',
+    'Domnesti, Ilfov',
+    'Client',
+    'SC Test SRL',
+  ].join('\n');
+
+  async function avizWithoutRoute() {
+    const doc = await makeAviz(ctx.company.id, { ruta_transport: null });
+    await query(
+      `UPDATE aviz_documents SET extracted_data = $1::jsonb WHERE id = $2`,
+      [JSON.stringify({ raw_text: RAW, provider: 'paddle' }), doc.id],
+    );
+    return doc;
+  }
+
+  it('shows the route the OCR text carries, not an empty cell', async () => {
+    const doc = await avizWithoutRoute();
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      const row = res.body.find((r) => r.id === doc.id);
+      expect(row.ruta_transport).toBe('Domnesti/Independentei');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
+  });
+
+  it('reports the route as present rather than low confidence', async () => {
+    const doc = await avizWithoutRoute();
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      const row = res.body.find((r) => r.id === doc.id);
+      expect(row.field_confidence.ruta_transport).toBe('ok');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
+  });
+
+  it('never overwrites a route the office typed', async () => {
+    const doc = await makeAviz(ctx.company.id, { ruta_transport: 'Ruta de birou' });
+    await query(
+      `UPDATE aviz_documents SET extracted_data = $1::jsonb WHERE id = $2`,
+      [JSON.stringify({ raw_text: RAW, provider: 'paddle' }), doc.id],
+    );
+    try {
+      const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+      expect(res.body.find((r) => r.id === doc.id).ruta_transport).toBe('Ruta de birou');
+    } finally {
+      await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
+    }
+  });
+});
+
+describe('GET /api/avize, un TPO cu mai multe curse', () => {
+  /**
+   * A TPO is an order and an order can be driven more than once. Flagging every repeated TPO
+   * as a duplicate put a double-billing warning on legitimate work, and a warning that fires
+   * on the normal case stops being read before it ever meets the abnormal one.
+   */
+  it('does not call the second cursă of a TPO a duplicate', async () => {
+    const tpo = `TPO-MULTI-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10',
+      numar_auto: 'B-34-BAU',
+    });
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044701',
+      ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      data_efectuare_cursa: '2026-08-11',
+      numar_auto: 'B-34-BAU',
+    });
+
+    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    expect(res.status).toBe(200);
+    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    expect(mine).toHaveLength(2);
+    expect(mine.map((r) => r.duplicate_tpo)).toEqual([false, false]);
+    // Two rows, two routes, and both say the order was driven twice.
+    expect(mine.map((r) => r.numar_curse)).toEqual([2, 2]);
+    expect(new Set(mine.map((r) => r.ruta_transport)).size).toBe(2);
+  });
+
+  it('still catches the same aviz uploaded twice under that TPO', async () => {
+    const tpo = `TPO-DUP-${Date.now()}`;
+    for (const name of ['prima.pdf', 'aceeasi-din-greseala.pdf']) {
+      await makeAviz(ctx.company.id, {
+        numar_tpo: tpo,
+        original_filename: name,
+        numar_document_marfa: 'PSL-0044633',
+        ruta_transport: 'Bol-Bucuresti/Viilor52',
+        data_efectuare_cursa: '2026-08-10',
+        numar_auto: 'B-34-BAU',
+      });
+    }
+
+    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    expect(mine).toHaveLength(2);
+    expect(mine.map((r) => r.duplicate_tpo)).toEqual([true, true]);
+  });
+});
+
+describe('PUT /api/entities/AvizDocument, avertismentul de la Salvează', () => {
+  /**
+   * The single-row check runs against the database rather than against a loaded list, so it is
+   * a second implementation of the same question and has to give the same answer. It used to
+   * ask only "does another row carry this TPO", which is what put "există deja un aviz cu
+   * același TPO" on the screen every time an operator saved the second cursă.
+   */
+  it('stays quiet when the other row is a different cursă of the same TPO', async () => {
+    const tpo = `TPO-SAVE-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+    });
+    const second = await makeAviz(ctx.company.id, {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044701',
+      ruta_transport: 'Bol-Bucuresti/IuliuManiu600A',
+      data_efectuare_cursa: '2026-08-11', numar_auto: 'B-34-BAU',
+    });
+
+    const res = await api().put(`/api/entities/AvizDocument/${second.id}`)
+      .set(auth(ctx.adminToken)).send({ km_parcursi: 51 });
+    expect(res.status).toBe(200);
+    expect(res.body.duplicate_tpo).toBe(false);
+  });
+
+  it('warns when the other row is the same aviz', async () => {
+    const tpo = `TPO-SAVE-DUP-${Date.now()}`;
+    const common = {
+      numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10', numar_auto: 'B-34-BAU',
+    };
+    await makeAviz(ctx.company.id, common);
+    const second = await makeAviz(ctx.company.id, common);
+
+    const res = await api().put(`/api/entities/AvizDocument/${second.id}`)
+      .set(auth(ctx.adminToken)).send({ km_parcursi: 51 });
+    expect(res.status).toBe(200);
+    expect(res.body.duplicate_tpo).toBe(true);
   });
 });

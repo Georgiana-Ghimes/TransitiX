@@ -12,7 +12,7 @@ import {
  * Connectivity as the driver app needs to know it.
  *
  * `navigator.onLine` only says whether the device has *a* network, not whether the API is
- * reachable — a truck stop's captive portal reports online while nothing gets through. So a
+ * reachable, a truck stop's captive portal reports online while nothing gets through. So a
  * failed send also flips this to offline, and a successful one flips it back. The browser events
  * are a hint, not the truth.
  */
@@ -75,7 +75,7 @@ export function useOutbox(userId, send) {
 
   // Coming back into coverage is the moment the queue matters; drain it without being asked.
   // Held in a ref so the effect fires on the transition itself, not every time the callback is
-  // rebuilt — otherwise a re-render mid-flush would start a second one over the same entries.
+  // rebuilt, otherwise a re-render mid-flush would start a second one over the same entries.
   const flushRef = useRef(flushNow);
   flushRef.current = flushNow;
   const wasOnline = useRef(online);

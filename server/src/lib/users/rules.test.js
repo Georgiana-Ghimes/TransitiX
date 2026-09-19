@@ -89,7 +89,7 @@ describe('checkRoleChange', () => {
 
   it('refuses demoting the last active admin', () => {
     // A company that does this locks itself out of user administration, tariffs and the audit
-    // trail, and the only way back is SQL — which is what this screen exists to remove.
+    // trail, and the only way back is SQL, which is what this screen exists to remove.
     const res = checkRoleChange({
       actorId: 'u1', target: { id: 'u2', role: 'admin', is_active: true },
       nextRole: 'dispatcher', adminCount: 1,
@@ -182,6 +182,12 @@ describe('inviteState', () => {
   it('calls an account with no token at all expired', () => {
     // Nothing to click and never signed in: the invitation needs reissuing.
     expect(inviteState({ last_login: null, reset_token: null }, now)).toBe('expired');
+  });
+
+  it('calls a hand-made account waiting for its first sign-in manual, not expired', () => {
+    expect(inviteState({
+      last_login: null, reset_token: null, created_via: 'manual', must_change_password: true,
+    }, now)).toBe('manual');
   });
 
   it('stays active once used, even after the token is cleared', () => {

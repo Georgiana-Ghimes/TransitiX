@@ -2,7 +2,7 @@
  * The printed page, as HTML.
  *
  * Kept apart from the PDF writer so the layout can be tested without a browser, and so the
- * rasterizer only has one job. Styles are inline and deliberately plain — the renderer only
+ * rasterizer only has one job. Styles are inline and deliberately plain, the renderer only
  * understands basic CSS, and nothing here may depend on the app's stylesheet.
  */
 

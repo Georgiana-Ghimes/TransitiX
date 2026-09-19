@@ -3,7 +3,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 /**
  * A finger-drawn signature on a canvas.
  *
- * Extracted from the ePOD modal when the CMR form needed the same thing three times over — the
+ * Extracted from the ePOD modal when the CMR form needed the same thing three times over, the
  * shipper, the carrier and the consignee each sign a consignment note, and a fourth copy of this
  * arithmetic is how the pads start behaving differently from one another.
  *

@@ -266,7 +266,7 @@ describe('isOfflineError', () => {
   });
 
   it('does not call a server rejection offline', async () => {
-    // A 422 arrived, so the tunnel is fine — the server simply said no.
+    // A 422 arrived, so the tunnel is fine, the server simply said no.
     const { isOfflineError } = await import('./useOffline.js');
     expect(isOfflineError(Object.assign(new Error('Greutate lipsă'), { status: 422 }))).toBe(false);
     expect(isOfflineError(Object.assign(new Error('boom'), { status: 500 }))).toBe(false);

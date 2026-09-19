@@ -19,7 +19,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip \
  && pip install -r requirements.txt
 
-COPY app.py check_logic.py ./
+COPY app.py check_logic.py bench.py ./
 
 EXPOSE 8100
 

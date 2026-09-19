@@ -3,7 +3,7 @@
  *
  * The decision is the important part. A result is only written to `locations` unattended when
  * it clears AUTO_ACCEPT_CONFIDENCE; everything else is stored but left unverified so a human
- * confirms the pin. `geocode_verified` is never set by this module — only by a person.
+ * confirms the pin. `geocode_verified` is never set by this module, only by a person.
  */
 
 import { addressKey, parseRomanianAddress } from './address.js';
@@ -32,7 +32,7 @@ export function activeGeocodeProvider() {
 /**
  * Runs the free provider first and only pays for the second when the first is unsure.
  *
- * The fallback failing — bad key, quota gone, network — must never break geocoding: the
+ * The fallback failing (bad key, quota gone, network) must never break geocoding: the
  * primary result stands, exactly as it would have without TomTom configured.
  */
 export function escalatingSearch({
@@ -58,7 +58,7 @@ export function escalatingSearch({
       if (onEscalate) onEscalate({ address, primaryConfidence: best?.confidence ?? null });
       fallbackResult = await fallback(address, options);
     } catch {
-      // Paid provider unavailable — fall back to whatever the free one managed.
+      // Paid provider unavailable, fall back to whatever the free one managed.
       if (primaryResult) return primaryResult;
       throw primaryError || new Error('Geocodarea a eșuat la ambii furnizori');
     }
@@ -90,9 +90,9 @@ export const GEOCODE_PROVIDER = 'photon';
 
 /**
  * What to do with a geocoding result.
- *   accept  — confident enough to write coordinates unattended
- *   review  — coordinates written, but flagged for a human to confirm on the map
- *   reject  — nothing usable came back; the location stays without coordinates
+ *   accept: confident enough to write coordinates unattended
+ *   review: coordinates written, but flagged for a human to confirm on the map
+ *   reject: nothing usable came back; the location stays without coordinates
  */
 export function decideOutcome(best, { autoAccept = AUTO_ACCEPT_CONFIDENCE } = {}) {
   if (!best) return { action: 'reject', reason: 'niciun_rezultat' };
@@ -159,6 +159,18 @@ async function writeCache(db, companyId, key, provider, payload) {
  * `search` is injectable so tests never touch the network, and so a second provider can be
  * dropped in later without changing callers.
  */
+/**
+ * Whether a thrown geocoding failure is about the address or about the provider.
+ *
+ * A provider answers a bad address with no results, not an exception, so a throw is almost
+ * always infrastructure. Only a 4xx, which means the provider looked at this request and
+ * rejected it, is treated as something the address caused.
+ */
+export function isAddressFault(err) {
+  const status = Number(err?.status);
+  return Number.isFinite(status) && status >= 400 && status < 500;
+}
+
 export async function geocodeAddress(db, companyId, address, {
   provider = activeGeocodeProvider(),
   search = defaultSearch(),
@@ -191,15 +203,21 @@ export async function geocodeAddress(db, companyId, address, {
   try {
     result = await search(parsed);
   } catch (err) {
-    // Cache the failure so a broken address is not re-sent to the provider every run.
-    await writeCache(db, companyId, key, provider, {
-      queryText: parsed.raw, status: 'error',
-      latitude: null, longitude: null, confidence: null, matchedLabel: null,
-      candidates: [], errorMessage: err.message,
-    });
+    // Only a failure the address itself caused is worth remembering. A provider that is
+    // unconfigured, down, or unreachable says nothing about the address, and caching that
+    // outlives the outage: every address tried while PHOTON_URL was unset stayed "not found"
+    // after it was set, because the cache is read before the provider is called.
+    if (isAddressFault(err)) {
+      await writeCache(db, companyId, key, provider, {
+        queryText: parsed.raw, status: 'error',
+        latitude: null, longitude: null, confidence: null, matchedLabel: null,
+        candidates: [], errorMessage: err.message,
+      });
+    }
     return {
       key, cached: false, best: null, candidates: [], error: err.message,
-      outcome: { action: 'reject', reason: 'eroare_provider' },
+      providerDown: !isAddressFault(err),
+      outcome: { action: 'reject', reason: isAddressFault(err) ? 'eroare_provider' : 'geocoder_indisponibil' },
     };
   }
 

@@ -7,8 +7,8 @@
  * `entityInput.parity.test.js`, which runs one table of inputs through both and asserts the same
  * verdict. Change one, change the other.
  *
- * The forms are not the only caller — the generic `/api/entities/:entity` routes are reachable
- * directly — so a value rejected in the UI has to be rejected here as well.
+ * The forms are not the only caller, the generic `/api/entities/:entity` routes are reachable
+ * directly, so a value rejected in the UI has to be rejected here as well.
  */
 
 // eslint-disable-next-line no-control-regex
@@ -22,7 +22,7 @@ const SKU_RE = /^[A-Za-z0-9._-]+$/;
 const CODE_RE = /^[A-Za-z0-9 ./-]+$/;
 /**
  * Deliberately loose. A Romanian CUI is `RO` plus digits, but the same column holds the VAT id of
- * any EU partner — `ATU12345678` has three letters, `IE1234567FA` ends in them — so pinning the
+ * any EU partner, `ATU12345678` has three letters, `IE1234567FA` ends in them, so pinning the
  * shape would refuse real clients. This only rules out text that identifies nobody: it has to
  * carry at least one digit.
  */
@@ -89,7 +89,7 @@ function checkVatId(errors, field, value, label) {
   if (text === '') return;
   if (text.length > 20) errors[field] = `${capitalize(label)}: maxim 20 caractere.`;
   else if (!VAT_ID_RE.test(text) || !/\d/.test(text)) {
-    errors[field] = `${capitalize(label)} invalid — litere și cifre (ex. RO12345678).`;
+    errors[field] = `${capitalize(label)} invalid: litere și cifre (ex. RO12345678).`;
   }
 }
 
@@ -245,7 +245,7 @@ function validateDriver(form) {
   ];
   for (const [numberField, expiryField, label] of pairs) {
     if (!isBlank(form[numberField]) && isBlank(form[expiryField]) && !errors[expiryField]) {
-      errors[expiryField] = `Completează expirarea ${label} — altfel nu intră în alerte.`;
+      errors[expiryField] = `Completează expirarea ${label}, altfel nu intră în alerte.`;
     }
   }
 

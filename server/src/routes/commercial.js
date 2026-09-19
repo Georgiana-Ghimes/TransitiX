@@ -4,7 +4,7 @@
  *
  * All of it was already editable through the generic entities API and through nothing else,
  * which meant the pricing engine was configurable only by whoever could write SQL. This route
- * exists so one screen can load the whole picture, and — more importantly — so the warnings it
+ * exists so one screen can load the whole picture, and, more importantly, so the warnings it
  * shows come from the same functions the calculation uses. A tariff screen that decides for
  * itself what "valid" means is how a rate reads as active on screen and is skipped in the TPO.
  */
@@ -15,6 +15,10 @@ import { pool, query, withTransaction } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import { findOverlaps, findTariff, tariffHistory } from '../lib/pricing/tariffs.js';
+import { findZoneRate, pointInPolygon, resolveZone } from '../lib/pricing/taxes.js';
+import { geocodeAddress } from '../lib/geo/geocode.js';
+import { parseRomanianAddress } from '../lib/geo/address.js';
+import { vehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { parseCodeRows } from '../lib/pricing/codeImport.js';
 import { actorFrom, recordAudit } from '../lib/audit/events.js';
 
@@ -34,11 +38,16 @@ function fail(res, err, fallback) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Lowercased and stripped of diacritics, so "Bucuresti" and "București" compare equal. */
+function plainText(value) {
+  return String(value || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 /**
  * Everything the configuration screen needs, in one call.
  *
  * Overlapping validity periods are computed here with `findOverlaps` rather than in the browser:
- * an overlap is not an error — the newest still wins — but it is almost always a forgotten
+ * an overlap is not an error, the newest still wins, but it is almost always a forgotten
  * `valid_to`, and the screen has to name it in the same terms the calculation would.
  */
 router.get('/overview', async (req, res) => {
@@ -124,6 +133,159 @@ router.get('/contracts/:id/history', async (req, res) => {
   }
 });
 
+/**
+ * Just the zones and their rates.
+ *
+ * The zone map used to call `/overview`, which loads contracts, tariffs, surcharges,
+ * observation codes, locations and the fleet's vehicle classes, eleven queries to read two
+ * tables. On the documents companion none of the rest exists, and a screen that drags the whole
+ * commercial configuration behind it is a screen that breaks when any part of it does.
+ */
+router.get('/zones', async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const [zones, rates] = await Promise.all([
+      query('SELECT * FROM tax_zones WHERE company_id = $1 ORDER BY priority DESC, code', [companyId]),
+      query('SELECT * FROM tax_zone_rates WHERE company_id = $1 ORDER BY mma_min_kg NULLS FIRST', [companyId]),
+    ]);
+    res.json({
+      zones: zones.rows.map(serializeRow),
+      zone_rates: rates.rows.map(serializeRow),
+    });
+  } catch (err) {
+    fail(res, err, 'Zonele nu au putut fi citite');
+  }
+});
+
+/**
+ * Which zone an address falls in, and what that costs for a given MMA.
+ *
+ * The map screen asks this instead of deciding for itself: `resolveZone` and `findZoneRate` are
+ * the same functions the TPO calls, so an operator checking a street before a run is told the
+ * figure the invoice will actually carry. A screen that reimplemented the lookup would be free
+ * to disagree with the calculation, and the disagreement would surface as a customer query.
+ *
+ * Geocoding stays on the shared path in `geo/geocode.js`, confidence is the provider-agnostic
+ * score, and a low one is reported rather than quietly treated as a hit.
+ */
+router.post('/zones/locate', async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const street = String(req.body?.address || '').trim();
+    if (!street) return res.status(400).json({ message: 'Adresa este obligatorie' });
+
+    // The screen knows which city's tab is open, so an operator types a street and nothing
+    // else. Without this a bare "Calea Victoriei" is geocoded country-wide and lands on the
+    // first street of that name anywhere in Romania, a confident pin in the wrong county.
+    const cityHint = String(req.body?.city || '').trim();
+    const address = cityHint && !plainText(street).includes(plainText(cityHint))
+      ? street + ', ' + cityHint
+      : street;
+
+    let mmaKg = req.body?.mma_kg == null || req.body.mma_kg === ''
+      ? null
+      : Number(req.body.mma_kg);
+    if (mmaKg != null && !Number.isFinite(mmaKg)) {
+      return res.status(400).json({ message: 'MMA trebuie să fie un număr, în kilograme' });
+    }
+
+    // A plate is enough. The mass the fee is charged on is a fact about the lorry, recorded
+    // once in Autoturisme, not something to retype per trip. A figure typed here still wins:
+    // somebody checking a hypothetical is asking about that number, not about the fleet.
+    const plate = String(req.body?.plate || '').trim();
+    let vehicle = null;
+    if (plate) {
+      vehicle = await vehicleForPlate(pool, companyId, plate);
+      if (mmaKg == null && vehicle.mmaKg != null) mmaKg = vehicle.mmaKg;
+    }
+    const onDate = String(req.body?.date || today()).slice(0, 10);
+
+    const geo = await geocodeAddress(pool, companyId, address);
+    if (!geo.best) {
+      // "Not found" and "there is no geocoder" send someone to different places: one is a
+      // typo, the other is a server that cannot answer any address at all.
+      if (geo.providerDown) {
+        return res.status(503).json({
+          message: 'Geocodarea nu este configurată pe server, deci adresele nu pot fi '
+            + 'localizate. Setează PHOTON_URL în server/.env.',
+          geocoder: 'indisponibil',
+        });
+      }
+      return res.json({
+        address,
+        query: address,
+        point: null,
+        outcome: geo.outcome,
+        zone: null,
+        rate: null,
+        message: 'Adresa nu a putut fi localizată.',
+      });
+    }
+
+    // `best` is not enough on its own: a fresh geocode carries city/county/postcode, but a
+    // cached one is rebuilt by `fromCacheRow` from the stored columns and loses them. Reading
+    // the textual fields off `best` would make a zone with a city matcher resolve on the first
+    // lookup of an address and stop resolving on every later one, the same screen giving two
+    // answers depending on whether somebody had searched that street before. The candidates
+    // are cached in full, and the typed address is parsed the same way either way.
+    const parsed = parseRomanianAddress(address);
+    const candidate = geo.candidates?.find(
+      (c) => Number(c?.latitude) === Number(geo.best.latitude)
+        && Number(c?.longitude) === Number(geo.best.longitude),
+    ) ?? geo.candidates?.[0] ?? null;
+
+    const place = {
+      latitude: geo.best.latitude,
+      longitude: geo.best.longitude,
+      label: geo.best.label ?? candidate?.label ?? address,
+      city: candidate?.city ?? parsed.city ?? null,
+      county: candidate?.county ?? parsed.county ?? null,
+      postcode: candidate?.postcode ?? parsed.postcode ?? null,
+    };
+
+    const [zonesRes, ratesRes] = await Promise.all([
+      query('SELECT * FROM tax_zones WHERE company_id = $1 AND is_active = TRUE', [companyId]),
+      query('SELECT * FROM tax_zone_rates WHERE company_id = $1', [companyId]),
+    ]);
+
+    const zone = resolveZone(zonesRes.rows, place);
+    // Say how the zone was decided: a polygon hit is a fact about the point, a textual match is
+    // a fact about the address text, and an operator checking a boundary needs to tell them
+    // apart. This re-tests the point rather than inferring from "the zone has a polygon", a
+    // zone can carry an outline the point falls outside of and still win on its matcher.
+    const matchedBy = zone
+      ? (zone.polygon && pointInPolygon(place, zone.polygon) ? 'polygon' : 'text')
+      : null;
+
+    let rate = null;
+    if (zone) {
+      const zoneRates = ratesRes.rows.filter((r) => r.tax_zone_id === zone.id);
+      rate = findZoneRate(zoneRates, { mmaKg, onDate });
+    }
+
+    res.json({
+      address,
+      point: { latitude: place.latitude, longitude: place.longitude, label: place.label },
+      confidence: geo.best.confidence ?? null,
+      outcome: geo.outcome,
+      zone: zone ? serializeRow(zone) : null,
+      matched_by: matchedBy,
+      rate: rate ? serializeRow(rate) : null,
+      mma_kg: mmaKg,
+      // What the screen needs to write a sentence: whether the lorry is on file at all, and
+      // whether the figure shown came from there rather than from the box. "No MTMA" reaching
+      // the screen as one silence, for both an unknown lorry and an incomplete one, is how an
+      // operator ends up retyping a number that was supposed to be recorded once.
+      vehicle: vehicle?.plate
+        ? { plate: vehicle.plate, known: vehicle.known, has_mma: vehicle.mmaKg != null }
+        : null,
+      date: onDate,
+    });
+  } catch (err) {
+    fail(res, err, 'Căutarea zonei a eșuat');
+  }
+});
+
 /** The depot every trip's kilometres start and end at. */
 router.put('/depot', adminRequired, async (req, res) => {
   try {
@@ -136,10 +298,10 @@ router.put('/depot', adminRequired, async (req, res) => {
       if (!found.rows[0]) return res.status(404).json({ message: 'Locație inexistentă' });
       if (found.rows[0].latitude == null || found.rows[0].longitude == null) {
         // Without coordinates the round trip cannot be measured, and the TPO silently loses its
-        // kilometre component — better to refuse than to accept a depot that cannot be routed.
+        // kilometre component, better to refuse than to accept a depot that cannot be routed.
         return res.status(422).json({
           message: 'Locația nu are coordonate. Geocodeaz-o din ecranul Locații înainte de a o '
-            + 'seta ca garaj — fără coordonate nu se pot calcula kilometrii.',
+            + 'seta ca garaj, fără coordonate nu se pot calcula kilometrii.',
         });
       }
     }

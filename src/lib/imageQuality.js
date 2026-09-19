@@ -7,7 +7,7 @@
  * silence.
  *
  * The measure is the variance of the Laplacian: a sharp image has strong local intensity changes
- * at edges, a blurred one has few. It is a heuristic, so it never blocks — the driver can always
+ * at edges, a blurred one has few. It is a heuristic, so it never blocks, the driver can always
  * send anyway, and a document nobody can read is still better than a document nobody sent.
  */
 
@@ -15,7 +15,7 @@
 export const SAMPLE_MAX_SIDE = 640;
 
 /**
- * Below this, warn. Calibrated against downscaled phone photos, not a physical constant — if
+ * Below this, warn. Calibrated against downscaled phone photos, not a physical constant, if
  * real avize keep tripping it, move the number rather than removing the warning.
  */
 export const SHARPNESS_MIN = 55;
@@ -81,7 +81,7 @@ export function sampleSize(width, height, maxSide = SAMPLE_MAX_SIDE) {
 /**
  * Measures one image file in the browser.
  *
- * Returns `null` when the check cannot run — an unsupported file, a browser without the APIs, a
+ * Returns `null` when the check cannot run, an unsupported file, a browser without the APIs, a
  * decode failure. A check that could not run must never be reported as a failed check.
  */
 export async function measurePhotoSharpness(file) {
@@ -113,22 +113,41 @@ export async function measurePhotoSharpness(file) {
 /**
  * The blurriest of a set, so a driver sending four photos hears about the one that needs redoing.
  * Files the check could not read are skipped, never counted as blurred.
+ *
+ * `timeoutMs`: after a long pause the first `createImageBitmap` can hang on some phones. The
+ * check must never block the send — a late warning is worse than a photo that reaches the office.
  */
-export async function findBlurriest(files, threshold = SHARPNESS_MIN) {
-  let worst = null;
-  for (const file of files) {
-    const score = await measurePhotoSharpness(file);
-    if (score == null) continue;
-    if (!worst || score < worst.score) worst = { file, score };
+export async function findBlurriest(files, threshold = SHARPNESS_MIN, { timeoutMs = 2_500 } = {}) {
+  const work = (async () => {
+    let worst = null;
+    for (const file of files) {
+      const score = await measurePhotoSharpness(file);
+      if (score == null) continue;
+      if (!worst || score < worst.score) worst = { file, score };
+    }
+    if (!worst || !isBlurry(worst.score, threshold)) return null;
+    return worst;
+  })();
+
+  if (!timeoutMs || timeoutMs <= 0) return work;
+
+  let timer;
+  try {
+    return await Promise.race([
+      work,
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
-  if (!worst || !isBlurry(worst.score, threshold)) return null;
-  return worst;
 }
 
 /**
  * Where to put the warning line, given photos somebody has judged by eye.
  *
- * The two mistakes do not cost the same. A false warning on a readable photo costs one tap —
+ * The two mistakes do not cost the same. A false warning on a readable photo costs one tap,
  * the check never blocks. A missed blurry photo costs a document the office cannot read and,
  * often, a trip back to the truck. So misses are weighted double and ties break upward.
  *

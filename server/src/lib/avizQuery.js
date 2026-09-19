@@ -1,11 +1,17 @@
 /**
  * How a stored row was read. `vision` stays in the table for rows extracted before Google Vision
- * was removed — dropping it would relabel their history rather than erase a dependency.
+ * was removed, dropping it would relabel their history rather than erase a dependency.
+ *
+ * `paddle` and `none` are named explicitly because they are what the extractor actually writes
+ * today: falling through to `stub` labelled a real PaddleOCR read, and a failed one, as though
+ * no OCR had been attempted at all.
  */
 export function mapProviderToSource(provider) {
   const p = String(provider || '').toLowerCase();
   if (p === 'pdf_text' || p === 'pdf-text') return 'pdf-text';
   if (p === 'google_vision' || p === 'vision') return 'vision';
+  if (p === 'paddle' || p === 'paddle_ocr' || p === 'paddleocr') return 'paddle';
+  if (p === 'none') return 'none';
   return 'stub';
 }
 
@@ -21,29 +27,117 @@ export function isLockedRaiTemplate(row) {
   return String(row?.name || '').trim() === 'Anexa Factura RAI';
 }
 
+/**
+ * What makes two rows the same delivery, rather than two curse of one TPO.
+ *
+ * A TPO is an order, and an order can legitimately be driven several times: the same
+ * TPO-0025803 covers PSL-0044633 to Șos. Viilor on Monday and PSL-0044701 to Bd. Iuliu Maniu on
+ * Tuesday. Treating a repeated TPO as a duplicate warned about double billing on every one of
+ * those, which trains an operator to click past the warning, and a warning nobody reads is
+ * worse than no warning: the real double upload goes through with the same shrug.
+ *
+ * The aviz number is the discriminator, because that is what the consignment is: two different
+ * PSL numbers are two different loads whatever TPO paid for them, and the same PSL number twice
+ * is the same paper counted twice.
+ *
+ * Without an aviz number there is nothing that precise, so the run plus where it went stands in.
+ * Two rows that agree on the day, the lorry and the destination, and carry no document number
+ * to tell them apart, have nothing left that distinguishes them.
+ */
+export function consignmentKey(row) {
+  const doc = String(row?.numar_document_marfa || '').trim().toLowerCase();
+  if (doc) return `doc:${doc}`;
+  const route = String(row?.ruta_transport || '').trim().toLowerCase();
+  return `run:${runIdentity(row)}|${route}`;
+}
+
+/**
+ * Marks the rows that are the same consignment as another row in the set, under the same TPO.
+ *
+ * Still scoped to the TPO, which is where an operator looks when the annex totals are wrong.
+ * The same aviz number appearing under two different TPOs is a different mistake and is not
+ * what this flag has ever meant.
+ */
 export function flagDuplicateTpos(rows) {
   const counts = new Map();
+  const keyOf = (row) => {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    return tpo ? `${tpo}::${consignmentKey(row)}` : null;
+  };
   for (const row of rows) {
-    const tpo = String(row.numar_tpo || '').trim().toLowerCase();
-    if (!tpo) continue;
-    counts.set(tpo, (counts.get(tpo) || 0) + 1);
+    const key = keyOf(row);
+    if (!key) continue;
+    counts.set(key, (counts.get(key) || 0) + 1);
   }
   return rows.map((row) => {
-    const tpo = String(row.numar_tpo || '').trim().toLowerCase();
-    return { ...row, duplicate_tpo: Boolean(tpo && counts.get(tpo) > 1) };
+    const key = keyOf(row);
+    return { ...row, duplicate_tpo: Boolean(key && counts.get(key) > 1) };
   });
 }
 
-export async function tpoExistsForOther(queryFn, { companyId, tpo, exceptId }) {
-  const term = String(tpo || '').trim();
-  if (!term) return false;
+/**
+ * One cursă ≠ one aviz. Same TPO with two trucks (or two days) is two runs; two unloadings
+ * on the same truck/day stay one run. Prefer linked trip_id when present.
+ */
+export function runIdentity(row) {
+  if (row?.trip_id) return `trip:${row.trip_id}`;
+  const date = String(row?.data_efectuare_cursa || '').slice(0, 10) || '_';
+  const auto = String(row?.numar_auto || '')
+    .toUpperCase()
+    .replace(/\s+/g, '')
+    .replace(/[^A-Z0-9/]/g, '');
+  if (auto) return `${date}|${auto}`;
+  // No plate: do not collapse unrelated unloadings into one phantom run.
+  return `${date}|id:${row?.id || ''}`;
+}
+
+/**
+ * Sets `numar_curse` on each row to the count of distinct runs sharing its TPO
+ * (within the given set, typically the list view or the export selection).
+ */
+export function applyNumarCurseByRuns(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const runsByTpo = new Map();
+  for (const row of list) {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    if (!tpo) continue;
+    if (!runsByTpo.has(tpo)) runsByTpo.set(tpo, new Set());
+    runsByTpo.get(tpo).add(runIdentity(row));
+  }
+  return list.map((row) => {
+    const tpo = String(row?.numar_tpo || '').trim().toLowerCase();
+    if (!tpo) return { ...row, numar_curse: 1 };
+    const count = runsByTpo.get(tpo)?.size || 1;
+    return { ...row, numar_curse: count };
+  });
+}
+
+/**
+ * Whether another stored document is the same consignment as this one.
+ *
+ * The candidates are fetched and compared in JavaScript rather than matched in SQL, so this
+ * and `flagDuplicateTpos` cannot drift apart: the list view and the single row would otherwise
+ * each have their own opinion about what a duplicate is, and an operator would see a row
+ * labelled duplicate in the table and not in the modal.
+ *
+ * `decorate` is how a caller hands over rows repaired from the stored OCR text. Comparing a
+ * repaired row against raw candidates can only miss a duplicate, never invent one, but a
+ * caller that can repair both should.
+ */
+export async function duplicateConsignmentExists(queryFn, { companyId, row, decorate }) {
+  const tpo = String(row?.numar_tpo || '').trim();
+  if (!tpo) return false;
   const result = await queryFn(
-    `SELECT 1 FROM aviz_documents
+    `SELECT id, numar_tpo, numar_document_marfa, ruta_transport, data_efectuare_cursa,
+            numar_auto, trip_id, extracted_data
+     FROM aviz_documents
      WHERE company_id = $1 AND LOWER(numar_tpo) = LOWER($2) AND id <> $3
-     LIMIT 1`,
-    [companyId, term, exceptId]
+     LIMIT 50`,
+    [companyId, tpo, row.id]
   );
-  return Boolean(result.rows[0]);
+  const shape = typeof decorate === 'function' ? decorate : (x) => x;
+  const key = consignmentKey(row);
+  return result.rows.some((other) => consignmentKey(shape(other)) === key);
 }
 
 export const AVIZ_ID_CAP = 200;
@@ -89,7 +183,7 @@ export function uniqueZipEntry(name, used) {
 /**
  * Which calendar date the `from`/`to` filters mean, as clauses rather than a bare expression.
  *
- * `cursa` is the trip date read off the aviz — the one a monthly annex is built on. `incarcare`
+ * `cursa` is the trip date read off the aviz, the one a monthly annex is built on. `incarcare`
  * is when the file reached us, expressed in Bucharest so a 23:30 upload does not count as the
  * next day. They are far apart in practice: an aviz photographed today can carry a trip date
  * from two weeks ago, which is why a week preset on the trip date can come back empty while the
@@ -103,7 +197,7 @@ export function uniqueZipEntry(name, used) {
  * functional index could not stand in for that: `AT TIME ZONE` is STABLE, not IMMUTABLE, and
  * Postgres refuses it in an index.
  *
- * Each clause carries a single `$n` placeholder, repeated where needed — callers substitute their
+ * Each clause carries a single `$n` placeholder, repeated where needed, callers substitute their
  * own parameter index and push one value.
  */
 export function avizDateClauses(dateField, alias = '') {

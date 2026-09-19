@@ -11,11 +11,12 @@ import {
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
 import { avizFieldConfidence, repairAvizFromStored } from '../lib/avizOcr.js';
-import { extractBatchDocuments, logEvent } from './documents.js';
+import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  ocrCapability,
 } from '../lib/ocr/readText.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { buildReport } from '../lib/reporting/build.js';
@@ -23,8 +24,14 @@ import { recordExport } from '../lib/reporting/exportLog.js';
 import { isPgUniqueViolation, repairNeedsWrite } from '../lib/concurrency.js';
 import { resolveUploadPath } from '../lib/cmrOcr.js';
 import { sendEmail } from '../lib/email.js';
+import {
+  isValidObservationCodeFormat,
+  normalizeObservationCode,
+  validateObservationCodeInput,
+} from '../lib/observationCodes.js';
 import { zipStore } from '../lib/zipStore.js';
 import {
+  applyNumarCurseByRuns,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
@@ -32,7 +39,7 @@ import {
   pickConfirmedAvize,
   templateDeleteDecision,
   templateUpdateDecision,
-  tpoExistsForOther,
+  duplicateConsignmentExists,
   uniqueZipEntry,
 } from '../lib/avizQuery.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
@@ -118,13 +125,27 @@ function repairedUpdateValues(repaired) {
 }
 
 const DEFAULT_OBS_CODES = [
-  { code: 'Z:B*', label: 'Zona B', sort_order: 1 },
-  { code: 'IF*', label: 'Ilfov', sort_order: 2 },
-  { code: 'Așteptare', label: 'Așteptare', sort_order: 3 },
+  { code: 'Z:B', label: 'Zona B', sort_order: 1 },
+  { code: 'IF', label: 'Ilfov', sort_order: 2 },
+  { code: 'ZA', label: 'Zona A', sort_order: 3 },
+  { code: 'DM', label: 'Descărcare macara', sort_order: 4 },
 ];
 
+/**
+ * One aviz as the screen should see it.
+ *
+ * The repair runs here for the same reason it runs on export: PaddleOCR regularly leaves
+ * `ruta_transport` empty on the row while the route is plainly there in the stored OCR text.
+ * Export repaired it and the list did not, so the same document showed no route in the table
+ * and the right one in the XLSX. A screen that disagrees with the file it produces is worse
+ * than either being wrong alone, because neither can be trusted afterwards.
+ *
+ * `repairAvizFromStored` fills blanks (and replaces a false route like "Bolintin-Deal"), so an
+ * office edit of a real route is never overwritten, and nothing is written back here: this
+ * decorates a response, it does not change the document.
+ */
 function decorateAviz(row) {
-  const serialized = serializeRow(row);
+  const serialized = repairAvizFromStored(serializeRow(row));
   const source = serialized.extraction_source
     || mapProviderToSource(serialized.extracted_data?.provider);
   return {
@@ -135,8 +156,8 @@ function decorateAviz(row) {
 }
 
 /**
- * Records an export through the shared recorder, so history from this screen is as complete —
- * and as re-downloadable — as history from `/reports`. Before this the two paths wrote different
+ * Records an export through the shared recorder, so history from this screen is as complete,
+ * and as re-downloadable, as history from `/reports`. Before this the two paths wrote different
  * amounts of detail, and only one of them could reproduce its own file.
  */
 async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename, built }) {
@@ -184,7 +205,7 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
   const template = serializeRow(tmpl.rows[0]);
   const columns = exportColumnsFor(template);
   const report = buildReport({ template, documents: avize });
-  // The annex keeps its exact agreed shape here — no totals row on the legacy path.
+  // The annex keeps its exact agreed shape here, no totals row on the legacy path.
   const workbook = renderReportWorkbook({
     name: template.name || 'Anexa',
     columns,
@@ -197,7 +218,38 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
   return { buffer, filename: `${safeName}-${stamp}.xlsx`, template, avize, columns, report };
 }
 
+/**
+ * Strip trailing `*` from stored catalog codes (separator belongs only in Observații joins).
+ * Drops the starred row when the clean code already exists.
+ */
+async function repairObservationCodeStars(companyId) {
+  const listed = await query(
+    `SELECT id, code, label FROM aviz_observation_codes WHERE company_id = $1`,
+    [companyId]
+  );
+  for (const row of listed.rows || []) {
+    const cleaned = normalizeObservationCode(row.code);
+    if (!cleaned || cleaned === row.code) continue;
+    if (!isValidObservationCodeFormat(cleaned)) continue;
+    try {
+      await query(
+        `UPDATE aviz_observation_codes
+         SET code = $1, label = COALESCE(NULLIF(TRIM(label), ''), $2)
+         WHERE id = $3 AND company_id = $4`,
+        [cleaned, row.label || cleaned, row.id, companyId]
+      );
+    } catch (err) {
+      if (!isPgUniqueViolation(err)) throw err;
+      await query(
+        `DELETE FROM aviz_observation_codes WHERE id = $1 AND company_id = $2`,
+        [row.id, companyId]
+      );
+    }
+  }
+}
+
 async function ensureObservationCodes(companyId) {
+  await repairObservationCodeStars(companyId);
   const existing = await query(
     `SELECT * FROM aviz_observation_codes WHERE company_id = $1 ORDER BY sort_order ASC, code ASC`,
     [companyId]
@@ -220,6 +272,7 @@ async function ensureObservationCodes(companyId) {
 
 router.get('/', async (req, res) => {
   try {
+    await failStaleUploadedAvize(req.user.company_id).catch(() => {});
     const { sql, params } = buildAvizListQuery({
       companyId: req.user.company_id,
       from: req.query.from,
@@ -230,7 +283,7 @@ router.get('/', async (req, res) => {
       dateField: req.query.date_field,
     });
     const result = await query(sql, params);
-    const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
+    const rows = flagDuplicateTpos(applyNumarCurseByRuns(result.rows.map(decorateAviz)));
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -406,7 +459,7 @@ router.post('/extract', async (req, res) => {
     }
 
     // Every aviz is read by one extractor: the profile engine in documents.js, over PaddleOCR.
-    // A document therefore has to belong to a batch before it can be read — rows uploaded from
+    // A document therefore has to belong to a batch before it can be read, rows uploaded from
     // this screen get one here, and rows that predate batches are attached to one on first use.
     let docId = id;
     let batchId = null;
@@ -463,15 +516,25 @@ router.post('/extract', async (req, res) => {
       batchId = created.batchId;
     }
 
-    // A scanned dossier is a job, not a spinner. Every page is a full OCR pass, so past a few
-    // of them the request would be held open for minutes and time out on a document that is
-    // perfectly readable. Those run in the background, the same way a driver's upload does.
+    // A dead sidecar used to hold the spinner for the full interactive budget (and longer
+    // behind a tunnel that drops the answer). Health already knows; refuse before the wait.
+    if ((await ocrCapability()) === 'paddle-down') {
+      return res.status(503).json({
+        code: 'OCR_DOWN',
+        message: 'Serviciul OCR nu răspunde. Pornește sidecar-ul PaddleOCR și încearcă din nou.',
+      });
+    }
+
     const pages = await documentPageCount(storedFileUrl);
-    if (pages > interactiveOcrMaxPages()) {
-      // Flip before the background job is scheduled so the list shows "Se procesează…" immediately.
+    // Re-extract (client sent `id`) and long scans never hold the HTTP request. A hard carnet
+    // photo routinely hits OCR_TIMEOUT at the interactive budget; behind Cloudflare the tunnel
+    // often drops earlier, so the UI never receives the 202 retry and stays on „Se re-extrage…”.
+    // Background uses the full OCR_TIMEOUT_MS budget and the list polls until fields appear.
+    const reextract = Boolean(req.body?.id);
+    if (reextract || pages > interactiveOcrMaxPages()) {
       await query(
         `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
-         WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+         WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed', 'uploaded')`,
         [docId, req.user.company_id]
       );
       extractBatchDocuments(req.user.company_id, batchId, req.user.id, {
@@ -489,6 +552,7 @@ router.post('/extract', async (req, res) => {
         ...decorateAviz(pending.rows[0]),
         extraction_pending: true,
         pages,
+        reason: reextract ? 'reextract_background' : 'long_document',
       });
     }
 
@@ -496,7 +560,7 @@ router.post('/extract', async (req, res) => {
       force: true,
       profileId: req.body?.profile_id,
       documentIds: [docId],
-      // Somebody is watching a spinner — this one does not get the background budget.
+      // Somebody is watching a spinner, this one does not get the background budget.
       timeoutMs: interactiveOcrTimeoutMs(pages),
     });
 
@@ -510,7 +574,7 @@ router.post('/extract', async (req, res) => {
       if (timedOut) {
         await query(
           `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
-           WHERE id = $1 AND company_id = $2 AND status = 'extracted'`,
+           WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed')`,
           [docId, req.user.company_id]
         );
         extractBatchDocuments(req.user.company_id, batchId, req.user.id, {
@@ -543,10 +607,12 @@ router.post('/extract', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
 
     const row = decorateAviz(result.rows[0]);
-    row.duplicate_tpo = await tpoExistsForOther(query, {
+    row.duplicate_tpo = await duplicateConsignmentExists(query, {
       companyId: req.user.company_id,
-      tpo: row.numar_tpo,
-      exceptId: row.id,
+      row,
+      // Candidates are repaired too, so a stored row whose aviz number lives only in the OCR
+      // text is compared by that number and not by the blank column.
+      decorate: (other) => repairAvizFromStored(serializeRow(other)),
     });
     res.json(row);
   } catch (err) {
@@ -589,7 +655,7 @@ router.post('/bulk-confirm', async (req, res) => {
         [req.user.company_id, ids]
       );
     });
-    res.json(flagDuplicateTpos(result.rows.map(decorateAviz)));
+    res.json(flagDuplicateTpos(applyNumarCurseByRuns(result.rows.map(decorateAviz))));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });
@@ -608,18 +674,33 @@ router.get('/observation-codes', async (req, res) => {
 
 router.post('/observation-codes', async (req, res) => {
   try {
-    const code = String(req.body?.code || '').trim();
-    if (!code) return res.status(400).json({ message: 'Completează codul.' });
-    const label = String(req.body?.label || code).trim();
+    const checked = validateObservationCodeInput({
+      code: req.body?.code,
+      label: req.body?.label,
+    });
+    if (!checked.ok) return res.status(400).json({ message: checked.message });
+
+    const dup = await query(
+      `SELECT id FROM aviz_observation_codes
+       WHERE company_id = $1 AND UPPER(code) = $2
+       LIMIT 1`,
+      [req.user.company_id, checked.code]
+    );
+    if (dup.rows[0]) {
+      return res.status(409).json({ message: `Codul „${checked.code}” există deja.` });
+    }
+
     const result = await query(
       `INSERT INTO aviz_observation_codes (company_id, code, label, sort_order)
        VALUES ($1, $2, $3, $4)
-       ON CONFLICT (company_id, code) DO UPDATE SET label = EXCLUDED.label
        RETURNING *`,
-      [req.user.company_id, code, label, Number(req.body?.sort_order) || 0]
+      [req.user.company_id, checked.code, checked.label, Number(req.body?.sort_order) || 0]
     );
     res.status(201).json(serializeRow(result.rows[0]));
   } catch (err) {
+    if (isPgUniqueViolation(err)) {
+      return res.status(409).json({ message: 'Codul există deja.' });
+    }
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to save code' });
   }
@@ -667,7 +748,7 @@ router.post('/email', async (req, res) => {
       download: Boolean(sent.stub),
       content_base64: sent.stub ? buffer.toString('base64') : undefined,
       message: sent.stub
-        ? 'Resend nu este configurat — emailul nu a fost trimis. Descarcă anexa manual.'
+        ? 'Resend nu este configurat, emailul nu a fost trimis. Descarcă anexa manual.'
         : undefined,
     });
   } catch (err) {
@@ -754,7 +835,7 @@ router.get('/trip-suggestions', async (req, res) => {
 /**
  * A draft invoice built from what the pricing engine computed.
  *
- * The amounts are the trip's `trip_charges` — the same lines the TPO is made of — not a figure
+ * The amounts are the trip's `trip_charges`, the same lines the TPO is made of, not a figure
  * re-derived here. There used to be two money paths: the engine decomposed a trip into charges
  * while this endpoint summed `aviz_documents.valoare_tpo`, a column an operator types into. They
  * could disagree, and nothing compared them, so an invoice could go out on a number nothing had

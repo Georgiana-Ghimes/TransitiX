@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-/** Honest label for GPS / Planning / e-Factura — not live ANAF or telematics. */
+/** Honest label for GPS / Planning / e-Factura, not live ANAF or telematics. */
 export default function DemoBanner({ title, children }) {
   return (
     <div

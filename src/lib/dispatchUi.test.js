@@ -281,7 +281,7 @@ describe('orderLocationOptions', () => {
   it('lists active locations with a readable label', () => {
     const options = orderLocationOptions(locations);
     expect(options.map((o) => o.id)).toEqual(['l1', 'l2', 'l3']);
-    expect(options[0].label).toBe('Depozit Sud — bucuresti');
+    expect(options[0].label).toBe('Depozit Sud, bucuresti');
   });
 
   it('narrows to a client plus unattached locations', () => {
@@ -302,7 +302,7 @@ describe('validateOrder', () => {
     expect(validateOrder(valid)).toEqual({ ok: true, errors: {} });
   });
 
-  it('requires a location — without one the order can never be planned', () => {
+  it('requires a location, without one the order can never be planned', () => {
     const { ok, errors } = validateOrder({ ...valid, location_id: null });
     expect(ok).toBe(false);
     expect(errors.location_id).toMatch(/locație/);

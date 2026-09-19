@@ -2,8 +2,8 @@
  * CMR drafts from a planned route.
  *
  * A route is a plan; a CMR is a document. This module turns one into the other without
- * touching the database, so the mapping that actually matters — who is the shipper, who is
- * the consignee, which way round a pickup goes — is testable on its own.
+ * touching the database, so the mapping that actually matters (who is the shipper, who is
+ * the consignee, which way round a pickup goes) is testable on its own.
  *
  * The direction is the whole point: on a delivery our company hands the goods over, so the
  * company is the shipper and the stop is the consignee. On a pickup it is the other way
@@ -33,7 +33,7 @@ function titleCase(value) {
  *
  * `locations.address` holds only the street, because the parser split the city and county
  * into their own columns. A CMR with a street and no town is not a delivery address, so the
- * parts are put back together — skipping any the street already contains.
+ * parts are put back together, skipping any the street already contains.
  */
 export function fullAddress(stop = {}) {
   const parts = [];
@@ -97,8 +97,8 @@ function localTime(value) {
 }
 
 /**
- * The stop as a CMR party. Contact details come from the location first — that is the gate
- * the driver actually calls — and fall back to the client record.
+ * The stop as a CMR party. Contact details come from the location first, that is the gate
+ * the driver actually calls, and fall back to the client record.
  */
 function stopParty(stop) {
   return {
@@ -125,7 +125,7 @@ function companyParty(company) {
 /**
  * One trip row per eligible stop.
  *
- * `skipStopIds` are stops that already produced a document — regenerating a route must add
+ * `skipStopIds` are stops that already produced a document, regenerating a route must add
  * the new stops without duplicating the CMRs already printed and handed to a driver.
  */
 export function buildTripDrafts({

@@ -3,7 +3,7 @@
  *
  * Each extractor returns `{ value, confidence, matched }` rather than a bare value.
  * Confidence is what decides whether a field is written unattended or lands in front of an
- * operator, so every extractor has to be honest about how sure it is — a regex that matched
+ * operator, so every extractor has to be honest about how sure it is, a regex that matched
  * a well-formed, labelled value is worth more than one that grabbed a loose number.
  */
 
@@ -31,18 +31,70 @@ export function matchPatterns(text, patterns, { transform, baseConfidence = 0.9 
   return NO_MATCH;
 }
 
-/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ. */
+/** Romanian county codes used on standard plates (B, CJ, …). */
+export const RO_PLATE_COUNTIES =
+  'B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN';
+
+const RO_PLATE_TOKEN = new RegExp(
+  `^(?:${RO_PLATE_COUNTIES})[\\s-]?\\d{2,3}[\\s-]?[A-Z]{2,3}$`,
+  'i'
+);
+const SYNTHETIC_PLATE_TOKEN = /^(?:TEST-?\d{1,6}|B\s+TEST\s+\d{1,4})$/i;
+
+/**
+ * True when every slash-separated token is a real RO plate or a known synthetic test plate.
+ * Used so OCR prose ("330 SRS FOOTY STREAM…") never lands in Număr auto / Excel.
+ */
+export function isAcceptableAutoField(value) {
+  const parts = String(value || '')
+    .split('/')
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (!parts.length) return false;
+  if (parts.some((p) => p.length > 24)) return false;
+  return parts.every((p) => RO_PLATE_TOKEN.test(p) || SYNTHETIC_PLATE_TOKEN.test(p));
+}
+
+/** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ, county required, no loose shape matches. */
+/**
+ * The one way a plate is written down: `B-112-VFM`.
+ *
+ * There used to be two. This extractor returned `B 112 VFM` and `normalizePlate` in avizOcr
+ * returned `B-112-VFM`, so the same lorry was stored two ways depending on which path had run.
+ * On a screen that is untidy; as the key of a vehicle registry it is two vehicles, one of which
+ * never gets its MTMA filled in. Hyphens win because that is the form the customer's own sheet
+ * uses.
+ *
+ * A string this does not recognise as a plate comes back unchanged rather than emptied: the
+ * fleet holds deliberate non-standard entries (`B-900-DEMO`, `B TEST 1`) and losing them would
+ * be a worse outcome than leaving them inconsistent.
+ */
+export function canonicalPlate(value) {
+  const text = String(value || '').toUpperCase().replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  const re = new RegExp(`\\b(${RO_PLATE_COUNTIES})[-\\s]?(\\d{2,3})[-\\s]?([A-Z]{2,3})\\b`, 'gi');
+  const parts = [];
+  const seen = new Set();
+  let m = re.exec(text);
+  while (m) {
+    const plate = `${m[1].toUpperCase()}-${m[2]}-${m[3].toUpperCase()}`;
+    if (!seen.has(plate)) {
+      seen.add(plate);
+      parts.push(plate);
+    }
+    m = re.exec(text);
+  }
+  return parts.length ? parts.join(' / ') : text;
+}
+
 export function extractPlate(text) {
   const found = matchPatterns(text, [
-    /\b((?:B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)\s?\d{2,3}\s?[A-Z]{3})\b/,
-    /\b([A-Z]{1,2}\s?\d{2,3}\s?[A-Z]{3})\b/,
+    new RegExp(`\\b((?:${RO_PLATE_COUNTIES})\\s?\\d{2,3}\\s?[A-Z]{3})\\b`, 'i'),
   ], {
-    transform: (raw) => String(raw).toUpperCase().replace(/\s+/g, ' ').trim(),
+    transform: (raw) => canonicalPlate(raw),
   });
-  if (!found.value) return NO_MATCH;
-  // A plate that is only plausible in shape, without a real county prefix, is worth less.
-  const strong = /^(B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)\s/.test(found.value);
-  return result(found.value, strong ? found.confidence : found.confidence - 0.25, found.matched);
+  if (!found.value || !isAcceptableAutoField(found.value)) return NO_MATCH;
+  return result(found.value, found.confidence, found.matched);
 }
 
 const MONTHS = {
@@ -112,132 +164,221 @@ export function parseNumber(raw) {
 const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000, tone_: 1000 };
 
 /**
- * Gross weight — what the weighbridge shows, goods plus pallets.
+ * Gross weight, what the weighbridge shows, goods plus pallets.
  *
  * This is the field the client corrected us on: a report needs "9.000 kg", not "378 saci".
  * A labelled "greutate brută" is trusted; a bare weight with no label is not, because it
  * could just as easily be the net.
  */
+/**
+ * A labelled weight, with the unit on either side of the number.
+ *
+ * Baumit's own avize print `Greutate bruta, kg  15,744.00` — the unit sits in the label and the
+ * figure follows it. Only the `number unit` order was matched, so on those documents the weight
+ * came back empty, and the annex fell back to the bucket count: "Cantitate marfa (tone)" read
+ * 768 where the weighbridge said 15.74. That is the mistake the client corrected us on once
+ * already, arriving again through a different door.
+ *
+ * The digits are matched without `\s`, so a number cannot swallow the following line on a PDF
+ * that puts every token on its own row. A literal space still allows "15 744,00".
+ */
+function matchLabelledWeight(blob, label) {
+  const after = blob.match(new RegExp(`(?:${label})\\s*[:\\-]?\\s*([\\d][\\d., ]*)\\s*(kg|to?ne?|t)\\b`, 'i'));
+  if (after) return { raw: after[1], unit: after[2], matched: after[0] };
+
+  const before = blob.match(new RegExp(`(?:${label})\\s*[,:\\-]?\\s*(kg|to?ne?|t)\\b\\s*[:\\-]?\\s*([\\d][\\d., ]*)`, 'i'));
+  if (before) return { raw: before[2], unit: before[1], matched: before[0] };
+
+  return null;
+}
+
+function weightFrom(hit, confidence) {
+  if (!hit) return null;
+  const value = parseNumber(hit.raw);
+  if (value == null) return null;
+  const factor = String(hit.unit || 'kg').toLowerCase().startsWith('t') ? 1000 : 1;
+  return result(Math.round(value * factor * 100) / 100, confidence, hit.matched);
+}
+
+const GROSS_LABEL = 'greutate\\s*(?:bruta|brută)|masa\\s*(?:bruta|brută)|gross\\s*weight|g\\.?\\s*bruta';
+const NET_LABEL = 'greutate\\s*(?:neta|netă)|masa\\s*(?:neta|netă)|net\\s*weight';
+
 export function extractGrossWeight(text) {
   const blob = String(text || '');
 
-  const labelled = blob.match(
-    /(?:greutate\s*(?:bruta|brută)|masa\s*(?:bruta|brută)|gross\s*weight|g\.?\s*bruta)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
-  );
-  if (labelled) {
-    const value = parseNumber(labelled[1]);
-    if (value != null) {
-      const unit = String(labelled[2] || 'kg').toLowerCase();
-      const factor = unit.startsWith('t') ? 1000 : 1;
-      return result(Math.round(value * factor * 100) / 100, 0.95, labelled[0]);
-    }
-  }
+  const labelled = weightFrom(matchLabelledWeight(blob, GROSS_LABEL), 0.95);
+  if (labelled) return labelled;
 
-  const anyWeight = blob.match(/(?:greutate|masa|weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i);
-  if (anyWeight) {
-    const value = parseNumber(anyWeight[1]);
-    if (value != null) {
-      const factor = String(anyWeight[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-      // Unlabelled: it may be the net weight, so an operator should confirm.
-      return result(Math.round(value * factor * 100) / 100, 0.55, anyWeight[0]);
-    }
-  }
+  // Unlabelled: it may be the net weight, so an operator should confirm.
+  const any = weightFrom(matchLabelledWeight(blob, 'greutate|masa|weight'), 0.55);
+  if (any) return any;
 
   return NO_MATCH;
 }
 
 export function extractNetWeight(text) {
-  const hit = String(text || '').match(
-    /(?:greutate\s*(?:neta|netă)|masa\s*(?:neta|netă)|net\s*weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
-  );
-  if (!hit) return NO_MATCH;
-  const value = parseNumber(hit[1]);
-  if (value == null) return NO_MATCH;
-  const factor = String(hit[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-  return result(Math.round(value * factor * 100) / 100, 0.9, hit[0]);
+  return weightFrom(matchLabelledWeight(String(text || ''), NET_LABEL), 0.9) ?? NO_MATCH;
 }
 
-/** Quantity with its unit — kept separate from weight, never used in its place. */
+/**
+ * Hard ceilings, only drop OCR noise that is orders of magnitude wrong
+ * ("245.000 saci" / "245090 saci"). Real loads of 10_000+ bags must still pass.
+ */
+export const QUANTITY_CEILING = Object.freeze({
+  saci: 100000,
+  sac: 100000,
+  galeti: 100000,
+  bucati: 200000,
+  buc: 200000,
+  bucăți: 200000,
+  paleti: 2000,
+  paleți: 2000,
+  palet: 2000,
+  role: 100000,
+  colete: 100000,
+  kg: 100000,
+  t: 100,
+  to: 100,
+  ton: 100,
+  tone: 100,
+  mc: 500,
+  m3: 500,
+});
+
+/** Fold diacritics so tip_marfa / OCR units compare cleanly. */
+function foldUnit(unit) {
+  return String(unit || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+function quantityKey(unit) {
+  const u = foldUnit(unit);
+  if (u.startsWith('sac')) return 'saci';
+  if (u.startsWith('pal')) return 'paleti';
+  if (u.startsWith('buc') || u === 'pcs') return 'bucati';
+  if (u.startsWith('gal')) return 'galeti';
+  if (u.startsWith('ton') || u === 't' || u === 'to') return 'tone';
+  return u || 'saci';
+}
+
+/**
+ * True when qty is below the hard OCR-garbage ceiling for the unit.
+ * Unknown count units default to the saci ceiling.
+ */
+export function isPlausibleQuantity(value, unit) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return false;
+  const key = quantityKey(unit);
+  const max = QUANTITY_CEILING[key] ?? QUANTITY_CEILING.saci;
+  return n <= max;
+}
+
+/**
+ * How much a unit says about what is on the lorry.
+ *
+ * "buc" is a counting word, not a kind of goods: an aviz reading `Cantitate 768.00 buc` and
+ * `Numarul de galeti 768.00` is describing buckets both times, and only the second says so.
+ * Writing "bucati" into Tip marfa puts a word on the customer's annex that names nothing.
+ *
+ * Shared with `avizOcr.parseQty`, which ranks the same way. One table, because two would drift
+ * and the two readers of the same document would then disagree about its goods.
+ */
+export const GOODS_UNIT_RANK = Object.freeze({
+  galeti: 4, saci: 3, paleti: 2, bucati: 1,
+});
+
+/** True when a unit only counts things, without saying what they are. */
+export function isGenericCountUnit(unit) {
+  const folded = String(unit || '').toLowerCase().trim();
+  return /^(buc|bucati|bucăți|bucati\.|pcs|pce|pc)$/.test(folded);
+}
+
+// Matched against folded text, so the diacritic spellings are already gone by this point and
+// listing them here would only add dead alternatives.
+const GOODS_UNIT_SOURCE = '(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?)';
+
+/**
+ * A packaging word, or null.
+ *
+ * Built on `quantityKey`, which already maps every spelling onto the same four names and is
+ * what the plausibility ceilings key off. A second mapping would be a second opinion about
+ * what "gal" means. Weights are rejected here: tonnes are how much, not what.
+ */
+function goodsUnitOf(raw) {
+  const key = quantityKey(raw);
+  return GOODS_UNIT_RANK[key] ? key : null;
+}
+
+/**
+ * The packaging the document actually names, preferring the word that says the most.
+ *
+ * A label like `Numarul de galeti` is taken first: it exists on the page precisely to name the
+ * packaging, where a bare `768 buc` is only counting. Failing that, every `N unit` pair is
+ * ranked and the most specific wins.
+ */
+export function extractGoodsUnit(text) {
+  const folded = foldUnit(text);
+
+  const labelled = folded.match(new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'));
+  if (labelled) {
+    const unit = goodsUnitOf(labelled[1]);
+    if (unit) return result(unit, 0.9, labelled[0]);
+  }
+
+  let best = null;
+  const re = new RegExp(`\\d[\\d.,]*\\s*${GOODS_UNIT_SOURCE}\\b`, 'gi');
+  let match = re.exec(folded);
+  while (match) {
+    const unit = goodsUnitOf(match[1]);
+    const rank = GOODS_UNIT_RANK[unit] ?? 0;
+    if (unit && (!best || rank > best.rank)) best = { unit, rank, matched: match[0] };
+    match = re.exec(folded);
+  }
+  if (!best) return NO_MATCH;
+  // A bare count is the weakest thing a document can say, so it is offered for review rather
+  // than written unattended.
+  return result(best.unit, best.rank > 1 ? 0.8 : 0.4, best.matched);
+}
+
+/** Quantity with its unit, kept separate from weight, never used in its place. */
 export function extractQuantity(text) {
   const blob = String(text || '');
   // A labelled quantity is worth more than a loose number followed by a unit.
   const labelled = blob.match(
-    /(?:cantitate|quantity|numarul\s+de\s+galeti)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|galeti|galeți|kg|to?ne?|mc|m3|role|colete)?\b/i
+    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|kg|to?ne?|mc|m3|role|colete)?\b/i
   );
   if (labelled) {
-    const scored = scorePieceQuantity(parseNumber(labelled[1]), labelled[2] || '');
-    if (scored) return result(scored.value, scored.confidence, labelled[0]);
+    const value = parseNumber(labelled[1]);
+    const unit = (labelled[2] || '').toLowerCase() || null;
+    if (value != null && isPlausibleQuantity(value, unit)) {
+      return result({ quantity: value, unit }, 0.9, labelled[0]);
+    }
   }
-  // An unlabelled number in a weight unit is almost always the weight, not the quantity —
+  // An unlabelled number in a weight unit is almost always the weight, not the quantity,
   // "Greutate 4200 kg" must not come back as "4200 kg of goods". Reading a weight as a
   // quantity is exactly the confusion the report has to avoid.
   const bare = blob.match(
-    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|galeti|galeți|mc|m3|role|colete)\b/i
+    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|mc|m3|role|colete)\b/i
   );
   if (bare) {
-    const scored = scorePieceQuantity(parseNumber(bare[1]), bare[2]);
-    if (scored) return result(scored.value, Math.min(scored.confidence, 0.8), bare[0]);
+    const value = parseNumber(bare[1]);
+    const unit = bare[2].toLowerCase();
+    if (value != null && isPlausibleQuantity(value, unit)) {
+      return result({ quantity: value, unit }, 0.8, bare[0]);
+    }
   }
   return NO_MATCH;
 }
 
 /**
- * OCR often turns "245.00 sac" into "245.000" → thousands parse → 245000.
- * Piece units that large are not credible on a single aviz; fold back by 1000 and flag review.
- */
-function scorePieceQuantity(rawValue, rawUnit) {
-  if (rawValue == null || rawValue <= 0) return null;
-  const unit = String(rawUnit || '').toLowerCase() || null;
-  const piece = unit && /saci?|buc|pal|galeti|galeți|role|colete/.test(unit);
-  let quantity = rawValue;
-  let confidence = 0.9;
-  if (piece && quantity >= 10000 && quantity % 1000 === 0) {
-    const folded = quantity / 1000;
-    if (folded > 0 && folded < 5000) {
-      quantity = folded;
-      confidence = 0.4;
-    }
-  }
-  if (piece && quantity > 5000) confidence = Math.min(confidence, 0.35);
-  // Gross weight belongs in its own field — a "quantity" of tens of thousands of kg is wrong.
-  if (unit && /^(kg|t|to|tone|tona)$/.test(unit) && quantity > 80000) {
-    return null;
-  }
-  return { value: { quantity, unit }, confidence };
-}
-
-/** Sales order (SOR) — commercial reference on PSL avize, not the packing-slip number. */
-export function extractSorNumber(text) {
-  return matchPatterns(text, [
-    /\b(SOR[\s\-._]*\d[\d./-]*)\b/i,
-  ], {
-    transform: (raw) => {
-      const m = String(raw).toUpperCase().match(/SOR[\s\-._]*(\d[\d./-]*)/);
-      if (!m) return null;
-      return `SOR-${m[1].replace(/[^\d]/g, '')}`;
-    },
-    baseConfidence: 0.9,
-  });
-}
-
-export function extractPalletWeight(text) {
-  const hit = String(text || '').match(
-    /(?:greutate\s*(?:paleti|paleți|palet)|pallet\s*weight)\s*[:\-]?\s*([\d.,\s]+)\s*(kg|to?ne?|t)\b/i
-  );
-  if (!hit) return NO_MATCH;
-  const value = parseNumber(hit[1]);
-  if (value == null) return NO_MATCH;
-  const factor = String(hit[2]).toLowerCase().startsWith('t') ? 1000 : 1;
-  return result(Math.round(value * factor * 100) / 100, 0.85, hit[0]);
-}
-
-/**
- * Pallet count. Documents write it both ways round — "18 paleti" and "Paleti: 18" — and
+ * Pallet count. Documents write it both ways round, "18 paleti" and "Paleti: 18", and
  * handling only one of them loses the field on half the layouts.
  */
 export function extractPalletCount(text) {
   const blob = String(text || '');
-  // Only same-line whitespace — `\s` would jump to the next article code after "7.00 pal".
+  // Only same-line whitespace, `\s` would jump to the next article code after "7.00 pal".
   const labelled = blob.match(/(?:paleti|paleți|palete?)\b[^\S\n]*[:\-]?[^\S\n]*([\d.,]+)/i);
   if (labelled) {
     const value = parseNumber(labelled[1]);

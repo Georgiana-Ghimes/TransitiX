@@ -100,7 +100,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
       setRoadDocs(docs?.documents || []);
       sigRefs.current = {};
 
-      // A draft only worth offering if it still holds something the server does not — otherwise
+      // A draft only worth offering if it still holds something the server does not, otherwise
       // the prompt appears every time and drivers learn to dismiss it.
       const draft = await readDraft(offlineStore, userId, tripId);
       setRestorable(draftDiffers(draft, cmr.data) ? draft : null);
@@ -139,7 +139,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
       setForm(next.data || {});
       await dropDraft(offlineStore, userId, tripId);
       setRestorable(null);
-      notifySuccess('CMR salvat', 'Ciornă — încă nesemnată');
+      notifySuccess('CMR salvat', 'Ciornă, încă nesemnată');
     } catch (err) {
       if (isOfflineError(err)) {
         await outbox.queue({
@@ -174,7 +174,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
     } catch (err) {
       if (isOfflineError(err)) {
         // The signatures are data URLs of a few kilobytes, so the drawn ink itself is what gets
-        // queued — losing a finger-drawn signature to a dead spot is the whole reason this exists.
+        // queued, losing a finger-drawn signature to a dead spot is the whole reason this exists.
         const signatures = pendingSignatures(model, stage, sigRefs.current);
         await outbox.queue({
           kind: 'cmr_sign',
@@ -289,7 +289,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
             </p>
             <p className={`text-xs mt-0.5 ${outbox.counts.parked ? 'text-red-800' : 'text-amber-800'}`}>
               {waiting
-                ? `${waiting}. Nu închide aplicația fără semnal — ce ai scris rămâne salvat pe telefon.`
+                ? `${waiting}. Nu închide aplicația fără semnal. Ce ai scris rămâne salvat pe telefon.`
                 : 'Poți completa și semna în continuare; totul se trimite când prinzi semnal.'}
             </p>
             {outbox.counts.parked ? (
@@ -476,7 +476,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
           <div>
             <h3 className="text-sm font-semibold text-[#0A2B4E]">Documente pe lot (birou)</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Pozele intră în același lot ca upload-ul din Documente — OCR și confirmare pe birou.
+              Pozele intră în același lot ca upload-ul din Documente: OCR și confirmare pe birou.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 items-end">

@@ -144,6 +144,83 @@ def main() -> int:
           f"size={app_module.upscale_for_ocr(tiny).size}")
     check("an already large page is left at its own size",
           app_module.upscale_for_ocr(PILImage.new("RGB", (2400, 3000))).size == (2400, 3000))
+
+    # Every photo pass must hand the detector exactly the size it will read at. Preprocessing
+    # that enlarges past PADDLE_OCR_DET_SIDE_LEN is silently undone by Paddle's own resize —
+    # that is how a handwritten carnet reached the detector at ~22px and returned nothing.
+    side = app_module._DET_SIDE_LEN
+    for name, source in (
+        ("a small phone frame", PILImage.new("RGB", (576, 1024), (180, 180, 180))),
+        ("a 12MP phone photo", PILImage.new("RGB", (3024, 4032), (180, 180, 180))),
+    ):
+        for pass_name, transform in (
+            ("emphasize_ink", app_module.emphasize_ink),
+            ("plain", app_module.fit_for_detector),
+            ("shadow", app_module.flatten_shadow),
+            ("clahe", app_module.enhance_aggressive),
+        ):
+            size = transform(source).size
+            check(f"{name} reaches the detector at its working size ({pass_name})",
+                  max(size) == side, f"{source.size} -> {size}, expected long side {side}")
+
+    check("the detector cap is above PaddleOCR's own 960 default",
+          side > 960, f"PADDLE_OCR_DET_SIDE_LEN={side}")
+
+    # Ink emphasis must survive an illuminant it was not tuned for. A frame lit green (monitor)
+    # has almost no red channel to work with, which is what min(R, G) got wrong.
+    import numpy as _np
+    lit = _np.dstack([
+        _np.full((200, 300), 60, "uint8"),    # R starved
+        _np.full((200, 300), 210, "uint8"),   # G from the screen
+        _np.full((200, 300), 180, "uint8"),
+    ]).copy()
+    lit[80:120, 40:260] = 30  # a dark stroke
+    inked = _np.asarray(app_module.emphasize_ink(PILImage.fromarray(lit)).convert("L"))
+    check("ink emphasis leaves paper bright under a green cast",
+          inked.mean() > 120, f"mean={inked.mean():.1f}")
+
+    # The scan pass: deskew off the ruled lines, erase them, keep the letters crossing them.
+    import cv2 as _cv2
+
+    ruled = _np.full((900, 700), 240, "uint8")
+    for y in range(120, 860, 48):                      # the notebook's rules
+        _cv2.line(ruled, (40, y), (660, y), 120, 2)
+    for x in range(90, 600, 60):                       # writing that crosses them
+        _cv2.line(ruled, (x, 150), (x + 8, 210), 40, 5)
+    tilted = app_module.rotate_gray(ruled, 4.0)        # as if photographed askew
+    page = PILImage.fromarray(_cv2.cvtColor(tilted, _cv2.COLOR_GRAY2RGB))
+
+    segments = app_module.rule_segments(app_module._ink_mask(tilted))
+    check("ruled lines are found as Hough segments", len(segments) >= 5,
+          f"{len(segments)} segments")
+
+    angles = [_np.degrees(_np.arctan2(float(y2 - y1), float(x2 - x1)))
+              for x1, y1, x2, y2 in segments] if segments else [0.0]
+    check("the skew angle is recovered from the rules",
+          abs(abs(float(_np.median(angles))) - 4.0) < 1.5,
+          f"found {float(_np.median(angles)):.2f}deg, planted 4.0deg counter-clockwise")
+
+    scanned = app_module.scan_like_document(page)
+    check("the scan pass returns ink on white paper at detector size",
+          max(scanned.size) == app_module._DET_SIDE_LEN and scanned.mode == "RGB",
+          f"{scanned.size} {scanned.mode}")
+
+    scan_ink = (_np.asarray(scanned.convert("L")) < 128).mean()
+    check("de-ruling does not erase the writing with the lines",
+          0.0005 < scan_ink < 0.30, f"ink={scan_ink:.4f}")
+
+    # Unruled paper is the common case (a printed aviz) and must survive untouched-ish.
+    blank = _np.full((1200, 900), 235, "uint8")
+    blank[300:340, 100:700] = 40
+    kept = app_module.scan_like_document(
+        PILImage.fromarray(_cv2.cvtColor(blank, _cv2.COLOR_GRAY2RGB)))
+    check("a page with no rules still comes back with its text",
+          (_np.asarray(kept.convert("L")) < 128).mean() > 0.0001,
+          f"ink={(_np.asarray(kept.convert('L')) < 128).mean():.5f}")
+
+    check("the line filter is below what handwriting scores",
+          float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.10") or 0.10) <= 0.15,
+          "handwriting recognises at 0.1-0.3; 0.35 deletes the whole page")
     check("short garbage does not trigger a second OCR pass",
           app_module.needs_aggressive_pass("iiii") is False)
     check("longer text without a code does trigger it",
@@ -154,6 +231,40 @@ def main() -> int:
           app_module.missing_from_text("Aviz de expeditie TPO-0025813 catre depozit") is True)
     check("a page with both a code and a plate is done",
           app_module.missing_from_text("Aviz TPO-0025813 auto B 330 SRS livrare") is False)
+    check("empty OCR still asks for photo passes (notebook under glare)",
+          app_module.missing_from_text("") is True)
+    check("short junk still asks for photo passes",
+          app_module.missing_from_text("iiii") is True)
+
+    # Perspective: a white page on a dark desk must warp; a full-bleed sheet must not invent corners.
+    # OpenCV is in the Docker image; a bare host may only have pillow/numpy — skip, don't fail.
+    try:
+        import cv2
+        import numpy as np
+        from PIL import Image as PILImageCheck
+        has_cv2 = True
+    except ImportError:
+        has_cv2 = False
+
+    if has_cv2:
+        desk = np.full((800, 600, 3), 30, dtype=np.uint8)
+        # Trapezoid page (phone-oblique): wider at the bottom.
+        page_pts = np.array([[120, 80], [480, 100], [540, 720], [60, 700]], dtype=np.int32)
+        cv2.fillConvexPoly(desk, page_pts, (230, 225, 210))
+        warped = app_module.correct_perspective(PILImageCheck.fromarray(desk))
+        check("oblique page photo is perspective-warped",
+              warped.size != (600, 800) and warped.size[0] > 200 and warped.size[1] > 200,
+              f"size={warped.size}")
+        ordered = app_module.order_quad_points(page_pts.astype("float32"))
+        check("quad corners are ordered TL-TR-BR-BL",
+              ordered[0][1] < ordered[3][1] and ordered[0][0] < ordered[1][0],
+              f"ordered={ordered.tolist()}")
+        full = PILImageCheck.new("RGB", (600, 800), (240, 240, 240))
+        same = app_module.correct_perspective(full)
+        check("full-bleed page is left alone (no false warp)",
+              same.size == (600, 800), f"size={same.size}")
+    else:
+        print("  SKIP  perspective checks (opencv not installed on host)")
 
     # The photo path re-renders; the dossier path must stay at one pass per page after the first.
     calls.clear()

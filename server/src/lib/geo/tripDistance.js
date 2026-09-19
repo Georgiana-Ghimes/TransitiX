@@ -6,7 +6,7 @@
  *  1. A number a dispatcher typed is never overwritten. `distance_source` records who last
  *     set the value, and a `manual` distance is left alone forever after.
  *  2. Saving a CMR must never depend on OSRM being up. Coordinates are read from tables we
- *     already own (`locations`, `geocode_cache`) and the whole computation is best-effort —
+ *     already own (`locations`, `geocode_cache`) and the whole computation is best-effort,
  *     when anything is missing the trip saves with no distance, which is the honest result.
  */
 
@@ -37,7 +37,7 @@ export function resolveDistanceSource({ incoming, stored, storedSource }) {
     return { distance_km: null, distance_source: null, autoEligible: true };
   }
   if (storedSource === 'osrm' && prev != null && Math.abs(next - prev) < 0.5) {
-    // Unchanged auto value echoed by the form — stays ours, stays refreshable.
+    // Unchanged auto value echoed by the form, stays ours, stays refreshable.
     return { distance_km: next, distance_source: 'osrm', autoEligible: true };
   }
   if (storedSource === 'manual' && prev != null && Math.abs(next - prev) < 0.001) {
@@ -55,7 +55,7 @@ export function shouldAutoCompute(trip) {
 
 /**
  * Coordinates for a free-text address, from local tables only.
- * Never calls a geocoding provider — this runs on the trip save path.
+ * Never calls a geocoding provider, this runs on the trip save path.
  */
 export async function findCoordinates(db, companyId, address) {
   const key = addressKey(address);
@@ -96,7 +96,7 @@ export async function findCoordinates(db, companyId, address) {
 
 /**
  * Road distance between a trip's shipper and consignee.
- * Returns `{ ok: false, reason }` rather than throwing — the caller is a save handler.
+ * Returns `{ ok: false, reason }` rather than throwing, the caller is a save handler.
  */
 export async function computeTripDistance(db, companyId, trip, { route = osrmRoute } = {}) {
   if (!osrmConfigured()) return { ok: false, reason: 'osrm_neconfigurat' };

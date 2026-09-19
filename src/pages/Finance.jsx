@@ -27,7 +27,7 @@ function InvoiceLines({ lines }) {
   if (lines.length === 0) {
     return (
       <p className="text-xs text-slate-500">
-        Factura nu are linii — a fost creată manual, nu din TPO-urile curselor.
+        Factura nu are linii, a fost creată manual, nu din TPO-urile curselor.
       </p>
     );
   }
@@ -133,7 +133,7 @@ export default function Finance() {
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      notifySuccess('UBL descărcat', `${filename} — local, nu e trimis la SPV`);
+      notifySuccess('UBL descărcat', `${filename}, local, nu e trimis la SPV`);
     } catch (e) {
       notifyError('Export UBL eșuat', e);
     }
@@ -145,7 +145,7 @@ export default function Finance() {
   /**
    * Loads the components behind an invoice, once.
    *
-   * A customer disputes a component — "why 120 for the crane" — not a total. The invoice is built
+   * A customer disputes a component, "why 120 for the crane", not a total. The invoice is built
    * from `trip_charges`, so the breakdown exists; without a way to open it, it would exist only
    * in the database.
    */
@@ -187,7 +187,7 @@ export default function Finance() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Financiar</h1>
-          <p className="text-sm text-slate-500 mt-1">Facturi locale, UBL pentru e-Factura, încasări — fără SPV ANAF</p>
+          <p className="text-sm text-slate-500 mt-1">Facturi locale, UBL pentru e-Factura, încasări, fără SPV ANAF</p>
         </div>
         <div className="flex gap-2">
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><Download className="w-4 h-4" /> Export</button>
@@ -197,7 +197,7 @@ export default function Finance() {
 
       <DemoBanner title="e-Factura: UBL local, SPV neconectat">
         Poți descărca XML UBL (CIUS-RO) pentru fiecare factură. Trimiterea către SPV ANAF vine după
-        certificat — până atunci statusul e-Factura rămâne local și nu inventăm „acceptat”.
+        certificat, până atunci statusul e-Factura rămâne local și nu inventăm „acceptat”.
       </DemoBanner>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -2,8 +2,8 @@
  * Provider-agnostic confidence scoring for a geocoding result.
  *
  * Extracted from the Photon client so a second provider produces numbers on the same scale.
- * That matters: the whole pipeline — auto-accept at 0.8, review at 0.45, the colours on
- * `/locations` — compares these values without caring who returned them. Two providers each
+ * That matters: the whole pipeline, auto-accept at 0.8, review at 0.45, the colours on
+ * `/locations`, compares these values without caring who returned them. Two providers each
  * with their own idea of "confidence" would quietly break every one of those thresholds.
  *
  * Candidates arrive already normalized by their provider into the shape below; nothing here

@@ -7,7 +7,7 @@
  * testable without a database.
  *
  * The import never guesses a location. A line whose location cannot be matched is
- * reported as an error, because an order without a location can never be planned — the
+ * reported as an error, because an order without a location can never be planned, the
  * same rule the manual form enforces.
  */
 
@@ -59,7 +59,7 @@ export function normalizeHeader(value) {
 
 /**
  * Which column holds which field. Unknown columns are reported rather than dropped
- * silently — a misspelled header is the most common reason an import "loses" data.
+ * silently, a misspelled header is the most common reason an import "loses" data.
  */
 export function mapHeaders(headerRow = []) {
   const fields = {};
@@ -145,7 +145,7 @@ function sniffDelimiter(text) {
 /**
  * Romanian spreadsheets mix separators: "1.234,56", "1234,56" and "1234.56" all appear,
  * sometimes in one file. The rightmost separator wins when both are present.
- * A lone dot with exactly three digits after it is thousands ("1.500" is 1500 kg) —
+ * A lone dot with exactly three digits after it is thousands ("1.500" is 1500 kg),
  * nobody writes a dot-three-zeros to mean one and a half.
  */
 export function parseNumber(value) {
@@ -195,7 +195,7 @@ function isoFromParts(year, month, day) {
 /**
  * Date as YYYY-MM-DD. Accepts what a spreadsheet actually produces: a real Date, an
  * Excel serial, `dd.mm.yyyy`, `dd/mm/yyyy` and ISO. Day-first, because the file comes
- * from a Romanian office — `03.04.2026` is 3 April, never 4 March.
+ * from a Romanian office, `03.04.2026` is 3 April, never 4 March.
  */
 export function parseImportDate(value) {
   if (value == null || value === '') return null;
@@ -278,7 +278,7 @@ function textKey(value) {
 
 /**
  * Lookup tables for matching a spreadsheet line to a stored location.
- * A name is only usable as a key when it is unambiguous — two locations called "Depozit"
+ * A name is only usable as a key when it is unambiguous, two locations called "Depozit"
  * must not silently resolve to whichever was loaded first.
  */
 export function indexLocations(locations = []) {
@@ -321,7 +321,7 @@ export function matchLocation(index, { location_name, address, city } = {}) {
   const rawAddress = String(address || '').trim();
   if (rawAddress) {
     // The city is often its own column, and `address_key` needs it to be part of the
-    // address string — otherwise the same street in two towns collapses to one key.
+    // address string, otherwise the same street in two towns collapses to one key.
     const withCity = city && !textKey(rawAddress).includes(textKey(city))
       ? `${city}, ${rawAddress}`
       : rawAddress;
@@ -366,7 +366,7 @@ export function parseImportRow(row, { fields, locationIndex, clientIndex, defaul
   const requestedDate = parseImportDate(raw.requested_date) || defaultDate || null;
   if (!requestedDate) errors.push('Data lipsește sau nu poate fi citită');
   else if (raw.requested_date != null && !parseImportDate(raw.requested_date)) {
-    warnings.push('Data nu a putut fi citită — s-a folosit data selectată');
+    warnings.push('Data nu a putut fi citită, s-a folosit data selectată');
   }
 
   const type = parseOrderType(raw.type);
@@ -379,12 +379,12 @@ export function parseImportRow(row, { fields, locationIndex, clientIndex, defaul
     } else if (match.reason === 'lipsa') {
       errors.push('Lipsește locația (nume sau adresă)');
     } else {
-      errors.push('Locația nu există — adaug-o din Locații și reia importul');
+      errors.push('Locația nu există, adaug-o din Locații și reia importul');
     }
   }
 
   const client = raw.client_name ? clientIndex?.get(textKey(raw.client_name)) : null;
-  if (raw.client_name && !client) warnings.push(`Clientul „${raw.client_name}” nu există — comanda rămâne fără client`);
+  if (raw.client_name && !client) warnings.push(`Clientul „${raw.client_name}” nu există, comanda rămâne fără client`);
 
   const windowStart = raw.window_start == null ? null : parseImportTime(raw.window_start);
   const windowEnd = raw.window_end == null ? null : parseImportTime(raw.window_end);
@@ -403,7 +403,7 @@ export function parseImportRow(row, { fields, locationIndex, clientIndex, defaul
   ]) {
     if (raw[field] == null) { numbers[field] = null; continue; }
     const parsed = parseNumber(raw[field]);
-    if (parsed == null) { warnings.push(`${label} nu a putut fi citit — se ignoră`); numbers[field] = null; }
+    if (parsed == null) { warnings.push(`${label} nu a putut fi citit, se ignoră`); numbers[field] = null; }
     else if (parsed < 0) { errors.push(`${label} nu poate fi negativ`); numbers[field] = null; }
     else numbers[field] = parsed;
   }

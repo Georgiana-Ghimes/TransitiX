@@ -17,7 +17,7 @@ function numericColumn(col) {
  * Renders rows that have already been mapped.
  *
  * Re-downloading an old export goes through here with the rows stored at the time, so the file
- * a customer gets a second time is the file they got the first time — not a fresh reading of
+ * a customer gets a second time is the file they got the first time, not a fresh reading of
  * documents that may have been corrected since.
  */
 export function renderReportWorkbook({ name, columns, rows, totals = null }) {

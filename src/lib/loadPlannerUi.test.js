@@ -106,7 +106,7 @@ describe('vehicleModelLabel', () => {
 });
 
 describe('groupByStop', () => {
-  it('returns stops in loading order — last delivered is loaded first', () => {
+  it('returns stops in loading order, last delivered is loaded first', () => {
     const groups = groupByStop([
       placement({ stop_seq: 1 }), placement({ stop_seq: 3 }), placement({ stop_seq: 2 }),
     ]);
@@ -220,7 +220,7 @@ describe('strategyIsIndistinguishable', () => {
   });
 });
 
-describe('loadWarnings — strategy notice', () => {
+describe('loadWarnings, strategy notice', () => {
   it('explains why the two strategies look identical', () => {
     const out = loadWarnings({ placements: [placement({ sku: null })] });
     expect(out.some((w) => /Ordine depozit/.test(w.text))).toBe(true);

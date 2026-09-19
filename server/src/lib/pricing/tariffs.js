@@ -3,7 +3,7 @@
  *
  * Rates are negotiated per client and change by addendum, so they are never fetched from
  * anywhere and never edited in place. Each change adds a new validity period, and every
- * lookup is *as of a date* — a report for March must recompute with the March rate even if
+ * lookup is *as of a date*, a report for March must recompute with the March rate even if
  * the contract has been renegotiated twice since.
  */
 
@@ -42,8 +42,8 @@ export function isValidOn(row, onDate) {
 }
 
 /**
- * The row in force on a date. When several overlap — which happens when someone forgets to
- * close the previous period — the one that started most recently wins, because that is the
+ * The row in force on a date. When several overlap, which happens when someone forgets to
+ * close the previous period, the one that started most recently wins, because that is the
  * addendum the parties signed last.
  */
 export function pickValid(rows = [], onDate) {
@@ -57,7 +57,7 @@ export function pickValid(rows = [], onDate) {
 /**
  * Tariff for a vehicle class on a date.
  *
- * Falls back to a tariff with no class only if one exists — a contract that prices "10t"
+ * Falls back to a tariff with no class only if one exists, a contract that prices "10t"
  * and "20t" separately must not silently charge a 20t truck at the 10t rate.
  */
 export function findTariff(tariffs = [], { vehicleClass, onDate }) {
@@ -80,7 +80,7 @@ export function num(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-/** Rate history for one class, newest first — what the tariff screen shows. */
+/** Rate history for one class, newest first, what the tariff screen shows. */
 export function tariffHistory(tariffs = [], vehicleClass) {
   return tariffs
     .filter((t) => normaliseClass(t.vehicle_class) === normaliseClass(vehicleClass))
@@ -88,7 +88,7 @@ export function tariffHistory(tariffs = [], vehicleClass) {
 }
 
 /**
- * Periods that overlap for the same class. Not an error — the newest still wins — but the
+ * Periods that overlap for the same class. Not an error, the newest still wins, but the
  * tariff screen should show it, because it is nearly always a forgotten `valid_to`.
  */
 export function findOverlaps(tariffs = []) {

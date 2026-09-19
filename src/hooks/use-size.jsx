@@ -6,7 +6,7 @@ export function useSize(ref) {
   // useLayoutEffect (not useEffect): the initial measurement must land before
   // the browser paints, so consumers can render their real content on the
   // very first painted frame instead of a guess. A ResizeObserver's first
-  // callback arrives too late for that — by then an <img> src guess has
+  // callback arrives too late for that, by then an <img> src guess has
   // already been dispatched to the network.
   React.useLayoutEffect(() => {
     const element = ref.current

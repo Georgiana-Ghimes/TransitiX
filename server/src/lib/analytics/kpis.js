@@ -1,5 +1,5 @@
 /**
- * Operational KPIs for the cockpit — pure aggregations over route/trip rows.
+ * Operational KPIs for the cockpit, pure aggregations over route/trip rows.
  */
 
 function num(value) {
@@ -43,7 +43,7 @@ export function punctuality({ stops = [], graceMin = 15 } = {}) {
 }
 
 /**
- * Empty km: legs with no delivery/pickup cargo — approximate as depot→first and last→depot
+ * Empty km: legs with no delivery/pickup cargo, approximate as depot→first and last→depot
  * when kind is known; else null.
  */
 export function emptyKmShare({ legs = [] } = {}) {

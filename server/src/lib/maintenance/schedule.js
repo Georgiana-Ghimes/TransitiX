@@ -5,7 +5,7 @@
  * an app that starts timers on import leaves them running after the suite finishes and deletes
  * rows out from under other tests.
  *
- * The first pass is delayed rather than immediate — a restart loop would otherwise hammer the
+ * The first pass is delayed rather than immediate, a restart loop would otherwise hammer the
  * database with delete batches while the process is still failing to come up.
  */
 import { runRetention } from './retention.js';

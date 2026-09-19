@@ -2,7 +2,7 @@
  * Display logic for the reporting screen, kept out of the component so it can be tested.
  *
  * The server decides what a report contains; this file only decides how it reads. The one rule
- * it shares with the server is that a missing figure is shown as missing — never as a zero that
+ * it shares with the server is that a missing figure is shown as missing, never as a zero that
  * a customer would take for a real measurement.
  */
 
@@ -14,7 +14,8 @@ export const WARNING_LABELS = {
   missing_gross_weight: 'Fără greutate brută',
   missing_invoice_date: 'Fără dată de facturare',
   weight_not_exported: 'Greutatea nu ajunge în raport',
-  duplicate_tpo: 'TPO duplicat',
+  missing_quantity_weight: 'Cantitate (tone) goală',
+  duplicate_tpo: 'Aviz duplicat',
 };
 
 export const WARNING_HINTS = {
@@ -23,7 +24,11 @@ export const WARNING_HINTS = {
     + 'Raportul nu va putea fi verificat cu bonul de cântar.',
   missing_gross_weight:
     'Coloana de greutate rămâne goală pe aceste rânduri. Un zero ar arăta ca o mașină plecată goală.',
-  duplicate_tpo: 'Același număr de TPO apare pe mai multe documente din selecție.',
+  missing_quantity_weight:
+    'Coloana Cantitate marfa (tone) rămâne goală pe aceste rânduri, pentru că avizul nu are '
+    + 'greutate brută. Numărul de saci nu poate lua locul tonelor sub același antet.',
+  duplicate_tpo: 'Același transport apare de mai multe ori în selecție, deci ar fi facturat dublu. '
+    + 'Un TPO cu mai multe curse nu intră aici, acelea sunt rânduri diferite.',
   missing_invoice_date:
     'Coloana de dată facturare rămâne goală pe aceste rânduri. O poți completa pentru toată '
     + 'selecția deodată, din câmpul de deasupra tabelului.',
@@ -101,13 +106,13 @@ export function formatDateTime(value) {
 /**
  * What an export's history row should say about whether it can still be trusted.
  *
- * An export whose documents were corrected afterwards is not wrong — it is what was sent. The
+ * An export whose documents were corrected afterwards is not wrong, it is what was sent. The
  * distinction that matters is whether the sheet still matches today's data.
  */
 export function driftSummary(drift) {
   if (!drift) return { tone: 'unknown', text: 'Stare necunoscută' };
   if (!drift.reproducible) {
-    return { tone: 'warn', text: 'Conținutul nu a fost salvat — nu poate fi reprodus identic' };
+    return { tone: 'warn', text: 'Conținutul nu a fost salvat și nu poate fi reprodus identic' };
   }
   const changed = drift.changed_since?.length ?? 0;
   const missing = drift.missing_documents?.length ?? 0;

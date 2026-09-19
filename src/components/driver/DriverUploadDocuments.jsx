@@ -19,13 +19,17 @@ const STATUS_LABEL = {
   failed: 'Eșuat',
 };
 
-/** Driver list never showed fields — "OCR gata" looked like success even when TPO was empty. */
+/** Driver list never showed fields, "OCR gata" looked like success even when TPO was empty. */
 function driverStatusDetail(doc, online = true) {
   if (doc.status === 'uploaded' && !online) {
     return 'Procesare întreruptă · reluăm la reconectare';
   }
+  if (doc.status === 'uploaded') return STATUS_LABEL.uploaded;
+  // Sidecar timeout / stale upload: extraction_source none + needs_review.
+  if (doc.extraction_source === 'none' && (doc.status === 'extracted' || doc.needs_review)) {
+    return 'Eșuat OCR · biroul poate Re-extrage';
+  }
   const base = STATUS_LABEL[doc.status] || doc.status || '—';
-  if (doc.status === 'uploaded') return base;
   const tpo = String(doc.numar_tpo || '').trim();
   if (tpo) {
     return doc.needs_review ? `${base} · ${tpo} · de revizuit` : `${base} · ${tpo}`;
@@ -117,7 +121,7 @@ export default function DriverUploadDocuments({ user }) {
     await refreshQueued();
     notifySuccess(
       'Salvat pe telefon',
-      `${files.length} fișier(e) — se trimite automat când prinzi semnal`
+      `${files.length} fișier(e), se trimite automat când prinzi semnal`
     );
     return true;
   }, [userId, outbox, tripId, docType, refreshQueued]);
@@ -167,7 +171,7 @@ export default function DriverUploadDocuments({ user }) {
   /**
    * OCR runs after the upload responds, so a row sent a moment ago still says "Se procesează…".
    * Refresh only the document list, only while something is still pending, and only while the
-   * tab is visible — a phone in a cab should not poll from a pocket.
+   * tab is visible, a phone in a cab should not poll from a pocket.
    */
   const pending = docs.some((d) => d.status === 'uploaded');
   const hasQueuedUploads = queuedUploads.length > 0;
@@ -189,7 +193,7 @@ export default function DriverUploadDocuments({ user }) {
     prevOutboxPending.current = outbox.counts.pending;
   }, [outbox.counts.pending, refreshDocs, refreshQueued]);
 
-  /** When coverage drops mid-OCR, stop the spinner immediately — don't wait for the next poll. */
+  /** When coverage drops mid-OCR, stop the spinner immediately, don't wait for the next poll. */
   useEffect(() => {
     const onOffline = () => setOnline(false);
     window.addEventListener('offline', onOffline);
@@ -206,7 +210,7 @@ export default function DriverUploadDocuments({ user }) {
     };
   }, [pending, refreshDocs]);
 
-  /** When coverage returns, pull the list right away — don't wait for the next poll tick. */
+  /** When coverage returns, pull the list right away, don't wait for the next poll tick. */
   const wasOnline = useRef(online);
   useEffect(() => {
     const cameBack = online && !wasOnline.current;
@@ -214,39 +218,63 @@ export default function DriverUploadDocuments({ user }) {
     if (cameBack) refreshDocs();
   }, [online, refreshDocs]);
 
+  /**
+   * Coming back to the tab after a long pause: re-probe the API so a stale `online === false`
+   * does not send the first photo only to the outbox.
+   */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshDocs();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refreshDocs]);
+
   const uploadFiles = async (fileList) => {
     const files = [...(fileList || [])];
     if (!files.length) return;
 
-    // Say what the limit is before the upload, not after: on a phone the round trip costs the
-    // driver their data and a wait, and the answer used to come back as `Unexpected field`.
-    if (files.length > maxFiles) {
-      notifyError(
-        'Prea multe fișiere',
-        `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length} — trimite-le în două rânduri.`
-      );
-      return;
-    }
-    const tooBig = files.find((f) => f.size > MAX_UPLOAD_BYTES);
-    if (tooBig) {
-      notifyError(
-        'Fișier prea mare',
-        `„${tooBig.name}" are ${(tooBig.size / 1024 / 1024).toFixed(1)} MB. Limita este de ${MAX_UPLOAD_MB} MB.`
-      );
-      return;
-    }
+    setUploading(true);
+    try {
+      // Say what the limit is before the upload, not after: on a phone the round trip costs the
+      // driver their data and a wait, and the answer used to come back as `Unexpected field`.
+      if (files.length > maxFiles) {
+        notifyError(
+          'Prea multe fișiere',
+          `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length}. Trimite-le în două rânduri.`
+        );
+        return;
+      }
+      const tooBig = files.find((f) => f.size > MAX_UPLOAD_BYTES);
+      if (tooBig) {
+        notifyError(
+          'Fișier prea mare',
+          `„${tooBig.name}" are ${(tooBig.size / 1024 / 1024).toFixed(1)} MB. Limita este de ${MAX_UPLOAD_MB} MB.`
+        );
+        return;
+      }
 
-    // A photo the office cannot read is a trip back to the truck. Say so now, but never block:
-    // the check is a heuristic and a sent document beats a refused one.
-    const worst = await findBlurriest(files).catch(() => null);
-    if (worst) {
-      setBlurWarning({ files, name: worst.file.name });
-      return;
-    }
+      // A photo the office cannot read is a trip back to the truck. Say so now, but never block:
+      // the check is a heuristic and a sent document beats a refused one. Timed out after wake so
+      // the first photo of the day is not stuck behind a cold image decoder.
+      const worst = await findBlurriest(files).catch(() => null);
+      if (worst) {
+        setBlurWarning({ files, name: worst.file.name });
+        return;
+      }
 
-    await sendFiles(files);
+      await sendFiles(files);
+    } finally {
+      // Blur path returns early without sendFiles' finally — clear the spinner either way.
+      setUploading(false);
+    }
   };
 
+  /**
+   * After a long pause the app can still think it is offline (stale flag) while the radio is
+   * fine — the first photo then went only to the outbox and never appeared under „Trimise recent”.
+   * Always try the network unless the browser itself reports offline; queue only if the send fails.
+   */
   const sendFiles = async (files) => {
     const brake = throttleState(sendTimes.current);
     sendTimes.current = brake.recent;
@@ -261,7 +289,7 @@ export default function DriverUploadDocuments({ user }) {
 
     setBlurWarning(null);
 
-    if (!online || browserOffline()) {
+    if (browserOffline()) {
       await queueFiles(files);
       clearFileInputs();
       return;
@@ -313,7 +341,7 @@ export default function DriverUploadDocuments({ user }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-        Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize / Rapoarte.
+        Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize OCR.
       </p>
 
       {!online ? (
@@ -377,7 +405,7 @@ export default function DriverUploadDocuments({ user }) {
               onChange={(e) => setTripId(e.target.value)}
               className={fieldCls}
             >
-              <option value="">— Fără cursă (biroul leagă ulterior) —</option>
+              <option value="">Fără cursă (biroul leagă ulterior)</option>
               {trips.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.cmr_number || t.id.slice(0, 8)} · {t.status}

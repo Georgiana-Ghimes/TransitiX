@@ -61,7 +61,7 @@ describe('ocr timeouts', () => {
 
   it('lets a background pass wait far longer than someone watching a spinner', () => {
     expect(backgroundOcrTimeoutMs()).toBe(300_000);
-    expect(interactiveOcrTimeoutMs()).toBe(45_000);
+    expect(interactiveOcrTimeoutMs()).toBe(120_000);
     expect(interactiveOcrTimeoutMs()).toBeLessThan(backgroundOcrTimeoutMs());
   });
 
@@ -72,11 +72,11 @@ describe('ocr timeouts', () => {
   });
 
   it('grows the interactive budget with the pages, but keeps it bounded', () => {
-    expect(interactiveOcrTimeoutMs(1)).toBe(45_000);
-    expect(interactiveOcrTimeoutMs(2)).toBe(90_000);
-    // A spinner is never allowed to run away, however long the document is — past the page
+    expect(interactiveOcrTimeoutMs(1)).toBe(120_000);
+    expect(interactiveOcrTimeoutMs(2)).toBe(240_000);
+    // A spinner is never allowed to run away, however long the document is, past the page
     // threshold the work belongs in the background anyway.
-    expect(interactiveOcrTimeoutMs(30)).toBe(90_000);
+    expect(interactiveOcrTimeoutMs(30)).toBe(240_000);
   });
 
   it('sends anything past a few pages to the background', () => {
@@ -113,7 +113,7 @@ describe('ocrCapability', () => {
   });
 
   it('separates a configured sidecar that will not answer from one that is absent', async () => {
-    // Port 1 refuses immediately — "configured but down", which is the case that silently
+    // Port 1 refuses immediately, "configured but down", which is the case that silently
     // produces documents with no OCR.
     process.env.PADDLE_OCR_URL = 'http://127.0.0.1:1';
     const { ocrCapability } = await import('./readText.js');

@@ -11,6 +11,10 @@ export function signAccessToken(user, extras = {}) {
     payload.impersonator_id = extras.impersonator_id;
     payload.impersonator_email = extras.impersonator_email || null;
   }
+  if (user.must_change_password) {
+    // Present only while a temporary password is still in use; see `authRequired`.
+    payload.pcr = true;
+  }
   return jwt.sign(
     payload,
     process.env.JWT_SECRET,
@@ -21,7 +25,7 @@ export function signAccessToken(user, extras = {}) {
 /**
  * A refresh token carries a `jti` so the session behind it can be revoked.
  *
- * Without one, signing out is only the client forgetting its copy — the token keeps working
+ * Without one, signing out is only the client forgetting its copy, the token keeps working
  * until it expires, and there is nothing to point at to take it away.
  */
 export function signRefreshToken(user, jti) {
@@ -43,6 +47,17 @@ function userFromPayload(payload) {
   };
 }
 
+/**
+ * An account an admin created by hand carries a temporary password the admin knows. Until the
+ * person chooses their own, the token opens `/api/auth` (to see who they are and change it) and
+ * nothing else, hiding the rest of the app in the browser alone would be a suggestion, not a rule.
+ */
+function passwordChangeBlocks(payload, req) {
+  if (!payload.pcr) return false;
+  const url = String(req.originalUrl || req.url || '');
+  return !url.startsWith('/api/auth/');
+}
+
 export function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
@@ -53,6 +68,12 @@ export function authRequired(req, res, next) {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     if (payload.type === 'refresh') {
       return res.status(401).json({ message: 'Token de acces invalid. Conectează-te din nou.' });
+    }
+    if (passwordChangeBlocks(payload, req)) {
+      return res.status(403).json({
+        code: 'PASSWORD_CHANGE_REQUIRED',
+        message: 'Alege-ți o parolă nouă înainte să continui.',
+      });
     }
     req.user = userFromPayload(payload);
     next();
@@ -67,7 +88,7 @@ export function optionalAuth(req, _res, next) {
   if (token) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
-      if (payload.type !== 'refresh') {
+      if (payload.type !== 'refresh' && !passwordChangeBlocks(payload, req)) {
         req.user = userFromPayload(payload);
       }
     } catch {
@@ -79,7 +100,7 @@ export function optionalAuth(req, _res, next) {
 
 const OFFICE_ROLES = new Set(['admin', 'dispatcher', 'finance']);
 
-/** Office inbox / dispatcher tools — drivers stay on the driver app. */
+/** Office inbox / dispatcher tools, drivers stay on the driver app. */
 export function officeRequired(req, res, next) {
   if (!req.user) {
     return res.status(401).json({ message: 'Autentificare necesară. Conectează-te din nou.' });
