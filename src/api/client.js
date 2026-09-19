@@ -1,3 +1,5 @@
+import { withApiOrigin } from '@/lib/apiOrigin';
+
 const TOKEN_KEY = 'transitix_access_token';
 const REFRESH_KEY = 'transitix_refresh_token';
 const GOD_TOKEN_KEY = 'transitix_god_access_token';
@@ -53,7 +55,7 @@ async function refreshAccessToken() {
   refreshInFlight = (async () => {
     const refresh_token = localStorage.getItem(REFRESH_KEY);
     if (!refresh_token) throw new Error('No refresh token');
-    const res = await fetch('/api/auth/refresh', {
+    const res = await fetch(withApiOrigin('/api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token }),
@@ -93,7 +95,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData, sig
     opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`/api${path}`, opts);
+  const res = await fetch(withApiOrigin(`/api${path}`), opts);
   let data = null;
   const text = await res.text();
   try {
@@ -129,7 +131,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData, sig
  */
 async function downloadFile(url, opts, retried, retry, fallbackName) {
   const token = getToken();
-  const res = await fetch(url, {
+  const res = await fetch(withApiOrigin(url), {
     ...opts,
     headers: { ...(opts.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
@@ -428,7 +430,7 @@ export const api = {
     /** Local UBL XML, never claims SPV send. */
     async downloadUbl(id, retried = false) {
       const token = getToken();
-      const res = await fetch(`/api/invoices/${encodeURIComponent(id)}/ubl`, {
+      const res = await fetch(withApiOrigin(`/api/invoices/${encodeURIComponent(id)}/ubl`), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.status === 401 && !retried) {
@@ -482,7 +484,7 @@ export const api = {
       if (tripId) fd.append('trip_id', tripId);
       fd.append('document_type', document_type);
       for (const file of files) fd.append('files', file);
-      const res = await fetch('/api/driver-documents', {
+      const res = await fetch(withApiOrigin('/api/driver-documents'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -514,7 +516,7 @@ export const api = {
       fd.append('file', file);
       if (driver_id) fd.append('driver_id', driver_id);
       if (vehicle_id) fd.append('vehicle_id', vehicle_id);
-      const res = await fetch('/api/tachograph/import', {
+      const res = await fetch(withApiOrigin('/api/tachograph/import'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -581,7 +583,7 @@ export const api = {
     streamUrl() {
       const token = getToken();
       const qs = token ? `?access_token=${encodeURIComponent(token)}` : '';
-      return `/api/telematics/stream${qs}`;
+      return withApiOrigin(`/api/telematics/stream${qs}`);
     },
   },
   routes: {
@@ -991,7 +993,7 @@ export const api = {
       const fd = new FormData();
       fd.append('file', file);
       if (dryRun) fd.append('dry_run', 'true');
-      const res = await fetch('/api/commercial/observation-codes/import', {
+      const res = await fetch(withApiOrigin('/api/commercial/observation-codes/import'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -1114,7 +1116,7 @@ export const api = {
     },
     async exportXlsx({ template_id, aviz_ids }, retried = false) {
       const token = getToken();
-      const res = await fetch('/api/avize/export', {
+      const res = await fetch(withApiOrigin('/api/avize/export'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1154,7 +1156,7 @@ export const api = {
     },
     async zipExport({ template_id, aviz_ids }, retried = false) {
       const token = getToken();
-      const res = await fetch('/api/avize/zip', {
+      const res = await fetch(withApiOrigin('/api/avize/zip'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
