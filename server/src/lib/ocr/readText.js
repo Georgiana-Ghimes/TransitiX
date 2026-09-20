@@ -83,6 +83,15 @@ export function interactiveOcrMaxPages() {
 }
 
 /**
+ * Phone / carnet photos (png/jpeg) routinely exceed Cloudflare tunnel idle time when OCR + VL
+ * hold the HTTP request. PDFs with a text layer finish fast; rasters always go background.
+ */
+export function isRasterAvizUpload(fileUrl, filename) {
+  const s = `${fileUrl || ''} ${filename || ''}`.toLowerCase();
+  return /\.(png|jpe?g|gif|webp)(?:\?|#|\s|$)/i.test(s);
+}
+
+/**
  * Giving up on the clock is not the same as reading a document and finding nothing in it.
  * Reported as empty text, a caller would overwrite a good extraction with this one.
  */

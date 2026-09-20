@@ -16,6 +16,7 @@ import {
   documentPageCount,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  isRasterAvizUpload,
   ocrCapability,
 } from '../lib/ocr/readText.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
@@ -528,10 +529,13 @@ router.post('/extract', async (req, res) => {
     const pages = await documentPageCount(storedFileUrl);
     // Re-extract (client sent `id`) and long scans never hold the HTTP request. A hard carnet
     // photo routinely hits OCR_TIMEOUT at the interactive budget; behind Cloudflare the tunnel
-    // often drops earlier, so the UI never receives the 202 retry and stays on „Se re-extrage…”.
+    // often drops earlier (wsarecv: connection forcibly closed), so the UI never receives the
+    // 202 retry and stays on „Se re-extrage…”. Rasters always background for the same reason —
+    // PDFs with a text layer stay interactive.
     // Background uses the full OCR_TIMEOUT_MS budget and the list polls until fields appear.
     const reextract = Boolean(req.body?.id);
-    if (reextract || pages > interactiveOcrMaxPages()) {
+    const photo = isRasterAvizUpload(storedFileUrl, original_filename);
+    if (reextract || photo || pages > interactiveOcrMaxPages()) {
       await query(
         `UPDATE aviz_documents SET status = 'uploaded', updated_at = NOW()
          WHERE id = $1 AND company_id = $2 AND status IN ('extracted', 'confirmed', 'uploaded')`,
@@ -552,7 +556,7 @@ router.post('/extract', async (req, res) => {
         ...decorateAviz(pending.rows[0]),
         extraction_pending: true,
         pages,
-        reason: reextract ? 'reextract_background' : 'long_document',
+        reason: reextract ? 'reextract_background' : (photo ? 'photo_background' : 'long_document'),
       });
     }
 

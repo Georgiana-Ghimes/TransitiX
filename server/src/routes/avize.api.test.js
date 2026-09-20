@@ -112,6 +112,21 @@ describe('POST /api/avize/extract', () => {
     expect(row.batch_id).toBeTruthy();
   });
 
+  it('hands a PNG photo to the background so Cloudflare cannot drop the spinner', async () => {
+    // Tiny valid PNG — tunnel-safe path must not wait for Paddle on the request.
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const fileUrl = await placeUpload(`carnet-${Date.now()}.png`, png);
+    const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
+      .send({ file_url: fileUrl, original_filename: 'carnet.png' });
+
+    expect(res.status).toBe(202);
+    expect(res.body.extraction_pending).toBe(true);
+    expect(res.body.reason).toBe('photo_background');
+  });
+
   it('still extracts a short document while the caller waits', async () => {
     const fileUrl = await placeMultiPagePdf(`scurt-${Date.now()}.pdf`, 2);
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))

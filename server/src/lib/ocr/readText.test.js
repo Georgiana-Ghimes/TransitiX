@@ -3,6 +3,7 @@ import {
   backgroundOcrTimeoutMs,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  isRasterAvizUpload,
   needsVlFallback,
   ocrProvider,
   paddleOcrUrl,
@@ -65,6 +66,14 @@ describe('needsVlFallback', () => {
 
   it('skips VL when a TPO/PSL is already readable', () => {
     expect(needsVlFallback('Aviz PSL-0044362 TPO-0025629 placuta B 330 SRS')).toBe(false);
+  });
+});
+
+describe('isRasterAvizUpload', () => {
+  it('detects phone photos that must not hold the tunnel open', () => {
+    expect(isRasterAvizUpload('/uploads/a.png', 'a.png')).toBe(true);
+    expect(isRasterAvizUpload('/uploads/a.JPG', null)).toBe(true);
+    expect(isRasterAvizUpload('/uploads/a.pdf', 'a.pdf')).toBe(false);
   });
 });
 
