@@ -1,7 +1,8 @@
 {
   "name": "transitix",
   "private": true,
-  "version": "1.12.0",
+  "version": "1.13.0",
+  "build": 2,
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
