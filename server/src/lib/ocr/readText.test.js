@@ -3,8 +3,10 @@ import {
   backgroundOcrTimeoutMs,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  needsVlFallback,
   ocrProvider,
   paddleOcrUrl,
+  paddleOcrVlUrl,
 } from './readText.js';
 
 describe('ocr provider selection', () => {
@@ -17,6 +19,7 @@ describe('ocr provider selection', () => {
   beforeEach(() => {
     delete process.env.OCR_PROVIDER;
     delete process.env.PADDLE_OCR_URL;
+    delete process.env.PADDLE_OCR_VL_URL;
   });
 
   it('defaults to none when nothing is configured', () => {
@@ -27,6 +30,11 @@ describe('ocr provider selection', () => {
     process.env.PADDLE_OCR_URL = 'http://127.0.0.1:8100/';
     expect(ocrProvider()).toBe('paddle');
     expect(paddleOcrUrl()).toBe('http://127.0.0.1:8100');
+  });
+
+  it('reads the optional VL sidecar URL', () => {
+    process.env.PADDLE_OCR_VL_URL = 'http://127.0.0.1:8101/';
+    expect(paddleOcrVlUrl()).toBe('http://127.0.0.1:8101');
   });
 
   it('honours explicit OCR_PROVIDER=paddle', () => {
@@ -43,6 +51,20 @@ describe('ocr provider selection', () => {
     process.env.OCR_PROVIDER = 'none';
     process.env.PADDLE_OCR_URL = 'http://127.0.0.1:8100';
     expect(ocrProvider()).toBe('none');
+  });
+});
+
+describe('needsVlFallback', () => {
+  it('asks for VL when the text is thin', () => {
+    expect(needsVlFallback('abc')).toBe(true);
+  });
+
+  it('asks for VL when there are no logistics codes', () => {
+    expect(needsVlFallback('Aviz de livrare către client fără coduri lungi')).toBe(true);
+  });
+
+  it('skips VL when a TPO/PSL is already readable', () => {
+    expect(needsVlFallback('Aviz PSL-0044362 TPO-0025629 placuta B 330 SRS')).toBe(false);
   });
 });
 

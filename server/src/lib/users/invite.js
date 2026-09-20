@@ -5,17 +5,16 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../email.js';
+import { appLink } from '../auth/mail.js';
 import {
   INVITE_TTL_HOURS,
   inviteState,
   unusablePasswordSeed,
 } from './rules.js';
 
+/** Invite / set-password link on the FE origin (CLIENT_ORIGIN-aware). */
 export function buildInviteLink(req, token) {
-  const origin = req.body?.origin
-    || process.env.CLIENT_ORIGIN
-    || `${req.protocol}://${req.get('host')}`;
-  return `${String(origin).replace(/\/$/, '')}/reset-password?token=${token}`;
+  return appLink(req, '/reset-password', token);
 }
 
 /**

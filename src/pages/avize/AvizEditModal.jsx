@@ -44,6 +44,25 @@ export default function AvizEditModal({
                     value={form[f.key] ?? ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                   />
+                  {f.key === 'gross_weight_kg' && (
+                    <label className="mt-1.5 flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 rounded border-slate-300"
+                        checked={form.include_gross_in_annex !== false}
+                        onChange={(e) => setForm((prev) => ({
+                          ...prev,
+                          include_gross_in_annex: e.target.checked,
+                        }))}
+                      />
+                      <span>
+                        Include în Anexa (tone)
+                        <span className="block text-slate-400 font-normal">
+                          Debifat: coloana „Cantitate marfă (tone)” rămâne goală. Taxa de zonă folosește oricum bruta.
+                        </span>
+                      </span>
+                    </label>
+                  )}
                 </div>
               ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />

@@ -239,6 +239,7 @@ export const ENTITY_MAP = {
       'batch_id', 'document_type', 'ocr_profile_id', 'ocr_confidence',
       'field_confidence', 'corrected_fields', 'needs_review',
       'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg', 'pallets', 'quantity_unit',
+      'include_gross_in_annex',
     ],
   },
 };

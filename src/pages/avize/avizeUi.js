@@ -68,7 +68,7 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
  */
 const OCR_OWNED_FIELDS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
-  'cantitate_marfa', 'gross_weight_kg', 'numar_document_marfa',
+  'cantitate_marfa', 'gross_weight_kg', 'net_weight_kg', 'numar_document_marfa',
 ];
 
 function ocrValueFor(values, key) {
@@ -137,6 +137,8 @@ export function emptyForm(row = {}) {
   }
   form.ruta_display = row.ruta_display ?? '';
   form.trip_id = row.trip_id ?? '';
+  // Default on: Anexa “Cantitate (tone)” uses greutate brută unless the operator opts out.
+  form.include_gross_in_annex = row.include_gross_in_annex !== false && row.include_gross_in_annex !== 'false';
   return form;
 }
 

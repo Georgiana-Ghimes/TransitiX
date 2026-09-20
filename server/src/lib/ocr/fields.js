@@ -161,6 +161,37 @@ export function parseNumber(raw) {
   return Number.isFinite(num) ? num : null;
 }
 
+/**
+ * Coerce OCR/VLM strings into a DB-safe number (Postgres NUMERIC rejects "15,75").
+ *
+ * Handles the carnet form `15,744,00` (same separator for thousands and decimals) that
+ * plain `parseNumber` cannot, without changing `parseNumber` itself.
+ */
+export function coerceDbNumber(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+  const text = String(raw).trim().replace(/\s/g, '');
+  if (!text) return null;
+
+  const simple = parseNumber(text);
+  if (simple != null) return simple;
+
+  const separators = text.match(/[.,]/g) ?? [];
+  if (separators.length < 2) return null;
+
+  const cut = Math.max(text.lastIndexOf('.'), text.lastIndexOf(','));
+  const fraction = text.slice(cut + 1).replace(/\D/g, '');
+  const oneKind = new Set(separators).size === 1;
+  if (fraction.length === 3 && oneKind) {
+    const digits = text.replace(/[.,\s]/g, '');
+    return /^\d+$/.test(digits) ? Number(digits) : null;
+  }
+  const whole = text.slice(0, cut).replace(/[.,\s]/g, '');
+  if (!/^\d+$/.test(whole)) return null;
+  const value = Number(`${whole}.${fraction || '0'}`);
+  return Number.isFinite(value) ? value : null;
+}
+
 const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000, tone_: 1000 };
 
 /**
@@ -194,7 +225,7 @@ function matchLabelledWeight(blob, label) {
 
 function weightFrom(hit, confidence) {
   if (!hit) return null;
-  const value = parseNumber(hit.raw);
+  const value = coerceDbNumber(hit.raw);
   if (value == null) return null;
   const factor = String(hit.unit || 'kg').toLowerCase().startsWith('t') ? 1000 : 1;
   return result(Math.round(value * factor * 100) / 100, confidence, hit.matched);

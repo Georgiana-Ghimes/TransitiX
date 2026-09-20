@@ -8,8 +8,9 @@ import { normalizeOcrText } from './normalizeOcrText.js';
  *
  * Sources, in order:
  *   1. PDF text layer, free, exact
- *   2. PaddleOCR, the local sidecar, the only OCR provider
- *   3. nothing, upload still succeeds; office types fields
+ *   2. PaddleOCR classic (:8100)
+ *   3. PaddleOCR-VL 0.9B (:8101) when classic text is thin / missing logistics codes
+ *   4. nothing — upload still succeeds; office types fields
  */
 export function ocrProvider() {
   const raw = String(process.env.OCR_PROVIDER || '').trim().toLowerCase();
@@ -24,8 +25,25 @@ export function isTextPoor(rawText, minChars = 40) {
   return String(rawText || '').trim().length < minChars;
 }
 
+/** Classic line OCR — tuned handwriting knobs live on that service. */
 export function paddleOcrUrl() {
   return String(process.env.PADDLE_OCR_URL || '').trim().replace(/\/$/, '');
+}
+
+/** PaddleOCR-VL 0.9B document VLM (CPU). Optional second pass. */
+export function paddleOcrVlUrl() {
+  return String(process.env.PADDLE_OCR_VL_URL || '').trim().replace(/\/$/, '');
+}
+
+const LOGISTICS_CODE_RE = /\b(?:TPO|PSL|TRO)[\s\-._]*\d{3,}/i;
+
+/**
+ * Classic OCR that produced characters but no TPO/PSL/TRO is still "weak" for avize —
+ * worth spending a VL pass. Handwriting carnets often hit this path.
+ */
+export function needsVlFallback(rawText) {
+  if (isTextPoor(rawText, 40)) return true;
+  return !LOGISTICS_CODE_RE.test(String(rawText || ''));
 }
 
 /**
@@ -185,21 +203,53 @@ async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
   const provider = ocrProvider();
   if (provider === 'paddle') {
     const paddle = await readWithPaddle(buffer, mimeType, { timeoutMs });
-    if (paddle.text) {
+    if (paddle.timedOut) return { text: null, timedOut: true, reason: 'paddle_timeout' };
+
+    const classicText = paddle.text || null;
+    const classicOk = classicText && !needsVlFallback(classicText);
+
+    if (classicOk) {
       return {
-        text: paddle.text, source: 'paddle', pages: paddle.pages, truncated: paddle.truncated,
+        text: classicText, source: 'paddle', pages: paddle.pages, truncated: paddle.truncated,
       };
     }
-    if (paddle.timedOut) return { text: null, timedOut: true, reason: 'paddle_timeout' };
-    return { text: null, reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat' };
+
+    // Thin / no logistics codes → try VL when configured. Prefer the richer of the two.
+    const vl = await readWithPaddleVl(buffer, mimeType, { timeoutMs });
+    if (vl.timedOut && !classicText) {
+      return { text: null, timedOut: true, reason: 'paddle_vl_timeout' };
+    }
+    if (vl.text && (!classicText || vl.text.length >= classicText.length || needsVlFallback(classicText))) {
+      // Keep classic crumbs if VL somehow returned less signal with codes.
+      const preferVl = !classicText
+        || !LOGISTICS_CODE_RE.test(classicText)
+        || LOGISTICS_CODE_RE.test(vl.text)
+        || vl.text.length > classicText.length * 1.1;
+      if (preferVl) {
+        return {
+          text: vl.text,
+          source: classicText ? 'paddle+vl' : 'paddle-vl',
+          pages: vl.pages || paddle.pages,
+          truncated: Boolean(vl.truncated || paddle.truncated),
+        };
+      }
+    }
+
+    if (classicText) {
+      return {
+        text: classicText, source: 'paddle', pages: paddle.pages, truncated: paddle.truncated,
+      };
+    }
+    return {
+      text: null,
+      reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat',
+    };
   }
   return { text: null, reason: 'ocr_neconfigurat' };
 }
 
-async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
-  const base = paddleOcrUrl();
+async function postOcrJson(base, buffer, mimeType, timeoutMs) {
   if (!base) return { text: null, timedOut: false };
-
   try {
     const res = await fetch(`${base}/ocr/json`, {
       method: 'POST',
@@ -208,7 +258,6 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
         image_base64: buffer.toString('base64'),
         mime_type: mimeType || 'image/jpeg',
       }),
-      // Auto-rotate tries up to four orientations on CPU, so a background pass waits minutes.
       signal: AbortSignal.timeout(timeoutMs ?? backgroundOcrTimeoutMs()),
     });
     if (!res.ok) return { text: null, timedOut: false };
@@ -218,12 +267,21 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
       text: text ? normalizeOcrText(String(text)) : null,
       timedOut: false,
       pages: Number(json?.total_pages) || Number(json?.pages) || 1,
-      // The sidecar caps how many pages it will read. A partial read stored as the whole
-      // document would put an understated figure on an invoice.
       truncated: Boolean(json?.truncated),
     };
   } catch (err) {
     return { text: null, timedOut: err?.name === 'TimeoutError' };
   }
+}
+
+async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
+  return postOcrJson(paddleOcrUrl(), buffer, mimeType, timeoutMs);
+}
+
+async function readWithPaddleVl(buffer, mimeType, { timeoutMs } = {}) {
+  const base = paddleOcrVlUrl();
+  if (!base) return { text: null, timedOut: false };
+  // VL on CPU is slower than classic; allow the full background budget.
+  return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
 }
 

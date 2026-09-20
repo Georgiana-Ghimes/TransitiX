@@ -6,6 +6,7 @@ import {
   ANNEX_SOURCE_KEYS,
   DEFAULT_RAI_COLUMNS,
   annexFieldDefaults,
+  annexQuantityValue,
   exportColumnsFor,
   isCompleteRaiTemplate,
   resolveExportColumns,
@@ -159,6 +160,21 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
     expect(row['Km parcursi']).toBe(0);
     expect(row['Tarif Km']).toBe(0);
     expect(row['Observatii'] ?? '').toBe('');
+  });
+
+  it('leaves Anexa tonnes blank when include_gross_in_annex is off', async () => {
+    expect(annexQuantityValue({ gross_weight_kg: 9487.8 })).toBe(9.49);
+    expect(annexQuantityValue({
+      gross_weight_kg: 9487.8,
+      include_gross_in_annex: false,
+    })).toBeNull();
+
+    const sheet = await loadSheet(
+      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS },
+      [{ ...EXTRACTED_AVIZ, include_gross_in_annex: false }]
+    );
+    const { rows } = tableFromSheet(sheet);
+    expect(rows[0]['Cantitate marfa (tone)'] ?? '').toBe('');
   });
 
   it('numbers two avize and keeps tractor + trailer plates', async () => {

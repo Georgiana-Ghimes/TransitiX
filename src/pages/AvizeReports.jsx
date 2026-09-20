@@ -334,7 +334,11 @@ export default function AvizeReports() {
     if (!editRow) return;
     setSaving(true);
     try {
-      const payload = { ...form, status: nextAvizStatusOnSave(editRow.status) };
+      const payload = {
+        ...form,
+        status: nextAvizStatusOnSave(editRow.status),
+        include_gross_in_annex: form.include_gross_in_annex !== false,
+      };
       if (!payload.trip_id) payload.trip_id = null;
       const saved = await api.entities.AvizDocument.update(editRow.id, payload);
       notifySuccess(

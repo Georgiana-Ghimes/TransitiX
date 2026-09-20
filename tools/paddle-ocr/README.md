@@ -39,6 +39,17 @@ driver app or Avize page — `readDocumentText` will call Paddle for images.
 Default `PADDLE_OCR_LANG=latin` covers Romanian diacritics reasonably. For
 Chinese docs use `ch`. Set via compose env or `.env`.
 
+## Companion: PaddleOCR-VL + Qwen
+
+For thin scans / handwriting, Node can call a second sidecar and an optional
+local VLM. See [`tools/paddle-ocr-vl/README.md`](../paddle-ocr-vl/README.md).
+
+```env
+PADDLE_OCR_VL_URL=http://127.0.0.1:8101
+VLM_URL=http://127.0.0.1:11434
+VLM_MODEL=qwen2.5vl:3b
+```
+
 ## Auto-rotate
 
 By default the service tries page orientations `0 → 90 → 270 → 180` when the

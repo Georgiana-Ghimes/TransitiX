@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 !server/.env.example
+scripts/vercel-pc.env
+!scripts/vercel-pc.env.example
 
 # Logs
 /logs

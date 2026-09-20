@@ -134,8 +134,14 @@ function formatDateCell(value) {
 /**
  * Anexa Factura RAI column “Cantitate marfa (tone)” must carry weighbridge tons when
  * we have greutate brută, not the sack/bucket line count OCR also finds on the same page.
+ *
+ * `include_gross_in_annex === false` opts the row out of that column only (UI checkbox).
+ * Zone tax still uses `gross_weight_kg` and is unaffected.
  */
 export function annexQuantityValue(row) {
+  if (row?.include_gross_in_annex === false || row?.include_gross_in_annex === 'false') {
+    return null;
+  }
   const kg = Number(row?.gross_weight_kg);
   if (Number.isFinite(kg) && kg > 0) {
     return Math.round((kg / 1000) * 100) / 100;

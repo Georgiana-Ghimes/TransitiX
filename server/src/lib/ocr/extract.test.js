@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canonicalPlate,
+  coerceDbNumber,
   extractDate,
   extractGoodsUnit,
   extractGrossWeight,
@@ -95,6 +96,30 @@ describe('parseNumber', () => {
   it('returns null for junk', () => {
     expect(parseNumber('abc')).toBeNull();
     expect(parseNumber(null)).toBeNull();
+  });
+});
+
+describe('coerceDbNumber', () => {
+  it('accepts a single Romanian decimal comma Postgres would reject', () => {
+    expect(coerceDbNumber('15,75')).toBe(15.75);
+  });
+
+  it('accepts the carnet double-comma form', () => {
+    expect(coerceDbNumber('15,744,00')).toBe(15744);
+  });
+
+  it('reads RO and US mixed separators the same way', () => {
+    expect(coerceDbNumber('9.487,80')).toBe(9487.8);
+    expect(coerceDbNumber('9,487.80')).toBe(9487.8);
+  });
+
+  it('reads a bare decimal and a thousands-only dot', () => {
+    expect(coerceDbNumber('9487.8')).toBe(9487.8);
+    expect(coerceDbNumber('9.000')).toBe(9000);
+  });
+
+  it('passes through finite numbers', () => {
+    expect(coerceDbNumber(15.744)).toBe(15.744);
   });
 });
 

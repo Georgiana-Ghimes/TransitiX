@@ -1,0 +1,9 @@
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+pillow==11.0.0
+pymupdf==1.24.14
+numpy==1.26.4
+# Installed separately in the Dockerfile from the Paddle CPU index (3.2.x).
+# paddlepaddle==3.2.1
+paddleocr[doc-parser]>=3.0.0

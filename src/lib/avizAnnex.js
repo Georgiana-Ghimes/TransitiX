@@ -6,6 +6,7 @@ export const AVIZ_FORM_FIELDS = [
   { key: 'ruta_transport', label: 'Rută transport' },
   { key: 'tip_marfa', label: 'Tip marfă' },
   { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³)', type: 'number', step: '0.001' },
+  { key: 'net_weight_kg', label: 'Greutate netă (kg)', type: 'number', step: '0.01' },
   { key: 'gross_weight_kg', label: 'Greutate brută (kg)', type: 'number', step: '0.01' },
   { key: 'numar_document_marfa', label: 'Număr document marfă' },
   { key: 'numar_curse', label: 'Număr curse', type: 'number', step: '1' },

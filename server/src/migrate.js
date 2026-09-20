@@ -1362,6 +1362,10 @@ CREATE INDEX IF NOT EXISTS idx_aviz_documents_undated
   ON aviz_documents(company_id, created_at)
   WHERE data_efectuare_cursa IS NULL;
 
+-- When false, Anexa “Cantitate marfa (tone)” stays blank even if gross_weight_kg is set.
+-- Zone tax still reads greutate brută. Default true preserves existing annex behaviour.
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS include_gross_in_annex BOOLEAN NOT NULL DEFAULT TRUE;
+
 -- Issued refresh tokens, so logging out actually ends a session. Without this a signed token
 -- stays valid until it expires on its own: a lost phone or a departed employee keeps working
 -- access for a week, and the logout button is decoration.

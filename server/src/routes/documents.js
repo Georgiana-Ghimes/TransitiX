@@ -8,9 +8,10 @@ import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
+import { correctWithVlm, mergeVlmIntoExtraction, vlmUrl } from '../lib/ocr/vlmCorrect.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
-import { isGenericCountUnit } from '../lib/ocr/fields.js';
+import { coerceDbNumber, isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 
 const storage = multer.diskStorage({
@@ -87,12 +88,24 @@ const EXTRACT_COLUMNS = [
   'numar_curse',
 ];
 
+/** Numeric columns Postgres rejects if left as "15,75" / "15,744,00". */
+const NUMERIC_EXTRACT_COLUMNS = new Set([
+  'cantitate_marfa', 'gross_weight_kg', 'net_weight_kg', 'pallet_weight_kg',
+  'pallets', 'numar_curse',
+]);
+
 /** Maps extractor field names onto the document columns. */
 function toColumns(values) {
   const out = {};
   for (const [name, value] of Object.entries(values ?? {})) {
     if (name === 'quantity') out.cantitate_marfa = value;
     else if (EXTRACT_COLUMNS.includes(name)) out[name] = value;
+  }
+  for (const key of NUMERIC_EXTRACT_COLUMNS) {
+    if (out[key] === undefined || out[key] === null || out[key] === '') continue;
+    const n = coerceDbNumber(out[key]);
+    if (n == null) delete out[key];
+    else out[key] = n;
   }
   // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
   // A bare count is not a packaging unit, though. An aviz reading `Cantitate 768.00 buc` two
@@ -225,13 +238,13 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 
     try {
       const text = await readDocumentText(doc.file_url, { timeoutMs });
-      const extraction = extractDocument(text.text, {
+      let extraction = extractDocument(text.text, {
         documentType: doc.document_type,
         profileId,
       });
 
       const corrected = doc.corrected_fields ?? [];
-      const merged = corrected.length
+      let merged = corrected.length
         ? reExtract(text.text, {
           documentType: doc.document_type,
           profileId,
@@ -239,6 +252,20 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           correctedFields: corrected,
         })
         : extraction;
+
+      // Optional local Qwen (Ollama): fill gaps / flag conflicts. Fail-open.
+      // Runs after manual corrections so operator pins still win.
+      if (vlmUrl() && (doc.document_type == null || doc.document_type === 'aviz')) {
+        try {
+          const vlmFields = await correctWithVlm({
+            fileUrl: doc.file_url,
+            ocrText: text.text,
+          });
+          if (vlmFields) merged = mergeVlmIntoExtraction(merged, vlmFields);
+        } catch {
+          // Keep regex extraction; VLM is enrichment only.
+        }
+      }
 
       const columns = toColumns(merged.values);
       const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
