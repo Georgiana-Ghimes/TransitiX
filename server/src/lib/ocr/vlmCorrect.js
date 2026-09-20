@@ -10,6 +10,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { uploadRoot } from '../../uploadPath.js';
+import { coerceDbNumber } from './fields.js';
 
 export function vlmUrl() {
   return String(process.env.VLM_URL || '').trim().replace(/\/$/, '');
@@ -40,14 +41,17 @@ export const VLM_AVIZ_KEYS = Object.freeze([
   'delivery_locality',
 ]);
 
-const SYSTEM_PROMPT = `You extract fields from a Romanian logistics aviz (Baumit / transport).
+const SYSTEM_PROMPT = `You extract fields from a Romanian logistics aviz (Baumit / transport / carnet de bord).
 Return ONLY a JSON object with these keys (use null when unknown):
 numar_tpo, numar_document_marfa, numar_auto, data_efectuare_cursa,
 ruta_transport, tip_marfa, quantity, gross_weight_kg, net_weight_kg,
 delivery_street, delivery_street_type, delivery_house_number, delivery_locality.
 Dates as YYYY-MM-DD. Plates like B-330-SRS. Codes like TPO-0025803, PSL-0044362.
 Prefer the delivery address (Adresa de livrare), not the billing client address.
-gross_weight_kg = greutate brută (kg); net_weight_kg = greutate netă (kg).`;
+gross_weight_kg = greutate brută in kilograms (integer or one decimal). On a handwritten carnet,
+"CANT MARFA 15.744,00" / "15,744,00" means ~15744 kg weighbridge — put that in gross_weight_kg, NOT quantity.
+quantity = count of sacks/buckets only (e.g. 378 saci). Never put a street house number (e.g. 600) in quantity.
+net_weight_kg only when the page says greutate netă / masă netă.`;
 
 /**
  * Pull a JSON object out of a model reply (raw or fenced).
@@ -112,6 +116,12 @@ export function mergeVlmIntoExtraction(extraction, vlmFields = {}) {
     let proposed = vlmFields[key];
     if (blank(proposed)) continue;
     if (typeof proposed === 'string') proposed = proposed.trim();
+
+    if (key === 'gross_weight_kg' || key === 'net_weight_kg' || key === 'quantity') {
+      const n = coerceDbNumber(proposed);
+      if (n == null) continue;
+      proposed = n;
+    }
 
     // quantity may arrive as number; keep as-is for toColumns
     const current = fields[key];

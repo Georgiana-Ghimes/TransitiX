@@ -63,4 +63,14 @@ describe('mergeVlmIntoExtraction', () => {
   it('exposes the aviz key list for prompts', () => {
     expect(VLM_AVIZ_KEYS).toContain('delivery_street');
   });
+
+  it('coerces RO weighbridge strings into kg numbers', () => {
+    const base = extractDocument('AVIZ fara greutate');
+    const merged = mergeVlmIntoExtraction(base, {
+      gross_weight_kg: '15,744,00',
+      quantity: '15.744,00',
+    });
+    expect(merged.values.gross_weight_kg).toBe(15744);
+    expect(merged.values.quantity).toBe(15744);
+  });
 });

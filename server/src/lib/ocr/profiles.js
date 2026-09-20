@@ -10,6 +10,7 @@
 
 import {
   NO_MATCH,
+  coerceDbNumber,
   extractDate,
   extractGoodsUnit,
   extractGrossWeight,
@@ -146,31 +147,69 @@ const CARNET_LABEL = /\b(?:tip\s*marf|cant\.?\s*marf|nr\.?\s*document|nr\.?\s*cu
 /**
  * A number written the way a hand writes it, where one separator does both jobs.
  *
- * `15,744,00` is on the page with a comma for thousands and for the decimal, and the shared
- * `parseNumber` returns null for it. That parser must not change — it decides what a weight
- * means everywhere else — so the rule lives here, with the layout that needs it.
+ * `15,744,00` is on the page with a comma for thousands and for the decimal. Shared
+ * `coerceDbNumber` owns that rule (same as DB writes); keep one parser for carnet + weights.
  */
 function carnetNumber(raw) {
-  const text = String(raw ?? '').trim();
-  const separators = text.match(/[.,]/g) ?? [];
-  // None or one: the shared parser already knows the Romanian rules.
-  if (separators.length < 2) return parseNumber(text);
-
-  const cut = Math.max(text.lastIndexOf('.'), text.lastIndexOf(','));
-  const fraction = text.slice(cut + 1).replace(/\D/g, '');
-  const oneKind = new Set(separators).size === 1;
-  // `1,234,567` is thousands all the way down; `15,744,00` ends in a two-digit remainder and
-  // cannot be. Three digits after the last separator means grouping, not a decimal.
-  if (fraction.length === 3 && oneKind) {
-    const digits = text.replace(/[.,\s]/g, '');
-    return /^\d+$/.test(digits) ? Number(digits) : null;
-  }
-
-  const whole = text.slice(0, cut).replace(/[.,\s]/g, '');
-  if (!/^\d+$/.test(whole)) return null;
-  const value = Number(`${whole}.${fraction || '0'}`);
-  return Number.isFinite(value) ? value : null;
+  return coerceDbNumber(raw);
 }
+
+/**
+ * True when `CANT MARFĂ` is the weighbridge figure in kg, not a bag/bucket count.
+ *
+ * Drivers write `15,744,00` / `15.744,00` under CANT MARFĂ — that is kg. Putting it in
+ * `cantitate_marfa` left greutate brută empty, so the VLM invented `15.75` and Anexa stayed wrong.
+ */
+function looksLikeWeighbridgeKg(raw, value, unit) {
+  const u = String(unit || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  if (u === 'kg' || u.startsWith('ton') || u === 't' || u === 'to') {
+    return Number.isFinite(value) && value > 0 && value <= 100000;
+  }
+  if (/^(sac|gal|buc|pal|rol|col)/.test(u)) return false;
+  // Truck payload in kg; refuse OCR garbage like 1,234,567 → 1234567.
+  if (!Number.isFinite(value) || value < 1000 || value > 50000) return false;
+  const text = String(raw ?? '').trim();
+  if ((text.match(/[.,]/g) || []).length >= 2) return true;
+  return true;
+}
+
+/** Labelled `CANT MARFĂ` line on a carnet page. */
+function matchCarnetCantMarfa(text) {
+  return String(text || '').match(
+    /\bcant(?:itate)?\.?[^\S\n]*marf[aăá]?[^\S\n]*[:.\-]?[^\S\n]*([\d.,]+)[^\S\n]*([a-zăâîșț]{2,8})?/i
+  );
+}
+
+/**
+ * Greutate brută: labelled weight first, else weighbridge-style `CANT MARFĂ`.
+ */
+const carnetGrossWeightField = (text) => {
+  const labelled = extractGrossWeight(text);
+  if (labelled?.value != null) return labelled;
+
+  const found = matchCarnetCantMarfa(text);
+  if (!found) return NO_MATCH;
+  const value = carnetNumber(found[1]);
+  const unit = (found[2] || '').toLowerCase() || null;
+  if (value == null || !looksLikeWeighbridgeKg(found[1], value, unit)) return NO_MATCH;
+  return { value: Math.round(value * 100) / 100, confidence: 0.88, matched: found[0] };
+};
+
+/** `CANT MARFĂ`, which `extractQuantity` never matched — it only knows `cantitate`. */
+const carnetQuantityField = (text) => {
+  // The unit must stay on the number's own line. With `\s*` it reaches the next line and takes
+  // the `NR` of `NR. DOCUMENT` as a unit — which `toColumns` then copies into Tip marfă when
+  // that field is empty, putting a word on the customer's annex that names nothing.
+  const found = matchCarnetCantMarfa(text);
+  if (!found) return extractQuantity(text);
+  const value = carnetNumber(found[1]);
+  const unit = (found[2] || '').toLowerCase() || null;
+  if (value == null) return NO_MATCH;
+  // Weighbridge figure belongs in gross_weight_kg, not in the sack/bucket column.
+  if (looksLikeWeighbridgeKg(found[1], value, unit)) return NO_MATCH;
+  if (!isPlausibleQuantity(value, unit)) return NO_MATCH;
+  return { value: { quantity: value, unit }, confidence: 0.85, matched: found[0] };
+};
 
 /** `TPO` in ballpoint reads back as `TP0`, `TPQ`, `IPO`. Fix the prefix, keep the digits. */
 const carnetTpoField = (text) => {
@@ -236,21 +275,6 @@ const carnetGoodsField = (text) => {
   return value ? { value: value.slice(0, 60), confidence: 0.85, matched: found[0] } : NO_MATCH;
 };
 
-/** `CANT MARFĂ`, which `extractQuantity` never matched — it only knows `cantitate`. */
-const carnetQuantityField = (text) => {
-  // The unit must stay on the number's own line. With `\s*` it reaches the next line and takes
-  // the `NR` of `NR. DOCUMENT` as a unit — which `toColumns` then copies into Tip marfă when
-  // that field is empty, putting a word on the customer's annex that names nothing.
-  const found = String(text || '').match(
-    /\bcant(?:itate)?\.?[^\S\n]*marf[aăá]?[^\S\n]*[:.\-]?[^\S\n]*([\d.,]+)[^\S\n]*([a-zăâîșț]{2,8})?/i
-  );
-  if (!found) return extractQuantity(text);
-  const value = carnetNumber(found[1]);
-  const unit = (found[2] || '').toLowerCase() || null;
-  if (value == null || !isPlausibleQuantity(value, unit)) return NO_MATCH;
-  return { value: { quantity: value, unit }, confidence: 0.85, matched: found[0] };
-};
-
 /** `NR. CURSE: 1`. A TPO may cover several trips; nothing extracted this before. */
 const carnetTripCountField = (text) => {
   const found = String(text || '').match(/\bnr\.?\s*curse\s*[:.\-]?\s*(\d{1,2})\b/i);
@@ -276,13 +300,15 @@ export const OCR_PROFILES = [
       numar_document_marfa: docNoField([TRO_CODE, PSL_CODE]),
       ruta_transport: carnetRouteField,
       tip_marfa: carnetGoodsField,
+      gross_weight_kg: carnetGrossWeightField,
+      net_weight_kg: extractNetWeight,
       quantity: carnetQuantityField,
       numar_curse: carnetTripCountField,
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
-      numar_document_marfa: 2, quantity: 2, ruta_transport: 1,
-      tip_marfa: 1, numar_curse: 1,
+      gross_weight_kg: 2, numar_document_marfa: 2, ruta_transport: 1,
+      tip_marfa: 1, quantity: 1, numar_curse: 1, net_weight_kg: 0.5,
     },
   },
   {

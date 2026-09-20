@@ -685,7 +685,9 @@ describe('carnet de bord profile', () => {
     expect(values.numar_auto).toBe('B-112-VFM');
     expect(values.numar_document_marfa).toBe('TRO-0008053');
     expect(values.tip_marfa).toBe('GALETI');
-    expect(values.quantity).toBe(15744);
+    // CANT MARFA 15,744,00 is weighbridge kg, not a bucket count.
+    expect(values.gross_weight_kg).toBe(15744);
+    expect(values.quantity ?? null).toBeNull();
     expect(values.numar_curse).toBe(1);
   });
 
@@ -703,13 +705,22 @@ describe('carnet de bord profile', () => {
     // it and must not change — it decides what a weight means everywhere else.
     expect(parseNumber('15,744,00')).toBeNull();
     const { values } = extractDocument('CANT MARFA: 15,744,00', { profileId: 'carnet_bord' });
-    expect(values.quantity).toBe(15744);
+    expect(values.gross_weight_kg).toBe(15744);
+    expect(values.quantity ?? null).toBeNull();
+    // Dot-thousands form from OCR (15.744,00) must not become 15.75.
+    const dotted = extractDocument('CANT MARFA: 15.744,00', { profileId: 'carnet_bord' });
+    expect(dotted.values.gross_weight_kg).toBe(15744);
+    // Explicit bucket count stays in quantity.
+    const bags = extractDocument('CANT MARFA: 768 galeti', { profileId: 'carnet_bord' });
+    expect(bags.values.quantity).toBe(768);
+    expect(bags.values.gross_weight_kg ?? null).toBeNull();
     // Grouping all the way down is still grouping. Were the rightmost separator taken as the
     // decimal here, `1,234,567` would become 1234.567 — a plausible-looking number, under the
     // ceiling, written unattended. It reads as 1234567 instead, which the quantity ceiling
     // then refuses, so the figure reaches an operator rather than the annex.
     const grouped = extractDocument('CANT MARFA: 1,234,567', { profileId: 'carnet_bord' });
     expect(grouped.values.quantity ?? null).toBeNull();
+    expect(grouped.values.gross_weight_kg ?? null).toBeNull();
     expect(grouped.values.quantity).not.toBe(1234.567);
   });
 
