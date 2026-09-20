@@ -109,7 +109,8 @@ export function extractDate(text) {
   const iso = blob.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
   if (iso) return result(`${iso[1]}-${iso[2]}-${iso[3]}`, 0.95, iso[0]);
 
-  const dmy = blob.match(/\b(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})\b/);
+  // Colon is common on carnets: the hand's dots photograph as `11:08.2026`.
+  const dmy = blob.match(/\b(\d{1,2})[.:\-/](\d{1,2})[.:\-/](\d{2,4})\b/);
   if (dmy) {
     const day = Number(dmy[1]);
     const month = Number(dmy[2]);
@@ -159,6 +160,25 @@ export function parseNumber(raw) {
   }
   const num = Number(text);
   return Number.isFinite(num) ? num : null;
+}
+
+/**
+ * Coerce OCR/VLM date strings into a Postgres DATE-safe ISO day (`YYYY-MM-DD`).
+ *
+ * Carnet photos often yield `11:08.2026` (colon for the hand's dot). Writing that raw makes
+ * the whole extract UPDATE fail — `invalid input syntax for type date` — and the UI shows
+ * extraction_source=none with empty fields even though OCR text was fine.
+ */
+export function coerceDbDate(raw) {
+  if (raw == null || raw === '') return null;
+  if (raw instanceof Date && Number.isFinite(raw.getTime())) {
+    return raw.toISOString().slice(0, 10);
+  }
+  const text = String(raw).trim();
+  if (!text) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const found = extractDate(text);
+  return found?.value || null;
 }
 
 /**

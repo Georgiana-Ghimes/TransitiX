@@ -10,7 +10,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { uploadRoot } from '../../uploadPath.js';
-import { coerceDbNumber } from './fields.js';
+import { coerceDbDate, coerceDbNumber } from './fields.js';
 
 export function vlmUrl() {
   return String(process.env.VLM_URL || '').trim().replace(/\/$/, '');
@@ -121,6 +121,11 @@ export function mergeVlmIntoExtraction(extraction, vlmFields = {}) {
       const n = coerceDbNumber(proposed);
       if (n == null) continue;
       proposed = n;
+    }
+    if (key === 'data_efectuare_cursa') {
+      const d = coerceDbDate(proposed);
+      if (d == null) continue;
+      proposed = d;
     }
 
     // quantity may arrive as number; keep as-is for toColumns

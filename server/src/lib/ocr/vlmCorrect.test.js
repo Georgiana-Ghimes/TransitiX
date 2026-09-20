@@ -73,4 +73,12 @@ describe('mergeVlmIntoExtraction', () => {
     expect(merged.values.gross_weight_kg).toBe(15744);
     expect(merged.values.quantity).toBe(15744);
   });
+
+  it('coerces carnet colon dates before they reach Postgres', () => {
+    const base = extractDocument('AVIZ fara data');
+    const merged = mergeVlmIntoExtraction(base, {
+      data_efectuare_cursa: '11:08.2026',
+    });
+    expect(merged.values.data_efectuare_cursa).toBe('2026-08-11');
+  });
 });

@@ -11,7 +11,7 @@ import { applyCorrections, extractDocument, reExtract, summariseExtraction } fro
 import { correctWithVlm, mergeVlmIntoExtraction, vlmUrl } from '../lib/ocr/vlmCorrect.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
-import { coerceDbNumber, isGenericCountUnit } from '../lib/ocr/fields.js';
+import { coerceDbDate, coerceDbNumber, isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 
 const storage = multer.diskStorage({
@@ -94,6 +94,9 @@ const NUMERIC_EXTRACT_COLUMNS = new Set([
   'pallets', 'numar_curse',
 ]);
 
+/** Date columns Postgres rejects if left as "11:08.2026". */
+const DATE_EXTRACT_COLUMNS = new Set(['data_efectuare_cursa']);
+
 /** Maps extractor field names onto the document columns. */
 function toColumns(values) {
   const out = {};
@@ -106,6 +109,12 @@ function toColumns(values) {
     const n = coerceDbNumber(out[key]);
     if (n == null) delete out[key];
     else out[key] = n;
+  }
+  for (const key of DATE_EXTRACT_COLUMNS) {
+    if (out[key] === undefined || out[key] === null || out[key] === '') continue;
+    const d = coerceDbDate(out[key]);
+    if (d == null) delete out[key];
+    else out[key] = d;
   }
   // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
   // A bare count is not a packaging unit, though. An aviz reading `Cantitate 768.00 buc` two

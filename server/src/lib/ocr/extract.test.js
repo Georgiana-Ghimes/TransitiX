@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canonicalPlate,
+  coerceDbDate,
   coerceDbNumber,
   extractDate,
   extractGoodsUnit,
@@ -120,6 +121,19 @@ describe('coerceDbNumber', () => {
 
   it('passes through finite numbers', () => {
     expect(coerceDbNumber(15.744)).toBe(15.744);
+  });
+});
+
+describe('coerceDbDate', () => {
+  it('turns carnet colon dates into ISO so Postgres DATE accepts them', () => {
+    expect(coerceDbDate('11:08.2026')).toBe('2026-08-11');
+    expect(coerceDbDate('11.08.2026')).toBe('2026-08-11');
+    expect(coerceDbDate('2026-08-11')).toBe('2026-08-11');
+  });
+
+  it('drops garbage instead of letting the extract UPDATE fail', () => {
+    expect(coerceDbDate('nu e data')).toBeNull();
+    expect(coerceDbDate('')).toBeNull();
   });
 });
 
