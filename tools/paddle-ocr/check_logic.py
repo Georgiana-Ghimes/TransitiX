@@ -90,8 +90,8 @@ def main() -> int:
     # A partial read filed as the whole document understates a figure on an invoice.
     check("the true page count survives the cap", real_total == 6, f"total={real_total}")
 
-    text, _rotation, read, total = app_module.run_ocr_on_bytes(make_pdf(6), max_pages=2)
-    check("run_ocr_on_bytes returns (text, rotation, read, total)", (read, total) == (2, 6),
+    text, _rotation, read, total, _confs, _hybrid = app_module.run_ocr_on_bytes(make_pdf(6), max_pages=2)
+    check("run_ocr_on_bytes returns pages", (read, total) == (2, 6),
           f"read={read} total={total}")
     check("text from every page read is joined", text.count("PSL") >= 2, repr(text[:50]))
 
@@ -110,9 +110,12 @@ def main() -> int:
 
     app_module.ocr_page = counting_ocr_page
     try:
-        _text, rotation, _read, _total = app_module.run_ocr_on_bytes(make_pdf(3))
+        # Gate 0 hybrid off for orientation unit test speed/stability
+        os.environ["HYBRID_OCR"] = "0"
+        _text, rotation, _read, _total, _confs, _h = app_module.run_ocr_on_bytes(make_pdf(3))
     finally:
         app_module.ocr_page = real_ocr_page
+        os.environ.pop("HYBRID_OCR", None)
 
     check("the first page searches orientations", per_page[0] > 1, f"{per_page[0]} passes")
     check("later pages cost one pass each, not four",

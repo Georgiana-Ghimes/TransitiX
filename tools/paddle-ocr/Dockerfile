@@ -19,7 +19,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip \
  && pip install -r requirements.txt
 
-COPY app.py check_logic.py bench.py ./
+COPY app.py check_logic.py bench.py field_check.py bench_baseline.py \
+     classifier.py pipeline.py trocr_onnx.py test_handwriting.py ./
+COPY scripts/ ./scripts/
 
 EXPOSE 8100
 

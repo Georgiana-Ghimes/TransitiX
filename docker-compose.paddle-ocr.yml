@@ -19,9 +19,21 @@ services:
       # 0.1-0.3 even when correct, so the printed-text default of 0.35 deletes a whole carnet
       # and the caller sees an empty read instead of a poor one.
       PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
+      HYBRID_OCR: ${HYBRID_OCR:-1}
+      MEMORY_PROFILE: ${MEMORY_PROFILE:-host}
+      HW_BIAS: ${HW_BIAS:-1}
+      CLASSIFIER_BACKEND: ${CLASSIFIER_BACKEND:-heuristic}
+      PRINTED_FALLBACK_CONF: ${PRINTED_FALLBACK_CONF:-0.5}
+      HANDWRITING_THRESHOLD: ${HANDWRITING_THRESHOLD:-0.75}
+      HANDWRITING_MIN_LEN: ${HANDWRITING_MIN_LEN:-2}
+      HANDWRITING_PADDLE_KEEP: ${HANDWRITING_PADDLE_KEEP:-0.55}
+      TROCR_UNLOAD_AFTER_REQUEST: ${TROCR_UNLOAD_AFTER_REQUEST:-1}
+      ORT_INTRA_THREADS: ${ORT_INTRA_THREADS:-2}
+      OCR_ONNX_DIR: /root/.paddleocr/onnx
+      TROCR_ONNX: trocr-small-handwritten-v1
     restart: unless-stopped
     volumes:
-      # Persist downloaded OCR models between rebuilds
+      # Persist downloaded OCR models between rebuilds (+ TrOCR ONNX under onnx/)
       - paddle_ocr_models:/root/.paddleocr
 
 volumes:

@@ -759,7 +759,7 @@ def _merge_ocr_text(best_text: str, best_score: float, text: str, score: float) 
     return best_text, best_score
 
 
-def ocr_photo_page(image) -> tuple[str, int]:
+def ocr_photo_page(image) -> tuple[str, int, list[float], object | None]:
     """
     Phone photo of a notebook (or any single-page hard shot).
 
@@ -781,6 +781,7 @@ def ocr_photo_page(image) -> tuple[str, int]:
     best_text = ""
     best_score = -1.0
     best_rot = 0
+    best_confs: list[float] = []
     best_source = base
 
     for degrees in rotations:
@@ -793,6 +794,7 @@ def ocr_photo_page(image) -> tuple[str, int]:
             best_score = score
             best_text = text
             best_rot = degrees
+            best_confs = list(confs)
             best_source = frame
         # Phone notebooks are almost always upright; stop when TPO/PSL already reads.
         if degrees == rotations[0] and looks_upright_enough(text, score):
@@ -822,12 +824,42 @@ def ocr_photo_page(image) -> tuple[str, int]:
                 continue
             score = _score_frame(text, confs, best_source)
             log.info("OCR photo pass=%s score=%.2f chars=%s", name, score, len(text))
+            prev = best_text
             best_text, best_score = _merge_ocr_text(best_text, best_score, text, score)
+            if best_text != prev and score >= best_score:
+                best_confs = list(confs)
 
-    return best_text, best_rot
+    hybrid_meta = _maybe_hybrid(best_source, photo=True)
+    if hybrid_meta is not None and hybrid_meta.text.strip():
+        best_text = hybrid_meta.text
+        best_confs = list(hybrid_meta.confidences)
+
+    return best_text, best_rot, best_confs, hybrid_meta
 
 
-def ocr_printed_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
+def _maybe_hybrid(frame, *, photo: bool = False):
+    """Run PATH-B hybrid when HYBRID_OCR=1. `photo` applies ink emphasize first."""
+    if os.environ.get("HYBRID_OCR", "1").strip() in ("0", "false", "False"):
+        return None
+    import numpy as np
+
+    try:
+        from pipeline import ocr_hybrid
+
+        if hasattr(frame, "convert"):
+            rgb = emphasize_ink(frame) if photo else frame.convert("RGB")
+            arr = np.array(rgb)
+        else:
+            arr = np.asarray(frame)
+        return ocr_hybrid(get_engine(), arr)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("hybrid OCR failed: %s", exc)
+        return None
+
+
+def ocr_printed_page(
+    image, prefer: Optional[int] = None
+) -> tuple[str, int, list[float], object | None]:
     """Scanned / printed pages: raw pixels first, no phone-photo preprocess."""
     import numpy as np
 
@@ -837,66 +869,83 @@ def ocr_printed_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
     best_text = ""
     best_score = -1.0
     best_rot = 0
+    best_confs: list[float] = []
+    best_frame = image.convert("RGB") if hasattr(image, "convert") else image
 
     for degrees in rotations:
         frame = image if degrees == 0 else image.rotate(-degrees, expand=True)
-        text, confs = ocr_array(np.array(frame.convert("RGB")))
+        rgb = frame.convert("RGB")
+        text, confs = ocr_array(np.array(rgb))
         score = _score_frame(text, confs, frame)
         log.info("OCR rotation=%s score=%.2f chars=%s (raw)", degrees, score, len(text))
         if score > best_score:
             best_score = score
             best_text = text
             best_rot = degrees
+            best_confs = list(confs)
+            best_frame = rgb
         if degrees == rotations[0] and looks_upright_enough(text, score):
             break
 
-    return best_text, best_rot
+    hybrid_meta = _maybe_hybrid(best_frame, photo=False)
+    if hybrid_meta is not None and hybrid_meta.text.strip():
+        best_text = hybrid_meta.text
+        best_confs = list(hybrid_meta.confidences)
+    return best_text, best_rot, best_confs, hybrid_meta
 
 
-def ocr_page(image, prefer: Optional[int] = None, extra_passes: bool = False) -> tuple[str, int]:
-    """
-    OCR one page.
-
-    `extra_passes` means a single phone photo — use the notebook path (ink first).
-    Multi-page scans stay on the printed path so clean PDFs stay fast and accurate.
-    """
+def ocr_page(
+    image, prefer: Optional[int] = None, extra_passes: bool = False
+) -> tuple[str, int, list[float], object | None]:
+    """OCR one page. Photo path uses ink first; multi-page stays printed."""
     if extra_passes:
         return ocr_photo_page(image)
     return ocr_printed_page(image, prefer=prefer)
 
 
-def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str, int, int, int]:
-    """
-    OCR image or PDF bytes.
-
-    Returns (text, rotation of the first page, pages read, pages the document has).
-    """
+def run_ocr_on_bytes(
+    data: bytes, max_pages: Optional[int] = None
+) -> tuple[str, int, int, int, list[float], object | None]:
+    """Returns (text, rotation, pages read, total pages, confs, hybrid_meta)."""
     pages, total = pages_from_bytes(data, max_pages)
     texts: list[str] = []
+    all_confs: list[float] = []
     first_rot = 0
     prefer: Optional[int] = None
-    # A photo is one page and worth re-rendering; a dossier is not.
     extra_passes = len(pages) == 1
+    last_hybrid = None
 
     for index, page in enumerate(pages):
-        text, rot = ocr_page(page, prefer=prefer, extra_passes=extra_passes)
+        text, rot, confs, hybrid_meta = ocr_page(
+            page, prefer=prefer, extra_passes=extra_passes
+        )
         if index == 0:
             first_rot = rot
             prefer = rot
+            last_hybrid = hybrid_meta
         if text:
             texts.append(text)
+            all_confs.extend(confs)
 
     log.info(
-        "OCR pages=%s/%s rotation=%s chars=%s",
-        len(pages), total, first_rot, sum(len(t) for t in texts),
+        "OCR pages=%s/%s rotation=%s chars=%s conf_lines=%s hybrid=%s",
+        len(pages), total, first_rot, sum(len(t) for t in texts), len(all_confs),
+        last_hybrid is not None,
     )
-    return "\n".join(texts).strip(), first_rot, len(pages), total
+    return "\n".join(texts).strip(), first_rot, len(pages), total, all_confs, last_hybrid
 
 
 class OcrJsonRequest(BaseModel):
     image_base64: str = Field(..., description="Raw base64 (no data: URL prefix required)")
     mime_type: Optional[str] = "image/jpeg"
     max_pages: Optional[int] = Field(None, description="Cap for PDFs; server default when unset")
+
+
+class OcrLineOut(BaseModel):
+    text: str
+    conf: float
+    source: str = "paddle"
+    style: str = "printed"
 
 
 class OcrResponse(BaseModel):
@@ -906,21 +955,159 @@ class OcrResponse(BaseModel):
     rotation: int = 0
     pages: int = 1
     total_pages: int = 1
-    # A caller that stored a partial read as if it were the whole document would put an
-    # understated figure on an invoice. Say so instead.
     truncated: bool = False
+    line_confidences: list[float] = Field(default_factory=list)
+    avg_confidence: Optional[float] = None
+    needs_review: bool = False
+    missing_fields: list[str] = Field(default_factory=list)
+    lines: list[OcrLineOut] = Field(default_factory=list)
+    stats: dict = Field(default_factory=dict)
+
+
+def _ocr_response(
+    text: str,
+    rotation: int,
+    pages: int,
+    total: int,
+    confs: list[float],
+    hybrid_meta=None,
+) -> OcrResponse:
+    from field_check import check_fields
+
+    avg = (sum(confs) / len(confs)) if confs else None
+    check = check_fields(text)
+    lines_out: list[OcrLineOut] = []
+    stats: dict = {}
+    engine = "paddleocr"
+    if hybrid_meta is not None:
+        engine = "paddleocr+trocr"
+        check.needs_review = hybrid_meta.needs_review
+        check.missing_fields = list(hybrid_meta.missing_fields)
+        stats = {
+            "paddle_boxes": hybrid_meta.stats.paddle_boxes,
+            "trocr_boxes": hybrid_meta.stats.trocr_boxes,
+            "paddle_fallback_boxes": hybrid_meta.stats.paddle_fallback_boxes,
+            "ms_total": round(hybrid_meta.stats.ms_total, 1),
+            "ms_det": round(hybrid_meta.stats.ms_det, 1),
+            "ms_rec": round(hybrid_meta.stats.ms_rec, 1),
+        }
+        for ln in hybrid_meta.lines:
+            lines_out.append(
+                OcrLineOut(
+                    text=ln.text,
+                    conf=round(float(ln.conf), 4),
+                    source=ln.source,
+                    style=ln.style,
+                )
+            )
+    return OcrResponse(
+        text=text,
+        engine=engine,
+        chars=len(text),
+        rotation=rotation,
+        pages=pages,
+        total_pages=total,
+        truncated=pages < total,
+        line_confidences=[round(c, 4) for c in confs],
+        avg_confidence=round(avg, 4) if avg is not None else None,
+        needs_review=check.needs_review,
+        missing_fields=check.missing_fields,
+        lines=lines_out,
+        stats=stats,
+    )
+
+
+_ocr_lock = None
+
+
+def _get_ocr_lock():
+    global _ocr_lock
+    import asyncio
+
+    if _ocr_lock is None:
+        _ocr_lock = asyncio.Lock()
+    return _ocr_lock
 
 
 @app.get("/health")
 def health():
+    hybrid = os.environ.get("HYBRID_OCR", "1").strip() not in ("0", "false", "False")
+    counters = {}
+    try:
+        from pipeline import get_counters
+
+        counters = get_counters()
+    except Exception:  # noqa: BLE001
+        counters = {
+            "handwriting_boxes_total": 0,
+            "printed_boxes_total": 0,
+            "needs_review_total": 0,
+        }
+    trocr_ok = False
+    try:
+        import trocr_onnx
+
+        trocr_ok = trocr_onnx.available()
+    except Exception:  # noqa: BLE001
+        pass
+    rss_mb = None
+    try:
+        import resource
+
+        rss_mb = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0, 1)
+    except Exception:  # noqa: BLE001
+        pass
     return {
         "ok": True,
         "service": "transitix-paddle-ocr",
         "engine_loaded": _engine is not None,
+        "hybrid": hybrid,
         "use_gpu": os.environ.get("PADDLE_OCR_USE_GPU", "0"),
         "lang": os.environ.get("PADDLE_OCR_LANG", "latin"),
         "auto_rotate": _AUTO_ROTATE,
         "aggressive": _AGGRESSIVE,
+        "trocr_available": trocr_ok,
+        "trocr_model": os.environ.get("TROCR_ONNX", "trocr-small-handwritten-v1"),
+        "classifier_backend": os.environ.get("CLASSIFIER_BACKEND", "heuristic"),
+        "memory_profile": os.environ.get("MEMORY_PROFILE", "host"),
+        "rss_mb": rss_mb,
+        **counters,
+    }
+
+
+@app.post("/debug/classify")
+async def debug_classify(
+    file: Optional[UploadFile] = File(None),
+    image_base64: Optional[str] = Form(None),
+):
+    """Classify one text crop — printed vs handwritten (no full-document OCR)."""
+    import base64
+    import io
+
+    import numpy as np
+    from PIL import Image
+
+    from classifier import classify_crop
+
+    data = b""
+    if file is not None:
+        data = await file.read()
+    elif image_base64:
+        raw = image_base64
+        if "," in raw and raw.strip().startswith("data:"):
+            raw = raw.split(",", 1)[1]
+        data = base64.b64decode(raw)
+    else:
+        raise HTTPException(status_code=400, detail="Send multipart file or image_base64")
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty image")
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    result = classify_crop(np.array(img))
+    return {
+        "style": result.style,
+        "confidence": result.confidence,
+        "backend": result.backend,
+        "model": result.model,
     }
 
 
@@ -949,16 +1136,14 @@ async def ocr_upload(
     if not data:
         raise HTTPException(status_code=400, detail="Empty image")
 
-    try:
-        text, rotation, pages, total = run_ocr_on_bytes(data, max_pages)
-    except Exception as exc:  # noqa: BLE001
-        log.exception("OCR failed")
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    async with _get_ocr_lock():
+        try:
+            text, rotation, pages, total, confs, hybrid = run_ocr_on_bytes(data, max_pages)
+        except Exception as exc:  # noqa: BLE001
+            log.exception("OCR failed")
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return OcrResponse(
-        text=text, engine="paddleocr", chars=len(text), rotation=rotation,
-        pages=pages, total_pages=total, truncated=pages < total,
-    )
+    return _ocr_response(text, rotation, pages, total, confs, hybrid)
 
 
 @app.post("/ocr/json", response_model=OcrResponse)
@@ -976,13 +1161,11 @@ async def ocr_json(body: OcrJsonRequest):
     if not data:
         raise HTTPException(status_code=400, detail="Empty image")
 
-    try:
-        text, rotation, pages, total = run_ocr_on_bytes(data, body.max_pages)
-    except Exception as exc:  # noqa: BLE001
-        log.exception("OCR failed")
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    async with _get_ocr_lock():
+        try:
+            text, rotation, pages, total, confs, hybrid = run_ocr_on_bytes(data, body.max_pages)
+        except Exception as exc:  # noqa: BLE001
+            log.exception("OCR failed")
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return OcrResponse(
-        text=text, engine="paddleocr", chars=len(text), rotation=rotation,
-        pages=pages, total_pages=total, truncated=pages < total,
-    )
+    return _ocr_response(text, rotation, pages, total, confs, hybrid)
