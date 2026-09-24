@@ -56,3 +56,7 @@ __pycache__/
 /tools/paddle-ocr/*.png
 /tools/paddle-ocr/*.pdf
 /tools/paddle-ocr/last-*.txt
+
+# Local planning docs (canonical: docs/planning/; docs/ already ignored)
+/planning/
+
