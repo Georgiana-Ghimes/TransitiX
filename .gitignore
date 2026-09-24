@@ -57,6 +57,9 @@ __pycache__/
 /tools/paddle-ocr/*.pdf
 /tools/paddle-ocr/last-*.txt
 
+# Client document samples + baseline/hybrid reports — never publish
+/tools/paddle-ocr/samples/
+
 # Local planning docs (canonical: docs/planning/; docs/ already ignored)
 /planning/
 
