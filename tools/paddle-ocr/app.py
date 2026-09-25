@@ -37,16 +37,40 @@ _engine = None
 # Romanian / logistics hints — sideways photos often miss these until rotated.
 _KEYWORD_RE = re.compile(
     r"(aviz|expedit|tpo|psl|tro|cmr|greutate|baumit|transport|placut|"
-    r"adres|delegat|palet|comanda|livrare|auto|numar)",
+    r"adres|delegat|palet|comanda|livrare|auto|numar|ruta|rută|cant|"
+    r"curse|marf|data|document|galet|gălet|neamt|militari)",
     re.I,
 )
-_CODE_RE = re.compile(r"(?:TPO|TP0|TPQ|PSL|TRO)[\s\-._]*[0-9OIl]{3,}", re.I)
+# Strong upright signal on carnet / HW lists (rarely survive upside-down OCR).
+_HW_LABEL_RE = re.compile(
+    r"(?:\bDATA\b|\bNR\.?\s*(?:AUTO|CURSE|DOCUMENT|COMAND)\b|\bRUT[AĂ]\b|"
+    r"\bCANT(?:ITATE)?\b|\bTIP\s*MARF|\bEXPEDITOR\b|\bGREUTATE\b|"
+    r"\bADRES[AĂ]\b|\bCOMANDA\b|\bAVIZ\b)",
+    re.I,
+)
+_CODE_RE = re.compile(
+    r"(?:T\s*P\s*[O0Q]|P\s*S\s*L|T\s*R\s*O)[\s\-._]*([0-9A-Za-z]{4,12})",
+    re.I,
+)
 _PLATE_RE = re.compile(
     r"\b(?:B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|"
     r"HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN)"
     r"\s?\d{2,3}\s?[A-Z]{3}\b",
     re.I,
 )
+
+
+def code_signal(text: str) -> int:
+    """How strongly the blob looks like a real TPO/PSL/TRO code (not upside-down junk)."""
+    best = 0
+    for m in _CODE_RE.finditer(text or ""):
+        num = m.group(1)
+        digits = sum(ch.isdigit() for ch in num)
+        if digits < 3:
+            continue
+        # Prefer digit-heavy tails; OCR often injects o/u/l into the number run.
+        best = max(best, digits * 3 - (len(num) - digits))
+    return best
 
 # If first orientation already looks like an upright logistics doc, skip extra
 # rotations (CPU). Require a real doc code — a plate alone is not enough (sideways
@@ -64,10 +88,40 @@ _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0"
 _DET_SIDE_LEN = int(os.environ.get("PADDLE_OCR_DET_SIDE_LEN", "1920") or 1920)
 
 
+def score_ocr(text: str, confidences: list[float], *, portrait_bonus: float = 0.0) -> float:
+    """Higher = more likely upright logistics document."""
+    blob = text or ""
+    if not blob.strip():
+        return -1.0
+
+    avg_conf = sum(confidences) / len(confidences) if confidences else 0.35
+    score = avg_conf * 10.0
+    # Handwriting upside-down can look "confident" on a few short lines; reward volume.
+    score += min(len(blob) / 50.0, 8.0)
+    score += min(len(_KEYWORD_RE.findall(blob)), 8) * 1.5
+    labels = len(_HW_LABEL_RE.findall(blob))
+    score += min(labels, 6) * 2.5
+    cq = code_signal(blob)
+    if cq > 0:
+        score += 6.0 + min(cq, 12) * 0.25
+    if _PLATE_RE.search(blob):
+        score += 3.0
+    # Phone photos of a notebook are almost always portrait; sideways pages get a small penalty.
+    score += portrait_bonus
+    # Upside-down HW often yields high conf on nonsense without labels/codes — dampen that.
+    if labels == 0 and cq <= 0 and avg_conf > 0.55 and len(blob) < 80:
+        score -= 4.0
+    return score
+
+
 def looks_upright_enough(text: str, score: float) -> bool:
     if score < _GOOD_ENOUGH_SCORE:
         return False
-    return bool(_CODE_RE.search(text or ""))
+    blob = text or ""
+    if code_signal(blob) >= 6:
+        return True
+    # Carnet / HW list without a clean code yet, but clear logistics labels.
+    return len(_HW_LABEL_RE.findall(blob)) >= 2
 
 
 def get_engine():
@@ -174,26 +228,6 @@ def lines_and_conf_from_result(result) -> tuple[str, list[float]]:
                 elif "text" in item:
                     lines.append(str(item["text"]))
     return "\n".join(lines).strip(), confs
-
-
-def score_ocr(text: str, confidences: list[float], *, portrait_bonus: float = 0.0) -> float:
-    """Higher = more likely upright logistics document."""
-    blob = text or ""
-    if not blob.strip():
-        return -1.0
-
-    avg_conf = sum(confidences) / len(confidences) if confidences else 0.35
-    score = avg_conf * 10.0
-    # Handwriting upside-down can look "confident" on a few short lines; reward volume.
-    score += min(len(blob) / 50.0, 8.0)
-    score += min(len(_KEYWORD_RE.findall(blob)), 8) * 1.5
-    if _CODE_RE.search(blob):
-        score += 6.0
-    if _PLATE_RE.search(blob):
-        score += 3.0
-    # Phone photos of a notebook are almost always portrait; sideways pages get a small penalty.
-    score += portrait_bonus
-    return score
 
 
 def ocr_array(arr) -> tuple[str, list[float]]:
@@ -750,12 +784,13 @@ def _score_frame(text: str, confs: list[float], frame) -> float:
 
 
 def _merge_ocr_text(best_text: str, best_score: float, text: str, score: float) -> tuple[str, float]:
+    """Pick the better full-page read — never concatenate dumps (that duplicated HW noise)."""
     if not text:
         return best_text, best_score
+    if not best_text:
+        return text, score
     if score > best_score:
-        return (f"{text}\n{best_text}".strip() if best_text else text), score
-    if missing_from_text(best_text):
-        return (f"{best_text}\n{text}".strip() if best_text else text), best_score
+        return text, score
     return best_text, best_score
 
 
@@ -778,37 +813,55 @@ def ocr_photo_page(image) -> tuple[str, int, list[float], object | None]:
         base = image.convert("RGB") if hasattr(image, "convert") else image
 
     rotations = [0, 90, 270, 180] if _AUTO_ROTATE else [0]
-    best_text = ""
-    best_score = -1.0
-    best_rot = 0
-    best_confs: list[float] = []
-    best_source = base
+    candidates: list[tuple] = []
 
     for degrees in rotations:
         frame = base if degrees == 0 else base.rotate(-degrees, expand=True)
         prepared = emphasize_ink(frame)
         text, confs = ocr_array(np.array(prepared))
+        try:
+            from ro_post import normalize_ro_lines
+
+            text = "\n".join(normalize_ro_lines((text or "").splitlines()))
+        except Exception:  # noqa: BLE001
+            pass
         score = _score_frame(text, confs, frame)
-        log.info("OCR photo rotation=%s score=%.2f chars=%s (ink)", degrees, score, len(text))
-        if score > best_score:
-            best_score = score
-            best_text = text
-            best_rot = degrees
-            best_confs = list(confs)
-            best_source = frame
-        # Phone notebooks are almost always upright; stop when TPO/PSL already reads.
-        if degrees == rotations[0] and looks_upright_enough(text, score):
+        labels = len(_HW_LABEL_RE.findall(text or ""))
+        cq = code_signal(text or "")
+        has_code = cq >= 6
+        log.info(
+            "OCR photo rotation=%s score=%.2f chars=%s labels=%s code_q=%s (ink)",
+            degrees, score, len(text), labels, cq,
+        )
+        candidates.append((degrees, text, confs, score, frame, labels, cq))
+        # Early stop only when upright (0) already looks like a logistics list.
+        if degrees == 0 and looks_upright_enough(text, score):
             break
-        if looks_upright_enough(text, score) and degrees != 0:
-            break
+
+    def _rank(c: tuple) -> tuple:
+        deg, _text, _confs, score, _frame, labels, cq = c
+        strong = 1 if cq >= 6 else 0
+        upright = 2 if deg == 0 else (1 if deg in (90, 270) else 0)
+        # Strong code + upright beats a slightly "better" upside-down false code.
+        if strong == 0 and labels == 0:
+            return (0, upright, score)
+        return (strong, upright, cq + labels * 3, score)
+
+    best = max(candidates, key=_rank) if candidates else None
+    if best is None:
+        return "", 0, [], None
+    best_rot, best_text, best_confs, best_score, best_source, best_labels, _cq = best
+    best_confs = list(best_confs)
+    log.info(
+        "OCR photo chose rot=%s score=%.2f labels=%s code_q=%s",
+        best_rot, best_score, best_labels, _cq,
+    )
+
+    best_prep_frame = emphasize_ink(best_source)
 
     if _AGGRESSIVE:
         passes = (
-            # Deskew + de-rule + binarize: the scanner-app treatment, and the only pass that
-            # addresses the ruled lines running through every word.
             ("scan", scan_like_document),
-            # Untouched pixels at detector size: the ink map assumes ballpoint on paper, and a
-            # printed aviz photographed in daylight does not need it.
             ("plain", fit_for_detector),
             ("shadow", flatten_shadow),
             ("clahe", enhance_aggressive),
@@ -818,27 +871,128 @@ def ocr_photo_page(image) -> tuple[str, int, list[float], object | None]:
             if not missing_from_text(best_text):
                 break
             try:
-                text, confs = ocr_array(np.array(transform(best_source)))
+                prepared = transform(best_source)
+                text, confs = ocr_array(np.array(prepared))
             except Exception as exc:  # noqa: BLE001
                 log.warning("OCR photo pass %s failed: %s", name, exc)
                 continue
+            try:
+                from ro_post import normalize_ro_document
+
+                text = normalize_ro_document(text)
+            except Exception:  # noqa: BLE001
+                pass
             score = _score_frame(text, confs, best_source)
             log.info("OCR photo pass=%s score=%.2f chars=%s", name, score, len(text))
-            prev = best_text
-            best_text, best_score = _merge_ocr_text(best_text, best_score, text, score)
-            if best_text != prev and score >= best_score:
+            if score > best_score:
+                best_text, best_score = text, score
                 best_confs = list(confs)
+                best_prep_frame = prepared
 
-    hybrid_meta = _maybe_hybrid(best_source, photo=True)
-    if hybrid_meta is not None and hybrid_meta.text.strip():
-        best_text = hybrid_meta.text
-        best_confs = list(hybrid_meta.confidences)
+    # Hybrid on ink + winning prep (often scan) — then field-merge the two reads.
+    hybrid_meta = None
+    hybrid_frames = [
+        ("ink", emphasize_ink(best_source)),
+        ("prep", best_prep_frame),
+    ]
+
+    best_hybrid = None
+    best_hybrid_rank = (-1, -1.0)
+    hybrid_texts: list[str] = []
+    for name, frame in hybrid_frames:
+        meta = _maybe_hybrid(frame, photo=True, already_prepared=True)
+        if meta is None or not meta.text.strip():
+            continue
+        try:
+            from ro_post import normalize_ro_document
+
+            cleaned = normalize_ro_document(meta.text)
+        except Exception:  # noqa: BLE001
+            cleaned = meta.text
+        hybrid_texts.append(cleaned)
+        cq = code_signal(cleaned)
+        labels = len(_HW_LABEL_RE.findall(cleaned))
+        missing_n = len(meta.missing_fields or [])
+        has_date = 1 if re.search(r"\b\d{1,2}\.\d{1,2}\.20[2-3]\d\b", cleaned) else 0
+        rank = (
+            has_date * 10 + cq + labels * 3 - missing_n * 2,
+            float(sum(meta.confidences) / len(meta.confidences)) if meta.confidences else 0.0,
+        )
+        log.info(
+            "OCR photo hybrid prep=%s cq=%s labels=%s date=%s missing=%s rank=%s",
+            name, cq, labels, has_date, missing_n, rank,
+        )
+        if rank > best_hybrid_rank:
+            best_hybrid_rank = rank
+            meta.text = cleaned
+            from field_check import check_fields as _cf
+
+            chk = _cf(cleaned)
+            meta.needs_review = chk.needs_review
+            meta.missing_fields = list(chk.missing_fields)
+            best_hybrid = meta
+
+    if len(hybrid_texts) >= 2:
+        try:
+            from ro_post import merge_ro_documents
+
+            merged = merge_ro_documents(*hybrid_texts)
+            if merged and best_hybrid is not None:
+                from field_check import check_fields as _cf
+
+                chk = _cf(merged)
+                best_n = max(len([ln for ln in t.splitlines() if ln.strip()]) for t in hybrid_texts)
+                merged_n = len([ln for ln in merged.splitlines() if ln.strip()])
+                # Don't replace a rich single pass with a thin field-merge.
+                thin = merged_n < max(3, int(best_n * 0.45))
+                better_date = re.search(r"\b\d{1,2}\.\d{1,2}\.20[2-3]\d\b", merged) and not re.search(
+                    r"\b\d{1,2}\.\d{1,2}\.20[2-3]\d\b", best_hybrid.text
+                )
+                better_codes = code_signal(merged) > code_signal(best_hybrid.text)
+                if not thin and (better_codes or better_date or merged_n >= best_n):
+                    best_hybrid.text = merged
+                    best_hybrid.needs_review = chk.needs_review
+                    best_hybrid.missing_fields = list(chk.missing_fields)
+                    log.info("OCR photo hybrid merged ink+prep (%s chars, %s lines)", len(merged), merged_n)
+                else:
+                    log.info(
+                        "OCR photo skip thin merge (merged_lines=%s best_lines=%s)",
+                        merged_n,
+                        best_n,
+                    )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("hybrid merge failed: %s", exc)
+
+    if best_hybrid is not None and best_hybrid.text.strip():
+        hybrid_meta = best_hybrid
+        h_cq = code_signal(hybrid_meta.text)
+        b_cq = code_signal(best_text)
+        if h_cq >= b_cq or not best_text.strip():
+            best_text = hybrid_meta.text
+            best_confs = list(hybrid_meta.confidences)
+
+    try:
+        from ro_post import normalize_ro_document
+
+        best_text = normalize_ro_document(best_text)
+        if hybrid_meta is not None:
+            hybrid_meta.text = best_text
+            from field_check import check_fields as _cf
+
+            chk = _cf(best_text)
+            hybrid_meta.needs_review = chk.needs_review
+            hybrid_meta.missing_fields = list(chk.missing_fields)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("final ro_post failed: %s", exc)
 
     return best_text, best_rot, best_confs, hybrid_meta
 
 
-def _maybe_hybrid(frame, *, photo: bool = False):
-    """Run PATH-B hybrid when HYBRID_OCR=1. `photo` applies ink emphasize first."""
+def _maybe_hybrid(frame, *, photo: bool = False, already_prepared: bool = False):
+    """Run PATH-B hybrid when HYBRID_OCR=1.
+
+    When already_prepared=True, `frame` is RGB ready (ink/scan) — do not re-emphasize.
+    """
     if os.environ.get("HYBRID_OCR", "1").strip() in ("0", "false", "False"):
         return None
     import numpy as np
@@ -847,11 +1001,14 @@ def _maybe_hybrid(frame, *, photo: bool = False):
         from pipeline import ocr_hybrid
 
         if hasattr(frame, "convert"):
-            rgb = emphasize_ink(frame) if photo else frame.convert("RGB")
+            if already_prepared:
+                rgb = frame.convert("RGB") if frame.mode != "RGB" else frame
+            else:
+                rgb = emphasize_ink(frame) if photo else frame.convert("RGB")
             arr = np.array(rgb)
         else:
             arr = np.asarray(frame)
-        return ocr_hybrid(get_engine(), arr)
+        return ocr_hybrid(get_engine(), arr, photo=photo)
     except Exception as exc:  # noqa: BLE001
         log.warning("hybrid OCR failed: %s", exc)
         return None
@@ -912,7 +1069,9 @@ def run_ocr_on_bytes(
     all_confs: list[float] = []
     first_rot = 0
     prefer: Optional[int] = None
-    extra_passes = len(pages) == 1
+    # Phone photos need ink/perspective; PDFs are already flat scans — even one page.
+    is_pdf = data[:5] == b"%PDF-" or data[:4] == b"%PDF"
+    extra_passes = (not is_pdf) and len(pages) == 1
     last_hybrid = None
 
     for index, page in enumerate(pages):
@@ -928,9 +1087,9 @@ def run_ocr_on_bytes(
             all_confs.extend(confs)
 
     log.info(
-        "OCR pages=%s/%s rotation=%s chars=%s conf_lines=%s hybrid=%s",
+        "OCR pages=%s/%s rotation=%s chars=%s conf_lines=%s hybrid=%s pdf=%s",
         len(pages), total, first_rot, sum(len(t) for t in texts), len(all_confs),
-        last_hybrid is not None,
+        last_hybrid is not None, is_pdf,
     )
     return "\n".join(texts).strip(), first_rot, len(pages), total, all_confs, last_hybrid
 
@@ -980,13 +1139,20 @@ def _ocr_response(
     stats: dict = {}
     engine = "paddleocr"
     if hybrid_meta is not None:
-        engine = "paddleocr+trocr"
+        if hybrid_meta.stats.htr_latin_boxes:
+            engine = "paddleocr+htr_latin"
+        elif hybrid_meta.stats.trocr_boxes:
+            engine = "paddleocr+trocr"
+        else:
+            engine = "paddleocr+hybrid"
         check.needs_review = hybrid_meta.needs_review
         check.missing_fields = list(hybrid_meta.missing_fields)
         stats = {
             "paddle_boxes": hybrid_meta.stats.paddle_boxes,
+            "htr_latin_boxes": hybrid_meta.stats.htr_latin_boxes,
             "trocr_boxes": hybrid_meta.stats.trocr_boxes,
             "paddle_fallback_boxes": hybrid_meta.stats.paddle_fallback_boxes,
+            "boxes_dropped": getattr(hybrid_meta.stats, "boxes_dropped", 0),
             "ms_total": round(hybrid_meta.stats.ms_total, 1),
             "ms_det": round(hybrid_meta.stats.ms_det, 1),
             "ms_rec": round(hybrid_meta.stats.ms_rec, 1),
@@ -1050,6 +1216,15 @@ def health():
         trocr_ok = trocr_onnx.available()
     except Exception:  # noqa: BLE001
         pass
+    htr_ok = False
+    try:
+        import htr_latin
+
+        htr_ok = htr_latin.available()
+    except Exception:  # noqa: BLE001
+        pass
+    use_trocr = os.environ.get("USE_TROCR", "0").strip() not in ("0", "false", "False", "")
+    use_htr = os.environ.get("USE_HTR_LATIN", "1").strip() not in ("0", "false", "False", "")
     rss_mb = None
     try:
         import resource
@@ -1064,10 +1239,18 @@ def health():
         "hybrid": hybrid,
         "use_gpu": os.environ.get("PADDLE_OCR_USE_GPU", "0"),
         "lang": os.environ.get("PADDLE_OCR_LANG", "latin"),
+        "ocr_locale": "ro",
         "auto_rotate": _AUTO_ROTATE,
         "aggressive": _AGGRESSIVE,
+        "trocr_enabled": use_trocr,
         "trocr_available": trocr_ok,
         "trocr_model": os.environ.get("TROCR_ONNX", "trocr-small-handwritten-v1"),
+        "trocr_note": None
+        if use_trocr
+        else "USE_TROCR=0 — English IAM disabled",
+        "htr_latin_enabled": use_htr,
+        "htr_latin_available": htr_ok,
+        "htr_latin_model": os.environ.get("HTR_ONNX", "latin-g2-free"),
         "classifier_backend": os.environ.get("CLASSIFIER_BACKEND", "heuristic"),
         "memory_profile": os.environ.get("MEMORY_PROFILE", "host"),
         "rss_mb": rss_mb,
