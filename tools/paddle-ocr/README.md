@@ -37,6 +37,9 @@ driver app or Avize page — `readDocumentText` will call Paddle for images.
 ## Language
 
 Default `PADDLE_OCR_LANG=latin` covers Romanian diacritics reasonably. For
+handwriting experiments also run Tesseract (`docker-compose.tesseract-ocr.yml`,
+`TESSERACT_OCR_URL`) — Node calls it only when classic OCR is thin or missing
+logistics codes (see `readText.js` hybrid gates).
 Chinese docs use `ch`. Set via compose env or `.env`.
 
 ## Auto-rotate

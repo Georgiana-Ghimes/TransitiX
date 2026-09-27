@@ -3,8 +3,12 @@ import {
   backgroundOcrTimeoutMs,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  needsOcrFallback,
   ocrProvider,
   paddleOcrUrl,
+  paddleOcrVlUrl,
+  pickBestOcrText,
+  tesseractOcrUrl,
 } from './readText.js';
 
 describe('ocr provider selection', () => {
@@ -17,6 +21,8 @@ describe('ocr provider selection', () => {
   beforeEach(() => {
     delete process.env.OCR_PROVIDER;
     delete process.env.PADDLE_OCR_URL;
+    delete process.env.PADDLE_OCR_VL_URL;
+    delete process.env.TESSERACT_OCR_URL;
   });
 
   it('defaults to none when nothing is configured', () => {
@@ -27,6 +33,13 @@ describe('ocr provider selection', () => {
     process.env.PADDLE_OCR_URL = 'http://127.0.0.1:8100/';
     expect(ocrProvider()).toBe('paddle');
     expect(paddleOcrUrl()).toBe('http://127.0.0.1:8100');
+  });
+
+  it('reads optional VL and Tesseract sidecar URLs', () => {
+    process.env.PADDLE_OCR_VL_URL = 'http://127.0.0.1:8101/';
+    process.env.TESSERACT_OCR_URL = 'http://127.0.0.1:8102/';
+    expect(paddleOcrVlUrl()).toBe('http://127.0.0.1:8101');
+    expect(tesseractOcrUrl()).toBe('http://127.0.0.1:8102');
   });
 
   it('honours explicit OCR_PROVIDER=paddle', () => {
@@ -43,6 +56,39 @@ describe('ocr provider selection', () => {
     process.env.OCR_PROVIDER = 'none';
     process.env.PADDLE_OCR_URL = 'http://127.0.0.1:8100';
     expect(ocrProvider()).toBe('none');
+  });
+});
+
+describe('needsOcrFallback + pickBestOcrText', () => {
+  it('asks for VL/Tesseract when the text is thin or has no logistics codes', () => {
+    expect(needsOcrFallback('abc')).toBe(true);
+    expect(needsOcrFallback('Aviz de livrare fără coduri lungi pe pagină')).toBe(true);
+    expect(needsOcrFallback(
+      'Aviz de expeditie PSL-0044362 Comanda de transport TPO-0025629 placuta B 330 SRS'
+    )).toBe(false);
+  });
+
+  it('prefers the candidate with a logistics code over a longer empty one', () => {
+    const best = pickBestOcrText([
+      { source: 'paddle', text: 'x'.repeat(200) },
+      { source: 'tesseract', text: 'TPO-0025813 greutate 15744' },
+    ]);
+    expect(best.source).toContain('tesseract');
+    expect(best.text).toContain('TPO-0025813');
+    expect(best.engines.length).toBe(2);
+  });
+
+  it('joins sources when several engines contributed', () => {
+    const best = pickBestOcrText([
+      { source: 'paddle', text: 'TPO-1 short' },
+      { source: 'paddle-vl', text: 'TPO-0025813 with more Romanian text ăâî' },
+    ]);
+    expect(best.source).toBe('paddle+paddle-vl');
+  });
+
+  it('returns null when nothing usable arrived', () => {
+    expect(pickBestOcrText([{ source: 'paddle', text: '   ' }])).toBeNull();
+    expect(pickBestOcrText([])).toBeNull();
   });
 });
 

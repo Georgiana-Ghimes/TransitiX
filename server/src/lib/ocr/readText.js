@@ -6,16 +6,21 @@ import { normalizeOcrText } from './normalizeOcrText.js';
 /**
  * Gets text out of an uploaded file.
  *
- * Sources, in order:
- *   1. PDF text layer, free, exact
- *   2. PaddleOCR, the local sidecar, the only OCR provider
- *   3. nothing, upload still succeeds; office types fields
+ * Hybrid gates (experiment/paddleocr-tesseract-handwriting):
+ *   1. PDF text layer — free, exact when present
+ *   2. PaddleOCR classic (:8100) — fast first pass
+ *   3. PaddleOCR-VL (:8101) when classic is thin / missing logistics codes
+ *   4. Tesseract ron+eng (:8102) when still weak after Paddle gates
+ *   5. pickBestOcrText — keep the richest candidate
+ *
+ * Order is intentional: Paddle first (layout + handwriting), VL for hard pages,
+ * Tesseract as the third vote (RO diacritics / printed fallback). Empty OCR still
+ * lets the upload succeed; office types fields.
  */
 export function ocrProvider() {
   const raw = String(process.env.OCR_PROVIDER || '').trim().toLowerCase();
   if (raw === 'paddle' || raw === 'paddleocr') return 'paddle';
   if (raw === 'none' || raw === 'off') return 'none';
-  // Auto: the sidecar when its URL is set, otherwise nothing to call.
   return paddleOcrUrl() ? 'paddle' : 'none';
 }
 
@@ -28,46 +33,88 @@ export function paddleOcrUrl() {
   return String(process.env.PADDLE_OCR_URL || '').trim().replace(/\/$/, '');
 }
 
+/** Optional document-VLM sidecar (multitenant / local experiment). */
+export function paddleOcrVlUrl() {
+  return String(process.env.PADDLE_OCR_VL_URL || '').trim().replace(/\/$/, '');
+}
+
+/** Optional Tesseract sidecar with Romanian tessdata. */
+export function tesseractOcrUrl() {
+  return String(process.env.TESSERACT_OCR_URL || '').trim().replace(/\/$/, '');
+}
+
+const LOGISTICS_CODE_RE = /\b(?:TPO|PSL|TRO|TP0|TPQ)[\s\-._]*\d{3,}/i;
+const RO_DIACRITIC_RE = /[ăâîșțĂÂÎȘȚ]/g;
+
 /**
- * How long an OCR call may take, by who is waiting for it.
- *
- * Background extraction rides whatever CPU the VM has and nobody is watching a spinner, so it
- * waits. A person who pressed a button is watching one, and a request that hangs for minutes
- * reads as a broken screen, it gives up early and says so instead.
+ * Classic OCR that produced characters but no TPO/PSL/TRO is still "weak" for avize —
+ * worth spending VL / Tesseract. Handwriting carnets often hit this path.
  */
-export function backgroundOcrTimeoutMs(pages = 1) {
-  const base = Number(process.env.OCR_TIMEOUT_MS) || 300_000;
-  const count = Math.max(1, Number(pages) || 1);
-  // Grows with the document, because a flat budget would fail every long scan the background
-  // path exists to handle, and a failure there just leaves it to be retried forever.
-  return Math.min(base * count, base * 4);
+export function needsOcrFallback(rawText) {
+  if (isTextPoor(rawText, 40)) return true;
+  return !LOGISTICS_CODE_RE.test(String(rawText || ''));
+}
+
+/** @deprecated alias — same gate as needsOcrFallback */
+export function needsVlFallback(rawText) {
+  return needsOcrFallback(rawText);
+}
+
+function ocrCandidateScore(text) {
+  const t = String(text || '');
+  if (!t.trim()) return -1;
+  let score = Math.min(t.length, 4000) / 10;
+  if (LOGISTICS_CODE_RE.test(t)) score += 100;
+  const dia = t.match(RO_DIACRITIC_RE);
+  if (dia) score += Math.min(dia.length, 40);
+  return score;
 }
 
 /**
- * @param {number} [pages] how many pages the document has, when that is known.
- *
- * One page is a photo and finishes quickly. More pages cost roughly linearly, so the budget
- * grows with them, but stays capped, because past a few pages the work belongs in the
- * background rather than under a spinner (see `interactiveOcrMaxPages`).
+ * Pick the richest OCR string among engines. Prefer logistics codes, then length,
+ * then Romanian diacritics — never invent text.
  */
+export function pickBestOcrText(candidates = []) {
+  const usable = (Array.isArray(candidates) ? candidates : [])
+    .filter((c) => c && String(c.text || '').trim());
+  if (!usable.length) return null;
+
+  let best = usable[0];
+  let bestScore = ocrCandidateScore(best.text);
+  for (let i = 1; i < usable.length; i += 1) {
+    const score = ocrCandidateScore(usable[i].text);
+    if (score > bestScore) {
+      best = usable[i];
+      bestScore = score;
+    }
+  }
+
+  const sources = [...new Set(usable.map((c) => c.source).filter(Boolean))];
+  return {
+    text: best.text,
+    source: sources.length > 1 ? sources.join('+') : (best.source || 'ocr'),
+    pages: best.pages,
+    truncated: Boolean(best.truncated),
+    engines: usable.map((c) => ({ source: c.source, chars: String(c.text).length, score: ocrCandidateScore(c.text) })),
+  };
+}
+
+export function backgroundOcrTimeoutMs(pages = 1) {
+  const base = Number(process.env.OCR_TIMEOUT_MS) || 300_000;
+  const count = Math.max(1, Number(pages) || 1);
+  return Math.min(base * count, base * 4);
+}
+
 export function interactiveOcrTimeoutMs(pages = 1) {
-  // Phone notebook photos run several heavy CPU passes (ink + orientations). 45s was enough
-  // for a clean printed page and too short for a hard carnet shot — the request aborted with
-  // empty text before those passes finished. Background still has the long budget.
   const base = Number(process.env.OCR_INTERACTIVE_TIMEOUT_MS) || 120_000;
   const count = Math.max(1, Number(pages) || 1);
   return Math.min(base * count, base * 2);
 }
 
-/** Above this many pages, extraction runs in the background instead of blocking the request. */
 export function interactiveOcrMaxPages() {
   return Number(process.env.OCR_INTERACTIVE_MAX_PAGES) || 3;
 }
 
-/**
- * Giving up on the clock is not the same as reading a document and finding nothing in it.
- * Reported as empty text, a caller would overwrite a good extraction with this one.
- */
 function assertNotTimedOut(ocr) {
   if (!ocr?.timedOut) return;
   const err = new Error('OCR a depășit timpul alocat');
@@ -75,21 +122,17 @@ function assertNotTimedOut(ocr) {
   throw err;
 }
 
-/**
- * Whether the sidecar is actually answering.
- *
- * There is no fallback provider, so a sidecar that is down means every upload lands with no OCR
- * and nothing on screen says why. Reported distinctly from "not configured" for that reason.
- * Cached briefly because /api/health is polled and this crosses the network.
- */
 let ocrProbe = { at: 0, value: null };
 const OCR_PROBE_TTL_MS = 15_000;
 
-/** Drop the cached health probe (tests that swap PADDLE_OCR_URL mid-suite). */
 export function resetOcrCapabilityCache() {
   ocrProbe = { at: 0, value: null };
 }
 
+/**
+ * Capability string for /api/health.
+ * `paddle` when classic answers; `paddle-down` when URL set but unreachable; false when off.
+ */
 export async function ocrCapability() {
   const base = paddleOcrUrl();
   if (ocrProvider() !== 'paddle' || !base) return false;
@@ -102,7 +145,7 @@ export async function ocrCapability() {
     const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2_000) });
     if (res.ok) value = 'paddle';
   } catch {
-    // Unreachable is the answer, not an error to propagate into /api/health.
+    // Unreachable is the answer.
   }
   ocrProbe = { at: now, value };
   return value;
@@ -125,14 +168,13 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
   if (isPdf) {
     const layer = await readPdfText(buffer);
     if (!isTextPoor(layer.text)) return { text: layer.text, source: 'pdf_text', pages: layer.pages };
-    // No usable text layer: it is a scan. The sidecar rasterizes the pages itself.
-    // A caller that pinned a budget keeps it; otherwise it scales with what we just counted.
     const ocr = await readWithOcr(buffer, 'application/pdf', {
       timeoutMs: timeoutMs ?? backgroundOcrTimeoutMs(layer.pages),
     });
     if (ocr?.text) {
       return {
         text: ocr.text, source: ocr.source, pages: ocr.pages, truncated: ocr.truncated,
+        engines: ocr.engines,
       };
     }
     assertNotTimedOut(ocr);
@@ -143,7 +185,12 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
   }
 
   const ocr = await readWithOcr(buffer, 'image/jpeg', { timeoutMs });
-  if (ocr?.text) return { text: ocr.text, source: ocr.source };
+  if (ocr?.text) {
+    return {
+      text: ocr.text, source: ocr.source, pages: ocr.pages, truncated: ocr.truncated,
+      engines: ocr.engines,
+    };
+  }
   assertNotTimedOut(ocr);
   return {
     text: '',
@@ -162,12 +209,6 @@ async function readPdfText(buffer) {
   }
 }
 
-/**
- * How many pages a stored upload has, so a caller can decide whether to wait for it.
- *
- * Costs one text-layer parse, which is negligible next to OCR and is the only way to know
- * before the work starts. Anything that is not a readable PDF counts as one page.
- */
 export async function documentPageCount(fileUrl) {
   const name = path.basename(String(fileUrl || ''));
   if (!name || !/\.pdf$/i.test(name)) return 1;
@@ -180,26 +221,58 @@ export async function documentPageCount(fileUrl) {
   }
 }
 
-/** Runs the configured provider. Never throws, a caller decides what an empty read means. */
+/**
+ * Hybrid OCR: Paddle → (optional VL) → (optional Tesseract) → pickBest.
+ * Never throws; empty text is a soft failure.
+ */
 async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
   const provider = ocrProvider();
-  if (provider === 'paddle') {
-    const paddle = await readWithPaddle(buffer, mimeType, { timeoutMs });
-    if (paddle.text) {
-      return {
-        text: paddle.text, source: 'paddle', pages: paddle.pages, truncated: paddle.truncated,
-      };
+  if (provider !== 'paddle') {
+    // Even with OCR_PROVIDER=none, allow an explicit Tesseract URL for experiments.
+    if (tesseractOcrUrl()) {
+      const tess = await readWithTesseract(buffer, mimeType, { timeoutMs });
+      if (tess.text) return { ...tess, source: 'tesseract' };
+      if (tess.timedOut) return { text: null, timedOut: true, reason: 'tesseract_timeout' };
     }
-    if (paddle.timedOut) return { text: null, timedOut: true, reason: 'paddle_timeout' };
-    return { text: null, reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat' };
+    return { text: null, reason: 'ocr_neconfigurat' };
   }
-  return { text: null, reason: 'ocr_neconfigurat' };
+
+  const candidates = [];
+  const paddle = await readWithPaddle(buffer, mimeType, { timeoutMs });
+  if (paddle.timedOut && !paddle.text) {
+    return { text: null, timedOut: true, reason: 'paddle_timeout' };
+  }
+  if (paddle.text) candidates.push({ ...paddle, source: 'paddle' });
+
+  let current = paddle.text || '';
+  if (needsOcrFallback(current) && paddleOcrVlUrl()) {
+    const vl = await readWithPaddleVl(buffer, mimeType, { timeoutMs });
+    if (vl.timedOut && !current) {
+      return { text: null, timedOut: true, reason: 'paddle_vl_timeout' };
+    }
+    if (vl.text) candidates.push({ ...vl, source: 'paddle-vl' });
+    if (vl.text) current = pickBestOcrText(candidates)?.text || current;
+  }
+
+  if (needsOcrFallback(current) && tesseractOcrUrl()) {
+    const tess = await readWithTesseract(buffer, mimeType, { timeoutMs });
+    if (tess.timedOut && !current) {
+      return { text: null, timedOut: true, reason: 'tesseract_timeout' };
+    }
+    if (tess.text) candidates.push({ ...tess, source: 'tesseract' });
+  }
+
+  const best = pickBestOcrText(candidates);
+  if (best) return best;
+
+  return {
+    text: null,
+    reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat',
+  };
 }
 
-async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
-  const base = paddleOcrUrl();
+async function postOcrJson(base, buffer, mimeType, timeoutMs) {
   if (!base) return { text: null, timedOut: false };
-
   try {
     const res = await fetch(`${base}/ocr/json`, {
       method: 'POST',
@@ -208,7 +281,6 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
         image_base64: buffer.toString('base64'),
         mime_type: mimeType || 'image/jpeg',
       }),
-      // Auto-rotate tries up to four orientations on CPU, so a background pass waits minutes.
       signal: AbortSignal.timeout(timeoutMs ?? backgroundOcrTimeoutMs()),
     });
     if (!res.ok) return { text: null, timedOut: false };
@@ -218,8 +290,6 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
       text: text ? normalizeOcrText(String(text)) : null,
       timedOut: false,
       pages: Number(json?.total_pages) || Number(json?.pages) || 1,
-      // The sidecar caps how many pages it will read. A partial read stored as the whole
-      // document would put an understated figure on an invoice.
       truncated: Boolean(json?.truncated),
     };
   } catch (err) {
@@ -227,3 +297,18 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
   }
 }
 
+async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
+  return postOcrJson(paddleOcrUrl(), buffer, mimeType, timeoutMs);
+}
+
+async function readWithPaddleVl(buffer, mimeType, { timeoutMs } = {}) {
+  const base = paddleOcrVlUrl();
+  if (!base) return { text: null, timedOut: false };
+  return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
+}
+
+async function readWithTesseract(buffer, mimeType, { timeoutMs } = {}) {
+  const base = tesseractOcrUrl();
+  if (!base) return { text: null, timedOut: false };
+  return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
+}
