@@ -22,6 +22,7 @@ import {
   parseNumber,
 } from './fields.js';
 import { parseBaumitAviz } from '../avizOcr.js';
+import { withNumberedFallback } from './numberedSheet.js';
 
 /** How strongly a text looks like this layout, 0..1. */
 function scoreMarkers(text, markers) {
@@ -260,6 +261,50 @@ const carnetTripCountField = (text) => {
   return { value, confidence: 0.85, matched: found[0] };
 };
 
+/** Numbered sheet slot 2 often has only `11.08.2026` with no DATA label. */
+const dateFromBareLine = (line) => {
+  const found = String(line || '').match(
+    /^(\d{1,2})\s*[.:\-/]\s*(\d{1,2})\s*[.:\-/]\s*(\d{2,4})$/,
+  );
+  if (!found) return null;
+  const day = Number(found[1]);
+  const month = Number(found[2]);
+  let year = Number(found[3]);
+  if (year < 100) year += 2000;
+  if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+  const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return { value: iso, confidence: 0.9, matched: found[0] };
+};
+
+const routeFromBareLine = (line) => {
+  const value = String(line || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (value.length < 3) return null;
+  return { value, confidence: 0.82, matched: value };
+};
+
+const goodsFromBareLine = (line) => {
+  const value = String(line || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (value.length < 2) return null;
+  return { value, confidence: 0.82, matched: value };
+};
+
+const qtyFromBareLine = (line) => {
+  const found = String(line || '').match(/([\d.,]+)\s*([a-zăâîșț]{0,8})/i);
+  if (!found) return null;
+  const value = carnetNumber(found[1]);
+  const unit = (found[2] || '').toLowerCase() || null;
+  if (value == null || !isPlausibleQuantity(value, unit)) return null;
+  return { value: { quantity: value, unit }, confidence: 0.86, matched: found[0] };
+};
+
+const tripsFromBareLine = (line) => {
+  const found = String(line || '').match(/(\d{1,2})/);
+  if (!found) return null;
+  const value = Number(found[1]);
+  if (!Number.isFinite(value) || value < 1 || value > 99) return null;
+  return { value, confidence: 0.86, matched: found[0] };
+};
+
 export const OCR_PROFILES = [
   {
     id: 'carnet_bord',
@@ -268,20 +313,28 @@ export const OCR_PROFILES = [
     markers: [
       /nr\.?\s*auto/, /cant\.?\s*marf/, /nr\.?\s*curse/,
       /tip\s*marf/, /ruta\s*trans/, /nr\.?\s*document/,
+      // Numbered cheat-sheet (driver app writing guide): "1. TPO-…"
+      /(?:^|\n)\s*1[.)\-]\s*\S/,
     ],
     fields: {
-      numar_tpo: carnetTpoField,
-      data_efectuare_cursa: carnetDateField,
-      numar_auto: extractPlate,
-      numar_document_marfa: docNoField([TRO_CODE, PSL_CODE]),
-      ruta_transport: carnetRouteField,
-      tip_marfa: carnetGoodsField,
-      quantity: carnetQuantityField,
-      numar_curse: carnetTripCountField,
+      // Sheet map: 1 TPO, 2 DATA, 3 AUTO, 4 RUTA, 5 TIP, 6 CANT/GREUTATE, 7 DOC, 8 CURSE
+      numar_tpo: withNumberedFallback(1, carnetTpoField),
+      data_efectuare_cursa: withNumberedFallback(2, carnetDateField, dateFromBareLine),
+      numar_auto: withNumberedFallback(3, extractPlate),
+      ruta_transport: withNumberedFallback(4, carnetRouteField, routeFromBareLine),
+      tip_marfa: withNumberedFallback(5, carnetGoodsField, goodsFromBareLine),
+      quantity: withNumberedFallback(6, carnetQuantityField, qtyFromBareLine),
+      gross_weight_kg: withNumberedFallback(6, extractGrossWeight, (line) => {
+        const n = carnetNumber(String(line).replace(/[^\d.,]/g, ''));
+        if (n == null || n < 1) return null;
+        return { value: n, confidence: 0.84, matched: line };
+      }),
+      numar_document_marfa: withNumberedFallback(7, docNoField([TRO_CODE, PSL_CODE])),
+      numar_curse: withNumberedFallback(8, carnetTripCountField, tripsFromBareLine),
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
-      numar_document_marfa: 2, quantity: 2, ruta_transport: 1,
+      numar_document_marfa: 2, quantity: 2, gross_weight_kg: 2, ruta_transport: 1,
       tip_marfa: 1, numar_curse: 1,
     },
   },

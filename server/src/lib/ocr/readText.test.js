@@ -8,7 +8,6 @@ import {
   paddleOcrUrl,
   paddleOcrVlUrl,
   pickBestOcrText,
-  tesseractOcrUrl,
 } from './readText.js';
 
 describe('ocr provider selection', () => {
@@ -22,7 +21,6 @@ describe('ocr provider selection', () => {
     delete process.env.OCR_PROVIDER;
     delete process.env.PADDLE_OCR_URL;
     delete process.env.PADDLE_OCR_VL_URL;
-    delete process.env.TESSERACT_OCR_URL;
   });
 
   it('defaults to none when nothing is configured', () => {
@@ -35,11 +33,9 @@ describe('ocr provider selection', () => {
     expect(paddleOcrUrl()).toBe('http://127.0.0.1:8100');
   });
 
-  it('reads optional VL and Tesseract sidecar URLs', () => {
+  it('reads optional VL sidecar URL', () => {
     process.env.PADDLE_OCR_VL_URL = 'http://127.0.0.1:8101/';
-    process.env.TESSERACT_OCR_URL = 'http://127.0.0.1:8102/';
     expect(paddleOcrVlUrl()).toBe('http://127.0.0.1:8101');
-    expect(tesseractOcrUrl()).toBe('http://127.0.0.1:8102');
   });
 
   it('honours explicit OCR_PROVIDER=paddle', () => {
@@ -60,7 +56,7 @@ describe('ocr provider selection', () => {
 });
 
 describe('needsOcrFallback + pickBestOcrText', () => {
-  it('asks for VL/Tesseract when the text is thin or has no logistics codes', () => {
+  it('asks for VL when the text is thin or has no logistics codes', () => {
     expect(needsOcrFallback('abc')).toBe(true);
     expect(needsOcrFallback('Aviz de livrare fără coduri lungi pe pagină')).toBe(true);
     expect(needsOcrFallback(
@@ -71,9 +67,9 @@ describe('needsOcrFallback + pickBestOcrText', () => {
   it('prefers the candidate with a logistics code over a longer empty one', () => {
     const best = pickBestOcrText([
       { source: 'paddle', text: 'x'.repeat(200) },
-      { source: 'tesseract', text: 'TPO-0025813 greutate 15744' },
+      { source: 'paddle-vl', text: 'TPO-0025813 greutate 15744' },
     ]);
-    expect(best.source).toContain('tesseract');
+    expect(best.source).toContain('paddle-vl');
     expect(best.text).toContain('TPO-0025813');
     expect(best.engines.length).toBe(2);
   });

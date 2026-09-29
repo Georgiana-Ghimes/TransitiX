@@ -41,6 +41,8 @@ export function normalizeExtractionSource(provider) {
   if (p === 'pdf-text' || p === 'pdftext') return 'pdf-text';
   if (p === 'vision' || p === 'google-vision' || p === 'google_vision') return 'vision';
   if (p === 'paddle' || p === 'paddle-ocr' || p === 'paddleocr') return 'paddle';
+  if (p === 'paddle-vl' || p === 'paddleocr-vl') return 'paddle-vl';
+  if (p === 'driver-manual') return 'driver_manual';
   if (p === 'none') return 'none';
   return 'stub';
 }

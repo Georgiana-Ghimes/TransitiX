@@ -1,0 +1,25 @@
+# PaddleOCR-VL 0.9B sidecar (CPU). Complements classic PaddleOCR on :8100.
+# Usage from repo root:
+#   docker compose -f docker-compose.paddle-ocr-vl.yml up -d --build
+# Health: http://127.0.0.1:8101/health
+#
+# First build downloads Paddle 3.x + VL models (large). AMD hosts stay on CPU;
+# official NVIDIA images are not used here.
+services:
+  paddle-ocr-vl:
+    build:
+      context: ./tools/paddle-ocr-vl
+    ports:
+      - "8101:8101"
+    environment:
+      PADDLE_OCR_VL_DEVICE: ${PADDLE_OCR_VL_DEVICE:-cpu}
+      PADDLE_OCR_VL_PDF_PAGES: ${PADDLE_OCR_VL_PDF_PAGES:-8}
+      PADDLE_OCR_VL_PDF_DPI: ${PADDLE_OCR_VL_PDF_DPI:-200}
+    restart: unless-stopped
+    volumes:
+      - paddle_ocr_vl_models:/root/.paddleocr
+      - paddle_ocr_vl_paddlex:/root/.paddlex
+
+volumes:
+  paddle_ocr_vl_models:
+  paddle_ocr_vl_paddlex:

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, CloudOff, FileText, Loader2, Upload } from 'lucide-react';
+import { Camera, ClipboardList, CloudOff, FileText, Loader2, Upload } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { findDriverForUser } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { throttleState } from '@/lib/uploadThrottle';
 import { isOfflineError, useOnline, useOutbox } from '@/lib/useOffline';
 import { offlineStore } from '@/lib/offlineStore';
 import { pendingEntries } from '@/lib/offlineQueue';
+import DriverAvizReviewForm, { DriverWritingTips } from '@/components/driver/DriverAvizReviewForm';
 
 const STATUS_LABEL = {
   uploaded: 'Se procesează…',
@@ -19,15 +20,22 @@ const STATUS_LABEL = {
   failed: 'Eșuat',
 };
 
-/** Driver list never showed fields, "OCR gata" looked like success even when TPO was empty. */
+/** Driver list: after OCR, incomplete logistics must be filled by the driver. */
 function driverStatusDetail(doc, online = true) {
   if (doc.status === 'uploaded' && !online) {
     return 'Procesare întreruptă · reluăm la reconectare';
   }
   if (doc.status === 'uploaded') return STATUS_LABEL.uploaded;
-  // Sidecar timeout / stale upload: extraction_source none + needs_review.
+  if (doc.status === 'confirmed' || doc.logistics_complete) {
+    return doc.numar_tpo
+      ? `Confirmat · ${doc.numar_tpo}`
+      : 'Confirmat';
+  }
   if (doc.extraction_source === 'none' && (doc.status === 'extracted' || doc.needs_review)) {
-    return 'Eșuat OCR · biroul poate Re-extrage';
+    return 'Eșuat OCR · completează câmpurile sau biroul Re-extrage';
+  }
+  if (Array.isArray(doc.missing_fields) && doc.missing_fields.length) {
+    return `Lipsesc câmpuri · ${doc.missing_fields.map((m) => m.label).join(', ')}`;
   }
   const base = STATUS_LABEL[doc.status] || doc.status || '—';
   const tpo = String(doc.numar_tpo || '').trim();
@@ -35,7 +43,7 @@ function driverStatusDetail(doc, online = true) {
     return doc.needs_review ? `${base} · ${tpo} · de revizuit` : `${base} · ${tpo}`;
   }
   if (doc.status === 'extracted' || doc.status === 'needs_review') {
-    return 'OCR gata, fără TPO · biroul completează';
+    return 'OCR gata · verifică și completează câmpurile';
   }
   if (doc.needs_review) return `${base} · de revizuit`;
   return base;
@@ -53,7 +61,7 @@ function browserOffline() {
 }
 
 /**
- * Driver home for road paperwork: camera or gallery → same office avize queue.
+ * Driver home: photo of printed aviz (OCR → fill gaps) or completează aviz manual.
  */
 export default function DriverUploadDocuments({ user }) {
   const userId = user?.id;
@@ -69,10 +77,13 @@ export default function DriverUploadDocuments({ user }) {
   const [blurWarning, setBlurWarning] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [reviewDocId, setReviewDocId] = useState(null);
+  const [manualOpen, setManualOpen] = useState(false);
   const sendTimes = useRef([]);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const prevOutboxPending = useRef(0);
+  const autoOpenedReview = useRef(new Set());
 
   /** Replays one queued upload once coverage is back. */
   const sendQueued = useCallback(async (entry) => {
@@ -210,6 +221,25 @@ export default function DriverUploadDocuments({ user }) {
     };
   }, [pending, refreshDocs]);
 
+  /** When OCR finishes with gaps, open the form once per document. */
+  useEffect(() => {
+    for (const doc of docs) {
+      if (doc.status === 'uploaded' || doc.status === 'confirmed') continue;
+      if (doc.logistics_complete) continue;
+      if (!Array.isArray(doc.missing_fields) || !doc.missing_fields.length) continue;
+      if (autoOpenedReview.current.has(doc.id)) continue;
+      autoOpenedReview.current.add(doc.id);
+      setReviewDocId(doc.id);
+      notifyError(
+        'Completează câmpurile lipsă',
+        `OCR nu a găsit tot: ${doc.missing_fields.map((m) => m.label).join(', ')}`,
+      );
+      break;
+    }
+  }, [docs]);
+
+  const reviewDoc = docs.find((d) => d.id === reviewDocId) || null;
+
   /** When coverage returns, pull the list right away, don't wait for the next poll tick. */
   const wasOnline = useRef(online);
   useEffect(() => {
@@ -312,7 +342,7 @@ export default function DriverUploadDocuments({ user }) {
       const n = result.documents?.length || files.length;
       notifySuccess(
         'Documente trimise',
-        `${n} fișier(e) → coada biroului (OCR pe /avize)`
+        `${n} fișier(e) · OCR rulează, apoi completezi câmpurile lipsă`,
       );
       setDocs((prev) => [...(result.documents || []), ...prev].slice(0, 40));
       setOnline(true);
@@ -341,7 +371,8 @@ export default function DriverUploadDocuments({ user }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-        Pozează un aviz / cântar sau alege din galerie. Ajung la birou pe Avize OCR.
+        Pozează avizul tipărit — OCR citește ce poate. Dacă lipsesc câmpuri, le completezi manual.
+        Sau scrii totul de la zero cu „Completează aviz manual”.
       </p>
 
       {!online ? (
@@ -435,30 +466,76 @@ export default function DriverUploadDocuments({ user }) {
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button
             type="button"
-            disabled={uploading}
-            onClick={() => cameraRef.current?.click()}
+            disabled={uploading || manualOpen}
+            onClick={() => {
+              setManualOpen(false);
+              cameraRef.current?.click();
+            }}
             className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-h-[5.5rem] sm:min-h-[7rem] px-2 sm:px-4 py-3 text-sm font-medium text-white bg-[#0A2B4E] rounded-xl active:scale-[0.99] disabled:opacity-50"
           >
             {uploading ? <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin" /> : <Camera className="w-6 h-6 sm:w-7 sm:h-7" />}
-            Foto
+            <span className="text-center leading-tight">Fă o poză</span>
           </button>
           <button
             type="button"
-            disabled={uploading}
-            onClick={() => fileRef.current?.click()}
+            disabled={uploading || manualOpen}
+            onClick={() => {
+              setReviewDocId(null);
+              setManualOpen(true);
+            }}
             className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-h-[5.5rem] sm:min-h-[7rem] px-2 sm:px-4 py-3 text-sm font-medium text-[#0A2B4E] bg-slate-50 border border-slate-200 rounded-xl active:scale-[0.99] disabled:opacity-50"
           >
-            <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
-            <span className="text-center leading-tight">
-              <span className="sm:hidden">Galerie</span>
-              <span className="hidden sm:inline">Galerie / fișier</span>
-            </span>
+            <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7" />
+            <span className="text-center leading-tight">Completează aviz manual</span>
           </button>
         </div>
+        <button
+          type="button"
+          disabled={uploading || manualOpen}
+          onClick={() => fileRef.current?.click()}
+          className="inline-flex w-full min-h-[40px] items-center justify-center gap-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+        >
+          <Upload className="w-3.5 h-3.5" />
+          Sau din galerie / fișier PDF
+        </button>
         <p className="text-[11px] text-slate-400 text-center leading-snug px-1">
-          Pe telefon, Foto deschide camera. PDF și imagini din galerie merg la „Galerie”.
+          Poză: pentru avize tipărite. Dacă OCR nu scoate tot, deschidem formularul pe câmpurile lipsă.
         </p>
       </div>
+
+      {manualOpen ? (
+        <DriverAvizReviewForm
+          mode="create"
+          tripId={tripId}
+          documentType={docType}
+          onCancel={() => setManualOpen(false)}
+          onSaved={(created) => {
+            setDocs((prev) => [created, ...prev].slice(0, 40));
+            setManualOpen(false);
+          }}
+        />
+      ) : null}
+
+      {reviewDoc ? (
+        <DriverAvizReviewForm
+          mode="review"
+          doc={reviewDoc}
+          onCancel={() => setReviewDocId(null)}
+          onSaved={(updated) => {
+            setDocs((prev) => prev.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)));
+            setReviewDocId(null);
+          }}
+        />
+      ) : null}
+
+      <details className="rounded-xl border border-slate-100 bg-white/60 open:shadow-sm">
+        <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-slate-500">
+          Sfaturi pentru poza la aviz tipărit (OCR)
+        </summary>
+        <div className="px-2 pb-3">
+          <DriverWritingTips />
+        </div>
+      </details>
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="px-4 sm:px-5 py-3 border-b border-slate-100">
@@ -500,7 +577,9 @@ export default function DriverUploadDocuments({ user }) {
                     <span className={`inline-flex items-center gap-1 ${
                       doc.status === 'uploaded'
                         ? (online ? 'text-sky-700' : 'text-amber-700')
-                        : ''
+                        : doc.logistics_complete || doc.status === 'confirmed'
+                          ? 'text-emerald-700'
+                          : 'text-amber-800'
                     }`}>
                       {doc.status === 'uploaded' ? (
                         online
@@ -513,6 +592,15 @@ export default function DriverUploadDocuments({ user }) {
                       ? <span>· {new Date(doc.created_at).toLocaleString('ro-RO')}</span>
                       : null}
                   </p>
+                  {doc.status !== 'uploaded' && doc.status !== 'confirmed' && !doc.logistics_complete ? (
+                    <button
+                      type="button"
+                      onClick={() => setReviewDocId(doc.id)}
+                      className="mt-1.5 text-xs font-medium text-[#1D4E89] underline-offset-2 hover:underline"
+                    >
+                      Completează câmpurile
+                    </button>
+                  ) : null}
                 </div>
               </li>
             ))}

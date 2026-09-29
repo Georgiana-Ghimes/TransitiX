@@ -449,6 +449,41 @@ export const api = {
     listForTrip(tripId) {
       return request(`/driver-documents/trips/${encodeURIComponent(tripId)}`);
     },
+    confirm(id, fields) {
+      return request(`/driver-documents/${encodeURIComponent(id)}/confirm`, {
+        method: 'PATCH',
+        body: { fields },
+      });
+    },
+    async createManual({ tripId, document_type = 'aviz', fields = {}, file, signal } = {}, retried = false) {
+      const token = getToken();
+      const fd = new FormData();
+      if (tripId) fd.append('trip_id', tripId);
+      fd.append('document_type', document_type);
+      for (const [key, value] of Object.entries(fields)) {
+        if (value == null || value === '') continue;
+        fd.append(key, String(value));
+      }
+      if (file) fd.append('files', file);
+      const res = await fetch('/api/driver-documents/manual', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: fd,
+        signal,
+      });
+      if (res.status === 401 && !retried) {
+        await refreshAccessToken();
+        return api.driverDocuments.createManual({ tripId, document_type, fields, file, signal }, true);
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data?.message || res.statusText || 'Salvare eșuată');
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    },
     async upload({ tripId, files, document_type = 'aviz', signal } = {}, retried = false) {
       const token = getToken();
       const fd = new FormData();
@@ -469,6 +504,7 @@ export const api = {
       if (!res.ok) {
         const err = new Error(data?.message || res.statusText || 'Încărcare eșuată');
         err.status = res.status;
+        err.payload = data;
         throw err;
       }
       return data;

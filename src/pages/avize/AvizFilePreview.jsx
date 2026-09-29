@@ -6,6 +6,9 @@ const SOURCE_LABEL = {
   'pdf-text': 'Text PDF',
   vision: 'Vision',
   paddle: 'Paddle',
+  'paddle-vl': 'Paddle VL',
+  driver_manual: 'Manual șofer',
+  'driver-manual': 'Manual șofer',
   stub: 'Stub',
   // `none` is what the extractor stores when a read failed. Without a label the badge printed
   // the raw column value at the operator.
@@ -16,16 +19,20 @@ const SOURCE_TONE = {
   'pdf-text': 'bg-sky-50 text-sky-800',
   vision: 'bg-violet-50 text-violet-800',
   paddle: 'bg-indigo-50 text-indigo-800',
+  'paddle-vl': 'bg-indigo-50 text-indigo-800',
+  driver_manual: 'bg-emerald-50 text-emerald-800',
+  'driver-manual': 'bg-emerald-50 text-emerald-800',
   none: 'bg-rose-50 text-rose-800',
   stub: 'bg-amber-50 text-amber-800',
 };
 
 export function SourceBadge({ source }) {
-  const key = source || 'stub';
-  const tone = SOURCE_TONE[key] || SOURCE_TONE.stub;
+  const key = String(source || 'stub').replace(/_/g, '-');
+  const tone = SOURCE_TONE[key] || SOURCE_TONE[source] || SOURCE_TONE.stub;
+  const label = SOURCE_LABEL[key] || SOURCE_LABEL[source] || key;
   return (
     <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${tone}`}>
-      {SOURCE_LABEL[key] || key}
+      {label}
     </span>
   );
 }
@@ -69,6 +76,12 @@ export default function AvizFilePreview({ fileUrl, fill = false }) {
 
     if (!fileUrl) {
       setError('Nu există fișier atașat acestui aviz.');
+      return undefined;
+    }
+
+    // Manual cab entry — no bytes on disk.
+    if (String(fileUrl).startsWith('manual://')) {
+      setError('Aviz completat manual de șofer — fără fișier atașat.');
       return undefined;
     }
 

@@ -11,6 +11,8 @@ export function mapProviderToSource(provider) {
   if (p === 'pdf_text' || p === 'pdf-text') return 'pdf-text';
   if (p === 'google_vision' || p === 'vision') return 'vision';
   if (p === 'paddle' || p === 'paddle_ocr' || p === 'paddleocr') return 'paddle';
+  if (p === 'paddle-vl' || p === 'paddle_vl' || p === 'paddleocr-vl') return 'paddle-vl';
+  if (p === 'driver_manual' || p === 'driver-manual') return 'driver_manual';
   if (p === 'none') return 'none';
   return 'stub';
 }

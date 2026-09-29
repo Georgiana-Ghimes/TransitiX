@@ -6,16 +6,14 @@ import { normalizeOcrText } from './normalizeOcrText.js';
 /**
  * Gets text out of an uploaded file.
  *
- * Hybrid gates (experiment/paddleocr-tesseract-handwriting):
+ * Hybrid gates (on-prem only — images stay on this PC):
  *   1. PDF text layer — free, exact when present
  *   2. PaddleOCR classic (:8100) — fast first pass
  *   3. PaddleOCR-VL (:8101) when classic is thin / missing logistics codes
- *   4. Tesseract ron+eng (:8102) when still weak after Paddle gates
- *   5. pickBestOcrText — keep the richest candidate
+ *   4. pickBestOcrText — keep the richest candidate
  *
- * Order is intentional: Paddle first (layout + handwriting), VL for hard pages,
- * Tesseract as the third vote (RO diacritics / printed fallback). Empty OCR still
- * lets the upload succeed; office types fields.
+ * Tesseract was parked (tools/tesseract-ocr) — not called. Empty OCR still lets
+ * the upload succeed; office types fields.
  */
 export function ocrProvider() {
   const raw = String(process.env.OCR_PROVIDER || '').trim().toLowerCase();
@@ -38,17 +36,12 @@ export function paddleOcrVlUrl() {
   return String(process.env.PADDLE_OCR_VL_URL || '').trim().replace(/\/$/, '');
 }
 
-/** Optional Tesseract sidecar with Romanian tessdata. */
-export function tesseractOcrUrl() {
-  return String(process.env.TESSERACT_OCR_URL || '').trim().replace(/\/$/, '');
-}
-
 const LOGISTICS_CODE_RE = /\b(?:TPO|PSL|TRO|TP0|TPQ)[\s\-._]*\d{3,}/i;
 const RO_DIACRITIC_RE = /[ăâîșțĂÂÎȘȚ]/g;
 
 /**
  * Classic OCR that produced characters but no TPO/PSL/TRO is still "weak" for avize —
- * worth spending VL / Tesseract. Handwriting carnets often hit this path.
+ * worth spending VL. Handwriting carnets often hit this path.
  */
 export function needsOcrFallback(rawText) {
   if (isTextPoor(rawText, 40)) return true;
@@ -222,18 +215,12 @@ export async function documentPageCount(fileUrl) {
 }
 
 /**
- * Hybrid OCR: Paddle → (optional VL) → (optional Tesseract) → pickBest.
+ * Hybrid OCR: Paddle → (optional VL) → pickBest.
  * Never throws; empty text is a soft failure.
  */
 async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
   const provider = ocrProvider();
   if (provider !== 'paddle') {
-    // Even with OCR_PROVIDER=none, allow an explicit Tesseract URL for experiments.
-    if (tesseractOcrUrl()) {
-      const tess = await readWithTesseract(buffer, mimeType, { timeoutMs });
-      if (tess.text) return { ...tess, source: 'tesseract' };
-      if (tess.timedOut) return { text: null, timedOut: true, reason: 'tesseract_timeout' };
-    }
     return { text: null, reason: 'ocr_neconfigurat' };
   }
 
@@ -251,15 +238,6 @@ async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
       return { text: null, timedOut: true, reason: 'paddle_vl_timeout' };
     }
     if (vl.text) candidates.push({ ...vl, source: 'paddle-vl' });
-    if (vl.text) current = pickBestOcrText(candidates)?.text || current;
-  }
-
-  if (needsOcrFallback(current) && tesseractOcrUrl()) {
-    const tess = await readWithTesseract(buffer, mimeType, { timeoutMs });
-    if (tess.timedOut && !current) {
-      return { text: null, timedOut: true, reason: 'tesseract_timeout' };
-    }
-    if (tess.text) candidates.push({ ...tess, source: 'tesseract' });
   }
 
   const best = pickBestOcrText(candidates);
@@ -303,12 +281,6 @@ async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
 
 async function readWithPaddleVl(buffer, mimeType, { timeoutMs } = {}) {
   const base = paddleOcrVlUrl();
-  if (!base) return { text: null, timedOut: false };
-  return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
-}
-
-async function readWithTesseract(buffer, mimeType, { timeoutMs } = {}) {
-  const base = tesseractOcrUrl();
   if (!base) return { text: null, timedOut: false };
   return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
 }

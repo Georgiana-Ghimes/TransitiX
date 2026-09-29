@@ -1,46 +1,17 @@
-# Tesseract OCR sidecar (Romanian)
+# Tesseract OCR sidecar — PARKED
 
-Sidecar on **:8102** — `tesseract` + `ron` tessdata, with light OpenCV preprocess for carnets.
+Not wired into Transitix Node OCR (`readText.js`). Kept on disk for a later
+handwriting experiment if Paddle + PaddleOCR-VL are not enough.
 
-Runs **beside** classic PaddleOCR on :8100 (and optional PaddleOCR-VL on :8101). Node picks the best text — see `server/src/lib/ocr/readText.js`.
+Both Paddle classic and PaddleOCR-VL run **on this PC** (Docker). Images never
+leave the machine — same on-prem profile Tesseract would have had. The GDPR
+risk to avoid is **cloud** OCR (e.g. Google Vision), not a local sidecar.
 
-## Start
+## Start (only if re-enabled)
 
 ```bash
 docker compose -f docker-compose.tesseract-ocr.yml up -d --build
 ```
 
-- Health: http://127.0.0.1:8102/health
-
-## Env (Node)
-
-```env
-OCR_PROVIDER=paddle
-PADDLE_OCR_URL=http://127.0.0.1:8100
-# optional VL (if you run that sidecar)
-# PADDLE_OCR_VL_URL=http://127.0.0.1:8101
-TESSERACT_OCR_URL=http://127.0.0.1:8102
-```
-
-## Hybrid order (Node)
-
-1. PDF text layer  
-2. **Paddle classic** (fast)  
-3. If thin / no TPO|PSL|TRO → **Paddle VL** (when URL set)  
-4. If still weak → **Tesseract ron+eng**  
-5. `pickBestOcrText` keeps the richest candidate (logistics codes > length > RO diacritics)
-
-Tesseract is the third gate on purpose: strong on printed RO diacritics and a useful second opinion on handwriting, but slower to help alone on messy carnets than Paddle+VL.
-
-## Tessdata
-
-The Docker image installs `tesseract-ocr-ron` from Debian. For a manual `ron.traineddata`, see [tessdata](https://github.com/tesseract-ocr/tessdata) and set `TESSDATA_PREFIX`.
-
-## Knobs
-
-| Env | Default | Meaning |
-|-----|---------|---------|
-| `TESSERACT_LANG` | `ron+eng` | OCR languages |
-| `TESSERACT_PSM` | `6` | Page segmentation (uniform block) |
-| `TESSERACT_OEM` | `3` | LSTM engine |
-| `TESSERACT_OCR_PDF_PAGES` | `8` | Max PDF pages rasterized |
+Then set `TESSERACT_OCR_URL=http://127.0.0.1:8102` and re-wire the gate in
+`server/src/lib/ocr/readText.js`.

@@ -4,6 +4,9 @@
  * Photos / PDFs land in the same aviz_documents + document_batches pipeline as office
  * uploads (created_from: driver). Trip is optional, the cab can send paperwork before
  * the office links a cursă on /avize.
+ *
+ * After OCR the driver must confirm logistics fields (TPO, date, plate, qty/weight).
+ * Missing required fields block "confirmare" — office still sees the row for backup.
  */
 import { Router } from 'express';
 import { query, withTransaction } from '../db.js';
@@ -11,6 +14,11 @@ import { authRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import { publicUploadUrl } from '../uploadPath.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
+import {
+  DRIVER_WRITABLE_KEYS,
+  missingDriverLogistics,
+  pickLogisticsRow,
+} from '../lib/ocr/driverLogistics.js';
 import { logEvent, upload, extractBatchDocuments, failStaleUploadedAvize, uploadErrorMessage } from './documents.js';
 
 const router = Router();
@@ -19,12 +27,47 @@ router.use(authRequired);
 /** A phone sends a few photos at a time, not a month's archive. */
 const DRIVER_FILE_CAP = 8;
 
+const DRIVER_LIST_COLUMNS = `
+  id, batch_id, original_filename, file_url, document_type, status, needs_review,
+  numar_tpo, data_efectuare_cursa, numar_auto, ruta_transport, tip_marfa,
+  cantitate_marfa, gross_weight_kg, numar_document_marfa, numar_curse,
+  field_confidence, trip_id, created_at, uploaded_from, extraction_source
+`;
+
 const driverHits = new Map();
 
 function sendError(res, err, fallback) {
   const status = err?.status || 500;
   if (status >= 500) console.error('[driver-documents]', err);
   res.status(status).json({ message: err?.message || fallback });
+}
+
+function withMissing(doc) {
+  const row = serializeRow(doc);
+  const logistics = pickLogisticsRow(row);
+  const missing = missingDriverLogistics(logistics);
+  return {
+    ...row,
+    missing_fields: missing,
+    logistics_complete: missing.length === 0,
+  };
+}
+
+function coerceWritableFields(body = {}) {
+  const out = {};
+  for (const key of DRIVER_WRITABLE_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
+    let value = body[key];
+    if (value === '' || value === undefined) value = null;
+    if (value != null && ['cantitate_marfa', 'gross_weight_kg', 'numar_curse'].includes(key)) {
+      const n = Number(String(value).replace(',', '.'));
+      value = Number.isFinite(n) ? n : null;
+    } else if (value != null) {
+      value = String(value).trim() || null;
+    }
+    out[key] = value;
+  }
+  return out;
 }
 
 /**
@@ -92,18 +135,207 @@ router.get('/', async (req, res) => {
     await failStaleUploadedAvize(req.user.company_id).catch(() => {});
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const docs = await query(
-      `SELECT id, original_filename, file_url, document_type, status, needs_review,
-              numar_tpo, trip_id, created_at, uploaded_from, extraction_source
+      `SELECT ${DRIVER_LIST_COLUMNS}
        FROM aviz_documents
        WHERE company_id = $1 AND uploaded_by = $2 AND uploaded_from = 'driver'
        ORDER BY created_at DESC
        LIMIT $3`,
       [req.user.company_id, req.user.id, limit]
     );
-    res.json({ documents: docs.rows.map(serializeRow), max_files: DRIVER_FILE_CAP });
+
+    // If OCR never started (API restart mid-upload), kick it again for open batches.
+    const pending = docs.rows.filter((d) => d.status === 'uploaded');
+    if (pending.length) {
+      const byBatch = new Map();
+      for (const d of pending) {
+        if (!d.batch_id) continue;
+        if (!byBatch.has(d.batch_id)) byBatch.set(d.batch_id, []);
+        byBatch.get(d.batch_id).push(d.id);
+      }
+      for (const [batchId, documentIds] of byBatch) {
+        extractBatchDocuments(req.user.company_id, batchId, req.user.id, { documentIds })
+          .catch((err) => console.error('[driver-documents] retry extract', err?.message || err));
+      }
+    }
+
+    res.json({
+      documents: docs.rows.map(withMissing),
+      max_files: DRIVER_FILE_CAP,
+    });
   } catch (err) {
     sendError(res, err, 'Documentele nu au putut fi citite');
   }
+});
+
+/**
+ * Driver confirms (or fills) logistics after OCR.
+ * Hard-blocks when required fields are still empty — photo alone is not enough.
+ */
+router.patch('/:id/confirm', async (req, res) => {
+  try {
+    const doc = (await query(
+      `SELECT * FROM aviz_documents
+       WHERE id = $1 AND company_id = $2 AND uploaded_by = $3 AND uploaded_from = 'driver'`,
+      [req.params.id, req.user.company_id, req.user.id]
+    )).rows[0];
+    if (!doc) return res.status(404).json({ message: 'Document inexistent' });
+    if (doc.status === 'uploaded') {
+      return res.status(409).json({
+        message: 'OCR încă rulează. Așteaptă câteva secunde, apoi completează câmpurile.',
+      });
+    }
+
+    const patch = coerceWritableFields(req.body?.fields ?? req.body ?? {});
+    const merged = { ...pickLogisticsRow(doc), ...patch };
+    const missing = missingDriverLogistics(merged);
+    if (missing.length) {
+      return res.status(400).json({
+        message: 'Verifică câmpurile următoare — datele nu sunt complete',
+        missing_fields: missing,
+        document: withMissing({ ...doc, ...merged }),
+      });
+    }
+
+    const sets = Object.keys(patch).map((c, i) => `${c} = $${i + 1}`);
+    const updated = await withTransaction(async (client) => {
+      const row = (await client.query(
+        `UPDATE aviz_documents SET
+           ${sets.length ? `${sets.join(', ')},` : ''}
+           status = 'confirmed',
+           needs_review = FALSE,
+           updated_at = NOW()
+         WHERE id = $${sets.length + 1} AND company_id = $${sets.length + 2}
+         RETURNING *`,
+        [...Object.values(patch), doc.id, req.user.company_id]
+      )).rows[0];
+
+      await logEvent(client, {
+        companyId: req.user.company_id,
+        documentId: doc.id,
+        batchId: doc.batch_id,
+        userId: req.user.id,
+        kind: 'confirmed',
+        summary: 'Șoferul a confirmat câmpurile logistice',
+        detail: { fields: patch, by: 'driver' },
+      });
+      return row;
+    });
+
+    res.json({ document: withMissing(updated) });
+  } catch (err) {
+    sendError(res, err, 'Confirmarea a eșuat');
+  }
+});
+
+/**
+ * Manual aviz from the cab: logistics fields first, optional gallery photo as evidence.
+ * Fields win — we do not OCR-overwrite what the driver typed.
+ */
+router.post('/manual', (req, res) => {
+  const limit = hitRateLimit(driverHits, req.user.id, { max: 30, windowMs: 60_000 });
+  if (!limit.ok) {
+    return res.status(429).json({ message: 'Prea multe încărcări. Reîncearcă într-un minut.' });
+  }
+
+  upload.array('files', 1)(req, res, async (err) => {
+    if (err) return res.status(400).json({ message: uploadErrorMessage(err, 1) });
+
+    try {
+      const fields = coerceWritableFields(req.body ?? {});
+      const missing = missingDriverLogistics(fields);
+      if (missing.length) {
+        return res.status(400).json({
+          message: 'Verifică câmpurile următoare — datele nu sunt complete',
+          missing_fields: missing,
+        });
+      }
+
+      const rawTripId = String(req.body?.trip_id || '').trim();
+      let trip = null;
+      if (rawTripId) {
+        trip = await driverTrip(req.user, rawTripId);
+        if (!trip) return res.status(404).json({ message: 'Cursă inexistentă' });
+      }
+
+      const documentType = ['aviz', 'cmr', 'other'].includes(req.body?.document_type)
+        ? req.body.document_type
+        : 'aviz';
+
+      const file = (req.files ?? [])[0] || null;
+      const fileUrl = file ? publicUploadUrl(file.filename) : 'manual://driver-entry';
+      const originalName = file?.originalname || 'Aviz manual (șofer)';
+
+      const colKeys = Object.keys(fields);
+      const colPlaceholders = colKeys.map((_, i) => `$${i + 8}`).join(', ');
+      const colNames = colKeys.length ? `, ${colKeys.join(', ')}` : '';
+      const colVals = colKeys.map((k) => fields[k]);
+
+      const result = await withTransaction(async (client) => {
+        const batch = await batchForUpload(client, {
+          companyId: req.user.company_id, userId: req.user.id, trip, documentType,
+        });
+
+        const doc = (await client.query(
+          `INSERT INTO aviz_documents (
+             company_id, batch_id, document_type, file_url, original_filename,
+             status, needs_review, trip_id, uploaded_by, uploaded_from,
+             extraction_source
+             ${colNames}
+           ) VALUES (
+             $1,$2,$3,$4,$5,
+             'confirmed', FALSE, $6, $7, 'driver',
+             'driver_manual'
+             ${colKeys.length ? `, ${colPlaceholders}` : ''}
+           ) RETURNING *`,
+          [
+            req.user.company_id, batch.id, documentType, fileUrl, originalName,
+            trip?.id || null, req.user.id,
+            ...colVals,
+          ]
+        )).rows[0];
+
+        await logEvent(client, {
+          companyId: req.user.company_id,
+          documentId: doc.id,
+          batchId: batch.id,
+          userId: req.user.id,
+          kind: 'confirmed',
+          summary: originalName,
+          detail: {
+            fields,
+            has_photo: Boolean(file),
+            trip_id: trip?.id || null,
+            by: 'driver_manual',
+          },
+        });
+
+        const counted = (await client.query(
+          `UPDATE document_batches
+           SET file_count = (SELECT COUNT(*) FROM aviz_documents WHERE batch_id = $1),
+               updated_at = NOW()
+           WHERE id = $1 RETURNING *`,
+          [batch.id]
+        )).rows[0];
+
+        return { batch: counted, document: doc };
+      });
+
+      const { notifyDriverUpload } = await import('../lib/officeNotifications.js');
+      await notifyDriverUpload(req.user.company_id, {
+        driverName: req.user.name || req.user.full_name,
+        documentType,
+        fileCount: 1,
+        trip,
+      }).catch(() => {});
+
+      res.status(201).json({
+        batch: serializeRow(result.batch),
+        document: withMissing(result.document),
+      });
+    } catch (error) {
+      sendError(res, error, 'Salvarea avizului a eșuat');
+    }
+  });
 });
 
 /** Upload from the driver app. Lands in the office review queue like any other document. */

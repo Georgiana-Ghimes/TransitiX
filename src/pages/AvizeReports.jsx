@@ -56,10 +56,13 @@ export default function AvizeReports() {
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
   const [filters, setFilters] = useState({
-    from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'cursa',
+    // Upload day, not trip day: a manual/photo from the cab often carries an older cursă date
+    // and would vanish under „Săptămâna asta” pe data cursei.
+    from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'incarcare',
   });
   const [qInput, setQInput] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [hiddenByFilters, setHiddenByFilters] = useState(0);
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
   const [trips, setTrips] = useState([]);
@@ -107,9 +110,10 @@ export default function AvizeReports() {
         api.avize.observationCodes().catch(() => []),
       ]);
       if (gen !== loadGen.current) return;
-      setRows(avize);
+      const list = Array.isArray(avize) ? avize : [];
+      setRows(list);
       setSelected((prev) => {
-        const visible = new Set(avize.map((r) => r.id));
+        const visible = new Set(list.map((r) => r.id));
         const next = new Set([...prev].filter((id) => visible.has(id)));
         return next;
       });
@@ -119,6 +123,23 @@ export default function AvizeReports() {
         if (prev && tmpls.some((t) => t.id === prev)) return prev;
         return tmpls.find((t) => t.is_default)?.id || tmpls[0]?.id || '';
       });
+
+      // Empty list with active filters: check whether the company actually has rows.
+      const filtersActive = Boolean(
+        activeFilters.from || activeFilters.to || activeFilters.status
+        || activeFilters.q || activeFilters.uploaded_from
+      );
+      if (list.length === 0 && filtersActive) {
+        try {
+          const all = await api.avize.list({ date_field: 'incarcare' });
+          if (gen !== loadGen.current) return;
+          setHiddenByFilters(Array.isArray(all) ? all.length : 0);
+        } catch {
+          setHiddenByFilters(0);
+        }
+      } else {
+        setHiddenByFilters(0);
+      }
     } catch (e) {
       if (gen !== loadGen.current) return;
       notifyError('Nu am putut încărca avizele', e);
@@ -157,6 +178,7 @@ export default function AvizeReports() {
       try {
         const avize = await api.avize.list(filters);
         if (gen !== loadGen.current) return;
+        if (!Array.isArray(avize)) return;
         setRows(avize);
         setSelected((prev) => {
           const visible = new Set(avize.map((r) => r.id));
@@ -210,8 +232,9 @@ export default function AvizeReports() {
 
   const resetAvizFilters = () => {
     setActivePreset('');
-    setFilters({ from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'cursa' });
+    setFilters({ from: '', to: '', status: '', q: '', uploaded_from: '', date_field: 'incarcare' });
     setQInput('');
+    setHiddenByFilters(0);
   };
 
   const uploadFiles = async (fileList) => {
@@ -915,9 +938,33 @@ export default function AvizeReports() {
           <AvizLegend id="avize-actiuni" title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
 
           {rows.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm">
-              <ClipboardList className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">Încarcă PDF-uri sau poze de aviz. OCR-ul completează tabelul; tu corectezi km, taxe și observații.</p>
+            <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm space-y-3">
+              <ClipboardList className="w-10 h-10 mx-auto mb-1 opacity-40" />
+              {hiddenByFilters > 0 ? (
+                <>
+                  <p className="text-sm text-slate-600">
+                    Filtrele ascund {hiddenByFilters} aviz(e) din firmă (inclusiv cele de la șofer).
+                  </p>
+                  <button
+                    type="button"
+                    onClick={resetAvizFilters}
+                    className="inline-flex h-10 items-center px-4 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg"
+                  >
+                    Resetează filtrele
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm">
+                    Încarcă PDF-uri sau poze de aviz. OCR-ul completează tabelul; tu corectezi km, taxe și observații.
+                  </p>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                    Avizele completate manual de șofer apar aici automat. Verifică că ești logat pe
+                    aceeași firmă ca șoferul (ex. <span className="font-medium text-slate-500">admin@rai-spedition.ro</span>)
+                    și filtrează după <span className="font-medium text-slate-500">Data încărcării</span>.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <>

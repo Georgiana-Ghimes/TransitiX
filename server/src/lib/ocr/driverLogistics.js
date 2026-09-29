@@ -1,0 +1,62 @@
+/**
+ * Same logistics contract as the driver app (`src/lib/driverAvizLogistics.js`).
+ * Kept in server so confirm API does not import from the Vite tree.
+ */
+
+export const DRIVER_LOGISTICS_FIELDS = [
+  { key: 'numar_tpo', label: 'Număr TPO', sheetNo: 1 },
+  { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', sheetNo: 2 },
+  { key: 'numar_auto', label: 'Număr auto', sheetNo: 3 },
+  { key: 'ruta_transport', label: 'Rută transport', sheetNo: 4 },
+  { key: 'tip_marfa', label: 'Tip marfă', sheetNo: 5 },
+  { key: 'cantitate_marfa', label: 'Cantitate marfă', sheetNo: 6 },
+  { key: 'gross_weight_kg', label: 'Greutate brută (kg)', sheetNo: 6 },
+  { key: 'numar_document_marfa', label: 'Nr. document marfă (PSL/TRO)', sheetNo: 7 },
+  { key: 'numar_curse', label: 'Număr curse', sheetNo: 8 },
+];
+
+export const DRIVER_REQUIRED_KEYS = [
+  'numar_tpo',
+  'data_efectuare_cursa',
+  'numar_auto',
+];
+
+export const DRIVER_REQUIRED_ONE_OF = ['cantitate_marfa', 'gross_weight_kg'];
+
+export const DRIVER_WRITABLE_KEYS = DRIVER_LOGISTICS_FIELDS.map((f) => f.key);
+
+export function fieldEmpty(value) {
+  if (value == null) return true;
+  if (typeof value === 'number') return !Number.isFinite(value);
+  return String(value).trim() === '';
+}
+
+export function missingDriverLogistics(row = {}) {
+  const missing = [];
+  for (const key of DRIVER_REQUIRED_KEYS) {
+    if (fieldEmpty(row[key])) {
+      const meta = DRIVER_LOGISTICS_FIELDS.find((f) => f.key === key);
+      missing.push({ key, label: meta?.label || key });
+    }
+  }
+  const hasQtyOrWeight = DRIVER_REQUIRED_ONE_OF.some((k) => !fieldEmpty(row[k]));
+  if (!hasQtyOrWeight) {
+    missing.push({
+      key: 'cantitate_sau_greutate',
+      label: 'Cantitate marfă sau greutate brută',
+    });
+  }
+  return missing;
+}
+
+export function driverLogisticsComplete(row = {}) {
+  return missingDriverLogistics(row).length === 0;
+}
+
+export function pickLogisticsRow(doc = {}) {
+  const out = {};
+  for (const key of DRIVER_WRITABLE_KEYS) {
+    out[key] = doc[key] ?? null;
+  }
+  return out;
+}

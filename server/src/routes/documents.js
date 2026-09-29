@@ -136,11 +136,12 @@ async function markExtractFailed(companyId, docId, err) {
 
 /**
  * Uploads whose OCR job never came back (process restart, hung sidecar) stay on
- * „Se procesează…” forever. After the background budget + grace, treat them as failed
- * so the office and the driver see a final status and can Re-extrage.
+ * „Se procesează…” forever. After a short grace (not the full 5‑minute background
+ * budget), treat them as failed so the driver/office can Re-extrage instead of
+ * staring at a spinner.
  */
 export async function failStaleUploadedAvize(companyId, {
-  olderThanMs = backgroundOcrTimeoutMs() + 60_000,
+  olderThanMs = Number(process.env.OCR_STALE_UPLOADED_MS) || 90_000,
 } = {}) {
   if (!companyId) return { failed: 0 };
   const message = 'OCR nu a terminat la timp. Folosește Re-extrage.';
@@ -197,7 +198,9 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       results.push({ id: doc.id, skipped: true, reason: 'already_extracted' });
       continue;
     }
-    if (doc.ocr_profile_id && !force) {
+    // Profile set but still `uploaded` means a previous run wrote fields then crashed
+    // before flipping status — or a bad skip left the spinner on. Re-run, don't skip.
+    if (doc.ocr_profile_id && !force && doc.status !== 'uploaded') {
       results.push({
         id: doc.id,
         skipped: true,

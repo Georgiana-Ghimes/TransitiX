@@ -664,6 +664,27 @@ describe('carnet de bord profile', () => {
     expect(values.numar_curse).toBe(1);
   });
 
+  it('maps numbered sheet lines (driver writing guide) onto fields', () => {
+    const numbered = [
+      '1. TPO-0025999',
+      '2. 15.09.2026',
+      '3. CJ 12 ABC',
+      '4. Cluj → Sibiu',
+      '5. SACI',
+      '6. 12500 kg',
+      '7. PSL-0044999',
+      '8. 2',
+    ].join('\n');
+    const { values } = extractDocument(numbered, { profileId: 'carnet_bord' });
+    expect(values.numar_tpo).toBe('TPO-0025999');
+    expect(values.data_efectuare_cursa).toBe('2026-09-15');
+    expect(values.numar_auto).toBe('CJ-12-ABC');
+    expect(values.ruta_transport).toMatch(/Cluj/i);
+    expect(values.tip_marfa).toMatch(/SACI/i);
+    expect(values.numar_document_marfa).toBe('PSL-0044999');
+    expect(values.numar_curse).toBe(2);
+  });
+
   it('keeps the delivery address, which sits on the line below the label', () => {
     // Reading only the labelled line drops the destination — the half the annex needs.
     const { values } = extractDocument(CARNET_OCR, { profileId: 'carnet_bord' });
