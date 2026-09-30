@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.13.2] - 2026-09-30
+
+### Fixed
+
+- Sidecar Paddle: OCR-ul rulează în afara event loop-ului — `/health` răspunde și când procesează, deci „ocupat” nu mai e citit ca **paddle-down** (care marca toate upload-urile ca Eșuat)
+- Rândurile aflate efectiv în coada OCR nu mai sunt picate de fail-stale după 90s; înainte OCR-ul rula oricum pe ele și rezultatul era aruncat
+- Înainte de OCR, fiecare rând e reverificat — unul picat / completat manual / șters între timp nu mai consumă CPU
+- Poze cu orientare EXIF (telefon) sunt întoarse înainte de OCR, nu după 3 treceri de rotație în plus
+
+### Changed
+
+- Un singur job OCR odată (Node `OCR_CONCURRENCY=1` + lock în ambele sidecar-uri); coada intră în bugetul de timp
+- Un singur buget pentru clasic + VL (înainte VL primea încă un timeout întreg după clasic)
+- Node trimite `budget_ms`: sidecar-ul se oprește când apelantul a renunțat (504) sau nu mai pornește dacă bugetul s-a dus în coadă (503)
+- VL doar pentru PDF-uri ≤ 2 pagini, cu ≥ 90s buget rămas; după 2 citiri goale / expirate VL se oprește 30 min
+- VL scos din `.env.example` implicit: pe CPU 266s pentru o poză (0 caractere) și timeout la 300s pe alte 4, față de 1–7s la clasic
+- Pagini 2+ dintr-un scan: dacă se citesc sigur în orientarea paginii 1, fără încă 3 rotații; poze curate (CMR etc.) sar peste cele 5 treceri agresive
+- Sidecar Paddle încarcă modelele la pornire (`PADDLE_OCR_WARMUP`), `/health` arată `busy` / `waiting`
+
 ## [1.13.1] - 2026-09-30
 
 ### Fixed

@@ -9,7 +9,8 @@ import { normalizeOcrText } from './normalizeOcrText.js';
  * Hybrid gates (on-prem only — images stay on this PC):
  *   1. PDF text layer — free, exact when present
  *   2. PaddleOCR classic (:8100) — fast first pass
- *   3. PaddleOCR-VL (:8101) when classic is thin / missing logistics codes
+ *   3. PaddleOCR-VL (:8101) when classic is thin / missing logistics codes, the file is short,
+ *      budget remains, and VL has not just kept failing (shouldTryVl)
  *   4. pickBestOcrText — keep the richest candidate
  *
  * Tesseract was parked (tools/tesseract-ocr) — not called. Empty OCR still lets
@@ -108,6 +109,110 @@ export function interactiveOcrMaxPages() {
   return Number(process.env.OCR_INTERACTIVE_MAX_PAGES) || 3;
 }
 
+/**
+ * How many OCR jobs this API process sends the sidecars at once. Both run on the VM's CPU:
+ * two photos side by side take longer than two in a row, and each can outlive its caller.
+ */
+export function ocrConcurrency() {
+  return Math.max(1, Math.floor(Number(process.env.OCR_CONCURRENCY) || 1));
+}
+
+let ocrActive = 0;
+const ocrWaiters = [];
+
+/** Resolves false when the deadline passes in the queue — that job never reaches the sidecar. */
+export function acquireOcrSlot(deadline) {
+  if (ocrActive < ocrConcurrency()) {
+    ocrActive += 1;
+    return Promise.resolve(true);
+  }
+  const wait = deadline - Date.now();
+  if (wait <= 0) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const waiter = { resolve, timer: null };
+    waiter.timer = setTimeout(() => {
+      const at = ocrWaiters.indexOf(waiter);
+      if (at >= 0) ocrWaiters.splice(at, 1);
+      resolve(false);
+    }, wait);
+    ocrWaiters.push(waiter);
+  });
+}
+
+export function releaseOcrSlot() {
+  const next = ocrWaiters.shift();
+  if (next) {
+    clearTimeout(next.timer);
+    next.resolve(true);
+    return;
+  }
+  ocrActive = Math.max(0, ocrActive - 1);
+}
+
+/** Jobs holding or waiting for a sidecar slot in this process. */
+export function ocrQueueState() {
+  return { active: ocrActive, waiting: ocrWaiters.length, limit: ocrConcurrency() };
+}
+
+/** PDFs longer than this never go to VL: it reads a page in minutes on CPU, not seconds. */
+export function vlMaxPages() {
+  return Math.max(1, Number(process.env.OCR_VL_MAX_PAGES) || 2);
+}
+
+/** VL is not started with less budget left than this — it would be aborted mid-page. */
+export function vlMinBudgetMs() {
+  return Math.max(0, Number(process.env.OCR_VL_MIN_BUDGET_MS) || 90_000);
+}
+
+const VL_MAX_MISSES = () => Math.max(1, Number(process.env.OCR_VL_MAX_MISSES) || 2);
+const VL_COOLDOWN_MS = () => Math.max(0, Number(process.env.OCR_VL_COOLDOWN_MS) || 30 * 60_000);
+
+let vlBreaker = { misses: 0, openUntil: 0 };
+
+export function resetVlBreaker() {
+  vlBreaker = { misses: 0, openUntil: 0 };
+}
+
+/** Closed means VL may be tried. It opens after VL keeps timing out or reading nothing. */
+export function vlBreakerOpen(now = Date.now()) {
+  return vlBreaker.openUntil > now;
+}
+
+export function recordVlOutcome(vl, now = Date.now()) {
+  if (vl?.text) {
+    vlBreaker = { misses: 0, openUntil: 0 };
+    return;
+  }
+  const misses = vlBreaker.misses + 1;
+  if (misses >= VL_MAX_MISSES()) {
+    vlBreaker = { misses: 0, openUntil: now + VL_COOLDOWN_MS() };
+    console.warn(`[ocr] PaddleOCR-VL paused for ${Math.round(VL_COOLDOWN_MS() / 60_000)} min after ${misses} empty/timed-out reads`);
+    return;
+  }
+  vlBreaker = { ...vlBreaker, misses };
+}
+
+/**
+ * Whether VL is worth its CPU for this document. The classic read has to be weak, the file
+ * short, enough budget left for a whole page, and VL not recently useless.
+ */
+export function shouldTryVl(classicText, { pages = 1, remainingMs = Infinity, now = Date.now() } = {}) {
+  if (!paddleOcrVlUrl()) return false;
+  if (!needsOcrFallback(classicText)) return false;
+  if ((Number(pages) || 1) > vlMaxPages()) return false;
+  if (remainingMs < vlMinBudgetMs()) return false;
+  return !vlBreakerOpen(now);
+}
+
+export function mimeTypeFor(name) {
+  const ext = path.extname(String(name || '')).toLowerCase();
+  if (ext === '.pdf') return 'application/pdf';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.heic' || ext === '.heif') return 'image/heic';
+  return 'image/jpeg';
+}
+
 function assertNotTimedOut(ocr) {
   if (!ocr?.timedOut) return;
   const err = new Error('OCR a depășit timpul alocat');
@@ -138,7 +243,10 @@ export async function ocrCapability() {
     const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2_000) });
     if (res.ok) value = 'paddle';
   } catch {
-    // Unreachable is the answer.
+    // Unreachable is the answer — unless this process is mid-OCR on it. An older sidecar
+    // cannot answer /health while it computes, and busy must not read as down: down fails
+    // every pending upload.
+    if (ocrActive > 0) value = 'paddle';
   }
   ocrProbe = { at: now, value };
   return value;
@@ -177,7 +285,7 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
     };
   }
 
-  const ocr = await readWithOcr(buffer, 'image/jpeg', { timeoutMs });
+  const ocr = await readWithOcr(buffer, mimeTypeFor(name), { timeoutMs });
   if (ocr?.text) {
     return {
       text: ocr.text, source: ocr.source, pages: ocr.pages, truncated: ocr.truncated,
@@ -216,6 +324,9 @@ export async function documentPageCount(fileUrl) {
 
 /**
  * Hybrid OCR: Paddle → (optional VL) → pickBest.
+ *
+ * One deadline covers the queue, classic and VL together. VL used to get a fresh full budget
+ * after classic had spent its own, so a weak photo could hold the CPU for twice the timeout.
  * Never throws; empty text is a soft failure.
  */
 async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
@@ -224,33 +335,56 @@ async function readWithOcr(buffer, mimeType, { timeoutMs } = {}) {
     return { text: null, reason: 'ocr_neconfigurat' };
   }
 
-  const candidates = [];
-  const paddle = await readWithPaddle(buffer, mimeType, { timeoutMs });
-  if (paddle.timedOut && !paddle.text) {
-    return { text: null, timedOut: true, reason: 'paddle_timeout' };
+  const startedAt = Date.now();
+  const deadline = startedAt + (timeoutMs ?? backgroundOcrTimeoutMs());
+  if (!(await acquireOcrSlot(deadline))) {
+    return { text: null, timedOut: true, reason: 'ocr_coada_plina' };
   }
-  if (paddle.text) candidates.push({ ...paddle, source: 'paddle' });
 
-  let current = paddle.text || '';
-  if (needsOcrFallback(current) && paddleOcrVlUrl()) {
-    const vl = await readWithPaddleVl(buffer, mimeType, { timeoutMs });
-    if (vl.timedOut && !current) {
-      return { text: null, timedOut: true, reason: 'paddle_vl_timeout' };
+  try {
+    const candidates = [];
+    const paddle = await postOcrJson(paddleOcrUrl(), buffer, mimeType, deadline);
+    const classicMs = Date.now() - startedAt;
+    if (paddle.timedOut && !paddle.text) {
+      console.warn(`[ocr] paddle timed out after ${classicMs}ms`);
+      return { text: null, timedOut: true, reason: 'paddle_timeout' };
     }
-    if (vl.text) candidates.push({ ...vl, source: 'paddle-vl' });
+    if (paddle.text) candidates.push({ ...paddle, source: 'paddle' });
+
+    const current = paddle.text || '';
+    if (shouldTryVl(current, { pages: paddle.pages, remainingMs: deadline - Date.now() })) {
+      const vlStarted = Date.now();
+      const vl = await postOcrJson(paddleOcrVlUrl(), buffer, mimeType, deadline, {
+        max_pages: vlMaxPages(),
+      });
+      recordVlOutcome(vl);
+      console.info(`[ocr] paddle ${classicMs}ms ${current.length}ch; vl ${Date.now() - vlStarted}ms ${vl.text?.length || 0}ch${vl.timedOut ? ' timeout' : ''}`);
+      if (vl.timedOut && !current) {
+        return { text: null, timedOut: true, reason: 'paddle_vl_timeout' };
+      }
+      if (vl.text) candidates.push({ ...vl, source: 'paddle-vl' });
+    }
+
+    const best = pickBestOcrText(candidates);
+    if (best) return best;
+
+    return {
+      text: null,
+      reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat',
+    };
+  } finally {
+    releaseOcrSlot();
   }
-
-  const best = pickBestOcrText(candidates);
-  if (best) return best;
-
-  return {
-    text: null,
-    reason: paddleOcrUrl() ? 'paddle_fara_rezultat' : 'paddle_neconfigurat',
-  };
 }
 
-async function postOcrJson(base, buffer, mimeType, timeoutMs) {
+/**
+ * `budget_ms` lets the sidecar drop the job once this caller has given up. Without it an
+ * aborted fetch left the sidecar computing for minutes on an answer nobody would read.
+ */
+async function postOcrJson(base, buffer, mimeType, deadline, extra = {}) {
   if (!base) return { text: null, timedOut: false };
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return { text: null, timedOut: true };
   try {
     const res = await fetch(`${base}/ocr/json`, {
       method: 'POST',
@@ -258,9 +392,13 @@ async function postOcrJson(base, buffer, mimeType, timeoutMs) {
       body: JSON.stringify({
         image_base64: buffer.toString('base64'),
         mime_type: mimeType || 'image/jpeg',
+        budget_ms: remaining,
+        ...extra,
       }),
-      signal: AbortSignal.timeout(timeoutMs ?? backgroundOcrTimeoutMs()),
+      signal: AbortSignal.timeout(remaining),
     });
+    // 503 = sidecar queue full until our deadline, 504 = it stopped at our deadline.
+    if (res.status === 503 || res.status === 504) return { text: null, timedOut: true };
     if (!res.ok) return { text: null, timedOut: false };
     const json = await res.json();
     const text = json?.text;
@@ -273,14 +411,4 @@ async function postOcrJson(base, buffer, mimeType, timeoutMs) {
   } catch (err) {
     return { text: null, timedOut: err?.name === 'TimeoutError' };
   }
-}
-
-async function readWithPaddle(buffer, mimeType, { timeoutMs } = {}) {
-  return postOcrJson(paddleOcrUrl(), buffer, mimeType, timeoutMs);
-}
-
-async function readWithPaddleVl(buffer, mimeType, { timeoutMs } = {}) {
-  const base = paddleOcrVlUrl();
-  if (!base) return { text: null, timedOut: false };
-  return postOcrJson(base, buffer, mimeType, timeoutMs ?? backgroundOcrTimeoutMs());
 }

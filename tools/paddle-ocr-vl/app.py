@@ -15,6 +15,8 @@ import io
 import logging
 import os
 import tempfile
+import threading
+import time
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -37,16 +39,31 @@ _PDF_MAX_PAGES = int(os.environ.get("PADDLE_OCR_VL_PDF_PAGES", "8") or 8)
 _PDF_DPI = int(os.environ.get("PADDLE_OCR_VL_PDF_DPI", "200") or 200)
 _DEVICE = (os.environ.get("PADDLE_OCR_VL_DEVICE") or "cpu").strip() or "cpu"
 
+# A 0.9B VLM on CPU takes every core and several GB for one page. FastAPI runs sync handlers
+# in a 40-thread pool, so without this each retry started another copy alongside the first.
+_VL_LOCK = threading.Lock()
+_PIPELINE_LOCK = threading.Lock()
+_waiting = 0
+
 
 class OcrJsonBody(BaseModel):
     image_base64: str = Field(..., min_length=8)
     mime_type: Optional[str] = None
+    max_pages: Optional[int] = None
+    budget_ms: Optional[int] = None
 
 
 def get_pipeline():
-    global _pipeline
     if _pipeline is not None:
         return _pipeline
+    with _PIPELINE_LOCK:
+        if _pipeline is not None:
+            return _pipeline
+        return _load_pipeline()
+
+
+def _load_pipeline():
+    global _pipeline
     try:
         from paddleocr import PaddleOCRVL
     except ImportError as err:
@@ -75,19 +92,25 @@ def decode_payload(image_base64: str) -> bytes:
         raise HTTPException(status_code=400, detail=f"invalid base64: {err}") from err
 
 
-def pages_from_bytes(data: bytes) -> tuple[list, int]:
-    from PIL import Image
+def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list, int]:
+    from PIL import Image, ImageOps
 
     if data[:4] != b"%PDF":
-        return [Image.open(io.BytesIO(data)).convert("RGB")], 1
+        image = Image.open(io.BytesIO(data))
+        try:
+            image = ImageOps.exif_transpose(image)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("EXIF orientation ignored: %s", exc)
+        return [image.convert("RGB")], 1
 
     import fitz
 
+    cap = min(_PDF_MAX_PAGES, max_pages) if max_pages and max_pages > 0 else _PDF_MAX_PAGES
     pages = []
     with fitz.open(stream=data, filetype="pdf") as doc:
         total = doc.page_count
         for index, page in enumerate(doc):
-            if index >= _PDF_MAX_PAGES:
+            if index >= cap:
                 break
             pix = page.get_pixmap(dpi=_PDF_DPI)
             pages.append(Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB"))
@@ -142,11 +165,18 @@ def _coerce_text(res: Any) -> str:
     return ""
 
 
-def run_vl_on_images(images: list) -> str:
+class DeadlineExceeded(Exception):
+    pass
+
+
+def run_vl_on_images(images: list, deadline: Optional[float] = None) -> str:
     pipeline = get_pipeline()
     chunks: list[str] = []
 
     for index, image in enumerate(images):
+        # One page cannot be interrupted once predict() starts; the next one need not start.
+        if deadline is not None and time.monotonic() > deadline:
+            raise DeadlineExceeded()
         # predict() accepts paths most reliably across paddleocr versions.
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             path = tmp.name
@@ -188,22 +218,44 @@ def health():
         "device": _DEVICE,
         "model_loaded": ready,
         "model": "PaddleOCR-VL-0.9B",
+        "busy": _VL_LOCK.locked(),
+        "waiting": _waiting,
     }
 
 
 @app.post("/ocr/json")
 def ocr_json(body: OcrJsonBody):
+    global _waiting
+    budget = (body.budget_ms or 0) / 1000.0
+    deadline = time.monotonic() + budget if budget > 0 else None
+
     data = decode_payload(body.image_base64)
     try:
-        images, total = pages_from_bytes(data)
+        images, total = pages_from_bytes(data, body.max_pages)
     except Exception as err:
         raise HTTPException(status_code=400, detail=f"cannot read file: {err}") from err
 
+    _waiting += 1
     try:
-        text = run_vl_on_images(images)
+        acquired = _VL_LOCK.acquire(timeout=max(0.0, deadline - time.monotonic())) if deadline \
+            else _VL_LOCK.acquire()
+    finally:
+        _waiting -= 1
+    if not acquired:
+        raise HTTPException(status_code=503, detail="VL ocupat — bugetul s-a consumat în coadă")
+
+    started = time.monotonic()
+    text = ""
+    try:
+        text = run_vl_on_images(images, deadline)
+    except DeadlineExceeded:
+        raise HTTPException(status_code=504, detail="VL oprit la termenul apelantului") from None
     except Exception as err:
         log.exception("PaddleOCR-VL failed")
         raise HTTPException(status_code=500, detail=str(err)) from err
+    finally:
+        _VL_LOCK.release()
+        log.info("VL job %.1fs pages=%s chars=%s", time.monotonic() - started, len(images), len(text))
 
     truncated = total > len(images)
     return {

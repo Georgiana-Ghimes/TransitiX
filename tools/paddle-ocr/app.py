@@ -15,11 +15,14 @@ import io
 import logging
 import os
 import re
+import threading
+import time
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("paddle-ocr")
@@ -33,6 +36,23 @@ app.add_middleware(
 )
 
 _engine = None
+_ENGINE_LOCK = threading.Lock()
+
+# One OCR at a time. Paddle already uses every core for a single page; a second request
+# in parallel only makes both slower and doubles the memory.
+_OCR_LOCK = threading.Lock()
+_waiting = 0
+# Monotonic deadline of the job holding _OCR_LOCK. Module-level is safe because of the lock.
+_deadline: Optional[float] = None
+
+
+class DeadlineExceeded(Exception):
+    """The caller's budget ran out; stop spending CPU on an answer nobody will read."""
+
+
+def check_deadline() -> None:
+    if _deadline is not None and time.monotonic() > _deadline:
+        raise DeadlineExceeded()
 
 # Romanian / logistics hints — sideways photos often miss these until rotated.
 _KEYWORD_RE = re.compile(
@@ -64,10 +84,28 @@ _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0"
 _DET_SIDE_LEN = int(os.environ.get("PADDLE_OCR_DET_SIDE_LEN", "1920") or 1920)
 
 
-def looks_upright_enough(text: str, score: float) -> bool:
+def _avg(confs: Optional[list[float]]) -> float:
+    return sum(confs) / len(confs) if confs else 0.0
+
+
+def confident_read(text: str, confs: Optional[list[float]], min_chars: int = 24,
+                   min_conf: float = 0.75) -> bool:
+    """
+    Enough text at a confidence a sideways page does not reach.
+
+    Read at the wrong angle, printed lines come back as short fragments scored well under 0.6,
+    so this separates a right read from a wrong one without needing a TPO code — which a CMR,
+    a delivery note from another supplier, or page two of a dossier does not carry.
+    """
+    return len((text or "").strip()) >= min_chars and _avg(confs) >= min_conf
+
+
+def looks_upright_enough(text: str, score: float, confs: Optional[list[float]] = None) -> bool:
     if score < _GOOD_ENOUGH_SCORE:
         return False
-    return bool(_CODE_RE.search(text or ""))
+    if _CODE_RE.search(text or ""):
+        return True
+    return confident_read(text, confs, min_chars=300, min_conf=0.85)
 
 
 def get_engine():
@@ -75,7 +113,14 @@ def get_engine():
     global _engine
     if _engine is not None:
         return _engine
+    with _ENGINE_LOCK:
+        if _engine is not None:
+            return _engine
+        return _load_engine()
 
+
+def _load_engine():
+    global _engine
     try:
         from paddleocr import PaddleOCR
 
@@ -197,6 +242,8 @@ def score_ocr(text: str, confidences: list[float], *, portrait_bonus: float = 0.
 
 
 def ocr_array(arr) -> tuple[str, list[float]]:
+    # Every pass, rotation and page goes through here, so this one check bounds all of them.
+    check_deadline()
     engine = get_engine()
     try:
         result = engine.ocr(arr, cls=True)
@@ -213,10 +260,17 @@ def pages_from_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[list
     read it first. Rasterizing belongs here: the image toolchain is already installed for OCR,
     and keeping it out of the API is the reason this service exists.
     """
-    from PIL import Image
+    from PIL import Image, ImageOps
 
     if data[:4] != b"%PDF":
-        return [Image.open(io.BytesIO(data)).convert("RGB")], 1
+        # A phone camera stores "turn me 90°" in EXIF instead of turning the pixels. Ignoring
+        # it made an upright aviz arrive sideways and cost three extra rotation passes.
+        image = Image.open(io.BytesIO(data))
+        try:
+            image = ImageOps.exif_transpose(image)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("EXIF orientation ignored: %s", exc)
+        return [image.convert("RGB")], 1
 
     import fitz  # PyMuPDF
 
@@ -783,6 +837,7 @@ def ocr_photo_page(image) -> tuple[str, int]:
     best_rot = 0
     best_source = base
 
+    best_confs: list[float] = []
     for degrees in rotations:
         frame = base if degrees == 0 else base.rotate(-degrees, expand=True)
         prepared = emphasize_ink(frame)
@@ -794,10 +849,9 @@ def ocr_photo_page(image) -> tuple[str, int]:
             best_text = text
             best_rot = degrees
             best_source = frame
+            best_confs = confs
         # Phone notebooks are almost always upright; stop when TPO/PSL already reads.
-        if degrees == rotations[0] and looks_upright_enough(text, score):
-            break
-        if looks_upright_enough(text, score) and degrees != 0:
+        if looks_upright_enough(text, score, confs):
             break
 
     if _AGGRESSIVE:
@@ -815,8 +869,15 @@ def ocr_photo_page(image) -> tuple[str, int]:
         for name, transform in passes:
             if not missing_from_text(best_text):
                 break
+            # A clean printed page (CMR, another supplier's note) has no TPO or plate to find;
+            # five more renders of it at detector size will not add one.
+            if confident_read(best_text, best_confs, min_chars=300, min_conf=0.85):
+                log.info("OCR photo passes skipped — confident %s chars", len(best_text))
+                break
             try:
                 text, confs = ocr_array(np.array(transform(best_source)))
+            except DeadlineExceeded:
+                raise
             except Exception as exc:  # noqa: BLE001
                 log.warning("OCR photo pass %s failed: %s", name, exc)
                 continue
@@ -847,7 +908,13 @@ def ocr_printed_page(image, prefer: Optional[int] = None) -> tuple[str, int]:
             best_score = score
             best_text = text
             best_rot = degrees
-        if degrees == rotations[0] and looks_upright_enough(text, score):
+        if degrees != rotations[0]:
+            continue
+        if looks_upright_enough(text, score, confs):
+            break
+        # Later pages of a scan share the first page's orientation. Only a page that reads
+        # badly that way is worth three more full passes.
+        if prefer is not None and confident_read(text, confs):
             break
 
     return best_text, best_rot
@@ -893,10 +960,44 @@ def run_ocr_on_bytes(data: bytes, max_pages: Optional[int] = None) -> tuple[str,
     return "\n".join(texts).strip(), first_rot, len(pages), total
 
 
+def run_ocr_budgeted(data: bytes, max_pages: Optional[int], budget_ms: Optional[int]):
+    """
+    run_ocr_on_bytes behind the single-job lock, bounded by the caller's budget.
+
+    The budget starts when the request arrived, so time spent queued counts. 503 = the queue
+    ate the whole budget and no OCR ran; 504 = OCR stopped at the deadline.
+    """
+    global _deadline, _waiting
+    budget = (budget_ms or 0) / 1000.0
+    deadline = time.monotonic() + budget if budget > 0 else None
+
+    _waiting += 1
+    try:
+        acquired = _OCR_LOCK.acquire(timeout=max(0.0, deadline - time.monotonic())) if deadline \
+            else _OCR_LOCK.acquire()
+    finally:
+        _waiting -= 1
+    if not acquired:
+        raise HTTPException(status_code=503, detail="OCR ocupat — bugetul s-a consumat în coadă")
+
+    started = time.monotonic()
+    try:
+        _deadline = deadline
+        return run_ocr_on_bytes(data, max_pages)
+    except DeadlineExceeded:
+        log.warning("OCR stopped at caller deadline after %.1fs", time.monotonic() - started)
+        raise HTTPException(status_code=504, detail="OCR oprit la termenul apelantului") from None
+    finally:
+        _deadline = None
+        _OCR_LOCK.release()
+        log.info("OCR job %.1fs", time.monotonic() - started)
+
+
 class OcrJsonRequest(BaseModel):
     image_base64: str = Field(..., description="Raw base64 (no data: URL prefix required)")
     mime_type: Optional[str] = "image/jpeg"
     max_pages: Optional[int] = Field(None, description="Cap for PDFs; server default when unset")
+    budget_ms: Optional[int] = Field(None, description="Caller gives up after this; work stops too")
 
 
 class OcrResponse(BaseModel):
@@ -921,7 +1022,25 @@ def health():
         "lang": os.environ.get("PADDLE_OCR_LANG", "latin"),
         "auto_rotate": _AUTO_ROTATE,
         "aggressive": _AGGRESSIVE,
+        "busy": _OCR_LOCK.locked(),
+        "waiting": _waiting,
     }
+
+
+@app.on_event("startup")
+def warm_engine():
+    """Load models off the request path, so the first aviz of the day is not the slow one."""
+    if os.environ.get("PADDLE_OCR_WARMUP", "1").strip() in ("0", "false", "False"):
+        return
+
+    def load():
+        try:
+            get_engine()
+            log.info("PaddleOCR warm")
+        except Exception as exc:  # noqa: BLE001
+            log.warning("warmup failed: %s", exc)
+
+    threading.Thread(target=load, name="paddle-warmup", daemon=True).start()
 
 
 @app.post("/ocr", response_model=OcrResponse)
@@ -929,6 +1048,7 @@ async def ocr_upload(
     file: Optional[UploadFile] = File(None),
     image_base64: Optional[str] = Form(None),
     max_pages: Optional[int] = Form(None),
+    budget_ms: Optional[int] = Form(None),
 ):
     data = b""
     if file is not None:
@@ -950,7 +1070,11 @@ async def ocr_upload(
         raise HTTPException(status_code=400, detail="Empty image")
 
     try:
-        text, rotation, pages, total = run_ocr_on_bytes(data, max_pages)
+        text, rotation, pages, total = await run_in_threadpool(
+            run_ocr_budgeted, data, max_pages, budget_ms,
+        )
+    except HTTPException:
+        raise
     except Exception as exc:  # noqa: BLE001
         log.exception("OCR failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -976,8 +1100,14 @@ async def ocr_json(body: OcrJsonRequest):
     if not data:
         raise HTTPException(status_code=400, detail="Empty image")
 
+    # Off the event loop: running OCR inline froze /health too, and Node read "busy" as
+    # "down" and failed every upload waiting behind this one.
     try:
-        text, rotation, pages, total = run_ocr_on_bytes(data, body.max_pages)
+        text, rotation, pages, total = await run_in_threadpool(
+            run_ocr_budgeted, data, body.max_pages, body.budget_ms,
+        )
+    except HTTPException:
+        raise
     except Exception as exc:  # noqa: BLE001
         log.exception("OCR failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc

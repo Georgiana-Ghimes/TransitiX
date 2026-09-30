@@ -283,6 +283,67 @@ def main() -> int:
     check("a multi-page scan does not pay for them on every page", len(calls) <= 8,
           f"{len(calls)} passes for 3 pages")
 
+    # A CMR has no TPO code. Page one still searches, but pages that read confidently at the
+    # first page's angle must not pay three more full passes each.
+    def cmr_engine(arr):
+        height, width = arr.shape[0], arr.shape[1]
+        calls.append((width, height))
+        if height >= width:
+            return "Scrisoare de trasura internationala CMR marfa livrata", [0.93] * 6
+        return "iiii", [0.2]
+
+    calls.clear()
+    per_page.clear()
+    app_module.ocr_array = cmr_engine
+    app_module.ocr_page = counting_ocr_page
+    try:
+        app_module.run_ocr_on_bytes(make_pdf(3))
+    finally:
+        app_module.ocr_page = real_ocr_page
+    check("pages without a code reuse the first page's angle when they read confidently",
+          per_page[1:] == [1, 1], f"passes per page: {per_page}")
+
+    # Budget: the sidecar stops when Node has given up, instead of computing for nobody.
+    import time as _time
+    from fastapi import HTTPException as _HTTPException
+
+    def slow_engine(arr):
+        _time.sleep(0.02)
+        app_module.check_deadline()
+        return "iiii", [0.2]
+
+    app_module.ocr_array = slow_engine
+    try:
+        app_module.run_ocr_budgeted(photo.getvalue(), None, 5)
+        stopped = None
+    except _HTTPException as exc:
+        stopped = exc.status_code
+    check("OCR stops at the caller's deadline (504)", stopped == 504, f"status={stopped}")
+    check("the lock is released after a stopped job", not app_module._OCR_LOCK.locked())
+
+    app_module._OCR_LOCK.acquire()
+    try:
+        check("/health answers and says busy while a job runs", app_module.health()["busy"] is True)
+        try:
+            app_module.run_ocr_budgeted(photo.getvalue(), None, 50)
+            queued = None
+        except _HTTPException as exc:
+            queued = exc.status_code
+        check("a job whose budget runs out in the queue never starts (503)", queued == 503,
+              f"status={queued}")
+    finally:
+        app_module._OCR_LOCK.release()
+
+    # EXIF orientation 6 = "rotate 90° clockwise to view"; the pixels are stored landscape.
+    exif_photo = PILImage.new("RGB", (600, 400), (200, 200, 200))
+    exif = exif_photo.getexif()
+    exif[0x0112] = 6
+    exif_buf = io.BytesIO()
+    exif_photo.save(exif_buf, format="JPEG", exif=exif.tobytes())
+    upright, _ = app_module.pages_from_bytes(exif_buf.getvalue())
+    check("a phone photo is turned by its EXIF orientation before OCR",
+          upright[0].size == (400, 600), f"size={upright[0].size}")
+
     print()
     if failures:
         print(f"FAILED: {len(failures)} - {', '.join(failures)}")

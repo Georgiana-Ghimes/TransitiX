@@ -19,6 +19,8 @@ services:
       # 0.1-0.3 even when correct, so the printed-text default of 0.35 deletes a whole carnet
       # and the caller sees an empty read instead of a poor one.
       PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
+      # Load models at container start instead of on the first aviz of the day.
+      PADDLE_OCR_WARMUP: ${PADDLE_OCR_WARMUP:-1}
     restart: unless-stopped
     volumes:
       # Persist downloaded OCR models between rebuilds

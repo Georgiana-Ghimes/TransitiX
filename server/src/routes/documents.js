@@ -118,6 +118,29 @@ function runBatchExtract(batchKey, fn) {
   return next;
 }
 
+/**
+ * Rows this process is OCR-ing or has queued. „Stale” means nobody is working on it; a row
+ * waiting its turn behind twenty others is not stale, and failing it only threw away the
+ * read that was already paid for.
+ */
+const inFlightDocs = new Map();
+
+function holdInFlight(ids) {
+  for (const id of ids) inFlightDocs.set(id, (inFlightDocs.get(id) || 0) + 1);
+}
+
+function releaseInFlight(ids) {
+  for (const id of ids) {
+    const left = (inFlightDocs.get(id) || 0) - 1;
+    if (left > 0) inFlightDocs.set(id, left);
+    else inFlightDocs.delete(id);
+  }
+}
+
+export function isExtractInFlight(id) {
+  return inFlightDocs.has(id);
+}
+
 export async function markExtractFailed(companyId, docId, err) {
   const message = err?.code === 'OCR_TIMEOUT'
     ? 'OCR a depășit timpul alocat. Folosește Re-extrage.'
@@ -158,8 +181,9 @@ export async function failStaleUploadedAvize(companyId, {
      WHERE company_id = $2
        AND status = 'uploaded'
        AND updated_at < NOW() - ($3 * INTERVAL '1 millisecond')
+       AND NOT (id = ANY($4::uuid[]))
      RETURNING id`,
-    [JSON.stringify({ extract_error: message }), companyId, olderThanMs]
+    [JSON.stringify({ extract_error: message }), companyId, olderThanMs, [...inFlightDocs.keys()]]
   );
   return { failed: result.rowCount || 0 };
 }
@@ -178,6 +202,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
   timeoutMs,
 } = {}) {
   const batchKey = `${companyId}:${batchId}`;
+  const queued = Array.isArray(documentIds) ? [...documentIds] : [];
+  holdInFlight(queued);
   return runBatchExtract(batchKey, async () => {
   // Opportunistic: clear rows that never left „Se procesează…” after the budget window.
   await failStaleUploadedAvize(companyId).catch(() => {});
@@ -192,7 +218,10 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     docs = docs.filter((d) => wanted.has(d.id));
   }
 
+  const running = docs.filter((d) => force || d.status === 'uploaded').map((d) => d.id);
+  holdInFlight(running);
   const results = [];
+  try {
   for (const doc of docs) {
     if (!force && doc.status !== 'uploaded') {
       results.push({ id: doc.id, skipped: true, reason: 'already_extracted' });
@@ -224,6 +253,17 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         [doc.id, companyId]
       );
       doc.status = 'uploaded';
+    }
+
+    // The SELECT above can be minutes old by the time a row's turn comes. A row failed,
+    // filled in by hand or deleted meanwhile would have its answer discarded — skip the OCR.
+    const live = await query(
+      `SELECT status FROM aviz_documents WHERE id = $1 AND company_id = $2`,
+      [doc.id, companyId]
+    );
+    if (live.rows[0]?.status !== 'uploaded') {
+      results.push({ id: doc.id, filename: doc.original_filename, skipped: true, reason: 'already_settled' });
+      continue;
     }
 
     try {
@@ -339,6 +379,9 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       });
     }
   }
+  } finally {
+    releaseInFlight(running);
+  }
 
   // A batch only ever moves forward. Extraction now runs in the background for driver uploads,
   // so a confirmation that lands while OCR is still working would otherwise be undone by this
@@ -355,7 +398,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     needs_review: results.filter((r) => r.needs_review).length,
     results,
   };
-  });
+  }).finally(() => releaseInFlight(queued));
 }
 
 /** The profiles available, so the review screen can offer an override. */

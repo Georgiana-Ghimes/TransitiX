@@ -1,13 +1,22 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import {
+  acquireOcrSlot,
   backgroundOcrTimeoutMs,
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
+  mimeTypeFor,
   needsOcrFallback,
+  ocrConcurrency,
   ocrProvider,
+  ocrQueueState,
   paddleOcrUrl,
   paddleOcrVlUrl,
   pickBestOcrText,
+  recordVlOutcome,
+  releaseOcrSlot,
+  resetVlBreaker,
+  shouldTryVl,
+  vlBreakerOpen,
 } from './readText.js';
 
 describe('ocr provider selection', () => {
@@ -132,6 +141,91 @@ describe('ocr timeouts', () => {
     process.env.OCR_INTERACTIVE_TIMEOUT_MS = '15000';
     expect(backgroundOcrTimeoutMs()).toBe(120_000);
     expect(interactiveOcrTimeoutMs()).toBe(15_000);
+  });
+});
+
+describe('VL gate', () => {
+  const env = { ...process.env };
+
+  beforeEach(() => {
+    resetVlBreaker();
+    process.env.PADDLE_OCR_VL_URL = 'http://127.0.0.1:8101';
+    for (const key of ['OCR_VL_MAX_PAGES', 'OCR_VL_MIN_BUDGET_MS', 'OCR_VL_MAX_MISSES', 'OCR_VL_COOLDOWN_MS']) {
+      delete process.env[key];
+    }
+  });
+
+  afterEach(() => {
+    process.env = { ...env };
+    resetVlBreaker();
+  });
+
+  const weak = 'Aviz de livrare fără coduri lungi pe pagină';
+
+  it('never runs without a VL URL, or when classic already read a logistics code', () => {
+    expect(shouldTryVl(weak)).toBe(true);
+    expect(shouldTryVl('Aviz PSL-0044362 TPO-0025629 auto B 330 SRS')).toBe(false);
+    delete process.env.PADDLE_OCR_VL_URL;
+    expect(shouldTryVl(weak)).toBe(false);
+  });
+
+  it('skips long PDFs and a budget too short to finish a page', () => {
+    expect(shouldTryVl(weak, { pages: 2 })).toBe(true);
+    expect(shouldTryVl(weak, { pages: 3 })).toBe(false);
+    expect(shouldTryVl(weak, { remainingMs: 89_000 })).toBe(false);
+    expect(shouldTryVl(weak, { remainingMs: 200_000 })).toBe(true);
+  });
+
+  it('pauses VL after repeated useless reads and resumes after the cooldown', () => {
+    const t0 = 1_000_000;
+    recordVlOutcome({ text: null, timedOut: true }, t0);
+    expect(vlBreakerOpen(t0)).toBe(false);
+    recordVlOutcome({ text: null }, t0);
+    expect(vlBreakerOpen(t0 + 1)).toBe(true);
+    expect(shouldTryVl(weak, { now: t0 + 1 })).toBe(false);
+    expect(shouldTryVl(weak, { now: t0 + 30 * 60_000 + 1 })).toBe(true);
+  });
+
+  it('a VL read with text resets the miss count', () => {
+    recordVlOutcome({ text: null }, 0);
+    recordVlOutcome({ text: 'TPO-0025813' }, 0);
+    recordVlOutcome({ text: null }, 0);
+    expect(vlBreakerOpen(1)).toBe(false);
+  });
+});
+
+describe('OCR queue', () => {
+  afterEach(() => {
+    delete process.env.OCR_CONCURRENCY;
+  });
+
+  it('runs one job at a time and hands the slot to the next waiter', async () => {
+    expect(ocrConcurrency()).toBe(1);
+    const far = Date.now() + 10_000;
+    expect(await acquireOcrSlot(far)).toBe(true);
+    const second = acquireOcrSlot(far);
+    expect(ocrQueueState()).toMatchObject({ active: 1, waiting: 1 });
+    releaseOcrSlot();
+    expect(await second).toBe(true);
+    expect(ocrQueueState()).toMatchObject({ active: 1, waiting: 0 });
+    releaseOcrSlot();
+    expect(ocrQueueState().active).toBe(0);
+  });
+
+  it('gives up in the queue at the deadline instead of reaching the sidecar late', async () => {
+    expect(await acquireOcrSlot(Date.now() + 10_000)).toBe(true);
+    expect(await acquireOcrSlot(Date.now() + 20)).toBe(false);
+    expect(ocrQueueState().waiting).toBe(0);
+    releaseOcrSlot();
+  });
+});
+
+describe('mimeTypeFor', () => {
+  it('names the real type instead of calling every upload a JPEG', () => {
+    expect(mimeTypeFor('a.PDF')).toBe('application/pdf');
+    expect(mimeTypeFor('scan.png')).toBe('image/png');
+    expect(mimeTypeFor('x.webp')).toBe('image/webp');
+    expect(mimeTypeFor('photo.jpeg')).toBe('image/jpeg');
   });
 });
 
