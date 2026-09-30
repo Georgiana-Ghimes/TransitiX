@@ -199,6 +199,13 @@ describe('reportWarnings', () => {
     expect(codes([UNWEIGHED], getPreset('baumit_greutati'))).toContain('missing_gross_weight');
   });
 
+  it('does not warn about missing weight when the operator excluded it from XLSX', () => {
+    const excluded = { ...CONFIRMED, include_gross_weight_xlsx: false };
+    expect(codes([excluded], getPreset('baumit_greutati'))).not.toContain('missing_gross_weight');
+    expect(codes([{ ...UNWEIGHED, include_gross_weight_xlsx: false }], getPreset('rai_anexa')))
+      .not.toContain('missing_quantity_weight');
+  });
+
   it('warns when a billing column has no billing date behind it', () => {
     const withoutDate = { ...CONFIRMED, id: 'doc-9', data_facturare: null };
     const codes = reportWarnings(getPreset('centralizator_km').columns, [withoutDate])

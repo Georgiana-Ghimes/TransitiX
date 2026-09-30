@@ -8,6 +8,7 @@ import { createRequire } from 'module';
 import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
 import {
   extractGrossWeight,
+  extractNetWeight,
   isAcceptableAutoField,
   isGenericCountUnit,
   isPlausibleQuantity,
@@ -458,6 +459,7 @@ export function parseBaumitAviz(rawText) {
 
   const qty = parseQty(blob);
   const gross = extractGrossWeight(blob);
+  const net = extractNetWeight(blob);
   const defaults = annexFieldDefaults();
 
   return {
@@ -470,6 +472,7 @@ export function parseBaumitAviz(rawText) {
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
     gross_weight_kg: gross.value ?? null,
+    net_weight_kg: net.value ?? null,
     numar_document_marfa,
     layout: psl ? 'psl' : tro ? 'tro' : null,
     _stub: false,
@@ -577,6 +580,7 @@ export function repairAvizFromStored(row) {
     tip_marfa: preferTipMarfa(row, parsed),
     cantitate_marfa: preferQuantity(row, parsed),
     gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
+    net_weight_kg: row?.net_weight_kg ?? parsed?.net_weight_kg ?? null,
     numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
     // Derived, never stored and never edited: the delivery address exists only to answer
     // "which zone", and re-reading it from the OCR text each time means a document whose text

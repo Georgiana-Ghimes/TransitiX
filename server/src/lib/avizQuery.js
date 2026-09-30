@@ -204,8 +204,13 @@ export function uniqueZipEntry(name, used) {
  */
 export function avizDateClauses(dateField, alias = '') {
   const col = alias ? `${alias}.` : '';
-  const dayStart = `($n::date AT TIME ZONE 'Europe/Bucharest')`;
-  const nextDayStart = `(($n::date + 1) AT TIME ZONE 'Europe/Bucharest')`;
+  // `date AT TIME ZONE zone` is wrong here: with a UTC session it yields a *timestamp
+  // without time zone* equal to that calendar midnight in the zone (e.g. 03:00 for
+  // Bucharest in summer), which Postgres then re-reads as UTC — shifting the window
+  // three hours late and dropping early-morning uploads. Cast through `timestamp`
+  // so "midnight in Bucharest" becomes a real timestamptz (21:00 UTC previous day).
+  const dayStart = `($n::timestamp AT TIME ZONE 'Europe/Bucharest')`;
+  const nextDayStart = `((($n::date + 1)::timestamp) AT TIME ZONE 'Europe/Bucharest')`;
   if (dateField === 'incarcare') {
     return {
       from: `${col}created_at >= ${dayStart}`,

@@ -283,7 +283,7 @@ router.post('/manual', (req, res) => {
              ${colNames}
            ) VALUES (
              $1,$2,$3,$4,$5,
-             'confirmed', FALSE, $6, $7, 'driver',
+             'extracted', TRUE, $6, $7, 'driver',
              'driver_manual'
              ${colKeys.length ? `, ${colPlaceholders}` : ''}
            ) RETURNING *`,
@@ -299,13 +299,14 @@ router.post('/manual', (req, res) => {
           documentId: doc.id,
           batchId: batch.id,
           userId: req.user.id,
-          kind: 'confirmed',
+          kind: 'uploaded',
           summary: originalName,
           detail: {
             fields,
             has_photo: Boolean(file),
             trip_id: trip?.id || null,
             by: 'driver_manual',
+            needs_review: true,
           },
         });
 

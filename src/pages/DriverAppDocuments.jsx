@@ -7,17 +7,20 @@ import { findDriverForUser } from '@/lib/utils';
 import { HelpCircle, Upload, User } from 'lucide-react';
 import GuideView from '@/components/GuideView';
 import { DRIVER_GUIDE } from '@/lib/guide';
-
-/** Shared column: phone → tablet → fold / Surface without looking like a thin strip. */
-const SHELL =
-  'w-full max-w-[28rem] sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto';
+import {
+  DRIVER_MAIN_PAD_BOTTOM,
+  DRIVER_SHELL,
+  driverNavBtn,
+  driverNavIcon,
+  driverNavLabel,
+} from '@/lib/driverUi';
 
 /**
  * The driver shell for the documents companion: send paperwork, see your profile.
  *
  * Deliberately not the full driver app, the companion's job is the document queue, and a
  * driver on it has no routes to execute. `DriverApp.jsx` remains the Transitix one.
- * Sized for Chrome device presets (iPhone SE → iPad Pro / Fold / Surface).
+ * Sized for Chrome device presets and large system text / display (~150–200%).
  */
 export default function DriverAppDocuments() {
   const { user: authUser } = useAuth();
@@ -64,7 +67,7 @@ export default function DriverAppDocuments() {
       .slice(0, 2)
       .toUpperCase();
 
-  const TITLES = { profile: 'Profil', ghid: 'Ghid', upload: 'Încarcă documente' };
+  const TITLES = { profile: 'Profil', ghid: 'Ghid', upload: 'Documente' };
   const title = TITLES[tab] || TITLES.upload;
 
   return (
@@ -74,28 +77,28 @@ export default function DriverAppDocuments() {
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <div
-          className={`${SHELL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4`}
+          className={`${DRIVER_SHELL} flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5 sm:py-4`}
           style={{
             paddingLeft: 'max(1rem, env(safe-area-inset-left))',
             paddingRight: 'max(1rem, env(safe-area-inset-right))',
           }}
         >
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs text-white/60">Aplicație Șofer</p>
-            <p className="font-bold text-base sm:text-lg truncate">{title}</p>
+            <p className="text-sm text-white/70">Aplicație Șofer</p>
+            <p className="font-bold text-lg sm:text-xl leading-snug break-words">{title}</p>
           </div>
-          <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-base">
             {initials}
           </div>
         </div>
       </header>
 
       <main
-        className={`${SHELL} w-full flex-1 px-4 pt-4 sm:px-5 sm:pt-5`}
+        className={`${DRIVER_SHELL} w-full flex-1 px-4 pt-4 sm:px-5 sm:pt-5`}
         style={{
           paddingLeft: 'max(1rem, env(safe-area-inset-left))',
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
-          paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))',
+          paddingBottom: DRIVER_MAIN_PAD_BOTTOM,
         }}
       >
         {tab === 'profile' && <DriverProfile driver={driver} />}
@@ -108,14 +111,14 @@ export default function DriverAppDocuments() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div
-          className={`${SHELL} grid grid-cols-3`}
+          className={`${DRIVER_SHELL} grid grid-cols-3`}
           style={{
             paddingLeft: 'max(0px, env(safe-area-inset-left))',
             paddingRight: 'max(0px, env(safe-area-inset-right))',
           }}
         >
           {[
-            { key: 'upload', icon: Upload, label: 'Încarcă documente' },
+            { key: 'upload', icon: Upload, label: 'Documente' },
             { key: 'ghid', icon: HelpCircle, label: 'Ghid' },
             { key: 'profile', icon: User, label: 'Profil' },
           ].map((t) => {
@@ -126,14 +129,12 @@ export default function DriverAppDocuments() {
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={`relative flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 px-1 py-2 sm:min-h-[3.5rem] ${
+                className={`${driverNavBtn} ${
                   active ? 'text-[#0A2B4E]' : 'text-slate-400'
                 }`}
               >
-                <Icon className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" strokeWidth={active ? 2.25 : 2} />
-                <span className="max-w-[9.5rem] truncate px-1 text-[10px] font-medium leading-tight sm:max-w-none sm:text-[11px]">
-                  {t.label}
-                </span>
+                <Icon className={driverNavIcon} strokeWidth={active ? 2.25 : 2} />
+                <span className={driverNavLabel}>{t.label}</span>
               </button>
             );
           })}

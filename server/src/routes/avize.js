@@ -6,7 +6,6 @@ import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
 import {
   DEFAULT_RAI_COLUMNS,
-  exportColumnsFor,
   hasUsableColumns,
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
@@ -203,9 +202,10 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     throw err;
   }
   const template = serializeRow(tmpl.rows[0]);
-  const columns = exportColumnsFor(template);
   const report = buildReport({ template, documents: avize });
   // The annex keeps its exact agreed shape here, no totals row on the legacy path.
+  // report.columns already includes Editează Include-în-XLSX weight column choices.
+  const columns = report.columns;
   const workbook = renderReportWorkbook({
     name: template.name || 'Anexa',
     columns,

@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { isActiveTripStatus } from '@/lib/utils';
 import { isDocumentsProfile } from '@/lib/appProfile';
 import { formatAppVersion } from '@/lib/appVersion';
+import { driverDangerBtn } from '@/lib/driverUi';
 import { Truck, CheckCircle, Clock, Mail, Phone, LogOut } from 'lucide-react';
 
 export default function DriverProfile({ driver: driverProp, trips: tripsProp }) {
@@ -53,15 +54,15 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="bg-[#0A2B4E] rounded-xl shadow-sm p-4 sm:p-6 text-white">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-full bg-[#F5A623] flex items-center justify-center text-xl sm:text-2xl font-bold text-[#0A2B4E]">
+      <div className="bg-[#0A2B4E] rounded-xl shadow-sm p-5 sm:p-6 text-white">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-full bg-[#F5A623] flex items-center justify-center text-2xl font-bold text-[#0A2B4E]">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-base sm:text-lg truncate">{displayName}</p>
-            <p className="text-xs sm:text-sm text-white/60 truncate">{user?.email || ''}</p>
-            <span className="inline-block mt-1 px-2 py-0.5 text-[11px] sm:text-xs font-medium bg-white/20 rounded-full">
+            <p className="font-bold text-lg sm:text-xl break-words leading-snug">{displayName}</p>
+            <p className="text-base text-white/70 break-words mt-1">{user?.email || ''}</p>
+            <span className="inline-block mt-2 px-2.5 py-1 text-sm font-medium bg-white/20 rounded-full">
               Rol: {user?.role || 'driver'}
             </span>
           </div>
@@ -83,11 +84,11 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
               key={s.label}
               className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-3 sm:p-4 text-center min-w-0"
             >
-              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.color} mx-auto mb-1`} />
+              <Icon className={`w-5 h-5 ${s.color} mx-auto mb-1`} />
               <p className="text-xl sm:text-2xl font-bold text-[#0A2B4E] tabular-nums">
                 {loading ? '—' : s.value}
               </p>
-              <p className="text-[10px] sm:text-xs text-slate-400 truncate">{s.label}</p>
+              <p className="text-sm text-slate-500 break-words">{s.label}</p>
             </div>
           );
         })}
@@ -95,22 +96,22 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
       )}
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm divide-y divide-slate-100">
-        <div className="flex items-center gap-3 p-3.5 sm:p-4 min-w-0">
-          <div className="w-9 h-9 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center">
-            <Mail className="w-4 h-4 text-slate-500" />
+        <div className="flex items-center gap-3 p-4 min-w-0">
+          <div className="w-11 h-11 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center">
+            <Mail className="w-5 h-5 text-slate-500" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-700">Email</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email || '—'}</p>
+            <p className="text-base font-medium text-slate-800">Email</p>
+            <p className="text-base text-slate-500 break-words">{user?.email || '—'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3.5 sm:p-4 min-w-0">
-          <div className="w-9 h-9 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-slate-500" />
+        <div className="flex items-center gap-3 p-4 min-w-0">
+          <div className="w-11 h-11 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center">
+            <Phone className="w-5 h-5 text-slate-500" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-700">Telefon</p>
-            <p className="text-xs text-slate-400 truncate">{driverProp?.phone || user?.phone || '—'}</p>
+            <p className="text-base font-medium text-slate-800">Telefon</p>
+            <p className="text-base text-slate-500 break-words">{driverProp?.phone || user?.phone || '—'}</p>
           </div>
         </div>
       </div>
@@ -119,13 +120,13 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
         type="button"
         onClick={handleLogout}
         disabled={loggingOut}
-        className="flex items-center justify-center gap-2 w-full min-h-[48px] px-5 py-3 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 active:bg-red-700 transition-colors disabled:opacity-60"
+        className={driverDangerBtn}
       >
         <LogOut className="w-5 h-5 shrink-0" />
         {loggingOut ? 'Se deconectează…' : 'Deconectare'}
       </button>
 
-      <p className="text-center text-[11px] sm:text-xs text-slate-400 pt-1 pb-1">
+      <p className="text-center text-sm text-slate-400 pt-1 pb-1">
         Transitix Driver App {formatAppVersion()}
       </p>
     </div>

@@ -176,6 +176,20 @@ describe('gross weight, the field the report actually needs', () => {
     expect(extractNetWeight('Greutate neta, kg 15,360.00').value).toBe(15360);
   });
 
+  it('reads Greutate brută/netă (kg) 9.487,80 — unit in parentheses', () => {
+    const block = `
+Greutate netă (kg) 9.450,00
+Greutate brută (kg) 9.487,80
+`;
+    expect(extractNetWeight(block).value).toBe(9450);
+    expect(extractGrossWeight(block).value).toBe(9487.8);
+  });
+
+  it('reads US-style thousands with parentheses unit', () => {
+    expect(extractGrossWeight('Greutate brută (kg) 9,487.80').value).toBe(9487.8);
+    expect(extractNetWeight('Greutate netă (kg) 9,450.00').value).toBe(9450);
+  });
+
   it('reads it across the line breaks a PDF puts between tokens', () => {
     const asPdfGivesIt = 'Greutate\nbruta,\nkg\n15,744.00\npce / preluare';
     expect(extractGrossWeight(asPdfGivesIt).value).toBe(15744);
@@ -196,6 +210,39 @@ describe('gross weight, the field the report actually needs', () => {
 
   it('does not read a net-only document as a gross weight', () => {
     expect(extractGrossWeight('Greutate neta, kg 15,360.00').value).toBeNull();
+  });
+
+  it('reads gross from the Baumit PDF column order (kg after sac, label empty)', () => {
+    // Real pdf-parse stream from Aviz_Baumit_cu_zona_centrala „B”: gross digits sit in the
+    // goods table after "378.00 sac"; "Greutate brută:" is followed only by "pce / preluare".
+    const zonaCentrala = `
+Cantitatea
+378.00
+sac
+9,487.80
+kg
+Cantitatea
+pachetului
+7.00
+pal
+Greutate
+netă:
+9,450.00
+kg
+Greutate
+brută:
+pce
+/
+preluare
+pce
+`;
+    expect(extractNetWeight(zonaCentrala).value).toBe(9450);
+    expect(extractGrossWeight(zonaCentrala).value).toBe(9487.8);
+  });
+
+  it('does not treat product unit size "25 kg" as gross beside a labelled net', () => {
+    const onlyNetAndBag = 'Adeziv ADCELEX 25 kg (54/pal)\nGreutate netă: 9,450.00 kg\nGreutate brută: pce';
+    expect(extractGrossWeight(onlyNetAndBag).value).toBeNull();
   });
 
   it('still accepts a space as the thousands separator', () => {

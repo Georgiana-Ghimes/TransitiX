@@ -118,14 +118,26 @@ export default function AvizFilePreview({ fileUrl, fill = false }) {
     };
   }, [fileUrl]);
 
-  const openUrl = src || withAccessToken(fileUrl);
+  const isManualPlaceholder = String(fileUrl || '').startsWith('manual://');
+  const openUrl = !isManualPlaceholder && (src || withAccessToken(fileUrl));
 
   if (error) {
     return (
-      <div className={`${fill ? 'absolute inset-0 flex flex-col justify-center' : ''} p-4 space-y-2`}>
-        <p className="text-xs text-amber-800">{error}</p>
+      <div
+        className={`${
+          fill ? 'absolute inset-0' : 'w-full min-h-[240px] h-[36vh] max-h-[420px]'
+        } flex flex-col items-center justify-center gap-3 p-6`}
+      >
+        <p className="max-w-sm text-center text-sm leading-relaxed text-amber-800">
+          {error}
+        </p>
         {openUrl ? (
-          <a href={openUrl} target="_blank" rel="noreferrer" className="text-xs text-sky-700 hover:underline">
+          <a
+            href={openUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-sky-700 hover:underline"
+          >
             Deschide documentul într-un tab nou
           </a>
         ) : null}

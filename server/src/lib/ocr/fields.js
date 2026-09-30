@@ -179,15 +179,33 @@ const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000,
  * 768 where the weighbridge said 15.74. That is the mistake the client corrected us on once
  * already, arriving again through a different door.
  *
+ * Some PDF layouts wrap the unit in parentheses — `Greutate brută (kg) 9.487,80` — which the
+ * older pattern missed because `(` blocked the unit token.
+ *
  * The digits are matched without `\s`, so a number cannot swallow the following line on a PDF
  * that puts every token on its own row. A literal space still allows "15 744,00".
  */
 function matchLabelledWeight(blob, label) {
-  const after = blob.match(new RegExp(`(?:${label})\\s*[:\\-]?\\s*([\\d][\\d., ]*)\\s*(kg|to?ne?|t)\\b`, 'i'));
-  if (after) return { raw: after[1], unit: after[2], matched: after[0] };
+  const unit = '(kg|to?ne?|t)\\b';
+  const num = '([\\d][\\d., ]*)';
+  // Optional parentheses around the unit: "(kg)" or bare "kg".
+  const unitToken = `\\(?\\s*${unit}\\s*\\)?`;
 
-  const before = blob.match(new RegExp(`(?:${label})\\s*[,:\\-]?\\s*(kg|to?ne?|t)\\b\\s*[:\\-]?\\s*([\\d][\\d., ]*)`, 'i'));
-  if (before) return { raw: before[2], unit: before[1], matched: before[0] };
+  // Label, then unit, then number — `Greutate bruta, kg 15,744.00` / `Greutate brută (kg) 9.487,80`.
+  const unitThenNum = blob.match(
+    new RegExp(`(?:${label})\\s*[,:\\-]?\\s*${unitToken}\\s*[:\\-]?\\s*${num}`, 'i'),
+  );
+  if (unitThenNum) {
+    return { raw: unitThenNum[2], unit: unitThenNum[1], matched: unitThenNum[0] };
+  }
+
+  // Label, then number, then unit — `Greutate bruta: 9.000 kg`.
+  const numThenUnit = blob.match(
+    new RegExp(`(?:${label})\\s*[:\\-]?\\s*${num}\\s*${unit}`, 'i'),
+  );
+  if (numThenUnit) {
+    return { raw: numThenUnit[1], unit: numThenUnit[2], matched: numThenUnit[0] };
+  }
 
   return null;
 }
@@ -203,11 +221,68 @@ function weightFrom(hit, confidence) {
 const GROSS_LABEL = 'greutate\\s*(?:bruta|brută)|masa\\s*(?:bruta|brută)|gross\\s*weight|g\\.?\\s*bruta';
 const NET_LABEL = 'greutate\\s*(?:neta|netă)|masa\\s*(?:neta|netă)|net\\s*weight';
 
+/** Bag/unit sizes like "25 kg" on the product line — not a truck load. */
+const LOAD_WEIGHT_MIN_KG = 100;
+
+/**
+ * Baumit digital PDFs column-order the goods table so the gross kg sits after the bag
+ * count, while the later "Greutate brută:" label only has "pce / preluare" under it:
+ *   378.00 sac · 9,487.80 kg · … · Greutate netă: 9,450.00 kg · Greutate brută: pce
+ */
+function matchQuantityAdjacentGross(blob) {
+  const m = blob.match(
+    /\b([\d][\d.,]*)\s*(?:sac(?:i)?|gale(?:t[iă]|ți)|buc(?:ati|ăți)?|pcs)\b\s+([\d][\d.,]*)\s*kg\b/i,
+  );
+  if (!m) return null;
+  return { raw: m[2], unit: 'kg', matched: m[0] };
+}
+
+/**
+ * When net is labelled but gross is not, pick another load-sized kg figure — preferably
+ * the one just above net (packaging delta). Skips the net value itself and tiny unit sizes.
+ */
+function matchGrossBesideNet(blob, netKg) {
+  const re = /([\d][\d.,]*)\s*kg\b/gi;
+  const candidates = [];
+  let m;
+  while ((m = re.exec(blob)) !== null) {
+    const value = parseNumber(m[1]);
+    if (value == null || value < LOAD_WEIGHT_MIN_KG) continue;
+    if (netKg != null && Math.abs(value - netKg) < 0.05) continue;
+    candidates.push({ value, raw: m[1], matched: m[0] });
+  }
+  if (!candidates.length) return null;
+
+  if (netKg != null) {
+    const above = candidates.filter((c) => c.value >= netKg - 0.05);
+    if (above.length) {
+      above.sort((a, b) => a.value - b.value);
+      return { raw: above[0].raw, unit: 'kg', matched: above[0].matched };
+    }
+  }
+
+  candidates.sort((a, b) => b.value - a.value);
+  return { raw: candidates[0].raw, unit: 'kg', matched: candidates[0].matched };
+}
+
 export function extractGrossWeight(text) {
   const blob = String(text || '');
 
   const labelled = weightFrom(matchLabelledWeight(blob, GROSS_LABEL), 0.95);
   if (labelled) return labelled;
+
+  // Table-column layout: kg figure right after the bag/bucket count.
+  const besideQty = weightFrom(matchQuantityAdjacentGross(blob), 0.88);
+  if (besideQty && besideQty.value >= LOAD_WEIGHT_MIN_KG) return besideQty;
+
+  // Net labelled (or a hollow "Greutate brută:" with no digits after it) — pick another
+  // load-sized kg. Do not run this on bare "Greutate 9000 kg"; that stays low-confidence.
+  const net = weightFrom(matchLabelledWeight(blob, NET_LABEL), 0.9);
+  const hollowGrossLabel = new RegExp(`(?:${GROSS_LABEL})`, 'i').test(blob);
+  if (net || hollowGrossLabel) {
+    const besideNet = weightFrom(matchGrossBesideNet(blob, net?.value ?? null), 0.8);
+    if (besideNet) return besideNet;
+  }
 
   // Unlabelled: it may be the net weight, so an operator should confirm.
   const any = weightFrom(matchLabelledWeight(blob, 'greutate|masa|weight'), 0.55);

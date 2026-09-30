@@ -616,6 +616,32 @@ describe('mapAnnexRows', () => {
     expect(mapped[0].cantitate_marfa).toBe(9.96);
   });
 
+  it('leaves Cantitate blank when operator excludes greutate brută from XLSX', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      numar_tpo: 'TPO-1',
+      cantitate_marfa: 245,
+      tip_marfa: 'saci',
+      gross_weight_kg: 9964.15,
+      include_gross_weight_xlsx: false,
+    }]);
+    expect(mapped[0].cantitate_marfa).toBe('');
+  });
+
+  it('blanks gross/net weight columns when their XLSX include flags are off', () => {
+    const columns = [
+      { key: 'gross_weight_kg', header: 'Brut', source: 'gross_weight_kg' },
+      { key: 'net_weight_kg', header: 'Net', source: 'net_weight_kg' },
+    ];
+    const mapped = mapAnnexRows(columns, [{
+      gross_weight_kg: 15744,
+      net_weight_kg: 15360,
+      include_gross_weight_xlsx: false,
+      include_net_weight_xlsx: false,
+    }]);
+    expect(mapped[0].gross_weight_kg).toBe('');
+    expect(mapped[0].net_weight_kg).toBe('');
+  });
+
   it('keeps each cursă of one TPO on its own row, with its own route', () => {
     // TPO-0025803 driven twice: two avize, two days, two destinations. One row per cursă is
     // what the customer's sheet wants, and Numar curse says 2 on both so the pair reads as one

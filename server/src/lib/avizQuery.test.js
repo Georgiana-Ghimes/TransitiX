@@ -55,10 +55,23 @@ describe('avizQuery', () => {
       to: '2026-08-30',
       dateField: 'incarcare',
     });
-    expect(sql).toMatch(/a\.created_at >= \(\$2::date AT TIME ZONE 'Europe\/Bucharest'\)/);
-    expect(sql).toMatch(/a\.created_at < \(\(\$3::date \+ 1\) AT TIME ZONE 'Europe\/Bucharest'\)/);
+    expect(sql).toMatch(/a\.created_at >= \(\$2::timestamp AT TIME ZONE 'Europe\/Bucharest'\)/);
+    expect(sql).toMatch(/a\.created_at < \(\(\(\$3::date \+ 1\)::timestamp\) AT TIME ZONE 'Europe\/Bucharest'\)/);
     expect(sql).not.toMatch(/data_efectuare_cursa/);
     expect(params).toContain('2026-08-24');
+  });
+
+  it('uses timestamp AT TIME ZONE so same-day "Azi" includes early Bucharest hours', () => {
+    // Regression: `date AT TIME ZONE` under a UTC session produced 03:00 UTC and dropped
+    // uploads between midnight and 03:00 Europe/Bucharest on the filter day.
+    const { sql } = buildAvizListQuery({
+      companyId: 'co',
+      from: '2026-09-30',
+      to: '2026-09-30',
+      dateField: 'incarcare',
+    });
+    expect(sql).toMatch(/::timestamp AT TIME ZONE/);
+    expect(sql).not.toMatch(/\$\d::date AT TIME ZONE/);
   });
 
   it('keeps the trip date for an unknown or missing date_field', () => {

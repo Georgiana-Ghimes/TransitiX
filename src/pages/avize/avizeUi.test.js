@@ -94,6 +94,17 @@ describe('avizeUi', () => {
     expect(form.numar_tpo).toBe('TPO-1');
     expect(form.trip_id).toBe('trip-9');
     expect(form.ruta_display).toBe('B');
+    expect(form.include_gross_weight_xlsx).toBe(true);
+    expect(form.include_net_weight_xlsx).toBe(true);
+  });
+
+  it('keeps XLSX include flags off when the row opted out', () => {
+    const form = emptyForm({
+      include_gross_weight_xlsx: false,
+      include_net_weight_xlsx: false,
+    });
+    expect(form.include_gross_weight_xlsx).toBe(false);
+    expect(form.include_net_weight_xlsx).toBe(false);
   });
 
   it('auto-downloads the email stub annex only once per attempt', () => {

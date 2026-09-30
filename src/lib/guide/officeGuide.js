@@ -57,7 +57,7 @@ const OCR = {
       { term: 'Greutate brută', text: 'Citită când documentul o tipărește. Vezi secțiunea despre greutate, e câmpul cu cele mai multe consecințe.' },
     ]),
     p('Nu sunt citite și le completezi tu: valoarea TPO, km parcurși, tariful pe km, taxele suplimentare și observațiile. Nu apar pe avizul de expediție, deci nu are de unde să le ia.'),
-    warn('Câmpurile pe care parserul nu e sigur apar cu marginea galbenă și textul „verifică”. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit.'),
+    warn('Câmpurile pe care OCR nu e sigur apar cu marginea galbenă și textul „verifică”. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit.'),
   ],
 };
 
@@ -70,6 +70,7 @@ const GREUTATE = {
     p('Când avizul nu tipărește greutatea brută, celula rămâne goală, iar documentul apare în avertismentul „Cantitate (tone) goală” cu numele lui. Înainte se scria acolo numărul de saci, deci o coloană cu antetul „(tone)” conținea 378 lângă 21,00: de douăzeci de ori mai mare, evident pentru cine se uită, invizibil pentru cine adună.'),
     warn('Greutatea netă nu ține locul celei brute niciodată. Sunt mărimi diferite, iar o valoare aproximativă într-o coloană de facturare e mai rea decât un gol pe care cineva îl observă.'),
     p('Poți scrie greutatea de mână în Editează aviz. Când o scrii, taxa de zonă se recalculează pe loc.'),
+    p('Sub greutatea brută și netă există bifă „Include în XLSX”. Debifezi când cifra trebuie pe ecran (taxă zonă, verificare) dar nu în fișierul care pleacă la client.'),
   ],
 };
 
@@ -156,8 +157,9 @@ const SABLOANE = {
   id: 'sabloane',
   title: 'Șabloane și exportul XLSX',
   blocks: [
-    p('Un șablon spune ce coloane are fișierul și în ce ordine. Anexa Factura RAI e blocată: are cele 14 coloane cerute de client și nu poate fi modificată, ca două firme pe aceeași versiune să nu trimită două fișiere diferite.'),
-    p('Coloanele ei, în ordine: Nr. Crt., Numar TPO, Data efectuare cursa, Valoare TPO, Numar auto, Ruta transport, Tip marfa, Cantitate marfa (tone), Numar document marfa, Numar curse, Taxe suplimentare, Km parcursi, Tarif Km, Observatii.'),
+    p('Un șablon spune ce coloane are fișierul și în ce ordine. Anexa Factura RAI e blocată ca bază: are coloanele cerute de client și nu poate fi rescrisă din Șabloane.'),
+    p('Coloanele ei de bază, în ordine: Nr. Crt., Numar TPO, Data efectuare cursa, Valoare TPO, Numar auto, Ruta transport, Tip marfa, Cantitate marfa (tone), Numar document marfa, Numar curse, Taxe suplimentare, Km parcursi, Tarif Km, Observatii.'),
+    p('Bifele „Include în XLSX” de sub greutatea brută și netă din Editează schimbă foaia: brută aduce (sau scoate) Cantitate marfa (tone), netă aduce (sau scoate) coloana Greutate netă (kg).'),
     terms([
       { term: 'Valoarea Default', text: 'Se scrie în Excel doar când câmpul de pe aviz e gol, sau 0 la câmpurile unde 0 înseamnă necompletat.' },
       { term: 'Șablon fără coloane', text: 'Exportul se oprește cu un mesaj, în loc să inventeze alt aranjament. Un fișier care ignoră șablonul ales arată exact ca unul corect.' },

@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import { NUMERIC_SOURCES } from './avizTemplate.js';
-import { canTotal, numberFormatFor } from './reporting/sources.js';
+import { canTotal, isNumericSource, numberFormatFor } from './reporting/sources.js';
 
 const THIN_BORDER = {
   top: { style: 'thin' },
@@ -10,7 +10,9 @@ const THIN_BORDER = {
 };
 
 function numericColumn(col) {
-  return NUMERIC_SOURCES.has(col.source) || NUMERIC_SOURCES.has(col.key);
+  return NUMERIC_SOURCES.has(col.source)
+    || NUMERIC_SOURCES.has(col.key)
+    || isNumericSource(col.source);
 }
 
 /**

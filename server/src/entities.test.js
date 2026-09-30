@@ -88,6 +88,8 @@ describe('ENTITY_MAP', () => {
       'observatii',
       'ruta_display',
       'trip_id',
+      'include_gross_weight_xlsx',
+      'include_net_weight_xlsx',
     ]));
   });
 

@@ -3,7 +3,7 @@ import { AVIZ_FORM_FIELDS, AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSa
 import { ANNEX_SOURCE_KEYS } from '../../server/src/lib/avizTemplate.js';
 
 describe('avizAnnex field map', () => {
-  it('lists the 14 fields the Editează form can save', () => {
+  it('lists the fields the Editează form can save', () => {
     expect(AVIZ_FORM_FIELDS.map((f) => f.key)).toEqual([
       'numar_tpo',
       'data_efectuare_cursa',
@@ -15,6 +15,7 @@ describe('avizAnnex field map', () => {
       // Weighbridge figure: editable on the form, fed into Anexa “Cantitate” as tons, not a
       // separate column on the locked RAI A–N layout.
       'gross_weight_kg',
+      'net_weight_kg',
       'numar_document_marfa',
       'numar_curse',
       'taxe_suplimentare',
@@ -22,6 +23,7 @@ describe('avizAnnex field map', () => {
       'tarif_km',
       'observatii',
     ]);
+    expect(AVIZ_FORM_FIELDS.map((f) => f.key)).toContain('net_weight_kg');
   });
 
   it('keeps every XLSX annex source editable on the form (except generated Nr. crt)', () => {

@@ -20,6 +20,12 @@ import {
 import GuideView from '@/components/GuideView';
 import { DRIVER_GUIDE } from '@/lib/guide';
 import { notifyError } from '@/lib/notify';
+import {
+  DRIVER_MAIN_PAD_BOTTOM,
+  driverNavBtn,
+  driverNavIcon,
+  driverNavLabel,
+} from '@/lib/driverUi';
 
 /** One primary action per status, TMS driver pattern */
 const STATUS_FLOW = [
@@ -176,29 +182,29 @@ export default function DriverApp() {
   }
 
   return (
-    <div className="max-w-md mx-auto pb-24">
+    <div className="max-w-md mx-auto" style={{ paddingBottom: DRIVER_MAIN_PAD_BOTTOM }}>
       <div className="bg-[#0A2B4E] text-white px-5 py-4 -mx-4 lg:-mx-6 lg:rounded-t-xl sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/60">Aplicație Șofer</p>
-            <p className="font-bold text-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm text-white/70">Aplicație Șofer</p>
+            <p className="font-bold text-lg sm:text-xl break-words leading-snug">
               {tab === 'route'
                 ? 'Ruta mea'
                 : selectedTrip && tab === 'trips' ? selectedTrip.cmr_number : 'Cursele mele'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* The bottom bar already carries five tabs; a sixth would shrink every label past
                 reading. The guide is a thing you reach for once, so it sits in the header. */}
             <button
               type="button"
               onClick={() => setGuideOpen(true)}
               aria-label="Ghidul șoferului"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white"
             >
-              <HelpCircle className="h-5 w-5" />
+              <HelpCircle className="h-6 w-6" />
             </button>
-            <div className="w-9 h-9 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-sm">
+            <div className="w-11 h-11 rounded-full bg-[#F5A623] text-[#0A2B4E] flex items-center justify-center font-semibold text-base">
               {initials}
             </div>
           </div>
@@ -458,17 +464,17 @@ export default function DriverApp() {
                   if (t.key !== 'trips') setSelectedTrip(null);
                   if (t.key === 'notifications') loadUnreadCount();
                 }}
-                className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 ${
+                className={`${driverNavBtn} ${
                   active ? 'text-[#0A2B4E]' : 'text-slate-400'
                 }`}
               >
-                <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.25 : 2} />
+                <Icon className={driverNavIcon} strokeWidth={active ? 2.25 : 2} />
                 {t.badge > 0 && (
-                  <span className="absolute top-1.5 right-[18%] flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute top-1.5 right-[12%] flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
                     {t.badge > 9 ? '9+' : t.badge}
                   </span>
                 )}
-                <span className="max-w-full truncate text-[10px] font-medium leading-tight">
+                <span className={driverNavLabel}>
                   {t.label}
                 </span>
               </button>
