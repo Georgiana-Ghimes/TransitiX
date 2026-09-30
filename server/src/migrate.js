@@ -1471,6 +1471,31 @@ CREATE INDEX IF NOT EXISTS idx_users_verify_token ON users (email_verify_token_h
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users (google_sub)
   WHERE google_sub IS NOT NULL;
 
+-- OCR output keyed by what was read, not by which upload row read it.
+--
+-- The same photo arrives more than once: a driver re-sends one the signal dropped, the office
+-- uploads a PDF the driver already sent, a container restart loses the work in flight. Each of
+-- those cost a fresh five-minute read of bytes already transcribed.
+--
+-- Keyed per company, so one tenant's document can never answer for another's even when the
+-- files are byte-identical. The pipeline_version column is what lets an OCR improvement
+-- invalidate the lot: bump it in textCache.js and every document is read again.
+CREATE TABLE IF NOT EXISTS ocr_text_cache (
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  content_sha256 TEXT NOT NULL,
+  pipeline_version INT NOT NULL,
+  text TEXT NOT NULL,
+  source TEXT NOT NULL,
+  pages INT,
+  truncated BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  hits INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (company_id, content_sha256, pipeline_version)
+);
+-- Housekeeping reads it oldest-first; nothing else queries by time.
+CREATE INDEX IF NOT EXISTS idx_ocr_text_cache_used ON ocr_text_cache(used_at);
+
 `
 
 async function migrate() {

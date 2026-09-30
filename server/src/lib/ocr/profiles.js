@@ -81,9 +81,19 @@ const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|maca
  */
 const LOOSE_CITY_ROUTE = /\b([A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2}\s+(?:-|–|→|catre|către)\s+[A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ]?[a-zăâîșț]{2,}){0,2})\b/;
 
+/**
+ * A cell's worth of text: stops at a newline, a `;` or a tab.
+ *
+ * The tab is what `pdfRows` / the OCR sidecar write between two columns of the same row. Before
+ * they did, a label at the left edge and the figure at the right edge were on separate lines and
+ * these captures could not reach past the label anyway. Now that the row is one line, `[^\n;]`
+ * would run from „Ruta:" all the way through whatever the page prints in the next column.
+ */
+const CELL = '[^\\n;\\t]';
+
 const routeField = (text) => {
   const labelled = matchPatterns(text, [
-    /(?:ruta|traseu|route)\s*[:\-]?\s*([A-ZĂÂÎȘȚ][^\n;]{3,80})/i,
+    new RegExp(`(?:ruta|traseu|route)\\s*[:\\-]?\\s*([A-ZĂÂÎȘȚ]${CELL}{3,80})`, 'i'),
   ], { baseConfidence: 0.8 });
   if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
 
@@ -106,8 +116,8 @@ const baumitRouteField = (text) => {
 const goodsField = (text) => {
   // Do not treat HS / "Cod marfă: 38245090" as the goods description.
   const labelled = matchPatterns(text, [
-    /(?:tip\s*marf[aă]|denumire\s*produs)\s*[:\-]?\s*([^\n;]{3,60})/i,
-    /(?<!cod\s)(?<!codul\s)\bprodus\b\s*[:\-]?\s*([^\n;]{3,60})/i,
+    new RegExp(`(?:tip\\s*marf[aă]|denumire\\s*produs)\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
+    new RegExp(`(?<!cod\\s)(?<!codul\\s)\\bprodus\\b\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
   ], { baseConfidence: 0.75 });
   if (labelled.value && !/^\d{6,}$/.test(String(labelled.value).trim())) return labelled;
 
@@ -231,7 +241,9 @@ const carnetRouteField = (text) => {
 };
 
 const carnetGoodsField = (text) => {
-  const found = String(text || '').match(/\btip\s*marf[aăá]?\s*[:.\-]?\s*([^\n;]{3,60})/i);
+  const found = String(text || '').match(
+    new RegExp(`\\btip\\s*marf[aăá]?\\s*[:.\\-]?\\s*(${CELL}{3,60})`, 'i'),
+  );
   if (!found) return goodsField(text);
   const value = found[1].replace(/\s+/g, ' ').trim();
   return value ? { value: value.slice(0, 60), confidence: 0.85, matched: found[0] } : NO_MATCH;
@@ -433,10 +445,10 @@ export const OCR_PROFILES = [
       loading_date: extractDate,
       numar_auto: extractPlate,
       shipper_name: (text) => matchPatterns(text, [
-        /(?:expeditor|shipper)\s*[:\-]?\s*([^\n;]{3,60})/i,
+        new RegExp(`(?:expeditor|shipper)\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
       ], { baseConfidence: 0.8 }),
       consignee_name: (text) => matchPatterns(text, [
-        /(?:destinatar|consignee)\s*[:\-]?\s*([^\n;]{3,60})/i,
+        new RegExp(`(?:destinatar|consignee)\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
       ], { baseConfidence: 0.8 }),
       gross_weight_kg: extractGrossWeight,
       pallets: extractPalletCount,

@@ -17,6 +17,12 @@ services:
       PADDLE_OCR_VL_PDF_PAGES: ${PADDLE_OCR_VL_PDF_PAGES:-2}
       PADDLE_OCR_VL_PDF_DPI: ${PADDLE_OCR_VL_PDF_DPI:-200}
     restart: unless-stopped
+    # A 0.9B model on CPU will take whatever it is given; the rest of the stack has to live.
+    deploy:
+      resources:
+        limits:
+          cpus: "${PADDLE_OCR_VL_CPUS:-4}"
+          memory: ${PADDLE_OCR_VL_MEMORY:-8g}
     volumes:
       - paddle_ocr_vl_models:/root/.paddleocr
       - paddle_ocr_vl_paddlex:/root/.paddlex

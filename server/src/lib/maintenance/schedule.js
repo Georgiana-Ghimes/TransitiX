@@ -8,6 +8,7 @@
  * The first pass is delayed rather than immediate, a restart loop would otherwise hammer the
  * database with delete batches while the process is still failing to come up.
  */
+import { pruneOcrTextCache } from '../ocr/textCache.js';
 import { runRetention } from './retention.js';
 
 const HOUR = 60 * 60 * 1000;
@@ -24,6 +25,11 @@ export function retentionIntervalMs(env = process.env) {
 
 async function tick() {
   try {
+    // Transcripts of files nobody has looked at in months, and everything an older OCR
+    // pipeline produced. Its own try/catch inside, so it cannot skip the retention pass.
+    const cache = await pruneOcrTextCache();
+    if (cache.removed > 0) console.log(`[retention] cache OCR: ${cache.removed} rânduri șterse`);
+
     const result = await runRetention();
     if (result.skipped) return;
     if (result.deleted > 0) {

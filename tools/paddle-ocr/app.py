@@ -82,6 +82,15 @@ _AUTO_ROTATE = os.environ.get("PADDLE_OCR_AUTO_ROTATE", "1").strip() not in ("0"
 # handwritten carnet needs (see get_engine). Costs CPU roughly with the square of this number,
 # so it is the first knob to turn down if the VM cannot keep up.
 _DET_SIDE_LEN = int(os.environ.get("PADDLE_OCR_DET_SIDE_LEN", "1920") or 1920)
+# Intel's CPU kernels. Paddle's own recommendation for CPU inference and worth roughly 2x here.
+# Turn off if the container starts growing in memory across many pages — mkldnn caches a plan
+# per input shape, and every page of a scan is a slightly different shape.
+_MKLDNN = os.environ.get("PADDLE_OCR_MKLDNN", "1").strip() not in ("0", "false", "False")
+# Paddle defaults to 10 threads. On a 2-4 core VM shared with Postgres and the API that is
+# oversubscription: the threads fight each other and the page takes longer than with four.
+_CPU_THREADS = int(os.environ.get("PADDLE_OCR_CPU_THREADS", "0") or 0) or max(
+    1, min(4, os.cpu_count() or 4)
+)
 
 
 def _avg(confs: Optional[list[float]]) -> float:
@@ -127,8 +136,8 @@ def _load_engine():
         use_gpu = os.environ.get("PADDLE_OCR_USE_GPU", "0").strip() in ("1", "true", "True")
         lang = os.environ.get("PADDLE_OCR_LANG", "latin").strip() or "latin"
         log.info(
-            "Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s, det_side=%s)",
-            lang, use_gpu, _AUTO_ROTATE, _DET_SIDE_LEN,
+            "Loading PaddleOCR (lang=%s, gpu=%s, auto_rotate=%s, det_side=%s, mkldnn=%s, threads=%s)",
+            lang, use_gpu, _AUTO_ROTATE, _DET_SIDE_LEN, _MKLDNN, _CPU_THREADS,
         )
 
         # Detector geometry first, because it is what decided that handwriting was invisible:
@@ -154,13 +163,17 @@ def _load_engine():
             # against `corrected_fields` and a review queue, not per line with no appeal.
             "drop_score": float(os.environ.get("PADDLE_OCR_DROP_SCORE", "0.10") or 0.10),
         }
+        # Speed, not geometry. Kept apart from `tuned` so the ladder below can drop these two
+        # without also dropping the detector settings that decide whether a page reads at all.
+        cpu = {"enable_mkldnn": _MKLDNN, "cpu_threads": _CPU_THREADS} if not use_gpu else {}
         base = {"use_angle_cls": True, "lang": lang, "use_gpu": use_gpu, "show_log": False}
 
         # Degrade one step at a time. The old two-step fallback dropped *all* tuning the moment
         # any single kwarg was unknown, so a version bump could silently restore printed-text
         # defaults and nobody would see it in the logs.
         for attempt, kwargs in (
-            ("tuned", {**base, **tuned}),
+            ("tuned", {**base, **tuned, **cpu}),
+            ("tuned-without-cpu-flags", {**base, **tuned}),
             ("thresholds-only", {**base, "det_db_box_thresh": tuned["det_db_box_thresh"],
                                  "drop_score": tuned["drop_score"]}),
             ("base", base),
@@ -180,45 +193,175 @@ def _load_engine():
         raise RuntimeError(f"PaddleOCR unavailable: {exc}") from exc
 
 
-def lines_and_conf_from_result(result) -> tuple[str, list[float]]:
-    """Normalize paddleocr 2.x / 3.x result shapes into plain text + confidences."""
-    if not result:
-        return "", []
+def _float(value) -> Optional[float]:
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    return out
 
-    lines: list[str] = []
-    confs: list[float] = []
+
+def box_metrics(box) -> Optional[tuple[float, float, float, float]]:
+    """
+    (left, right, y_center, height) from whatever shape the box arrived in.
+
+    Paddle hands back a 4-point polygon in 2.x and either a polygon or an (x1, y1, x2, y2)
+    rectangle in 3.x, so this normalises all three rather than trusting one.
+    """
+    if box is None:
+        return None
+    points: list[tuple[float, float]] = []
+
+    try:
+        flat = list(box)
+    except TypeError:
+        return None
+
+    if len(flat) == 4 and all(_float(v) is not None for v in flat):
+        x1, y1, x2, y2 = (float(v) for v in flat)
+        return min(x1, x2), max(x1, x2), (y1 + y2) / 2.0, abs(y2 - y1)
+
+    for point in flat:
+        try:
+            px, py = list(point)[:2]
+        except (TypeError, ValueError):
+            return None
+        fx, fy = _float(px), _float(py)
+        if fx is None or fy is None:
+            return None
+        points.append((fx, fy))
+
+    if len(points) < 2:
+        return None
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return min(xs), max(xs), sum(ys) / len(ys), max(ys) - min(ys)
+
+
+def entries_from_result(result) -> list[dict]:
+    """
+    Normalize paddleocr 2.x / 3.x result shapes into [{text, score, box}].
+
+    The box is kept, not dropped. Paddle returns one entry per detected box, and a label and
+    the figure printed beside it are two boxes — reading order alone puts them on separate
+    lines, which is where every "label then number on the same line" pattern downstream
+    stopped finding anything.
+    """
+    if not result:
+        return []
+
+    entries: list[dict] = []
 
     if isinstance(result, list) and result and isinstance(result[0], list):
-        page = result[0]
-        for item in page or []:
-            if not item:
+        for item in result[0] or []:
+            if not item or not isinstance(item, (list, tuple)) or len(item) < 2:
                 continue
-            if isinstance(item, (list, tuple)) and len(item) >= 2:
-                text_part = item[1]
-                if isinstance(text_part, (list, tuple)) and text_part:
-                    lines.append(str(text_part[0]))
-                    if len(text_part) > 1:
-                        try:
-                            confs.append(float(text_part[1]))
-                        except (TypeError, ValueError):
-                            pass
-                elif isinstance(text_part, str):
-                    lines.append(text_part)
-        return "\n".join(lines).strip(), confs
+            text_part = item[1]
+            if isinstance(text_part, (list, tuple)) and text_part:
+                entries.append({
+                    "text": str(text_part[0]),
+                    "score": _float(text_part[1]) if len(text_part) > 1 else None,
+                    "box": item[0],
+                })
+            elif isinstance(text_part, str):
+                entries.append({"text": text_part, "score": None, "box": item[0]})
+        return entries
 
     if isinstance(result, list):
         for item in result:
-            if isinstance(item, dict):
-                if "rec_texts" in item:
-                    lines.extend(str(t) for t in item.get("rec_texts") or [])
-                    for c in item.get("rec_scores") or []:
-                        try:
-                            confs.append(float(c))
-                        except (TypeError, ValueError):
-                            pass
-                elif "text" in item:
-                    lines.append(str(item["text"]))
-    return "\n".join(lines).strip(), confs
+            if not isinstance(item, dict):
+                continue
+            if "rec_texts" in item:
+                texts = [str(t) for t in item.get("rec_texts") or []]
+                scores = list(item.get("rec_scores") or [])
+                boxes = None
+                for key in ("rec_polys", "dt_polys", "rec_boxes"):
+                    if item.get(key) is not None:
+                        boxes = list(item[key])
+                        break
+                for index, text in enumerate(texts):
+                    entries.append({
+                        "text": text,
+                        "score": _float(scores[index]) if index < len(scores) else None,
+                        "box": boxes[index] if boxes is not None and index < len(boxes) else None,
+                    })
+            elif "text" in item:
+                entries.append({"text": str(item["text"]), "score": None, "box": item.get("box")})
+    return entries
+
+
+# Mirrors server/src/lib/ocr/pdfRows.js: a tab is a column break, a space a word break.
+_COLUMN_GAP = 1.2
+_WORD_GAP = 0.12
+
+
+def rows_from_entries(entries: list[dict]) -> str:
+    """
+    One line per visual row of the page.
+
+    Without this, `Greutate brută:` and `9.487,80` are separate lines and the extractor sees a
+    label with nothing after it. A tab between columns keeps the two in one line for the label
+    patterns while still marking where the cell ends, so a capture cannot run into the column
+    next to it.
+
+    Entries whose box could not be read fall back to their own line, in arrival order — a
+    missing coordinate must not drop the text.
+    """
+    placed = []
+    loose = []
+    for entry in entries:
+        text = str(entry.get("text") or "")
+        if not text.strip():
+            continue
+        metrics = box_metrics(entry.get("box"))
+        if metrics is None:
+            loose.append(text)
+            continue
+        left, right, y_center, height = metrics
+        placed.append({"text": text, "left": left, "right": right, "y": y_center,
+                       "height": height if height > 0 else 0.0})
+
+    if not placed:
+        return "\n".join(loose).strip()
+
+    heights = sorted(p["height"] for p in placed if p["height"] > 0)
+    median = heights[len(heights) // 2] if heights else 12.0
+    tolerance = max(1.0, median * 0.5)
+
+    rows: list[dict] = []
+    for cell in sorted(placed, key=lambda c: (c["y"], c["left"])):
+        # Anchored on the row's first cell: a long row of drifting boxes must not creep into
+        # the row below one cell at a time.
+        if rows and abs(rows[-1]["anchor"] - cell["y"]) <= tolerance:
+            rows[-1]["cells"].append(cell)
+        else:
+            rows.append({"anchor": cell["y"], "cells": [cell]})
+
+    lines = []
+    for row in rows:
+        cells = sorted(row["cells"], key=lambda c: c["left"])
+        out = cells[0]["text"]
+        cursor = cells[0]["right"]
+        for cell in cells[1:]:
+            height = cell["height"] or median
+            gap = cell["left"] - cursor
+            if gap > height * _COLUMN_GAP:
+                out += "\t"
+            elif gap > height * _WORD_GAP and not out.endswith((" ", "\t")):
+                out += " "
+            out += cell["text"]
+            cursor = max(cursor, cell["right"])
+        lines.append(out.rstrip(" \t"))
+
+    lines.extend(loose)
+    return "\n".join(lines).strip()
+
+
+def lines_and_conf_from_result(result) -> tuple[str, list[float]]:
+    """Plain text (rows rebuilt from the boxes) + confidences."""
+    entries = entries_from_result(result)
+    confs = [e["score"] for e in entries if e.get("score") is not None]
+    return rows_from_entries(entries), confs
 
 
 def score_ocr(text: str, confidences: list[float], *, portrait_bonus: float = 0.0) -> float:
@@ -1024,6 +1167,8 @@ def health():
         "aggressive": _AGGRESSIVE,
         "busy": _OCR_LOCK.locked(),
         "waiting": _waiting,
+        "mkldnn": _MKLDNN,
+        "cpu_threads": _CPU_THREADS,
     }
 
 

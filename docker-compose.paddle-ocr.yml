@@ -21,7 +21,26 @@ services:
       PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
       # Load models at container start instead of on the first aviz of the day.
       PADDLE_OCR_WARMUP: ${PADDLE_OCR_WARMUP:-1}
+      # Intel CPU kernels (~2x). Set to 0 if memory grows across a long scan.
+      PADDLE_OCR_MKLDNN: ${PADDLE_OCR_MKLDNN:-1}
+      # Paddle's own default is 10 threads, which oversubscribes a small shared VM.
+      PADDLE_OCR_CPU_THREADS: ${PADDLE_OCR_CPU_THREADS:-4}
     restart: unless-stopped
+    # A ceiling, not a reservation: OCR is the one process here that can grow without bound,
+    # and Postgres plus the API have to survive it. Hitting the memory limit kills only this
+    # container, which `restart` brings back — that is the outcome to prefer over a dead VM.
+    deploy:
+      resources:
+        limits:
+          cpus: "${PADDLE_OCR_CPUS:-4}"
+          memory: ${PADDLE_OCR_MEMORY:-4g}
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8100/health',timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
     volumes:
       # Persist downloaded OCR models between rebuilds
       - paddle_ocr_models:/root/.paddleocr

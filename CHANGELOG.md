@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.13.3] - 2026-09-30
+
+### Fixed
+
+- **Primul PDF citit după restart eșua** cu „bad XRef entry”: `pdf-parse` era încărcat de două ori (prin `import` și prin `createRequire` în `avizOcr.js`), iar cele două copii de pdf.js se călcau pe aceeași variabilă globală. Un PDF cu strat de text perfect cădea pe OCR de 5 minute degeaba
+- OCR pe poze: eticheta și valoarea de lângă ea ajungeau pe linii diferite, fiindcă Paddle întoarce câte o casetă separată pentru fiecare. Rândurile sunt acum reconstruite din coordonate, deci greutatea brută etichetată se **citește** (0.95), nu se mai ghicește din numărul de saci de lângă (0.8)
+- Număr auto din PDF: `Nr. autoB 330 SRS` (celule lipite de pdf-parse) nu avea graniță de cuvânt înaintea județului, deci plăcuța nu era găsită pe un PDF care o tipărește clar
+
+### Added
+
+- Cache de text OCR per firmă, cheie = sha256 al fișierului: aceeași poză sau PDF nu se mai citește de două ori. „Re-extrage” refolosește doar o citire bună (cu cod TPO/PSL/TRO); una slabă se reia la sidecar
+- Curățare cache în pasul de retenție (TTL + versiunile vechi de pipeline)
+
+### Changed
+
+- Strat de text PDF citit cu poziții (`pdfRows.js`): un rând tipărit = o linie, tab între coloane, spațiu între cuvinte. Capturile de text (rută, tip marfă, expeditor, destinatar) se opresc la tab, deci nu mai trec în coloana vecină
+- Paddle pe CPU: `PADDLE_OCR_MKLDNN=1` (~2x) și 4 thread-uri în loc de 10, care sufocau un VM mic
+- Limite de CPU/memorie în docker-compose pentru ambele sidecar-uri, plus healthcheck la clasic: dacă OCR-ul crește necontrolat, moare containerul și repornește, nu VM-ul
+
 ## [1.13.2] - 2026-09-30
 
 ### Fixed

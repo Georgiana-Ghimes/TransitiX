@@ -2,9 +2,6 @@
  * Extract + parse Baumit-style avize (PSL sales and TRO transfer).
  * Text parsing only. Reading a file is the profile extractor's job (lib/ocr/readText.js).
  */
-import fs from 'fs/promises';
-import path from 'path';
-import { createRequire } from 'module';
 import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
 import {
   extractGrossWeight,
@@ -15,26 +12,6 @@ import {
   parseNumber,
   RO_PLATE_COUNTIES,
 } from './ocr/fields.js';
-
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
-
-/** pdf-parse can throw `bad XRef entry` on otherwise valid PDFs; retry a copy of the buffer. */
-async function parsePdfTextLayer(buf) {
-  let lastErr = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      const parsed = await pdfParse(Buffer.from(buf));
-      const text = String(parsed?.text || '');
-      if (text.trim()) return text;
-    } catch (err) {
-      lastErr = err;
-      console.error('[aviz pdf-parse]', err.message || err, `attempt ${attempt + 1}`);
-    }
-  }
-  if (lastErr) throw lastErr;
-  return '';
-}
 
 function fold(value) {
   return String(value || '')

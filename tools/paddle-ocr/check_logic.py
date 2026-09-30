@@ -334,6 +334,79 @@ def main() -> int:
     finally:
         app_module._OCR_LOCK.release()
 
+    # Rows rebuilt from the boxes. Paddle returns one box per detected run of text, so a label
+    # and the figure printed beside it are two boxes; joined in arrival order they land on two
+    # lines and every "label then number on the same line" pattern downstream finds nothing.
+    def quad(x1, y1, x2, y2):
+        return [[x1, y1], [x2, y1], [x2, y2], [x1, y2]]
+
+    paddle2x = [[
+        [quad(60, 100, 200, 120), ("Greutate bruta:", 0.97)],
+        [quad(300, 100, 380, 120), ("9.487,80", 0.96)],
+        [quad(390, 100, 420, 120), ("kg", 0.95)],
+        [quad(60, 140, 200, 160), ("Greutate neta:", 0.97)],
+        [quad(300, 140, 380, 160), ("9.450,00", 0.96)],
+    ]]
+    entries = app_module.entries_from_result(paddle2x)
+    check("paddle 2.x boxes are read with their text and score",
+          len(entries) == 5 and entries[0]["score"] == 0.97,
+          f"{len(entries)} entries")
+
+    text, confs = app_module.lines_and_conf_from_result(paddle2x)
+    # The unit sits right against its figure, so it joins with a space rather than a tab —
+    # which is the form `matchLabelledWeight` reads as "number then unit".
+    check("a label and the figure beside it end up on one line",
+          text.split("\n")[0] == "Greutate bruta:\t9.487,80 kg",
+          repr(text.split("\n")[0]))
+    check("a second printed row stays a second line",
+          text.split("\n")[1] == "Greutate neta:\t9.450,00", repr(text))
+    check("every confidence survives the rebuild", len(confs) == 5, f"{len(confs)} scores")
+
+    # 3.x hands back parallel lists in a dict, with rectangles rather than polygons.
+    paddle3x = [{
+        "rec_texts": ["Nr. auto", "B 330 SRS"],
+        "rec_scores": [0.94, 0.91],
+        "rec_boxes": [[60, 100, 140, 120], [300, 100, 400, 120]],
+    }]
+    text3, confs3 = app_module.lines_and_conf_from_result(paddle3x)
+    check("paddle 3.x dict + rectangles rebuild the same way",
+          text3 == "Nr. auto\tB 330 SRS" and len(confs3) == 2, repr(text3))
+
+    check("a rectangle and a polygon describe the same cell",
+          app_module.box_metrics([60, 100, 140, 120])
+          == app_module.box_metrics(quad(60, 100, 140, 120)),
+          f"{app_module.box_metrics([60, 100, 140, 120])}")
+
+    # Words of one phrase must not be split by a tab, or `Nr. auto` stops matching its label.
+    close = [[
+        [quad(60, 100, 100, 112), ("Greutate", 0.9)],
+        [quad(104, 100, 150, 112), ("bruta:", 0.9)],
+        [quad(300, 100, 360, 112), ("9450", 0.9)],
+    ]]
+    close_text, _ = app_module.lines_and_conf_from_result(close)
+    check("words of one phrase are joined by a space, columns by a tab",
+          close_text == "Greutate bruta:\t9450", repr(close_text))
+
+    # A box the caller could not measure must not take its text down with it.
+    no_box = [[
+        [quad(60, 100, 200, 120), ("cu caseta", 0.9)],
+        [None, ("fara caseta", 0.9)],
+    ]]
+    loose_text, _ = app_module.lines_and_conf_from_result(no_box)
+    check("text whose box is unusable is kept, not dropped",
+          "fara caseta" in loose_text and "cu caseta" in loose_text, repr(loose_text))
+
+    check("an empty result is still empty", app_module.lines_and_conf_from_result(None) == ("", []))
+
+    # A photo is rarely square to the camera: boxes on one printed row differ by a few pixels.
+    wobble = [[
+        [quad(60, 100, 200, 120), ("Paleti:", 0.9)],
+        [quad(300, 104, 340, 124), ("18", 0.9)],
+    ]]
+    wobble_text, _ = app_module.lines_and_conf_from_result(wobble)
+    check("a few pixels of baseline wobble is still one row",
+          wobble_text == "Paleti:\t18", repr(wobble_text))
+
     # EXIF orientation 6 = "rotate 90° clockwise to view"; the pixels are stored landscape.
     exif_photo = PILImage.new("RGB", (600, 400), (200, 200, 200))
     exif = exif_photo.getexif()

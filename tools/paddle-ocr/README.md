@@ -41,6 +41,39 @@ hard pages, set `PADDLE_OCR_VL_URL` (PaddleOCR-VL sidecar on :8101). Node calls
 VL only when classic OCR is thin or missing logistics codes (see `readText.js`).
 Tesseract is parked and not called. Chinese docs use `ch`. Set via compose env or `.env`.
 
+## Rows, not reading order
+
+Paddle returns one box per detected run of text, so `Greutate brută:` and the
+figure printed beside it are **two boxes**. Joined in arrival order they became
+two lines, and every extractor in `fields.js` looks for a label and its number
+on the same line — which is why a labelled weight had to be guessed from the bag
+count next to it instead of simply read.
+
+`rows_from_entries` rebuilds the page's rows from the box coordinates: boxes
+within half a line-height of each other are one row, sorted left to right. A
+**tab** separates columns, a **space** separates words of one cell. Both are
+`\s`, so label patterns match across either, while the capture classes that stop
+at `\t` cannot run off a cell into the column beside it.
+
+`server/src/lib/ocr/pdfRows.js` does the same for a PDF's text layer. Keep the
+two gap ratios (`_COLUMN_GAP`, `_WORD_GAP`) in step with it.
+
+## One job at a time
+
+OCR runs in a worker thread under a process-wide lock, so `/health` still answers
+while a page is being read — a sidecar that cannot answer its health check reads
+as **down** to Node, which then fails every upload waiting on it.
+
+Callers send `budget_ms`. The job stops at that deadline (**504**) rather than
+spending minutes on an answer nobody is waiting for, and a request whose budget
+runs out while queued never starts at all (**503**). `/health` reports `busy` and
+`waiting`.
+
+`PADDLE_OCR_MKLDNN=1` (default) turns on Intel's CPU kernels, worth roughly 2x.
+`PADDLE_OCR_CPU_THREADS` defaults to 4 rather than Paddle's 10, which
+oversubscribes a small VM shared with Postgres and the API. `PADDLE_OCR_WARMUP=1`
+loads the models at container start instead of on the first aviz of the day.
+
 ## Auto-rotate
 
 By default the service tries page orientations `0 → 90 → 270 → 180` when the

@@ -7,6 +7,7 @@ import { uploadRoot, publicUploadUrl } from '../uploadPath.js';
 import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
+import { lookupOcrText, storeOcrText } from '../lib/ocr/textCache.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
@@ -267,7 +268,16 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     }
 
     try {
-      const text = await readDocumentText(doc.file_url, { timeoutMs });
+      // Bytes already transcribed are not read again. „Re-extrage" (`force`) only accepts a
+      // cached read that found a logistics code — a weak transcript is the reason somebody
+      // pressed the button, so that one goes back to the sidecar.
+      let text = await lookupOcrText(companyId, doc.file_url, { strongOnly: force });
+      if (text) {
+        console.info(`[documents] ${doc.id} text reused from cache (${text.text.length}ch, ${text.source})`);
+      } else {
+        text = await readDocumentText(doc.file_url, { timeoutMs });
+        await storeOcrText(companyId, doc.file_url, text);
+      }
       const extraction = extractDocument(text.text, {
         documentType: doc.document_type,
         profileId,
@@ -341,6 +351,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             confidence: merged.confidence,
             review_fields: merged.review_fields,
             text_source: text.source,
+            text_cached: Boolean(text.cached),
             pages: text.pages ?? null,
             pages_truncated: Boolean(text.truncated),
             ...(registeredPlate ? { vehicle_registered: registeredPlate } : {}),

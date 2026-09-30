@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { uploadRoot } from '../../uploadPath.js';
 import { normalizeOcrText } from './normalizeOcrText.js';
+import { parsePdf, readPdfRows } from './pdfRows.js';
 
 /**
  * Gets text out of an uploaded file.
@@ -302,8 +303,12 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
 
 async function readPdfText(buffer) {
   try {
-    const { default: pdfParse } = await import('pdf-parse');
-    const parsed = await pdfParse(buffer);
+    return await readPdfRows(buffer);
+  } catch (err) {
+    console.warn('[ocr] layout-aware PDF read failed, falling back to flat text:', err?.message || err);
+  }
+  try {
+    const parsed = await parsePdf(buffer);
     return { text: String(parsed?.text ?? ''), pages: Number(parsed?.numpages) || 0 };
   } catch {
     return { text: '', pages: 0 };
