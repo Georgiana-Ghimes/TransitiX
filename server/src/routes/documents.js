@@ -119,29 +119,6 @@ function runBatchExtract(batchKey, fn) {
   return next;
 }
 
-/**
- * Rows this process is OCR-ing or has queued. „Stale” means nobody is working on it; a row
- * waiting its turn behind twenty others is not stale, and failing it only threw away the
- * read that was already paid for.
- */
-const inFlightDocs = new Map();
-
-function holdInFlight(ids) {
-  for (const id of ids) inFlightDocs.set(id, (inFlightDocs.get(id) || 0) + 1);
-}
-
-function releaseInFlight(ids) {
-  for (const id of ids) {
-    const left = (inFlightDocs.get(id) || 0) - 1;
-    if (left > 0) inFlightDocs.set(id, left);
-    else inFlightDocs.delete(id);
-  }
-}
-
-export function isExtractInFlight(id) {
-  return inFlightDocs.has(id);
-}
-
 export async function markExtractFailed(companyId, docId, err) {
   const message = err?.code === 'OCR_TIMEOUT'
     ? 'OCR a depășit timpul alocat. Folosește Re-extrage.'
@@ -163,6 +140,11 @@ export async function markExtractFailed(companyId, docId, err) {
  * „Se procesează…” forever. After a short grace (not the full 5‑minute background
  * budget), treat them as failed so the driver/office can Re-extrage instead of
  * staring at a spinner.
+ *
+ * Do not shield „in-flight” rows from this. 1.13.2 did, and a job waiting on Paddle
+ * (or stuck behind another) kept the spinner forever — fail-stale skipped it, and the
+ * driver never got Eșuat. A late OCR answer still cannot overwrite: the success UPDATE
+ * requires status='uploaded', so an already-failed row stays failed.
  */
 export async function failStaleUploadedAvize(companyId, {
   olderThanMs = Number(process.env.OCR_STALE_UPLOADED_MS) || 90_000,
@@ -182,9 +164,8 @@ export async function failStaleUploadedAvize(companyId, {
      WHERE company_id = $2
        AND status = 'uploaded'
        AND updated_at < NOW() - ($3 * INTERVAL '1 millisecond')
-       AND NOT (id = ANY($4::uuid[]))
      RETURNING id`,
-    [JSON.stringify({ extract_error: message }), companyId, olderThanMs, [...inFlightDocs.keys()]]
+    [JSON.stringify({ extract_error: message }), companyId, olderThanMs]
   );
   return { failed: result.rowCount || 0 };
 }
@@ -203,9 +184,9 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
   timeoutMs,
 } = {}) {
   const batchKey = `${companyId}:${batchId}`;
-  const queued = Array.isArray(documentIds) ? [...documentIds] : [];
-  holdInFlight(queued);
+  const targetIds = Array.isArray(documentIds) ? [...documentIds] : [];
   return runBatchExtract(batchKey, async () => {
+  try {
   // Opportunistic: clear rows that never left „Se procesează…” after the budget window.
   await failStaleUploadedAvize(companyId).catch(() => {});
 
@@ -214,15 +195,12 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     [companyId, batchId]
   )).rows;
 
-  if (Array.isArray(documentIds) && documentIds.length) {
-    const wanted = new Set(documentIds);
+  if (targetIds.length) {
+    const wanted = new Set(targetIds);
     docs = docs.filter((d) => wanted.has(d.id));
   }
 
-  const running = docs.filter((d) => force || d.status === 'uploaded').map((d) => d.id);
-  holdInFlight(running);
   const results = [];
-  try {
   for (const doc of docs) {
     if (!force && doc.status !== 'uploaded') {
       results.push({ id: doc.id, skipped: true, reason: 'already_extracted' });
@@ -390,9 +368,6 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       });
     }
   }
-  } finally {
-    releaseInFlight(running);
-  }
 
   // A batch only ever moves forward. Extraction now runs in the background for driver uploads,
   // so a confirmation that lands while OCR is still working would otherwise be undone by this
@@ -409,7 +384,19 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     needs_review: results.filter((r) => r.needs_review).length,
     results,
   };
-  }).finally(() => releaseInFlight(queued));
+  } catch (err) {
+    // A throw outside the per-doc try left every row on „Se procesează…” forever.
+    console.error('[documents] extract batch', batchId, err?.message || err);
+    const toFail = targetIds.length
+      ? targetIds
+      : (await query(
+        `SELECT id FROM aviz_documents WHERE company_id = $1 AND batch_id = $2 AND status = 'uploaded'`,
+        [companyId, batchId]
+      )).rows.map((r) => r.id);
+    await Promise.all(toFail.map((id) => markExtractFailed(companyId, id, err).catch(() => {})));
+    throw err;
+  }
+  });
 }
 
 /** The profiles available, so the review screen can offer an override. */

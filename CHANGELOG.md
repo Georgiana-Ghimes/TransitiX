@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.4] - 2026-09-30
+
+### Fixed
+
+- Avizele rămâneau pe **„Se procesează…”** după 1.13.2: rândurile aflate în coada OCR erau excluse din fail-stale (90s), deci un job blocat pe Paddle nu trecea niciodată la Eșuat. Răspunsul OCR întârziat tot nu rescrie un rând deja eșuat (`status='uploaded'` la UPDATE)
+- Dacă extragerea de batch crapă înainte de bucla pe documente, toate rândurile din batch trec acum la Eșuat (înainte rămâneau spinner)
+
 ## [1.13.3] - 2026-09-30
 
 ### Fixed

@@ -20,7 +20,7 @@ import {
   pickLogisticsRow,
 } from '../lib/ocr/driverLogistics.js';
 import {
-  logEvent, upload, extractBatchDocuments, failStaleUploadedAvize, isExtractInFlight,
+  logEvent, upload, extractBatchDocuments, failStaleUploadedAvize,
   markExtractFailed, uploadErrorMessage,
 } from './documents.js';
 import { ocrCapability } from '../lib/ocr/readText.js';
@@ -156,9 +156,7 @@ router.get('/', async (req, res) => {
       );
       down.code = 'OCR_DOWN';
       await Promise.all(
-        stuck.rows
-          .filter((row) => !isExtractInFlight(row.id))
-          .map((row) => markExtractFailed(req.user.company_id, row.id, down).catch(() => {})),
+        stuck.rows.map((row) => markExtractFailed(req.user.company_id, row.id, down).catch(() => {})),
       );
     }
 
