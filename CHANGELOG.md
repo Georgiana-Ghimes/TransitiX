@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.13.1] - 2026-09-30
+
+### Fixed
+
+- Companion: lista „Trimise recent” **nu mai repornește OCR** la fiecare poll/reload pe rândurile „Se procesează…” (asta umplea coada Paddle și omora sidecar-ul/VM)
+- OCR eșuat rămâne eșuat: un răspuns Paddle întârziat nu mai rescrie câmpurile după fail-stale (explica „se completează singur fără Re-extrage”)
+- Dacă Paddle e down: upload-urile noi și spinner-ele blocate ale șoferului trec imediat la **Eșuat OCR**, fără a aștepta 90s
+- Toast „Completează câmpurile lipsă” doar când OCR tocmai a terminat, nu la fiecare reload al paginii
+
 ## [1.13.0] - 2026-09-30
 
 ### Added

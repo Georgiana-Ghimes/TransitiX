@@ -118,7 +118,7 @@ function runBatchExtract(batchKey, fn) {
   return next;
 }
 
-async function markExtractFailed(companyId, docId, err) {
+export async function markExtractFailed(companyId, docId, err) {
   const message = err?.code === 'OCR_TIMEOUT'
     ? 'OCR a depășit timpul alocat. Folosește Re-extrage.'
     : (err?.message || String(err));
@@ -246,16 +246,22 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       const columns = toColumns(merged.values);
       const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
 
-      await withTransaction(async (client) => {
-        await client.query(
+      // Only commit while the row is still `uploaded`. failStale / markExtractFailed may have
+      // already flipped it to Eșuat; a late Paddle answer must not silently fill fields (or
+      // restart the OCR tax on rows the driver already abandoned).
+      const written = await withTransaction(async (client) => {
+        const update = await client.query(
           `UPDATE aviz_documents SET
              ocr_profile_id = $1, ocr_confidence = $2, field_confidence = $3,
              needs_review = $4, extraction_source = $5,
              extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $6::jsonb
              ${sets.length ? `, ${sets.join(', ')}` : ''},
-             status = CASE WHEN status = 'uploaded' THEN 'extracted' ELSE status END,
+             status = 'extracted',
              updated_at = NOW()
-           WHERE id = $${7 + Object.keys(columns).length} AND company_id = $${8 + Object.keys(columns).length}`,
+           WHERE id = $${7 + Object.keys(columns).length}
+             AND company_id = $${8 + Object.keys(columns).length}
+             AND status = 'uploaded'
+           RETURNING id`,
           [
             merged.profile_id, merged.confidence,
             JSON.stringify(merged.fields), merged.needs_review, text.source,
@@ -272,6 +278,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             doc.id, companyId,
           ]
         );
+        if (!update.rowCount) return null;
+
         // A plate the OCR just read opens a vehicle record, inside this transaction, so a
         // document and the lorry it names cannot land on opposite sides of a failure. A filing
         // problem never fails the extraction though: the document is what the operator sent.
@@ -298,7 +306,18 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             ...(registeredPlate ? { vehicle_registered: registeredPlate } : {}),
           },
         });
+        return update.rows[0];
       });
+
+      if (!written) {
+        results.push({
+          id: doc.id,
+          filename: doc.original_filename,
+          skipped: true,
+          reason: 'already_settled',
+        });
+        continue;
+      }
 
       results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
     } catch (err) {

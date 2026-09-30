@@ -27,6 +27,28 @@ const STATUS_LABEL = {
   failed: 'Eșuat',
 };
 
+const REVIEW_PROMPTED_KEY = 'tx.driver.reviewPrompted';
+
+function loadReviewPrompted() {
+  try {
+    const raw = sessionStorage.getItem(REVIEW_PROMPTED_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberReviewPrompted(id) {
+  try {
+    const next = loadReviewPrompted();
+    next.add(id);
+    sessionStorage.setItem(REVIEW_PROMPTED_KEY, JSON.stringify([...next].slice(-80)));
+  } catch {
+    /* private mode / quota — in-memory set still covers this session page life */
+  }
+}
+
 /** Driver list: after OCR, incomplete logistics must be filled by the driver. */
 function driverStatusDetail(doc, online = true) {
   if (doc.status === 'uploaded' && !online) {
@@ -87,7 +109,8 @@ export default function DriverUploadDocuments({ user }) {
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const prevOutboxPending = useRef(0);
-  const autoOpenedReview = useRef(new Set());
+  const autoOpenedReview = useRef(loadReviewPrompted());
+  const prevStatusById = useRef(new Map());
 
   /** Replays one queued upload once coverage is back. */
   const sendQueued = useCallback(async (entry) => {
@@ -225,14 +248,27 @@ export default function DriverUploadDocuments({ user }) {
     };
   }, [pending, refreshDocs]);
 
-  /** When OCR finishes with gaps, open the form once per document. */
+  /**
+   * When OCR just finished with gaps, open the form once. Do not toast on every reload —
+   * incomplete „Eșuat OCR” rows stay incomplete until the driver taps „Completează câmpurile”.
+   */
   useEffect(() => {
+    const prev = prevStatusById.current;
     for (const doc of docs) {
+      const was = prev.get(doc.id);
+      prev.set(doc.id, doc.status);
+
       if (doc.status === 'uploaded' || doc.status === 'confirmed') continue;
       if (doc.logistics_complete) continue;
       if (!Array.isArray(doc.missing_fields) || !doc.missing_fields.length) continue;
       if (autoOpenedReview.current.has(doc.id)) continue;
+
+      // Only auto-prompt right after OCR leaves „Se procesează…”, not for every list refresh
+      // or page reload of already-failed rows.
+      if (was !== 'uploaded') continue;
+
       autoOpenedReview.current.add(doc.id);
+      rememberReviewPrompted(doc.id);
       setReviewDocId(doc.id);
       notifyError(
         'Completează câmpurile lipsă',

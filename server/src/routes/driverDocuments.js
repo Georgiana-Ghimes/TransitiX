@@ -19,7 +19,8 @@ import {
   missingDriverLogistics,
   pickLogisticsRow,
 } from '../lib/ocr/driverLogistics.js';
-import { logEvent, upload, extractBatchDocuments, failStaleUploadedAvize, uploadErrorMessage } from './documents.js';
+import { logEvent, upload, extractBatchDocuments, failStaleUploadedAvize, markExtractFailed, uploadErrorMessage } from './documents.js';
+import { ocrCapability } from '../lib/ocr/readText.js';
 
 const router = Router();
 router.use(authRequired);
@@ -132,7 +133,30 @@ async function batchForUpload(client, { companyId, userId, trip, documentType })
 /** Recent documents this driver uploaded (any trip / none). */
 router.get('/', async (req, res) => {
   try {
+    // Hung „Se procesează…” → Eșuat after the stale window. Do NOT kick extract here:
+    // the companion polls this list every few seconds while anything is pending, and each
+    // kick used to queue another OCR job on the same rows, stacking Paddle until the VM died.
+    // Upload already starts OCR once; after a restart, stale-fail then office/driver Re-extrage.
     await failStaleUploadedAvize(req.user.company_id).catch(() => {});
+
+    // Sidecar dead: flip this driver's spinners to Eșuat now — do not wait 90s, and do not
+    // start new OCR (that is what was killing the VM on every reload).
+    if ((await ocrCapability()) === 'paddle-down') {
+      const stuck = await query(
+        `SELECT id FROM aviz_documents
+         WHERE company_id = $1 AND uploaded_by = $2 AND uploaded_from = 'driver'
+           AND status = 'uploaded'`,
+        [req.user.company_id, req.user.id]
+      );
+      const down = new Error(
+        'Serviciul OCR nu răspunde. Completează câmpurile sau biroul Re-extrage când OCR e pornit.',
+      );
+      down.code = 'OCR_DOWN';
+      await Promise.all(
+        stuck.rows.map((row) => markExtractFailed(req.user.company_id, row.id, down).catch(() => {})),
+      );
+    }
+
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const docs = await query(
       `SELECT ${DRIVER_LIST_COLUMNS}
@@ -142,21 +166,6 @@ router.get('/', async (req, res) => {
        LIMIT $3`,
       [req.user.company_id, req.user.id, limit]
     );
-
-    // If OCR never started (API restart mid-upload), kick it again for open batches.
-    const pending = docs.rows.filter((d) => d.status === 'uploaded');
-    if (pending.length) {
-      const byBatch = new Map();
-      for (const d of pending) {
-        if (!d.batch_id) continue;
-        if (!byBatch.has(d.batch_id)) byBatch.set(d.batch_id, []);
-        byBatch.get(d.batch_id).push(d.id);
-      }
-      for (const [batchId, documentIds] of byBatch) {
-        extractBatchDocuments(req.user.company_id, batchId, req.user.id, { documentIds })
-          .catch((err) => console.error('[driver-documents] retry extract', err?.message || err));
-      }
-    }
 
     res.json({
       documents: docs.rows.map(withMissing),
@@ -424,10 +433,19 @@ router.post('/', (req, res) => {
       });
 
       const docIds = result.documents.map((d) => d.id);
-      extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id, { documentIds: docIds })
-        .catch((extractErr) => {
-          console.error('[driver-documents] extract', extractErr?.message || extractErr);
-        });
+      // Dead sidecar: fail the new rows now instead of holding „Se procesează…” until stale.
+      if ((await ocrCapability()) === 'paddle-down') {
+        const down = new Error(
+          'Serviciul OCR nu răspunde. Completează câmpurile sau biroul Re-extrage când OCR e pornit.',
+        );
+        down.code = 'OCR_DOWN';
+        await Promise.all(docIds.map((id) => markExtractFailed(req.user.company_id, id, down).catch(() => {})));
+      } else {
+        extractBatchDocuments(req.user.company_id, result.batch.id, req.user.id, { documentIds: docIds })
+          .catch((extractErr) => {
+            console.error('[driver-documents] extract', extractErr?.message || extractErr);
+          });
+      }
     } catch (error) {
       sendError(res, error, 'Încărcarea a eșuat');
     }
