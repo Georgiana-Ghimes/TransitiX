@@ -104,8 +104,14 @@ describe('ocrCapability', () => {
 
   beforeEach(() => {
     vi.resetModules();
+    // The fresh import pulls uploadPath.js → loadEnv.js, which would read a developer's
+    // server/.env (and, with COMPANION=1 in the shell, .env.companion with override) straight
+    // back into the environment cleared below. A unit test's answer must not depend on what
+    // is in somebody's env files, so the loader is stubbed out entirely.
+    vi.doMock('../../loadEnv.js', () => ({}));
     delete process.env.OCR_PROVIDER;
     delete process.env.MISTRAL_API_KEY;
+    delete process.env.COMPANION;
   });
 
   it('reports false when no OCR is configured', async () => {

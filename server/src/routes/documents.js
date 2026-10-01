@@ -10,6 +10,8 @@ import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js
 import { lookupOcrText, storeOcrText } from '../lib/ocr/textCache.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
 import { validateAvizExtraction } from '../lib/ocr/validateAviz.js';
+import { summariseFeedback } from '../lib/ocr/feedback.js';
+import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit } from '../lib/ocr/fields.js';
@@ -607,6 +609,59 @@ router.get('/review-queue', async (req, res) => {
   }
 });
 
+/**
+ * Faza 4 — feedback loop. Aggregates `corrected` events over a window against the
+ * documents extracted in it. Read by a person; nothing is tuned automatically.
+ */
+router.get('/feedback', async (req, res) => {
+  try {
+    const DAY = 'YYYY-MM-DD';
+    const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
+    const to = isDay(req.query.to) ? String(req.query.to) : new Date().toISOString().slice(0, 10);
+    let from = isDay(req.query.from) ? String(req.query.from) : null;
+    if (!from) {
+      const d = new Date(`${to}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - 30);
+      from = d.toISOString().slice(0, 10);
+    }
+    if (from > to) return res.status(400).json({ message: `Interval invalid (${DAY}): „de la” e după „până la”.` });
+
+    const [docs, events] = await Promise.all([
+      query(
+        `SELECT id, status,
+                extracted_data->'validation'->>'routing' AS routing,
+                extracted_data->'validation'->'failed_rules' AS failed_rules
+         FROM aviz_documents
+         WHERE company_id = $1
+           AND status <> 'uploaded'
+           AND created_at >= $2::date
+           AND created_at < ($3::date + INTERVAL '1 day')`,
+        [req.user.company_id, from, to]
+      ),
+      query(
+        `SELECT e.document_id, e.detail, e.created_at, u.name AS user_name, u.email AS user_email
+         FROM document_events e
+         LEFT JOIN users u ON u.id = e.user_id
+         WHERE e.company_id = $1
+           AND e.kind = 'corrected'
+           AND e.created_at >= $2::date
+           AND e.created_at < ($3::date + INTERVAL '1 day')`,
+        [req.user.company_id, from, to]
+      ),
+    ]);
+
+    const documents = docs.rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      routing: r.routing ?? null,
+      failed_rules: Array.isArray(r.failed_rules) ? r.failed_rules : [],
+    }));
+    res.json({ window: { from, to }, ...summariseFeedback({ events: events.rows, documents }) });
+  } catch (err) {
+    sendError(res, err, 'Nu am putut calcula calitatea OCR');
+  }
+});
+
 /** HITL payload for one document (values, scores, failed rules, blocks). */
 router.get('/:id/review', async (req, res) => {
   try {
@@ -618,23 +673,26 @@ router.get('/:id/review', async (req, res) => {
 
     const validation = doc.extracted_data?.validation ?? null;
     const fields = doc.field_confidence ?? {};
+    // Column values go through the same serializer as the row: pg hands a DATE back as local
+    // midnight, and the raw object would reach the input as `…T21:00:00.000Z`, the day before.
+    const row = serializeRow(doc);
     const values = {
       ...(doc.extracted_data?.values ?? {}),
-      numar_tpo: doc.numar_tpo,
-      numar_auto: doc.numar_auto,
-      data_efectuare_cursa: doc.data_efectuare_cursa,
-      ruta_transport: doc.ruta_transport,
-      tip_marfa: doc.tip_marfa,
-      cantitate_marfa: doc.cantitate_marfa,
-      numar_document_marfa: doc.numar_document_marfa,
-      gross_weight_kg: doc.gross_weight_kg,
-      net_weight_kg: doc.net_weight_kg,
-      numar_curse: doc.numar_curse,
-      km_parcursi: doc.km_parcursi,
-      tarif_km: doc.tarif_km,
-      valoare_tpo: doc.valoare_tpo,
-      taxe_suplimentare: doc.taxe_suplimentare,
-      observatii: doc.observatii,
+      numar_tpo: row.numar_tpo,
+      numar_auto: row.numar_auto,
+      data_efectuare_cursa: row.data_efectuare_cursa,
+      ruta_transport: row.ruta_transport,
+      tip_marfa: row.tip_marfa,
+      cantitate_marfa: row.cantitate_marfa,
+      numar_document_marfa: row.numar_document_marfa,
+      gross_weight_kg: row.gross_weight_kg,
+      net_weight_kg: row.net_weight_kg,
+      numar_curse: row.numar_curse,
+      km_parcursi: row.km_parcursi,
+      tarif_km: row.tarif_km,
+      valoare_tpo: row.valoare_tpo,
+      taxe_suplimentare: row.taxe_suplimentare,
+      observatii: row.observatii,
     };
 
     const findings = validation?.findings ?? [];
@@ -652,13 +710,21 @@ router.get('/:id/review', async (req, res) => {
     }));
 
     res.json({
-      document: serializeRow(doc),
+      document: row,
       values,
       fields,
       validation,
       issues,
       review_fields: doc.extracted_data?.review_fields ?? [],
-      ocr_blocks: doc.extracted_data?.ocr_blocks ?? null,
+      // Rows extracted before blocks were normalised still carry the provider's raw shape;
+      // normalising on the way out means the drawer never sees two spellings of a bbox.
+      ocr_blocks: Array.isArray(doc.extracted_data?.ocr_blocks)
+        ? doc.extracted_data.ocr_blocks.map((b) => normalizeBlock(
+          b,
+          Number.isInteger(b?.page) ? b.page : 0,
+          { width: b?.page_width, height: b?.page_height },
+        ))
+        : null,
       routing: validation?.routing ?? (doc.needs_review ? ROUTING.HITL_REQUIRED : ROUTING.AUTO),
     });
   } catch (err) {

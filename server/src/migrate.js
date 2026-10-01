@@ -1294,6 +1294,14 @@ CREATE TABLE IF NOT EXISTS document_events (
 );
 CREATE INDEX IF NOT EXISTS idx_document_events_document
   ON document_events(company_id, document_id, created_at DESC);
+-- HITL: an operator marking a document as checked is its own event, distinct from
+-- 'corrected' (values changed) and 'confirmed' (ready for the annex).
+ALTER TABLE document_events DROP CONSTRAINT IF EXISTS document_events_kind_check;
+ALTER TABLE document_events ADD CONSTRAINT document_events_kind_check
+  CHECK (kind IN ('uploaded', 'extracted', 're_extracted', 'corrected', 'review_approved',
+                  'confirmed', 'linked_trip', 'rejected', 'deleted'));
+CREATE INDEX IF NOT EXISTS idx_document_events_company_kind
+  ON document_events(company_id, kind, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_document_events_batch
   ON document_events(company_id, batch_id, created_at DESC);
 
@@ -1495,6 +1503,9 @@ CREATE TABLE IF NOT EXISTS ocr_text_cache (
 );
 -- Housekeeping reads it oldest-first; nothing else queries by time.
 CREATE INDEX IF NOT EXISTS idx_ocr_text_cache_used ON ocr_text_cache(used_at);
+-- Layout blocks (normalised, with page size) travel with the text: a cache hit must give the
+-- HITL overlay the same boxes a fresh read would.
+ALTER TABLE ocr_text_cache ADD COLUMN IF NOT EXISTS blocks JSONB;
 
 `
 

@@ -8,6 +8,7 @@ import { appendObservationCode, validateObservationCodeInput } from '@/lib/obser
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
 import { findBlurriest } from '@/lib/imageQuality';
+import { prepareImagesForUpload } from '@/lib/imagePreprocess';
 import {
   Archive, Camera, Check, ClipboardList, Download, Loader2,
   Mail, Trash2, Upload, X,
@@ -242,8 +243,8 @@ export default function AvizeReports() {
   };
 
   const uploadFiles = async (fileList) => {
-    const files = Array.from(fileList || []);
-    if (files.length === 0) return;
+    const picked = Array.from(fileList || []);
+    if (picked.length === 0) return;
     setUploading(true);
     const failed = [];
     let dup = 0;
@@ -251,6 +252,9 @@ export default function AvizeReports() {
     const uploadedRows = [];
     let listFilters = filters;
     try {
+      // Orientation, size and contrast are settled here, before anything is measured or
+      // sent. Best-effort: a file that cannot be prepared goes as it was picked.
+      const files = await prepareImagesForUpload(picked);
       // Photos taken at a desk blur too. Unlike the cab, a batch of scans is not interrupted for
       // it, the operator is told which file may not read and the upload carries on.
       const worst = await findBlurriest(files).catch(() => null);
@@ -1177,7 +1181,12 @@ export default function AvizeReports() {
           onUseForExport={useTemplateForExport}
         />
       ) : (
-        <AvizReportsTab filterBar={filterBar} reportData={reportData} onRefresh={loadReports} />
+        <AvizReportsTab
+          filterBar={filterBar}
+          reportData={reportData}
+          onRefresh={loadReports}
+          range={{ from: filters.from, to: filters.to }}
+        />
       )}
 
       {editRow && (

@@ -21,6 +21,8 @@ import {
 } from '../lib/concurrency.js';
 import { duplicateConsignmentExists } from '../lib/avizQuery.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
+import { avizOcrFieldChanges } from '../lib/ocr/feedback.js';
+import { logEvent as logDocumentEvent } from './documents.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
 import { refreshTripDistance, resolveDistanceSource } from '../lib/geo/tripDistance.js';
@@ -366,32 +368,44 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     // afterwards would leave the SET clause and the value list out of step.
     if (req.params.entity === 'Trip') applyTripDistance(data, previous);
 
-    data.updated_at = new Date().toISOString();
-    const keys = Object.keys(data);
-    if (keys.length === 0) return res.status(400).json({ message: 'Nu ai modificat niciun câmp.' });
-
+    // Everything below adds keys to `data`, so it has to run before `keys` is taken.
+    let avizPrev = null;
+    let avizFieldChanges = [];
     if (req.params.entity === 'AvizDocument') {
       const prev = await query(
-        `SELECT status, needs_review, extracted_data FROM aviz_documents WHERE id = $1 AND company_id = $2`,
+        `SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
       );
-      if (!prev.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
+      avizPrev = prev.rows[0] || null;
+      if (!avizPrev) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
       if (data.status !== undefined) {
-        data.status = nextAvizStatusOnSave(prev.rows[0].status, data.status);
+        data.status = nextAvizStatusOnSave(avizPrev.status, data.status);
       }
       if (data.status === 'confirmed') {
-        const routing = prev.rows[0].extracted_data?.validation?.routing;
-        if (prev.rows[0].needs_review || routing === 'hitl_required') {
+        const routing = avizPrev.extracted_data?.validation?.routing;
+        if (avizPrev.needs_review || routing === 'hitl_required') {
           return res.status(409).json({
             code: 'NEEDS_REVIEW',
             message: 'Documentul are nevoie de verificare. Folosește Confirmă din listă după HITL, sau force ca admin.',
-            needs_review: prev.rows[0].needs_review,
+            needs_review: avizPrev.needs_review,
             routing: routing ?? null,
           });
         }
         data.needs_review = false;
       }
+      // An edit from the office form is a correction like any other: it is what the OCR
+      // feedback loop counts, and a field a person typed must never be overwritten by a
+      // re-extraction, so it joins `corrected_fields` here too.
+      avizFieldChanges = avizOcrFieldChanges(avizPrev, data, req.user);
+      if (avizFieldChanges.length) {
+        const already = Array.isArray(avizPrev.corrected_fields) ? avizPrev.corrected_fields : [];
+        data.corrected_fields = [...new Set([...already, ...avizFieldChanges.map((c) => c.field)])];
+      }
     }
+
+    data.updated_at = new Date().toISOString();
+    const keys = Object.keys(data);
+    if (keys.length === 0) return res.status(400).json({ message: 'Nu ai modificat niciun câmp.' });
 
     const result = await withTransaction(async (client) => {
       if (req.params.entity === 'GPSLog' && data.is_current) {
@@ -424,6 +438,22 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
           before: previous,
           after: updated.rows[0],
         });
+        if (avizPrev && avizFieldChanges.length) {
+          await logDocumentEvent(client, {
+            companyId: req.user.company_id,
+            documentId: avizPrev.id,
+            batchId: avizPrev.batch_id,
+            userId: req.user.id,
+            kind: 'corrected',
+            summary: avizFieldChanges.map((c) => c.field).join(', '),
+            detail: {
+              corrections: Object.fromEntries(avizFieldChanges.map((c) => [c.field, c.new_value])),
+              field_changes: avizFieldChanges,
+              routing: avizPrev.extracted_data?.validation?.routing ?? null,
+              via: 'office_form',
+            },
+          });
+        }
       }
       return updated;
     });

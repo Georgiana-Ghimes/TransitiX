@@ -5,6 +5,7 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import { findDriverForUser } from '@/lib/utils';
 import { DOC_TYPES } from '@/lib/cmrUi';
 import { findBlurriest } from '@/lib/imageQuality';
+import { prepareImagesForUpload } from '@/lib/imagePreprocess';
 import { throttleState } from '@/lib/uploadThrottle';
 import { isOfflineError, useOnline, useOutbox } from '@/lib/useOffline';
 import { offlineStore } from '@/lib/offlineStore';
@@ -301,20 +302,23 @@ export default function DriverUploadDocuments({ user }) {
   }, [refreshDocs]);
 
   const uploadFiles = async (fileList) => {
-    const files = [...(fileList || [])];
-    if (!files.length) return;
+    const picked = [...(fileList || [])];
+    if (!picked.length) return;
 
     setUploading(true);
     try {
       // Say what the limit is before the upload, not after: on a phone the round trip costs the
       // driver their data and a wait, and the answer used to come back as `Unexpected field`.
-      if (files.length > maxFiles) {
+      if (picked.length > maxFiles) {
         notifyError(
           'Prea multe fișiere',
-          `Poți trimite maximum ${maxFiles} odată. Ai ales ${files.length}. Trimite-le în două rânduri.`
+          `Poți trimite maximum ${maxFiles} odată. Ai ales ${picked.length}. Trimite-le în două rânduri.`
         );
         return;
       }
+      // Rotate, downscale and re-encode in the browser first: a 6 MB frame becomes ~1 MB
+      // before the size check, so a phone camera at full resolution is not refused for it.
+      const files = await prepareImagesForUpload(picked);
       const tooBig = files.find((f) => f.size > MAX_UPLOAD_BYTES);
       if (tooBig) {
         notifyError(

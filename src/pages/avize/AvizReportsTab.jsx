@@ -3,12 +3,13 @@ import { Loader2, Trash2 } from 'lucide-react';
 import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import OcrQualityCard from './OcrQualityCard';
 
 function exportWho(row) {
   return row.user_name || row.user_email || '—';
 }
 
-export default function AvizReportsTab({ filterBar, reportData, onRefresh }) {
+export default function AvizReportsTab({ filterBar, reportData, onRefresh, range }) {
   const [pendingDelete, setPendingDelete] = useState(null); // { type: 'one'|'all', row? }
   const [deleting, setDeleting] = useState(false);
   const exports = reportData.exports || [];
@@ -89,6 +90,7 @@ export default function AvizReportsTab({ filterBar, reportData, onRefresh }) {
           </table>
         </div>
       </div>
+      <OcrQualityCard from={range?.from} to={range?.to} />
       <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <h2 className="text-sm font-semibold text-[#0A2B4E]">Istoric export</h2>

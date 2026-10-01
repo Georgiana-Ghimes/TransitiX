@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { blocksForValue, isLowConfidenceBlock } from '@/lib/ocrBlocks';
+import { previewKind } from '@/lib/avizOps';
 import { Loader2, X } from 'lucide-react';
+import AvizBlockOverlay from './AvizBlockOverlay';
 import AvizFilePreview from './AvizFilePreview';
 import { inputCls, labelCls } from './avizeUi';
 
@@ -32,6 +35,8 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [payload, setPayload] = useState(null);
   const [draft, setDraft] = useState({});
+  const [activeField, setActiveField] = useState(null);
+  const [showAllBlocks, setShowAllBlocks] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +106,37 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
   const fileUrl = payload?.document?.file_url;
   const issues = payload?.issues || [];
   const routing = payload?.routing;
+  const blocks = useMemo(() => (Array.isArray(payload?.ocr_blocks) ? payload.ocr_blocks : []), [payload]);
+  const canOverlay = blocks.length > 0 && previewKind(fileUrl) === 'image';
+  const lowBlocks = useMemo(() => blocks.filter((b) => isLowConfidenceBlock(b)).length, [blocks]);
+
+  // Blocks that carry the value the operator is looking at: the draft first (what they are
+  // typing), the stored value as a fallback (what OCR read), only on page 0 for a photo.
+  const highlight = useMemo(() => {
+    if (!activeField || !canOverlay) return [];
+    const typed = draft[activeField];
+    const hits = blocksForValue(blocks, typed, { page: 0 });
+    if (hits.length) return hits;
+    return blocksForValue(blocks, payload?.values?.[activeField], { page: 0 });
+  }, [activeField, canOverlay, draft, blocks, payload]);
+
+  const pickBlock = useCallback((block) => {
+    if (!activeField || !block?.text) return;
+    setDraft((d) => ({ ...d, [activeField]: block.text }));
+  }, [activeField]);
+
+  const overlay = canOverlay
+    ? (natural) => (
+      <AvizBlockOverlay
+        blocks={blocks}
+        page={0}
+        natural={natural}
+        highlight={highlight}
+        showAll={showAllBlocks}
+        onPick={pickBlock}
+      />
+    )
+    : null;
 
   return (
     <ModalShell onClose={onClose} panelClassName="max-w-5xl w-full" labelledBy="hitl-title">
@@ -122,8 +158,41 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[75vh]">
-            <div className="min-h-[260px] h-[40vh] lg:h-auto relative border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-              <AvizFilePreview fileUrl={fileUrl} fill />
+            <div className="flex flex-col gap-2 min-h-0">
+              <div className="min-h-[260px] h-[40vh] lg:h-auto lg:flex-1 relative border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                <AvizFilePreview fileUrl={fileUrl} fill overlay={overlay} />
+              </div>
+              {blocks.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600">
+                  {canOverlay ? (
+                    <>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block w-3 h-3 rounded-sm border border-sky-500 bg-sky-400/20" />
+                        câmpul activ
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block w-3 h-3 rounded-sm border border-amber-500 bg-amber-300/20" />
+                        citire nesigură ({lowBlocks})
+                      </span>
+                      <label className="inline-flex items-center gap-1 cursor-pointer ml-auto">
+                        <input
+                          type="checkbox"
+                          checked={showAllBlocks}
+                          onChange={(e) => setShowAllBlocks(e.target.checked)}
+                        />
+                        toate blocurile ({blocks.length})
+                      </label>
+                      <span className="w-full text-slate-500">
+                        Apasă într-un câmp, apoi pe un bloc din poză ca să preiei textul citit acolo.
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-slate-500">
+                      Evidențierea pe pagină e disponibilă pentru poze; la PDF rămâne lista de probleme.
+                    </span>
+                  )}
+                </div>
+              ) : null}
             </div>
             <div className="overflow-y-auto pr-1 space-y-3 max-h-[60vh] lg:max-h-[70vh]">
               <p className="text-xs text-slate-500">
@@ -144,7 +213,12 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
                   {issues.map((issue, idx) => (
                     <li
                       key={`${issue.rule}-${issue.field}-${idx}`}
-                      className="rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-xs text-amber-950"
+                      onMouseEnter={issue.field ? () => setActiveField(issue.field) : undefined}
+                      className={`rounded-lg border px-3 py-2 text-xs text-amber-950 ${
+                        issue.field && issue.field === activeField
+                          ? 'border-sky-300 bg-sky-50/70'
+                          : 'border-amber-100 bg-amber-50/60'
+                      }`}
                     >
                       <div className="font-semibold">{issue.title}</div>
                       <div className="opacity-90 mt-0.5">{issue.message}</div>
@@ -160,16 +234,28 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
               )}
 
               <div className="space-y-3 pt-1">
-                {Object.keys(draft).map((key) => (
-                  <div key={key}>
-                    <label className={labelCls}>{FIELD_LABELS[key] || key}</label>
-                    <input
-                      className={inputCls}
-                      value={draft[key] ?? ''}
-                      onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
-                    />
-                  </div>
-                ))}
+                {Object.keys(draft).map((key) => {
+                  const active = key === activeField;
+                  const matched = active ? highlight.length : 0;
+                  return (
+                    <div key={key}>
+                      <label className={labelCls}>
+                        {FIELD_LABELS[key] || key}
+                        {active && canOverlay ? (
+                          <span className="ml-2 font-normal text-[11px] text-slate-500">
+                            {matched ? `${matched} bloc(uri) în poză` : 'nu găsesc valoarea în poză'}
+                          </span>
+                        ) : null}
+                      </label>
+                      <input
+                        className={`${inputCls} ${active ? 'ring-2 ring-sky-300' : ''}`}
+                        value={draft[key] ?? ''}
+                        onFocus={() => setActiveField(key)}
+                        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="flex flex-wrap gap-2 pt-2 sticky bottom-0 bg-white py-2">

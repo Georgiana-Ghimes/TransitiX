@@ -707,6 +707,14 @@ export const api = {
         body: {},
       });
     },
+    /** Faza 4: what people correct after OCR, per field and per routing band. */
+    feedback({ from, to } = {}) {
+      const params = new URLSearchParams();
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const q = params.toString();
+      return request(`/documents/feedback${q ? `?${q}` : ''}`);
+    },
     confirmBatch(id, documentIds, { force = false } = {}) {
       return request(`/documents/batches/${encodeURIComponent(id)}/confirm`, {
         method: 'POST',

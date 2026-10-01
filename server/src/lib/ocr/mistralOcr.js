@@ -11,6 +11,7 @@
  */
 
 import { normalizeOcrText } from './normalizeOcrText.js';
+import { normalizePages } from './ocrBlocks.js';
 
 export function mistralApiKey() {
   return String(process.env.MISTRAL_API_KEY || '').trim();
@@ -129,7 +130,9 @@ export async function runMistralOcr(buffer, mimeType, { timeoutMs } = {}) {
     const pages = Array.isArray(json?.pages) ? json.pages : [];
     const textRaw = pagesToText(pages);
     const text = textRaw ? normalizeOcrText(textRaw) : null;
-    const blocks = pages.flatMap((p) => (Array.isArray(p?.blocks) ? p.blocks : []));
+    // Normalised here, at the provider boundary: the HITL overlay reads one shape whatever
+    // the API calls its corners this quarter.
+    const blocks = normalizePages(pages);
 
     return {
       text: text || null,

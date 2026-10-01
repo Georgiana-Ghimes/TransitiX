@@ -30,8 +30,10 @@ import { needsOcrFallback } from './readText.js';
  *
  *   1 — flat text, pdf-parse default rendering
  *   2 — rows rebuilt from coordinates (pdfRows.js + sidecar rows_from_entries)
+ *   3 — Mistral Document AI; provider-independent sanitiser (`sanitizeOcrText`) and layout
+ *       blocks normalised with page size, cached beside the text
  */
-export const OCR_PIPELINE_VERSION = Number(process.env.OCR_PIPELINE_VERSION) || 2;
+export const OCR_PIPELINE_VERSION = Number(process.env.OCR_PIPELINE_VERSION) || 3;
 
 /** How long an entry is worth keeping. Storage is cheap; a stale transcript is not useful. */
 const TTL_DAYS = Number(process.env.OCR_CACHE_TTL_DAYS) || 120;
@@ -64,7 +66,7 @@ export async function lookupOcrText(companyId, fileUrl, { strongOnly = false } =
     rows = (await query(
       `UPDATE ocr_text_cache SET used_at = NOW(), hits = hits + 1
        WHERE company_id = $1 AND content_sha256 = $2 AND pipeline_version = $3
-       RETURNING text, source, pages, truncated`,
+       RETURNING text, source, pages, truncated, blocks`,
       [companyId, hash, OCR_PIPELINE_VERSION]
     )).rows;
   } catch (err) {
@@ -82,6 +84,7 @@ export async function lookupOcrText(companyId, fileUrl, { strongOnly = false } =
     source: hit.source,
     pages: hit.pages ?? undefined,
     truncated: Boolean(hit.truncated),
+    ...(Array.isArray(hit.blocks) && hit.blocks.length ? { blocks: hit.blocks } : {}),
     cached: true,
   };
 }
@@ -95,13 +98,14 @@ export async function storeOcrText(companyId, fileUrl, result) {
   try {
     await query(
       `INSERT INTO ocr_text_cache
-         (company_id, content_sha256, pipeline_version, text, source, pages, truncated)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+         (company_id, content_sha256, pipeline_version, text, source, pages, truncated, blocks)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT (company_id, content_sha256, pipeline_version) DO UPDATE SET
          text = EXCLUDED.text, source = EXCLUDED.source, pages = EXCLUDED.pages,
-         truncated = EXCLUDED.truncated, used_at = NOW()`,
+         truncated = EXCLUDED.truncated, blocks = EXCLUDED.blocks, used_at = NOW()`,
       [companyId, hash, OCR_PIPELINE_VERSION, result.text, result.source || 'ocr',
-       Number(result.pages) || null, Boolean(result.truncated)]
+       Number(result.pages) || null, Boolean(result.truncated),
+       Array.isArray(result.blocks) && result.blocks.length ? JSON.stringify(result.blocks) : null]
     );
   } catch (err) {
     console.warn('[ocr-cache] store failed:', err?.message || err);

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { previewKind } from '@/lib/avizOps';
+import { containedRect } from '@/lib/ocrBlocks';
 import { fetchUploadBlob, withAccessToken } from '@/lib/uploadUrl';
 
 const SOURCE_LABEL = {
@@ -69,17 +70,49 @@ const PREVIEW_FRAME_FIXED =
 const PREVIEW_FRAME_FILL =
   'absolute inset-0 w-full h-full border-0 bg-slate-100 object-contain';
 
-export default function AvizFilePreview({ fileUrl, fill = false }) {
+/**
+ * @param {object} props
+ * @param {string} props.fileUrl
+ * @param {boolean} [props.fill]
+ * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
+ *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
+ *   (so percentage-positioned children land on the page, not in the letterbox). Ignored for
+ *   PDFs — an iframe cannot be drawn over.
+ */
+export default function AvizFilePreview({ fileUrl, fill = false, overlay = null }) {
   const [src, setSrc] = useState('');
   const [error, setError] = useState('');
+  const [natural, setNatural] = useState(null);
+  const [boxSize, setBoxSize] = useState(null);
+  const boxRef = useRef(null);
   const kind = previewKind(fileUrl);
   const frame = fill ? PREVIEW_FRAME_FILL : PREVIEW_FRAME_FIXED;
+  const wantsOverlay = Boolean(overlay) && kind === 'image';
+
+  // The overlay has to sit on the picture, not on the box around it. `object-contain`
+  // letterboxes, so the picture's rectangle is computed from the box size and the natural
+  // size — and recomputed when the box changes (drawer resize, phone rotation).
+  useEffect(() => {
+    if (!wantsOverlay || !src) return undefined;
+    const el = boxRef.current;
+    if (!el) return undefined;
+    const update = () => setBoxSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', update);
+      return () => window.removeEventListener('resize', update);
+    }
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [wantsOverlay, src]);
 
   useEffect(() => {
     let objectUrl = '';
     let cancelled = false;
     setSrc('');
     setError('');
+    setNatural(null);
 
     if (!fileUrl) {
       setError('Nu există fișier atașat acestui aviz.');
@@ -163,6 +196,32 @@ export default function AvizFilePreview({ fileUrl, fill = false }) {
   if (kind === 'pdf') {
     return (
       <iframe title="Previzualizare aviz" className={frame} src={src} />
+    );
+  }
+  if (wantsOverlay) {
+    const rect = natural && boxSize
+      ? containedRect(boxSize.width, boxSize.height, natural.naturalWidth, natural.naturalHeight)
+      : null;
+    return (
+      <div
+        ref={boxRef}
+        className={`${fill ? 'absolute inset-0' : 'relative w-full min-h-[240px] h-[36vh] max-h-[420px]'} bg-slate-100 overflow-hidden`}
+      >
+        <img
+          alt="Aviz"
+          className="absolute inset-0 w-full h-full object-contain"
+          src={src}
+          onLoad={(e) => setNatural({ naturalWidth: e.currentTarget.naturalWidth, naturalHeight: e.currentTarget.naturalHeight })}
+        />
+        {rect ? (
+          <div
+            className="absolute pointer-events-none"
+            style={{ left: rect.left, top: rect.top, width: rect.width, height: rect.height }}
+          >
+            {overlay(natural)}
+          </div>
+        ) : null}
+      </div>
     );
   }
   if (kind === 'image') {
