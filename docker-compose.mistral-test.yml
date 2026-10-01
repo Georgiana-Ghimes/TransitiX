@@ -1,0 +1,22 @@
+# Postgres izolat pentru test MISTRAL pe VM (port 5436 pe host).
+# Nu refolosi volumul companion-ului vechi. Parola trebuie să coincidă cu DATABASE_URL.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: transitix_rai_mistral
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MistralDb
+    volumes:
+      - transitix_rai_mistral_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d transitix_rai_mistral"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  transitix_rai_mistral_pg:
