@@ -14,7 +14,11 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat). Nu blochează exportul, poți uni și rânduri neverificate, dar Confirmă e semnul că datele sunt gata de factură.',
+    text: 'Marchează rândul ca verificat (status Confirmat) doar dacă validarea OCR a trecut. Dacă apare „De revizuit” / HITL, deschide Verificare, corectează și marchează verificat — altfel Confirmă e blocat (admin poate forța cu motiv).',
+  },
+  {
+    name: 'Verificare OCR',
+    text: 'Deschide imaginea lângă câmpurile problematice (încredere scăzută, regulă eșuată, duplicat). Salvează corecțiile (audit old→new) apoi Marchează verificat.',
   },
   {
     name: 'Re-extrage',

@@ -9,7 +9,7 @@ import {
   hasUsableColumns,
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
-import { avizFieldConfidence, repairAvizFromStored } from '../lib/avizOcr.js';
+import { fieldConfidenceForUi, repairAvizFromStored } from '../lib/avizOcr.js';
 import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
@@ -148,10 +148,13 @@ function decorateAviz(row) {
   const serialized = repairAvizFromStored(serializeRow(row));
   const source = serialized.extraction_source
     || mapProviderToSource(serialized.extracted_data?.provider);
+  const validation = serialized.extracted_data?.validation ?? null;
   return {
     ...serialized,
     extraction_source: source,
-    field_confidence: avizFieldConfidence(serialized),
+    field_confidence: fieldConfidenceForUi(serialized),
+    validation_routing: validation?.routing ?? null,
+    validation_findings: validation?.findings ?? null,
   };
 }
 
@@ -646,19 +649,119 @@ router.post('/bulk-confirm', async (req, res) => {
   try {
     const ids = capAvizIds(req.body?.ids);
     if (ids.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+    const force = Boolean(req.body?.force);
+    const forceReason = String(req.body?.force_reason || '').trim();
+
+    const docs = (await query(
+      `SELECT * FROM aviz_documents WHERE company_id = $1 AND id = ANY($2::uuid[])`,
+      [req.user.company_id, ids]
+    )).rows;
+
+    const blocked = docs.filter((d) => {
+      const routing = d.extracted_data?.validation?.routing;
+      const needsHitl = d.needs_review || routing === 'hitl_required';
+      return needsHitl && !force;
+    });
+    if (blocked.length) {
+      return res.status(409).json({
+        code: 'NEEDS_REVIEW',
+        message: `${blocked.length} document(e) au nevoie de verificare (OCR/validare). Corectează-le sau, ca admin, trimite force cu motiv.`,
+        blocked: blocked.map((d) => ({
+          id: d.id,
+          filename: d.original_filename,
+          routing: d.extracted_data?.validation?.routing ?? null,
+          needs_review: d.needs_review,
+        })),
+      });
+    }
+    if (force && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Doar un administrator poate forța confirmarea.' });
+    }
+    if (force && !forceReason) {
+      return res.status(400).json({ message: 'La force este obligatoriu un motiv scurt.' });
+    }
+
     const result = await withTransaction(async (client) => {
-      return client.query(
+      const updated = await client.query(
         `UPDATE aviz_documents
-         SET status = 'confirmed', updated_at = NOW()
+         SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
          WHERE company_id = $1 AND id = ANY($2::uuid[]) AND status <> 'confirmed'
          RETURNING *`,
         [req.user.company_id, ids]
       );
+      for (const row of updated.rows) {
+        await logEvent(client, {
+          companyId: req.user.company_id,
+          documentId: row.id,
+          batchId: row.batch_id,
+          userId: req.user.id,
+          kind: 'confirmed',
+          summary: row.original_filename,
+          detail: force ? { force: true, force_reason: forceReason } : undefined,
+        });
+      }
+      return updated;
     });
     res.json(flagDuplicateTpos(applyNumarCurseByRuns(result.rows.map(decorateAviz))));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });
+  }
+});
+
+/** Confirm one aviz (gates on validation / needs_review). */
+router.post('/doc/:id/confirm', async (req, res) => {
+  try {
+    const force = Boolean(req.body?.force);
+    const forceReason = String(req.body?.force_reason || '').trim();
+    const doc = (await query(
+      `SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2`,
+      [req.params.id, req.user.company_id]
+    )).rows[0];
+    if (!doc) return res.status(404).json({ message: 'Aviz inexistent' });
+
+    const routing = doc.extracted_data?.validation?.routing;
+    const needsHitl = doc.needs_review || routing === 'hitl_required';
+    if (needsHitl && !force) {
+      return res.status(409).json({
+        code: 'NEEDS_REVIEW',
+        message: 'Documentul are câmpuri de verificat. Deschide verificarea HITL sau forțează ca admin.',
+        routing: routing ?? null,
+        needs_review: doc.needs_review,
+        findings: doc.extracted_data?.validation?.findings ?? [],
+      });
+    }
+    if (force && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Doar un administrator poate forța confirmarea.' });
+    }
+    if (force && !forceReason) {
+      return res.status(400).json({ message: 'La force este obligatoriu un motiv scurt.' });
+    }
+
+    const updated = await withTransaction(async (client) => {
+      const row = (await client.query(
+        `UPDATE aviz_documents
+         SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
+         WHERE id = $1 AND company_id = $2
+         RETURNING *`,
+        [doc.id, req.user.company_id]
+      )).rows[0];
+      await logEvent(client, {
+        companyId: req.user.company_id,
+        documentId: doc.id,
+        batchId: doc.batch_id,
+        userId: req.user.id,
+        kind: 'confirmed',
+        summary: doc.original_filename,
+        detail: force ? { force: true, force_reason: forceReason } : undefined,
+      });
+      return row;
+    });
+
+    res.json(decorateAviz(updated));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Confirmarea a eșuat' });
   }
 });
 

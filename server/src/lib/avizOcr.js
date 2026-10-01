@@ -163,7 +163,7 @@ function normalizeDocNo(value) {
  * report that collapses distinct trips onto one identifier and makes the annex's key column
  * useless, and it fires the duplicate-TPO warning on a perfectly clean selection.
  */
-function normalizeTpo(value, minDigits = 1) {
+export function normalizeTpo(value, minDigits = 1) {
   if (!value) return null;
   const n = Number(minDigits) >= 1 ? Number(minDigits) : 1;
   const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-.]*(\\d{${n},}(?:[-/.]\\d+)*)`));
@@ -573,4 +573,31 @@ export function avizFieldConfidence(row) {
     ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
     cantitate_marfa: isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa) ? 'low' : 'ok',
   };
+}
+
+/**
+ * Prefer stored OCR field objects for the UI amber flags; fall back to heuristics
+ * when a row predates field_confidence JSON or only has low/ok strings.
+ */
+export function fieldConfidenceForUi(row) {
+  const heuristic = avizFieldConfidence(row);
+  const stored = row?.field_confidence;
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return heuristic;
+
+  const out = { ...heuristic };
+  for (const [key, val] of Object.entries(stored)) {
+    if (val === 'low' || val === 'ok') {
+      out[key] = val;
+      continue;
+    }
+    if (val && typeof val === 'object') {
+      const status = val.status;
+      if (status === 'ok') out[key] = 'ok';
+      else if (status === 'review' || status === 'missing') out[key] = 'low';
+      else if (typeof val.confidence === 'number') {
+        out[key] = val.confidence >= 0.92 ? 'ok' : 'low';
+      }
+    }
+  }
+  return out;
 }

@@ -50,11 +50,16 @@ export function DriverUploadBadge({ uploadedFrom }) {
 }
 
 /** OCR finished but confidence/fields still need a human eye. */
-export function NeedsReviewBadge({ needsReview }) {
-  if (!needsReview) return null;
+export function NeedsReviewBadge({ needsReview, routing }) {
+  if (!needsReview && routing !== 'hitl_required' && routing !== 'hitl_optional') return null;
+  const label = routing === 'hitl_required'
+    ? 'HITL obligatoriu'
+    : routing === 'hitl_optional'
+      ? 'De revizuit'
+      : 'De revizuit';
   return (
     <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
-      De revizuit
+      {label}
     </span>
   );
 }

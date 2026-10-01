@@ -13,6 +13,7 @@ import {
   Mail, Trash2, Upload, X,
 } from 'lucide-react';
 import AvizEditModal from './avize/AvizEditModal';
+import AvizReviewDrawer from './avize/AvizReviewDrawer';
 import AvizFilterBar from './avize/AvizFilterBar';
 import AvizLegend from './avize/AvizLegend';
 import AvizReportsTab from './avize/AvizReportsTab';
@@ -45,6 +46,7 @@ export default function AvizeReports() {
   const [selected, setSelected] = useState(() => new Set());
   const [templateId, setTemplateId] = useState('');
   const [editRow, setEditRow] = useState(null);
+  const [reviewId, setReviewId] = useState(null);
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
@@ -389,11 +391,16 @@ export default function AvizeReports() {
     if (busyId) return;
     setBusyId(row.id);
     try {
-      await api.entities.AvizDocument.update(row.id, { status: 'confirmed' });
+      await api.avize.confirm(row.id);
       notifySuccess('Aviz confirmat', row.numar_tpo || row.original_filename || 'Rând marcat ca confirmat.');
       await load();
     } catch (e) {
-      notifyError('Confirmare eșuată', e);
+      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+        notifyError('Necesită verificare', e);
+        setReviewId(row.id);
+      } else {
+        notifyError('Confirmare eșuată', e);
+      }
     } finally {
       setBusyId(null);
     }
@@ -427,7 +434,13 @@ export default function AvizeReports() {
       );
       await load();
     } catch (e) {
-      notifyError('Confirmare eșuată', e);
+      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+        const blocked = e?.data?.blocked || [];
+        notifyError('Necesită verificare', e);
+        if (blocked[0]?.id) setReviewId(blocked[0].id);
+      } else {
+        notifyError('Confirmare eșuată', e);
+      }
     } finally {
       setBusy(false);
       bulkConfirmLock.current = false;
@@ -1016,12 +1029,18 @@ export default function AvizeReports() {
                           </span>
                           <SourceBadge source={row.extraction_source} />
                           <DriverUploadBadge uploadedFrom={row.uploaded_from} />
-                          <NeedsReviewBadge needsReview={row.needs_review} />
+                          <NeedsReviewBadge
+                            needsReview={row.needs_review}
+                            routing={row.validation_routing}
+                          />
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
                       <button type="button" className="text-[#1D4E89] disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
+                      {(row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
+                        <button type="button" className="text-amber-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
+                      )}
                       {row.status !== 'confirmed' && (
                         <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                       )}
@@ -1105,7 +1124,10 @@ export default function AvizeReports() {
                               <div className="flex flex-wrap gap-1">
                                 <SourceBadge source={row.extraction_source} />
                                 <DriverUploadBadge uploadedFrom={row.uploaded_from} />
-                                <NeedsReviewBadge needsReview={row.needs_review} />
+                                <NeedsReviewBadge
+                                  needsReview={row.needs_review}
+                                  routing={row.validation_routing}
+                                />
                               </div>
                             </div>
                           </td>
@@ -1117,6 +1139,9 @@ export default function AvizeReports() {
                           }`}>
                             <div className="flex flex-col items-end gap-0.5">
                               <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
+                              {(row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
+                                <button type="button" className="text-amber-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
+                              )}
                               {row.status !== 'confirmed' && (
                                 <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
                               )}
@@ -1166,6 +1191,14 @@ export default function AvizeReports() {
           onClose={() => setEditRow(null)}
           onSave={saveEdit}
           onAppendObs={appendObs}
+        />
+      )}
+
+      {reviewId && (
+        <AvizReviewDrawer
+          documentId={reviewId}
+          onClose={() => setReviewId(null)}
+          onSaved={() => load()}
         />
       )}
 

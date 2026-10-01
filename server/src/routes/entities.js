@@ -372,12 +372,24 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
 
     if (req.params.entity === 'AvizDocument') {
       const prev = await query(
-        `SELECT status FROM aviz_documents WHERE id = $1 AND company_id = $2`,
+        `SELECT status, needs_review, extracted_data FROM aviz_documents WHERE id = $1 AND company_id = $2`,
         [req.params.id, req.user.company_id]
       );
       if (!prev.rows[0]) return res.status(404).json({ message: 'Înregistrarea nu a fost găsită.' });
       if (data.status !== undefined) {
         data.status = nextAvizStatusOnSave(prev.rows[0].status, data.status);
+      }
+      if (data.status === 'confirmed') {
+        const routing = prev.rows[0].extracted_data?.validation?.routing;
+        if (prev.rows[0].needs_review || routing === 'hitl_required') {
+          return res.status(409).json({
+            code: 'NEEDS_REVIEW',
+            message: 'Documentul are nevoie de verificare. Folosește Confirmă din listă după HITL, sau force ca admin.',
+            needs_review: prev.rows[0].needs_review,
+            routing: routing ?? null,
+          });
+        }
+        data.needs_review = false;
       }
     }
 

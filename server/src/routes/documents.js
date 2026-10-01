@@ -9,10 +9,12 @@ import { hitRateLimit } from '../lib/rateLimit.js';
 import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { lookupOcrText, storeOcrText } from '../lib/ocr/textCache.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
+import { validateAvizExtraction } from '../lib/ocr/validateAviz.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
+import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
@@ -272,11 +274,26 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         : extraction;
 
       const columns = toColumns(merged.values);
+      const fieldsForValidation = { ...(merged.fields || {}) };
+      if (fieldsForValidation.quantity && !fieldsForValidation.cantitate_marfa) {
+        fieldsForValidation.cantitate_marfa = fieldsForValidation.quantity;
+      }
+      const validation = await validateAvizExtraction({
+        values: {
+          ...merged.values,
+          ...columns,
+          cantitate_marfa: columns.cantitate_marfa ?? merged.values.quantity ?? merged.values.cantitate_marfa,
+        },
+        fields: fieldsForValidation,
+        companyId,
+        documentId: doc.id,
+        queryFn: query,
+      });
+      const needsReview = Boolean(validation.needs_review);
       const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
 
       // Only commit while the row is still `uploaded`. failStale / markExtractFailed may have
-      // already flipped it to Eșuat; a late Paddle answer must not silently fill fields (or
-      // restart the OCR tax on rows the driver already abandoned).
+      // already flipped it to Eșuat; a late OCR answer must not silently fill fields.
       const written = await withTransaction(async (client) => {
         const update = await client.query(
           `UPDATE aviz_documents SET
@@ -292,13 +309,15 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
            RETURNING id`,
           [
             merged.profile_id, merged.confidence,
-            JSON.stringify(merged.fields), merged.needs_review, text.source,
+            JSON.stringify(merged.fields), needsReview, text.source,
             JSON.stringify({
               raw_text: text.text,
               values: merged.values,
               review_fields: merged.review_fields,
-              // A partial read must stay visible on the row: the figures came from fewer pages
-              // than the document has, and nothing downstream could tell otherwise.
+              validation,
+              ...(Array.isArray(text.blocks) && text.blocks.length
+                ? { ocr_blocks: text.blocks }
+                : {}),
               ...(text.pages ? { pages: text.pages } : {}),
               ...(text.truncated ? { pages_truncated: true } : {}),
             }),
@@ -328,6 +347,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           detail: {
             confidence: merged.confidence,
             review_fields: merged.review_fields,
+            routing: validation.routing,
+            failed_rules: validation.failed_rules,
             text_source: text.source,
             text_cached: Boolean(text.cached),
             pages: text.pages ?? null,
@@ -348,7 +369,13 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         continue;
       }
 
-      results.push({ id: doc.id, filename: doc.original_filename, ...summariseExtraction(merged) });
+      results.push({
+        id: doc.id,
+        filename: doc.original_filename,
+        ...summariseExtraction({ ...merged, needs_review: needsReview }),
+        routing: validation.routing,
+        failed_rules: validation.failed_rules,
+      });
     } catch (err) {
       const timedOut = err?.code === 'OCR_TIMEOUT';
       // Interactive path pins a short `timeoutMs` and /avize/extract retries in background.
@@ -522,6 +549,173 @@ router.get('/batches', async (req, res) => {
   }
 });
 
+/** HITL queue: documents that need human review after validation. */
+router.get('/review-queue', async (req, res) => {
+  try {
+    const routing = String(req.query.routing || '').trim();
+    const params = [req.user.company_id];
+    let routingFilter = '';
+    if (routing === ROUTING.HITL_REQUIRED || routing === ROUTING.HITL_OPTIONAL) {
+      params.push(routing);
+      routingFilter = `AND extracted_data->'validation'->>'routing' = $${params.length}`;
+    }
+    const rows = await query(
+      `SELECT id, original_filename, file_url, status, needs_review, ocr_confidence,
+              field_confidence, numar_tpo, numar_auto, data_efectuare_cursa,
+              extracted_data, created_at, updated_at, uploaded_from
+       FROM aviz_documents
+       WHERE company_id = $1
+         AND status IN ('extracted', 'uploaded')
+         AND (
+           needs_review = TRUE
+           OR extracted_data->'validation'->>'routing' IN ('hitl_required', 'hitl_optional')
+         )
+         ${routingFilter}
+       ORDER BY
+         CASE extracted_data->'validation'->>'routing'
+           WHEN 'hitl_required' THEN 0
+           WHEN 'hitl_optional' THEN 1
+           ELSE 2
+         END,
+         updated_at DESC
+       LIMIT 200`,
+      params
+    );
+    res.json({
+      documents: rows.rows.map((row) => {
+        const validation = row.extracted_data?.validation ?? null;
+        return {
+          id: row.id,
+          original_filename: row.original_filename,
+          file_url: row.file_url,
+          status: row.status,
+          needs_review: row.needs_review,
+          ocr_confidence: row.ocr_confidence,
+          numar_tpo: row.numar_tpo,
+          numar_auto: row.numar_auto,
+          data_efectuare_cursa: row.data_efectuare_cursa,
+          routing: validation?.routing ?? (row.needs_review ? ROUTING.HITL_REQUIRED : ROUTING.AUTO),
+          findings: validation?.findings ?? [],
+          review_fields: row.extracted_data?.review_fields ?? [],
+          uploaded_from: row.uploaded_from,
+          updated_at: row.updated_at,
+        };
+      }),
+    });
+  } catch (err) {
+    sendError(res, err, 'Nu am putut încărca coada de verificare');
+  }
+});
+
+/** HITL payload for one document (values, scores, failed rules, blocks). */
+router.get('/:id/review', async (req, res) => {
+  try {
+    const doc = (await query(
+      'SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2',
+      [req.params.id, req.user.company_id]
+    )).rows[0];
+    if (!doc) return res.status(404).json({ message: 'Document inexistent' });
+
+    const validation = doc.extracted_data?.validation ?? null;
+    const fields = doc.field_confidence ?? {};
+    const values = {
+      ...(doc.extracted_data?.values ?? {}),
+      numar_tpo: doc.numar_tpo,
+      numar_auto: doc.numar_auto,
+      data_efectuare_cursa: doc.data_efectuare_cursa,
+      ruta_transport: doc.ruta_transport,
+      tip_marfa: doc.tip_marfa,
+      cantitate_marfa: doc.cantitate_marfa,
+      numar_document_marfa: doc.numar_document_marfa,
+      gross_weight_kg: doc.gross_weight_kg,
+      net_weight_kg: doc.net_weight_kg,
+      numar_curse: doc.numar_curse,
+      km_parcursi: doc.km_parcursi,
+      tarif_km: doc.tarif_km,
+      valoare_tpo: doc.valoare_tpo,
+      taxe_suplimentare: doc.taxe_suplimentare,
+      observatii: doc.observatii,
+    };
+
+    const findings = validation?.findings ?? [];
+    const issues = findings.map((f) => ({
+      field: f.field,
+      rule: f.rule,
+      severity: f.severity,
+      title: f.title,
+      message: f.message,
+      source: f.source || 'rule_failed',
+      confidence: f.field && fields[f.field]?.confidence != null
+        ? fields[f.field].confidence
+        : null,
+      value: f.field ? values[f.field] ?? null : null,
+    }));
+
+    res.json({
+      document: serializeRow(doc),
+      values,
+      fields,
+      validation,
+      issues,
+      review_fields: doc.extracted_data?.review_fields ?? [],
+      ocr_blocks: doc.extracted_data?.ocr_blocks ?? null,
+      routing: validation?.routing ?? (doc.needs_review ? ROUTING.HITL_REQUIRED : ROUTING.AUTO),
+    });
+  } catch (err) {
+    sendError(res, err, 'Nu am putut încărca detaliile de verificare');
+  }
+});
+
+/** Clears review flag after operator verified (does not Confirm). */
+router.post('/:id/approve-review', async (req, res) => {
+  try {
+    const doc = (await query(
+      'SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2',
+      [req.params.id, req.user.company_id]
+    )).rows[0];
+    if (!doc) return res.status(404).json({ message: 'Document inexistent' });
+
+    const updated = await withTransaction(async (client) => {
+      const prevValidation = doc.extracted_data?.validation ?? {};
+      const row = (await client.query(
+        `UPDATE aviz_documents SET
+           needs_review = FALSE,
+           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $1::jsonb,
+           updated_at = NOW()
+         WHERE id = $2 AND company_id = $3
+         RETURNING *`,
+        [
+          JSON.stringify({
+            validation: {
+              ...prevValidation,
+              routing: ROUTING.AUTO,
+              needs_review: false,
+              approved_at: new Date().toISOString(),
+              approved_by: req.user.id,
+            },
+          }),
+          doc.id,
+          req.user.company_id,
+        ]
+      )).rows[0];
+      await logEvent(client, {
+        companyId: req.user.company_id,
+        documentId: doc.id,
+        batchId: doc.batch_id,
+        userId: req.user.id,
+        kind: 'review_approved',
+        summary: doc.original_filename,
+        detail: { previous_routing: prevValidation.routing ?? null },
+      });
+      return row;
+    });
+
+    res.json({ document: serializeRow(updated), needs_review: false });
+  } catch (err) {
+    sendError(res, err, 'Aprobarea verificării a eșuat');
+  }
+});
+
 /** Operator corrections on one document. */
 router.put('/:id/corrections', async (req, res) => {
   try {
@@ -545,9 +739,40 @@ router.put('/:id/corrections', async (req, res) => {
       status: doc.needs_review ? 'review' : 'ok',
       review_fields: doc.extracted_data?.review_fields ?? [],
     };
-    const merged = applyCorrections(current, corrections, { previouslyCorrected: doc.corrected_fields ?? [] });
+    const previousValues = { ...(doc.extracted_data?.values ?? {}) };
+    for (const col of [
+      'numar_tpo', 'numar_auto', 'data_efectuare_cursa', 'ruta_transport',
+      'tip_marfa', 'cantitate_marfa', 'numar_document_marfa', 'gross_weight_kg',
+      'net_weight_kg', 'numar_curse', 'km_parcursi', 'tarif_km', 'valoare_tpo',
+      'taxe_suplimentare', 'observatii',
+    ]) {
+      if (doc[col] != null && previousValues[col] === undefined) previousValues[col] = doc[col];
+    }
 
+    const merged = applyCorrections(current, corrections, { previouslyCorrected: doc.corrected_fields ?? [] });
     const columns = toColumns(merged.values);
+    const fieldsForValidation = { ...(merged.fields || {}) };
+    if (fieldsForValidation.quantity && !fieldsForValidation.cantitate_marfa) {
+      fieldsForValidation.cantitate_marfa = fieldsForValidation.quantity;
+    }
+    const validation = await validateAvizExtraction({
+      values: { ...previousValues, ...merged.values, ...columns },
+      fields: fieldsForValidation,
+      companyId: req.user.company_id,
+      documentId: doc.id,
+      queryFn: query,
+    });
+    const needsReview = Boolean(validation.needs_review);
+
+    const fieldChanges = Object.entries(corrections).map(([field, next]) => ({
+      field,
+      old_value: previousValues[field] ?? previousValues[field === 'cantitate_marfa' ? 'quantity' : field] ?? null,
+      new_value: next,
+      operator_id: req.user.id,
+      operator_name: req.user.name ?? null,
+      timestamp: new Date().toISOString(),
+    }));
+
     const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 5}`);
 
     const updated = await withTransaction(async (client) => {
@@ -560,8 +785,12 @@ router.put('/:id/corrections', async (req, res) => {
          WHERE id = $${5 + Object.keys(columns).length} AND company_id = $${6 + Object.keys(columns).length}
          RETURNING *`,
         [
-          JSON.stringify(merged.fields), merged.corrected_fields, merged.needs_review,
-          JSON.stringify({ values: merged.values, review_fields: merged.review_fields }),
+          JSON.stringify(merged.fields), merged.corrected_fields, needsReview,
+          JSON.stringify({
+            values: merged.values,
+            review_fields: merged.review_fields,
+            validation,
+          }),
           ...Object.values(columns),
           doc.id, req.user.company_id,
         ]
@@ -571,12 +800,17 @@ router.put('/:id/corrections', async (req, res) => {
         companyId: req.user.company_id, documentId: doc.id, batchId: doc.batch_id,
         userId: req.user.id, kind: 'corrected',
         summary: Object.keys(corrections).join(', '),
-        detail: { corrections },
+        detail: { corrections, field_changes: fieldChanges, routing: validation.routing },
       });
       return row;
     });
 
-    res.json({ document: serializeRow(updated), needs_review: merged.needs_review });
+    res.json({
+      document: serializeRow(updated),
+      needs_review: needsReview,
+      validation,
+      field_changes: fieldChanges,
+    });
   } catch (err) {
     sendError(res, err, 'Salvarea corecțiilor a eșuat');
   }

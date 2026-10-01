@@ -692,6 +692,21 @@ export const api = {
     history(documentId) {
       return request(`/documents/${encodeURIComponent(documentId)}/history`);
     },
+    reviewQueue({ routing } = {}) {
+      const params = new URLSearchParams();
+      if (routing) params.set('routing', routing);
+      const q = params.toString();
+      return request(`/documents/review-queue${q ? `?${q}` : ''}`);
+    },
+    review(documentId) {
+      return request(`/documents/${encodeURIComponent(documentId)}/review`);
+    },
+    approveReview(documentId) {
+      return request(`/documents/${encodeURIComponent(documentId)}/approve-review`, {
+        method: 'POST',
+        body: {},
+      });
+    },
     confirmBatch(id, documentIds, { force = false } = {}) {
       return request(`/documents/batches/${encodeURIComponent(id)}/confirm`, {
         method: 'POST',
@@ -1037,8 +1052,17 @@ export const api = {
       const match = disp.match(/filename="([^"]+)"/);
       return { blob, filename: match?.[1] || 'anexa-factura.xlsx' };
     },
-    bulkConfirm(ids) {
-      return request('/avize/bulk-confirm', { method: 'POST', body: { ids } });
+    bulkConfirm(ids, { force = false, force_reason } = {}) {
+      return request('/avize/bulk-confirm', {
+        method: 'POST',
+        body: { ids, force, force_reason },
+      });
+    },
+    confirm(id, { force = false, force_reason } = {}) {
+      return request(`/avize/doc/${encodeURIComponent(id)}/confirm`, {
+        method: 'POST',
+        body: { force, force_reason },
+      });
     },
     observationCodes() {
       return request('/avize/observation-codes');
