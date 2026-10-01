@@ -36,7 +36,10 @@ export default function AvizEditModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {AVIZ_FORM_FIELDS.map((f) => (
                 <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                  <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică (parser nesigur)' : ''}</label>
+                  <label className={labelCls}>
+                    {f.label}
+                    {f.key !== 'cantitate_marfa' && lowField(editRow, f.key) ? ' · verifică (parser nesigur)' : ''}
+                  </label>
                   <input
                     className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
                     type={f.type || 'text'}
@@ -47,10 +50,6 @@ export default function AvizEditModal({
                 </div>
               ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />
-              <div className="sm:col-span-2">
-                <label className={labelCls}>Rută birou (nu merge în Excel)</label>
-                <input className={inputCls} value={form.ruta_display ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, ruta_display: e.target.value }))} />
-              </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Cursă (opțional)</label>
                 <select className={inputCls} value={form.trip_id || ''} onChange={(e) => setForm((prev) => ({ ...prev, trip_id: e.target.value }))}>
