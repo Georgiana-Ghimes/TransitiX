@@ -89,7 +89,7 @@ export function headline(summary) {
 
 /** The label for a finding's subject, so a row says what it is about before why. */
 export function subjectLabel(subject) {
-  if (!subject) return '—';
+  if (!subject) return '-';
   const kind = { trip: 'Cursă', document: 'Document', tpo: 'TPO' }[subject.type] ?? '';
   return kind ? `${kind} ${subject.label}` : subject.label;
 }

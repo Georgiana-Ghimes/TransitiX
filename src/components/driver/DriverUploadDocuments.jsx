@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, ClipboardList, CloudOff, FileText, Loader2, Upload } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
-import { findDriverForUser } from '@/lib/utils';
-import { DOC_TYPES } from '@/lib/cmrUi';
 import { findBlurriest } from '@/lib/imageQuality';
 import { prepareImagesForUpload } from '@/lib/imagePreprocess';
 import { throttleState } from '@/lib/uploadThrottle';
@@ -12,12 +10,13 @@ import { offlineStore } from '@/lib/offlineStore';
 import { pendingEntries } from '@/lib/offlineQueue';
 import DriverAvizReviewForm, { DriverWritingTips } from '@/components/driver/DriverAvizReviewForm';
 import {
-  driverFieldCls,
-  driverLabelCls,
   driverPrimaryBtn,
   driverSecondaryBtn,
   driverStackGap,
 } from '@/lib/driverUi';
+
+/** Companion uploads are always avize; type/trip pickers were noise on this screen. */
+const DOCUMENT_TYPE = 'aviz';
 
 const STATUS_LABEL = {
   uploaded: 'Se procesează…',
@@ -46,7 +45,7 @@ function rememberReviewPrompted(id) {
     next.add(id);
     sessionStorage.setItem(REVIEW_PROMPTED_KEY, JSON.stringify([...next].slice(-80)));
   } catch {
-    /* private mode / quota — in-memory set still covers this session page life */
+    /* private mode / quota - in-memory set still covers this session page life */
   }
 }
 
@@ -67,7 +66,7 @@ function driverStatusDetail(doc, online = true) {
   if (Array.isArray(doc.missing_fields) && doc.missing_fields.length) {
     return `Lipsesc câmpuri · ${doc.missing_fields.map((m) => m.label).join(', ')}`;
   }
-  const base = STATUS_LABEL[doc.status] || doc.status || '—';
+  const base = STATUS_LABEL[doc.status] || doc.status || '-';
   const tpo = String(doc.numar_tpo || '').trim();
   if (tpo) {
     return doc.needs_review ? `${base} · ${tpo} · de revizuit` : `${base} · ${tpo}`;
@@ -92,9 +91,6 @@ function browserOffline() {
  */
 export default function DriverUploadDocuments({ user }) {
   const userId = user?.id;
-  const [docType, setDocType] = useState('aviz');
-  const [tripId, setTripId] = useState('');
-  const [trips, setTrips] = useState([]);
   const [docs, setDocs] = useState([]);
   const [queuedUploads, setQueuedUploads] = useState([]);
   const [online, setOnline] = useOnline();
@@ -118,15 +114,14 @@ export default function DriverUploadDocuments({ user }) {
     if (entry.kind !== 'driver_document_upload') {
       throw new Error(`Acțiune necunoscută: ${entry.kind}`);
     }
-    const { tripId: queuedTripId, document_type, files: stored = [] } = entry.payload ?? {};
+    const { files: stored = [] } = entry.payload ?? {};
     const files = stored.map((f) => {
       const blob = f.blob instanceof Blob ? f.blob : f;
       return new File([blob], f.name, { type: f.type || blob.type || 'application/octet-stream' });
     });
     return api.driverDocuments.upload({
-      tripId: queuedTripId,
       files,
-      document_type: document_type || 'aviz',
+      document_type: DOCUMENT_TYPE,
     });
   }, []);
 
@@ -152,8 +147,7 @@ export default function DriverUploadDocuments({ user }) {
       kind: 'driver_document_upload',
       label: files.length === 1 ? files[0].name : `${files.length} documente`,
       run: {
-        tripId: tripId || undefined,
-        document_type: docType,
+        document_type: DOCUMENT_TYPE,
         files: files.map((f) => ({ name: f.name, type: f.type, blob: f })),
       },
     });
@@ -163,7 +157,7 @@ export default function DriverUploadDocuments({ user }) {
       `${files.length} fișier(e), se trimite automat când prinzi semnal`
     );
     return true;
-  }, [userId, outbox, tripId, docType, refreshQueued]);
+  }, [userId, outbox, refreshQueued]);
 
   const syncDocs = useCallback(async () => {
     const mine = await api.driverDocuments.listMine(30);
@@ -175,22 +169,9 @@ export default function DriverUploadDocuments({ user }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const me = user || await api.auth.me();
-      const drivers = await api.entities.Driver.list().catch(() => []);
-      const myDriver = findDriverForUser(drivers, me);
-
-      const [syncResult, tripList] = await Promise.all([
-        syncDocs().then((value) => ({ ok: true, value })).catch((err) => ({ ok: false, err })),
-        myDriver
-          ? api.entities.Trip.filter({ driver_id: myDriver.id }, '-created_date', 30).catch(() => [])
-          : Promise.resolve([]),
-      ]);
-
-      const active = (Array.isArray(tripList) ? tripList : []).filter(
-        (t) => !['livrata', 'anulata'].includes(t.status)
-      );
-      setTrips(active);
-      if (active.length === 1) setTripId((prev) => prev || active[0].id);
+      const syncResult = await syncDocs()
+        .then((value) => ({ ok: true, value }))
+        .catch((err) => ({ ok: false, err }));
 
       if (syncResult.ok) setOnline(true);
       else if (isOfflineError(syncResult.err)) setOnline(false);
@@ -202,7 +183,7 @@ export default function DriverUploadDocuments({ user }) {
       setLoading(false);
       await refreshQueued();
     }
-  }, [user, syncDocs, setOnline, refreshQueued]);
+  }, [syncDocs, setOnline, refreshQueued]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { refreshQueued(); }, [refreshQueued]);
@@ -250,7 +231,7 @@ export default function DriverUploadDocuments({ user }) {
   }, [pending, refreshDocs]);
 
   /**
-   * When OCR just finished with gaps, open the form once. Do not toast on every reload —
+   * When OCR just finished with gaps, open the form once. Do not toast on every reload -
    * incomplete „Eșuat OCR” rows stay incomplete until the driver taps „Completează câmpurile”.
    */
   useEffect(() => {
@@ -339,14 +320,14 @@ export default function DriverUploadDocuments({ user }) {
 
       await sendFiles(files);
     } finally {
-      // Blur path returns early without sendFiles' finally — clear the spinner either way.
+      // Blur path returns early without sendFiles' finally - clear the spinner either way.
       setUploading(false);
     }
   };
 
   /**
    * After a long pause the app can still think it is offline (stale flag) while the radio is
-   * fine — the first photo then went only to the outbox and never appeared under „Trimise recent”.
+   * fine - the first photo then went only to the outbox and never appeared under „Trimise recent”.
    * Always try the network unless the browser itself reports offline; queue only if the send fails.
    */
   const sendFiles = async (files) => {
@@ -378,9 +359,8 @@ export default function DriverUploadDocuments({ user }) {
     window.addEventListener('offline', onOffline);
     try {
       const result = await api.driverDocuments.upload({
-        tripId: tripId || undefined,
         files,
-        document_type: docType,
+        document_type: DOCUMENT_TYPE,
         signal: controller.signal,
       });
       const n = result.documents?.length || files.length;
@@ -415,9 +395,11 @@ export default function DriverUploadDocuments({ user }) {
   return (
     <div className={driverStackGap}>
       <p className="text-base text-slate-600 leading-relaxed">
-        Pozează avizul tipărit — OCR citește ce poate. Dacă lipsesc câmpuri, le completezi manual.
+        Pozează avizul tipărit - OCR citește ce poate. Dacă lipsesc câmpuri, le completezi manual.
         Sau scrii totul cu „Aviz manual”.
       </p>
+
+      <DriverWritingTips />
 
       {!online ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex items-start gap-3">
@@ -459,36 +441,6 @@ export default function DriverUploadDocuments({ user }) {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col gap-4">
-          <div className="min-w-0">
-            <label className={driverLabelCls}>Tip document</label>
-            <select
-              value={docType}
-              onChange={(e) => setDocType(e.target.value)}
-              className={driverFieldCls}
-            >
-              {DOC_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="min-w-0">
-            <label className={driverLabelCls}>Cursă (opțional)</label>
-            <select
-              value={tripId}
-              onChange={(e) => setTripId(e.target.value)}
-              className={driverFieldCls}
-            >
-              <option value="">Fără cursă (biroul leagă ulterior)</option>
-              {trips.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.cmr_number || t.id.slice(0, 8)} · {t.status}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <input
           ref={fileRef}
           type="file"
@@ -546,8 +498,7 @@ export default function DriverUploadDocuments({ user }) {
       {manualOpen ? (
         <DriverAvizReviewForm
           mode="create"
-          tripId={tripId}
-          documentType={docType}
+          documentType={DOCUMENT_TYPE}
           onCancel={() => setManualOpen(false)}
           onSaved={(created) => {
             setDocs((prev) => [created, ...prev].slice(0, 40));
@@ -568,8 +519,6 @@ export default function DriverUploadDocuments({ user }) {
         />
       ) : null}
 
-      <DriverWritingTips />
-
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="px-4 sm:px-5 py-4 border-b border-slate-100">
           <h3 className="text-lg font-semibold text-[#0A2B4E]">Trimise recent</h3>
@@ -584,8 +533,6 @@ export default function DriverUploadDocuments({ user }) {
                     {entry.label || 'Document'}
                   </p>
                   <p className="text-base text-slate-500 mt-1 break-words leading-snug">
-                    <span>{entry.payload?.document_type || 'aviz'}</span>
-                    {' · '}
                     <span className="inline-flex items-center gap-1.5 text-amber-800 font-medium">
                       {outbox.flushing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {outbox.flushing ? 'Se trimite…' : 'Netrimis · așteaptă semnal'}
@@ -611,7 +558,6 @@ export default function DriverUploadDocuments({ user }) {
                         ? 'text-emerald-800'
                         : 'text-amber-900'
                   }`}>
-                    <span className="text-slate-500">{doc.document_type || 'aviz'} · </span>
                     <span className="inline-flex items-center gap-1.5 font-medium">
                       {doc.status === 'uploaded' ? (
                         online

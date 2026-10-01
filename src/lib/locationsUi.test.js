@@ -215,7 +215,7 @@ describe('formatCoord', () => {
   });
 
   it('shows a dash for a missing coordinate', () => {
-    expect(formatCoord(null)).toBe('—');
-    expect(formatCoord(undefined)).toBe('—');
+    expect(formatCoord(null)).toBe('-');
+    expect(formatCoord(undefined)).toBe('-');
   });
 });

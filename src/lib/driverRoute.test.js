@@ -85,8 +85,8 @@ describe('stop formatting', () => {
   });
 
   it('formats a partial delivery window', () => {
-    expect(formatWindow({ window_start: '08:00:00', window_end: '12:00:00' })).toBe('08:00–12:00');
-    expect(formatWindow({ window_end: '12:00' })).toBe('…–12:00');
+    expect(formatWindow({ window_start: '08:00:00', window_end: '12:00:00' })).toBe('08:00-12:00');
+    expect(formatWindow({ window_end: '12:00' })).toBe('…-12:00');
     expect(formatWindow({})).toBe('');
   });
 

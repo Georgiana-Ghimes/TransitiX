@@ -9,7 +9,9 @@ export const AVIZ_FORM_FIELDS = [
   { key: 'gross_weight_kg', label: 'Greutate brută (kg)', type: 'number', step: '0.01' },
   { key: 'net_weight_kg', label: 'Greutate netă (kg)', type: 'number', step: '0.01' },
   { key: 'numar_document_marfa', label: 'Număr document marfă' },
-  { key: 'numar_curse', label: 'Număr curse', type: 'number', step: '1' },
+  // Text, not type=number: spinner steppers fight controlled React state and made
+  // typed values (e.g. 2) snap back to 1 while editing.
+  { key: 'numar_curse', label: 'Număr curse' },
   { key: 'taxe_suplimentare', label: 'Taxe suplimentare', type: 'number', step: '0.01' },
   { key: 'km_parcursi', label: 'Km parcurși', type: 'number', step: '0.01' },
   { key: 'tarif_km', label: 'Tarif km', type: 'number', step: '0.0001' },

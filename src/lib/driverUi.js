@@ -1,12 +1,12 @@
 /**
  * Shared Tailwind class tokens for the driver app at large system text / display size.
- * Prefer these over ad-hoc text-[10px] / min-h-[44px] so 150–200% zoom stays usable.
+ * Prefer these over ad-hoc text-[10px] / min-h-[44px] so 150-200% zoom stays usable.
  */
 
 export const DRIVER_SHELL =
   'w-full max-w-[28rem] sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto';
 
-/** Text / select fields — 56px min height, base type. */
+/** Text / select fields - 56px min height, base type. */
 export const driverFieldCls =
   'w-full min-h-14 px-4 py-3 text-base border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-[#1D4E89]';
 

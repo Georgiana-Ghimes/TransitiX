@@ -32,13 +32,13 @@ const ACCOUNT_TYPES = [
     id: 'institution',
     icon: Building2,
     title: 'Email de firmă',
-    hint: 'ex. nume@firma.ro — colegii tăi vor fi recunoscuți după domeniu',
+    hint: 'ex. nume@firma.ro - colegii tăi vor fi recunoscuți după domeniu',
   },
   {
     id: 'personal',
     icon: User,
     title: 'Email personal',
-    hint: 'Gmail, Yahoo, Outlook… — când firma nu are adresă proprie',
+    hint: 'Gmail, Yahoo, Outlook… - când firma nu are adresă proprie',
   },
 ];
 

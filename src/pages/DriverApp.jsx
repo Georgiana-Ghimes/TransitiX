@@ -242,7 +242,7 @@ export default function DriverApp() {
               <h2 className="font-bold text-[#0A2B4E] text-lg">{selectedTrip.cmr_number}</h2>
               {(selectedTrip.driver_name || selectedTrip.vehicle_plate) && (
                 <p className="text-xs text-slate-500 mt-1">
-                  {selectedTrip.driver_name || '—'} · {selectedTrip.vehicle_plate || '—'}
+                  {selectedTrip.driver_name || '-'} · {selectedTrip.vehicle_plate || '-'}
                 </p>
               )}
 

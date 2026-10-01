@@ -61,8 +61,7 @@ function sameValue(a, b) {
 
 /**
  * Field-level diff between the stored aviz row and an office-form payload, limited to the
- * OCR fields. Manual fields (km, tarif, valoare) are typed by people and never read from
- * the page, so changing them says nothing about OCR.
+ * OCR fields. Free-text notes (`observatii`) stay manual and never count as OCR feedback.
  *
  * @returns {Array<{field: string, old_value: *, new_value: *, operator_id: string|null, operator_name: string|null, timestamp: string}>}
  */

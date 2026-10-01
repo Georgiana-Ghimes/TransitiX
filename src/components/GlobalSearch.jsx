@@ -162,7 +162,7 @@ export default function GlobalSearch({ className }) {
                           {v.plate || 'Vehicul'}
                         </span>
                         <span className="block text-xs text-slate-500 truncate">
-                          {[v.brand, v.model].filter(Boolean).join(' · ') || '—'}
+                          {[v.brand, v.model].filter(Boolean).join(' · ') || '-'}
                         </span>
                       </span>
                     </button>
@@ -185,7 +185,7 @@ export default function GlobalSearch({ className }) {
                           {d.name || 'Șofer'}
                         </span>
                         <span className="block text-xs text-slate-500 truncate">
-                          {[d.phone, d.email].filter(Boolean).join(' · ') || '—'}
+                          {[d.phone, d.email].filter(Boolean).join(' · ') || '-'}
                         </span>
                       </span>
                     </button>

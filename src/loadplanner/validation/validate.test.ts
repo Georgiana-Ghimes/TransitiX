@@ -206,7 +206,7 @@ describe('unloading order', () => {
     expect(validatePlan(vehicle, plan).warnings.some((w) => w.code === 'unloading_order')).toBe(false);
   });
 
-  it('is a warning, not an error — a dispatcher may accept double handling', () => {
+  it('is a warning, not an error - a dispatcher may accept double handling', () => {
     const early = pallet('u1', { stopNumber: 1 });
     const late = pallet('u2', { stopNumber: 3 });
     const plan = planWith([early, late], [at('p1', 'u1', 0, 0), at('p2', 'u2', 1200, 0)]);

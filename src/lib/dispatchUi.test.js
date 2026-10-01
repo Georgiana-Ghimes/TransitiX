@@ -39,9 +39,9 @@ describe('formatDuration', () => {
   });
 
   it('shows a dash for nothing usable', () => {
-    expect(formatDuration(null)).toBe('—');
-    expect(formatDuration('abc')).toBe('—');
-    expect(formatDuration(-5)).toBe('—');
+    expect(formatDuration(null)).toBe('-');
+    expect(formatDuration('abc')).toBe('-');
+    expect(formatDuration(-5)).toBe('-');
   });
 });
 
@@ -64,7 +64,7 @@ describe('formatKm', () => {
   });
 
   it('shows a dash for nothing usable', () => {
-    expect(formatKm(null)).toBe('—');
+    expect(formatKm(null)).toBe('-');
   });
 });
 

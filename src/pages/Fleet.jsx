@@ -7,7 +7,8 @@
  *
  * Rows the OCR opened on its own are marked as such. A misread plate produces a lorry that
  * never existed, and presenting it as fleet somebody entered would leave an alert nobody can
- * explain or clear.
+ * explain or clear. Șterge removes the row from the database; the same plate on a later aviz
+ * opens a fresh record through the OCR path.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -104,12 +105,14 @@ export default function Fleet() {
   const removeVehicle = async (vehicle) => {
     setSaving(vehicle.id);
     try {
-      // Retired, not erased: a lorry that carried documents stays referenced by them.
-      await api.entities.Vehicle.update(vehicle.id, { is_active: false });
-      notifySuccess(`${vehicle.plate} scos din listă`, 'Nu mai cere MTMA și nu mai apare aici.');
+      // Hard delete: the row leaves the DB. Avize that named this plate keep their text;
+      // references on trips/GPS become NULL. A later OCR of the same plate opens a fresh
+      // record - that is what "Șterge, apoi reapare pe un aviz nou" has to mean.
+      await api.entities.Vehicle.delete(vehicle.id);
+      notifySuccess(`${vehicle.plate} șters`, 'Dacă apare pe un aviz nou, se adaugă din nou aici.');
       await load();
     } catch (err) {
-      notifyError('Operația a eșuat', err);
+      notifyError('Ștergerea a eșuat', err);
     } finally {
       setSaving(null);
     }
@@ -147,7 +150,7 @@ export default function Fleet() {
           <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             <strong>{missing.length === 1 ? 'O mașină nu are MTMA' : `${missing.length} mașini nu au MTMA`}</strong>
-            {' — '}
+            {' - '}
             fără masa din talon nu se poate calcula taxa de zonă pentru cursele lor.
           </span>
         </div>
@@ -286,7 +289,7 @@ function VehicleRow({ vehicle, busy, onSave, onRemove }) {
           readOnly={!editing}
           inputMode="numeric"
           pattern="[0-9 .,]*"
-          placeholder="—"
+          placeholder="-"
         />
 
         {editing ? (

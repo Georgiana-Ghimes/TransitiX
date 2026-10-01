@@ -6,7 +6,7 @@ import { notifyError, notifySuccess } from '@/lib/notify';
 import OcrQualityCard from './OcrQualityCard';
 
 function exportWho(row) {
-  return row.user_name || row.user_email || '—';
+  return row.user_name || row.user_email || '-';
 }
 
 export default function AvizReportsTab({ filterBar, reportData, onRefresh, range }) {
@@ -125,8 +125,8 @@ export default function AvizReportsTab({ filterBar, reportData, onRefresh, range
                 <td className="py-2">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
                 <td className="py-2 truncate" title={row.user_email || ''}>{exportWho(row)}</td>
                 <td className="py-2">{row.kind}</td>
-                <td className="py-2 truncate">{row.filename || '—'}</td>
-                <td className="py-2 text-right">{row.aviz_count ?? '—'}</td>
+                <td className="py-2 truncate">{row.filename || '-'}</td>
+                <td className="py-2 text-right">{row.aviz_count ?? '-'}</td>
                 <td className="py-2 text-right">
                   <button
                     type="button"

@@ -31,7 +31,6 @@ import {
 } from '../lib/observationCodes.js';
 import { zipStore } from '../lib/zipStore.js';
 import {
-  applyNumarCurseByRuns,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
@@ -287,7 +286,9 @@ router.get('/', async (req, res) => {
       dateField: req.query.date_field,
     });
     const result = await query(sql, params);
-    const rows = flagDuplicateTpos(applyNumarCurseByRuns(result.rows.map(decorateAviz)));
+    // Keep the stored `numar_curse` (OCR / foaie / edit). Run-count derivation is for
+    // annex export only — overwriting here made the Editează field snap back to 1.
+    const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -702,7 +703,7 @@ router.post('/bulk-confirm', async (req, res) => {
       }
       return updated;
     });
-    res.json(flagDuplicateTpos(applyNumarCurseByRuns(result.rows.map(decorateAviz))));
+    res.json(flagDuplicateTpos(result.rows.map(decorateAviz)));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });

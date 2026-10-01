@@ -24,11 +24,34 @@ export const DRIVER_GUIDE = {
       blocks: [
         steps([
           'Apeși Încarcă documente.',
-          'Alegi tipul: Aviz / cântar, Poză CMR sau Alt document.',
           'Apeși pe aparatul foto și fotografiezi hârtia, sau alegi o poză din galerie.',
           'Aștepți până apare în listă, sub buton.',
         ]),
         p('Gata. Biroul primește documentul imediat și îl citește programul. Nu trebuie să suni ca să anunți.'),
+      ],
+    },
+    {
+      id: 'ce-scrii-pe-foaie',
+      title: 'Ce scrii pe foaie (când nu ai aviz tipărit)',
+      blocks: [
+        p('Dacă completezi pe o foaie goală și o fotografiezi, scrie rândurile în această ordine, cu numărul în față. Așa le citește programul corect.'),
+        steps([
+          '1. TPO',
+          '2. Data efectuare cursă',
+          '3. Valoare TPO (lăsați gol dacă este cazul)',
+          '4. Număr plăcuță auto',
+          '5. Rută transport',
+          '6. Tip marfă',
+          '7. Cantitate marfă (tone)',
+          '8. Greutate brută (kg)',
+          '9. Greutate netă (kg)',
+          '10. Număr document marfă (aviz/factură)',
+          '11. Număr curse',
+          '12. Taxe suplimentare (dacă este cazul)',
+          '13. Km parcurși (dacă este cazul)',
+          '14. Tarif km (dacă este cazul)',
+        ]),
+        note('Aceeași listă apare mereu pe ecranul de Documente, deasupra butonului „Fă o poză”. Lasă gol ce nu știi. Nu inventa cifre.'),
       ],
     },
     {
@@ -48,15 +71,10 @@ export const DRIVER_GUIDE = {
       id: 'ce-trimiti',
       title: 'Ce documente trimiți',
       blocks: [
-        terms([
-          { term: 'Aviz / cântar', text: 'Cel mai important. De aici se scot numărul comenzii, data, mașina, adresa și greutatea.' },
-          { term: 'Poză CMR', text: 'Scrisoarea de transport, când o ai.' },
-          { term: 'Alt document', text: 'Orice altceva îți cere biroul: bon, proces verbal, confirmare de primire.' },
-        ]),
-        p('Trimite fiecare hârtie separat, nu toate într-o poză. Programul face un rând pentru fiecare fotografie.'),
+        p('Trimiți avize (sau cântarul legat de aviz). Fiecare hârtie separat, nu toate într-o poză - programul face un rând pentru fiecare fotografie.'),
+        p('Dacă nu ai aviz tipărit, completezi pe foaie (lista de mai sus) sau apeși „Completează aviz manual” pe ecran.'),
       ],
-    },
-    {
+    },    {
       id: 'statusuri',
       title: 'Ce înseamnă mesajul de lângă document',
       blocks: [
@@ -105,7 +123,7 @@ export const DRIVER_GUIDE = {
       blocks: [
         terms([
           { term: 'Nu trimite de două ori același aviz', text: 'Biroul îl vede o dată. Trimis de două ori, apare ca dublură și cineva pierde timp verificând.' },
-          { term: 'Nu completa cifre', text: 'Km, tarife și taxe le pune biroul. Tu trimiți hârtia așa cum e.' },
+          { term: 'Nu inventa cifre pe foaie', text: 'Taxe, km și tarif le scrii doar dacă le știi. Dacă nu, lași rândul gol. Biroul le completează.' },
           { term: 'Nu aștepta sfârșitul cursei', text: 'Trimite avizul când îl primești. Hârtia se pierde, poza nu.' },
         ]),
       ],

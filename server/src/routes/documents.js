@@ -90,6 +90,9 @@ const EXTRACT_COLUMNS = [
   // The carnet writes `NR. CURSE` on the page. Without this the profile read it and `toColumns`
   // dropped it, so the row kept the column default and the driver's own count never arrived.
   'numar_curse',
+  // Numbered sheet slots 3 / 12–14 (DRIVER_SHEET_GUIDE): optional annex figures the driver
+  // may write. Without these columns a minimal "3. 450" line extracts and then vanishes.
+  'valoare_tpo', 'taxe_suplimentare', 'km_parcursi', 'tarif_km',
 ];
 
 /** Maps extractor field names onto the document columns. */

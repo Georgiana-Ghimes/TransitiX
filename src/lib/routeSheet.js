@@ -37,7 +37,7 @@ function formatWindow(stop) {
   const from = String(stop.window_start || '').slice(0, 5);
   const to = String(stop.window_end || '').slice(0, 5);
   if (!from && !to) return '';
-  return `${from || '…'}–${to || '…'}`;
+  return `${from || '…'}-${to || '…'}`;
 }
 
 function formatLoad(stop) {
@@ -83,8 +83,8 @@ export function buildRouteSheet(plan, { company = null, date = null } = {}) {
   }));
 
   const meta = [
-    { label: 'Șofer', value: route.driver_name || '—' },
-    { label: 'Vehicul', value: route.vehicle_plate || '—' },
+    { label: 'Șofer', value: route.driver_name || '-' },
+    { label: 'Vehicul', value: route.vehicle_plate || '-' },
     { label: 'Plecare', value: String(route.starts_at || '08:00').slice(0, 5) },
     { label: 'Opriri', value: String(totals.stops ?? rows.length) },
     { label: 'Distanță', value: formatKm(totals.distance_km) },

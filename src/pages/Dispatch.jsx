@@ -432,7 +432,7 @@ export default function Dispatch() {
                 {(order.window_start || order.window_end) && (
                   <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {String(order.window_start || '').slice(0, 5)}–{String(order.window_end || '').slice(0, 5)}
+                    {String(order.window_start || '').slice(0, 5)}-{String(order.window_end || '').slice(0, 5)}
                   </p>
                 )}
                 {routes.length > 0 && (
@@ -798,7 +798,7 @@ export default function Dispatch() {
                 Plan încărcare · {loadingPlan.route?.code || 'Rută'}
               </h2>
               <p className="text-xs text-slate-500">
-                {loadingPlan.route?.vehicle_plate || '—'}
+                {loadingPlan.route?.vehicle_plate || '-'}
                 {' · '}
                 {loadingPlan.strategy === 'warehouse' ? 'depozit' : 'LIFO (șofer)'}
                 {loadingPlan.bay?.assumed ? ' · dimensiuni EU standard' : ''}
@@ -824,13 +824,13 @@ export default function Dispatch() {
               <div className="bg-slate-50 rounded-lg px-3 py-2">
                 <p className="text-slate-400">Axa față</p>
                 <p className="font-semibold text-slate-800 tabular-nums">
-                  {loadingPlan.axle?.front_kg != null ? `${loadingPlan.axle.front_kg} kg` : '—'}
+                  {loadingPlan.axle?.front_kg != null ? `${loadingPlan.axle.front_kg} kg` : '-'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-lg px-3 py-2">
                 <p className="text-slate-400">Axa spate</p>
                 <p className="font-semibold text-slate-800 tabular-nums">
-                  {loadingPlan.axle?.rear_kg != null ? `${loadingPlan.axle.rear_kg} kg` : '—'}
+                  {loadingPlan.axle?.rear_kg != null ? `${loadingPlan.axle.rear_kg} kg` : '-'}
                 </p>
               </div>
             </div>

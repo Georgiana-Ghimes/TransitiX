@@ -33,18 +33,18 @@ export function fillColor(pct) {
 
 export function formatPct(value) {
   const num = toFiniteNumber(value);
-  return num == null ? '—' : `${Math.round(num)}%`;
+  return num == null ? '-' : `${Math.round(num)}%`;
 }
 
 export function formatKg(value) {
   const num = toFiniteNumber(value);
-  if (num == null) return '—';
+  if (num == null) return '-';
   return `${num.toLocaleString('ro-RO', { maximumFractionDigits: 0 })} kg`;
 }
 
 export function formatMeters(value) {
   const num = toFiniteNumber(value);
-  return num == null ? '—' : `${num.toLocaleString('ro-RO', { maximumFractionDigits: 2 })} m`;
+  return num == null ? '-' : `${num.toLocaleString('ro-RO', { maximumFractionDigits: 2 })} m`;
 }
 
 /** Vehicles matching a free-text search on plate, brand, model or chassis. */
@@ -58,7 +58,7 @@ export function filterVehicles(vehicles = [], search = '') {
 
 /** "Mercedes-Benz Actros", what the crew calls the truck. */
 export function vehicleModelLabel(vehicle) {
-  return [vehicle?.brand, vehicle?.model].filter(Boolean).join(' ') || '—';
+  return [vehicle?.brand, vehicle?.model].filter(Boolean).join(' ') || '-';
 }
 
 /**

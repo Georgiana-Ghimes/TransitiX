@@ -14,7 +14,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat) doar dacă validarea OCR a trecut. Dacă apare „De revizuit” / HITL, deschide Verificare, corectează și marchează verificat — altfel Confirmă e blocat (admin poate forța cu motiv).',
+    text: 'Marchează rândul ca verificat (status Confirmat) doar dacă validarea OCR a trecut. Dacă apare „De revizuit” / HITL, deschide Verificare, corectează și marchează verificat - altfel Confirmă e blocat (admin poate forța cu motiv).',
   },
   {
     name: 'Verificare OCR',
@@ -62,7 +62,7 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
   const who = String(row?.uploaded_by_name || '').trim()
     || (row?.uploaded_from === 'driver' ? 'Șofer' : '');
   if (who && date) return `${who} · ${date}`;
-  return who || date || '—';
+  return who || date || '-';
 }
 
 /**

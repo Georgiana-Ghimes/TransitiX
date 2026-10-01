@@ -80,7 +80,7 @@ const EDITARE = {
   blocks: [
     terms([
       { term: 'Valoare TPO', text: 'Valoarea comenzii. Rămâne 0 dacă nu o completezi, iar 0 înseamnă necompletat, nu gratis.' },
-      { term: 'Număr curse', text: 'Calculat, nu scris. Vezi secțiunea despre un TPO cu mai multe curse.' },
+      { term: 'Număr curse', text: 'Cât e pe aviz sau pe foaia șoferului. La exportul Anexă, pe mai multe rânduri cu același TPO se poate recalcula după curse distincte.' },
       { term: 'Taxe suplimentare', text: 'Aici intră taxa de zonă București, completată automat. Orice altceva (macara, staționare) scrii tu. Dacă ai scris deja o sumă, programul nu o înlocuiește singur.' },
       { term: 'Km parcurși și Tarif km', text: 'Le completezi tu. Tariful e un tarif, nu se însumează pe raport.' },
       { term: 'Observații', text: 'Text liber. Butoanele cu coduri de sub câmp adaugă prescurtările folosite des.' },

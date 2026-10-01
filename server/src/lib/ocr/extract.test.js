@@ -712,24 +712,94 @@ describe('carnet de bord profile', () => {
   });
 
   it('maps numbered sheet lines (driver writing guide) onto fields', () => {
+    // Same order as DRIVER_SHEET_GUIDE / DRIVER_SHEET_FIELD_BY_NO — values only, no labels.
     const numbered = [
-      '1. TPO-0025999',
+      '1. 0025999',
       '2. 15.09.2026',
-      '3. CJ 12 ABC',
-      '4. Cluj → Sibiu',
-      '5. SACI',
-      '6. 12500 kg',
-      '7. PSL-0044999',
-      '8. 2',
+      '3. 450',
+      '4. CJ 12 ABC',
+      '5. Cluj → Sibiu',
+      '6. SACI',
+      '7. 12,5 t',
+      '8. 12500',
+      '9. 12000',
+      '10. PSL-0044999',
+      '11. 2',
+      '12. 80',
+      '13. 120',
+      '14. 2,50',
     ].join('\n');
     const { values } = extractDocument(numbered, { profileId: 'carnet_bord' });
     expect(values.numar_tpo).toBe('TPO-0025999');
     expect(values.data_efectuare_cursa).toBe('2026-09-15');
+    expect(values.valoare_tpo).toBe(450);
     expect(values.numar_auto).toBe('CJ-12-ABC');
     expect(values.ruta_transport).toMatch(/Cluj/i);
     expect(values.tip_marfa).toMatch(/SACI/i);
+    expect(values.quantity).toBe(12.5);
+    expect(values.gross_weight_kg).toBe(12500);
+    expect(values.net_weight_kg).toBe(12000);
     expect(values.numar_document_marfa).toBe('PSL-0044999');
     expect(values.numar_curse).toBe(2);
+    expect(values.taxe_suplimentare).toBe(80);
+    expect(values.km_parcursi).toBe(120);
+    expect(values.tarif_km).toBe(2.5);
+  });
+
+  it('picks carnet_bord on a numbered guide sheet even when line 10 is a PSL code', () => {
+    // Real cab photo: PSL on the doc-number slot made detectProfile prefer aviz_baumit_psl,
+    // so quantity / weight / trip count never ran through numbered fallbacks.
+    const sheet = [
+      '1. TPO - 00230',
+      '2. 01/10/2026',
+      '3. -',
+      '4. B - 100 - PLM',
+      '5. Bol - Deal / Bd. Dacia 36',
+      '6. GĂLEȚI',
+      '7. 9.96',
+      '8. 8000',
+      '9. 7843',
+      '10. PSL - 12345',
+      '11. 2',
+      '12. -',
+      '13. -',
+      '14. -',
+    ].join('\n');
+    expect(detectProfile(sheet).profile?.id).toBe('carnet_bord');
+    const { values, profile_id } = extractDocument(sheet);
+    expect(profile_id).toBe('carnet_bord');
+    expect(values.numar_tpo).toBe('TPO-00230');
+    expect(values.data_efectuare_cursa).toBe('2026-10-01');
+    expect(values.numar_auto).toBe('B-100-PLM');
+    expect(values.ruta_transport).toMatch(/Dacia/i);
+    expect(values.tip_marfa).toMatch(/GĂLEȚI|galeti/i);
+    expect(values.quantity).toBe(9.96);
+    expect(values.gross_weight_kg).toBe(8000);
+    expect(values.net_weight_kg).toBe(7843);
+    expect(values.numar_document_marfa).toBe('PSL-12345');
+    expect(values.numar_curse).toBe(2);
+    expect(values.valoare_tpo ?? null).toBeNull();
+  });
+
+  it('skips blank optional numbered lines instead of inventing zeros', () => {
+    const sparse = [
+      '1. TPO-0025999',
+      '2. 15.09.2026',
+      '3.',
+      '4. B 112 VFM',
+      '7. 10',
+      '8. 10000 kg',
+      '12. -',
+      '13. gol',
+    ].join('\n');
+    const { values } = extractDocument(sparse, { profileId: 'carnet_bord' });
+    expect(values.numar_tpo).toBe('TPO-0025999');
+    expect(values.numar_auto).toBe('B-112-VFM');
+    expect(values.valoare_tpo ?? null).toBeNull();
+    expect(values.taxe_suplimentare ?? null).toBeNull();
+    expect(values.km_parcursi ?? null).toBeNull();
+    expect(values.quantity).toBe(10);
+    expect(values.gross_weight_kg).toBe(10000);
   });
 
   it('keeps the delivery address, which sits on the line below the label', () => {

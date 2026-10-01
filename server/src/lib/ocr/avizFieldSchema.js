@@ -44,10 +44,11 @@ export const AVIZ_FIELD_SCHEMA = Object.freeze([
   { key: 'gross_weight_kg', label: 'Greutate brută', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
   { key: 'net_weight_kg', label: 'Greutate netă', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
   { key: 'numar_curse', label: 'Nr. curse', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
-  { key: 'km_parcursi', label: 'Km parcurși', source: 'manual', critical: false, bands: DEFAULT_BANDS },
-  { key: 'tarif_km', label: 'Tarif km', source: 'manual', critical: false, bands: DEFAULT_BANDS },
-  { key: 'valoare_tpo', label: 'Valoare TPO', source: 'manual', critical: false, bands: DEFAULT_BANDS },
-  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', source: 'manual', critical: false, bands: DEFAULT_BANDS },
+  // Optional annex figures: also read from numbered driver sheets (slots 3, 12–14).
+  { key: 'km_parcursi', label: 'Km parcurși', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
+  { key: 'tarif_km', label: 'Tarif km', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
+  { key: 'valoare_tpo', label: 'Valoare TPO', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
+  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
   { key: 'observatii', label: 'Observații', source: 'manual', critical: false, bands: DEFAULT_BANDS },
 ]);
 

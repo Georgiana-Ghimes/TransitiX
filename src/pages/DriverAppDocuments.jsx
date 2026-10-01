@@ -20,7 +20,7 @@ import {
  *
  * Deliberately not the full driver app, the companion's job is the document queue, and a
  * driver on it has no routes to execute. `DriverApp.jsx` remains the Transitix one.
- * Sized for Chrome device presets and large system text / display (~150–200%).
+ * Sized for Chrome device presets and large system text / display (~150-200%).
  */
 export default function DriverAppDocuments() {
   const { user: authUser } = useAuth();

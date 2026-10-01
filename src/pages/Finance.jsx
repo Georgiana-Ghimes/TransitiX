@@ -45,16 +45,16 @@ function InvoiceLines({ lines }) {
       <tbody>
         {lines.map((line) => (
           <tr key={line.id} className="border-t border-slate-200/60">
-            <td className="py-1 text-slate-500">{line.reference || '—'}</td>
+            <td className="py-1 text-slate-500">{line.reference || '-'}</td>
             <td className="py-1 text-slate-700">
               {line.code ? <span className="font-mono text-[10px] text-slate-400 mr-1">{line.code}</span> : null}
               {line.label}
             </td>
             <td className="py-1 text-right tabular-nums text-slate-500">
-              {line.quantity == null ? '—' : Number(line.quantity).toLocaleString('ro-RO')}
+              {line.quantity == null ? '-' : Number(line.quantity).toLocaleString('ro-RO')}
             </td>
             <td className="py-1 text-right tabular-nums text-slate-500">
-              {line.unit_amount == null ? '—' : Number(line.unit_amount).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
+              {line.unit_amount == null ? '-' : Number(line.unit_amount).toLocaleString('ro-RO', { minimumFractionDigits: 2 })}
             </td>
             <td className="py-1 text-right tabular-nums font-medium text-slate-700">
               {Number(line.amount).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} {line.currency}

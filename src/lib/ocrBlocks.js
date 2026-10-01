@@ -8,7 +8,7 @@
  * Matching is deliberately loose: a TPO typed as `TPO-0025629` has to find the block that
  * reads `TP0 - 0025629`, a date stored as `2026-09-14` has to find `14.09.2026`, a weight
  * stored as `9000.00` has to find `9.000 kg`. A miss costs the operator a glance at the whole
- * page; a false hit draws a box on the wrong line, which is worse — so a match needs the
+ * page; a false hit draws a box on the wrong line, which is worse - so a match needs the
  * whole value (or a long token of it), never a lone digit pair.
  */
 
@@ -56,7 +56,7 @@ export function valueCandidates(value) {
 
 function significantTokens(value) {
   return String(value ?? '')
-    .split(/[\s,;/\-–]+/)
+    .split(/[\s,;/\--]+/)
     .map(looseText)
     .filter((t) => t.length >= MIN_TOKEN && !/^\d{1,3}$/.test(t));
 }
@@ -137,7 +137,7 @@ export function isLowConfidence(block, threshold = LOW_CONFIDENCE_BELOW) {
   return block?.confidence != null && Number(block.confidence) < threshold;
 }
 
-/* Component-facing aliases — the drawer and the overlay speak in blocks and percentages. */
+/* Component-facing aliases - the drawer and the overlay speak in blocks and percentages. */
 
 /** Matching blocks themselves (not the match records), best first. */
 export function blocksForValue(blocks, value, opts) {

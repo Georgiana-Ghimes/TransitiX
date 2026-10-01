@@ -22,7 +22,7 @@ export const ACTIONS = {
 };
 
 export function actionMeta(action) {
-  return ACTIONS[action] || { label: action || '—', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
+  return ACTIONS[action] || { label: action || '-', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
 }
 
 /** Entity names as they appear on screen elsewhere in the app. */
@@ -52,7 +52,7 @@ export const ENTITY_LABELS = {
 };
 
 export function entityLabel(entity) {
-  return ENTITY_LABELS[entity] || entity || '—';
+  return ENTITY_LABELS[entity] || entity || '-';
 }
 
 /** The columns worth naming properly; everything else is humanised from the column itself. */
@@ -92,7 +92,7 @@ export function fieldLabel(field) {
 
 /** A value as text, keeping "empty" visibly different from zero. */
 export function formatValue(value) {
-  if (value == null || value === '') return '—';
+  if (value == null || value === '') return '-';
   if (value === true) return 'Da';
   if (value === false) return 'Nu';
   if (typeof value === 'object') return JSON.stringify(value);

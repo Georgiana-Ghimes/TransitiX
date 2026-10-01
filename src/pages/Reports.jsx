@@ -90,7 +90,7 @@ function PreviewTable({ preview }) {
                   key={col.key}
                   className={`px-3 py-1.5 whitespace-nowrap ${col.numeric ? 'text-right tabular-nums' : 'text-left'} ${row[col.key] === '' ? 'text-slate-300' : 'text-slate-700'}`}
                 >
-                  {formatCell(row[col.key], col) || '—'}
+                  {formatCell(row[col.key], col) || '-'}
                 </td>
               ))}
             </tr>

@@ -53,17 +53,17 @@ describe('fillColor', () => {
 describe('formatters', () => {
   it('rounds percentages', () => {
     expect(formatPct(84.6)).toBe('85%');
-    expect(formatPct(null)).toBe('—');
+    expect(formatPct(null)).toBe('-');
   });
 
   it('formats weights without decimals', () => {
     expect(formatKg(4233.3)).toMatch(/4\D?233 kg/);
-    expect(formatKg(null)).toBe('—');
+    expect(formatKg(null)).toBe('-');
   });
 
   it('formats metres', () => {
     expect(formatMeters(13.6)).toMatch(/13[,.]6 m/);
-    expect(formatMeters(null)).toBe('—');
+    expect(formatMeters(null)).toBe('-');
   });
 
   it('does not turn zero into a dash', () => {
@@ -101,7 +101,7 @@ describe('vehicleModelLabel', () => {
 
   it('copes with a missing half', () => {
     expect(vehicleModelLabel({ brand: 'Volvo' })).toBe('Volvo');
-    expect(vehicleModelLabel({})).toBe('—');
+    expect(vehicleModelLabel({})).toBe('-');
   });
 });
 

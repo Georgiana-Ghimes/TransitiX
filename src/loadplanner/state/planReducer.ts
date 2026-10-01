@@ -6,7 +6,7 @@ import type { LoadPlan, LoadUnit, Millimetres, Placement, Rotation } from '../do
  *
  * Snapshots rather than inverse commands: a plan is a few hundred small objects, so the
  * memory cost is trivial next to the correctness cost of keeping every mutation invertible.
- * Only actions that change the plan push history — selection does not.
+ * Only actions that change the plan push history - selection does not.
  */
 
 export type PlanState = {
@@ -127,7 +127,7 @@ export function planReducer(state: PlanState, action: PlanAction): PlanState {
       return commit(state, action.plan, null);
 
     case 'select':
-      // Selection is view state, not plan state — it must not land in the undo stack.
+      // Selection is view state, not plan state - it must not land in the undo stack.
       return state.selectedPlacementId === action.id
         ? state
         : { ...state, selectedPlacementId: action.id };

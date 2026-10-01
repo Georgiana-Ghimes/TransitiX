@@ -125,7 +125,7 @@ function findSpot(
       const maxY = section.cargo.widthMm - footprint.widthMm;
       if (maxX < -EPS || maxY < -EPS) continue;
 
-      // Front wall to doors, driver side to kerb — the order a loader actually works in.
+      // Front wall to doors, driver side to kerb - the order a loader actually works in.
       for (let x = 0; x <= maxX + EPS; x += options.stepMm) {
         for (let y = 0; y <= maxY + EPS; y += options.stepMm) {
           const candidate: Box = {

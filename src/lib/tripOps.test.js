@@ -9,8 +9,8 @@ describe('tripMargin', () => {
 });
 
 describe('formatRon', () => {
-  it('formats RON or em dash', () => {
-    expect(formatRon(null)).toBe('—');
+  it('formats RON or a plain hyphen placeholder', () => {
+    expect(formatRon(null)).toBe('-');
     expect(formatRon(1200)).toMatch(/1.?200/);
   });
 });

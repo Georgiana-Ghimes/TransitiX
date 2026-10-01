@@ -40,7 +40,7 @@ function asNumber(value: unknown, fallback = 0): number {
  * Deliberately strict about structure and forgiving about individual values: a file that is
  * not a plan must fail loudly, but a plan missing an optional field should still open.
  * Placements referring to load units that are not in the file are dropped rather than left
- * dangling — a placement with no unit cannot be drawn, measured or weighed.
+ * dangling - a placement with no unit cannot be drawn, measured or weighed.
  */
 export function importPlan(input: unknown): LoadPlan {
   const raw = typeof input === 'string' ? safeParse(input) : input;

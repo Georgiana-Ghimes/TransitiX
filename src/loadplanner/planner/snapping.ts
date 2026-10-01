@@ -30,7 +30,7 @@ export function snapPosition(
     if (overlaps1d(box.x, box.x + box.lengthMm, other.x, other.x + other.lengthMm)) {
       yCandidates.push(other.y + other.widthMm, other.y - box.widthMm);
     }
-    // Align edges even when the boxes are not adjacent — keeps rows tidy.
+    // Align edges even when the boxes are not adjacent - keeps rows tidy.
     xCandidates.push(other.x);
     yCandidates.push(other.y);
   }
@@ -75,7 +75,7 @@ export function clampToCargo(box: Box, cargo: CargoArea): { x: Millimetres; y: M
 }
 
 /**
- * Lowest free height at this footprint — what a dropped box should rest on.
+ * Lowest free height at this footprint - what a dropped box should rest on.
  * Returns 0 for the floor, or the top of whatever it lands on.
  */
 export function restingHeight(box: Box, others: Box[]): Millimetres {

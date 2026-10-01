@@ -141,7 +141,7 @@ export function reasonLabel(code) {
 
 export function formatCoord(value) {
   const num = toFiniteNumber(value);
-  return num == null ? '—' : num.toFixed(6);
+  return num == null ? '-' : num.toFixed(6);
 }
 
 /** Full address line for display and for handing to the geocoder. */

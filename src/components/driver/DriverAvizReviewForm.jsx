@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, ChevronDown, ImagePlus, Loader2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ImagePlus, Loader2, X } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
@@ -117,7 +117,7 @@ export default function DriverAvizReviewForm({
           <p className="mt-1 text-base leading-relaxed text-slate-600">
             {isCreate
               ? 'Completează câmpurile de pe foaie. La final poți atașa o poză (opțional).'
-              : 'Verifică și completează ce lipsește — fără astea documentul nu e finalizat.'}
+              : 'Verifică și completează ce lipsește - fără astea documentul nu e finalizat.'}
           </p>
         </div>
       </div>
@@ -232,26 +232,25 @@ export default function DriverAvizReviewForm({
   );
 }
 
-/** Tips when photographing a printed aviz for OCR — collapsed by default to save space. */
+/** Tips when handwriting a sheet for OCR - always open, so it is seen before the camera. */
 export function DriverWritingTips() {
   return (
-    <details className="rounded-xl border border-sky-100 bg-sky-50/80 px-4 py-3 group">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-base font-semibold text-[#0A2B4E]">
-        <span>Sfaturi pentru poză (OCR)</span>
-        <ChevronDown className="h-5 w-5 shrink-0 text-sky-700 transition group-open:rotate-180" />
-      </summary>
-      <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-slate-700">
-        <li>Încadrează toată foaia, lumină bună, fără umbră pe text.</li>
-        <li>Dacă OCR lasă goluri, formularul se deschide pe câmpurile lipsă.</li>
-      </ul>
-      <p className="mt-3 text-base font-medium text-slate-600">Ordinea pe foaie:</p>
-      <ol className="mt-1.5 space-y-1.5 text-base text-slate-800">
+    <div className="rounded-xl border-2 border-[#0A2B4E] bg-[#0A2B4E] text-white px-4 py-4 shadow-sm">
+      <p className="text-lg font-bold leading-snug">
+        Scrie pe foaie, în această ordine
+      </p>
+      <p className="mt-1 text-sm text-white/85 leading-relaxed">
+        Dacă completezi pe hârtie și faci poză, numerotează rândurile 1-14 exact așa.
+        Lasă gol ce nu știi - nu inventa cifre.
+      </p>
+      <ol className="mt-3 space-y-1.5 text-base leading-snug">
         {DRIVER_SHEET_GUIDE.map((g) => (
-          <li key={g.no}>
-            <span className="font-semibold">{g.no}.</span> {g.hint}
+          <li key={g.no} className="flex gap-2">
+            <span className="w-7 shrink-0 font-bold tabular-nums text-sky-200">{g.no}.</span>
+            <span>{g.hint}</span>
           </li>
         ))}
       </ol>
-    </details>
+    </div>
   );
 }

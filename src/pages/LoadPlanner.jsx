@@ -318,7 +318,7 @@ export default function LoadPlanner() {
                         </span>
                       </td>
                       <td className="px-3 py-2 font-medium text-slate-700">{row.sku || 'Palet'}</td>
-                      <td className="px-3 py-2 text-slate-500">{row.order_number || '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{row.order_number || '-'}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-slate-700">{row.quantity}</td>
                       <td className="px-3 py-2 text-right tabular-nums text-slate-700">{formatKg(row.weight_kg)}</td>
                     </tr>
@@ -369,7 +369,7 @@ export default function LoadPlanner() {
                 </div>
               )) : (
                 <p className="text-center py-6 text-xs text-slate-400">
-                  {plan ? 'Totul a încăput' : '—'}
+                  {plan ? 'Totul a încăput' : '-'}
                 </p>
               )}
             </div>

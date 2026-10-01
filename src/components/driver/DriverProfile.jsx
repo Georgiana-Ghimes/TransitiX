@@ -86,7 +86,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
             >
               <Icon className={`w-5 h-5 ${s.color} mx-auto mb-1`} />
               <p className="text-xl sm:text-2xl font-bold text-[#0A2B4E] tabular-nums">
-                {loading ? '—' : s.value}
+                {loading ? '-' : s.value}
               </p>
               <p className="text-sm text-slate-500 break-words">{s.label}</p>
             </div>
@@ -102,7 +102,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
           </div>
           <div className="min-w-0">
             <p className="text-base font-medium text-slate-800">Email</p>
-            <p className="text-base text-slate-500 break-words">{user?.email || '—'}</p>
+            <p className="text-base text-slate-500 break-words">{user?.email || '-'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 p-4 min-w-0">
@@ -111,7 +111,7 @@ export default function DriverProfile({ driver: driverProp, trips: tripsProp }) 
           </div>
           <div className="min-w-0">
             <p className="text-base font-medium text-slate-800">Telefon</p>
-            <p className="text-base text-slate-500 break-words">{driverProp?.phone || user?.phone || '—'}</p>
+            <p className="text-base text-slate-500 break-words">{driverProp?.phone || user?.phone || '-'}</p>
           </div>
         </div>
       </div>

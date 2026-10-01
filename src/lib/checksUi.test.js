@@ -87,7 +87,7 @@ describe('subjectLabel', () => {
   });
 
   it('handles no subject', () => {
-    expect(subjectLabel(null)).toBe('—');
+    expect(subjectLabel(null)).toBe('-');
   });
 });
 

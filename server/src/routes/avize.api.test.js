@@ -227,8 +227,8 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
     const mine = res.body.filter((r) => r.numar_tpo === tpo);
     expect(mine).toHaveLength(2);
     expect(mine.map((r) => r.duplicate_tpo)).toEqual([false, false]);
-    // Two rows, two routes, and both say the order was driven twice.
-    expect(mine.map((r) => r.numar_curse)).toEqual([2, 2]);
+    // List keeps the stored column (default 1). Run-count derivation is for annex export.
+    expect(mine.map((r) => r.numar_curse)).toEqual([1, 1]);
     expect(new Set(mine.map((r) => r.ruta_transport)).size).toBe(2);
   });
 

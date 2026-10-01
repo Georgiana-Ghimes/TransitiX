@@ -9,12 +9,12 @@ import { notifyError } from '@/lib/notify';
 import { collectExpiringDocuments, expiryHorizonDays } from '@/lib/documentExpiry';
 
 function fmtPct(v) {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return `${Number(v).toLocaleString('ro-RO', { maximumFractionDigits: 1 })}%`;
 }
 
 function fmtNum(v, suffix = '') {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return `${Number(v).toLocaleString('ro-RO', { maximumFractionDigits: 1 })}${suffix}`;
 }
 
@@ -143,7 +143,7 @@ export default function Dashboard() {
             <KpiCard
               icon={Coins}
               label="Cost estimat"
-              value={cockpit.kpis.cost_total != null ? `${fmtNum(cockpit.kpis.cost_total)} lei` : '—'}
+              value={cockpit.kpis.cost_total != null ? `${fmtNum(cockpit.kpis.cost_total)} lei` : '-'}
               subtitle={
                 cockpit.kpis.cost_per_route != null
                   ? `~${fmtNum(cockpit.kpis.cost_per_route)} lei / rută`
@@ -237,7 +237,7 @@ export default function Dashboard() {
                   <div className="min-w-0">
                     <p className="font-medium text-[#0A2B4E] truncate">{trip.cmr_number || '-'}</p>
                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</p>
-                    <p className="text-xs text-slate-400 mt-1">{[trip.driver_name, trip.vehicle_plate].filter(Boolean).join(' · ') || '—'}</p>
+                    <p className="text-xs text-slate-400 mt-1">{[trip.driver_name, trip.vehicle_plate].filter(Boolean).join(' · ') || '-'}</p>
                   </div>
                   <StatusBadge status={trip.status} />
                 </Link>

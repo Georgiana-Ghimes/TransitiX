@@ -1,12 +1,12 @@
 {
   "name": "transitix",
   "private": true,
-  "version": "1.13.4",
+  "version": "1.14.0",
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.12.1",
-    "build": 71
+    "version": "1.13.0",
+    "build": 72
   },
   "type": "module",
   "scripts": {

@@ -33,7 +33,7 @@ export function stopMarkerColor(stop, violations = []) {
 /** "6h 47m" / "47m". Minutes only, because a route plan never needs seconds. */
 export function formatDuration(minutes) {
   const total = toFiniteNumber(minutes);
-  if (total == null || total < 0) return '—';
+  if (total == null || total < 0) return '-';
   const rounded = Math.round(total);
   const hours = Math.floor(rounded / 60);
   const mins = rounded % 60;
@@ -51,7 +51,7 @@ export function formatEta(value) {
 
 export function formatKm(value) {
   const num = toFiniteNumber(value);
-  if (num == null) return '—';
+  if (num == null) return '-';
   return `${num.toLocaleString('ro-RO', { maximumFractionDigits: 1 })} km`;
 }
 

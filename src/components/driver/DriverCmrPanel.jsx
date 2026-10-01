@@ -386,7 +386,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
             {prefillBoxes.map((box) => (
               <div key={box.id}>
                 <p className="text-[11px] text-slate-400">{box.box}. {box.label}</p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{form[box.id] || '—'}</p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">{form[box.id] || '-'}</p>
               </div>
             ))}
           </div>
@@ -398,7 +398,7 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
             {priorStageBoxes.map((box) => (
               <div key={box.id}>
                 <p className="text-[11px] text-slate-400">{box.box}. {box.label}</p>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{form[box.id] ?? '—'}</p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">{form[box.id] ?? '-'}</p>
               </div>
             ))}
           </div>

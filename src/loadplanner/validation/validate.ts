@@ -91,7 +91,7 @@ function stackingFindings(box: Box, others: Box[]): ValidationError[] {
       code: 'unsupported_stack',
       severity: support === 0 ? 'error' : 'warning',
       message: support === 0
-        ? 'Unitatea plutește — nu are nimic dedesubt'
+        ? 'Unitatea plutește - nu are nimic dedesubt'
         : `Sprijin insuficient: doar ${Math.round(support * 100)}% din bază este susținută`,
       placementIds: [box.id],
     });
@@ -185,7 +185,7 @@ export function validatePlan(vehicle: VehicleTemplate, plan: LoadPlan): Validati
  * Last-in-first-out check: goods for an early stop must not be buried behind goods for a
  * later one. "Behind" means further from the doors, which sit at the high end of x.
  *
- * A warning rather than an error — a dispatcher may knowingly accept double handling.
+ * A warning rather than an error - a dispatcher may knowingly accept double handling.
  */
 export function unloadingOrderFindings(boxes: Box[]): ValidationError[] {
   const findings: ValidationError[] = [];

@@ -25,7 +25,7 @@ export type LoadUnitShapeProps = {
 /**
  * One load unit drawn as a rectangle.
  *
- * Memoised on its own props so dragging a single pallet does not repaint the other 499 —
+ * Memoised on its own props so dragging a single pallet does not repaint the other 499 -
  * the parent passes stable primitives rather than fresh objects per render.
  */
 function LoadUnitShapeInner({

@@ -80,8 +80,8 @@ describe('fiecare ghid', () => {
       });
 
       it('carries no em dashes, the app is not written by a machine', () => {
-        expect(guide.sections.map(sectionText).join(' ')).not.toMatch(/—/);
-        expect(guide.intro).not.toMatch(/—/);
+        expect(guide.sections.map(sectionText).join(' ')).not.toMatch(/\u2014|\u2013/);
+        expect(guide.intro).not.toMatch(/\u2014|\u2013/);
       });
     });
   }

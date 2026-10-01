@@ -166,7 +166,7 @@ export default function OrderImportModal({ date, onClose, onImported }) {
                     <span className="text-slate-400 tabular-nums">linia {row.line}</span>
                   </div>
                   <p className="text-slate-500 mt-0.5">
-                    {row.matched?.location_name || '—'} · {row.order.requested_date} · {row.order.type}
+                    {row.matched?.location_name || '-'} · {row.order.requested_date} · {row.order.type}
                   </p>
                   {row.errors.map((error, i) => (
                     <p key={i} className="text-red-600 mt-1">{error}</p>
@@ -197,14 +197,14 @@ export default function OrderImportModal({ date, onClose, onImported }) {
                       className={`border-t border-slate-100 ${row.status === 'ok' ? '' : 'bg-red-50/40'}`}
                     >
                       <td className="px-3 py-2 text-slate-400 tabular-nums">{row.line}</td>
-                      <td className="px-3 py-2 font-medium text-slate-700">{row.order.order_number || '—'}</td>
+                      <td className="px-3 py-2 font-medium text-slate-700">{row.order.order_number || '-'}</td>
                       <td className="px-3 py-2 text-slate-600">
-                        {row.matched?.location_name || '—'}
+                        {row.matched?.location_name || '-'}
                         {row.matched && !row.matched.geocoded && (
                           <span className="ml-1 text-[10px] text-amber-600">fără pin</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-slate-600 tabular-nums">{row.order.requested_date || '—'}</td>
+                      <td className="px-3 py-2 text-slate-600 tabular-nums">{row.order.requested_date || '-'}</td>
                       <td className="px-3 py-2 text-slate-600 text-right tabular-nums">
                         {row.order.weight_kg ? Number(row.order.weight_kg).toLocaleString('ro-RO') : ''}
                       </td>

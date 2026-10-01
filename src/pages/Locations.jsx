@@ -346,12 +346,12 @@ export default function Locations() {
                 <div className="bg-slate-50 rounded-lg p-2.5">
                   <p className="text-slate-400">Încredere</p>
                   <p className="font-medium text-slate-700 tabular-nums">
-                    {selected.geocode_confidence == null ? '—' : Number(selected.geocode_confidence).toFixed(2)}
+                    {selected.geocode_confidence == null ? '-' : Number(selected.geocode_confidence).toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-2.5">
                   <p className="text-slate-400">Sursă</p>
-                  <p className="font-medium text-slate-700">{selected.geocode_source || '—'}</p>
+                  <p className="font-medium text-slate-700">{selected.geocode_source || '-'}</p>
                 </div>
               </div>
 

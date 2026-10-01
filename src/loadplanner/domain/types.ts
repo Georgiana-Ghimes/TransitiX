@@ -6,9 +6,9 @@
  * in pixels would silently change meaning the moment the viewport resizes.
  *
  * Coordinate system (right-handed, origin at the front-left floor corner of the cargo area):
- *   x — along the vehicle length, 0 = front wall (behind the cab), growing toward the doors
- *   y — across the width, 0 = driver side (left, right-hand traffic), growing to the kerb
- *   z — height above the floor, 0 = deck
+ *   x - along the vehicle length, 0 = front wall (behind the cab), growing toward the doors
+ *   y - across the width, 0 = driver side (left, right-hand traffic), growing to the kerb
+ *   z - height above the floor, 0 = deck
  */
 
 export type Millimetres = number;
@@ -124,7 +124,7 @@ export type Rotation = 0 | 90 | 180 | 270;
 
 export type Placement = {
   loadUnitId: string;
-  /** Stable id for this specific placed instance — a LoadUnit of quantity 8 yields 8 of these. */
+  /** Stable id for this specific placed instance - a LoadUnit of quantity 8 yields 8 of these. */
   id: string;
   position: {
     x: Millimetres;
@@ -206,7 +206,7 @@ export type VehicleStatistics = {
   axles: AxleLoad[];
 };
 
-/** An axis-aligned box in vehicle space — the shape collision and bounds checks work on. */
+/** An axis-aligned box in vehicle space - the shape collision and bounds checks work on. */
 export type Box = {
   id: string;
   x: Millimetres;

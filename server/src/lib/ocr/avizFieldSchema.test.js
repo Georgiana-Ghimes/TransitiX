@@ -13,7 +13,9 @@ describe('avizFieldSchema', () => {
     expect(fieldMeta('numar_tpo').critical).toBe(true);
     expect(fieldMeta('numar_auto').critical).toBe(true);
     expect(fieldMeta('data_efectuare_cursa').critical).toBe(true);
-    expect(fieldMeta('valoare_tpo').source).toBe('manual');
+    expect(fieldMeta('valoare_tpo').source).toBe('ocr');
+    expect(fieldMeta('km_parcursi').source).toBe('ocr');
+    expect(fieldMeta('observatii').source).toBe('manual');
   });
 
   it('uses stricter bands on critical fields', () => {

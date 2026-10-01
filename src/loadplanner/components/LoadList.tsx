@@ -14,7 +14,7 @@ export type LoadListProps = {
 
 /**
  * Orders waiting to be loaded. Each row is draggable onto the vehicle, and also carries a
- * button — dragging must never be the only way to do something.
+ * button - dragging must never be the only way to do something.
  */
 export function LoadList({
   loadUnits,

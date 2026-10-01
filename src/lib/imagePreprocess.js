@@ -2,19 +2,19 @@
  * Light image preparation before an upload: orientation, size, contrast.
  *
  * Mistral reads a phone photo well as it is. What it does not need is a 12 MP, 6 MB frame
- * with the page sideways in the EXIF — the upload costs the driver data, the OCR pays for
+ * with the page sideways in the EXIF - the upload costs the driver data, the OCR pays for
  * pixels that carry nothing, and a sideways page is one more thing for the reader to work
  * out. So, in the browser, before the blur check and the send:
  *
  *   1. apply the EXIF orientation (the pixels are rotated, the tag is dropped),
- *   2. downscale so the longest side is at most `MAX_SIDE` — ~300 dpi for an A4 page,
+ *   2. downscale so the longest side is at most `MAX_SIDE` - ~300 dpi for an A4 page,
  *      more than any OCR uses,
  *   3. stretch the contrast when the frame is washed out (a shadowed cab, a grey photocopy),
- *      and only then — a well-exposed page is left alone,
+ *      and only then - a well-exposed page is left alone,
  *   4. re-encode as JPEG.
  *
  * Every step is conservative and the whole thing is best-effort: anything that cannot be
- * decoded, a browser without the APIs, a result that came out *larger* — the original file
+ * decoded, a browser without the APIs, a result that came out *larger* - the original file
  * is sent as it was. Preparation must never be the reason a document did not arrive.
  *
  * PDFs and anything that is not an image pass straight through.
@@ -63,8 +63,8 @@ export function contrastStretchParams(hist, { clip = CLIP_PERCENT, minRange = LO
   let high = 255;
   while (high > 0 && acc + hist[high] < target) { acc += hist[high]; high -= 1; }
 
-  if (high - low < 8) return null; // flat frame — a stretch would amplify noise only
-  if (high - low >= minRange) return null; // already contrasty — leave the exposure alone
+  if (high - low < 8) return null; // flat frame - a stretch would amplify noise only
+  if (high - low >= minRange) return null; // already contrasty - leave the exposure alone
   return { low, high };
 }
 
@@ -150,7 +150,7 @@ export async function prepareImageForUpload(file, {
 
 /**
  * Prepares a batch, in order, within a time budget. Past the budget the remaining files go
- * as they are — the send is what matters, the trim is a courtesy.
+ * as they are - the send is what matters, the trim is a courtesy.
  */
 export async function prepareImagesForUpload(files, { timeoutMs = 8_000, ...opts } = {}) {
   const list = Array.from(files || []);

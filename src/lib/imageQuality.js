@@ -115,7 +115,7 @@ export async function measurePhotoSharpness(file) {
  * Files the check could not read are skipped, never counted as blurred.
  *
  * `timeoutMs`: after a long pause the first `createImageBitmap` can hang on some phones. The
- * check must never block the send — a late warning is worse than a photo that reaches the office.
+ * check must never block the send - a late warning is worse than a photo that reaches the office.
  */
 export async function findBlurriest(files, threshold = SHARPNESS_MIN, { timeoutMs = 2_500 } = {}) {
   const work = (async () => {

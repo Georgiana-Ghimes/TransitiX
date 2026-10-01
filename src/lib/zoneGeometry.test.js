@@ -147,7 +147,7 @@ describe('pointInGeometry', () => {
 });
 
 describe('boundsContain', () => {
-  const big = square; // 44.4–44.5 N, 26.0–26.2 E
+  const big = square; // 44.4-44.5 N, 26.0-26.2 E
   const small = {
     type: 'Polygon',
     coordinates: [[[26.05, 44.42], [26.1, 44.42], [26.1, 44.45], [26.05, 44.45], [26.05, 44.42]]],

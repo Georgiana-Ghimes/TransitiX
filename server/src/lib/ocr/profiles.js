@@ -22,7 +22,7 @@ import {
   parseNumber,
 } from './fields.js';
 import { parseBaumitAviz } from '../avizOcr.js';
-import { withNumberedFallback } from './numberedSheet.js';
+import { countFilledSheetSlots, withNumberedFallback } from './numberedSheet.js';
 
 /** How strongly a text looks like this layout, 0..1. */
 function scoreMarkers(text, markers) {
@@ -317,6 +317,40 @@ const tripsFromBareLine = (line) => {
   return { value, confidence: 0.86, matched: found[0] };
 };
 
+/** Minimal sheet: digits alone, or a mangled TPO prefix on the numbered line. */
+const tpoFromBareLine = (line) => {
+  const labelled = carnetTpoField(line);
+  if (labelled?.value) return { ...labelled, confidence: Math.min(0.94, (labelled.confidence || 0.88) + 0.04) };
+  const digits = String(line || '').match(/(\d{4,})/);
+  if (!digits) return null;
+  const value = `TPO-${digits[1]}`;
+  const penalty = codeLengthPenalty(value);
+  return { value, confidence: Math.max(0, 0.8 - penalty), matched: digits[0] };
+};
+
+/** Money / rate on optional sheet lines (3, 12, 14). Blank means "leave empty", not 0. */
+const moneyFromBareLine = (line) => {
+  const found = String(line || '').match(/([\d.,]+)/);
+  if (!found) return null;
+  const value = carnetNumber(found[1]);
+  if (value == null || value < 0 || value > 1_000_000) return null;
+  return { value, confidence: 0.84, matched: found[0] };
+};
+
+const kmFromBareLine = (line) => {
+  const found = String(line || '').match(/([\d.,]+)/);
+  if (!found) return null;
+  const value = carnetNumber(found[1]);
+  if (value == null || value <= 0 || value > 5000) return null;
+  return { value, confidence: 0.84, matched: found[0] };
+};
+
+const weightFromBareLine = (line) => {
+  const n = carnetNumber(String(line).replace(/[^\d.,]/g, ''));
+  if (n == null || n < 1) return null;
+  return { value: n, confidence: 0.84, matched: line };
+};
+
 export const OCR_PROFILES = [
   {
     id: 'carnet_bord',
@@ -325,29 +359,32 @@ export const OCR_PROFILES = [
     markers: [
       /nr\.?\s*auto/, /cant\.?\s*marf/, /nr\.?\s*curse/,
       /tip\s*marf/, /ruta\s*trans/, /nr\.?\s*document/,
-      // Numbered cheat-sheet (driver app writing guide): "1. TPO-…"
+      // Numbered cheat-sheet (driver app writing guide): "1. TPO-…" or even "1. 0025999"
       /(?:^|\n)\s*1[.)\-]\s*\S/,
+      /(?:^|\n)\s*4[.)\-]\s*\S/,
     ],
     fields: {
-      // Sheet map: 1 TPO, 2 DATA, 3 AUTO, 4 RUTA, 5 TIP, 6 CANT/GREUTATE, 7 DOC, 8 CURSE
-      numar_tpo: withNumberedFallback(1, carnetTpoField),
+      // DRIVER_SHEET_GUIDE / DRIVER_SHEET_FIELD_BY_NO: 1–14
+      numar_tpo: withNumberedFallback(1, carnetTpoField, tpoFromBareLine),
       data_efectuare_cursa: withNumberedFallback(2, carnetDateField, dateFromBareLine),
-      numar_auto: withNumberedFallback(3, extractPlate),
-      ruta_transport: withNumberedFallback(4, carnetRouteField, routeFromBareLine),
-      tip_marfa: withNumberedFallback(5, carnetGoodsField, goodsFromBareLine),
-      quantity: withNumberedFallback(6, carnetQuantityField, qtyFromBareLine),
-      gross_weight_kg: withNumberedFallback(6, extractGrossWeight, (line) => {
-        const n = carnetNumber(String(line).replace(/[^\d.,]/g, ''));
-        if (n == null || n < 1) return null;
-        return { value: n, confidence: 0.84, matched: line };
-      }),
-      numar_document_marfa: withNumberedFallback(7, docNoField([TRO_CODE, PSL_CODE])),
-      numar_curse: withNumberedFallback(8, carnetTripCountField, tripsFromBareLine),
+      valoare_tpo: withNumberedFallback(3, () => NO_MATCH, moneyFromBareLine),
+      numar_auto: withNumberedFallback(4, extractPlate),
+      ruta_transport: withNumberedFallback(5, carnetRouteField, routeFromBareLine),
+      tip_marfa: withNumberedFallback(6, carnetGoodsField, goodsFromBareLine),
+      quantity: withNumberedFallback(7, carnetQuantityField, qtyFromBareLine),
+      gross_weight_kg: withNumberedFallback(8, extractGrossWeight, weightFromBareLine),
+      net_weight_kg: withNumberedFallback(9, extractNetWeight, weightFromBareLine),
+      numar_document_marfa: withNumberedFallback(10, docNoField([TRO_CODE, PSL_CODE])),
+      numar_curse: withNumberedFallback(11, carnetTripCountField, tripsFromBareLine),
+      taxe_suplimentare: withNumberedFallback(12, () => NO_MATCH, moneyFromBareLine),
+      km_parcursi: withNumberedFallback(13, () => NO_MATCH, kmFromBareLine),
+      tarif_km: withNumberedFallback(14, () => NO_MATCH, moneyFromBareLine),
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
-      numar_document_marfa: 2, quantity: 2, gross_weight_kg: 2, ruta_transport: 1,
-      tip_marfa: 1, numar_curse: 1,
+      numar_document_marfa: 2, quantity: 2, gross_weight_kg: 2, net_weight_kg: 1.5,
+      ruta_transport: 1, tip_marfa: 1, numar_curse: 1,
+      valoare_tpo: 0.5, taxe_suplimentare: 0.5, km_parcursi: 0.5, tarif_km: 0.5,
     },
   },
   {
@@ -475,9 +512,20 @@ export function profilesFor(documentType) {
  * detection is a hint, not a verdict.
  */
 export function detectProfile(text, { documentType, profiles = OCR_PROFILES } = {}) {
+  const sheetSlots = countFilledSheetSlots(text);
   const candidates = profiles
     .filter((p) => !documentType || p.documentType === documentType)
-    .map((profile) => ({ profile, score: Math.round(scoreMarkers(text, profile.markers) * 100) / 100 }))
+    .map((profile) => {
+      let score = scoreMarkers(text, profile.markers);
+      // A filled driver guide (1.…13.) must not lose to a lone PSL/TRO token on line 9 —
+      // that is what sent the handwritten test sheet through the Baumit profile and left
+      // quantity / weight / trip count empty.
+      if (profile.id === 'carnet_bord') {
+        if (sheetSlots >= 5) score = Math.max(score, 0.92);
+        else if (sheetSlots >= 3) score = Math.max(score, 0.55);
+      }
+      return { profile, score: Math.round(score * 100) / 100 };
+    })
     .sort((a, b) => b.score - a.score);
 
   const best = candidates[0] ?? null;

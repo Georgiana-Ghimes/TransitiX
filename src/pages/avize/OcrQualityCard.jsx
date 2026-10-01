@@ -11,7 +11,7 @@ const ROUTING_LABEL = {
 };
 
 function pct(value) {
-  if (value == null) return '—';
+  if (value == null) return '-';
   return `${Math.round(Number(value) * 100)} %`;
 }
 
@@ -21,7 +21,7 @@ function fmtExample(value) {
 }
 
 /**
- * Faza 4 — what people fix after OCR, over the list's date range.
+ * Faza 4 - what people fix after OCR, over the list's date range.
  *
  * The numbers describe the window the operator is already looking at, so a question like
  * "was September worse?" is answered by moving the same filter, not a second one. The card
@@ -130,7 +130,7 @@ export default function OcrQualityCard({ from, to }) {
                         <td className="py-1.5 text-right">{f.documents}</td>
                         <td className="py-1.5 text-right">{pct(f.doc_rate)}</td>
                         <td className="py-1.5 pl-3 text-xs text-slate-500 truncate max-w-[180px]" title={f.examples.map((e) => `${fmtExample(e.from)} → ${fmtExample(e.to)}`).join('\n')}>
-                          {f.examples[0] ? `${fmtExample(f.examples[0].from)} → ${fmtExample(f.examples[0].to)}` : '—'}
+                          {f.examples[0] ? `${fmtExample(f.examples[0].from)} → ${fmtExample(f.examples[0].to)}` : '-'}
                         </td>
                       </tr>
                     ))}
@@ -157,7 +157,7 @@ export default function OcrQualityCard({ from, to }) {
             <h3 className="text-xs font-semibold text-slate-700 mb-1">Ce ar merita ajustat</h3>
             {!data.enough_data ? (
               <p className="text-xs text-slate-500">
-                Sub {data.min_docs_for_suggestions} documente citite în interval — prea puține ca o recomandare să însemne ceva. Lărgește intervalul.
+                Sub {data.min_docs_for_suggestions} documente citite în interval - prea puține ca o recomandare să însemne ceva. Lărgește intervalul.
               </p>
             ) : (data.suggestions || []).length === 0 ? (
               <p className="text-xs text-emerald-800">Nimic ieșit din tipar: pragurile și profilul se țin bine pe acest interval.</p>
@@ -184,7 +184,7 @@ function Stat({ label, value, hint }) {
   return (
     <div className="rounded-lg border border-slate-100 px-3 py-2">
       <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-xl font-semibold text-[#0A2B4E]">{value ?? '—'}</div>
+      <div className="text-xl font-semibold text-[#0A2B4E]">{value ?? '-'}</div>
       {hint ? <div className="text-[11px] text-slate-500">{hint}</div> : null}
     </div>
   );

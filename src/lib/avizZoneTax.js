@@ -138,7 +138,7 @@ export function avizZoneTax({ aviz, vehicles, zoneResult, address }) {
   const threshold = zoneThresholdKg(zoneCode);
   const bracket = zoneBracket(zoneCode, mmaKg);
   if (threshold != null && mmaKg <= threshold) {
-    // Priced in the table and still not owed: HCGMB 514/2025 lists a 5–7,5 t row for Zone B
+    // Priced in the table and still not owed: HCGMB 514/2025 lists a 5-7,5 t row for Zone B
     // while access there is restricted only above 7,5 t. The fee is zero and the row is handed
     // back anyway, so the screen can show what the table says instead of silently dropping it.
     return result('under_threshold', { ...withMma, amount: 0, bracket, threshold });

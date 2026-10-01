@@ -10,20 +10,20 @@ const STATUS_LABELS = {
 };
 
 export function scenarioStatusLabel(status) {
-  return STATUS_LABELS[status] || status || '—';
+  return STATUS_LABELS[status] || status || '-';
 }
 
 export function formatKm(value) {
-  if (value == null || value === '') return '—';
+  if (value == null || value === '') return '-';
   const n = Number(value);
-  if (!Number.isFinite(n)) return '—';
+  if (!Number.isFinite(n)) return '-';
   return `${n.toLocaleString('ro-RO', { maximumFractionDigits: 1 })} km`;
 }
 
 export function formatHours(minutes) {
-  if (minutes == null || minutes === '') return '—';
+  if (minutes == null || minutes === '') return '-';
   const n = Number(minutes);
-  if (!Number.isFinite(n)) return '—';
+  if (!Number.isFinite(n)) return '-';
   if (n < 60) return `${Math.round(n)} min`;
   const h = Math.floor(n / 60);
   const m = Math.round(n % 60);
@@ -31,9 +31,9 @@ export function formatHours(minutes) {
 }
 
 export function formatLei(value) {
-  if (value == null || value === '') return '—';
+  if (value == null || value === '') return '-';
   const n = Number(value);
-  if (!Number.isFinite(n)) return '—';
+  if (!Number.isFinite(n)) return '-';
   return `${n.toLocaleString('ro-RO', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} lei`;
 }
 

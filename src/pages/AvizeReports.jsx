@@ -85,7 +85,7 @@ export default function AvizeReports() {
 
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
-  // Re-check while this page is open — a recovered Mistral key should clear the banner.
+  // Re-check while this page is open - a recovered Mistral key should clear the banner.
   // clear the banner without a full reload.
   useEffect(() => {
     let cancelled = false;
@@ -630,7 +630,7 @@ export default function AvizeReports() {
           downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
           emailFallbackDownloadedRef.current = true;
           notifyError(
-            'Email netrimis — anexa descărcată',
+            'Email netrimis - anexa descărcată',
             result?.message
               || 'Resend nu este configurat. Fișierul s-a salvat în Downloads; poți să-l trimiți tu din mail.'
           );
@@ -1014,10 +1014,10 @@ export default function AvizeReports() {
                         </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
-                          {row.numar_auto || '—'} · {row.data_efectuare_cursa || '—'}
+                          {row.numar_auto || '-'} · {row.data_efectuare_cursa || '-'}
                         </p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
-                          {displayRoute(row) || '—'}
+                          {displayRoute(row) || '-'}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, avizIncarcareDate)}>
                           {formatIncarcareLabel(row, avizIncarcareDate)}
@@ -1106,17 +1106,17 @@ export default function AvizeReports() {
                             ) : row.numar_tpo ? (
                               row.numar_tpo
                             ) : (
-                              <span className="font-normal text-slate-400">{row.original_filename || '—'}</span>
+                              <span className="font-normal text-slate-400">{row.original_filename || '-'}</span>
                             )}
                             {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
-                          <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{row.data_efectuare_cursa || '—'}</td>
-                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '—'}</td>
-                          <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '—'}</td>
+                          <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{row.data_efectuare_cursa || '-'}</td>
+                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
+                          <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '-'}</td>
                           <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || row.quantity_unit || ''}`.trim()}>
-                            {row.cantitate_marfa ?? '—'} {row.tip_marfa || row.quantity_unit || ''}
+                            {row.cantitate_marfa ?? '-'} {row.tip_marfa || row.quantity_unit || ''}
                           </td>
-                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '—'}</td>
+                          <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={row.numar_document_marfa || ''}>{row.numar_document_marfa || '-'}</td>
                           <td className="px-2 py-2.5">
                             <div className="space-y-1">
                               <span className={`inline-flex items-center gap-1 text-xs truncate ${

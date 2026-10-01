@@ -5,7 +5,7 @@ import { axleLoads, totalCargoWeightKg, usedVolumeM3 } from '../planner/weight';
 
 /**
  * "Pallet spaces" is measured in europallet floor positions, because that is the unit the
- * trade quotes capacity in. It is derived from the cargo geometry, never hardcoded — a
+ * trade quotes capacity in. It is derived from the cargo geometry, never hardcoded - a
  * 13.6 m curtainsider comes out at 33 because 33 is what fits, not because someone typed it.
  */
 export function palletSpaceCapacity(vehicle: VehicleTemplate): number {

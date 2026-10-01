@@ -26,7 +26,7 @@ export type TruckRendererProps = {
   /** Called continuously while dragging, with the proposed position in mm. */
   onDragMove?: (boxId: string, xMm: Millimetres, acrossMm: Millimetres) => void;
   onDragEnd?: (boxId: string) => void;
-  /** External drop (from the load list) — cursor position in mm. */
+  /** External drop (from the load list) - cursor position in mm. */
   onExternalDrop?: (xMm: Millimetres, acrossMm: Millimetres, sectionId: string) => void;
   height?: number;
 };
@@ -37,7 +37,7 @@ const PAD_MM = 600;
 /**
  * Parametric 2D vehicle renderer.
  *
- * Every shape is derived from the template geometry — there is no per-model artwork. Top and
+ * Every shape is derived from the template geometry - there is no per-model artwork. Top and
  * side views share this component and differ only in which axis maps to screen-y, which is
  * what keeps the two views guaranteed consistent.
  */
@@ -149,7 +149,7 @@ export function TruckRenderer({
       onDragOver={(event) => { if (onExternalDrop) event.preventDefault(); }}
       onDrop={handleDrop}
       role="img"
-      aria-label={`${vehicle.name} — vedere ${view === 'top' ? 'de sus' : 'laterală'}`}
+      aria-label={`${vehicle.name} - vedere ${view === 'top' ? 'de sus' : 'laterală'}`}
     >
       <VehicleChrome
         vehicle={vehicle}
@@ -207,7 +207,7 @@ type ChromeProps = {
   viewHeight: number;
 };
 
-/** Cab, body outline, doors, axles and wheels — all derived from the template. */
+/** Cab, body outline, doors, axles and wheels - all derived from the template. */
 function VehicleChrome({
   vehicle, sections, view, theme, scale, originX, cargoTop, acrossMm, viewHeight,
 }: ChromeProps) {

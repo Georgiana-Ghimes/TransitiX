@@ -50,7 +50,7 @@ describe('matchBlocksForValue', () => {
   });
 
   it('matches a route on two of its towns, scored lower', () => {
-    const m = matchBlocksForValue(blocks, 'Timisoara – Oradea');
+    const m = matchBlocksForValue(blocks, 'Timisoara - Oradea');
     expect(m).toHaveLength(1);
     expect(m[0]).toMatchObject({ index: 4, score: 0.5 });
   });

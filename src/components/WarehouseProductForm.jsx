@@ -109,7 +109,7 @@ export default function WarehouseProductForm({ product, onClose, onSave }) {
           <div>
             <label className={labelCls} htmlFor={fieldId('pallet_type')}>Tip palet</label>
             <select id={fieldId('pallet_type')} className={inputCls} value={form.pallet_type || ''} onChange={(e) => set('pallet_type', e.target.value)}>
-              <option value="">—</option>
+              <option value="">-</option>
               <option value="eur">EUR</option>
               <option value="industrial">Industrial</option>
               <option value="half">Half</option>

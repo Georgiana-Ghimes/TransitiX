@@ -260,7 +260,7 @@ export default function GPSMap() {
           <p className="text-sm text-slate-500 mt-1">
             {replayOpen
               ? (replay?.route?.code ? `Reluare ${replay.route.code}` : 'Reluare istorică')
-              : `${positions.length} poziții pe hartă${liveCount > 0 ? ` · ${liveCount} din telematică reală` : ''} · ${connected ? 'flux live' : 'reîmprospătare la 30–90s'}`}
+              : `${positions.length} poziții pe hartă${liveCount > 0 ? ` · ${liveCount} din telematică reală` : ''} · ${connected ? 'flux live' : 'reîmprospătare la 30-90s'}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -331,7 +331,7 @@ export default function GPSMap() {
               {!replayRoutes.length && <option value="">Nicio rută cu vehicul</option>}
               {replayRoutes.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.code} · {r.vehicle_plate || '—'}
+                  {r.code} · {r.vehicle_plate || '-'}
                   {r.trail_points ? ` · ${r.trail_points} puncte GPS` : ''}
                 </option>
               ))}
@@ -351,19 +351,19 @@ export default function GPSMap() {
               <div className="bg-slate-50 rounded-lg px-3 py-2">
                 <p className="text-slate-400">Planificat</p>
                 <p className="font-semibold text-slate-700 tabular-nums">
-                  {kpis.planned_km != null ? `${kpis.planned_km} km` : '—'}
+                  {kpis.planned_km != null ? `${kpis.planned_km} km` : '-'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-lg px-3 py-2">
                 <p className="text-slate-400">Realizat (GPS)</p>
                 <p className="font-semibold text-slate-700 tabular-nums">
-                  {kpis.actual_km != null ? `${kpis.actual_km} km` : '—'}
+                  {kpis.actual_km != null ? `${kpis.actual_km} km` : '-'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-lg px-3 py-2">
                 <p className="text-slate-400">Diferență</p>
                 <p className={`font-semibold tabular-nums ${kpis.delta_km > 0 ? 'text-amber-700' : 'text-slate-700'}`}>
-                  {kpis.delta_km != null ? `${kpis.delta_km > 0 ? '+' : ''}${kpis.delta_km} km` : '—'}
+                  {kpis.delta_km != null ? `${kpis.delta_km > 0 ? '+' : ''}${kpis.delta_km} km` : '-'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-lg px-3 py-2">
@@ -414,7 +414,7 @@ export default function GPSMap() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{vehicle.plate}</p>
                 <p className={`text-xs ${selected === vehicle.id ? 'text-white/70' : 'text-slate-400'}`}>
-                  {log.speed != null ? `${log.speed} km/h` : '—'}
+                  {log.speed != null ? `${log.speed} km/h` : '-'}
                   {log.telematics_source ? ` · ${SOURCE_LABELS[log.telematics_source] || log.telematics_source}` : ''}
                 </p>
               </div>
@@ -475,7 +475,7 @@ export default function GPSMap() {
                     <p className="font-bold text-[#0A2B4E]">{vehicle.plate}</p>
                     <p className="text-xs">{vehicle.brand} {vehicle.model}</p>
                     <p className="text-xs">
-                      {log.speed != null ? `${log.speed} km/h` : '—'}
+                      {log.speed != null ? `${log.speed} km/h` : '-'}
                       {' · '}
                       {log.ignition === false ? 'Motor oprit' : 'Motor pornit'}
                     </p>
@@ -510,22 +510,22 @@ export default function GPSMap() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-400">Viteză</p>
-                <p className="font-semibold text-slate-700">{sel.log.speed != null ? `${sel.log.speed} km/h` : '—'}</p>
+                <p className="font-semibold text-slate-700">{sel.log.speed != null ? `${sel.log.speed} km/h` : '-'}</p>
               </div>
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-400">Direcție</p>
-                <p className="font-semibold text-slate-700">{sel.log.heading != null ? `${sel.log.heading}°` : '—'}</p>
+                <p className="font-semibold text-slate-700">{sel.log.heading != null ? `${sel.log.heading}°` : '-'}</p>
               </div>
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-400">Sursă</p>
                 <p className="font-semibold text-slate-700">
-                  {SOURCE_LABELS[sel.log.telematics_source] || sel.log.telematics_source || '—'}
+                  {SOURCE_LABELS[sel.log.telematics_source] || sel.log.telematics_source || '-'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-400">Kilometraj</p>
                 <p className="font-semibold text-slate-700">
-                  {sel.vehicle.mileage?.toLocaleString('ro-RO') || '—'} km
+                  {sel.vehicle.mileage?.toLocaleString('ro-RO') || '-'} km
                 </p>
               </div>
             </div>

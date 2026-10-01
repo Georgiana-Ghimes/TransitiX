@@ -75,7 +75,7 @@ function bracketLabel(rate) {
   const min = Number(rate.mma_min_kg) || 0;
   const max = rate.mma_max_kg == null ? null : Number(rate.mma_max_kg);
   const t = (kg) => `${(kg / 1000).toLocaleString('ro-RO', { maximumFractionDigits: 1 })}t`;
-  return max == null ? `peste ${t(min)}` : `${t(min)} – ${t(max)}`;
+  return max == null ? `peste ${t(min)}` : `${t(min)} - ${t(max)}`;
 }
 
 export default function ZoneMap() {
@@ -913,7 +913,7 @@ function OutlinePicker({ taxZone, outlines, onCancel, onPick }) {
             const b = geometryBounds(o.geometry);
             const span = b
               ? `${(b[1][0] - b[0][0]).toFixed(3)}° lat × ${(b[1][1] - b[0][1]).toFixed(3)}° lon`
-              : '—';
+              : '-';
             return (
               <li key={`${o.name ?? 'contur'}-${i}`}>
                 <button
@@ -944,12 +944,12 @@ function OutlinePicker({ taxZone, outlines, onCancel, onPick }) {
   );
 }
 
-/** "5001 kg – 7500 kg" reads wrong on a tariff table; the decision speaks in tonnes. */
+/** "5001 kg - 7500 kg" reads wrong on a tariff table; the decision speaks in tonnes. */
 function tonnage({ minKg, maxKg }) {
   const t = (kg) => (kg / 1000).toLocaleString('ro-RO', { maximumFractionDigits: 1 });
   // The stored minimum is one kilogram above the printed one, so the bracket does not overlap
   // its neighbour. Showing that kilogram would make the table look wrong next to the decision.
-  return maxKg == null ? `peste ${t(minKg - 1)} t` : `${t(minKg - 1)} – ${t(maxKg)} t`;
+  return maxKg == null ? `peste ${t(minKg - 1)} t` : `${t(minKg - 1)} - ${t(maxKg)} t`;
 }
 
 function lei(value) {

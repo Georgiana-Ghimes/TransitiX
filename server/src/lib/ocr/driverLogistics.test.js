@@ -37,16 +37,24 @@ describe('driverLogistics', () => {
 });
 
 describe('numberedSheet', () => {
-  it('reads a numbered carnet line', () => {
+  it('reads a numbered carnet line (DRIVER_SHEET_GUIDE slots)', () => {
     const text = [
       '1. TPO-0025813',
       '2. 11.08.2026',
-      '3. B 112 VFM',
-      '4. Bucuresti → Ploiesti',
-      '6. 15744 kg',
+      '4. B 112 VFM',
+      '5. Bucuresti → Ploiesti',
+      '8. 15744 kg',
+      '9. 15000',
     ].join('\n');
     expect(numberedLineValue(text, 1)).toBe('TPO-0025813');
-    expect(numberedLineValue(text, 3)).toBe('B 112 VFM');
-    expect(numberedLineValue(text, 6)).toContain('15744');
+    expect(numberedLineValue(text, 4)).toBe('B 112 VFM');
+    expect(numberedLineValue(text, 8)).toContain('15744');
+    expect(numberedLineValue(text, 9)).toContain('15000');
+    expect(numberedLineValue(text, 3)).toBe('');
+  });
+
+  it('treats blank / dash optional lines as empty', () => {
+    expect(numberedLineValue('3. -\n4. B 1 ABC', 3)).toBe('');
+    expect(numberedLineValue('11. gol', 11)).toBe('');
   });
 });

@@ -239,11 +239,11 @@ export default function PlanningAI() {
                             <span className="ml-2 text-xs text-emerald-700">în plan</span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5">{row.routes ?? '—'}</td>
+                        <td className="px-4 py-2.5">{row.routes ?? '-'}</td>
                         <td className="px-4 py-2.5">{formatKm(row.distance_km)}</td>
                         <td className="px-4 py-2.5">{formatHours(row.duration_min)}</td>
                         <td className="px-4 py-2.5">{formatLei(row.cost)}</td>
-                        <td className="px-4 py-2.5">{row.unassigned ?? '—'}</td>
+                        <td className="px-4 py-2.5">{row.unassigned ?? '-'}</td>
                         <td className="px-4 py-2.5 text-xs text-slate-600">
                           {(row.breaks_inserted || 0) > 0 && (
                             <span className="inline-flex items-center gap-1 mr-2">
@@ -255,7 +255,7 @@ export default function PlanningAI() {
                               <Moon className="w-3.5 h-3.5" /> {row.rests_inserted} repaus
                             </span>
                           )}
-                          {!row.breaks_inserted && !row.rests_inserted && '—'}
+                          {!row.breaks_inserted && !row.rests_inserted && '-'}
                         </td>
                       </tr>
                     ))}
@@ -349,10 +349,10 @@ export default function PlanningAI() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border-b border-slate-100">
                     {[
-                      { label: 'Rute', value: detail.kpis?.routes ?? '—' },
+                      { label: 'Rute', value: detail.kpis?.routes ?? '-' },
                       { label: 'Distanță', value: formatKm(detail.kpis?.distance_km) },
                       { label: 'Durată', value: formatHours(detail.kpis?.duration_min) },
-                      { label: 'Nealocate', value: detail.kpis?.unassigned ?? '—' },
+                      { label: 'Nealocate', value: detail.kpis?.unassigned ?? '-' },
                       { label: 'Cost', value: formatLei(detail.kpis?.cost) },
                       { label: 'Pauze 45′', value: detail.kpis?.breaks_inserted ?? 0 },
                       { label: 'Repaus zilnic', value: detail.kpis?.rests_inserted ?? 0 },

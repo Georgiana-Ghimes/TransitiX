@@ -45,7 +45,7 @@ export function isWithinBounds(box: Box, cargo: CargoArea): boolean {
   return boundsViolations(box, cargo).length === 0;
 }
 
-/** Boxes whose top face lies directly under this one — what it rests on. */
+/** Boxes whose top face lies directly under this one - what it rests on. */
 export function supportingBoxes(box: Box, others: Box[]): Box[] {
   if (box.z <= EPS) return [];
   return others.filter((other) => (

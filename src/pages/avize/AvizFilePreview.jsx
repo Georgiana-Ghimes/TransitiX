@@ -4,35 +4,31 @@ import { containedRect } from '@/lib/ocrBlocks';
 import { fetchUploadBlob, withAccessToken } from '@/lib/uploadUrl';
 
 const SOURCE_LABEL = {
-  'pdf-text': 'Text PDF',
-  vision: 'Vision',
-  mistral: 'Mistral',
-  paddle: 'Paddle',
-  'paddle-vl': 'Paddle VL',
   driver_manual: 'Manual șofer',
   'driver-manual': 'Manual șofer',
-  stub: 'Stub',
   // `none` is what the extractor stores when a read failed. Without a label the badge printed
   // the raw column value at the operator.
   none: 'Fără OCR',
 };
 
 const SOURCE_TONE = {
-  'pdf-text': 'bg-sky-50 text-sky-800',
-  vision: 'bg-violet-50 text-violet-800',
-  mistral: 'bg-teal-50 text-teal-800',
-  paddle: 'bg-indigo-50 text-indigo-800',
-  'paddle-vl': 'bg-indigo-50 text-indigo-800',
   driver_manual: 'bg-emerald-50 text-emerald-800',
   'driver-manual': 'bg-emerald-50 text-emerald-800',
   none: 'bg-rose-50 text-rose-800',
-  stub: 'bg-amber-50 text-amber-800',
 };
 
+/** Engine / provider names stay off the office list - the customer does not need to know how the page was read. */
+const HIDDEN_SOURCES = new Set([
+  'pdf-text', 'mistral', 'vision', 'paddle', 'paddle-vl', 'stub',
+]);
+
 export function SourceBadge({ source }) {
-  const key = String(source || 'stub').replace(/_/g, '-');
-  const tone = SOURCE_TONE[key] || SOURCE_TONE[source] || SOURCE_TONE.stub;
-  const label = SOURCE_LABEL[key] || SOURCE_LABEL[source] || key;
+  if (!source) return null;
+  const key = String(source).replace(/_/g, '-');
+  if (HIDDEN_SOURCES.has(key) || HIDDEN_SOURCES.has(source)) return null;
+  const tone = SOURCE_TONE[key] || SOURCE_TONE[source];
+  const label = SOURCE_LABEL[key] || SOURCE_LABEL[source];
+  if (!label) return null;
   return (
     <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${tone}`}>
       {label}
@@ -54,7 +50,7 @@ export function DriverUploadBadge({ uploadedFrom }) {
 export function NeedsReviewBadge({ needsReview, routing }) {
   if (!needsReview && routing !== 'hitl_required' && routing !== 'hitl_optional') return null;
   const label = routing === 'hitl_required'
-    ? 'HITL obligatoriu'
+    ? 'Verificare obligatorie'
     : routing === 'hitl_optional'
       ? 'De revizuit'
       : 'De revizuit';
@@ -77,7 +73,7 @@ const PREVIEW_FRAME_FILL =
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
  *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
  *   (so percentage-positioned children land on the page, not in the letterbox). Ignored for
- *   PDFs — an iframe cannot be drawn over.
+ *   PDFs - an iframe cannot be drawn over.
  */
 export default function AvizFilePreview({ fileUrl, fill = false, overlay = null }) {
   const [src, setSrc] = useState('');
@@ -91,7 +87,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
 
   // The overlay has to sit on the picture, not on the box around it. `object-contain`
   // letterboxes, so the picture's rectangle is computed from the box size and the natural
-  // size — and recomputed when the box changes (drawer resize, phone rotation).
+  // size - and recomputed when the box changes (drawer resize, phone rotation).
   useEffect(() => {
     if (!wantsOverlay || !src) return undefined;
     const el = boxRef.current;
@@ -119,9 +115,9 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
       return undefined;
     }
 
-    // Manual cab entry — no bytes on disk.
+    // Manual cab entry - no bytes on disk.
     if (String(fileUrl).startsWith('manual://')) {
-      setError('Aviz completat manual de șofer — fără fișier atașat.');
+      setError('Aviz completat manual de șofer - fără fișier atașat.');
       return undefined;
     }
 

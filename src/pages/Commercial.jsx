@@ -268,10 +268,10 @@ function TariffsTab({ data, reload }) {
                       <span className="text-slate-700">{validityLabel(row)}</span>{' '}
                       <InForceBadge row={row} />
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{formatAmount(row.trip_rate) || '—'}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{formatAmount(row.km_rate, 4) || '—'}</td>
-                    <td className="px-4 py-2 text-right tabular-nums text-slate-500">{formatAmount(row.min_km, 0) || '—'}</td>
-                    <td className="px-4 py-2 text-slate-500">{row.notes || '—'}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{formatAmount(row.trip_rate) || '-'}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{formatAmount(row.km_rate, 4) || '-'}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-slate-500">{formatAmount(row.min_km, 0) || '-'}</td>
+                    <td className="px-4 py-2 text-slate-500">{row.notes || '-'}</td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">
                       <button type="button" className="p-1.5 text-slate-400 hover:text-slate-700" onClick={() => setEditing(row)} title="Editează">
                         <Pencil className="w-4 h-4" />
@@ -750,8 +750,8 @@ function CodesTab({ data, reload }) {
               {data.observation_codes.map((code) => (
                 <tr key={code.id} className="border-t border-slate-100">
                   <td className="px-4 py-2 font-mono text-xs">{code.code}</td>
-                  <td className="px-4 py-2 text-slate-700">{code.label || '—'}</td>
-                  <td className="px-4 py-2 text-slate-500">{code.kind || '—'}</td>
+                  <td className="px-4 py-2 text-slate-700">{code.label || '-'}</td>
+                  <td className="px-4 py-2 text-slate-500">{code.kind || '-'}</td>
                   <td className="px-4 py-2">
                     {code.is_active === false
                       ? <span className="text-xs text-slate-400">inactiv</span>

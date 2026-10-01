@@ -45,7 +45,7 @@ describe('floorCapacity', () => {
   });
 
   it('drops to 32 when clearance no longer allows three pallets across', () => {
-    // 3 x (800 + 30) = 2490 mm exceeds the 2480 mm width — a genuine cliff, worth pinning.
+    // 3 x (800 + 30) = 2490 mm exceeds the 2480 mm width - a genuine cliff, worth pinning.
     expect(floorCapacity(curtainsider, EURO, { clearanceMm: 30 })).toBe(32);
   });
 

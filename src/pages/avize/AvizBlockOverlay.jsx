@@ -4,9 +4,9 @@ import { blockRect, isLowConfidenceBlock } from '@/lib/ocrBlocks';
 /**
  * Draws OCR layout blocks over the rendered page.
  *
- * - `highlight`: blocks matched to the field the operator is on — solid blue.
- * - low-confidence blocks — amber, so a doubtful read is visible even when no field points at it.
- * - everything else — only when `showAll`, a faint outline for orientation.
+ * - `highlight`: blocks matched to the field the operator is on - solid blue.
+ * - low-confidence blocks - amber, so a doubtful read is visible even when no field points at it.
+ * - everything else - only when `showAll`, a faint outline for orientation.
  *
  * Clicking a block hands its text to `onPick`; the drawer uses that to fill the active
  * field without retyping. The parent sets `pointer-events-none` on the container, so only the

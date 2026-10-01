@@ -106,7 +106,7 @@ describe('groupTariffs', () => {
   });
 
   it('does not lose a row with no class', () => {
-    expect(groupTariffs([{ valid_from: '2026-01-01' }])[0].vehicle_class).toBe('—');
+    expect(groupTariffs([{ valid_from: '2026-01-01' }])[0].vehicle_class).toBe('-');
   });
 
   it('handles an empty list', () => {
@@ -117,7 +117,7 @@ describe('groupTariffs', () => {
 describe('bracketLabel', () => {
   it('reads a closed bracket', () => {
     expect(bracketLabel({ mma_min_kg: 3500, mma_max_kg: 7500 }).replace(/\s/g, ''))
-      .toBe('3.500–7.500kg');
+      .toBe('3.500-7.500kg');
   });
 
   it('reads an open top', () => {

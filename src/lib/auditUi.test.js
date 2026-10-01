@@ -30,8 +30,8 @@ describe('fieldLabel', () => {
 describe('formatValue', () => {
   it('keeps empty visibly different from zero', () => {
     // A blank tariff and a zero tariff are not the same thing.
-    expect(formatValue(null)).toBe('—');
-    expect(formatValue('')).toBe('—');
+    expect(formatValue(null)).toBe('-');
+    expect(formatValue('')).toBe('-');
     expect(formatValue(0)).toBe('0');
   });
 

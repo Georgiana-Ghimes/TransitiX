@@ -7,7 +7,7 @@ import type { AxleLoad, Box, VehicleTemplate } from '../domain/types';
  * x, and is shared between the two nearest axles in inverse proportion to distance. Load
  * ahead of the first axle or behind the last is carried entirely by that end axle.
  *
- * This is not a suspension model — no roll, no load transfer, no fifth-wheel geometry. It is
+ * This is not a suspension model - no roll, no load transfer, no fifth-wheel geometry. It is
  * accurate enough to catch the mistakes that matter in planning (all the weight at the nose,
  * all of it over the rear) and is structured so a real model can replace `distributeBox`
  * without touching anything else.
@@ -88,7 +88,7 @@ export function usedVolumeM3(boxes: Box[]): number {
 }
 
 /**
- * Which placed boxes contribute most to a given axle — the answer to "why is this overloaded".
+ * Which placed boxes contribute most to a given axle - the answer to "why is this overloaded".
  */
 export function axleContributors(
   boxes: Box[],

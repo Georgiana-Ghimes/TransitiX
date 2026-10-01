@@ -68,7 +68,7 @@ describe('buildRouteSheet', () => {
       address: 'str. Republicii 1, Oradea, BH',
       order: 'CMD-01',
       load: '1.200 kg / 4 pal',
-      window: '08:00–12:00',
+      window: '08:00-12:00',
     });
   });
 
@@ -93,7 +93,7 @@ describe('buildRouteSheet', () => {
   it('survives a route with no driver, vehicle or stops', () => {
     const sheet = buildRouteSheet({ route: { code: 'R-09', route_date: '2026-08-27' }, stops: [], totals: {} });
     expect(sheet.rows).toEqual([]);
-    expect(sheet.meta.find((m) => m.label === 'Șofer').value).toBe('—');
+    expect(sheet.meta.find((m) => m.label === 'Șofer').value).toBe('-');
     expect(sheet.company).toBe('');
   });
 

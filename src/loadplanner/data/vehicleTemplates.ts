@@ -4,7 +4,7 @@ import type { VehicleTemplate } from '../domain/types';
  * Vehicle templates for load planning.
  *
  * These are planning approximations, not homologation data. Real cargo areas, payloads and
- * axle limits vary by manufacturer, body builder and registration — always check the actual
+ * axle limits vary by manufacturer, body builder and registration - always check the actual
  * vehicle papers before relying on a plan for a road-legal decision.
  *
  * Axle `positionMm` is on the cargo x axis, so a steer axle ahead of the front wall is
@@ -123,7 +123,7 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
       { id: 'trailer', label: 'Remorcă', positionMm: 10200, maxWeightKg: 24000, tareShareKg: 5100 },
     ],
     visualization: { type: 'parametric', cabStyle: 'tractor', bodyStyle: 'curtain', wheelPositionsMm: [-3200, -800, 9600, 10200, 10800] },
-    note: 'Podea coborâtă pentru 3 m înălțime utilă — volum, nu tonaj.',
+    note: 'Podea coborâtă pentru 3 m înălțime utilă - volum, nu tonaj.',
   },
   {
     id: 'reefer_13_6',
@@ -137,7 +137,7 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
       { id: 'trailer', label: 'Remorcă', positionMm: 10000, maxWeightKg: 24000, tareShareKg: 6200 },
     ],
     visualization: { type: 'parametric', cabStyle: 'tractor', bodyStyle: 'reefer', wheelPositionsMm: [-3200, -800, 9400, 10000, 10600] },
-    note: 'Pereți izolați — cutie utilă mai mică decât un curtainsider.',
+    note: 'Pereți izolați - cutie utilă mai mică decât un curtainsider.',
   },
   {
     id: 'box_trailer_13_6',
@@ -190,7 +190,7 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
       { id: 'rear', label: 'Spate', positionMm: 5200, maxWeightKg: 11500, tareShareKg: 3600 },
     ],
     visualization: { type: 'parametric', cabStyle: 'rigid', bodyStyle: 'box', wheelPositionsMm: [-1000, 5200] },
-    note: 'Caroserie detașabilă — 18 europaleți pe podea.',
+    note: 'Caroserie detașabilă - 18 europaleți pe podea.',
   },
   {
     id: 'drawbar_2x7_45',
@@ -213,7 +213,7 @@ export const VEHICLE_TEMPLATES: VehicleTemplate[] = [
       { id: 'trailer_rear', label: 'Spate remorcă', positionMm: 14800, maxWeightKg: 10000, tareShareKg: 2400 },
     ],
     visualization: { type: 'parametric', cabStyle: 'rigid', bodyStyle: 'curtain', wheelPositionsMm: [-1000, 5200, 10400, 14800] },
-    note: 'Două compartimente separate — marfa nu se poate așeza peste cuplaj.',
+    note: 'Două compartimente separate - marfa nu se poate așeza peste cuplaj.',
   },
 ];
 

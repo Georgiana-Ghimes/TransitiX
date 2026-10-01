@@ -151,7 +151,7 @@ export default function Trips() {
             </div>
             <p className="text-sm text-slate-600 line-clamp-2">{trip.shipper_name} → {trip.consignee_name}</p>
             <p className="text-xs text-slate-500 mt-2">
-              {[trip.driver_name, trip.vehicle_plate, formatDate(trip.loading_date)].filter(Boolean).join(' · ') || '—'}
+              {[trip.driver_name, trip.vehicle_plate, formatDate(trip.loading_date)].filter(Boolean).join(' · ') || '-'}
             </p>
             {(trip.uit_code || tripMargin(trip.agreed_revenue, trip.estimated_cost) != null) && (
               <p className="text-xs text-slate-500 mt-1">
@@ -202,7 +202,7 @@ export default function Trips() {
                     <td className="px-4 py-3 text-slate-600 max-w-xs">
                       <span className="line-clamp-1">{trip.shipper_name} → {trip.consignee_name}</span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{trip.uit_code || '—'}</td>
+                    <td className="px-4 py-3 text-slate-500 font-mono text-xs">{trip.uit_code || '-'}</td>
                     <td className="px-4 py-3 text-right text-slate-600 tabular-nums">
                       {formatRon(tripMargin(trip.agreed_revenue, trip.estimated_cost))}
                     </td>

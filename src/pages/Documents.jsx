@@ -122,12 +122,12 @@ export default function Documents() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate">
-                    CMR {doc.cmr_number || '—'}
+                    CMR {doc.cmr_number || '-'}
                   </p>
                   <p className="text-xs text-slate-500">
                     Neconfirmat · {doc.created_date || doc.created_at
                       ? new Date(doc.created_date || doc.created_at).toLocaleString('ro-RO')
-                      : '—'}
+                      : '-'}
                   </p>
                 </div>
                 <span className="text-xs font-medium text-[#1D4E89]">Deschide cursa</span>
@@ -162,7 +162,7 @@ export default function Documents() {
               onChange={(e) => setDriverId(e.target.value)}
               className="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
@@ -175,7 +175,7 @@ export default function Documents() {
               onChange={(e) => setVehicleId(e.target.value)}
               className="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>{v.plate}</option>
               ))}

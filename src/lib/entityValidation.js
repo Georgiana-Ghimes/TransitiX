@@ -103,7 +103,7 @@ function checkPhone(errors, field, value, { required = false } = {}) {
   }
   const digits = text.replace(/\D/g, '');
   if (!PHONE_RE.test(text) || digits.length < 7 || digits.length > 15) {
-    errors[field] = 'Telefon invalid (7–15 cifre, ex. 0722 123 456).';
+    errors[field] = 'Telefon invalid (7-15 cifre, ex. 0722 123 456).';
   }
 }
 

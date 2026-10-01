@@ -25,7 +25,7 @@ export const ZONE_KINDS = [
 
 export function classLabel(value) {
   const text = String(value ?? '').trim();
-  return text || '—';
+  return text || '-';
 }
 
 /** Romanian decimal in, number out; blank stays blank rather than becoming zero. */
@@ -83,7 +83,7 @@ export function isInForce(row, onDate = new Date().toISOString().slice(0, 10)) {
 export function groupTariffs(tariffs = []) {
   const byClass = new Map();
   for (const row of tariffs) {
-    const key = String(row.vehicle_class ?? '').trim() || '—';
+    const key = String(row.vehicle_class ?? '').trim() || '-';
     if (!byClass.has(key)) byClass.set(key, []);
     byClass.get(key).push(row);
   }
@@ -101,7 +101,7 @@ export function bracketLabel(rate) {
   const min = rate?.mma_min_kg;
   const max = rate?.mma_max_kg;
   const kg = (v) => Number(v).toLocaleString('ro-RO');
-  if (min != null && max != null) return `${kg(min)} – ${kg(max)} kg`;
+  if (min != null && max != null) return `${kg(min)} - ${kg(max)} kg`;
   if (min != null) return `peste ${kg(min)} kg`;
   if (max != null) return `până la ${kg(max)} kg`;
   return 'orice MMA';

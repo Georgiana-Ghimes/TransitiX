@@ -32,15 +32,15 @@ export function SelectionPanel({ placement, loadUnit, box, onRotate, onRemove }:
 
   return (
     <div className="px-3 py-2">
-      <Row label="Comandă" value={loadUnit.orderNumber ?? '—'} />
-      <Row label="Client" value={loadUnit.customer ?? '—'} />
+      <Row label="Comandă" value={loadUnit.orderNumber ?? '-'} />
+      <Row label="Client" value={loadUnit.customer ?? '-'} />
       <Row label="Tip" value={unitTypeLabel(loadUnit.type)} />
       <Row
         label="Dimensiuni"
         value={`${loadUnit.dimensions.lengthMm} × ${loadUnit.dimensions.widthMm} × ${loadUnit.dimensions.heightMm} mm`}
       />
       <Row label="Greutate" value={`${loadUnit.weightKg.toLocaleString('ro-RO')} kg`} />
-      <Row label="Oprire" value={loadUnit.stopNumber ?? '—'} />
+      <Row label="Oprire" value={loadUnit.stopNumber ?? '-'} />
       <Row label="Stivuibil" value={loadUnit.stackable ? 'Da' : 'Nu'} />
       {loadUnit.maxStackWeightKg != null && (
         <Row label="Max. deasupra" value={`${loadUnit.maxStackWeightKg} kg`} />

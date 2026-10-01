@@ -58,11 +58,11 @@ export function stopActions(stop) {
   return [{ status: 'sosit', label: 'Am ajuns', tone: 'primary' }];
 }
 
-/** Local HH:MM, or an em dash. Times are shown in the driver's own clock. */
+/** Local HH:MM, or a plain hyphen. Times are shown in the driver's own clock. */
 export function formatClock(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -70,7 +70,7 @@ export function formatWindow(stop) {
   const from = String(stop?.window_start || '').slice(0, 5);
   const to = String(stop?.window_end || '').slice(0, 5);
   if (!from && !to) return '';
-  return `${from || '…'}–${to || '…'}`;
+  return `${from || '…'}-${to || '…'}`;
 }
 
 /** "1.200 kg · 4 paleți", only the parts that are actually set. */
