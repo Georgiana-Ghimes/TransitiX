@@ -32,7 +32,7 @@ No teammate secrets are required to log in locally. Invented Docker/JWT values a
 
 ### Known stubs / demos (not production integrations)
 
-- **OCR:** PaddleOCR, a local sidecar (`docker-compose.paddle-ocr.yml`), pointed at by `PADDLE_OCR_URL`. PDFs with a text layer parse without it. With no sidecar running, an upload still succeeds and the fields are typed by hand.
+- **OCR:** Mistral Document AI (cloud, `MISTRAL_API_KEY`). PDFs with a text layer parse without it. With OCR off, an upload still succeeds and the fields are typed by hand.
 - **Email:** Resend when `RESEND_API_KEY` + `EMAIL_FROM` are set; otherwise console log (reset-password still returns a local link)
 - **Planning AI / GPS / ANAF e-Factura:** labeled demos
 - **Routing:** real (OSRM) when `OSRM_URL` is set; otherwise `/api/geo/*` returns 503 rather than a made-up distance
@@ -179,7 +179,7 @@ The same codebase, built as a separate product for one customer: the office UI t
 somebody has to remember to create.
 
 ```bash
-docker compose -f docker-compose.companion.yml up -d --build   # Postgres :5435 + PaddleOCR :8101
+docker compose -f docker-compose.companion.yml up -d   # Postgres :5435; OCR = Mistral cloud (API key)
 cp server/companion.env.example server/.env                    # then edit
 npm run db:migrate
 npm run start:companion                                        # builds dist/ and serves it from the API
@@ -232,9 +232,8 @@ pinned to a scheme the dev server does not speak.
 
 The tunnel dials out, so no inbound port is opened on the VM.
 
-`GET /api/health` reports `ocr`: `paddle` when the sidecar answers, `paddle-down` when it is
-configured but silent, `false` when there is none. `/avize` shows a banner for `paddle-down`,
-because with no fallback provider a stopped sidecar means uploads land with no fields filled.
+`GET /api/health` reports `ocr`: `mistral` when the API key works, `mistral-down` when it is
+configured but silent, `false` when there is none. `/avize` shows a banner for `mistral-down`.
 
 ## Scripts
 

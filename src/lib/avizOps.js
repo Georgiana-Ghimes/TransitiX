@@ -40,6 +40,7 @@ export function normalizeExtractionSource(provider) {
   const p = String(provider || '').toLowerCase().replace(/_/g, '-');
   if (p === 'pdf-text' || p === 'pdftext') return 'pdf-text';
   if (p === 'vision' || p === 'google-vision' || p === 'google_vision') return 'vision';
+  if (p === 'mistral' || p === 'mistralai' || p === 'mistral-ocr') return 'mistral';
   if (p === 'paddle' || p === 'paddle-ocr' || p === 'paddleocr') return 'paddle';
   if (p === 'paddle-vl' || p === 'paddleocr-vl') return 'paddle-vl';
   if (p === 'driver-manual') return 'driver_manual';

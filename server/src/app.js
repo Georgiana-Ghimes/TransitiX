@@ -140,8 +140,7 @@ async function healthCapabilities() {
       ? [photonConfigured() && 'photon', tomtomConfigured() && 'tomtom'].filter(Boolean).join('+')
       : false,
     email: emailConfigured(),
-    // `paddle-down` is reported distinctly from `false`: with no fallback provider, a sidecar
-    // that stopped answering silently produces documents with no OCR at all.
+    // `mistral-down` when the API key is set but Mistral does not answer.
     ocr: await ocrCapability(),
   };
 }

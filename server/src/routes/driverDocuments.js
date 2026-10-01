@@ -23,7 +23,7 @@ import {
   logEvent, upload, extractBatchDocuments, failStaleUploadedAvize,
   markExtractFailed, uploadErrorMessage,
 } from './documents.js';
-import { ocrCapability } from '../lib/ocr/readText.js';
+import { isOcrDown, ocrCapability } from '../lib/ocr/readText.js';
 
 const router = Router();
 router.use(authRequired);
@@ -144,7 +144,7 @@ router.get('/', async (req, res) => {
 
     // Sidecar dead: flip this driver's spinners to Eșuat now — do not wait 90s, and do not
     // start new OCR (that is what was killing the VM on every reload).
-    if ((await ocrCapability()) === 'paddle-down') {
+    if (isOcrDown(await ocrCapability())) {
       const stuck = await query(
         `SELECT id FROM aviz_documents
          WHERE company_id = $1 AND uploaded_by = $2 AND uploaded_from = 'driver'
@@ -436,8 +436,8 @@ router.post('/', (req, res) => {
       });
 
       const docIds = result.documents.map((d) => d.id);
-      // Dead sidecar: fail the new rows now instead of holding „Se procesează…” until stale.
-      if ((await ocrCapability()) === 'paddle-down') {
+      // OCR down: fail the new rows now instead of holding „Se procesează…” until stale.
+      if (isOcrDown(await ocrCapability())) {
         const down = new Error(
           'Serviciul OCR nu răspunde. Completează câmpurile sau biroul Re-extrage când OCR e pornit.',
         );

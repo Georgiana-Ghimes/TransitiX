@@ -20,9 +20,10 @@ describe('avizQuery', () => {
     expect(mapProviderToSource('google_vision')).toBe('vision');
   });
 
-  it('keeps paddle and a failed read out of stub', () => {
-    // `stub` means "no OCR was attempted". A real PaddleOCR read and a failed one are both
-    // something else, and the badge is what an operator trusts when a field looks wrong.
+  it('keeps known providers and a failed read out of stub', () => {
+    // `stub` means "no OCR was attempted". A real read (mistral / historical paddle) and a
+    // failed one (`none`) are both something else — the badge is what an operator trusts.
+    expect(mapProviderToSource('mistral')).toBe('mistral');
     expect(mapProviderToSource('paddle')).toBe('paddle');
     expect(mapProviderToSource('paddle_ocr')).toBe('paddle');
     expect(mapProviderToSource('none')).toBe('none');

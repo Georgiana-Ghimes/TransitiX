@@ -5,6 +5,7 @@ import { fetchUploadBlob, withAccessToken } from '@/lib/uploadUrl';
 const SOURCE_LABEL = {
   'pdf-text': 'Text PDF',
   vision: 'Vision',
+  mistral: 'Mistral',
   paddle: 'Paddle',
   'paddle-vl': 'Paddle VL',
   driver_manual: 'Manual șofer',
@@ -18,6 +19,7 @@ const SOURCE_LABEL = {
 const SOURCE_TONE = {
   'pdf-text': 'bg-sky-50 text-sky-800',
   vision: 'bg-violet-50 text-violet-800',
+  mistral: 'bg-teal-50 text-teal-800',
   paddle: 'bg-indigo-50 text-indigo-800',
   'paddle-vl': 'bg-indigo-50 text-indigo-800',
   driver_manual: 'bg-emerald-50 text-emerald-800',

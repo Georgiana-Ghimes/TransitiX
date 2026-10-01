@@ -16,6 +16,7 @@ import {
   interactiveOcrMaxPages,
   interactiveOcrTimeoutMs,
   ocrCapability,
+  isOcrDown,
 } from '../lib/ocr/readText.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { buildReport } from '../lib/reporting/build.js';
@@ -516,12 +517,11 @@ router.post('/extract', async (req, res) => {
       batchId = created.batchId;
     }
 
-    // A dead sidecar used to hold the spinner for the full interactive budget (and longer
-    // behind a tunnel that drops the answer). Health already knows; refuse before the wait.
-    if ((await ocrCapability()) === 'paddle-down') {
+    // Mistral unreachable / misconfigured: refuse before the interactive wait.
+    if (isOcrDown(await ocrCapability())) {
       return res.status(503).json({
         code: 'OCR_DOWN',
-        message: 'Serviciul OCR nu răspunde. Pornește sidecar-ul PaddleOCR și încearcă din nou.',
+        message: 'Serviciul OCR nu răspunde. Verifică MISTRAL_API_KEY și conexiunea, apoi încearcă din nou.',
       });
     }
 

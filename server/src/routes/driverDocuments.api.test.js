@@ -188,19 +188,18 @@ describe('GET /api/driver-documents/trips/:tripId', () => {
 
 describe('POST /api/avize/extract on a document that came in through a batch', () => {
   /**
-   * `/avize` lists office scans and driver photos in one table, but the two arrived through
-   * different extractors. Re-extracting a driver photo on the avize/Vision path rewrote it with
-   * a stub wherever no Vision key is configured, the default in the documents companion, where
-   * paddle is the only provider. The suite runs with no key, so this is that configuration.
+   * `/avize` lists office scans and driver photos in one table. Re-extract must go through
+   * the batch extractor, not a stub path. With OCR_PROVIDER=none (suite default without a
+   * Mistral key), background re-extract still must not wipe existing fields with stub.
    */
   it('re-runs the batch extractor instead of stubbing the row', async () => {
     const uploaded = await upload(ctx.driverToken, trip.id, 're-extrage.pdf');
     const docId = uploaded.body.documents[0].id;
 
-    // Stands in for a finished paddle run: fields on the row, raw text in extracted_data.
+    // Stands in for a finished OCR run: fields on the row, raw text in extracted_data.
     await query(
       `UPDATE aviz_documents SET
-         status = 'extracted', extraction_source = 'paddle', numar_tpo = 'TPO-0025629',
+         status = 'extracted', extraction_source = 'mistral', numar_tpo = 'TPO-0025629',
          extracted_data = $2::jsonb
        WHERE id = $1`,
       [docId, JSON.stringify({
@@ -224,31 +223,35 @@ describe('POST /api/avize/extract on a document that came in through a batch', (
 
 describe('POST /api/avize/extract when OCR runs long', () => {
   /**
-   * Re-extract always answers 202 and runs in the background (tunnel-safe). A sidecar that
-   * accepts /health but never finishes /ocr still exhausts the background budget and is marked
-   * failed — the list must not spin forever.
+   * Re-extract answers 202 and runs in the background. A Mistral endpoint that never finishes
+   * still exhausts the budget and is marked failed — the list must not spin forever.
    */
-  const KEYS = ['OCR_PROVIDER', 'PADDLE_OCR_URL', 'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS'];
+  const KEYS = [
+    'OCR_PROVIDER', 'MISTRAL_API_KEY', 'MISTRAL_API_BASE',
+    'OCR_TIMEOUT_MS', 'OCR_INTERACTIVE_TIMEOUT_MS',
+  ];
   const saved = {};
   let hanging;
 
   beforeAll(async () => {
     const http = await import('node:http');
     const { resetOcrCapabilityCache } = await import('../lib/ocr/readText.js');
-    // Health must succeed (otherwise extract refuses with OCR_DOWN). OCR itself never answers.
     hanging = http.createServer((req, res) => {
-      if ((req.url || '').startsWith('/health')) {
+      const url = req.url || '';
+      if (url.startsWith('/v1/models')) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true }));
+        res.end(JSON.stringify({ data: [{ id: 'mistral-ocr-latest' }] }));
         return;
       }
-      // /ocr/json — hang until the client aborts
+      // /v1/ocr — hang until the client aborts
     });
     await new Promise((resolve) => hanging.listen(0, '127.0.0.1', resolve));
+    const port = hanging.address().port;
 
     for (const key of KEYS) saved[key] = process.env[key];
-    process.env.OCR_PROVIDER = 'paddle';
-    process.env.PADDLE_OCR_URL = `http://127.0.0.1:${hanging.address().port}`;
+    process.env.OCR_PROVIDER = 'mistral';
+    process.env.MISTRAL_API_KEY = 'test-key';
+    process.env.MISTRAL_API_BASE = `http://127.0.0.1:${port}`;
     process.env.OCR_TIMEOUT_MS = '80';
     process.env.OCR_INTERACTIVE_TIMEOUT_MS = '80';
     resetOcrCapabilityCache();
@@ -274,7 +277,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
 
     await query(
       `UPDATE aviz_documents SET
-         status = 'extracted', extraction_source = 'paddle', numar_tpo = 'TPO-0025629'
+         status = 'extracted', extraction_source = 'mistral', numar_tpo = 'TPO-0025629'
        WHERE id = $1`,
       [docId]
     );
@@ -283,10 +286,8 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     expect(res.status).toBe(202);
     expect(res.body.extraction_pending).toBe(true);
     expect(res.body.reason).toBe('reextract_background');
-    // Figures from the earlier pass are still on the 202 body / row until a better read replaces them.
     expect(res.body.numar_tpo).toBe('TPO-0025629');
 
-    // Hanging sidecar: background budget expires too. Mark failed so the list does not spin forever.
     await new Promise((r) => setTimeout(r, 400));
     const after = (await query('SELECT * FROM aviz_documents WHERE id = $1', [docId])).rows[0];
     expect(after.numar_tpo).toBe('TPO-0025629');
@@ -296,11 +297,7 @@ describe('POST /api/avize/extract when OCR runs long', () => {
     expect(after.extracted_data?.extract_error).toMatch(/timpul alocat/i);
   });
 
-  /**
-   * A scan reaches the sidecar as a PDF and is rasterized there. Node used to skip PDFs, so the
-   * sidecar was never called for one, reaching the clock at all is what proves it is now.
-   */
-  it('sends a text-poor PDF to the sidecar instead of giving up on it', async () => {
+  it('sends a text-poor PDF to OCR instead of giving up on it', async () => {
     const uploaded = await upload(ctx.driverToken, trip.id, 'scanata.pdf');
     const docId = uploaded.body.documents[0].id;
 

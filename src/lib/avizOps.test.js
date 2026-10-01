@@ -17,7 +17,8 @@ describe('avizOps', () => {
     expect(normalizeExtractionSource('stub')).toBe('stub');
   });
 
-  it('agrees with the server on paddle and a failed read', () => {
+  it('agrees with the server on mistral, historical paddle and a failed read', () => {
+    expect(normalizeExtractionSource('mistral')).toBe('mistral');
     expect(normalizeExtractionSource('paddle')).toBe('paddle');
     expect(normalizeExtractionSource('paddle_ocr')).toBe('paddle');
     expect(normalizeExtractionSource('none')).toBe('none');

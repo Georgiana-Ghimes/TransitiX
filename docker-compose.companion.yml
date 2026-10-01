@@ -1,10 +1,9 @@
-# RAI Spedition documents companion — isolated Postgres + Paddle OCR.
-# Does not touch the main Transitix stack (other ports, other DB volume).
+# RAI Spedition documents companion — isolated Postgres.
+# OCR is Mistral cloud (MISTRAL_API_KEY) — no OCR containers here.
 #
-#   docker compose -f docker-compose.companion.yml up -d --build
+#   docker compose -f docker-compose.companion.yml up -d
 #
 # Postgres: localhost:5435 / DB transitix_rai
-# Paddle OCR: localhost:8101
 
 services:
   db:
@@ -24,23 +23,5 @@ services:
       timeout: 5s
       retries: 10
 
-  paddle-ocr:
-    build:
-      context: ./tools/paddle-ocr
-    ports:
-      - "8101:8100"
-    environment:
-      PADDLE_OCR_LANG: ${PADDLE_OCR_LANG:-latin}
-      PADDLE_OCR_USE_GPU: "0"
-      PADDLE_OCR_AUTO_ROTATE: ${PADDLE_OCR_AUTO_ROTATE:-1}
-      # Default 960 squashes handwritten carnet lines below what the detector can see.
-      PADDLE_OCR_DET_SIDE_LEN: ${PADDLE_OCR_DET_SIDE_LEN:-1920}
-      # Handwriting scores 0.1–0.3; printed default 0.35 deleted whole pages.
-      PADDLE_OCR_DROP_SCORE: ${PADDLE_OCR_DROP_SCORE:-0.10}
-    restart: unless-stopped
-    volumes:
-      - transitix_rai_paddle_models:/root/.paddleocr
-
 volumes:
   transitix_rai_pg:
-  transitix_rai_paddle_models:

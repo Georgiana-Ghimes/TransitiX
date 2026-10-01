@@ -32,6 +32,7 @@ dist-ssr
 .env
 .vite
 server/uploads/
+server/uploads-companion/
 server/node_modules/
 
 # OSRM graph data (OSM extracts + build output, hundreds of MB)
@@ -46,13 +47,10 @@ server/node_modules/
 /.claude/
 backups/
 
-# Python bytecode from the OCR sidecar tooling
+# Python bytecode
 __pycache__/
 
-# Scans and OCR dumps produced while tuning the sidecar locally — inputs and output of a run,
-# not code, and they change on every experiment.
-/tools/paddle-ocr/*.jpg
-/tools/paddle-ocr/*.jpeg
-/tools/paddle-ocr/*.png
-/tools/paddle-ocr/*.pdf
-/tools/paddle-ocr/last-*.txt
+# Local OCR smoke dumps (if any)
+/tools/mistral-ocr/*.png
+/tools/mistral-ocr/*.jpg
+/tools/mistral-ocr/out/

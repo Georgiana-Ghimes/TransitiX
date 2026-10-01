@@ -82,14 +82,16 @@ export default function AvizeReports() {
 
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
-  // With no fallback provider, a stopped sidecar means uploads land with no OCR and nothing
-  // on screen would say why. Re-check while this page is open — a restarted sidecar should
+  // Re-check while this page is open — a recovered Mistral key should clear the banner.
   // clear the banner without a full reload.
   useEffect(() => {
     let cancelled = false;
     const probe = () => {
       api.system.health()
-        .then((h) => { if (!cancelled) setOcrDown(h?.capabilities?.ocr === 'paddle-down'); })
+        .then((h) => {
+          const cap = h?.capabilities?.ocr;
+          if (!cancelled) setOcrDown(cap === 'mistral-down');
+        })
         .catch(() => { if (!cancelled) setOcrDown(false); });
     };
     probe();
@@ -488,7 +490,7 @@ export default function AvizeReports() {
     if (ocrDown) {
       notifyError(
         'OCR indisponibil',
-        'Serviciul PaddleOCR nu răspunde. Pornește sidecar-ul pe VM, apoi încearcă din nou.'
+        'Mistral OCR nu răspunde. Verifică MISTRAL_API_KEY și conexiunea, apoi încearcă din nou.'
       );
       return;
     }
@@ -540,7 +542,7 @@ export default function AvizeReports() {
       if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
         notifyError(
           'Extragere întreruptă',
-          'OCR-ul a durat prea mult sau conexiunea s-a întrerupt. Verifică sidecar-ul PaddleOCR și încearcă din nou.'
+          'OCR-ul a durat prea mult sau conexiunea s-a întrerupt. Verifică Mistral OCR și încearcă din nou.'
         );
         setOcrDown(true);
       } else {
@@ -790,7 +792,7 @@ export default function AvizeReports() {
   const ocrBanner = ocrDown ? (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
       Serviciul OCR nu răspunde. Documentele se încarcă în continuare, dar ajung fără câmpuri
-      completate, pornește sidecar-ul PaddleOCR și apasă „Re-extrage".
+      completate. Verifică MISTRAL_API_KEY și apasă „Re-extrage".
     </div>
   ) : null;
 
