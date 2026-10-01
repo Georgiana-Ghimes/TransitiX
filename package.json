@@ -5,14 +5,15 @@
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.10.0",
-    "build": 67
+    "version": "1.10.1",
+    "build": 68
   },
   "type": "module",
   "scripts": {
     "prepare": "node scripts/install-git-hooks.js",
     "dev": "vite",
     "dev:companion": "vite --mode companion --host 0.0.0.0 --port 5174",
+    "dev:companion-api": "node scripts/dev-companion-api.mjs",
     "tunnel:companion": "cloudflared tunnel --url http://127.0.0.1:5174",
     "dev:server": "npm run dev --prefix server",
     "dev:all": "npm run dev:server & npm run dev",

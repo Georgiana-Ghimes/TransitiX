@@ -1,14 +1,12 @@
+import './loadEnv.js';
 import path from 'path';
 import fs from 'fs';
-import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Loaded here rather than relying on the entrypoint: ES imports evaluate before the entrypoint's
-// own `dotenv.config()` runs, so `UPLOAD_DIR` from a .env file would otherwise never be seen.
-dotenv.config();
-
+// loadEnv runs first: ES imports evaluate before the entrypoint, so UPLOAD_DIR must
+// already be on process.env when this module computes uploadRoot.
 /**
  * Always the same path for multer and for the static handler.
  *

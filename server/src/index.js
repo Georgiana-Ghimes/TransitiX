@@ -5,12 +5,10 @@
  * without binding a socket, an integration suite that has to start a real listener ends up
  * fighting for ports and leaking processes.
  */
-import dotenv from 'dotenv';
+import './loadEnv.js';
 import app from './app.js';
 import { uploadRoot } from './uploadPath.js';
 import { startRetentionSchedule } from './lib/maintenance/schedule.js';
-
-dotenv.config();
 
 const port = Number(process.env.PORT) || 3001;
 

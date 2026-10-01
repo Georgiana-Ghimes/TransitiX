@@ -1,7 +1,7 @@
+import './loadEnv.js';
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
@@ -48,8 +48,6 @@ import { vroomConfigured } from './lib/planning/vroom.js';
 import { etransportCapability, etransportConfigured } from './lib/compliance/etransport.js';
 import { efacturaCapability } from './lib/compliance/efactura.js';
 import { fileURLToPath } from 'url';
-
-dotenv.config();
 
 const APP_VERSION = JSON.parse(
   fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')
