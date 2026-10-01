@@ -31,7 +31,7 @@ export default function AvizBlockOverlay({
           ? 'border-sky-500 bg-sky-400/20 ring-1 ring-sky-300'
           : isLow
             ? 'border-amber-500 bg-amber-300/20'
-            : 'border-slate-400/60 bg-transparent';
+            : 'border-slate-600/70 bg-white/10';
         const label = `${block.text || ''}${block.confidence != null ? ` · ${Math.round(block.confidence * 100)}%` : ''}`;
         return (
           <button
