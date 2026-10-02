@@ -333,7 +333,8 @@ function quantityKey(unit) {
   if (u.startsWith('sac')) return 'saci';
   if (u.startsWith('pal')) return 'paleti';
   if (u.startsWith('buc') || u === 'pcs') return 'bucati';
-  if (u.startsWith('gal')) return 'galeti';
+  // Photo OCR often turns „găleți” into ga1eti / galei.
+  if (u.startsWith('gal') || u === 'ga1eti' || u === 'galei') return 'galeti';
   if (u.startsWith('ton') || u === 't' || u === 'to') return 'tone';
   return u || 'saci';
 }
@@ -372,7 +373,8 @@ export function isGenericCountUnit(unit) {
 
 // Matched against folded text, so the diacritic spellings are already gone by this point and
 // listing them here would only add dead alternatives.
-const GOODS_UNIT_SOURCE = '(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?)';
+// `ga1eti` / `galei` cover common photo-OCR misreads of „găleți”.
+const GOODS_UNIT_SOURCE = '(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?|ga1eti|galei)';
 
 /**
  * A packaging word, or null.
@@ -386,6 +388,42 @@ function goodsUnitOf(raw) {
   return GOODS_UNIT_RANK[key] ? key : null;
 }
 
+/** Footer label `Numărul de găleți` / `Numarul de saci` without requiring the total figure. */
+function packagingFooterUnit(folded) {
+  const labelled = folded.match(new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'));
+  if (!labelled) return null;
+  return goodsUnitOf(labelled[1]);
+}
+
+/**
+ * Packaging total from the Baumit footer. Photo OCR often splits the label and the number
+ * across lines or inserts junk between them — same-line-only matching then falls through to
+ * the first product line (48 instead of 576).
+ */
+function packagingFooterTotal(folded) {
+  const attempts = [
+    // Same line: `Numarul de galeti: 576,00`
+    new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}\\s*[:\\-]?\\s*([\\d.,]+)`, 'i'),
+    // Label then number within a short window (newline / OCR debris)
+    new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}[^\\d]{0,48}([\\d.,]+)`, 'i'),
+    // Number then label (reordered OCR blocks)
+    new RegExp(`([\\d.,]+)\\s*[:\\-]?\\s*num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'),
+  ];
+  for (const re of attempts) {
+    const m = folded.match(re);
+    if (!m) continue;
+    // Group order differs on the number-first pattern.
+    const unitRaw = m[1] && /[a-z]/i.test(m[1]) ? m[1] : m[2];
+    const numRaw = m[1] && /[a-z]/i.test(m[1]) ? m[2] : m[1];
+    const unit = goodsUnitOf(unitRaw);
+    const value = parseNumber(numRaw);
+    if (unit && value != null && isPlausibleQuantity(value, unit)) {
+      return { quantity: value, unit, matched: m[0] };
+    }
+  }
+  return null;
+}
+
 /**
  * The packaging the document actually names, preferring the word that says the most.
  *
@@ -396,10 +434,10 @@ function goodsUnitOf(raw) {
 export function extractGoodsUnit(text) {
   const folded = foldUnit(text);
 
-  const labelled = folded.match(new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'));
-  if (labelled) {
-    const unit = goodsUnitOf(labelled[1]);
-    if (unit) return result(unit, 0.9, labelled[0]);
+  const fromFooter = packagingFooterUnit(folded);
+  if (fromFooter) {
+    const labelled = folded.match(new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}`, 'i'));
+    return result(fromFooter, 0.9, labelled?.[0] || fromFooter);
   }
 
   let best = null;
@@ -451,8 +489,11 @@ function collectPackagingLines(folded) {
  *
  * Preference order (Baumit multi-line sheets):
  * 1. Footer total — `Numărul de găleți 576,00` / `Numărul de saci …`
- * 2. Sum of same packaging lines when there are several (exclude euro-pallet `pce`)
- * 3. Single best / labelled line (legacy one-row avize)
+ *    (tolerant of photo-OCR line splits between label and figure)
+ * 2. Sum of packaging lines when there are several (exclude euro-pallet `pce`)
+ * 3. Single best / labelled line (legacy one-row avize) — BUT never when a packaging
+ *    footer label is present: that means the page has a total, and the first product
+ *    line (48) is the wrong answer.
  *
  * Taking the first product line alone is wrong on multi-line transfers: 48 instead of 576.
  */
@@ -460,18 +501,27 @@ export function extractQuantity(text) {
   const blob = String(text || '');
   const folded = foldUnit(blob);
 
-  const footer = folded.match(
-    new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}\\s*[:\\-]?\\s*([\\d.,]+)`, 'i'),
-  );
+  const footer = packagingFooterTotal(folded);
   if (footer) {
-    const unit = goodsUnitOf(footer[1]);
-    const value = parseNumber(footer[2]);
-    if (unit && value != null && isPlausibleQuantity(value, unit)) {
-      return result({ quantity: value, unit }, 0.95, footer[0]);
+    return result({ quantity: footer.quantity, unit: footer.unit }, 0.95, footer.matched);
+  }
+
+  const footerUnit = packagingFooterUnit(folded);
+  const lines = collectPackagingLines(folded);
+
+  // Footer label seen (tip = găleți) but the figure failed OCR: sum product lines instead of
+  // grabbing the first `48 buc`. Report the footer unit so Tip marfă and Cantitate agree.
+  if (footerUnit && lines.length >= 2) {
+    const sum = Math.round(lines.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
+    if (isPlausibleQuantity(sum, footerUnit)) {
+      return result(
+        { quantity: sum, unit: footerUnit },
+        0.86,
+        lines.map((l) => l.matched).join(' + '),
+      );
     }
   }
 
-  const lines = collectPackagingLines(folded);
   if (!lines.length) {
     // Labelled quantity that carries no packaging word (rare), still better than nothing.
     const labelled = blob.match(
@@ -499,6 +549,10 @@ export function extractQuantity(text) {
       return result({ quantity: sum, unit: topUnit }, 0.88, top.map((l) => l.matched).join(' + '));
     }
   }
+
+  // Packaging footer label without a readable total + only one product line in OCR:
+  // do not write that line as Cantitate (classic photo miss: 48 instead of 576).
+  if (footerUnit) return NO_MATCH;
 
   const pick = top[0];
   return result({ quantity: pick.qty, unit: pick.unit }, pick.rank > 1 ? 0.9 : 0.8, pick.matched);

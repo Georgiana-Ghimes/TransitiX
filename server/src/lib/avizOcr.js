@@ -508,6 +508,32 @@ export function isFalseRoute(value) {
   return false;
 }
 
+/**
+ * Routes that look filled but are incomplete OCR (missing locality / site).
+ * Good shapes: `Bol-Bucuresti/Viilor52`, `Bucuresti/Viilor52`. Bad: `Republicii17`.
+ */
+export function isSuspiciousRoute(value) {
+  if (isFalseRoute(value)) return true;
+  const s = String(value || '').trim();
+  if (/\//.test(s)) return false;
+  // Street glued to house number with no locality leg (OCR dropped "Bolintin-Deal" / city).
+  if (/^[A-Za-zĂÂÎȘȚăâîșț]+[\d]+[A-Za-z0-9]*$/u.test(s)) return true;
+  // Bare words without Site- or Locality/Street structure.
+  if (!/^(Bol|Mil)-/i.test(s)) return true;
+  return false;
+}
+
+/**
+ * Stored quantity disagrees with what the same raw OCR text prefers (footer total / line sum).
+ * Classic multi-line Baumit miss: first product line 48 while `Numărul de găleți` is 576.
+ */
+export function quantityConflictsWithRaw(qty, tip, rawText) {
+  if (!fieldFilled(qty) || !rawText) return false;
+  const parsed = parseQty(rawText);
+  if (!parsed || !isPlausibleQuantity(parsed.qty, parsed.tip || tip)) return false;
+  return Number(parsed.qty) !== Number(qty);
+}
+
 function preferRoute(stored, parsed) {
   if (fieldFilled(stored) && !isFalseRoute(stored)) return stored;
   if (fieldFilled(parsed)) return parsed;
@@ -564,17 +590,30 @@ export function repairAvizFromStored(row) {
 }
 
 export function avizFieldConfidence(row) {
+  const raw = row?.extracted_data?.raw_text;
+  const qtyLow = isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa)
+    || quantityConflictsWithRaw(row?.cantitate_marfa, row?.tip_marfa, raw);
   return {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
-    ruta_transport: fieldFilled(row?.ruta_transport) ? 'ok' : 'low',
-    cantitate_marfa: isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa) ? 'low' : 'ok',
+    ruta_transport: isSuspiciousRoute(row?.ruta_transport) ? 'low' : 'ok',
+    cantitate_marfa: qtyLow ? 'low' : 'ok',
   };
+}
+
+function confidenceRank(status) {
+  return status === 'low' ? 1 : 0;
+}
+
+function worseConfidence(a, b) {
+  return confidenceRank(a) >= confidenceRank(b) ? a : b;
 }
 
 /**
  * Prefer stored OCR field objects for the UI amber flags; fall back to heuristics
  * when a row predates field_confidence JSON or only has low/ok strings.
+ * Heuristic "low" always wins over a stored "ok" — otherwise a wrong-but-confident
+ * parse (Republicii17, first-line quantity 48) hides the review label.
  */
 export function fieldConfidenceForUi(row) {
   const heuristic = avizFieldConfidence(row);
@@ -583,18 +622,19 @@ export function fieldConfidenceForUi(row) {
 
   const out = { ...heuristic };
   for (const [key, val] of Object.entries(stored)) {
+    let fromStored = null;
     if (val === 'low' || val === 'ok') {
-      out[key] = val;
-      continue;
-    }
-    if (val && typeof val === 'object') {
+      fromStored = val;
+    } else if (val && typeof val === 'object') {
       const status = val.status;
-      if (status === 'ok') out[key] = 'ok';
-      else if (status === 'review' || status === 'missing') out[key] = 'low';
+      if (status === 'ok') fromStored = 'ok';
+      else if (status === 'review' || status === 'missing') fromStored = 'low';
       else if (typeof val.confidence === 'number') {
-        out[key] = val.confidence >= 0.92 ? 'ok' : 'low';
+        fromStored = val.confidence >= 0.92 ? 'ok' : 'low';
       }
     }
+    if (!fromStored) continue;
+    out[key] = worseConfidence(heuristic[key] || 'ok', fromStored);
   }
   return out;
 }

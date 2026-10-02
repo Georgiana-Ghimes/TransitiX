@@ -10,8 +10,9 @@ const user = { id: 'u1', name: 'Ana' };
 
 describe('avizOcrFieldChanges', () => {
   it('reports only OCR fields that actually changed', () => {
+    // km / weight stay equal across pg string vs form number; only the plate changes.
     const prev = { numar_tpo: 'TPO-0025629', numar_auto: 'B 330 SRS', km_parcursi: '120.00', gross_weight_kg: '9000.00' };
-    const data = { numar_tpo: 'TPO-0025629', numar_auto: 'B 331 SRS', km_parcursi: 150, gross_weight_kg: 9000 };
+    const data = { numar_tpo: 'TPO-0025629', numar_auto: 'B 331 SRS', km_parcursi: 120, gross_weight_kg: 9000 };
     const changes = avizOcrFieldChanges(prev, data, user, { now: new Date('2026-10-01T10:00:00Z') });
     expect(changes).toEqual([
       {

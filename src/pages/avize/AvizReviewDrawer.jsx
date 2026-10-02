@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/client';
 import ModalShell from '@/components/ModalShell';
+import RoDateField from '@/components/RoDateField';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { blocksForValue, isLowConfidenceBlock } from '@/lib/ocrBlocks';
 import { previewKind } from '@/lib/avizOps';
+import { toDateIso } from '@/lib/utils';
 import { Loader2, X } from 'lucide-react';
 import AvizBlockOverlay from './AvizBlockOverlay';
 import AvizFilePreview from './AvizFilePreview';
@@ -47,10 +49,16 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
         setPayload(data);
         const next = {};
         for (const issue of data.issues || []) {
-          if (issue.field) next[issue.field] = issue.value ?? '';
+          if (issue.field) {
+            const raw = issue.value ?? '';
+            next[issue.field] = issue.field === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+          }
         }
         for (const key of ['numar_tpo', 'numar_auto', 'data_efectuare_cursa', 'cantitate_marfa']) {
-          if (next[key] === undefined) next[key] = data.values?.[key] ?? '';
+          if (next[key] === undefined) {
+            const raw = data.values?.[key] ?? '';
+            next[key] = key === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+          }
         }
         setDraft(next);
       })
@@ -247,12 +255,24 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
                           </span>
                         ) : null}
                       </label>
-                      <input
-                        className={`${inputCls} ${active ? 'ring-2 ring-sky-300' : ''}`}
-                        value={draft[key] ?? ''}
-                        onFocus={() => setActiveField(key)}
-                        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
-                      />
+                      {key === 'data_efectuare_cursa' ? (
+                        <RoDateField
+                          className={`${inputCls} ${active ? 'ring-2 ring-sky-300' : ''}`}
+                          value={draft[key] ?? ''}
+                          onChange={(iso) => {
+                            setActiveField(key);
+                            setDraft((d) => ({ ...d, [key]: iso }));
+                          }}
+                          aria-label={FIELD_LABELS[key] || key}
+                        />
+                      ) : (
+                        <input
+                          className={`${inputCls} ${active ? 'ring-2 ring-sky-300' : ''}`}
+                          value={draft[key] ?? ''}
+                          onFocus={() => setActiveField(key)}
+                          onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
+                        />
+                      )}
                     </div>
                   );
                 })}

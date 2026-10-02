@@ -3,6 +3,9 @@ import {
   findDriverForUser,
   formatDate,
   isActiveTripStatus,
+  localDateToIso,
+  parseRoDateInput,
+  toDateIso,
   toFiniteNumber,
 } from './utils.js';
 
@@ -18,6 +21,39 @@ describe('formatDate', () => {
   it('returns dash for empty values', () => {
     expect(formatDate(null)).toBe('-');
     expect(formatDate('')).toBe('-');
+  });
+
+  it('keeps 25 September as 25.09.2026 (never US 09/25)', () => {
+    expect(formatDate('2026-09-25')).toBe('25.09.2026');
+  });
+});
+
+describe('toDateIso / parseRoDateInput', () => {
+  it('normalises ISO and datetime to YYYY-MM-DD', () => {
+    expect(toDateIso('2026-09-25')).toBe('2026-09-25');
+    expect(toDateIso('2026-09-25T00:00:00.000Z')).toBe('2026-09-25');
+    expect(toDateIso('')).toBe('');
+    expect(toDateIso('not-a-date')).toBe('');
+  });
+
+  it('parses RO DD.MM.YYYY and DD/MM/YYYY as day-first', () => {
+    expect(parseRoDateInput('25.09.2026')).toBe('2026-09-25');
+    expect(parseRoDateInput('25/09/2026')).toBe('2026-09-25');
+    expect(parseRoDateInput('3.4.2026')).toBe('2026-04-03');
+  });
+
+  it('does not treat 03/04 as US March 4', () => {
+    expect(parseRoDateInput('03/04/2026')).toBe('2026-04-03');
+  });
+
+  it('accepts ISO paste and empty clear', () => {
+    expect(parseRoDateInput('2026-09-25')).toBe('2026-09-25');
+    expect(parseRoDateInput('  ')).toBe('');
+    expect(parseRoDateInput('99.99.2026')).toBeNull();
+  });
+
+  it('round-trips local Date without UTC day shift', () => {
+    expect(localDateToIso(new Date(2026, 8, 25))).toBe('2026-09-25');
   });
 });
 

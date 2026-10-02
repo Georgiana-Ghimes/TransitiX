@@ -57,7 +57,7 @@ const OCR = {
       { term: 'Greutate brută', text: 'Citită când documentul o tipărește. Vezi secțiunea despre greutate, e câmpul cu cele mai multe consecințe.' },
     ]),
     p('Nu sunt citite și le completezi tu: valoarea TPO, km parcurși, tariful pe km, taxele suplimentare și observațiile. Nu apar pe avizul de expediție, deci nu are de unde să le ia.'),
-    warn('Câmpurile pe care OCR nu e sigur apar cu marginea galbenă și textul „verifică”. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit.'),
+    warn('Câmpurile pe care OCR nu e sigur apar cu marginea galbenă și textul „verifică (parser nesigur)”. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit — inclusiv când valoarea arată plauzibilă dar ruta e incompletă sau cantitatea nu se potrivește cu totalul de pe aviz.'),
   ],
 };
 

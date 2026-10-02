@@ -148,11 +148,22 @@ function decorateAviz(row) {
   const source = serialized.extraction_source
     || mapProviderToSource(serialized.extracted_data?.provider);
   const validation = serialized.extracted_data?.validation ?? null;
+  const field_confidence = fieldConfidenceForUi(serialized);
+  const heuristicReview = ['numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa']
+    .some((key) => field_confidence[key] === 'low');
+  const existingRouting = validation?.routing ?? null;
+  const validation_routing = heuristicReview
+    && (!existingRouting || existingRouting === 'auto')
+    ? 'hitl_optional'
+    : existingRouting;
   return {
     ...serialized,
     extraction_source: source,
-    field_confidence: fieldConfidenceForUi(serialized),
-    validation_routing: validation?.routing ?? null,
+    field_confidence,
+    // Surface review when heuristics catch a wrong-but-plausible parse even if DB
+    // needs_review was cleared or never set for that field.
+    needs_review: Boolean(serialized.needs_review) || heuristicReview,
+    validation_routing,
     validation_findings: validation?.findings ?? null,
   };
 }

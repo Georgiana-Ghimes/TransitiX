@@ -288,6 +288,33 @@ describe('quantity stays separate from weight', () => {
     expect(extractQuantity(text).value).toEqual({ quantity: 576, unit: 'galeti' });
   });
 
+  it('reads footer total when photo OCR splits label and number onto two lines (#42)', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    const text = `${lines}\nNumarul de galeti\n576,00`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 576, unit: 'galeti' });
+  });
+
+  it('sums product lines when footer label is present but the figure failed OCR (#42)', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    // Label without a readable total — tip becomes găleți, quantity must not stay on 48.
+    const text = `${lines}\nNumarul de galeti`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 576, unit: 'galeti' });
+  });
+
+  it('does not take the first product line when footer label exists but only one line OCR (#42)', () => {
+    const text = 'Cantitate 48.00 buc BetonKontakt\nNumarul de galeti';
+    expect(extractQuantity(text).value).toBeNull();
+  });
+
+  it('reads OCR-garbled ga1eti footer totals (#42)', () => {
+    expect(extractQuantity('Cantitate 48.00 buc\nNumarul de ga1eti 576,00').value)
+      .toEqual({ quantity: 576, unit: 'galeti' });
+  });
+
   it('sums packaging lines when the footer total is missing', () => {
     const text = [
       '270.00 sac FinoGrande',

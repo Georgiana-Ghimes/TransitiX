@@ -1,4 +1,5 @@
 import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
+import { toDateIso } from '@/lib/utils';
 
 export const inputCls = 'w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1D4E89] transition-colors';
 export const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
@@ -137,7 +138,8 @@ export function columnCountOf(t) {
 export function emptyForm(row = {}) {
   const form = {};
   for (const f of AVIZ_FORM_FIELDS) {
-    form[f.key] = row[f.key] ?? '';
+    const raw = row[f.key] ?? '';
+    form[f.key] = f.type === 'date' ? toDateIso(raw) : raw;
   }
   form.ruta_display = row.ruta_display ?? '';
   form.trip_id = row.trip_id ?? '';

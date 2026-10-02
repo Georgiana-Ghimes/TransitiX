@@ -18,6 +18,58 @@ export function formatDate(value) {
 }
 
 /**
+ * Keep only a calendar day as YYYY-MM-DD (API/DB shape).
+ * Accepts ISO datetimes from pg without shifting the day via UTC.
+ */
+export function toDateIso(value) {
+  if (value == null || value === '') return '';
+  const raw = String(value).trim();
+  const ymd = raw.length >= 10 ? raw.slice(0, 10) : raw;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '';
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return '';
+  return ymd;
+}
+
+/**
+ * Parse operator-typed RO dates into YYYY-MM-DD.
+ * Prefers DD.MM.YYYY / DD/MM/YYYY (never US MM/DD). Also accepts ISO YYYY-MM-DD.
+ */
+export function parseRoDateInput(text) {
+  if (text == null) return null;
+  const raw = String(text).trim();
+  if (!raw) return '';
+  const iso = toDateIso(raw);
+  if (iso) return iso;
+  const m = raw.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const dt = new Date(year, month - 1, day);
+  if (dt.getFullYear() !== year || dt.getMonth() !== month - 1 || dt.getDate() !== day) return null;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** Local Date from YYYY-MM-DD without UTC shift (for calendar pickers). */
+export function isoToLocalDate(iso) {
+  const ymd = toDateIso(iso);
+  if (!ymd) return undefined;
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export function localDateToIso(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Number() that tells "not set" apart from zero.
  *
  * Number(null), Number(undefined) and Number('') are all 0, and 0 passes Number.isFinite,

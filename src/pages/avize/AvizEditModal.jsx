@@ -1,5 +1,6 @@
 import React from 'react';
 import ModalShell from '@/components/ModalShell';
+import RoDateField from '@/components/RoDateField';
 import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
 import { Loader2, Pencil, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
@@ -36,14 +37,26 @@ export default function AvizEditModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {AVIZ_FORM_FIELDS.map((f) => (
                 <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                  <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică' : ''}</label>
-                  <input
-                    className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
-                    type={f.type || 'text'}
-                    step={f.step}
-                    value={form[f.key] ?? ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                  />
+                  <label className={labelCls}>
+                    {f.label}
+                    {lowField(editRow, f.key) ? ' · verifică (parser nesigur)' : ''}
+                  </label>
+                  {f.type === 'date' ? (
+                    <RoDateField
+                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
+                      value={form[f.key] ?? ''}
+                      onChange={(iso) => setForm((prev) => ({ ...prev, [f.key]: iso }))}
+                      aria-label={f.label}
+                    />
+                  ) : (
+                    <input
+                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
+                      type={f.type || 'text'}
+                      step={f.step}
+                      value={form[f.key] ?? ''}
+                      onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                    />
+                  )}
                 </div>
               ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />

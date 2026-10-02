@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, ImagePlus, Loader2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ChevronDown, ImagePlus, Loader2, X } from 'lucide-react';
 import { api } from '@/api/client';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
@@ -232,25 +232,51 @@ export default function DriverAvizReviewForm({
   );
 }
 
-/** Tips when handwriting a sheet for OCR - always open, so it is seen before the camera. */
+/** Tips when handwriting a sheet for OCR — collapsed by default so „Fă o poză” stays near the fold. */
 export function DriverWritingTips() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="rounded-xl border-2 border-[#0A2B4E] bg-[#0A2B4E] text-white px-4 py-4 shadow-sm">
-      <p className="text-lg font-bold leading-snug">
-        Scrie pe foaie, în această ordine
-      </p>
-      <p className="mt-1 text-sm text-white/85 leading-relaxed">
-        Dacă completezi pe hârtie și faci poză, numerotează rândurile 1-14 exact așa.
-        Lasă gol ce nu știi - nu inventa cifre.
-      </p>
-      <ol className="mt-3 space-y-1.5 text-base leading-snug">
-        {DRIVER_SHEET_GUIDE.map((g) => (
-          <li key={g.no} className="flex gap-2">
-            <span className="w-7 shrink-0 font-bold tabular-nums text-sky-200">{g.no}.</span>
-            <span>{g.hint}</span>
-          </li>
-        ))}
-      </ol>
+    <div className="rounded-xl border-2 border-[#0A2B4E] bg-[#0A2B4E] text-white px-4 py-3 shadow-sm">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="driver-sheet-order-list"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-start gap-3 text-left min-h-11"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-bold leading-snug">
+            Scrie pe foaie, în această ordine
+          </span>
+          {!open ? (
+            <span className="mt-1 block text-sm text-white/85 leading-relaxed">
+              Ordinea pe foaie (1–14) — atingi ca să vezi
+            </span>
+          ) : null}
+        </span>
+        <ChevronDown
+          className={`mt-1 h-5 w-5 shrink-0 text-sky-200 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden
+        />
+      </button>
+
+      {open ? (
+        <div id="driver-sheet-order-list" className="mt-3 border-t border-white/20 pt-3">
+          <p className="text-sm text-white/85 leading-relaxed">
+            Dacă completezi pe hârtie și faci poză, numerotează rândurile 1-14 exact așa.
+            Lasă gol ce nu știi - nu inventa cifre.
+          </p>
+          <ol className="mt-3 space-y-1.5 text-base leading-snug">
+            {DRIVER_SHEET_GUIDE.map((g) => (
+              <li key={g.no} className="flex gap-2">
+                <span className="w-7 shrink-0 font-bold tabular-nums text-sky-200">{g.no}.</span>
+                <span>{g.hint}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
     </div>
   );
 }

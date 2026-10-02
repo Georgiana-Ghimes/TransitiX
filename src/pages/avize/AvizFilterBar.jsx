@@ -1,4 +1,5 @@
 import React from 'react';
+import RoDateField from '@/components/RoDateField';
 import { inputCls, labelCls } from './avizeUi';
 
 export default function AvizFilterBar({
@@ -67,11 +68,21 @@ export default function AvizFilterBar({
       </div>
       <div>
         <label className={labelCls}>De la ({dateFieldLabel})</label>
-        <input className={inputCls} type="date" value={filters.from} onChange={(e) => setFilters((p) => ({ ...p, from: e.target.value }))} />
+        <RoDateField
+          className={inputCls}
+          value={filters.from}
+          onChange={(iso) => setFilters((p) => ({ ...p, from: iso }))}
+          aria-label={`De la (${dateFieldLabel})`}
+        />
       </div>
       <div>
         <label className={labelCls}>Până la ({dateFieldLabel})</label>
-        <input className={inputCls} type="date" value={filters.to} onChange={(e) => setFilters((p) => ({ ...p, to: e.target.value }))} />
+        <RoDateField
+          className={inputCls}
+          value={filters.to}
+          onChange={(iso) => setFilters((p) => ({ ...p, to: iso }))}
+          aria-label={`Până la (${dateFieldLabel})`}
+        />
       </div>
       <div>
         <label className={labelCls}>Status</label>

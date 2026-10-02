@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, isFalseRoute } from './avizOcr.js';
+import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, fieldConfidenceForUi, isFalseRoute, isSuspiciousRoute, quantityConflictsWithRaw } from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
 
 const PSL_FIXTURE = `
@@ -528,6 +528,45 @@ NUMAR AUTO TEST-101
       extracted_data: { raw_text: 'Cantitate 245 buc' },
     });
     expect(repaired.tip_marfa).toBe('saci');
+  });
+});
+
+describe('review heuristics (#41)', () => {
+  it('flags glued street+number routes without locality as suspicious', () => {
+    expect(isSuspiciousRoute('Republicii17')).toBe(true);
+    expect(isSuspiciousRoute('Bol-Bucuresti/Viilor52')).toBe(false);
+    expect(isSuspiciousRoute('Bucuresti/Viilor52')).toBe(false);
+    expect(avizFieldConfidence({ ruta_transport: 'Republicii17' }).ruta_transport).toBe('low');
+  });
+
+  it('flags quantity that disagrees with Numărul de găleți in raw text', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    const raw = `${lines}\nNumarul de galeti: 576,00`;
+    expect(quantityConflictsWithRaw(48, 'galeti', raw)).toBe(true);
+    expect(avizFieldConfidence({
+      cantitate_marfa: 48,
+      tip_marfa: 'galeti',
+      extracted_data: { raw_text: raw },
+    }).cantitate_marfa).toBe('low');
+  });
+
+  it('does not let a stored ok confidence hide a heuristic low', () => {
+    const ui = fieldConfidenceForUi({
+      ruta_transport: 'Republicii17',
+      cantitate_marfa: 48,
+      tip_marfa: 'galeti',
+      field_confidence: {
+        ruta_transport: 'ok',
+        cantitate_marfa: { status: 'ok', confidence: 0.95 },
+      },
+      extracted_data: {
+        raw_text: 'Cantitate 48.00 buc\nCantitate 72.00 buc\nNumarul de galeti: 576,00',
+      },
+    });
+    expect(ui.ruta_transport).toBe('low');
+    expect(ui.cantitate_marfa).toBe('low');
   });
 });
 

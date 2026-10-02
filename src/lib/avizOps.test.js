@@ -32,6 +32,11 @@ describe('avizOps', () => {
     expect(c.ruta_transport).toBe('low');
   });
 
+  it('flags incomplete glued routes like Republicii17 as low (#41)', () => {
+    expect(avizFieldConfidence({ ruta_transport: 'Republicii17' }).ruta_transport).toBe('low');
+    expect(avizFieldConfidence({ ruta_transport: 'Bol-Bucuresti/Viilor52' }).ruta_transport).toBe('ok');
+  });
+
   it('sums draft invoice by TPO or km x tarif', () => {
     const row = { valoare_tpo: 100, km_parcursi: 10, tarif_km: 2 };
     expect(annexDraftAmount(row, 'tpo')).toBe(100);

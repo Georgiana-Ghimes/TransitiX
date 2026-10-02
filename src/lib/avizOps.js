@@ -63,10 +63,13 @@ export function isLowConfidenceAuto(value) {
 }
 
 export function avizFieldConfidence(row) {
+  const route = String(row?.ruta_transport || '').trim();
+  const routeLooksIncomplete = !route
+    || (!/\//.test(route) && !/^(Bol|Mil)-/i.test(route));
   return {
     numar_tpo: isLowConfidenceTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isLowConfidenceAuto(row?.numar_auto) ? 'low' : 'ok',
-    ruta_transport: String(row?.ruta_transport || '').trim() ? 'ok' : 'low',
+    ruta_transport: routeLooksIncomplete ? 'low' : 'ok',
   };
 }
 
