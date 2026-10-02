@@ -86,7 +86,13 @@ export async function runMistralOcr(buffer, mimeType, { timeoutMs } = {}) {
     };
   }
 
-  const budget = Math.max(5_000, Number(timeoutMs) || 120_000);
+  // Honour the caller's budget (interactive, remaining slot time, or a short OCR_TIMEOUT_MS
+  // in tests). A 5s floor here made AbortSignal ignore 80ms budgets and left re-extract rows
+  // stuck on `uploaded` while CI only waited 400ms for markExtractFailed.
+  const parsed = Number(timeoutMs);
+  const budget = Number.isFinite(parsed) && parsed > 0
+    ? Math.max(1, Math.floor(parsed))
+    : 120_000;
   const body = {
     model: mistralOcrModel(),
     document: documentPayload(buffer, mimeType),
