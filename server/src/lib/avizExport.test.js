@@ -129,13 +129,7 @@ describe('exportColumnsFor', () => {
       { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
       { key: 'tip_marfa', header: 'Tip marfa', source: 'tip_marfa', default_value: '' },
     ];
-    // Opt out of weight columns so this test stays about the template itself.
-    const aviz = {
-      ...EXTRACTED_AVIZ,
-      include_gross_weight_xlsx: false,
-      include_net_weight_xlsx: false,
-    };
-    const sheet = await loadSheet({ name: 'Doar două', columns }, [aviz]);
+    const sheet = await loadSheet({ name: 'Doar două', columns }, [EXTRACTED_AVIZ]);
     const { headers, rows } = tableFromSheet(sheet);
     expect(headers).toEqual(['Numar TPO', 'Tip marfa']);
     expect(headers).not.toContain('Nr. Crt.');
@@ -144,73 +138,49 @@ describe('exportColumnsFor', () => {
 });
 
 describe('anexa exportată, default Anexa Factura RAI', () => {
-  it('adds Greutate netă when Include în XLSX is on for both weights', async () => {
-    const aviz = {
-      ...EXTRACTED_AVIZ,
-      net_weight_kg: 8244,
-      include_gross_weight_xlsx: true,
-      include_net_weight_xlsx: true,
-    };
+  it('keeps the locked 14 columns and never injects Greutate netă', async () => {
+    const aviz = { ...EXTRACTED_AVIZ, net_weight_kg: 8244 };
     const sheet = await loadSheet({ name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [aviz]);
     const { headers, rows } = tableFromSheet(sheet);
 
+    expect(headers).toEqual(DEFAULT_RAI_COLUMNS.map((c) => c.header));
     expect(headers).toContain('Cantitate marfa (tone)');
-    expect(headers).toContain('Greutate netă (kg)');
-    const cantitateIdx = headers.indexOf('Cantitate marfa (tone)');
-    expect(headers[cantitateIdx + 1]).toBe('Greutate netă (kg)');
+    expect(headers).not.toContain('Greutate netă (kg)');
     expect(rows[0]['Cantitate marfa (tone)']).toBe(9);
-    expect(rows[0]['Greutate netă (kg)']).toBe(8244);
+    expect(rows[0]['Greutate netă (kg)']).toBeUndefined();
   });
 
-  it('keeps only the weight columns that were included for the selection', async () => {
-    const grossOnly = {
+  it('computes Cantitate exclusively from greutate brută, ignoring net', async () => {
+    const onlyNet = {
       ...EXTRACTED_AVIZ,
+      gross_weight_kg: null,
       net_weight_kg: 8244,
-      include_gross_weight_xlsx: true,
-      include_net_weight_xlsx: false,
     };
-    const netOnly = {
+    const both = {
       ...EXTRACTED_AVIZ,
+      gross_weight_kg: 15744,
       net_weight_kg: 8244,
-      include_gross_weight_xlsx: false,
-      include_net_weight_xlsx: true,
-    };
-    const neither = {
-      ...EXTRACTED_AVIZ,
-      include_gross_weight_xlsx: false,
-      include_net_weight_xlsx: false,
     };
 
-    const grossSheet = await loadSheet(
-      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [grossOnly],
+    const onlyNetSheet = await loadSheet(
+      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [onlyNet],
     );
-    expect(tableFromSheet(grossSheet).headers).toContain('Cantitate marfa (tone)');
-    expect(tableFromSheet(grossSheet).headers).not.toContain('Greutate netă (kg)');
+    expect(tableFromSheet(onlyNetSheet).headers).not.toContain('Greutate netă (kg)');
+    expect(tableFromSheet(onlyNetSheet).rows[0]['Cantitate marfa (tone)'] ?? '').toBe('');
 
-    const netSheet = await loadSheet(
-      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [netOnly],
+    const bothSheet = await loadSheet(
+      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [both],
     );
-    expect(tableFromSheet(netSheet).headers).not.toContain('Cantitate marfa (tone)');
-    expect(tableFromSheet(netSheet).headers).toContain('Greutate netă (kg)');
-    expect(tableFromSheet(netSheet).rows[0]['Greutate netă (kg)']).toBe(8244);
-
-    const neitherSheet = await loadSheet(
-      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [neither],
-    );
-    expect(tableFromSheet(neitherSheet).headers).not.toContain('Cantitate marfa (tone)');
-    expect(tableFromSheet(neitherSheet).headers).not.toContain('Greutate netă (kg)');
+    expect(tableFromSheet(bothSheet).rows[0]['Cantitate marfa (tone)']).toBe(15.74);
   });
 
-  it('writes RAI headers plus net weight when the flag defaults to include', async () => {
+  it('writes the locked RAI headers; quantity is greutate brută in tonnes', async () => {
     const aviz = { ...EXTRACTED_AVIZ, net_weight_kg: 8200 };
     const sheet = await loadSheet({ name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS }, [aviz]);
     const { headers, rows } = tableFromSheet(sheet);
 
-    expect(headers).toEqual([
-      ...DEFAULT_RAI_COLUMNS.slice(0, 8).map((c) => c.header),
-      'Greutate netă (kg)',
-      ...DEFAULT_RAI_COLUMNS.slice(8).map((c) => c.header),
-    ]);
+    expect(headers).toEqual(DEFAULT_RAI_COLUMNS.map((c) => c.header));
+    expect(headers).not.toContain('Greutate netă (kg)');
     expect(rows).toHaveLength(1);
 
     const row = rows[0];
@@ -222,7 +192,7 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
     expect(row['Ruta transport']).toBe('Bucuresti/Aeroportului120-T-Bucuresti/Viilor52');
     expect(row['Tip marfa']).toBe('saci');
     expect(row['Cantitate marfa (tone)']).toBe(9);
-    expect(row['Greutate netă (kg)']).toBe(8200);
+    expect(row['Greutate netă (kg)']).toBeUndefined();
     expect(row['Numar document marfa (aviz/factura)']).toBe('PSL-0044633');
     expect(row['Numar curse']).toBe(1);
     expect(row['Taxe suplimentare']).toBe(0);
@@ -234,10 +204,7 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
   it('numbers two avize and keeps tractor + trailer plates', async () => {
     const sheet = await loadSheet(
       { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS },
-      [
-        { ...EXTRACTED_AVIZ, include_net_weight_xlsx: false },
-        { ...DUAL_PLATE_AVIZ, include_net_weight_xlsx: false },
-      ]
+      [EXTRACTED_AVIZ, DUAL_PLATE_AVIZ],
     );
     const { rows } = tableFromSheet(sheet);
     expect(rows[0]['Nr. Crt.']).toBe(1);
@@ -254,7 +221,7 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
   it('paints yellow headers and names the sheet after the template', async () => {
     const sheet = await loadSheet(
       { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS },
-      [{ ...EXTRACTED_AVIZ, include_net_weight_xlsx: false }],
+      [EXTRACTED_AVIZ],
     );
     expect(sheet.name).toBe('Anexa Factura RAI');
     const fill = sheet.getRow(1).getCell(1).fill;
@@ -263,10 +230,19 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
 });
 
 describe('anexa exportată, custom Șablon nou defaults', () => {
+  it('does not inject Greutate netă unless the template defines that column', async () => {
+    const aviz = { ...EXTRACTED_AVIZ, net_weight_kg: 8244 };
+    const sheet = await loadSheet({ name: 'Șablon nou', columns: sablonNouColumns() }, [aviz]);
+    const { headers, rows } = tableFromSheet(sheet);
+    expect(headers).toContain('Cantitate marfa (tone)');
+    expect(headers).not.toContain('Greutate netă (kg)');
+    expect(rows[0]['Cantitate marfa (tone)']).toBe(9);
+  });
+
   it('writes Taxa 100 and Tarif km 20 when aviz fields are still 0', async () => {
     const sheet = await loadSheet(
       { name: 'Șablon nou', columns: sablonNouColumns() },
-      [{ ...EXTRACTED_AVIZ, include_net_weight_xlsx: false }],
+      [EXTRACTED_AVIZ],
     );
     const { headers, rows } = tableFromSheet(sheet);
 
@@ -288,7 +264,6 @@ describe('anexa exportată, custom Șablon nou defaults', () => {
   it('keeps per-aviz tax/tarif/km/valoare when they are not zero', async () => {
     const filled = {
       ...EXTRACTED_AVIZ,
-      include_net_weight_xlsx: false,
       valoare_tpo: 450,
       taxe_suplimentare: 40,
       km_parcursi: 32.5,
@@ -330,7 +305,7 @@ describe('anexa exportată, custom Șablon nou defaults', () => {
     ];
     const sheet = await loadSheet(
       { name: 'Șablon nou', columns },
-      [{ ...EXTRACTED_AVIZ, include_net_weight_xlsx: false }],
+      [EXTRACTED_AVIZ],
     );
     const { rows } = tableFromSheet(sheet);
     expect(rows[0]['Km parcursi']).toBe(50);
@@ -344,7 +319,7 @@ describe('anexa exportată, custom Șablon nou defaults', () => {
   it('round-trips custom defaults through an xlsx buffer the same way Unește downloads', async () => {
     const built = annexWorkbook(
       { name: 'Șablon nou', columns: sablonNouColumns() },
-      [{ ...EXTRACTED_AVIZ, include_net_weight_xlsx: false }],
+      [EXTRACTED_AVIZ],
     );
     const buffer = Buffer.from(await built.xlsx.writeBuffer());
     expect(buffer.subarray(0, 2).toString()).toBe('PK');

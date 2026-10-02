@@ -5,7 +5,7 @@
  * The rows themselves still come from `mapAnnexRows`, so an existing template exports exactly
  * what it exported before. What is new is that the report knows what it is missing.
  */
-import { mapAnnexRows, normalizeTemplateColumns, includesWeightInXlsx, exportColumnsFor, applyWeightXlsxColumns } from '../avizTemplate.js';
+import { mapAnnexRows, normalizeTemplateColumns, exportColumnsFor } from '../avizTemplate.js';
 import { consignmentKey } from '../avizQuery.js';
 import { canTotal, getSource, isNumericSource, WEIGHT_SOURCES } from './sources.js';
 
@@ -95,7 +95,7 @@ export function reportWarnings(columns, documents) {
   if (sources.has('cantitate_marfa')) {
     warn(found, 'missing_quantity_weight', 'warning',
       'Documente fără greutate brută, deci coloana de cantitate rămâne goală pe ele.',
-      docs.filter((d) => includesWeightInXlsx(d, 'gross') && toNumber(d.gross_weight_kg) === null)
+      docs.filter((d) => toNumber(d.gross_weight_kg) === null)
         .map((d) => d.id));
   }
 
@@ -103,7 +103,7 @@ export function reportWarnings(columns, documents) {
   if (exportsWeight) {
     warn(found, 'missing_gross_weight', 'warning',
       'Raportul are coloană de greutate brută, dar unele documente nu au valoarea.',
-      docs.filter((d) => includesWeightInXlsx(d, 'gross') && toNumber(d.gross_weight_kg) === null)
+      docs.filter((d) => toNumber(d.gross_weight_kg) === null)
         .map((d) => d.id));
   } else if (!sources.has('cantitate_marfa')) {
     // The report the client asked for is checked against a weighbridge ticket. If the documents
@@ -112,7 +112,7 @@ export function reportWarnings(columns, documents) {
     // Anexa RAI “Cantitate marfa (t/…)” already maps from gross_weight_kg → tons when present.
     warn(found, 'weight_not_exported', 'warning',
       'Documentele au greutate brută, dar șablonul nu o exportă.',
-      docs.filter((d) => includesWeightInXlsx(d, 'gross') && toNumber(d.gross_weight_kg) !== null)
+      docs.filter((d) => toNumber(d.gross_weight_kg) !== null)
         .map((d) => d.id));
   }
 
@@ -149,9 +149,9 @@ export function describeColumns(columns) {
 
 export function buildReport({ template, documents }) {
   const docs = Array.isArray(documents) ? documents : [];
-  // Same column resolution the workbook uses (locked RAI layout, usable custom columns),
-  // then the Editează Include-în-XLSX flags add or drop weight columns for this selection.
-  const columns = applyWeightXlsxColumns(exportColumnsFor(template), docs);
+  // Template columns as stored (locked RAI = fixed 14 cols). Cantitate marfa (tone) always
+  // comes from greutate brută via annexQuantityValue — never from net weight.
+  const columns = exportColumnsFor(template);
   const rows = mapAnnexRows(columns, docs);
   return {
     columns: describeColumns(columns),

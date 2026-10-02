@@ -130,82 +130,11 @@ function formatDateCell(value) {
 }
 
 /**
- * Whether a weighbridge figure should leave the building in the XLSX.
- * Missing / null means include (historical rows and OCR never set the flag).
- */
-export function includesWeightInXlsx(row, which = 'gross') {
-  const key = which === 'net' ? 'include_net_weight_xlsx' : 'include_gross_weight_xlsx';
-  const v = row?.[key];
-  if (v === false || v === 0 || v === 'false' || v === '0') return false;
-  return true;
-}
-
-/** Columns that carry greutate brută onto the sheet (tons via Cantitate, or kg). */
-const GROSS_XLSX_SOURCES = new Set(['cantitate_marfa', 'gross_weight_kg']);
-const NET_XLSX_SOURCES = new Set(['net_weight_kg']);
-
-const GROSS_KG_COLUMN = Object.freeze({
-  key: 'gross_weight_kg',
-  header: 'Greutate brută (kg)',
-  source: 'gross_weight_kg',
-  default_value: '',
-});
-
-const NET_KG_COLUMN = Object.freeze({
-  key: 'net_weight_kg',
-  header: 'Greutate netă (kg)',
-  source: 'net_weight_kg',
-  default_value: '',
-});
-
-function insertAfterWeightAnchor(cols, column) {
-  const afterGross = cols.findIndex((c) => GROSS_XLSX_SOURCES.has(c.source));
-  if (afterGross >= 0) {
-    return [...cols.slice(0, afterGross + 1), column, ...cols.slice(afterGross + 1)];
-  }
-  const afterTip = cols.findIndex((c) => c.source === 'tip_marfa');
-  if (afterTip >= 0) {
-    return [...cols.slice(0, afterTip + 1), column, ...cols.slice(afterTip + 1)];
-  }
-  return [...cols, column];
-}
-
-/**
- * Shape the sheet from the Editează “Include în XLSX” flags on the selected avize.
- *
- * Union across the selection: a column appears when at least one row wants it; rows that
- * opted out leave that cell blank. With no documents (empty preview) the template is left alone.
- */
-export function applyWeightXlsxColumns(columns, documents) {
-  const cols = normalizeTemplateColumns(columns);
-  const docs = Array.isArray(documents) ? documents : [];
-  if (docs.length === 0) return cols;
-
-  const wantGross = docs.some((d) => includesWeightInXlsx(d, 'gross'));
-  const wantNet = docs.some((d) => includesWeightInXlsx(d, 'net'));
-
-  let out = cols.filter((col) => {
-    if (GROSS_XLSX_SOURCES.has(col.source) && !wantGross) return false;
-    if (NET_XLSX_SOURCES.has(col.source) && !wantNet) return false;
-    return true;
-  });
-
-  if (wantGross && !out.some((c) => GROSS_XLSX_SOURCES.has(c.source))) {
-    out = insertAfterWeightAnchor(out, { ...GROSS_KG_COLUMN });
-  }
-  if (wantNet && !out.some((c) => NET_XLSX_SOURCES.has(c.source))) {
-    out = insertAfterWeightAnchor(out, { ...NET_KG_COLUMN });
-  }
-
-  return out;
-}
-
-/**
  * Anexa Factura RAI column “Cantitate marfa (tone)” must carry weighbridge tons when
  * we have greutate brută, not the sack/bucket line count OCR also finds on the same page.
+ * Greutate netă is never used for this figure.
  */
 export function annexQuantityValue(row) {
-  if (!includesWeightInXlsx(row, 'gross')) return null;
   const kg = Number(row?.gross_weight_kg);
   if (Number.isFinite(kg) && kg > 0) {
     return Math.round((kg / 1000) * 100) / 100;
@@ -337,10 +266,6 @@ export function mapAnnexRows(columns, avize) {
         raw = annexQuantityValue(row);
       } else if (col.source === 'tip_marfa') {
         raw = annexTipMarfa(row);
-      } else if (col.source === 'gross_weight_kg' && !includesWeightInXlsx(row, 'gross')) {
-        raw = null;
-      } else if (col.source === 'net_weight_kg' && !includesWeightInXlsx(row, 'net')) {
-        raw = null;
       } else {
         raw = col.source ? row?.[col.source] : undefined;
       }

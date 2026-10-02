@@ -1368,10 +1368,10 @@ CREATE INDEX IF NOT EXISTS idx_aviz_documents_undated
   ON aviz_documents(company_id, created_at)
   WHERE data_efectuare_cursa IS NULL;
 
--- Per-aviz opt-out of putting weighbridge figures into the XLSX. Values stay on the row for
--- zone tax and review; only the export cell blanks. Default true keeps existing behaviour.
-ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS include_gross_weight_xlsx BOOLEAN NOT NULL DEFAULT TRUE;
-ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS include_net_weight_xlsx BOOLEAN NOT NULL DEFAULT TRUE;
+-- Dropped: per-aviz „Include în XLSX” for net/gross. Annex Cantitate is always greutate
+-- brută → tone; net never drives quantity. Older builds may still have the columns.
+ALTER TABLE aviz_documents DROP COLUMN IF EXISTS include_gross_weight_xlsx;
+ALTER TABLE aviz_documents DROP COLUMN IF EXISTS include_net_weight_xlsx;
 
 -- Issued refresh tokens, so logging out actually ends a session. Without this a signed token
 -- stays valid until it expires on its own: a lost phone or a departed employee keeps working

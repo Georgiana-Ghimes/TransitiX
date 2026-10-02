@@ -70,7 +70,6 @@ const GREUTATE = {
     p('Când avizul nu tipărește greutatea brută, celula rămâne goală, iar documentul apare în avertismentul „Cantitate (tone) goală” cu numele lui. Înainte se scria acolo numărul de saci, deci o coloană cu antetul „(tone)” conținea 378 lângă 21,00: de douăzeci de ori mai mare, evident pentru cine se uită, invizibil pentru cine adună.'),
     warn('Greutatea netă nu ține locul celei brute niciodată. Sunt mărimi diferite, iar o valoare aproximativă într-o coloană de facturare e mai rea decât un gol pe care cineva îl observă.'),
     p('Poți scrie greutatea de mână în Editează aviz. Când o scrii, taxa de zonă se recalculează pe loc.'),
-    p('Sub greutatea brută și netă există bifă „Include în XLSX”. Debifezi când cifra trebuie pe ecran (taxă zonă, verificare) dar nu în fișierul care pleacă la client.'),
   ],
 };
 
@@ -159,7 +158,7 @@ const SABLOANE = {
   blocks: [
     p('Un șablon spune ce coloane are fișierul și în ce ordine. Anexa Factura RAI e blocată ca bază: are coloanele cerute de client și nu poate fi rescrisă din Șabloane.'),
     p('Coloanele ei de bază, în ordine: Nr. Crt., Numar TPO, Data efectuare cursa, Valoare TPO, Numar auto, Ruta transport, Tip marfa, Cantitate marfa (tone), Numar document marfa, Numar curse, Taxe suplimentare, Km parcursi, Tarif Km, Observatii.'),
-    p('Bifele „Include în XLSX” de sub greutatea brută și netă din Editează schimbă foaia: brută aduce (sau scoate) Cantitate marfa (tone), netă aduce (sau scoate) coloana Greutate netă (kg).'),
+    p('Cantitate marfa (tone) vine exclusiv din greutatea brută (kg ÷ 1000, două zecimale). Greutatea netă nu apare pe Anexa Factura RAI și nu intră în nicio cantitate calculată.'),
     terms([
       { term: 'Valoarea Default', text: 'Se scrie în Excel doar când câmpul de pe aviz e gol, sau 0 la câmpurile unde 0 înseamnă necompletat.' },
       { term: 'Șablon fără coloane', text: 'Exportul se oprește cu un mesaj, în loc să inventeze alt aranjament. Un fișier care ignoră șablonul ales arată exact ca unul corect.' },

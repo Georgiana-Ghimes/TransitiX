@@ -279,6 +279,31 @@ describe('quantity stays separate from weight', () => {
     expect(extractQuantity('Cantitate: 378 saci').value).toEqual({ quantity: 378, unit: 'saci' });
   });
 
+  it('prefers Numărul de găleți over the first product-line Cantitate', () => {
+    // Multi-line transfer: eleven găleți rows counted as buc, then the footer total.
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    const text = `${lines}\nNumărul de găleți: 576,00`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 576, unit: 'galeti' });
+  });
+
+  it('sums packaging lines when the footer total is missing', () => {
+    const text = [
+      '270.00 sac FinoGrande',
+      '378.00 sac Beton',
+      '105.00 sac MPA',
+      '54.00 sac DuoContact',
+      '16.00 pce Palet Euro returnabil',
+    ].join('\n');
+    expect(extractQuantity(text).value).toEqual({ quantity: 807, unit: 'saci' });
+  });
+
+  it('keeps a single product line and ignores euro-pallet pce', () => {
+    const text = 'Cantitate 72.00 buc SuperPrimer\n3.00 pce Palet Euro returnabil';
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+  });
+
   it('reads a pallet count', () => {
     expect(extractPalletCount('Paleti: 18').value).toBe(18);
   });
@@ -453,6 +478,22 @@ TW
     expect(result.values.quantity).toBe(378);
     expect(result.values.quantity_unit).toBe('saci');
     expect(result.values.gross_weight_kg).toBe(9000);
+  });
+
+  it('takes Numărul de găleți as quantity, not the first product line', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Articol SuperPrimer\nCantitate ${n}.00 buc`)
+      .join('\n');
+    const text = [
+      'Aviz de expeditie TRO-0009999',
+      'Comanda transport: TPO-0031027',
+      lines,
+      'Numărul de găleți: 576,00',
+      'Greutate brută (kg) 12.345,00',
+    ].join('\n');
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.values.quantity).toBe(576);
+    expect(result.values.quantity_unit).toBe('galeti');
   });
 
   it('scores every field, not just the document', () => {

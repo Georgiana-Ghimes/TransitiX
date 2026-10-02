@@ -6,11 +6,6 @@ import AvizFilePreview from './AvizFilePreview';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import { inputCls, labelCls, lowField } from './avizeUi';
 
-const WEIGHT_XLSX_FLAGS = {
-  gross_weight_kg: 'include_gross_weight_xlsx',
-  net_weight_kg: 'include_net_weight_xlsx',
-};
-
 export default function AvizEditModal({
   editRow, form, setForm, trips, obsCodes, saving, onClose, onSave, onAppendObs,
 }) {
@@ -39,32 +34,18 @@ export default function AvizEditModal({
 
           <div className="min-h-0 overflow-y-auto overscroll-contain pr-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {AVIZ_FORM_FIELDS.map((f) => {
-                const xlsxFlag = WEIGHT_XLSX_FLAGS[f.key];
-                return (
-                  <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                    <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică' : ''}</label>
-                    <input
-                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
-                      type={f.type || 'text'}
-                      step={f.step}
-                      value={form[f.key] ?? ''}
-                      onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                    />
-                    {xlsxFlag ? (
-                      <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-300 text-[#0A2B4E] focus:ring-[#1D4E89]"
-                          checked={form[xlsxFlag] !== false}
-                          onChange={(e) => setForm((prev) => ({ ...prev, [xlsxFlag]: e.target.checked }))}
-                        />
-                        Include în XLSX
-                      </label>
-                    ) : null}
-                  </div>
-                );
-              })}
+              {AVIZ_FORM_FIELDS.map((f) => (
+                <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
+                  <label className={labelCls}>{f.label}{lowField(editRow, f.key) ? ' · verifică' : ''}</label>
+                  <input
+                    className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
+                    type={f.type || 'text'}
+                    step={f.step}
+                    value={form[f.key] ?? ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                  />
+                </div>
+              ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />
               <div className="sm:col-span-2">
                 <label className={labelCls}>Rută birou (nu merge în Excel)</label>

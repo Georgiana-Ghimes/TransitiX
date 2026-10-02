@@ -417,34 +417,91 @@ export function extractGoodsUnit(text) {
   return result(best.unit, best.rank > 1 ? 0.8 : 0.4, best.matched);
 }
 
-/** Quantity with its unit, kept separate from weight, never used in its place. */
+/** Packaging units that name goods (not bare "buc" / euro-pallet "pce"). */
+const SUMMABLE_PACKAGING = new Set(['saci', 'galeti', 'paleti']);
+
+/** Count every packaging `N unit` / `Cantitate N unit` pair on the page. */
+function collectPackagingLines(folded) {
+  const lines = [];
+  // Labelled product rows and bare "48.00 buc" / "270.00 sac" alike. Euro-pallet `pce` is
+  // skipped: it is returnable packaging, not the goods count the annex wants.
+  const re = new RegExp(
+    `(?:(?:cantitate|quantity)\\s*[:\\-]?\\s*)?([\\d.,]+)\\s*${GOODS_UNIT_SOURCE}\\b`,
+    'gi',
+  );
+  let match = re.exec(folded);
+  while (match) {
+    const rawUnit = String(match[2] || '').toLowerCase();
+    if (rawUnit === 'pce') {
+      match = re.exec(folded);
+      continue;
+    }
+    const unit = goodsUnitOf(rawUnit);
+    const qty = parseNumber(match[1]);
+    if (unit && qty != null && isPlausibleQuantity(qty, unit)) {
+      lines.push({ qty, unit, rank: GOODS_UNIT_RANK[unit] ?? 0, matched: match[0] });
+    }
+    match = re.exec(folded);
+  }
+  return lines;
+}
+
+/**
+ * Quantity with its unit, kept separate from weight, never used in its place.
+ *
+ * Preference order (Baumit multi-line sheets):
+ * 1. Footer total — `Numărul de găleți 576,00` / `Numărul de saci …`
+ * 2. Sum of same packaging lines when there are several (exclude euro-pallet `pce`)
+ * 3. Single best / labelled line (legacy one-row avize)
+ *
+ * Taking the first product line alone is wrong on multi-line transfers: 48 instead of 576.
+ */
 export function extractQuantity(text) {
   const blob = String(text || '');
-  // A labelled quantity is worth more than a loose number followed by a unit.
-  const labelled = blob.match(
-    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|kg|to?ne?|mc|m3|role|colete)?\b/i
+  const folded = foldUnit(blob);
+
+  const footer = folded.match(
+    new RegExp(`num[ae]r(?:ul)?\\s+de\\s+${GOODS_UNIT_SOURCE}\\s*[:\\-]?\\s*([\\d.,]+)`, 'i'),
   );
-  if (labelled) {
-    const value = parseNumber(labelled[1]);
-    const unit = (labelled[2] || '').toLowerCase() || null;
-    if (value != null && isPlausibleQuantity(value, unit)) {
-      return result({ quantity: value, unit }, 0.9, labelled[0]);
+  if (footer) {
+    const unit = goodsUnitOf(footer[1]);
+    const value = parseNumber(footer[2]);
+    if (unit && value != null && isPlausibleQuantity(value, unit)) {
+      return result({ quantity: value, unit }, 0.95, footer[0]);
     }
   }
-  // An unlabelled number in a weight unit is almost always the weight, not the quantity,
-  // "Greutate 4200 kg" must not come back as "4200 kg of goods". Reading a weight as a
-  // quantity is exactly the confusion the report has to avoid.
-  const bare = blob.match(
-    /(?<!greutate\s)(?<!masa\s)(?<!weight\s)\b([\d.,]+)\s*(saci|sac|buc|bucati|bucăți|paleti|paleți|palet|mc|m3|role|colete)\b/i
-  );
-  if (bare) {
-    const value = parseNumber(bare[1]);
-    const unit = bare[2].toLowerCase();
-    if (value != null && isPlausibleQuantity(value, unit)) {
-      return result({ quantity: value, unit }, 0.8, bare[0]);
+
+  const lines = collectPackagingLines(folded);
+  if (!lines.length) {
+    // Labelled quantity that carries no packaging word (rare), still better than nothing.
+    const labelled = blob.match(
+      /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)\s*(kg|to?ne?|mc|m3)?\b/i,
+    );
+    if (labelled) {
+      const value = parseNumber(labelled[1]);
+      const unit = (labelled[2] || '').toLowerCase() || null;
+      // Reject bare kg/t here when the label was only "Cantitate" next to a weight — those
+      // belong to extractGrossWeight. A quantity in kg is allowed only with an explicit unit.
+      if (unit && value != null && isPlausibleQuantity(value, unit)) {
+        return result({ quantity: value, unit }, 0.75, labelled[0]);
+      }
+    }
+    return NO_MATCH;
+  }
+
+  const bestRank = Math.max(...lines.map((l) => l.rank));
+  const topUnit = lines.find((l) => l.rank === bestRank)?.unit;
+  const top = lines.filter((l) => l.unit === topUnit);
+
+  if (top.length >= 2 && (SUMMABLE_PACKAGING.has(topUnit) || topUnit === 'bucati')) {
+    const sum = Math.round(top.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
+    if (isPlausibleQuantity(sum, topUnit)) {
+      return result({ quantity: sum, unit: topUnit }, 0.88, top.map((l) => l.matched).join(' + '));
     }
   }
-  return NO_MATCH;
+
+  const pick = top[0];
+  return result({ quantity: pick.qty, unit: pick.unit }, pick.rank > 1 ? 0.9 : 0.8, pick.matched);
 }
 
 /**

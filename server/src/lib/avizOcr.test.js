@@ -496,6 +496,22 @@ NUMAR AUTO TEST-101
     expect(repaired.tip_marfa).toBe('galeti');
   });
 
+  it('upgrades a first-line quantity when Numarul de galeti is in raw_text', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'galeti',
+      quantity_unit: 'buc',
+      cantitate_marfa: 48,
+      extracted_data: {
+        raw_text: `${lines}\nNumarul de galeti: 576,00`,
+      },
+    });
+    expect(repaired.cantitate_marfa).toBe(576);
+    expect(repaired.tip_marfa).toBe('galeti');
+  });
+
   it('keeps an office-edited packaging tip over a weaker parse', () => {
     const repaired = repairAvizFromStored({
       tip_marfa: 'galeti',
@@ -616,30 +632,15 @@ describe('mapAnnexRows', () => {
     expect(mapped[0].cantitate_marfa).toBe(9.96);
   });
 
-  it('leaves Cantitate blank when operator excludes greutate brută from XLSX', () => {
+  it('never uses greutate netă for Cantitate tonnage', () => {
     const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
       numar_tpo: 'TPO-1',
       cantitate_marfa: 245,
       tip_marfa: 'saci',
-      gross_weight_kg: 9964.15,
-      include_gross_weight_xlsx: false,
+      net_weight_kg: 8200,
+      gross_weight_kg: null,
     }]);
     expect(mapped[0].cantitate_marfa).toBe('');
-  });
-
-  it('blanks gross/net weight columns when their XLSX include flags are off', () => {
-    const columns = [
-      { key: 'gross_weight_kg', header: 'Brut', source: 'gross_weight_kg' },
-      { key: 'net_weight_kg', header: 'Net', source: 'net_weight_kg' },
-    ];
-    const mapped = mapAnnexRows(columns, [{
-      gross_weight_kg: 15744,
-      net_weight_kg: 15360,
-      include_gross_weight_xlsx: false,
-      include_net_weight_xlsx: false,
-    }]);
-    expect(mapped[0].gross_weight_kg).toBe('');
-    expect(mapped[0].net_weight_kg).toBe('');
   });
 
   it('keeps each cursă of one TPO on its own row, with its own route', () => {

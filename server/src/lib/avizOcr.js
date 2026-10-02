@@ -6,6 +6,7 @@ import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
 import {
   extractGrossWeight,
   extractNetWeight,
+  extractQuantity,
   isAcceptableAutoField,
   isGenericCountUnit,
   isPlausibleQuantity,
@@ -189,33 +190,16 @@ function resolveStoredTpo(row, parsed) {
   return stored || null;
 }
 
-const UNIT_RANK = { galeti: 4, saci: 3, paleti: 2, bucati: 1 };
-
 function parseQty(blob) {
-  const folded = fold(blob);
-  const galetiLabel = folded.match(/numarul de galeti\s+([\d.,]+)/);
-  if (galetiLabel) {
-    const qty = parseNumber(galetiLabel[1]);
-    if (qty != null && isPlausibleQuantity(qty, 'galeti')) {
-      return { qty, tip: 'galeti', rank: 4 };
-    }
-  }
-
-  const re = /(\d+(?:[.,]\d+)?)\s*(saci?|pal(?:eti|et[ie]?)?|buc(?:ati)?|pcs|gal(?:eti)?|gale(?:ti|ata|ata)?)\b/gi;
-  let best = null;
-  let match;
-  while ((match = re.exec(blob)) !== null) {
-    const rawUnit = fold(match[2]);
-    let mapped = 'saci';
-    if (rawUnit.startsWith('pal')) mapped = 'paleti';
-    else if (rawUnit.startsWith('buc') || rawUnit === 'pcs') mapped = 'bucati';
-    else if (rawUnit.startsWith('gal')) mapped = 'galeti';
-    const qty = parseNumber(match[1]);
-    if (qty == null || !isPlausibleQuantity(qty, mapped)) continue;
-    const rank = UNIT_RANK[mapped] || 0;
-    if (!best || rank > best.rank) best = { qty, tip: mapped, rank };
-  }
-  return best;
+  // Same rules as live OCR (`extractQuantity`): footer `Numărul de găleți` first, then sum
+  // of packaging lines — never the first product row alone on a multi-line transfer.
+  const found = extractQuantity(blob);
+  const packed = found?.value;
+  if (!packed || typeof packed !== 'object') return null;
+  const qty = Number(packed.quantity);
+  const tip = normalizeGoodsUnit(packed.unit) || String(packed.unit || '').toLowerCase() || 'saci';
+  if (!Number.isFinite(qty) || !isPlausibleQuantity(qty, tip)) return null;
+  return { qty, tip, rank: tip === 'galeti' ? 4 : tip === 'saci' ? 3 : tip === 'paleti' ? 2 : 1 };
 }
 
 function prettyPlace(value) {
@@ -484,12 +468,25 @@ function preferStored(stored, parsedValue, isGarbage) {
 
 function preferQuantity(row, parsed) {
   const tip = row?.tip_marfa || parsed?.tip_marfa || 'saci';
-  if (fieldFilled(row?.cantitate_marfa) && isPlausibleQuantity(row.cantitate_marfa, tip)) {
-    return row.cantitate_marfa;
-  }
-  if (parsed?.cantitate_marfa != null
-    && isPlausibleQuantity(parsed.cantitate_marfa, parsed.tip_marfa || tip)) {
-    return parsed.cantitate_marfa;
+  const parsedQty = parsed?.cantitate_marfa;
+  const parsedTip = parsed?.tip_marfa || tip;
+
+  // Heal rows locked on the first product line (48) when raw text has a packaging total or
+  // a multi-line sum (576). Tip was already upgraded to găleți by build 41; quantity was not.
+  if (parsedQty != null && isPlausibleQuantity(parsedQty, parsedTip)) {
+    const stored = row?.cantitate_marfa;
+    if (!fieldFilled(stored) || !isPlausibleQuantity(stored, tip)) return parsedQty;
+    if (Number(stored) !== Number(parsedQty)) {
+      const raw = fold(row?.extracted_data?.raw_text || '');
+      const hasPackagingTotal = /numar(?:ul)?\s+de\s+(galeti|saci|paleti)/i.test(raw);
+      const parsedIsPackaging = ['galeti', 'saci', 'paleti'].includes(
+        String(normalizeGoodsUnit(parsedTip) || parsedTip).toLowerCase(),
+      );
+      if (hasPackagingTotal || (parsedIsPackaging && Number(parsedQty) > Number(stored))) {
+        return parsedQty;
+      }
+    }
+    return stored;
   }
   // Impossible OCR magnitudes (245000 saci) stay empty so the row is marked for review.
   return null;
