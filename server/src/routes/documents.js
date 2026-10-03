@@ -488,8 +488,8 @@ router.post('/batches', (req, res) => {
         ? req.body.document_type
         : 'aviz';
 
-      // Multi-page PDFs become one row per page before the batch is opened, so file_count
-      // matches what the extractor will actually see.
+      // PDFs with several distinct TRO/PSL numbers become one row per aviz before the batch
+      // is opened, so file_count matches what the extractor will actually see.
       const entries = [];
       for (const file of files) {
         const fileUrl = publicUploadUrl(file.filename);

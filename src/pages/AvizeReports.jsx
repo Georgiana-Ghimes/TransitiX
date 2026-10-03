@@ -353,7 +353,7 @@ export default function AvizeReports() {
           ? ` ${pending} document(e), OCR-ul rulează în fundal; statusul se actualizează singur.`
           : '';
         const splitNote = splitPagesTotal > 1
-          ? ` PDF despărțit în ${splitPagesTotal} avize (câte o pagină).`
+          ? ` PDF despărțit în ${splitPagesTotal} avize (TRO/PSL distincte).`
           : '';
         const countLabel = uploadedRows.length !== files.length
           ? `${files.length} fișier(e) → ${uploadedRows.length} aviz(e).`

@@ -32,15 +32,15 @@ const INCARCARE = {
   id: 'incarcare',
   title: 'Cum încarci un aviz',
   blocks: [
-    p('Accepți PDF sau poză. Un PDF cu mai multe avize (câte unul pe pagină) e despărțit automat: fiecare pagină devine un rând separat, cu TPO și confirmare proprii.'),
+    p('Accepți PDF sau poză. Un PDF cu mai multe avize (numere TRO/PSL diferite în text) e despărțit automat în rânduri separate. Un singur aviz pe două pagini rămâne un singur document.'),
     terms([
-      { term: 'PDF bulk', text: 'Exemplu: 6 avize într-un singur PDF → 6 rânduri în listă („nume.pdf · pag. 1/6” …). Re-extrage pe un rând nu le lipește la loc.' },
+      { term: 'PDF bulk', text: 'Exemplu: 6 avize cu TRO distincte într-un singur PDF → 6 rânduri. Un aviz pe 2 pagini (același TRO) → 1 rând. Re-extrage pe un rând nu le lipește la loc.' },
       { term: 'Limită per fișier', text: '15 MB. Peste asta aplicația îți spune înainte să pornească încărcarea, nu după.' },
       { term: 'Câte odată', text: 'Până la 8 fișiere într-o încărcare. Limita vine de la server și e afișată pe ecran. Un PDF nu poate avea mai mult de 40 de pagini la o despărțire.' },
       { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul. Pe companion, clopoțelul arată doar alertele de documente / flotă, nu statusuri de curse.' },
     ]),
-    warn('Despărțirea e pe pagini, nu pe TPO. Dacă două avize sunt pe aceeași foaie, rămân pe același rând: taie PDF-ul înainte sau încarcă poze separate.'),
-    note('TPO scris de mână cu pix color (roșu etc.) pe un aviz tipărit: pozele se aplatizează alb-negru înainte de trimitere, iar pe PDF cu TRO/PSL fără TPO în text se pornește OCR pe imagine, ca să prindă cerneala.'),
+    warn('Despărțirea se bazează pe TRO/PSL din stratul de text al PDF-ului, nu pe TPO. Dacă două avize sunt pe aceeași foaie sau PDF-ul e doar scan (fără text), rămân pe același rând: taie PDF-ul înainte sau încarcă poze separate.'),
+    note('TPO scris de mână pe un aviz tipărit: pe PDF cu TRO/PSL fără TPO în text se pornește OCR pe imagine, ca să prindă cerneala. Pozele se trimit color (fără aplatizare alb-negru).'),
     note('O poză neclară e semnalată înainte de trimitere. Merită refăcută pe loc: OCR-ul pe o poză mișcată nu greșește vizibil, greșește o cifră.'),
   ],
 };

@@ -1,17 +1,19 @@
 /**
- * Light image preparation before an upload: orientation, size, ink, contrast.
+ * Light image preparation before an upload: orientation, size, contrast.
  *
  * Mistral reads a phone photo well as it is. What it does not need is a 12 MP, 6 MB frame
  * with the page sideways in the EXIF - the upload costs the driver data, the OCR pays for
  * pixels that carry nothing, and a sideways page is one more thing for the reader to work
- * out. Coloured ballpoint (red TPO on a Baumit) also disappears into the page under some
- * lighting, so chromatic ink is forced to black and the page goes grayscale before contrast.
+ * out.
  *
  *   1. apply the EXIF orientation (the pixels are rotated, the tag is dropped),
  *   2. downscale so the longest side is at most `MAX_SIDE` - ~300 dpi for an A4 page,
- *   3. darken coloured ink and flatten to grayscale,
- *   4. stretch the contrast when the frame is washed out,
- *   5. re-encode as JPEG.
+ *   3. stretch the contrast when the frame is washed out,
+ *   4. re-encode as JPEG.
+ *
+ * Ink→black greyscale is opt-in only (`inkNormalize: true`). Warm notebook photos have a
+ * colour cast across the whole frame; treating that chroma as "pen" turns the page black
+ * and OCR extracts nothing. Mistral handles red/blue ballpoint on colour images.
  *
  * Every step is conservative and the whole thing is best-effort: anything that cannot be
  * decoded, a browser without the APIs, a result that came out *larger* - the original file
@@ -120,10 +122,9 @@ export function applyInkToBlackGrayscale(rgba, {
  * Decide, without touching pixels, whether a file is worth preparing.
  * Exported so the decision is testable without a canvas.
  *
- * Ink normalisation runs on every photo (red TPO on a clean scan is often under 1.2 MB),
- * so size alone no longer skips the pass.
+ * Default: only oversized frames. Opt-in ink mode prepares every photo.
  */
-export function shouldPrepare(file, { width, height, inkNormalize = true } = {}) {
+export function shouldPrepare(file, { width, height, inkNormalize = false } = {}) {
   if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) return false;
   if (file.type === 'image/gif' || file.type === 'image/svg+xml') return false;
   if (inkNormalize) return true;
@@ -144,7 +145,7 @@ export async function prepareImageForUpload(file, {
   maxSide = MAX_SIDE,
   quality = JPEG_QUALITY,
   contrast = true,
-  inkNormalize = true,
+  inkNormalize = false,
 } = {}) {
   if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) return file;
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;

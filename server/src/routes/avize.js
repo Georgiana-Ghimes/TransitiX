@@ -536,8 +536,9 @@ router.delete('/templates/:id', async (req, res) => {
 });
 
 /**
- * Fresh multi-page PDF → N one-page documents in one batch. Re-extract never enters here.
- * @returns {Promise<object|null>} response payload, or null when the file is not a multi-page PDF
+ * Fresh PDF with ≥2 distinct TRO/PSL in the text layer → one document per aviz.
+ * A single aviz on several pages is left as one file. Re-extract never enters here.
+ * @returns {Promise<object|null>} response payload, or null when the file stays one row
  */
 async function extractSplitPdfUpload(req, { fileUrl, originalFilename }) {
   let split;
@@ -588,7 +589,7 @@ async function extractSplitPdfUpload(req, { fileUrl, originalFilename }) {
   });
 
   const docIds = created.docs.map((d) => d.id);
-  // Each child is one page; many children still outrun an interactive wait — background then.
+  // Many children still outrun an interactive wait — background then.
   const background = created.docs.length >= interactiveOcrMaxPages();
   if (background) {
     extractBatchDocuments(req.user.company_id, created.batchId, req.user.id, {

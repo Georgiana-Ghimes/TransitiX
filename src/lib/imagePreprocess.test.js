@@ -20,19 +20,19 @@ function hist(fill) {
 }
 
 describe('shouldPrepare', () => {
-  it('prepares every photo when ink normalisation is on (default)', () => {
-    expect(shouldPrepare({ type: 'image/jpeg', size: 100 }, { width: 800, height: 600 })).toBe(true);
+  it('by default only big or oversized photos (no ink pass)', () => {
+    expect(shouldPrepare({ type: 'image/jpeg', size: 100 }, { width: 800, height: 600 })).toBe(false);
+    expect(shouldPrepare(
+      { type: 'image/jpeg', size: 100 },
+      { width: MAX_SIDE + 1, height: 10 },
+    )).toBe(true);
     expect(shouldPrepare({ type: 'image/jpeg', size: SKIP_BELOW_BYTES + 1 })).toBe(true);
   });
 
-  it('without ink mode, only big or oversized photos', () => {
+  it('with ink mode on, prepares every photo', () => {
     expect(shouldPrepare(
       { type: 'image/jpeg', size: 100 },
-      { width: 800, height: 600, inkNormalize: false },
-    )).toBe(false);
-    expect(shouldPrepare(
-      { type: 'image/jpeg', size: 100 },
-      { width: MAX_SIDE + 1, height: 10, inkNormalize: false },
+      { width: 800, height: 600, inkNormalize: true },
     )).toBe(true);
   });
 
