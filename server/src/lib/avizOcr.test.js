@@ -200,6 +200,26 @@ TPO-0031027
     expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
   });
 
+  it('reads Depozite (plural) with Site MIL → MIL-NEAMTIU', () => {
+    // Baumit form revision prints "Depozite:" — singular-only regex left origin as MIL alone.
+    const raw = `
+Expeditor
+Site: MIL
+Depozite: NEAMTIU
+Aviz de expeditie: TRO-0009884
+Adresa de livrare
+MBMARFA BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015
+ROU
+Termen de livrare
+Num de comanda de transport TPO / 31027
+Placuta de inmatriculare B 911 VFM / B 138 VRT
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
   it('keeps nr. + locality when Referința client is glued after the street name', () => {
     // Real OCR sometimes emits the right-column header mid-address, after Str. …
     const raw = `

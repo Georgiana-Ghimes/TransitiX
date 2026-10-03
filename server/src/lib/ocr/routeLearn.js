@@ -14,7 +14,7 @@ import {
 /** Tokens that appear on every Baumit page and must never become a match key. */
 const TOKEN_NOISE = new Set([
   'str', 'strada', 'nr', 'numar', 'ro', 'rou', 'romania', 'sector',
-  'site', 'depozit', 'pagina', 'client',
+  'site', 'depozit', 'depozite', 'pagina', 'client',
   'expeditor', 'adresa', 'livrare', 'aviz', 'transport', 'buc', 'kg',
 ]);
 

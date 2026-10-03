@@ -278,7 +278,7 @@ function sliceSection(blob, startLabels, stopLabels) {
 }
 
 /** Grammatical noise — never a locality. No town/street whitelist. */
-const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozit|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client)$/;
+const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client)$/;
 
 /** Second street-name token stops here (grammatical), not at town names — towns vary. */
 const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania)$/;
@@ -638,7 +638,7 @@ function scrubSectionNoise(folded) {
   return folded
     // Label + value — Site/Depozit codes (MIL, NEAMTIU, MBMARFA…) are never a street.
     .replace(/\bsite(?:\s+livrare)?\s*[:\s]+[a-z][a-z0-9\-]{0,20}\b/g, ' ')
-    .replace(/\bdepozit\s*[:\s]+[a-z][a-z0-9\-]{0,20}\b/g, ' ')
+    .replace(/\bdepozite?\s*[:\s]+[a-z][a-z0-9\-]{0,20}\b/g, ' ')
     // Right-column header glued into the delivery block by OCR.
     .replace(/\breferint[aă]\s+client(?:ului)?\b/g, ' ')
     .replace(/\bcs-[a-z0-9\-]+\b/g, ' ')
@@ -699,14 +699,15 @@ export function originFromSiteDepozit(blob) {
   }
   if (!head.trim()) return null;
 
-  const noise = /^(site|depozit|pagina|data|aviz|rou?|nr|str)$/;
+  // Baumit prints "Depozit" or "Depozite" (plural) depending on the form revision.
+  const noise = /^(site|depozite?|pagina|data|aviz|rou?|nr|str)$/;
 
   let site = null;
-  const siteM = head.match(/\bsite(?:\s+(?:livrare|depozit))?\s*[:\s]+([a-z]{2,4})\b/);
+  const siteM = head.match(/\bsite(?:\s+(?:livrare|depozite?))?\s*[:\s]+([a-z]{2,4})\b/);
   if (siteM?.[1] && !noise.test(siteM[1])) site = siteM[1];
   // `Site Depozit MIL MMMARFA` — labels then codes, no colons.
   if (!site) {
-    const bare = head.match(/\bsite\s+depozit\s+([a-z]{2,4})\s+([a-z][a-z0-9\-]{2,20})\b/);
+    const bare = head.match(/\bsite\s+depozite?\s+([a-z]{2,4})\s+([a-z][a-z0-9\-]{2,20})\b/);
     if (bare) {
       site = bare[1];
       const depot = bare[2];
@@ -717,13 +718,13 @@ export function originFromSiteDepozit(blob) {
   }
 
   let depot = null;
-  const depotM = head.match(/\bdepozit\s*[:\s]+([a-z][a-z0-9\-]{2,20})\b/);
+  const depotM = head.match(/\bdepozite?\s*[:\s]+([a-z][a-z0-9\-]{2,20})\b/);
   if (depotM?.[1] && !noise.test(depotM[1]) && depotM[1] !== site) depot = depotM[1];
   // Tab OCR: `Site MIL .` / `NEAMTIU Pagina` / `Depozit` — depot name before an empty Depozit label.
-  // Only when a Depozit label exists; `Site: BOL Bolintin` must not become BOL-BOLINTIN.
-  if (!depot && site && /\bdepozit\b/.test(head)) {
+  // Only when a Depozit(e) label exists; `Site: BOL Bolintin` must not become BOL-BOLINTIN.
+  if (!depot && site && /\bdepozite?\b/.test(head)) {
     const afterSite = head.match(
-      new RegExp(String.raw`\bsite(?:\s+(?:livrare|depozit))?\s*[:\s]+${site}\b[\s.\-]*([a-z][a-z0-9\-]{3,20})\b`)
+      new RegExp(String.raw`\bsite(?:\s+(?:livrare|depozite?))?\s*[:\s]+${site}\b[\s.\-]*([a-z][a-z0-9\-]{3,20})\b`)
     );
     const cand = afterSite?.[1];
     if (cand && !noise.test(cand) && cand !== site && !/^(pagina|data|aviz)$/.test(cand)) {
