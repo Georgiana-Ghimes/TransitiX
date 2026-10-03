@@ -766,6 +766,38 @@ TPO-0025803`,
     expect(repaired.ruta_transport).toBe('Str. Custom, Oras / Str. Alta, Oras');
   });
 
+  it('does not replace free-text office route with a single-leg OCR parse', () => {
+    const raw = [
+      'Expeditor: Baumit Romania SRL, Bolintin-Deal',
+      'Adresa de livrare',
+      'Strada Independentei 121',
+      'Domnesti, Ilfov',
+      'Client',
+      'SC Test SRL',
+    ].join('\n');
+    const repaired = repairAvizFromStored({
+      ruta_transport: 'Ruta de birou',
+      extracted_data: { raw_text: raw, provider: 'paddle' },
+    });
+    expect(repaired.ruta_transport).toBe('Ruta de birou');
+  });
+
+  it('fills an empty route from Adresa de livrare street', () => {
+    const raw = [
+      'Expeditor: Baumit Romania SRL, Bolintin-Deal',
+      'Adresa de livrare',
+      'Strada Independentei 121',
+      'Domnesti, Ilfov',
+      'Client',
+      'SC Test SRL',
+    ].join('\n');
+    const repaired = repairAvizFromStored({
+      ruta_transport: null,
+      extracted_data: { raw_text: raw, provider: 'paddle' },
+    });
+    expect(repaired.ruta_transport).toBe('Str. Independentei nr. 121');
+  });
+
   it('replaces a false Bolintin-Deal route with Site→livrare from the stored OCR text', () => {
     // Ticket 35: OCR profile treated the Expeditor town as City-City; export kept it because
     // preferStored never overwrites a non-empty field.

@@ -954,14 +954,22 @@ export function quantityConflictsWithRaw(qty, tip, rawText) {
 
 function preferRoute(stored, parsed, rawText = null) {
   const parsedRoute = fieldFilled(parsed) ? parsed : null;
-  // Fresh two-leg parse from labelled slices wins over a stale extract.
-  // Office Editează is protected via corrected_fields in repairAvizFromStored.
-  if (parsedRoute && /\s\/\s/.test(parsedRoute)) return parsedRoute;
-  if (fieldFilled(stored) && !isFalseRoute(stored) && !isSuspiciousRoute(stored, rawText)) {
+  const storedOk = fieldFilled(stored) && !isFalseRoute(stored);
+  const parsedTwoLeg = Boolean(parsedRoute && /\s\/\s/.test(parsedRoute));
+
+  // Two-leg labelled parse upgrades empty/false/suspicious OCR, truncated two-leg, and
+  // Client-column leftovers. It must not replace a non-suspicious one-leg the office kept.
+  if (parsedTwoLeg) {
+    if (!storedOk || isSuspiciousRoute(stored, rawText) || /\s\/\s/.test(stored)) {
+      return parsedRoute;
+    }
     return stored;
   }
+
+  // Single-leg parse must never wipe free-text Editează ("Ruta de birou") or an accepted street.
+  if (storedOk) return stored;
   if (parsedRoute) return parsedRoute;
-  return fieldFilled(stored) ? stored : null;
+  return null;
 }
 
 /**

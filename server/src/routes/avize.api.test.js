@@ -195,7 +195,8 @@ describe('the list and the export agree about a route', () => {
     try {
       const res = await api().get('/api/avize').set(auth(ctx.adminToken));
       const row = res.body.items.find((r) => r.id === doc.id);
-      expect(row.ruta_transport).toBe('Domnesti/Independentei');
+      // Baumit slices: street + house from Adresa de livrare (not the old City/Street glue).
+      expect(row.ruta_transport).toBe('Str. Independentei nr. 121');
     } finally {
       await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
     }
