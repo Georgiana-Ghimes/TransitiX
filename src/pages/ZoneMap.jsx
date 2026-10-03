@@ -46,12 +46,13 @@ import {
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
 const inputCls = 'w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30';
 
-function FitBounds({ bounds }) {
+function FitBounds({ bounds, pause = false }) {
   const map = useMap();
   useEffect(() => {
-    if (!bounds) return;
+    // A search pin owns the viewport — refitting the whole city would yank away from it.
+    if (!bounds || pause) return;
     map.fitBounds(L.latLngBounds(bounds).pad(0.12), { animate: true });
-  }, [bounds, map]);
+  }, [bounds, map, pause]);
   return null;
 }
 
@@ -59,7 +60,10 @@ function FlyTo({ point }) {
   const map = useMap();
   useEffect(() => {
     if (!point) return;
-    map.flyTo([point.latitude, point.longitude], Math.max(map.getZoom(), 14), { duration: 0.8 });
+    const lat = Number(point.latitude);
+    const lng = Number(point.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    map.flyTo([lat, lng], Math.max(map.getZoom(), 16), { duration: 0.8 });
   }, [point, map]);
   return null;
 }
@@ -194,7 +198,16 @@ export default function ZoneMap() {
    * it. The index never leaves the browser, which is the whole reason it exists: a search box
    * on this screen is routinely fed a customer's delivery address.
    */
-  const placePin = async (q) => {
+  /**
+   * Ask the geocoder for coordinates. When the street index already answered the zone
+   * (`pinOnly`), the geocode must not open a second result card or override the zone —
+   * it only feeds the Leaflet pin.
+   */
+  const placePin = async (q, {
+    displayLabel = null,
+    typedQuery = null,
+    pinOnly = false,
+  } = {}) => {
     const res = await api.commercial.locateZone({
       address: q,
       city: city.label,
@@ -209,7 +222,20 @@ export default function ZoneMap() {
         .sort((a, b) => b.priority - a.priority)
         .find((z) => pointInGeometry([res.point.latitude, res.point.longitude], z.outline))
       : null;
-    setHit({ ...res, drawn: drawn ?? null });
+    const label = String(
+      displayLabel || res.point?.label || res.address || res.query || q,
+    ).trim();
+    setHit({
+      ...res,
+      // Index owns zone + tax; a wrong Photon hit (e.g. Universitate) must not flash ZA.
+      zone: pinOnly ? null : res.zone,
+      rate: pinOnly ? null : res.rate,
+      drawn: pinOnly ? null : (drawn ?? null),
+      pinOnly,
+      point: res.point
+        ? { ...res.point, label, query: typedQuery || q }
+        : null,
+    });
     return res;
   };
 
@@ -229,10 +255,18 @@ export default function ZoneMap() {
         // React flushes `streetIndex` state on the first search.
         setLookup(fromIndex.status === 'unknown' ? fromIndex : { ...fromIndex, index });
         if (fromIndex.status !== 'unknown') {
-          // Index answers the zone without leaving the browser. Still ask the geocoder for a
-          // pin — otherwise the map stays empty and it looks like the address was not found.
+          // Index answers the zone. Geocode with the canonical street label so Photon does
+          // not land on a random "Iuliu Maniu" POI, and keep a single result card.
+          const pinLabel = [
+            fromIndex.found?.label,
+            fromIndex.number,
+          ].filter(Boolean).join(' ');
           try {
-            const res = await placePin(q);
+            const res = await placePin(pinLabel || q, {
+              displayLabel: pinLabel || q,
+              typedQuery: q,
+              pinOnly: true,
+            });
             if (!res.point) {
               notifyError(
                 'Strada e în index, dar pinul lipsește',
@@ -275,10 +309,35 @@ export default function ZoneMap() {
     }
   };
 
-  const pickSuggestion = (entry) => {
-    setAddress(entry.label);
-    setLookup({ status: 'exact', query: entry.label, found: entry, suggestions: [] });
+  const pickSuggestion = async (entry) => {
+    const q = entry.label;
+    setAddress(q);
+    setLookup({
+      status: 'exact', query: q, found: entry, suggestions: [],
+      index: streetIndex,
+    });
     setHit(null);
+    setSearching(true);
+    try {
+      const res = await placePin(q, { displayLabel: q, typedQuery: q, pinOnly: true });
+      if (!res.point) {
+        notifyError(
+          'Strada e în index, dar pinul lipsește',
+          'Geocodarea nu a găsit coordonate. Verifică PHOTON_URL pe server.',
+        );
+      }
+    } catch (err) {
+      if (err?.status === 503) {
+        notifyError(
+          'Harta nu are geocoder',
+          'Setează PHOTON_URL în server/.env (în dev: https://photon.komoot.io).',
+        );
+      } else {
+        notifyError('Pinul pe hartă a eșuat', err);
+      }
+    } finally {
+      setSearching(false);
+    }
   };
 
   /**
@@ -506,7 +565,10 @@ export default function ZoneMap() {
         </div>
       ) : null}
 
-      {hit?.point ? <LocateResult hit={hit} fromPlate={fromPlate} /> : null}
+      {/* Geocode card only when the index did not already answer — otherwise two cards fight. */}
+      {hit?.point && !hit.pinOnly && !(lookup && lookup.status !== 'unknown') ? (
+        <LocateResult hit={hit} fromPlate={fromPlate} />
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
         <div className={`${cardCls} relative z-0 overflow-hidden`} style={{ height: '62vh', minHeight: 380 }}>
@@ -522,7 +584,7 @@ export default function ZoneMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap"
             />
-            <FitBounds bounds={bounds} />
+            <FitBounds bounds={bounds} pause={Boolean(hit?.point)} />
             <FlyTo point={hit?.point} />
 
             {drawable.map(({ zone, rings }) => (
@@ -544,13 +606,37 @@ export default function ZoneMap() {
 
             {hit?.point ? (
               <CircleMarker
-                center={[hit.point.latitude, hit.point.longitude]}
-                radius={8}
+                center={[Number(hit.point.latitude), Number(hit.point.longitude)]}
+                radius={9}
                 pathOptions={{ color: '#0A2B4E', fillColor: '#F5A623', fillOpacity: 1, weight: 2 }}
               >
-                <Tooltip permanent direction="top" offset={[0, -8]}>
-                  {hit.zone ? hit.zone.code : 'Fără zonă'}
+                <Tooltip permanent direction="top" offset={[0, -10]} opacity={0.96}>
+                  <div style={{ maxWidth: 240, lineHeight: 1.25 }}>
+                    <div style={{ fontWeight: 650, fontSize: 12 }}>
+                      {hit.point.label || hit.address || hit.query}
+                    </div>
+                    <div style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
+                      {hit.zone?.code
+                        ? `Zona ${hit.zone.code}${hit.drawn?.code && hit.drawn.code !== hit.zone.code ? ` · contur ${hit.drawn.code}` : ''}`
+                        : hit.drawn?.code
+                          ? `Contur ${hit.drawn.code}`
+                          : 'În afara zonelor pe hartă'}
+                    </div>
+                  </div>
                 </Tooltip>
+                <Popup>
+                  <div style={{ minWidth: 160 }}>
+                    <strong>{hit.point.label || hit.address || hit.query}</strong>
+                    {hit.point.query && hit.point.query !== hit.point.label ? (
+                      <div style={{ fontSize: 12, marginTop: 4, color: '#475569' }}>
+                        Căutare: {hit.point.query}
+                      </div>
+                    ) : null}
+                    <div style={{ fontSize: 12, marginTop: 6 }}>
+                      {Number(hit.point.latitude).toFixed(5)}, {Number(hit.point.longitude).toFixed(5)}
+                    </div>
+                  </div>
+                </Popup>
               </CircleMarker>
             ) : null}
           </MapContainer>
