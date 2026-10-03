@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  avizDeliveryAddress, avizZoneTax, tractorPlate, zoneBracket, zoneThresholdKg,
+  avizDeliveryAddress, avizZoneTax, deliveryLegFromRuta, parseSpacedRouteLeg,
+  tractorPlate, zoneBracket, zoneThresholdKg,
 } from './avizZoneTax.js';
 
 const FLEET = [
@@ -172,6 +173,24 @@ describe('avizZoneTax, when it refuses to compute', () => {
   });
 });
 
+describe('deliveryLegFromRuta / parseSpacedRouteLeg', () => {
+  it('takes the half after the slash', () => {
+    expect(deliveryLegFromRuta(
+      'Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Iuliu Maniu nr. 600A, Bucuresti',
+    )).toBe('Bvd. Iuliu Maniu nr. 600A, Bucuresti');
+  });
+
+  it('parses type, name, number and locality for the street index', () => {
+    expect(parseSpacedRouteLeg('Bvd. Iuliu Maniu nr. 600A, Bucuresti')).toEqual({
+      street: 'bulevardul Iuliu Maniu',
+      number: '600A',
+      locality: 'Bucuresti',
+      streetName: 'Iuliu Maniu',
+      streetType: 'bulevardul',
+    });
+  });
+});
+
 describe('avizDeliveryAddress', () => {
   it('reads the street and number OCR kept apart from the route code', () => {
     expect(avizDeliveryAddress(AVIZ)).toEqual({
@@ -187,7 +206,23 @@ describe('avizDeliveryAddress', () => {
         locality: 'Bucuresti', streetName: 'viilor', streetType: 'sosea', houseNumber: '52',
       },
     });
-    expect(out.street).toBe('sosea viilor');
+    expect(out.street).toBe('soseaua viilor');
+  });
+
+  it('prefers the delivery leg of ruta_transport over OCR delivery_address', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport: 'Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti',
+      delivery_address: {
+        locality: 'Fundeni', streetName: 'locotenent moga', streetType: 'strada', houseNumber: '18',
+      },
+    });
+    expect(out).toMatchObject({
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    });
   });
 
   it('marks a locality with no index as unsupported rather than as unknown', () => {

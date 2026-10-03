@@ -177,32 +177,103 @@ export const FLEET_FIXABLE = new Set(['vehicle_unknown', 'mma_missing', 'mma_sus
 /** Localities the OCR prints, mapped onto the cities that have an index. */
 const CITY_BY_LOCALITY = { bucuresti: 'bucuresti' };
 
+/** Canonical type token for the street index (matches `normalizeStreetName` markers). */
+const ROUTE_TYPE_TO_QUERY = {
+  str: 'strada', strada: 'strada',
+  sosea: 'soseaua', soseaua: 'soseaua', sos: 'soseaua',
+  bvd: 'bulevardul', blvd: 'bulevardul', bulevardul: 'bulevardul', bd: 'bulevardul',
+  aleea: 'aleea', al: 'aleea',
+  piata: 'piata', pta: 'piata',
+  calea: 'calea',
+};
+
+/**
+ * Delivery half of `ruta_transport` — everything after ` / `.
+ * Single-leg routes (delivery only) are used as-is.
+ */
+export function deliveryLegFromRuta(ruta) {
+  const s = String(ruta || '').trim();
+  if (!s) return null;
+  const parts = s.split(/\s\/\s/);
+  const leg = (parts.length >= 2 ? parts[parts.length - 1] : parts[0]).trim();
+  return leg || null;
+}
+
+/**
+ * Parse a spaced annex leg: `Bvd. Iuliu Maniu nr. 600A, Bucuresti`
+ * → street query + house number + locality for the zone index.
+ */
+export function parseSpacedRouteLeg(leg) {
+  const raw = String(leg || '').trim();
+  if (!raw) return null;
+  const m = raw.match(
+    /^(?:(Str\.?|Șosea|Sosea|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea)\s+)?(.+?)(?:\s+nr\.?\s*([0-9]+[A-Za-z]?))?\s*,\s*(.+)$/iu,
+  );
+  if (!m) return null;
+  const typeRaw = (m[1] || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ș|ş/gi, 's')
+    .replace(/ț|ţ/gi, 't')
+    .toLowerCase()
+    .replace(/\.$/, '');
+  const type = ROUTE_TYPE_TO_QUERY[typeRaw] || null;
+  const name = String(m[2] || '').replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+  const number = m[3] ? String(m[3]).toUpperCase() : null;
+  const locality = String(m[4] || '').replace(/\s+/g, ' ').trim() || null;
+  const street = type ? `${type} ${name}` : name;
+  return { street, number, locality, streetName: name, streetType: type };
+}
+
+function foldLocality(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ș|ş/gi, 's')
+    .replace(/ț|ţ/gi, 't')
+    .trim();
+}
+
+function addressFromParts({ street, number, locality }) {
+  const loc = String(locality || '').trim() || null;
+  const cityId = CITY_BY_LOCALITY[foldLocality(loc)] ?? null;
+  return {
+    street: street || null,
+    number: number ?? null,
+    locality: loc,
+    cityId,
+    // A locality we have no index for is "no zones here", not "unknown street".
+    supported: Boolean(cityId),
+  };
+}
+
 /**
  * The delivery address, in the shape the street index wants.
  *
- * The type word is used whenever the document printed one, and left off when it did not.
- * `lookupStreet` handles the second case by matching on the bare name and asking the operator
- * only when two streets of that name disagree about the zone.
+ * Prefer the leg after ` / ` in `ruta_transport` (what the operator sees and edits). Fall
+ * back to OCR `delivery_address` when the route has no usable delivery half.
  */
 export function avizDeliveryAddress(aviz) {
+  const fromRoute = parseSpacedRouteLeg(deliveryLegFromRuta(aviz?.ruta_transport));
+  if (fromRoute?.street) {
+    return addressFromParts(fromRoute);
+  }
+
   const addr = aviz?.delivery_address ?? null;
   const name = String(addr?.streetName || '').trim();
   const type = String(addr?.streetType || '').trim();
   // The type word goes into the query when the document printed one. Bucharest has three
   // Viilor streets that disagree about the zone, so "viilor" alone is a question and
   // "sosea viilor", which is what the aviz actually says, is an answer.
-  const street = name ? (type ? `${type} ${name}` : name) : null;
-  const locality = String(addr?.locality || '').trim() || null;
-  const cityId = CITY_BY_LOCALITY[locality?.toLowerCase() ?? ''] ?? null;
-  return {
+  const typeQuery = ROUTE_TYPE_TO_QUERY[type.toLowerCase().replace(/\.$/, '')] || type || null;
+  const street = name ? (typeQuery ? `${typeQuery} ${name}` : name) : null;
+  return addressFromParts({
     street,
     number: addr?.houseNumber ?? null,
-    locality,
-    cityId,
-    // A locality we have no index for is "no zones here", not "unknown street". Only a
-    // locality we do index can produce any of the unsure answers below.
-    supported: Boolean(cityId),
-  };
+    locality: addr?.locality,
+  });
 }
 
 /**

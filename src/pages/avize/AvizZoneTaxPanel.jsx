@@ -30,16 +30,24 @@ const TONE = {
  * typing the greutate brută that OCR missed produces the fee on the spot, which is the whole
  * reason the weight is the gate.
  *
- * The fee is filled into Taxe suplimentare only while that field is still empty or zero. An
- * operator who typed 150 lei for a crane has said something this cannot know, and overwriting
- * it would be the app deciding it knows the job better than the person doing it.
+ * When the zone fee is known (> 0), it is written into Taxe suplimentare. Recalculation
+ * (rută / greutate / MTMA) updates the box while it still holds the last auto value; a
+ * different figure the operator typed by hand is left alone.
  */
 export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const [vehicles, setVehicles] = useState(null);
   const [zoneResult, setZoneResult] = useState(undefined);
-  const appliedFor = useRef(null);
+  /** Last amount we wrote for this document (`{ id, amount }`). */
+  const lastAuto = useRef({ id: null, amount: null });
 
-  const address = useMemo(() => avizDeliveryAddress(editRow), [editRow]);
+  // Prefer the delivery leg of Rută transport on screen (after ` / `), not only OCR delivery_address.
+  const address = useMemo(
+    () => avizDeliveryAddress({
+      ...editRow,
+      ruta_transport: form.ruta_transport ?? editRow?.ruta_transport,
+    }),
+    [editRow, form.ruta_transport],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -75,16 +83,25 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
     });
   }, [loading, editRow, form.gross_weight_kg, form.numar_auto, vehicles, zoneResult, address]);
 
-  const amount = result?.status === 'ok' ? result.amount : null;
+  const amount = result?.status === 'ok' && Number(result.amount) > 0 ? result.amount : null;
 
   useEffect(() => {
+    if (editRow?.id !== lastAuto.current.id) {
+      lastAuto.current = { id: editRow?.id ?? null, amount: null };
+    }
     if (amount == null) return;
-    const key = `${editRow?.id}:${amount}`;
-    // Once per document and amount. Cleared afterwards means the operator cleared it, and
-    // filling it back in would be an argument with the person the field belongs to.
-    if (appliedFor.current === key) return;
-    if (!isUnset(form.taxe_suplimentare)) return;
-    appliedFor.current = key;
+    const current = toFiniteNumber(form.taxe_suplimentare);
+    if (current === amount) {
+      lastAuto.current = { id: editRow?.id ?? null, amount };
+      return;
+    }
+    const previous = lastAuto.current.amount;
+    // First fill for this open, empty/0, or still our previous auto value → write the fee.
+    const mayWrite = isUnset(form.taxe_suplimentare)
+      || previous == null
+      || current === previous;
+    if (!mayWrite) return;
+    lastAuto.current = { id: editRow?.id ?? null, amount };
     setForm((prev) => ({ ...prev, taxe_suplimentare: String(amount) }));
   }, [amount, editRow?.id, form.taxe_suplimentare, setForm]);
 
