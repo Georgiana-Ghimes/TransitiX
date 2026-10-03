@@ -22,6 +22,7 @@ import {
 import { duplicateConsignmentExists } from '../lib/avizQuery.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { avizOcrFieldChanges } from '../lib/ocr/feedback.js';
+import { learnRouteFromCorrection } from '../lib/ocr/routeLearn.js';
 import { logEvent as logDocumentEvent } from './documents.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
@@ -462,6 +463,21 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
     const row = serializeRow(result.rows[0]);
 
     if (req.params.entity === 'AvizDocument') {
+      // Learn ruta_transport corrections as company regex rules (best-effort; never fail save).
+      const routeChange = avizFieldChanges.find((c) => c.field === 'ruta_transport');
+      if (routeChange && String(routeChange.new_value || '').trim()) {
+        const rawText = avizPrev?.extracted_data?.raw_text || row.extracted_data?.raw_text;
+        try {
+          await learnRouteFromCorrection(query, {
+            companyId: req.user.company_id,
+            documentId: row.id,
+            rawText,
+            rutaTransport: routeChange.new_value,
+          });
+        } catch (err) {
+          console.error('[entities] route learn failed', err?.message || err);
+        }
+      }
       row.duplicate_tpo = await duplicateConsignmentExists(query, {
         companyId: req.user.company_id,
         row: repairAvizFromStored(row),

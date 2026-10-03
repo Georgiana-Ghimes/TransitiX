@@ -32,12 +32,14 @@ import {
   formatIncarcareLabel,
   hasManualAvizEdits,
   inputCls,
+  isLearnedRoute,
   manualAvizEditLabels,
   isLockedRai,
   labelCls,
   lowField,
   readAvizPageSize,
   shouldAutoDownloadEmailFallback,
+  waitForAvizExtractSettled,
   writeAvizPageSize,
 } from './avize/avizeUi';
 
@@ -593,25 +595,54 @@ export default function AvizeReports() {
       const result = await api.avize.extract({
         id: row.id, file_url: row.file_url, original_filename: row.original_filename,
       });
+      let settled = result;
+      // Re-extrage always answers 202 and finishes in the background. A single load() here
+      // races the worker and leaves the list/form on the old ruta until the 15s poll — and
+      // busyId was blocking that poll. Wait until the row leaves `uploaded`.
       if (result?.extraction_pending) {
         notifySuccess(
           'Extragere pornită',
           result.pages > 1
-            ? `Documentul are ${result.pages} pagini, OCR-ul rulează în fundal. Lista se actualizează singură.`
-            : 'OCR-ul rulează în fundal. Rândul rămâne pe „Se procesează…” până termină.'
+            ? `Documentul are ${result.pages} pagini — aștept OCR-ul…`
+            : 'OCR-ul rulează — aștept câmpurile noi…'
         );
-      } else if (!String(result?.numar_tpo || '').trim()) {
+        settled = await waitForAvizExtractSettled(
+          row.id,
+          async (id) => {
+            try {
+              return await api.entities.AvizDocument.get(id);
+            } catch {
+              return null;
+            }
+          },
+        );
+        if (settled) {
+          setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...settled } : r)));
+          setEditRow((prev) => {
+            if (prev?.id !== row.id) return prev;
+            const next = { ...prev, ...settled };
+            setForm(emptyForm(next));
+            return next;
+          });
+        }
+      }
+      await load();
+      if (!String(settled?.numar_tpo || result?.numar_tpo || '').trim()) {
         notifyError(
           'OCR fără TPO',
           'Extragerea s-a terminat, dar nu am găsit număr TPO. Deschide Editează sau încearcă o poză mai clară.'
         );
-      } else {
+      } else if (!result?.extraction_pending) {
         notifySuccess(
           'Re-extras',
-          `${result.numar_tpo}, TPO/auto/rută din document; km, taxe și ruta de birou rămân.`
+          `${settled?.numar_tpo || result.numar_tpo}, TPO/auto/rută din document; km, taxe și observațiile rămân.`
+        );
+      } else if (settled && settled.status !== 'uploaded') {
+        notifySuccess(
+          'Re-extras',
+          `${settled.numar_tpo || 'Aviz'}, TPO/auto/rută din document; km, taxe și observațiile rămân.`
         );
       }
-      await load();
     } catch (e) {
       if (e?.name === 'TimeoutError' || e?.name === 'AbortError') {
         notifyError(
@@ -1169,6 +1200,9 @@ export default function AvizeReports() {
                         </p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
                           {displayRoute(row) || '-'}
+                          {isLearnedRoute(row) ? (
+                            <span className="ml-1 text-[10px] text-slate-400">· învățată</span>
+                          ) : null}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
                           {formatIncarcareLabel(row, formatAvizIncarcare)}
@@ -1269,7 +1303,12 @@ export default function AvizeReports() {
                           </td>
                           <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{formatDate(row.data_efectuare_cursa)}</td>
                           <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
-                          <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '-'}</td>
+                          <td
+                            className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`}
+                            title={isLearnedRoute(row) ? `${displayRoute(row)} (regulă învățată)` : displayRoute(row)}
+                          >
+                            {displayRoute(row) || '-'}
+                          </td>
                           <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || row.quantity_unit || ''}`.trim()}>
                             {row.cantitate_marfa ?? '-'} {row.tip_marfa || row.quantity_unit || ''}
                           </td>

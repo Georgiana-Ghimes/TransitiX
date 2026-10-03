@@ -18,6 +18,11 @@ import { isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
+import {
+  applyLearnedRoute,
+  listRouteRules,
+  recordRouteRuleHit,
+} from '../lib/ocr/routeLearn.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -207,6 +212,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
     docs = docs.filter((d) => wanted.has(d.id));
   }
 
+  const routeRules = await listRouteRules(query, companyId).catch(() => []);
+
   const results = [];
   for (const doc of docs) {
     if (!force && doc.status !== 'uploaded') {
@@ -278,7 +285,27 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         })
         : extraction;
 
-      // Route is structural only: Expeditor + Adresa de livrare slices (no LLM).
+      // Company-learned route overrides (from prior Editează corrections). Never overwrites
+      // fields the office pinned on this document via corrected_fields.
+      const learned = applyLearnedRoute(merged.values, text.text, routeRules, {
+        correctedFields: corrected,
+      });
+      const valuesAfterLearn = learned.values;
+      if (learned.learned && learned.rule?.id) {
+        recordRouteRuleHit(query, learned.rule.id).catch(() => {});
+      }
+      if (learned.learned && merged.fields?.ruta_transport) {
+        merged.fields.ruta_transport = {
+          ...merged.fields.ruta_transport,
+          value: valuesAfterLearn.ruta_transport,
+          confidence: 0.95,
+          status: 'ok',
+          source: 'learned',
+        };
+      }
+      merged.values = valuesAfterLearn;
+
+      // Route is structural only: Expeditor + Adresa de livrare slices (no LLM), unless learned.
       const columns = toColumns(merged.values);
       const fieldsForValidation = { ...(merged.fields || {}) };
       if (fieldsForValidation.quantity && !fieldsForValidation.cantitate_marfa) {
@@ -321,6 +348,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
               values: merged.values,
               review_fields: merged.review_fields,
               validation,
+              ...(learned.learned ? { route_source: 'learned' } : { route_source: null }),
               ...(Array.isArray(text.blocks) && text.blocks.length
                 ? { ocr_blocks: text.blocks }
                 : {}),

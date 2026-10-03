@@ -212,6 +212,38 @@ export function displayRoute(row) {
   return String(row?.ruta_display || '').trim() || row?.ruta_transport || '';
 }
 
+/** True when extract/list applied a company route rule learned from a prior Editează. */
+export function isLearnedRoute(row) {
+  return row?.extracted_data?.route_source === 'learned';
+}
+
+/**
+ * Re-extrage returns 202 and finishes in the background. Poll until the row leaves
+ * `uploaded` (or we give up), so the list/form show the new fields instead of the
+ * pre-extract snapshot that load() would otherwise race with.
+ *
+ * @param {string} id
+ * @param {(id: string) => Promise<object|null|undefined>} fetchRow
+ * @param {{ intervalMs?: number, timeoutMs?: number, sleep?: (ms: number) => Promise<void> }} [opts]
+ */
+export async function waitForAvizExtractSettled(id, fetchRow, {
+  intervalMs = 800,
+  timeoutMs = 90_000,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+} = {}) {
+  const started = Date.now();
+  let last = null;
+  while (Date.now() - started < timeoutMs) {
+    // eslint-disable-next-line no-await-in-loop
+    last = await fetchRow(id);
+    if (!last) return null;
+    if (last.status !== 'uploaded') return last;
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(intervalMs);
+  }
+  return last;
+}
+
 export function lowField(row, key) {
   return row?.field_confidence?.[key] === 'low';
 }

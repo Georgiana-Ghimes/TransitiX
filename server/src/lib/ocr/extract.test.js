@@ -514,6 +514,23 @@ Greutate bruta: 9964 kg
     expect(result.values.ruta_transport).not.toBe('Bolintin-Deal');
   });
 
+  it('keeps Republicii nr. + Bolintin-Deal when Referința client sits on the heading row', () => {
+    const text = `
+BAUMIT ROMANIA COM SRL
+Aviz de expeditie rezumat: TPO-0031027
+Expeditor Site: MIL Depozit: NEAMTIU
+Adresa de livrare    Referinta client
+MD MARFA BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015
+Placuta de inmatriculare B 911 VFM / B 138 VRT
+`;
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.values.ruta_transport).toMatch(/Republicii/i);
+    expect(result.values.ruta_transport).toMatch(/1F/);
+    expect(result.values.ruta_transport).toMatch(/Bolintin-Deal/i);
+  });
+
   it('still accepts an explicit City - City route with spaces around the dash', () => {
     const result = extractDocument(PSL_AVIZ);
     expect(result.values.ruta_transport).toMatch(/Bucuresti\s*-\s*Chiajna/i);

@@ -1507,6 +1507,23 @@ CREATE INDEX IF NOT EXISTS idx_ocr_text_cache_used ON ocr_text_cache(used_at);
 -- HITL overlay the same boxes a fresh read would.
 ALTER TABLE ocr_text_cache ADD COLUMN IF NOT EXISTS blocks JSONB;
 
+-- Company-local route corrections learned from office Editează.
+-- Match is a regex over folded OCR text (address tokens); value is the corrected ruta_transport.
+CREATE TABLE IF NOT EXISTS aviz_route_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  match_regex TEXT NOT NULL,
+  match_tokens JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ruta_transport TEXT NOT NULL,
+  source_document_id UUID REFERENCES aviz_documents(id) ON DELETE SET NULL,
+  hits INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, match_regex)
+);
+CREATE INDEX IF NOT EXISTS idx_aviz_route_rules_company
+  ON aviz_route_rules(company_id, updated_at DESC);
+
 `
 
 async function migrate() {

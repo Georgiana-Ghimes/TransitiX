@@ -163,6 +163,87 @@ sac
     expect(parsed.ruta_transport).toBe('Str. Ciresului, Dobroesti');
   });
 
+  it('keeps nr. and locality when Adresa de livrare shares a row with Referința client', () => {
+    // Rezumat Baumit: heading row is two columns; OCR concatenates them. Stopping at
+    // Referința client used to leave only "Str. Republicii".
+    const raw = `
+Expeditor
+Site: MIL
+Depozit: NEAMTIU
+Aviz de expeditie rezumat: TPO-0031027
+Adresa de livrare    Referinta client
+MD MARFA BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015 ROU
+Termen de livrare
+Cod UIT
+Num de comanda de transport TPO-0031027
+Placuta de inmatriculare B 911 VFM / B 138 VRT
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
+  it('uses Site+Depozit as origin when Expeditor has no street', () => {
+    const raw = `
+Expeditor
+Site: MIL-
+Depozit: NEAMTIU
+Adresa de livrare
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015 ROU
+Termen de livrare
+Placuta de inmatriculare B 911 VFM
+TPO-0031027
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
+  it('keeps nr. + locality when Referința client is glued after the street name', () => {
+    // Real OCR sometimes emits the right-column header mid-address, after Str. …
+    const raw = `
+Expeditor
+Site: MIL
+Depozit: NEAMTIU
+Adresa de livrare
+Str. Republicii Referinta client
+nr. 1F
+Bolintin-Deal RO 087015 ROU
+Termen de livrare
+Placuta de inmatriculare B 911 VFM
+TPO-0031027
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
+  it('does not copy the delivery street into Expeditor on one-line OCR', () => {
+    const raw = 'Expeditor Site: MIL- Depozit: NEAMTIU Adresa de livrare Referinta client BOL MBMARFA Bolintin Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU Termen de livrare Placuta de inmatriculare B 911 VFM TPO-0031027';
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
+  it('keeps IF + Bolintin-Deal when pdf-parse tabs house/locality into the next cell', () => {
+    // Real text layer from TPO-0031027 rezumat (before sanitize collapses tabs).
+    const raw = `
+Expeditor
+Site	MIL .
+NEAMTIU	Pagina
+Depozit
+Aviz de expediție rezumat: TPO-0031027
+Adresa de livrare
+BOL MBMARFA Bolintin
+str. Republicii,	IF Bolintin-Deal RO 087015 ROU
+nr.
+Transportator RAI.SPEDITION SRL
+Placuta de inmatriculare B 911 VFM / B 138 VRT
+Termeni de livrare DAP
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
   it('rebuilds Adresa de livrare from Baumit two-column tab OCR (not Client)', () => {
     const raw = `
 Expeditor
@@ -474,7 +555,8 @@ TPO-0025629
 PSL-0044362
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Str. Ciresului nr. 31B, Dobroesti');
+    // Site BOL, no street under Expeditor → BOL / delivery (not the Client factură seat).
+    expect(parsed.ruta_transport).toBe('BOL / Str. Ciresului nr. 31B, Dobroesti');
     expect(parsed.numar_auto).toBe('B-330-SRS');
   });
 
@@ -517,7 +599,7 @@ Aviz de expeditie TRO-0008053
 `;
     const parsed = parseBaumitAviz(raw);
     expect(parsed.numar_auto).toBe('B-112-VFM / B-475-AGR');
-    expect(parsed.ruta_transport).toBe('Bvd. Iuliu Maniu nr. 600A, Bucuresti');
+    expect(parsed.ruta_transport).toBe('MIL-MMMARFA / Bvd. Iuliu Maniu nr. 600A, Bucuresti');
     expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
     // A two-word street name survives the split, glued only in the route code.
     expect(parsed.delivery_address).toMatchObject({
@@ -627,6 +709,26 @@ TPO-0025803`,
     });
     expect(repaired.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
     expect(repaired.delivery_address?.streetName).toBe('viilor');
+  });
+
+  it('upgrades truncated Site/Depozit route with full delivery street from OCR', () => {
+    const repaired = repairAvizFromStored({
+      numar_tpo: 'TPO-0031027',
+      ruta_transport: 'MIL-NEAMTIU / Str. Republicii',
+      extracted_data: {
+        raw_text: `Expeditor
+Site: MIL-
+Depozit: NEAMTIU
+Adresa de livrare    Referinta client
+BOL MBMARFA Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015 ROU
+Termen de livrare
+Placuta de inmatriculare B 911 VFM
+TPO-0031027`,
+      },
+    });
+    expect(repaired.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
   });
 
   it('keeps a spaced office-edited route when ruta_transport is in corrected_fields', () => {
@@ -803,7 +905,10 @@ describe('review heuristics (#41)', () => {
     expect(isSuspiciousRoute('Republicii17')).toBe(true);
     expect(isSuspiciousRoute('Bol')).toBe(true);
     expect(isSuspiciousRoute('BolintinDeal/Republicii1F-Bucuresti/Viilor52')).toBe(true);
+    expect(isSuspiciousRoute('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal')).toBe(false);
+    expect(isFalseRoute('MIL-NEAMTIU')).toBe(true);
     expect(isSuspiciousRoute('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti')).toBe(false);
+    expect(isSuspiciousRoute('Str. Republicii nr. 1F, Bolintin-Deal')).toBe(false);
     expect(avizFieldConfidence({ ruta_transport: 'Republicii17' }).ruta_transport).toBe('low');
   });
 

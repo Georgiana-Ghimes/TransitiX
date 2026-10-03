@@ -21,6 +21,7 @@ import { renderReportWorkbook } from '../lib/avizExport.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
 import { normalizeTemplateColumns } from '../lib/avizTemplate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
+import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -48,9 +49,24 @@ async function loadTemplate(companyId, templateId) {
 
 async function selectDocuments(companyId, filters) {
   const { sql, params, filters: used } = buildSelectionQuery(companyId, filters);
-  const found = await query(sql, params);
+  const [found, routeRules] = await Promise.all([
+    query(sql, params),
+    listRouteRules(query, companyId).catch(() => []),
+  ]);
   return {
-    documents: found.rows.map((row) => repairAvizFromStored(serializeRow(row))),
+    documents: found.rows.map((row) => {
+      const repaired = repairAvizFromStored(serializeRow(row));
+      const corrected = Array.isArray(repaired.corrected_fields) ? repaired.corrected_fields : [];
+      const raw = repaired.extracted_data?.raw_text;
+      if (!routeRules.length || !raw || corrected.includes('ruta_transport')) return repaired;
+      const learned = preferLearnedRoute(repaired.ruta_transport, raw, routeRules);
+      if (!learned.rule) return repaired;
+      return {
+        ...repaired,
+        ruta_transport: learned.route,
+        extracted_data: { ...(repaired.extracted_data || {}), route_source: 'learned' },
+      };
+    }),
     filters: used,
   };
 }

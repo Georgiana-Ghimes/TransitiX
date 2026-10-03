@@ -6,10 +6,12 @@ import {
   emptyForm,
   formatIncarcareLabel,
   hasManualAvizEdits,
+  isLearnedRoute,
   isLockedRai,
   lowField,
   manualAvizEditLabels,
   shouldAutoDownloadEmailFallback,
+  waitForAvizExtractSettled,
 } from './avizeUi.js';
 
 describe('avizeUi', () => {
@@ -86,6 +88,12 @@ describe('avizeUi', () => {
     expect(displayRoute({ ruta_transport: 'Client → Livrare' })).toBe('Client → Livrare');
   });
 
+  it('detects a route filled from a learned company rule', () => {
+    expect(isLearnedRoute({ extracted_data: { route_source: 'learned' } })).toBe(true);
+    expect(isLearnedRoute({ extracted_data: {} })).toBe(false);
+    expect(isLearnedRoute({})).toBe(false);
+  });
+
   it('marks low-confidence fields', () => {
     expect(lowField({ field_confidence: { numar_tpo: 'low' } }, 'numar_tpo')).toBe(true);
     expect(lowField({}, 'numar_tpo')).toBe(false);
@@ -114,5 +122,23 @@ describe('avizeUi', () => {
     expect(asAvizPage(null)).toEqual({
       items: [], total: 0, limit: AVIZ_DEFAULT_PAGE_SIZE, offset: 0,
     });
+  });
+
+  it('waits until a background re-extract leaves uploaded', async () => {
+    const sleeps = [];
+    let n = 0;
+    const settled = await waitForAvizExtractSettled(
+      'doc-1',
+      async () => {
+        n += 1;
+        if (n < 3) return { id: 'doc-1', status: 'uploaded', ruta_transport: 'old' };
+        return { id: 'doc-1', status: 'extracted', ruta_transport: 'Str. Republicii nr. 1F, Bolintin-Deal' };
+      },
+      { intervalMs: 1, timeoutMs: 1000, sleep: async (ms) => { sleeps.push(ms); } },
+    );
+    expect(settled.ruta_transport).toMatch(/Republicii/);
+    expect(settled.status).toBe('extracted');
+    expect(n).toBe(3);
+    expect(sleeps.length).toBe(2);
   });
 });

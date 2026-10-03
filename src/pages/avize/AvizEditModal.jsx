@@ -5,7 +5,7 @@ import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
 import { Loader2, Pencil, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
-import { inputCls, labelCls, lowField } from './avizeUi';
+import { inputCls, isLearnedRoute, labelCls, lowField } from './avizeUi';
 
 export default function AvizEditModal({
   editRow, form, setForm, obsCodes, saving, onClose, onSave, onAppendObs,
@@ -54,6 +54,9 @@ export default function AvizEditModal({
                       onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                     />
                   )}
+                  {f.key === 'ruta_transport' && isLearnedRoute(editRow) ? (
+                    <p className="mt-1 text-[11px] text-slate-500">Completat din regulă învățată</p>
+                  ) : null}
                 </div>
               ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />

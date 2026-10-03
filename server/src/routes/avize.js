@@ -10,6 +10,7 @@ import {
   normalizeTemplateColumns,
 } from '../lib/avizTemplate.js';
 import { fieldConfidenceForUi, repairAvizFromStored } from '../lib/avizOcr.js';
+import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
 import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
@@ -145,12 +146,28 @@ const DEFAULT_OBS_CODES = [
  * office edit of a real route is never overwritten, and nothing is written back here: this
  * decorates a response, it does not change the document.
  */
-function decorateAviz(row) {
+function decorateAviz(row, { routeRules = [] } = {}) {
   const serialized = repairAvizFromStored(serializeRow(row));
-  const source = serialized.extraction_source
-    || mapProviderToSource(serialized.extracted_data?.provider);
-  const validation = serialized.extracted_data?.validation ?? null;
-  const field_confidence = fieldConfidenceForUi(serialized);
+  const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
+  const raw = serialized.extracted_data?.raw_text;
+  let ruta = serialized.ruta_transport;
+  let extracted_data = serialized.extracted_data;
+  if (routeRules.length && raw && !corrected.includes('ruta_transport')) {
+    const learned = preferLearnedRoute(ruta, raw, routeRules, { corrected: false });
+    if (learned.rule) {
+      ruta = learned.route;
+      extracted_data = { ...(extracted_data || {}), route_source: 'learned' };
+    }
+  }
+  const withRoute = {
+    ...serialized,
+    ruta_transport: ruta,
+    extracted_data,
+  };
+  const source = withRoute.extraction_source
+    || mapProviderToSource(withRoute.extracted_data?.provider);
+  const validation = withRoute.extracted_data?.validation ?? null;
+  const field_confidence = fieldConfidenceForUi(withRoute);
   const heuristicReview = ['numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa']
     .some((key) => field_confidence[key] === 'low');
   const existingRouting = validation?.routing ?? null;
@@ -159,15 +176,20 @@ function decorateAviz(row) {
     ? 'hitl_optional'
     : existingRouting;
   return {
-    ...serialized,
+    ...withRoute,
     extraction_source: source,
     field_confidence,
     // Surface review when heuristics catch a wrong-but-plausible parse even if DB
     // needs_review was cleared or never set for that field.
-    needs_review: Boolean(serialized.needs_review) || heuristicReview,
+    needs_review: Boolean(withRoute.needs_review) || heuristicReview,
     validation_routing,
     validation_findings: validation?.findings ?? null,
   };
+}
+
+async function decorateAvizForCompany(row, companyId) {
+  const routeRules = await listRouteRules(query, companyId).catch(() => []);
+  return decorateAviz(row, { routeRules });
 }
 
 /**
@@ -198,7 +220,20 @@ async function loadAvizeByIds(companyId, avizIds) {
      ORDER BY created_at ASC`,
     [companyId, avizIds]
   );
-  return docs.rows.map((row) => repairAvizFromStored(serializeRow(row)));
+  const routeRules = await listRouteRules(query, companyId).catch(() => []);
+  return docs.rows.map((row) => {
+    const repaired = repairAvizFromStored(serializeRow(row));
+    const corrected = Array.isArray(repaired.corrected_fields) ? repaired.corrected_fields : [];
+    const raw = repaired.extracted_data?.raw_text;
+    if (!routeRules.length || !raw || corrected.includes('ruta_transport')) return repaired;
+    const learned = preferLearnedRoute(repaired.ruta_transport, raw, routeRules);
+    if (!learned.rule) return repaired;
+    return {
+      ...repaired,
+      ruta_transport: learned.route,
+      extracted_data: { ...(repaired.extracted_data || {}), route_source: 'learned' },
+    };
+  });
 }
 
 async function buildAnnexBuffer(companyId, templateId, avizIds) {
@@ -304,11 +339,12 @@ router.get('/', async (req, res) => {
       offset: req.query.offset,
     });
     const countQ = buildAvizCountQuery(filters);
-    const [result, countResult] = await Promise.all([
+    const [result, countResult, routeRules] = await Promise.all([
       query(sql, params),
       query(countQ.sql, countQ.params),
+      listRouteRules(query, req.user.company_id).catch(() => []),
     ]);
-    const pageRows = result.rows.map(decorateAviz);
+    const pageRows = result.rows.map((row) => decorateAviz(row, { routeRules }));
     // Duplicate flag must see siblings off-page: same PSL under the same TPO on page 2
     // still has to light up the badge on page 1.
     const tpos = [...new Set(
@@ -324,7 +360,8 @@ router.get('/', async (req, res) => {
         [req.user.company_id, tpos]
       );
       const byId = new Map(
-        flagDuplicateTpos(siblings.rows.map(decorateAviz)).map((r) => [r.id, r.duplicate_tpo])
+        flagDuplicateTpos(siblings.rows.map((row) => decorateAviz(row, { routeRules })))
+          .map((r) => [r.id, r.duplicate_tpo])
       );
       flagged = pageRows.map((r) => ({ ...r, duplicate_tpo: Boolean(byId.get(r.id)) }));
     } else {
@@ -568,11 +605,12 @@ async function extractSplitPdfUpload(req, { fileUrl, originalFilename }) {
     });
   }
 
+  const routeRules = await listRouteRules(query, req.user.company_id).catch(() => []);
   const rows = (await query(
     `SELECT * FROM aviz_documents WHERE company_id = $1 AND id = ANY($2::uuid[])
      ORDER BY created_at ASC, original_filename ASC`,
     [req.user.company_id, docIds]
-  )).rows.map(decorateAviz);
+  )).rows.map((row) => decorateAviz(row, { routeRules }));
 
   const first = rows[0];
   if (!first) return null;
@@ -706,7 +744,7 @@ router.post('/extract', async (req, res) => {
       );
       if (!pending.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
       return res.status(202).json({
-        ...decorateAviz(pending.rows[0]),
+        ...(await decorateAvizForCompany(pending.rows[0], req.user.company_id)),
         extraction_pending: true,
         pages,
         reason: reextract ? 'reextract_background' : 'long_document',
@@ -746,7 +784,7 @@ router.post('/extract', async (req, res) => {
         );
         if (!pending.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
         return res.status(202).json({
-          ...decorateAviz(pending.rows[0]),
+          ...(await decorateAvizForCompany(pending.rows[0], req.user.company_id)),
           extraction_pending: true,
           pages,
           reason: 'ocr_timeout_retry',
@@ -763,7 +801,7 @@ router.post('/extract', async (req, res) => {
     );
     if (!result.rows[0]) return res.status(404).json({ message: 'Avizul nu a fost găsit.' });
 
-    const row = decorateAviz(result.rows[0]);
+    const row = await decorateAvizForCompany(result.rows[0], req.user.company_id);
     row.duplicate_tpo = await duplicateConsignmentExists(query, {
       companyId: req.user.company_id,
       row,
@@ -897,7 +935,8 @@ router.post('/bulk-confirm', async (req, res) => {
       }
       return updated;
     });
-    res.json(flagDuplicateTpos(result.rows.map(decorateAviz)));
+    const routeRules = await listRouteRules(query, req.user.company_id).catch(() => []);
+    res.json(flagDuplicateTpos(result.rows.map((row) => decorateAviz(row, { routeRules }))));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });
@@ -953,7 +992,7 @@ router.post('/doc/:id/confirm', async (req, res) => {
       return row;
     });
 
-    res.json(decorateAviz(updated));
+    res.json(await decorateAvizForCompany(updated, req.user.company_id));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Confirmarea a eșuat' });
