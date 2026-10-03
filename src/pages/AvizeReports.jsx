@@ -7,6 +7,7 @@ import { isDocumentsProfile } from '@/lib/appProfile';
 import { appendObservationCode, validateObservationCodeInput } from '@/lib/observationCodes';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
+import { formatDate } from '@/lib/utils';
 import { findBlurriest } from '@/lib/imageQuality';
 import { prepareImagesForUpload } from '@/lib/imagePreprocess';
 import {
@@ -39,6 +40,11 @@ import {
   shouldAutoDownloadEmailFallback,
   writeAvizPageSize,
 } from './avize/avizeUi';
+
+/** Încărcare label: Bucharest calendar day as DD.MM.YYYY (same as Editează). */
+function formatAvizIncarcare(createdAt) {
+  return formatDate(avizIncarcareDate({ created_at: createdAt }));
+}
 
 export default function AvizeReports() {
   const [tab, setTab] = useState('avize');
@@ -1153,13 +1159,13 @@ export default function AvizeReports() {
                         </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
-                          {row.numar_auto || '-'} · {row.data_efectuare_cursa || '-'}
+                          {row.numar_auto || '-'} · {formatDate(row.data_efectuare_cursa)}
                         </p>
                         <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
                           {displayRoute(row) || '-'}
                         </p>
-                        <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, avizIncarcareDate)}>
-                          {formatIncarcareLabel(row, avizIncarcareDate)}
+                        <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
+                          {formatIncarcareLabel(row, formatAvizIncarcare)}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${
@@ -1175,13 +1181,14 @@ export default function AvizeReports() {
                           <NeedsReviewBadge
                             needsReview={row.needs_review}
                             routing={row.validation_routing}
+                            status={row.status}
                           />
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
                       <button type="button" className="text-[#1D4E89] disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
-                      {(row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
+                      {row.status !== 'confirmed' && (row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
                         <button type="button" className="text-amber-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
                       )}
                       {row.status !== 'confirmed' && (
@@ -1254,7 +1261,7 @@ export default function AvizeReports() {
                             )}
                             {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
-                          <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{row.data_efectuare_cursa || '-'}</td>
+                          <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{formatDate(row.data_efectuare_cursa)}</td>
                           <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
                           <td className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`} title={displayRoute(row)}>{displayRoute(row) || '-'}</td>
                           <td className="px-2 py-2.5 truncate max-w-[7rem] hidden 2xl:table-cell" title={`${row.cantitate_marfa ?? ''} ${row.tip_marfa || row.quantity_unit || ''}`.trim()}>
@@ -1275,19 +1282,20 @@ export default function AvizeReports() {
                                 <NeedsReviewBadge
                                   needsReview={row.needs_review}
                                   routing={row.validation_routing}
+                                  status={row.status}
                                 />
                               </div>
                             </div>
                           </td>
-                          <td className="px-2 py-2.5 text-xs text-slate-600 whitespace-nowrap" title={formatIncarcareLabel(row, avizIncarcareDate)}>
-                            {formatIncarcareLabel(row, avizIncarcareDate)}
+                          <td className="px-2 py-2.5 text-xs text-slate-600 whitespace-nowrap" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
+                            {formatIncarcareLabel(row, formatAvizIncarcare)}
                           </td>
                           <td className={`px-2 py-2.5 sticky right-0 z-10 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)] ${
                             busyId === row.id ? 'bg-sky-50/80' : 'bg-white group-hover:bg-slate-50/50'
                           }`}>
                             <div className="flex flex-col items-end gap-0.5">
                               <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
-                              {(row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
+                              {row.status !== 'confirmed' && (row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
                                 <button type="button" className="text-amber-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
                               )}
                               {row.status !== 'confirmed' && (

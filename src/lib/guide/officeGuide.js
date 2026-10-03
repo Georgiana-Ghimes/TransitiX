@@ -36,7 +36,7 @@ const INCARCARE = {
     terms([
       { term: 'Limită per fișier', text: '15 MB. Peste asta aplicația îți spune înainte să pornească încărcarea, nu după.' },
       { term: 'Câte odată', text: 'Până la 8 fișiere într-o încărcare. Limita vine de la server și e afișată pe ecran.' },
-      { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul.' },
+      { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul. Pe companion, clopoțelul arată doar alertele de documente / flotă, nu statusuri de curse.' },
     ]),
     note('O poză neclară e semnalată înainte de trimitere. Merită refăcută pe loc: OCR-ul pe o poză mișcată nu greșește vizibil, greșește o cifră.'),
   ],

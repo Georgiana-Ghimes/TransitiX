@@ -46,14 +46,13 @@ export function DriverUploadBadge({ uploadedFrom }) {
   );
 }
 
-/** OCR finished but confidence/fields still need a human eye. */
-export function NeedsReviewBadge({ needsReview, routing }) {
+/** OCR finished but confidence/fields still need a human eye. Hidden once Confirmat. */
+export function NeedsReviewBadge({ needsReview, routing, status }) {
+  if (status === 'confirmed') return null;
   if (!needsReview && routing !== 'hitl_required' && routing !== 'hitl_optional') return null;
   const label = routing === 'hitl_required'
     ? 'Verificare obligatorie'
-    : routing === 'hitl_optional'
-      ? 'De revizuit'
-      : 'De revizuit';
+    : 'De revizuit';
   return (
     <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
       {label}

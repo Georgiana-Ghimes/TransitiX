@@ -132,6 +132,12 @@ describe('extractPlate', () => {
     expect(extractPlate('Auto: B 123 ABC').value).toBe('B-123-ABC');
   });
 
+  it('keeps tractor and trailer when both are on the aviz', () => {
+    expect(extractPlate(
+      'Transportator: RAI-SPEDITION SRL. Autovehicul: B 911 VFM / B 138 VRT',
+    ).value).toBe('B-911-VFM / B-138-VRT');
+  });
+
   it('rejects a plate-shaped string without a real county', () => {
     expect(extractPlate('QQ 12 XYZ').value).toBeNull();
     expect(extractPlate('CJ 12 XYZ').value).toBe('CJ-12-XYZ');

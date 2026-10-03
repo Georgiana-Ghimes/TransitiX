@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
+import { filterNotificationsForProfile } from '@/lib/companionNotifications';
 import {
   Bell, CheckCheck, Loader2, Truck, FileText, CheckCircle,
   AlertTriangle, Info, UserX, Trash2,
@@ -50,9 +51,11 @@ export default function NotificationBell() {
   const loadInbox = async () => {
     try {
       const data = await api.notifications.inbox();
-      setItems(data.items || []);
-      setUnreadCount(data.unread_count || 0);
-      setReadCount(data.read_count || 0);
+      // Companion drops trip/CMR noise; badge counts must match what the list shows.
+      const items = filterNotificationsForProfile(data.items || []);
+      setItems(items);
+      setUnreadCount(items.filter((n) => !n.is_read).length);
+      setReadCount(items.filter((n) => n.is_read).length);
     } catch (e) {
       console.error(e);
     } finally {

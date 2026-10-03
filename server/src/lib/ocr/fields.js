@@ -88,13 +88,12 @@ export function canonicalPlate(value) {
 }
 
 export function extractPlate(text) {
-  const found = matchPatterns(text, [
-    new RegExp(`\\b((?:${RO_PLATE_COUNTIES})\\s?\\d{2,3}\\s?[A-Z]{3})\\b`, 'i'),
-  ], {
-    transform: (raw) => canonicalPlate(raw),
-  });
-  if (!found.value || !isAcceptableAutoField(found.value)) return NO_MATCH;
-  return result(found.value, found.confidence, found.matched);
+  // Walk the whole snippet and keep every RO plate. Matching a single token used to drop
+  // the remorca on "B 911 VFM / B 138 VRT", while Autoturisme / taxa de zonă still only
+  // look up the first (tractor) plate on purpose.
+  const value = canonicalPlate(text);
+  if (!value || !isAcceptableAutoField(value)) return NO_MATCH;
+  return result(value, value.includes(' / ') ? 0.88 : 0.9, value);
 }
 
 const MONTHS = {
