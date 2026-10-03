@@ -98,6 +98,17 @@ describe('parseRomanianAddress', () => {
       .toBe(addressKey('Timișoara, Calea Aradului 50'));
   });
 
+  it('treats Bvd./Bd./Blvd. as the same boulevard for map geocode keys', () => {
+    // Without `bvd` in the abbrev map, "Bvd. Iuliu Maniu, Bucuresti" lost the street type
+    // and geocoded as the city alone — wrong pin, wrong km.
+    const bvd = parseRomanianAddress('Bvd. Iuliu Maniu nr. 600A, Bucuresti');
+    const bd = parseRomanianAddress('Bd. Iuliu Maniu nr. 600A, Bucuresti');
+    expect(bvd.hasStreetType).toBe(true);
+    expect(bvd.street).toMatch(/Iuliu Maniu/i);
+    expect(addressKey(bvd)).toBe(addressKey(bd));
+    expect(addressKey(bvd)).toBe(addressKey('Blvd. Iuliu Maniu nr. 600A, Bucuresti'));
+  });
+
   it('strips the municipiul/orașul prefix', () => {
     expect(parseRomanianAddress('Mun. Brașov, str. Muncii 44').city).toBe('brasov');
     expect(parseRomanianAddress('Oraș Otopeni, Calea Bucureștilor 3').county).toBe('IF');

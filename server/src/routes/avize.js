@@ -31,6 +31,7 @@ import {
 } from '../lib/observationCodes.js';
 import { zipStore } from '../lib/zipStore.js';
 import {
+  buildAvizCountQuery,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
@@ -287,7 +288,7 @@ async function ensureObservationCodes(companyId) {
 router.get('/', async (req, res) => {
   try {
     await failStaleUploadedAvize(req.user.company_id).catch(() => {});
-    const { sql, params } = buildAvizListQuery({
+    const filters = {
       companyId: req.user.company_id,
       from: req.query.from,
       to: req.query.to,
@@ -295,12 +296,47 @@ router.get('/', async (req, res) => {
       q: req.query.q,
       uploadedFrom: req.query.uploaded_from,
       dateField: req.query.date_field,
+    };
+    const { sql, params, page } = buildAvizListQuery({
+      ...filters,
+      limit: req.query.limit,
+      offset: req.query.offset,
     });
-    const result = await query(sql, params);
+    const countQ = buildAvizCountQuery(filters);
+    const [result, countResult] = await Promise.all([
+      query(sql, params),
+      query(countQ.sql, countQ.params),
+    ]);
+    const pageRows = result.rows.map(decorateAviz);
+    // Duplicate flag must see siblings off-page: same PSL under the same TPO on page 2
+    // still has to light up the badge on page 1.
+    const tpos = [...new Set(
+      pageRows.map((r) => String(r.numar_tpo || '').trim().toLowerCase()).filter(Boolean)
+    )];
+    let flagged = pageRows;
+    if (tpos.length > 0) {
+      const siblings = await query(
+        `SELECT id, numar_tpo, numar_document_marfa, ruta_transport, data_efectuare_cursa,
+                numar_auto, trip_id, extracted_data
+         FROM aviz_documents
+         WHERE company_id = $1 AND LOWER(numar_tpo) = ANY($2::text[])`,
+        [req.user.company_id, tpos]
+      );
+      const byId = new Map(
+        flagDuplicateTpos(siblings.rows.map(decorateAviz)).map((r) => [r.id, r.duplicate_tpo])
+      );
+      flagged = pageRows.map((r) => ({ ...r, duplicate_tpo: Boolean(byId.get(r.id)) }));
+    } else {
+      flagged = flagDuplicateTpos(pageRows);
+    }
     // Keep the stored `numar_curse` (OCR / foaie / edit). Run-count derivation is for
     // annex export only — overwriting here made the Editează field snap back to 1.
-    const rows = flagDuplicateTpos(result.rows.map(decorateAviz));
-    res.json(rows);
+    res.json({
+      items: flagged,
+      total: countResult.rows[0]?.total ?? 0,
+      limit: page.limit,
+      offset: page.offset,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to list avize' });
@@ -654,6 +690,44 @@ router.post('/export', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(err.status || 500).json({ message: err.message || 'Export failed' });
+  }
+});
+
+router.post('/bulk-delete', async (req, res) => {
+  try {
+    const ids = capAvizIds(req.body?.ids);
+    if (ids.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+
+    const result = await withTransaction(async (client) => {
+      const deleted = await client.query(
+        `DELETE FROM aviz_documents
+         WHERE company_id = $1 AND id = ANY($2::uuid[])
+         RETURNING id, original_filename, numar_tpo, batch_id`,
+        [req.user.company_id, ids]
+      );
+      // Events cascade-delete with the row; keep a company-level trail with document_id null
+      // so „cine a șters ce” survives after the aviz is gone.
+      for (const row of deleted.rows) {
+        await logEvent(client, {
+          companyId: req.user.company_id,
+          documentId: null,
+          batchId: row.batch_id,
+          userId: req.user.id,
+          kind: 'deleted',
+          summary: row.original_filename || row.numar_tpo || row.id,
+          detail: { aviz_id: row.id, numar_tpo: row.numar_tpo || null },
+        });
+      }
+      return deleted;
+    });
+
+    res.json({
+      deleted: result.rows.length,
+      ids: result.rows.map((r) => r.id),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Bulk delete failed' });
   }
 });
 

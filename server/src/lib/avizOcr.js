@@ -264,12 +264,123 @@ const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania)$/;
 
 const STREET_TYPE_RE = /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)/;
 
+/**
+ * House number shape: `31B`, `1F`, OCR `IF`/`LF`.
+ * At most 4 digits; leading `\b` so a postcode run (`077085`) cannot yield `7085`.
+ */
+const HOUSE_NUM_BODY = String.raw`\b(?:nr\.?\s*)?(?:[0-9]{1,4}[a-z]{0,2}|[il]f)\b`;
+const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>[0-9]{1,4}[a-z]{0,2}|[il]f)\b`, 'i');
+
+/**
+ * Street line after a type word — name then optional house, or house then name.
+ * Structural only: no town / street vocabulary.
+ */
+// Greedy name stopped by nr / RO / sector / postcode / end — non-greedy would keep only
+// the first token and leave "Maniu" behind on `Iuliu Maniu nr. 600A`.
+// Lookahead must use the full house pattern: a single `[0-9]\b` fails on `52` (no boundary
+// between the two digits) and was why only the number survived as a leg.
+const STREET_AFTER_TYPE_NAME_FIRST = new RegExp(
+  String.raw`^\s*,?\s*(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3})` +
+  String.raw`(?=\s*(?:,|${HOUSE_NUM_BODY}|\bro\b|\bsector\b|\d{5}|$))` +
+  String.raw`(?:\s*,)?(?:\s*${HOUSE_NUM_RE.source})?`,
+  'i'
+);
+const STREET_AFTER_TYPE_HOUSE_FIRST = new RegExp(
+  String.raw`^\s*,?\s*${HOUSE_NUM_RE.source}\s+` +
+  String.raw`(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3})` +
+  String.raw`(?=\s*(?:,|\bro\b|\bsector\b|\d{5}|$))`,
+  'i'
+);
+/**
+ * Name immediately before the type word. Tab OCR often emits `Viilor\t52` then `Șosea\tnr.`
+ * so the house sits between name and type — capture it here, not only after the type.
+ * Single last token: site leftovers (`obi lohn viilor 52`) must not become the street.
+ * Two-word names after a type stay on STREET_AFTER_TYPE_NAME_FIRST (`Iuliu Maniu`).
+ */
+const STREET_NAME_HOUSE_BEFORE_TYPE = new RegExp(
+  String.raw`(?:^|[\s,])(?<name>[a-z]{3,})\s+${HOUSE_NUM_RE.source}\s*$`,
+  'i'
+);
+const STREET_NAME_BEFORE_TYPE = /(?:^|[\s,])(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,1})\s*$/i;
+
 function isUsableStreetToken(word, localityFolded = '') {
   if (!word || word.length < 3) return false;
   if (STREET_NAME_STOP.test(word) || LOCALITY_NOISE.test(word)) return false;
   if (/^pagina/i.test(word)) return false;
   if (localityFolded && localityFolded.startsWith(word)) return false;
   return true;
+}
+
+/** Keep name tokens that are not the locality / grammatical noise. */
+function cleanStreetName(rawName, localityFolded = '') {
+  const parts = fold(rawName).split(/\s+/).filter((tok) => isUsableStreetToken(tok, localityFolded));
+  return parts.length ? parts.join(' ') : null;
+}
+
+/**
+ * Type + name + house from a folded address block. Regex shape only — never a street list.
+ */
+function parseStreetParts(folded, localityFolded = '') {
+  const typeMatch = folded.match(new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags));
+  if (!typeMatch) {
+    const loose = folded.match(
+      new RegExp(
+        String.raw`\b(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3}?)\s+${HOUSE_NUM_RE.source}`,
+        'i'
+      )
+    );
+    if (!loose) return { streetType: null, streetName: null, houseNumber: null };
+    const streetName = cleanStreetName(loose.groups?.name, localityFolded);
+    const house = loose.groups?.house || null;
+    return {
+      streetType: null,
+      streetName,
+      houseNumber: house && streetName ? fold(house) : null,
+    };
+  }
+
+  const streetType = typeMatch.groups?.type?.replace(/\.$/, '') || null;
+  const afterType = folded.slice(typeMatch.index + typeMatch[0].length);
+  let streetName = null;
+  let houseRaw = null;
+
+  const nameFirst = afterType.match(STREET_AFTER_TYPE_NAME_FIRST);
+  if (nameFirst?.groups?.name) {
+    streetName = cleanStreetName(nameFirst.groups.name, localityFolded);
+    houseRaw = nameFirst.groups.house || null;
+  }
+  if (!streetName) {
+    const houseFirst = afterType.match(STREET_AFTER_TYPE_HOUSE_FIRST);
+    if (houseFirst?.groups?.name) {
+      houseRaw = houseFirst.groups.house || null;
+      streetName = cleanStreetName(houseFirst.groups.name, localityFolded);
+    }
+  }
+  if (!streetName) {
+    const before = folded.slice(0, typeMatch.index);
+    const withHouse = before.match(STREET_NAME_HOUSE_BEFORE_TYPE);
+    if (withHouse?.groups?.name) {
+      streetName = cleanStreetName(withHouse.groups.name, localityFolded);
+      if (!houseRaw && withHouse.groups.house) houseRaw = withHouse.groups.house;
+    } else {
+      const prev = before.match(STREET_NAME_BEFORE_TYPE);
+      if (prev?.groups?.name) streetName = cleanStreetName(prev.groups.name, localityFolded);
+    }
+  }
+  if (!houseRaw && streetName) {
+    // Prefer a house next to the street name / type; never scan past RO/postcode.
+    const typeAt = typeMatch.index;
+    const nearStreet = folded.slice(Math.max(0, typeAt - 48), Math.min(folded.length, typeAt + typeMatch[0].length + 48));
+    const beforePost = nearStreet.replace(/\bro\s*\d{5,6}\b[\s\S]*$/i, '').replace(/\b\d{5,6}\b[\s\S]*$/i, '');
+    const nrNear = beforePost.match(new RegExp(HOUSE_NUM_RE.source, 'i'));
+    if (nrNear?.groups?.house) houseRaw = nrNear.groups.house;
+  }
+
+  return {
+    streetType,
+    streetName,
+    houseNumber: houseRaw ? fold(houseRaw) : null,
+  };
 }
 
 /**
@@ -303,6 +414,31 @@ function localityFromSection(folded) {
   return null;
 }
 
+/** True when the cell is only a street-type token (`Sosea`, `Str.`), using STREET_TYPE_RE. */
+function isStreetTypeOnlyCell(text) {
+  const f = fold(text).trim();
+  return new RegExp(`^${STREET_TYPE_RE.source}$`, STREET_TYPE_RE.flags).test(f);
+}
+
+function looksLikeClientIdCell(text) {
+  const f = fold(text);
+  return /^c\d{8}\b/.test(f) || /^ap-/.test(f);
+}
+
+/** Bare `nr` / `nr.` stub from a split cell (`Șosea\tnr.`). */
+function isNrStubCell(text) {
+  return /^nr\.?$/i.test(fold(text).trim());
+}
+
+/** Delivery-side continuation after a lone type cell: name and/or house, not a client id. */
+function isAddressContinuationCell(text) {
+  if (!text || looksLikeClientIdCell(text)) return false;
+  const f = fold(text).trim();
+  if (isNrStubCell(f)) return true;
+  if (new RegExp(`^${HOUSE_NUM_RE.source}$`, 'i').test(f)) return true;
+  return /[a-z]{3,}/.test(f);
+}
+
 /**
  * When Adresa de livrare | Client share a row, pdf-parse emits tab-separated cells.
  * Keep only the left cell(s) — unloading address. Right = Client seat, never parsed.
@@ -325,8 +461,36 @@ function leftColumnFromInterleaved(section) {
       left.push(cells[0], `RO ${secondCompact}`);
       continue;
     }
+    // `Sosea\tViilor nr. 52` / `Șosea\tnr.` — type alone left; name/nr still delivery-side.
+    if (
+      cells.length >= 2
+      && isStreetTypeOnlyCell(cells[0])
+      && isAddressContinuationCell(cells[1])
+    ) {
+      left.push(cells[0], cells[1]);
+      // type\thouse\t… — keep a bare house in cell 3 only when cell 2 was the name.
+      if (cells.length >= 3 && new RegExp(`^${HOUSE_NUM_RE.source}$`, 'i').test(fold(cells[2]).trim())) {
+        left.push(cells[2]);
+      }
+      continue;
+    }
+    // `Viilor\t52` / `Viilor\t52\tStradă Aeroportului…` — name+house left, client street right.
+    const houseCell = fold(cells[1] || '').trim();
+    const nameLike = /^[a-z]{3,}(?:\s+[a-z]{3,}){0,2}$/i.test(firstFold)
+      && !isStreetTypeOnlyCell(cells[0])
+      && !LOCALITY_NOISE.test(firstFold);
+    if (
+      nameLike
+      && cells.length >= 2
+      && new RegExp(`^${HOUSE_NUM_RE.source}$`, 'i').test(houseCell)
+    ) {
+      left.push(cells[0], cells[1]);
+      continue;
+    }
     // Skip cells that are clearly the Client id column (C######## / AP-…).
     if (/^c\d{8}\b/.test(firstFold) || /^ap-/.test(firstFold)) continue;
+    // Sector fragment left of the Client town (`5 RO\tBucurești Sector 1…`) — not a street.
+    if (/^\d{1,2}\s*ro$/i.test(firstFold)) continue;
     left.push(cells[0]);
     // type\thouse\tclientStreet — middle cell is delivery house number.
     if (cells.length >= 3 && /^(nr\.?\s*)?[a-z0-9\-]+$/i.test(secondCompact)) {
@@ -372,60 +536,11 @@ function parseDestBlock(section, { interleaved = false } = {}) {
   const localityRaw = localityFromSection(folded);
   const localityFolded = localityRaw ? fold(localityRaw) : '';
 
-  const typeMatch = folded.match(new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags));
-  let streetType = typeMatch?.groups?.type?.replace(/\.$/, '') || null;
-  let streetName = null;
-
-  if (typeMatch) {
-    const afterType = folded.slice(typeMatch.index + typeMatch[0].length);
-    // Skip `nr. 31B` / OCR `nr IF` that often sits between STR and the street name line.
-    const afterNr = afterType.replace(/^\s*(?:nr\.?\s*)?[a-z]?\d[a-z0-9\-]*\s*/i, ' ');
-    const afterTokens = afterNr.match(/[a-z]{3,}/g) || [];
-    for (const tok of afterTokens) {
-      if (isUsableStreetToken(tok, localityFolded)) {
-        streetName = tok;
-        break;
-      }
-    }
-    // Street name immediately before the type word (`Viilor Șosea`) — not earlier site tags.
-    if (!streetName) {
-      const before = folded.slice(0, typeMatch.index).trim();
-      const prev = before.match(/([a-z]{4,})$/);
-      if (prev && isUsableStreetToken(prev[1], localityFolded)) {
-        streetName = prev[1];
-      }
-    }
-  }
-
-  const nrMatch = folded.match(/\bnr\.?\s*([a-z0-9][a-z0-9\-]*)/);
-  let rawHouse = nrMatch?.[1] && !LOCALITY_NOISE.test(nrMatch[1]) && !/^pagina/i.test(nrMatch[1])
-    ? nrMatch[1]
+  const { streetType, streetName, houseNumber: houseRaw } = parseStreetParts(folded, localityFolded);
+  // Without a street name, a lone house number is not an address leg ("nr. 52" alone).
+  const rawHouse = streetName && houseRaw && !LOCALITY_NOISE.test(houseRaw) && !/^pagina/i.test(houseRaw)
+    ? houseRaw
     : null;
-  // Baumit often prints `Str. Republicii, IF Bolintin-Deal` with `nr.` on the next line.
-  if (!rawHouse && streetName) {
-    const afterStreet = folded.slice(folded.indexOf(streetName) + streetName.length);
-    const bare = afterStreet.match(/^\s*,?\s*(?:nr\.?\s*)?([0-9]+[a-z]?|[il]f)\b/i);
-    if (bare?.[1] && !LOCALITY_NOISE.test(fold(bare[1]))) rawHouse = bare[1];
-  }
-
-  if (!streetName && rawHouse) {
-    const loose = folded.match(/([a-z]{4,})(?:\s+([a-z]{3,}))?\s+nr\.?\s*[a-z0-9]/);
-    if (loose && isUsableStreetToken(loose[1], localityFolded)) {
-      streetName = loose[1];
-      if (loose[2] && isUsableStreetToken(loose[2], localityFolded)) {
-        streetName = `${loose[1]} ${loose[2]}`;
-      }
-    }
-  }
-
-  // "Iuliu Maniu" — second token only when it is still a street word, not the town.
-  if (streetName && !/\s/.test(streetName) && typeMatch) {
-    const afterName = folded.slice(folded.indexOf(streetName) + streetName.length);
-    const second = afterName.match(/^\s*([a-z]{3,})/);
-    if (second && isUsableStreetToken(second[1], localityFolded)) {
-      streetName = `${streetName} ${second[1]}`;
-    }
-  }
 
   const locality = localityRaw ? displayWords(localityRaw) : null;
   const street = compactStreet(streetName, rawHouse);
@@ -468,10 +583,11 @@ function streetTypeLabel(type) {
 function formatAddressLine(block) {
   if (!block) return null;
   const name = displayWords(block.streetName);
-  const type = streetTypeLabel(block.streetType) || (name ? 'Str.' : null);
-  const street = [type, name].filter(Boolean).join(' ');
+  // Type alone ("Șosea") or number alone ("nr. 52") is not an address leg.
+  if (!name) return displayWords(block.locality);
+  const type = streetTypeLabel(block.streetType) || 'Str.';
   const nr = block.houseNumber ? `nr. ${block.houseNumber}` : null;
-  const streetLine = [street, nr].filter(Boolean).join(' ');
+  const streetLine = [type, name, nr].filter(Boolean).join(' ');
   const locality = displayWords(block.locality);
   if (streetLine && locality) return `${streetLine}, ${locality}`;
   return streetLine || locality || null;

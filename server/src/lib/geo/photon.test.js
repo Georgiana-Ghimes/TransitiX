@@ -26,7 +26,15 @@ function feature(props, coordinates = [26.1025, 44.4268]) {
 describe('buildQueryText', () => {
   it('assembles street, city and postcode and pins the country', () => {
     const parsed = parseRomanianAddress('Cluj-Napoca, str. Fabricii 12');
-    expect(buildQueryText(parsed)).toBe('str. Fabricii 12, cluj napoca, Romania');
+    // Type abbreviations are expanded so Photon sees "strada", not a form it may miss.
+    expect(buildQueryText(parsed)).toBe('strada fabricii 12, cluj napoca, Romania');
+  });
+
+  it('expands Bvd. the same way as Bd. for boulevard queries', () => {
+    expect(buildQueryText(parseRomanianAddress('Bvd. Iuliu Maniu nr. 600A, Bucuresti')))
+      .toBe('bulevardul iuliu maniu nr 600a, bucuresti, Romania');
+    expect(buildQueryText(parseRomanianAddress('Bd. Iuliu Maniu nr. 600A, Bucuresti')))
+      .toBe('bulevardul iuliu maniu nr 600a, bucuresti, Romania');
   });
 
   it('falls back to the raw text when nothing parsed', () => {

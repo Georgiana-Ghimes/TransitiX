@@ -14,7 +14,7 @@
  * first if a real key returns something different.
  */
 
-import { parseRomanianAddress } from './address.js';
+import { geocodeStreetQuery, parseRomanianAddress } from './address.js';
 import { buildSearchResult } from './matchScore.js';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -44,7 +44,8 @@ function httpError(message, status) {
 
 /** Free-text query, same assembly as the Photon client so both see the same input. */
 export function buildQueryText(parsed) {
-  const parts = [parsed?.street, parsed?.city, parsed?.county, parsed?.postcode].filter(Boolean);
+  const street = geocodeStreetQuery(parsed?.street) || parsed?.street;
+  const parts = [street, parsed?.city, parsed?.county, parsed?.postcode].filter(Boolean);
   if (!parts.length && parsed?.raw) parts.push(parsed.raw);
   return parts.join(', ');
 }

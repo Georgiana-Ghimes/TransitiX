@@ -30,6 +30,14 @@ export const AVIZ_ACTION_LEGEND = [
     text: 'Scoate avizul din listă. Folosește-l pentru dubluri, teste sau documente încărcate greșit. Nu se poate anula.',
   },
   {
+    name: 'Șterge selectate',
+    text: 'Bifează mai multe rânduri, apoi Șterge selectate. Confirmarea e obligatorie; după ștergere selecția se golește. Nu se poate anula.',
+  },
+  {
+    name: 'Paginare',
+    text: 'Lista arată 20, 50, 100 sau 500 de avize pe pagină (alegerea se ține minte). Selectarea rămâne peste pagini până schimbi filtrele; „selectează tot” bifează doar pagina curentă.',
+  },
+  {
     name: 'Aviz duplicat',
     text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta nu blochează nimic, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
   },
@@ -56,6 +64,44 @@ export const TEMPLATE_ACTION_LEGEND = [
 
 export function isLockedRai(t) {
   return String(t?.name || '').trim() === 'Anexa Factura RAI';
+}
+
+/** Must stay aligned with `AVIZ_PAGE_SIZES` on the server. */
+export const AVIZ_PAGE_SIZES = [20, 50, 100, 500];
+export const AVIZ_DEFAULT_PAGE_SIZE = 50;
+const AVIZ_PAGE_SIZE_KEY = 'transitix.avize.pageSize';
+
+export function readAvizPageSize() {
+  try {
+    const n = Number(localStorage.getItem(AVIZ_PAGE_SIZE_KEY));
+    if (AVIZ_PAGE_SIZES.includes(n)) return n;
+  } catch {
+    // Private window / blocked storage — fall through.
+  }
+  return AVIZ_DEFAULT_PAGE_SIZE;
+}
+
+export function writeAvizPageSize(n) {
+  if (!AVIZ_PAGE_SIZES.includes(n)) return;
+  try {
+    localStorage.setItem(AVIZ_PAGE_SIZE_KEY, String(n));
+  } catch {
+    // Same as blur / offline: never block the screen for storage.
+  }
+}
+
+/** Normalises GET /avize into `{ items, total, limit, offset }`. */
+export function asAvizPage(res) {
+  if (Array.isArray(res)) {
+    return { items: res, total: res.length, limit: res.length, offset: 0 };
+  }
+  const items = Array.isArray(res?.items) ? res.items : [];
+  return {
+    items,
+    total: Number(res?.total) || 0,
+    limit: Number(res?.limit) || AVIZ_DEFAULT_PAGE_SIZE,
+    offset: Number(res?.offset) || 0,
+  };
 }
 
 export function formatIncarcareLabel(row, formatDate = (d) => d) {

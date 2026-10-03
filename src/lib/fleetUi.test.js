@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canonicalPlateClient, mmaLabel, parseMmaKg, resolveVehicleMma, sanitizeMmaInput,
+  asFleetPage,
+  canonicalPlateClient,
+  FLEET_DEFAULT_PAGE_SIZE,
+  mmaLabel,
+  parseMmaKg,
+  resolveVehicleMma,
+  sanitizeMmaInput,
 } from './fleetUi.js';
 
 describe('canonicalPlateClient', () => {
@@ -117,3 +123,24 @@ describe('resolveVehicleMma', () => {
     expect(resolveVehicleMma(null, 'B-112-VFM').status).toBe('unknown');
   });
 });
+
+describe('asFleetPage', () => {
+  it('normalises the paginated fleet response', () => {
+    expect(asFleetPage([{ id: '1', mma_kg: null }])).toEqual({
+      items: [{ id: '1', mma_kg: null }],
+      total: 1,
+      missing_mma: 1,
+      limit: 1,
+      offset: 0,
+    });
+    expect(asFleetPage({
+      items: [{ id: '1' }], total: 40, missing_mma: 3, limit: 20, offset: 20,
+    })).toEqual({
+      items: [{ id: '1' }], total: 40, missing_mma: 3, limit: 20, offset: 20,
+    });
+    expect(asFleetPage(null)).toEqual({
+      items: [], total: 0, missing_mma: 0, limit: FLEET_DEFAULT_PAGE_SIZE, offset: 0,
+    });
+  });
+});
+

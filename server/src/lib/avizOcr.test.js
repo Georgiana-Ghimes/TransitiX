@@ -184,6 +184,89 @@ Comandă de transport TPO-0025629
     expect(parsed.ruta_transport).not.toMatch(/Fundeni|Locotenent|Moga|Aeroportului/i);
   });
 
+  it('keeps the street name when the type sits alone left of a tab (Sosea\\tViilor)', () => {
+    // pdf-parse often splits "Șosea Viilor nr. 52" so the type is one cell and the name the
+    // next. Treating every right cell as Client produced route legs of just "Șosea".
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal
+RO 087015
+Adresă de livrare	Client
+CS-CONCELEX- OBI LOHN	C23901527 CONCELEX SRL
+Sosea	Viilor nr. 52
+Bucuresti	050151
+Client factură:	C23901527 CONCELEX SRL
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/\/ Șosea,/);
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Bucuresti', streetName: 'viilor', streetType: 'sosea', houseNumber: '52',
+    });
+  });
+
+  it('rebuilds Șosea Viilor when tab OCR puts name+house above the type (client original)', () => {
+    // Real Baumit two-column extract: name and number land one row above "Șosea\tnr.",
+    // while the Client street (Aeroportului) sits in the right cells.
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresă de livrare	Client
+CS-CONCELEX- OBI LOHN	C23000014 AP-CONCELEX- OBI LOHN
+Viilor	52	Stradă Aeroportului nr. 120-T
+Șosea	nr.
+5 RO	București Sector 1 RO 013596
+București Sector	050151
+ROU	ROU
+Client factură:	C23901527 CONCELEX SRL
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Bucuresti', streetName: 'viilor', streetType: 'sosea', houseNumber: '52',
+    });
+  });
+
+  it('does not emit a bare street type as the delivery leg', () => {
+    const raw = `
+Expeditor Str. Republicii nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare Sosea Bucuresti Sector 5 RO 050151
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Șosea/);
+  });
+
+  it('does not emit a house number without a street name', () => {
+    const raw = `
+Expeditor Str. Republicii nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare	Client
+Sosea	nr. 52
+Bucuresti	050151
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/\bnr\.\s*52\b/);
+    expect(parsed.delivery_address?.streetName).toBeFalsy();
+  });
+
+  it('reads house-then-name after the type (nr. before the street word)', () => {
+    const raw = `
+Expeditor Str. Republicii nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare Sosea nr. 52 Viilor Bucuresti Sector 5 RO 050151
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+  });
+
   it('replaces a stored Client-column delivery leg with Adresa de livrare from raw OCR', () => {
     const raw = `
 Expeditor

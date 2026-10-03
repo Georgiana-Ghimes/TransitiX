@@ -999,8 +999,30 @@ export const api = {
       return request('/reports/exports', { method: 'DELETE' });
     },
   },
+  fleet: {
+    list({ q, limit, offset } = {}) {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (limit != null) params.set('limit', String(limit));
+      if (offset != null) params.set('offset', String(offset));
+      const qs = params.toString();
+      return request(`/fleet${qs ? `?${qs}` : ''}`);
+    },
+    ids({ q } = {}) {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      const qs = params.toString();
+      return request(`/fleet/ids${qs ? `?${qs}` : ''}`);
+    },
+    bulkDelete({ ids, all_matching = false, q } = {}) {
+      return request('/fleet/bulk-delete', {
+        method: 'POST',
+        body: all_matching ? { all_matching: true, q } : { ids },
+      });
+    },
+  },
   avize: {
-    list({ from, to, status, q, uploaded_from, date_field } = {}) {
+    list({ from, to, status, q, uploaded_from, date_field, limit, offset } = {}) {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
@@ -1008,6 +1030,8 @@ export const api = {
       if (q) params.set('q', q);
       if (uploaded_from) params.set('uploaded_from', uploaded_from);
       if (date_field) params.set('date_field', date_field);
+      if (limit != null) params.set('limit', String(limit));
+      if (offset != null) params.set('offset', String(offset));
       const qs = params.toString();
       return request(`/avize${qs ? `?${qs}` : ''}`);
     },
@@ -1064,6 +1088,12 @@ export const api = {
       return request('/avize/bulk-confirm', {
         method: 'POST',
         body: { ids, force, force_reason },
+      });
+    },
+    bulkDelete(ids) {
+      return request('/avize/bulk-delete', {
+        method: 'POST',
+        body: { ids },
       });
     },
     confirm(id, { force = false, force_reason } = {}) {

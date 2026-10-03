@@ -45,7 +45,7 @@ function tomtomResult(over = {}) {
 describe('buildQueryText', () => {
   it('assembles street, city and county', () => {
     const parsed = parseRomanianAddress('Cluj-Napoca, str. Fabricii 12');
-    expect(buildQueryText(parsed)).toBe('str. Fabricii 12, cluj napoca, CJ');
+    expect(buildQueryText(parsed)).toBe('strada fabricii 12, cluj napoca, CJ');
   });
 
   it('falls back to the raw text when nothing parsed', () => {

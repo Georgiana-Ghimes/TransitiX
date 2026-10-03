@@ -117,6 +117,7 @@ const AUTOTURISME = {
       'Mașinile fără MTMA sunt semnalate, iar clopoțelul îți amintește cât timp rămân așa.',
       'Scrii MTMA. Poți scrie 19000 sau 19, valorile sub 1000 sunt citite ca tone.',
       'După salvare câmpul rămâne blocat. Creionul de lângă el îl deblochează, ca să nu se schimbe din greșeală.',
+      'Lista e paginată (20 / 50 / 100 / 500). „Selectează toate” bifează tot ce e în filtrul curent, pe toate paginile; Șterge selectate le scoate pe toate.',
     ]),
     p('Poți adăuga mașini și manual, înainte să vină primul aviz, ca flota să fie completă din prima zi.'),
     warn('Fără MTMA nu se calculează nicio taxă de zonă pentru mașina aceea. Nu se ghicește un tonaj, fiindcă intervalul greșit se plătește lună de lună.'),

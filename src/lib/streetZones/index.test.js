@@ -39,7 +39,7 @@ describe('lookupStreet', () => {
   });
 
   it('finds the same street however the type word is written', () => {
-    for (const form of ['bd. Dacia', 'B-dul Dacia', 'Bulevardul Dacia']) {
+    for (const form of ['bd. Dacia', 'Bvd. Dacia', 'B-dul Dacia', 'Bulevardul Dacia']) {
       expect(lookupStreet(index, form).found?.key, form).toBe('bulevardul dacia');
     }
   });
@@ -252,5 +252,27 @@ describe('telling a street name from a street plus number', () => {
     for (const form of ['Calea Victoriei 12', 'Calea Victoriei nr. 12', 'Calea Victoriei, 12']) {
       expect(lookupAddress(index, form).number, form).toBe('12');
     }
+  });
+
+  it('strips a trailing locality so aviz legs resolve on the map', () => {
+    // Annex / aviz delivery: `Bvd. Iuliu Maniu nr. 600A, Bucuresti`. Leaving the city on
+    // blocked the house-number split and the index answered unknown for a street it has.
+    for (const form of [
+      'Bvd. Iuliu Maniu nr. 600A, Bucuresti',
+      'Bvd. Iuliu Maniu 600A, București',
+      'Bd. Iuliu Maniu nr. 600A, Bucuresti',
+    ]) {
+      const res = lookupAddress(index, form);
+      expect(res.status, form).toBe('exact');
+      expect(res.found?.key, form).toBe('bulevardul iuliu maniu');
+      expect(res.number, form).toBe('600A');
+    }
+  });
+
+  it('strips the open city tab label even without a comma', () => {
+    const res = lookupAddress(index, 'Bvd Iuliu Maniu 600A Bucuresti', { cityLabel: 'București' });
+    expect(res.status).toBe('exact');
+    expect(res.found?.key).toBe('bulevardul iuliu maniu');
+    expect(res.number).toBe('600A');
   });
 });

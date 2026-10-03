@@ -224,7 +224,9 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
 
     const res = await api().get('/api/avize').set(auth(ctx.adminToken));
     expect(res.status).toBe(200);
-    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    expect(Array.isArray(res.body.items)).toBe(true);
+    expect(typeof res.body.total).toBe('number');
+    const mine = res.body.items.filter((r) => r.numar_tpo === tpo);
     expect(mine).toHaveLength(2);
     expect(mine.map((r) => r.duplicate_tpo)).toEqual([false, false]);
     // List keeps the stored column (default 1). Run-count derivation is for annex export.
@@ -246,9 +248,40 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
     }
 
     const res = await api().get('/api/avize').set(auth(ctx.adminToken));
-    const mine = res.body.filter((r) => r.numar_tpo === tpo);
+    const mine = res.body.items.filter((r) => r.numar_tpo === tpo);
     expect(mine).toHaveLength(2);
     expect(mine.map((r) => r.duplicate_tpo)).toEqual([true, true]);
+  });
+
+  it('pages the list and still flags a duplicate that lives on another page', async () => {
+    const tpo = `TPO-PAGE-DUP-${Date.now()}`;
+    const common = {
+      numar_tpo: tpo,
+      numar_document_marfa: 'PSL-0044999',
+      ruta_transport: 'Bol-Bucuresti/Viilor52',
+      data_efectuare_cursa: '2026-08-10',
+      numar_auto: 'B-34-BAU',
+    };
+    // created_at DESC: the second insert is page 1 when limit=1.
+    await makeAviz(ctx.company.id, { ...common, original_filename: 'vechi.pdf' });
+    await makeAviz(ctx.company.id, { ...common, original_filename: 'nou.pdf' });
+
+    const page1 = await api().get('/api/avize')
+      .query({ limit: 1, offset: 0, q: tpo })
+      .set(auth(ctx.adminToken));
+    expect(page1.status).toBe(200);
+    expect(page1.body.limit).toBe(1);
+    expect(page1.body.offset).toBe(0);
+    expect(page1.body.total).toBeGreaterThanOrEqual(2);
+    expect(page1.body.items).toHaveLength(1);
+    expect(page1.body.items[0].duplicate_tpo).toBe(true);
+
+    const page2 = await api().get('/api/avize')
+      .query({ limit: 1, offset: 1, q: tpo })
+      .set(auth(ctx.adminToken));
+    expect(page2.body.items).toHaveLength(1);
+    expect(page2.body.items[0].duplicate_tpo).toBe(true);
+    expect(page2.body.items[0].id).not.toBe(page1.body.items[0].id);
   });
 });
 
@@ -292,5 +325,57 @@ describe('PUT /api/entities/AvizDocument, avertismentul de la Salvează', () => 
       .set(auth(ctx.adminToken)).send({ km_parcursi: 51 });
     expect(res.status).toBe(200);
     expect(res.body.duplicate_tpo).toBe(true);
+  });
+});
+
+describe('POST /api/avize/bulk-delete', () => {
+  it('deletes only the selected avize for the company', async () => {
+    const a = await makeAviz(ctx.company.id, { numar_tpo: `TPO-DEL-A-${Date.now()}` });
+    const b = await makeAviz(ctx.company.id, { numar_tpo: `TPO-DEL-B-${Date.now()}` });
+    const keep = await makeAviz(ctx.company.id, { numar_tpo: `TPO-DEL-KEEP-${Date.now()}` });
+
+    const res = await api().post('/api/avize/bulk-delete').set(auth(ctx.adminToken))
+      .send({ ids: [a.id, b.id] });
+    expect(res.status).toBe(200);
+    expect(res.body.deleted).toBe(2);
+    expect(res.body.ids.sort()).toEqual([a.id, b.id].sort());
+
+    const gone = await query(
+      `SELECT id FROM aviz_documents WHERE id = ANY($1::uuid[])`,
+      [[a.id, b.id]]
+    );
+    expect(gone.rows).toHaveLength(0);
+    const still = await query(`SELECT id FROM aviz_documents WHERE id = $1`, [keep.id]);
+    expect(still.rows).toHaveLength(1);
+
+    const events = await query(
+      `SELECT kind, detail->>'aviz_id' AS aviz_id
+       FROM document_events
+       WHERE company_id = $1 AND kind = 'deleted'
+         AND detail->>'aviz_id' = ANY($2::text[])`,
+      [ctx.company.id, [a.id, b.id]]
+    );
+    expect(events.rows).toHaveLength(2);
+  });
+
+  it('refuses an empty selection', async () => {
+    const res = await api().post('/api/avize/bulk-delete').set(auth(ctx.adminToken))
+      .send({ ids: [] });
+    expect(res.status).toBe(400);
+  });
+
+  it('does not delete another company\'s avize', async () => {
+    const other = await seedCompany('avize-bulk-del');
+    try {
+      const foreign = await makeAviz(other.company.id, { numar_tpo: `TPO-FOREIGN-${Date.now()}` });
+      const res = await api().post('/api/avize/bulk-delete').set(auth(ctx.adminToken))
+        .send({ ids: [foreign.id] });
+      expect(res.status).toBe(200);
+      expect(res.body.deleted).toBe(0);
+      const still = await query(`SELECT id FROM aviz_documents WHERE id = $1`, [foreign.id]);
+      expect(still.rows).toHaveLength(1);
+    } finally {
+      await dropCompany(other.company.id);
+    }
   });
 });

@@ -22,6 +22,8 @@ import AvizTemplatesTab from './avize/AvizTemplatesTab';
 import { DriverUploadBadge, NeedsReviewBadge, SourceBadge } from './avize/AvizFilePreview';
 import {
   AVIZ_ACTION_LEGEND,
+  AVIZ_PAGE_SIZES,
+  asAvizPage,
   columnCountOf,
   displayRoute,
   downloadBlob,
@@ -33,12 +35,17 @@ import {
   isLockedRai,
   labelCls,
   lowField,
+  readAvizPageSize,
   shouldAutoDownloadEmailFallback,
+  writeAvizPageSize,
 } from './avize/avizeUi';
 
 export default function AvizeReports() {
   const [tab, setTab] = useState('avize');
   const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(readAvizPageSize);
   const [templates, setTemplates] = useState([]);
   const [obsCodes, setObsCodes] = useState([]);
   const [reportData, setReportData] = useState({ by_plate: [], weekly: [], exports: [] });
@@ -51,6 +58,8 @@ export default function AvizeReports() {
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
+  const [deleteBulkOpen, setDeleteBulkOpen] = useState(false);
+  const [deleteBulkCount, setDeleteBulkCount] = useState(0);
   const [confirmDuplicate, setConfirmDuplicate] = useState(null);
   const [confirmReextract, setConfirmReextract] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -75,6 +84,7 @@ export default function AvizeReports() {
   const cameraRef = useRef(null);
   const loadGen = useRef(0);
   const bulkConfirmLock = useRef(false);
+  const bulkDeleteLock = useRef(false);
   const emailFallbackDownloadedRef = useRef(false);
 
   const [ocrDown, setOcrDown] = useState(false);
@@ -105,23 +115,26 @@ export default function AvizeReports() {
     };
   }, []);
 
-  const load = async (filterOverride) => {
+  const load = async (filterOverride, pageOverride) => {
     const activeFilters = filterOverride ?? filters;
+    const activePage = pageOverride ?? page;
+    const offset = activePage * pageSize;
     const gen = ++loadGen.current;
     try {
-      const [avize, tmpls, codes] = await Promise.all([
-        api.avize.list(activeFilters),
+      const [avizeRes, tmpls, codes] = await Promise.all([
+        api.avize.list({ ...activeFilters, limit: pageSize, offset }),
         api.avize.templates(),
         api.avize.observationCodes().catch(() => []),
       ]);
       if (gen !== loadGen.current) return;
-      const list = Array.isArray(avize) ? avize : [];
-      setRows(list);
-      setSelected((prev) => {
-        const visible = new Set(list.map((r) => r.id));
-        const next = new Set([...prev].filter((id) => visible.has(id)));
-        return next;
-      });
+      const pageData = asAvizPage(avizeRes);
+      setRows(pageData.items);
+      setTotal(pageData.total);
+      // Delete-on-last-page (or a stale offset): step onto the last page that still has rows.
+      if (pageData.items.length === 0 && pageData.total > 0 && offset >= pageData.total) {
+        setPage(Math.max(0, Math.ceil(pageData.total / pageSize) - 1));
+        return;
+      }
       setTemplates(tmpls);
       setObsCodes(codes);
       setTemplateId((prev) => {
@@ -129,16 +142,18 @@ export default function AvizeReports() {
         return tmpls.find((t) => t.is_default)?.id || tmpls[0]?.id || '';
       });
 
-      // Empty list with active filters: check whether the company actually has rows.
+      // Empty page with active filters: check whether the company actually has rows.
       const filtersActive = Boolean(
         activeFilters.from || activeFilters.to || activeFilters.status
         || activeFilters.q || activeFilters.uploaded_from
       );
-      if (list.length === 0 && filtersActive) {
+      if (pageData.total === 0 && filtersActive) {
         try {
-          const all = await api.avize.list({ date_field: 'incarcare' });
+          const all = asAvizPage(await api.avize.list({
+            date_field: 'incarcare', limit: 1, offset: 0,
+          }));
           if (gen !== loadGen.current) return;
-          setHiddenByFilters(Array.isArray(all) ? all.length : 0);
+          setHiddenByFilters(all.total);
         } catch {
           setHiddenByFilters(0);
         }
@@ -163,10 +178,19 @@ export default function AvizeReports() {
     return () => clearTimeout(t);
   }, [qInput]);
 
+  // New filters → first page + clear cross-page selection (stale IDs would export the wrong set).
+  useEffect(() => {
+    setPage(0);
+    setSelected(new Set());
+  }, [filters.from, filters.to, filters.status, filters.q, filters.uploaded_from, filters.date_field]);
+
   useEffect(() => {
     if (!loading) setRefreshing(true);
     load();
-  }, [filters.from, filters.to, filters.status, filters.q, filters.uploaded_from, filters.date_field]);
+  }, [
+    filters.from, filters.to, filters.status, filters.q, filters.uploaded_from, filters.date_field,
+    page, pageSize,
+  ]);
 
   /**
    * Notifications already poll every 15s while the office tab is open. The avize table used to
@@ -181,14 +205,12 @@ export default function AvizeReports() {
       if (document.hidden || uploading || busyId) return;
       const gen = ++loadGen.current;
       try {
-        const avize = await api.avize.list(filters);
+        const pageData = asAvizPage(await api.avize.list({
+          ...filters, limit: pageSize, offset: page * pageSize,
+        }));
         if (gen !== loadGen.current) return;
-        if (!Array.isArray(avize)) return;
-        setRows(avize);
-        setSelected((prev) => {
-          const visible = new Set(avize.map((r) => r.id));
-          return new Set([...prev].filter((id) => visible.has(id)));
-        });
+        setRows(pageData.items);
+        setTotal(pageData.total);
       } catch {
         // Background refresh must not toast over the operator.
       }
@@ -208,6 +230,8 @@ export default function AvizeReports() {
     tab,
     uploading,
     busyId,
+    page,
+    pageSize,
     filters.from,
     filters.to,
     filters.status,
@@ -342,10 +366,31 @@ export default function AvizeReports() {
     });
   };
 
+  const allPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
   const toggleAll = () => {
-    if (selected.size === rows.length) setSelected(new Set());
-    else setSelected(new Set(rows.map((r) => r.id)));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        for (const r of rows) next.delete(r.id);
+      } else {
+        for (const r of rows) next.add(r.id);
+      }
+      return next;
+    });
   };
+
+  const changePageSize = (n) => {
+    const size = Number(n);
+    if (!AVIZ_PAGE_SIZES.includes(size)) return;
+    writeAvizPageSize(size);
+    setPageSize(size);
+    setPage(0);
+  };
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize) || 1);
+  const rangeFrom = total === 0 ? 0 : page * pageSize + 1;
+  const rangeTo = Math.min(total, (page + 1) * pageSize);
 
   const openEdit = async (row) => {
     setEditRow(row);
@@ -592,6 +637,33 @@ export default function AvizeReports() {
     }
   };
 
+  const runBulkDelete = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) {
+      notifyError('Nimic selectat', 'Bifează cel puțin un aviz pentru ștergere.');
+      return;
+    }
+    if (bulkDeleteLock.current) return;
+    bulkDeleteLock.current = true;
+    setBusy(true);
+    try {
+      const result = await api.avize.bulkDelete(ids);
+      const n = Number(result?.deleted) || 0;
+      notifySuccess(
+        'Avize șterse',
+        n === 1 ? '1 aviz eliminat.' : `${n} avize eliminate.`
+      );
+      setSelected(new Set());
+      setDeleteBulkOpen(false);
+      await load();
+    } catch (e) {
+      notifyError('Ștergere eșuată', e);
+    } finally {
+      setBusy(false);
+      bulkDeleteLock.current = false;
+    }
+  };
+
   const zipSelected = async () => {
     const ids = [...selected];
     if (ids.length === 0 || !templateId) {
@@ -826,6 +898,57 @@ export default function AvizeReports() {
     />
   );
 
+  const paginationBar = (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-1 py-1">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+        <label className="inline-flex items-center gap-2">
+          <span className="text-slate-500">Afișează</span>
+          <select
+            value={pageSize}
+            onChange={(e) => changePageSize(e.target.value)}
+            className="h-9 px-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-[#1D4E89]"
+            aria-label="Număr de avize pe pagină"
+          >
+            {AVIZ_PAGE_SIZES.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+          <span className="text-slate-500">pe pagină</span>
+        </label>
+        <span className="text-slate-400 hidden sm:inline">·</span>
+        <span className="tabular-nums text-slate-600">
+          {total === 0 ? '0 avize' : `${rangeFrom}–${rangeTo} din ${total}`}
+        </span>
+        {selected.size > 0 ? (
+          <span className="text-xs text-slate-500">
+            ({selected.size} selectate{selected.size > rows.length ? ', inclusiv pe alte pagini' : ''})
+          </span>
+        ) : null}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={page <= 0 || busy || refreshing}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          className="inline-flex h-9 items-center px-3 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+        >
+          Înapoi
+        </button>
+        <span className="text-sm tabular-nums text-slate-600 min-w-[5.5rem] text-center">
+          {Math.min(page + 1, pageCount)} / {pageCount}
+        </span>
+        <button
+          type="button"
+          disabled={page + 1 >= pageCount || busy || refreshing}
+          onClick={() => setPage((p) => p + 1)}
+          className="inline-flex h-9 items-center px-3 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
+        >
+          Înainte
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -956,6 +1079,22 @@ export default function AvizeReports() {
           {filterBar}
           <AvizLegend id="avize-actiuni" title="Legendă acțiuni" items={AVIZ_ACTION_LEGEND} />
 
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={selected.size === 0 || busy}
+              onClick={() => {
+                setDeleteBulkCount(selected.size);
+                setDeleteBulkOpen(true);
+              }}
+              title={selected.size === 0 ? 'Bifează avizele din tabel, apoi apasă aici' : 'Șterge definitiv avizele selectate'}
+              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-red-200 text-red-700 bg-white rounded-lg hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              Șterge selectate ({selected.size})
+            </button>
+          </div>
+
           {rows.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm space-y-3">
               <ClipboardList className="w-10 h-10 mx-auto mb-1 opacity-40" />
@@ -1066,7 +1205,12 @@ export default function AvizeReports() {
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-500 text-xs">
                         <th className="px-2 py-2.5 w-9">
-                          <input type="checkbox" checked={rows.length > 0 && selected.size === rows.length} onChange={toggleAll} />
+                          <input
+                            type="checkbox"
+                            checked={allPageSelected}
+                            onChange={toggleAll}
+                            title="Selectează / deselectează pagina curentă"
+                          />
                         </th>
                         <th className="text-left font-medium px-2 py-2.5 min-w-[6.5rem]">TPO</th>
                         <th className="text-left font-medium px-2 py-2.5 w-[5.5rem]">Data</th>
@@ -1161,6 +1305,7 @@ export default function AvizeReports() {
                   </table>
                 </div>
               </div>
+              {paginationBar}
             </>
           )}
         </>
@@ -1396,6 +1541,20 @@ export default function AvizeReports() {
         title="Șterge avizul?"
         description={`Ștergeți ${deleteRow?.numar_tpo || deleteRow?.original_filename || 'acest aviz'}?`}
         confirmLabel="Șterge"
+      />
+      <ConfirmDialog
+        open={deleteBulkOpen}
+        onClose={() => { if (!busy) setDeleteBulkOpen(false); }}
+        onConfirm={runBulkDelete}
+        busy={busy}
+        variant="danger"
+        title="Șterge avizele selectate?"
+        description={
+          deleteBulkCount === 1
+            ? 'Ștergeți 1 aviz selectat? Acțiunea nu se poate anula.'
+            : `Ștergeți ${deleteBulkCount} avize selectate? Acțiunea nu se poate anula.`
+        }
+        confirmLabel={deleteBulkCount === 1 ? 'Șterge' : `Șterge ${deleteBulkCount}`}
       />
       <ConfirmDialog
         open={Boolean(deleteTemplate)}

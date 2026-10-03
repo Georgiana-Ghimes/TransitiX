@@ -7,7 +7,7 @@
  * a geocoder that always answers is worse than one that admits when it guessed.
  */
 
-import { parseRomanianAddress } from './address.js';
+import { geocodeStreetQuery, parseRomanianAddress } from './address.js';
 import {
   AUTO_ACCEPT_CONFIDENCE,
   buildSearchResult,
@@ -42,7 +42,8 @@ function httpError(message, status) {
 
 /** Free-text query for Photon, assembled from the parsed parts we trust. */
 export function buildQueryText(parsed) {
-  const parts = [parsed?.street, parsed?.city, parsed?.postcode].filter(Boolean);
+  const street = geocodeStreetQuery(parsed?.street) || parsed?.street;
+  const parts = [street, parsed?.city, parsed?.postcode].filter(Boolean);
   if (!parts.length && parsed?.raw) parts.push(parsed.raw);
   parts.push('Romania');
   return parts.join(', ');

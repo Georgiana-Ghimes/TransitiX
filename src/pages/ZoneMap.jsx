@@ -194,6 +194,25 @@ export default function ZoneMap() {
    * it. The index never leaves the browser, which is the whole reason it exists: a search box
    * on this screen is routinely fed a customer's delivery address.
    */
+  const placePin = async (q) => {
+    const res = await api.commercial.locateZone({
+      address: q,
+      city: city.label,
+      mmaKg: effectiveMma,
+      plate: plate.trim() || null,
+    });
+    // Which drawn outline holds the pin. Asked here because the server answers about
+    // pricing, and a zone on the map that is not linked yet would otherwise come back as
+    // "no zone" while the operator is looking at the pin sitting inside it.
+    const drawn = res.point
+      ? [...city.zones]
+        .sort((a, b) => b.priority - a.priority)
+        .find((z) => pointInGeometry([res.point.latitude, res.point.longitude], z.outline))
+      : null;
+    setHit({ ...res, drawn: drawn ?? null });
+    return res;
+  };
+
   const search = async (e) => {
     e?.preventDefault();
     const q = address.trim();
@@ -203,33 +222,40 @@ export default function ZoneMap() {
     setLookup(null);
     try {
       const index = await ensureIndex();
+      let fromIndex = null;
       if (index) {
-        const found = lookupAddress(index, q);
-        if (found.status !== 'unknown') {
-          setLookup(found);
-          setSearching(false);
+        fromIndex = lookupAddress(index, q, { cityLabel: city.label });
+        // Keep the loaded index on the result so the card can resolve numbers even before
+        // React flushes `streetIndex` state on the first search.
+        setLookup(fromIndex.status === 'unknown' ? fromIndex : { ...fromIndex, index });
+        if (fromIndex.status !== 'unknown') {
+          // Index answers the zone without leaving the browser. Still ask the geocoder for a
+          // pin — otherwise the map stays empty and it looks like the address was not found.
+          try {
+            const res = await placePin(q);
+            if (!res.point) {
+              notifyError(
+                'Strada e în index, dar pinul lipsește',
+                'Zona e calculată mai sus; geocodarea nu a găsit coordonate pentru hartă. '
+                + 'Verifică PHOTON_URL pe server sau mută pinul din Locatii.',
+              );
+            }
+          } catch (err) {
+            if (err?.status === 503) {
+              notifyError(
+                'Strada e în index, dar harta nu are geocoder',
+                'Zona e calculată mai sus. Setează PHOTON_URL în server/.env ca să apară pinul '
+                + '(în dev: https://photon.komoot.io).',
+              );
+            } else {
+              notifyError('Pinul pe hartă a eșuat', err);
+            }
+          }
           return;
         }
-        // Not in the index: it may be a street we do not carry, or an address with a number.
-        // Fall through to the geocoder only if one is configured.
-        setLookup(found);
       }
 
-      const res = await api.commercial.locateZone({
-        address: q,
-        city: city.label,
-        mmaKg: effectiveMma,
-        plate: plate.trim() || null,
-      });
-      // Which drawn outline holds the pin. Asked here because the server answers about
-      // pricing, and a zone on the map that is not linked yet would otherwise come back as
-      // "no zone" while the operator is looking at the pin sitting inside it.
-      const drawn = res.point
-        ? [...city.zones]
-          .sort((a, b) => b.priority - a.priority)
-          .find((z) => pointInGeometry([res.point.latitude, res.point.longitude], z.outline))
-        : null;
-      setHit({ ...res, drawn: drawn ?? null });
+      const res = await placePin(q);
       if (!res.point) {
         notifyError('Adresă negăsită', res.message || 'Geocodarea nu a returnat niciun rezultat.');
       }
@@ -453,7 +479,7 @@ export default function ZoneMap() {
         <StreetResult
           lookup={lookup}
           city={city}
-          index={streetIndex}
+          index={lookup.index || streetIndex}
           mmaKg={effectiveMma}
           fromPlate={fromPlate}
           taxZoneFor={taxZoneFor}

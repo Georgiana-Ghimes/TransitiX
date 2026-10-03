@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  asAvizPage,
+  AVIZ_DEFAULT_PAGE_SIZE,
   displayRoute,
   emptyForm,
   formatIncarcareLabel,
@@ -100,5 +102,17 @@ describe('avizeUi', () => {
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: true })).toBe(true);
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: true, hasContent: true })).toBe(false);
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: false })).toBe(false);
+  });
+
+  it('normalises the paginated avize list response', () => {
+    expect(asAvizPage([{ id: '1' }])).toEqual({
+      items: [{ id: '1' }], total: 1, limit: 1, offset: 0,
+    });
+    expect(asAvizPage({ items: [{ id: '1' }], total: 40, limit: 20, offset: 20 })).toEqual({
+      items: [{ id: '1' }], total: 40, limit: 20, offset: 20,
+    });
+    expect(asAvizPage(null)).toEqual({
+      items: [], total: 0, limit: AVIZ_DEFAULT_PAGE_SIZE, offset: 0,
+    });
   });
 });

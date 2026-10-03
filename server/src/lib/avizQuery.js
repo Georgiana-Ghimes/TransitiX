@@ -142,6 +142,17 @@ export async function duplicateConsignmentExists(queryFn, { companyId, row, deco
 
 export const AVIZ_ID_CAP = 200;
 
+/** Page sizes the Avize table may ask for. Anything else falls back to the default. */
+export const AVIZ_PAGE_SIZES = [20, 50, 100, 500];
+export const AVIZ_DEFAULT_PAGE_SIZE = 50;
+
+export function normalizeAvizPage({ limit, offset } = {}) {
+  const raw = Number(limit);
+  const pageSize = AVIZ_PAGE_SIZES.includes(raw) ? raw : AVIZ_DEFAULT_PAGE_SIZE;
+  const off = Math.max(0, Math.floor(Number(offset) || 0));
+  return { limit: pageSize, offset: off };
+}
+
 export function capAvizIds(ids) {
   return [...new Set((Array.isArray(ids) ? ids : []).filter(Boolean))].slice(0, AVIZ_ID_CAP);
 }
@@ -223,8 +234,12 @@ export function avizDateClauses(dateField, alias = '') {
   };
 }
 
-export function buildAvizListQuery({
-  companyId, from, to, status, q, uploadedFrom, dateField, limit = 200,
+/**
+ * Shared WHERE for the list and its COUNT. One builder so a filter that lands on the page
+ * cannot disagree with the total shown under it.
+ */
+export function buildAvizFilterWhere({
+  companyId, from, to, status, q, uploadedFrom, dateField,
 }) {
   const where = ['a.company_id = $1'];
   const params = [companyId];
@@ -261,13 +276,30 @@ export function buildAvizListQuery({
     params.push(term);
     i += 1;
   }
-  const cap = Math.min(Math.max(Number(limit) || 200, 1), AVIZ_ID_CAP);
-  params.push(cap);
+  return { where, params, nextIndex: i };
+}
+
+export function buildAvizCountQuery(filters) {
+  const { where, params } = buildAvizFilterWhere(filters);
+  const sql = `SELECT COUNT(*)::int AS total
+    FROM aviz_documents a
+    WHERE ${where.join(' AND ')}`;
+  return { sql, params };
+}
+
+export function buildAvizListQuery({
+  companyId, from, to, status, q, uploadedFrom, dateField, limit, offset,
+}) {
+  const { where, params, nextIndex } = buildAvizFilterWhere({
+    companyId, from, to, status, q, uploadedFrom, dateField,
+  });
+  const page = normalizeAvizPage({ limit, offset });
+  params.push(page.limit, page.offset);
   const sql = `SELECT a.*, u.name AS uploaded_by_name
     FROM aviz_documents a
     LEFT JOIN users u ON u.id = a.uploaded_by AND u.company_id = a.company_id
     WHERE ${where.join(' AND ')}
     ORDER BY a.created_at DESC
-    LIMIT $${i}`;
-  return { sql, params };
+    LIMIT $${nextIndex} OFFSET $${nextIndex + 1}`;
+  return { sql, params, page };
 }

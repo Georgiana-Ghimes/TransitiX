@@ -11,7 +11,10 @@ describe('plainText', () => {
 
 describe('normalizeStreetName', () => {
   it('reaches one key from every spelling of the type word', () => {
-    const forms = ['Bulevardul Dacia', 'B-dul Dacia', 'bd. Dacia', 'bd Dacia', 'BD DACIA', 'Bdul Dacia'];
+    const forms = [
+      'Bulevardul Dacia', 'B-dul Dacia', 'bd. Dacia', 'bd Dacia', 'BD DACIA', 'Bdul Dacia',
+      'Bvd. Dacia', 'bvd Dacia', 'Blvd. Dacia', 'Bld. Dacia',
+    ];
     for (const form of forms) expect(normalizeStreetName(form), form).toBe('bulevardul dacia');
   });
 

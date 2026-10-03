@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   annexDraftAmount,
   applyNumarCurseByRuns,
+  AVIZ_DEFAULT_PAGE_SIZE,
+  buildAvizCountQuery,
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
   isLockedRaiTemplate,
   mapProviderToSource,
+  normalizeAvizPage,
   pickConfirmedAvize,
   templateDeleteDecision,
   templateUpdateDecision,
@@ -107,6 +110,42 @@ describe('avizQuery', () => {
     });
     expect(sql).toMatch(/uploaded_from =/);
     expect(params).toContain('driver');
+  });
+
+  it('paginates with an allowed page size and offset', () => {
+    const { sql, params, page } = buildAvizListQuery({
+      companyId: 'co',
+      limit: 100,
+      offset: 200,
+    });
+    expect(sql).toMatch(/LIMIT \$\d+ OFFSET \$\d+/);
+    expect(page).toEqual({ limit: 100, offset: 200 });
+    expect(params.slice(-2)).toEqual([100, 200]);
+  });
+
+  it('falls back to the default page size for an unknown limit', () => {
+    expect(normalizeAvizPage({ limit: 999, offset: -3 }))
+      .toEqual({ limit: AVIZ_DEFAULT_PAGE_SIZE, offset: 0 });
+    expect(normalizeAvizPage({ limit: 20, offset: 40 }))
+      .toEqual({ limit: 20, offset: 40 });
+  });
+
+  it('counts with the same filters as the list', () => {
+    const filters = {
+      companyId: 'co',
+      from: '2026-08-01',
+      to: '2026-08-31',
+      status: 'confirmed',
+      q: 'TPO-1',
+      uploadedFrom: 'driver',
+      dateField: 'incarcare',
+    };
+    const list = buildAvizListQuery({ ...filters, limit: 50, offset: 0 });
+    const count = buildAvizCountQuery(filters);
+    expect(count.sql).toMatch(/COUNT\(\*\)::int AS total/);
+    expect(count.sql).not.toMatch(/LIMIT/);
+    // Same WHERE params, without limit/offset.
+    expect(count.params).toEqual(list.params.slice(0, -2));
   });
 
   it('caps id lists at 200 and unique zip names', () => {

@@ -28,7 +28,8 @@ export function stripDiacritics(value) {
  */
 const ABBREVIATIONS = new Map(Object.entries({
   str: 'strada', stra: 'strada', strada: 'strada',
-  bd: 'bulevardul', bdul: 'bulevardul', blv: 'bulevardul', blvd: 'bulevardul',
+  bd: 'bulevardul', bvd: 'bulevardul', bdul: 'bulevardul',
+  blv: 'bulevardul', blvd: 'bulevardul', bld: 'bulevardul',
   bulevard: 'bulevardul', bulevardul: 'bulevardul',
   sos: 'soseaua', soseaua: 'soseaua',
   cal: 'calea', calea: 'calea',
@@ -284,6 +285,15 @@ export function extractHouseNumber(streetTokens) {
     if (isNumber(token)) found = token;
   }
   return found;
+}
+
+/**
+ * Street text for a geocoder query: type abbreviations expanded (`Bvd.` → `bulevardul`)
+ * so providers that only recognise the full Romanian word still hit the right street.
+ */
+export function geocodeStreetQuery(street) {
+  const tokens = canonicalTokens(street || '');
+  return tokens.length ? tokens.join(' ') : null;
 }
 
 /**

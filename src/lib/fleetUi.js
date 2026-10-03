@@ -6,6 +6,51 @@
  */
 import { toFiniteNumber } from './utils.js';
 
+/** Must stay aligned with `FLEET_PAGE_SIZES` on the server. */
+export const FLEET_PAGE_SIZES = [20, 50, 100, 500];
+export const FLEET_DEFAULT_PAGE_SIZE = 50;
+const FLEET_PAGE_SIZE_KEY = 'transitix.fleet.pageSize';
+
+export function readFleetPageSize() {
+  try {
+    const n = Number(localStorage.getItem(FLEET_PAGE_SIZE_KEY));
+    if (FLEET_PAGE_SIZES.includes(n)) return n;
+  } catch {
+    // Private window / blocked storage.
+  }
+  return FLEET_DEFAULT_PAGE_SIZE;
+}
+
+export function writeFleetPageSize(n) {
+  if (!FLEET_PAGE_SIZES.includes(n)) return;
+  try {
+    localStorage.setItem(FLEET_PAGE_SIZE_KEY, String(n));
+  } catch {
+    // Never block the screen for storage.
+  }
+}
+
+/** Normalises GET /fleet into `{ items, total, missing_mma, limit, offset }`. */
+export function asFleetPage(res) {
+  if (Array.isArray(res)) {
+    return {
+      items: res,
+      total: res.length,
+      missing_mma: res.filter((v) => v?.mma_kg == null).length,
+      limit: res.length,
+      offset: 0,
+    };
+  }
+  const items = Array.isArray(res?.items) ? res.items : [];
+  return {
+    items,
+    total: Number(res?.total) || 0,
+    missing_mma: Number(res?.missing_mma) || 0,
+    limit: Number(res?.limit) || FLEET_DEFAULT_PAGE_SIZE,
+    offset: Number(res?.offset) || 0,
+  };
+}
+
 const RO_PLATE_COUNTIES =
   'B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN';
 

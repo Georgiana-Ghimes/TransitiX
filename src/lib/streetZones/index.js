@@ -10,7 +10,8 @@
  * than with the page. A map that nobody searches never pays for it.
  */
 import {
-  houseNumberValue, normalizeStreetName, splitStreetAndNumber, streetNameWithoutType,
+  hasStreetTypeWord, houseNumberValue, normalizeStreetName, plainText,
+  splitStreetAndNumber, streetNameWithoutType,
 } from '../streetName.js';
 
 /** Cities with a built index. Adding one means generating it and adding a line here. */
@@ -219,29 +220,84 @@ export function zoneForNumber(index, streetKey, houseNumber) {
   return null;
 }
 
+function foldPlace(value) {
+  return plainText(value).replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Peel `, Bucuresti` (or any trailing locality) off an aviz-style line.
+ *
+ * `Bvd. Iuliu Maniu nr. 600A, Bucuresti` must become the street+number before we split the
+ * house number: with the city still attached, `splitStreetAndNumber` sees no trailing digits
+ * and the index answers "unknown" for a boulevard it plainly carries.
+ */
+function stripTrailingLocality(query) {
+  const raw = String(query || '').trim();
+  const idx = raw.lastIndexOf(',');
+  if (idx < 0) return raw;
+  const head = raw.slice(0, idx).trim();
+  const tail = raw.slice(idx + 1).trim();
+  if (!head || !tail) return raw;
+  // Locality: letters / spaces / hyphens. Not ", 12", not ", bl. A2", not ", Sector 6".
+  if (!/^[A-Za-zĂÂÎȘŢăâîșțŞŢ][A-Za-zĂÂÎȘŢăâîșțŞŢ\s\-]*$/u.test(tail)) return raw;
+  const tailFold = foldPlace(tail);
+  if (/\b(bl|bloc|sc|scara|ap|et|nr|sector|ro|rou)\b/.test(tailFold)) return raw;
+  const hasType = hasStreetTypeWord(head);
+  const hasHouse = Boolean(splitStreetAndNumber(head).number);
+  if (!hasType && !hasHouse) return raw;
+  return head;
+}
+
+/**
+ * Same peel when the operator omits the comma (`… 600A Bucuresti`) and the open city tab
+ * tells us which trailing words are the locality, not part of the street.
+ */
+function stripTrailingCityLabel(query, cityLabel) {
+  const raw = String(query || '').trim();
+  const city = foldPlace(cityLabel);
+  if (!raw || !city) return raw;
+  const folded = foldPlace(raw);
+  if (folded === city || !folded.endsWith(` ${city}`)) return raw;
+  const hasType = hasStreetTypeWord(raw);
+  const hasHouse = /\d/.test(raw);
+  if (!hasType && !hasHouse) return raw;
+  // Drop the matching suffix from the original string (diacritics / casing may differ).
+  const words = city.split(' ').filter(Boolean);
+  const parts = raw.trim().split(/\s+/);
+  if (parts.length <= words.length) return raw;
+  return parts.slice(0, -words.length).join(' ').replace(/,\s*$/, '').trim();
+}
+
 /**
  * A street and, when one was typed, a house number.
  *
  * The whole string is tried as a street name first. Only if no such street exists is a trailing
  * number split off, "Bulevardul 1 Decembrie 1918" is a street, "Calea Victoriei 12" is not, and
  * no rule about digits can tell those apart. The index can.
+ *
+ * `opts.cityLabel` (e.g. the open map tab) strips a trailing city even without a comma.
  */
-export function lookupAddress(index, query) {
+export function lookupAddress(index, query, opts = {}) {
+  const raw = String(query || '').trim();
+  if (!index || !raw) return { status: 'unknown', query: raw, found: null, suggestions: [], number: null };
+
   // Only the exact and bare-name paths count as "this whole string is a street". The fuzzy
   // suggestion pass drops single characters, so it happily matched "Bd. Dacia 5" to Bulevardul
   // Dacia and swallowed the number, the one part of the query that decides the answer there.
-  const key = normalizeStreetName(query);
-  const bare = index?.byBareName?.get(streetNameWithoutType(query)) ?? [];
-  if (index?.byKey?.has(key) || bare.length) {
-    return { ...lookupStreet(index, query), number: null };
+  let streetQuery = stripTrailingLocality(raw);
+  streetQuery = stripTrailingCityLabel(streetQuery, opts.cityLabel);
+  const key = normalizeStreetName(streetQuery);
+  const bare = index.byBareName?.get(streetNameWithoutType(streetQuery)) ?? [];
+  if (index.byKey?.has(key) || bare.length) {
+    return { ...lookupStreet(index, streetQuery), query: raw, number: null };
   }
 
-  const { street, number } = splitStreetAndNumber(query);
+  const { street, number } = splitStreetAndNumber(streetQuery);
   if (number) {
     const withoutNumber = lookupStreet(index, street);
-    if (withoutNumber.status !== 'unknown') return { ...withoutNumber, query, number };
+    if (withoutNumber.status !== 'unknown') return { ...withoutNumber, query: raw, number };
   }
-  return { ...lookupStreet(index, query), number: null };
+  return { ...lookupStreet(index, streetQuery), query: raw, number: null };
 }
 
 /**

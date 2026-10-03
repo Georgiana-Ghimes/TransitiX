@@ -28,7 +28,7 @@ export function plainText(value) {
  * Longest forms first so "bulevardul" is not matched as "bd" plus leftovers.
  */
 const STREET_TYPES = [
-  ['bulevardul', 'bulevard', 'b-dul', 'bdul', 'b dul', 'bd', 'blvd'],
+  ['bulevardul', 'bulevard', 'b-dul', 'bdul', 'b dul', 'bd', 'bvd', 'blvd', 'bld'],
   ['soseaua', 'sosea', 'sos'],
   ['calea', 'cal'],
   ['strada', 'str'],
@@ -85,6 +85,13 @@ export function streetNameWithoutType(value) {
   const words = key.split(' ');
   if (words.length > 1 && TYPE_LOOKUP.has(words[0])) return words.slice(1).join(' ');
   return key;
+}
+
+/** True when the leading word is a recognised street type (`Bvd.`, `Str.`, …). */
+export function hasStreetTypeWord(value) {
+  const key = normalizeStreetName(value);
+  const bare = streetNameWithoutType(value);
+  return Boolean(key) && key !== bare;
 }
 
 /**
