@@ -60,7 +60,7 @@ const FIELD_LABELS = {
   tarif_km: 'Tarif pe km',
   tarif_cursa: 'Tarif cursă',
   vehicle_class: 'Clasă vehicul',
-  mma_kg: 'MMA (kg)',
+  mma_kg: 'MTMA (kg)',
   valid_from: 'Valabil de la',
   valid_to: 'Valabil până la',
   distance_km: 'Distanță (km)',

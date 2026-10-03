@@ -309,7 +309,7 @@ export function checkVehiclesWithoutMma(vehicles) {
     severity: 'error',
     key: 'vehicle_no_mma:' + missing.length,
     title: missing.length === 1 ? 'Un vehicul fără MTMA' : missing.length + ' vehicule fără MTMA',
-    message: plates + rest + '. Fără masa din talon nu se poate calcula taxa de zonă București.',
+    message: plates + rest + '. Fără MTMA din talon nu se poate calcula taxa de zonă București.',
     link: '/fleet',
     subject: { type: 'vehicle', id: missing[0].id },
   });

@@ -23,8 +23,15 @@ describe('sanitizeOcrText (provider boundary)', () => {
     expect(out).not.toMatch(/----/);
     expect(out).not.toMatch(/─/);
     expect(out).not.toMatch(/\.{4,}|#{4,}/);
-    expect(out).toContain('| 1 | 420 |');
+    expect(out).not.toContain('|');
+    expect(out).toContain('1');
+    expect(out).toContain('420');
     expect(out).toContain('Total');
+  });
+
+  it('joins quantity and unit split across markdown table cells', () => {
+    expect(sanitizeOcrText('| 11000444 | SuperPrimer | 72.00 | buc |')).toContain('72.00 buc');
+    expect(sanitizeOcrText('Cantitate **72.00** buc')).toContain('72.00 buc');
   });
 
   it('caps blank lines and trims lines', () => {

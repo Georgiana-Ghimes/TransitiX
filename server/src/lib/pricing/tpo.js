@@ -132,14 +132,14 @@ export function calculateTpo({
     if (charge.missingRate) {
       warnings.push({
         code: 'fara_tarif_zona',
-        message: `Zona ${charge.zone.code} nu are tarif valabil la ${date} pentru MMA ${mmaKg ?? '—'} kg`,
+        message: `Zona ${charge.zone.code} nu are tarif valabil la ${date} pentru MTMA ${mmaKg ?? '—'} kg`,
       });
     }
   }
   if (mmaKg == null && zones.length) {
     warnings.push({
       code: 'fara_mma',
-      message: 'Vehiculul nu are MMA, taxele de zonă se calculează după MMA din talon, nu după marfă',
+      message: 'Vehiculul nu are MTMA, taxele de zonă se calculează după MTMA din talon, nu după marfă',
     });
   }
 

@@ -32,7 +32,7 @@ export const AUDITED_ENTITIES = {
   ObservationCode: 'Codurile clientului; un import greșit se vede în toate avizele.',
   Location: 'Coordonatele decid kilometrii facturabili.',
   Client: 'Datele de facturare ale clientului.',
-  Vehicle: 'Clasa comercială decide tariful; MMA decide legalitatea.',
+  Vehicle: 'Clasa comercială decide tariful; MTMA decide legalitatea.',
   Driver: 'Cine conduce și din ce dată, contează la orice reconstituire a unei curse.',
   Trip: 'Cursa. Editarea ei după facturare e exact ce trebuie explicat.',
   TripCharge: 'Componentele TPO, din ele se face factura.',

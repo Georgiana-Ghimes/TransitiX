@@ -440,11 +440,17 @@ export function extractGoodsUnit(text) {
   }
 
   let best = null;
-  const re = new RegExp(`\\d[\\d.,]*\\s*${GOODS_UNIT_SOURCE}\\b`, 'gi');
+  const re = new RegExp(`(\\d[\\d.,]*)\\s*${GOODS_UNIT_SOURCE}\\b`, 'gi');
   let match = re.exec(folded);
   while (match) {
-    const unit = goodsUnitOf(match[1]);
+    const unit = goodsUnitOf(match[2]);
     const rank = GOODS_UNIT_RANK[unit] ?? 0;
+    // Article codes like `11000001 Palet Euro returnabil` are not a pallet count.
+    const n = parseNumber(match[1]);
+    if (unit === 'paleti' && n != null && n >= 1000) {
+      match = re.exec(folded);
+      continue;
+    }
     if (unit && (!best || rank > best.rank)) best = { unit, rank, matched: match[0] };
     match = re.exec(folded);
   }
@@ -463,7 +469,7 @@ function collectPackagingLines(folded) {
   // Labelled product rows and bare "48.00 buc" / "270.00 sac" alike. Euro-pallet `pce` is
   // skipped: it is returnable packaging, not the goods count the annex wants.
   const re = new RegExp(
-    `(?:(?:cantitate|quantity)\\s*[:\\-]?\\s*)?([\\d.,]+)\\s*${GOODS_UNIT_SOURCE}\\b`,
+    `(?:(?:cantitate|quantity)\\s*[:\\-]?\\s*)?([\\d.,]+)[\\s|]*${GOODS_UNIT_SOURCE}\\b`,
     'gi',
   );
   let match = re.exec(folded);
@@ -475,12 +481,36 @@ function collectPackagingLines(folded) {
     }
     const unit = goodsUnitOf(rawUnit);
     const qty = parseNumber(match[1]);
+    // `11000001 Palet` is the euro-pallet article row, not 11 million paleți.
+    if (unit === 'paleti' && qty != null && qty >= 1000) {
+      match = re.exec(folded);
+      continue;
+    }
     if (unit && qty != null && isPlausibleQuantity(qty, unit)) {
       lines.push({ qty, unit, rank: GOODS_UNIT_RANK[unit] ?? 0, matched: match[0] });
     }
     match = re.exec(folded);
   }
-  return lines;
+  return collapseDoubledPackagingLines(lines, folded);
+}
+
+/**
+ * OCR+layer merge (and some Mistral tables) repeat the whole packaging list twice.
+ * `[72, 72]` → 144 on a one-SKU sheet; `[48,72, …, 48,72, …]` → double the footer total.
+ * A perfect mirror of the first half is that echo — keep the first half only.
+ */
+function collapseDoubledPackagingLines(lines, folded) {
+  if (lines.length < 2 || lines.length % 2 !== 0) return lines;
+  const half = lines.length / 2;
+  const head = lines.slice(0, half);
+  const tail = lines.slice(half);
+  const mirrored = head.every((l, i) => l.qty === tail[i].qty && l.unit === tail[i].unit);
+  if (!mirrored) return lines;
+  if (half >= 2) return head;
+  // Two identical counts: collapse only on a short article list (goods + euro pallet).
+  // Count distinct codes — an echoed page lists the same two SKUs twice.
+  const articles = new Set(String(folded || '').match(/\b\d{7,8}\b/g) || []).size;
+  return articles <= 2 ? head : lines;
 }
 
 /**
@@ -501,7 +531,10 @@ export function extractQuantity(text) {
   const folded = foldUnit(blob);
 
   const footer = packagingFooterTotal(folded);
-  if (footer) {
+  if (
+    footer
+    && !isWeightMistakenForQuantity(footer.quantity, footer.unit, blob)
+  ) {
     return result({ quantity: footer.quantity, unit: footer.unit }, 0.95, footer.matched);
   }
 
@@ -512,12 +545,27 @@ export function extractQuantity(text) {
   // grabbing the first `48 buc`. Report the footer unit so Tip marfă and Cantitate agree.
   if (footerUnit && lines.length >= 2) {
     const sum = Math.round(lines.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
-    if (isPlausibleQuantity(sum, footerUnit)) {
+    if (
+      isPlausibleQuantity(sum, footerUnit)
+      && !isWeightMistakenForQuantity(sum, footerUnit, blob)
+    ) {
       return result(
         { quantity: sum, unit: footerUnit },
         0.86,
         lines.map((l) => l.matched).join(' + '),
       );
+    }
+  }
+
+  // One goods line + euro-pallet `pce` (SuperPrimer): the line is the whole load. Without
+  // `pce`, a lone `48 buc` under a găleți footer is usually OCR that missed the other rows (#42).
+  if (footerUnit && lines.length === 1 && /\d[\d.,]*\s*pce\b/i.test(folded)) {
+    const pick = lines[0];
+    if (
+      isPlausibleQuantity(pick.qty, footerUnit)
+      && !isWeightMistakenForQuantity(pick.qty, footerUnit, blob)
+    ) {
+      return result({ quantity: pick.qty, unit: footerUnit }, 0.84, pick.matched);
     }
   }
 
@@ -531,7 +579,14 @@ export function extractQuantity(text) {
       const unit = (labelled[2] || '').toLowerCase() || null;
       // Reject bare kg/t here when the label was only "Cantitate" next to a weight — those
       // belong to extractGrossWeight. A quantity in kg is allowed only with an explicit unit.
-      if (unit && value != null && isPlausibleQuantity(value, unit)) {
+      // Also refuse a "Cantitate … kg" that is really the weighbridge figure (column scramble
+      // on Baumit: Cantitate header lands on 1.551,00 kg / 1550.998).
+      if (
+        unit
+        && value != null
+        && isPlausibleQuantity(value, unit)
+        && !isWeightMistakenForQuantity(value, unit, blob)
+      ) {
         return result({ quantity: value, unit }, 0.75, labelled[0]);
       }
     }
@@ -544,17 +599,45 @@ export function extractQuantity(text) {
 
   if (top.length >= 2 && (SUMMABLE_PACKAGING.has(topUnit) || topUnit === 'bucati')) {
     const sum = Math.round(top.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
-    if (isPlausibleQuantity(sum, topUnit)) {
+    if (isPlausibleQuantity(sum, topUnit) && !isWeightMistakenForQuantity(sum, topUnit, blob)) {
       return result({ quantity: sum, unit: topUnit }, 0.88, top.map((l) => l.matched).join(' + '));
     }
   }
 
   // Packaging footer label without a readable total + only one product line in OCR:
-  // do not write that line as Cantitate (classic photo miss: 48 instead of 576).
-  if (footerUnit) return NO_MATCH;
+  // do not write that line as Cantitate (classic photo miss: 48 instead of 576) — unless
+  // the euro-pallet row above already proved this is a one-SKU sheet.
+  if (footerUnit && !/\d[\d.,]*\s*pce\b/i.test(folded)) return NO_MATCH;
 
   const pick = top[0];
+  if (isWeightMistakenForQuantity(pick.qty, pick.unit, blob)) return NO_MATCH;
   return result({ quantity: pick.qty, unit: pick.unit }, pick.rank > 1 ? 0.9 : 0.8, pick.matched);
+}
+
+/**
+ * True when a candidate "quantity" is the gross (or net) weight wearing the wrong label.
+ * Seen on SuperPrimer / TRO sheets: Cantitate reads 1550.998 while the page says 72.00 buc
+ * and Greutate brută 1.551,00 kg.
+ */
+function isWeightMistakenForQuantity(value, unit, blob) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return false;
+  const u = foldUnit(unit);
+  const weightUnit = u === 'kg' || u === 'kgs' || u.startsWith('ton') || u === 't' || u === 'to';
+  // Packaging counts on the page always beat a kg "Cantitate".
+  if (weightUnit && pageHasPackagingCount(foldUnit(blob))) return true;
+  const gross = extractGrossWeight(blob)?.value;
+  const net = extractNetWeight(blob)?.value;
+  for (const w of [gross, net]) {
+    if (w == null || !Number.isFinite(Number(w)) || Number(w) <= 0) continue;
+    if (Math.abs(n - Number(w)) / Number(w) <= 0.02) return true;
+  }
+  return false;
+}
+
+function pageHasPackagingCount(folded) {
+  if (packagingFooterUnit(folded)) return true;
+  return new RegExp(`\\d[\\d.,]*\\s*${GOODS_UNIT_SOURCE}\\b`, 'i').test(folded);
 }
 
 /**

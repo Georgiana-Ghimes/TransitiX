@@ -34,11 +34,25 @@ export function isTextPoor(rawText, minChars = 40) {
 }
 
 const LOGISTICS_CODE_RE = /\b(?:TPO|PSL|TRO|TP0|TPQ)[\s\-._]*\d{3,}/i;
+const TPO_CODE_RE = /\b(?:TPO|TP0|TPQ|TPD)[\s\-._/:]*\d{3,}/i;
+const DOC_NO_RE = /\b(?:TRO|PSL)[\s\-._/:]*\d{3,}/i;
 
 /** Weak OCR text — no logistics code / too short (cache skip on re-extract). */
 export function needsOcrFallback(rawText) {
   if (isTextPoor(rawText, 40)) return true;
   return !LOGISTICS_CODE_RE.test(String(rawText || ''));
+}
+
+/**
+ * Printed aviz with a blank transport-order field: the TPO is only in the page image
+ * (often red ballpoint). A rich text layer that already has TRO/PSL must not skip OCR,
+ * or the handwritten order number never arrives.
+ */
+export function needsHandwritingPass(rawText) {
+  const text = String(rawText || '');
+  if (TPO_CODE_RE.test(text)) return false;
+  if (DOC_NO_RE.test(text)) return true;
+  return /comand[aă]\s+(?:de\s+)?transport/i.test(text);
 }
 
 export function backgroundOcrTimeoutMs(pages = 1) {
@@ -153,17 +167,23 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
 
   if (isPdf) {
     const layer = await readPdfText(buffer);
-    if (!isTextPoor(layer.text)) {
+    const layerOk = !isTextPoor(layer.text);
+    const wantInk = needsHandwritingPass(layer.text);
+    // Rich text layer is enough only when the order number is already there. Hybrid Baumit
+    // leaves "comandă de transport" blank in the layer and writes the TPO in coloured ink.
+    if (layerOk && !wantInk) {
       return { text: layer.text, source: 'pdf_text', pages: layer.pages };
     }
     const ocr = await readWithOcr(buffer, 'application/pdf', {
       timeoutMs: timeoutMs ?? backgroundOcrTimeoutMs(layer.pages),
     });
     if (ocr?.text) {
+      // Do not append the text layer under OCR: the same `72.00 buc` then appears twice and
+      // extractQuantity sums them to 144. OCR on the page image already carries the print.
       return {
         text: ocr.text,
         source: ocr.source,
-        pages: ocr.pages,
+        pages: ocr.pages || layer.pages,
         truncated: ocr.truncated,
         blocks: ocr.blocks,
       };
@@ -173,7 +193,7 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
       text: layer.text ?? '',
       source: 'pdf_text',
       pages: layer.pages,
-      reason: ocr?.reason || 'text_slab',
+      reason: ocr?.reason || (wantInk ? 'handwriting_ocr_failed' : 'text_slab'),
     };
   }
 

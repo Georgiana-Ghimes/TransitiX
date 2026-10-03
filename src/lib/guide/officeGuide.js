@@ -32,12 +32,15 @@ const INCARCARE = {
   id: 'incarcare',
   title: 'Cum încarci un aviz',
   blocks: [
-    p('Accepți PDF sau poză. Un PDF cu mai multe pagini e împărțit automat, fiecare pagină devine rândul ei.'),
+    p('Accepți PDF sau poză. Un PDF cu mai multe avize (câte unul pe pagină) e despărțit automat: fiecare pagină devine un rând separat, cu TPO și confirmare proprii.'),
     terms([
+      { term: 'PDF bulk', text: 'Exemplu: 6 avize într-un singur PDF → 6 rânduri în listă („nume.pdf · pag. 1/6” …). Re-extrage pe un rând nu le lipește la loc.' },
       { term: 'Limită per fișier', text: '15 MB. Peste asta aplicația îți spune înainte să pornească încărcarea, nu după.' },
-      { term: 'Câte odată', text: 'Până la 8 fișiere într-o încărcare. Limita vine de la server și e afișată pe ecran.' },
+      { term: 'Câte odată', text: 'Până la 8 fișiere într-o încărcare. Limita vine de la server și e afișată pe ecran. Un PDF nu poate avea mai mult de 40 de pagini la o despărțire.' },
       { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul. Pe companion, clopoțelul arată doar alertele de documente / flotă, nu statusuri de curse.' },
     ]),
+    warn('Despărțirea e pe pagini, nu pe TPO. Dacă două avize sunt pe aceeași foaie, rămân pe același rând: taie PDF-ul înainte sau încarcă poze separate.'),
+    note('TPO scris de mână cu pix color (roșu etc.) pe un aviz tipărit: pozele se aplatizează alb-negru înainte de trimitere, iar pe PDF cu TRO/PSL fără TPO în text se pornește OCR pe imagine, ca să prindă cerneala.'),
     note('O poză neclară e semnalată înainte de trimitere. Merită refăcută pe loc: OCR-ul pe o poză mișcată nu greșește vizibil, greșește o cifră.'),
   ],
 };
@@ -57,7 +60,7 @@ const OCR = {
       { term: 'Greutate brută', text: 'Citită când documentul o tipărește. Vezi secțiunea despre greutate, e câmpul cu cele mai multe consecințe.' },
     ]),
     p('Nu sunt citite și le completezi tu: valoarea TPO, km parcurși, tariful pe km, taxele suplimentare și observațiile. Nu apar pe avizul de expediție, deci nu are de unde să le ia.'),
-    warn('Câmpurile pe care OCR nu e sigur apar cu marginea galbenă și textul „verifică (parser nesigur)”. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit, inclusiv când valoarea arată plauzibilă dar ruta e incompletă sau cantitatea nu se potrivește cu totalul de pe aviz.'),
+    warn('Câmpurile pe care OCR nu e sigur apar cu marginea galbenă. Nu e o eroare, e o recunoaștere sinceră că nu poate garanta ce a citit, inclusiv când valoarea arată plauzibilă dar ruta e incompletă sau cantitatea nu se potrivește cu totalul de pe aviz.'),
   ],
 };
 
@@ -83,8 +86,6 @@ const EDITARE = {
       { term: 'Taxe suplimentare', text: 'Aici intră taxa de zonă București, completată automat. Orice altceva (macara, staționare) scrii tu. Dacă ai scris deja o sumă, programul nu o înlocuiește singur.' },
       { term: 'Km parcurși și Tarif km', text: 'Le completezi tu. Tariful e un tarif, nu se însumează pe raport.' },
       { term: 'Observații', text: 'Text liber. Butoanele cu coduri de sub câmp adaugă prescurtările folosite des.' },
-      { term: 'Rută birou', text: 'Note pentru tine. Nu ajunge în Excel.' },
-      { term: 'Cursă', text: 'Leagă avizul de o cursă existentă, când lucrezi și cu modulul de curse. Poți salva și fără.' },
     ]),
   ],
 };

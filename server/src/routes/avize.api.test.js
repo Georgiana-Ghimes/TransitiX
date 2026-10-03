@@ -92,33 +92,39 @@ describe('POST /api/avize/extract', () => {
   });
 
   /**
-   * Every page is a full OCR pass. Holding the request open for a dossier would time out on a
-   * document that is perfectly readable, so past a few pages the work goes to the background.
+   * A multi-page PDF is one aviz per page. Many children still outrun an interactive wait, so
+   * the whole split batch goes to the background (same 202 the UI already polls for).
    */
-  it('hands a long document to the background instead of blocking the request', async () => {
+  it('splits a long PDF into one row per page and extracts in the background', async () => {
     const fileUrl = await placeMultiPagePdf(`dosar-${Date.now()}.pdf`, 12);
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ file_url: fileUrl, original_filename: 'dosar.pdf' });
 
     expect(res.status).toBe(202);
     expect(res.body.extraction_pending).toBe(true);
-    expect(res.body.pages).toBe(12);
+    expect(res.body.split_pages).toBe(12);
+    expect(res.body.pages).toBe(1);
+    expect(res.body.documents).toHaveLength(12);
     expect(res.body.id).toBeTruthy();
 
-    // The row exists and belongs to a batch, so the background pass has something to work on.
-    const row = (await query(
-      'SELECT batch_id FROM aviz_documents WHERE id = $1', [res.body.id]
-    )).rows[0];
-    expect(row.batch_id).toBeTruthy();
+    const rows = await query(
+      `SELECT id, batch_id, original_filename FROM aviz_documents
+       WHERE company_id = $1 AND original_filename LIKE 'dosar.pdf · pag.%'`,
+      [ctx.company.id]
+    );
+    expect(rows.rows).toHaveLength(12);
+    expect(new Set(rows.rows.map((r) => r.batch_id)).size).toBe(1);
   });
 
-  it('still extracts a short document while the caller waits', async () => {
+  it('splits a short multi-page PDF and extracts while the caller waits', async () => {
     const fileUrl = await placeMultiPagePdf(`scurt-${Date.now()}.pdf`, 2);
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ file_url: fileUrl, original_filename: 'scurt.pdf' });
 
     expect(res.status).toBe(200);
-    expect(res.body.extraction_pending).toBeUndefined();
+    expect(res.body.split_pages).toBe(2);
+    expect(res.body.documents).toHaveLength(2);
+    expect(res.body.extraction_pending).toBe(false);
   });
 
   it('refuses a request with neither a file nor an id', async () => {

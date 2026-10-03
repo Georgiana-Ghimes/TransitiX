@@ -32,8 +32,9 @@ import { needsOcrFallback } from './readText.js';
  *   2 — rows rebuilt from coordinates (pdfRows.js + sidecar rows_from_entries)
  *   3 — Mistral Document AI; provider-independent sanitiser (`sanitizeOcrText`) and layout
  *       blocks normalised with page size, cached beside the text
+ *   4 — hybrid handwriting OCR without appending the PDF text layer (that doubled `72 buc`)
  */
-export const OCR_PIPELINE_VERSION = Number(process.env.OCR_PIPELINE_VERSION) || 3;
+export const OCR_PIPELINE_VERSION = Number(process.env.OCR_PIPELINE_VERSION) || 4;
 
 /** How long an entry is worth keeping. Storage is cheap; a stale transcript is not useful. */
 const TTL_DAYS = Number(process.env.OCR_CACHE_TTL_DAYS) || 120;

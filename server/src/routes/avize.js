@@ -18,6 +18,7 @@ import {
   ocrCapability,
   isOcrDown,
 } from '../lib/ocr/readText.js';
+import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { buildReport } from '../lib/reporting/build.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
@@ -497,6 +498,99 @@ router.delete('/templates/:id', async (req, res) => {
   }
 });
 
+/**
+ * Fresh multi-page PDF → N one-page documents in one batch. Re-extract never enters here.
+ * @returns {Promise<object|null>} response payload, or null when the file is not a multi-page PDF
+ */
+async function extractSplitPdfUpload(req, { fileUrl, originalFilename }) {
+  let split;
+  try {
+    split = await materializePdfPageFiles(fileUrl, {
+      originalFilename,
+      companyId: req.user.company_id,
+    });
+  } catch (err) {
+    if (err instanceof PdfSplitError) throw err;
+    // Unreadable / not a real PDF: fall through to the single-document path.
+    return null;
+  }
+  if (!split?.files?.length) return null;
+
+  const created = await withTransaction(async (client) => {
+    const batch = await createAvizBatch(client, {
+      companyId: req.user.company_id,
+      userId: req.user.id,
+      label: originalFilename,
+    });
+    const docs = [];
+    for (const file of split.files) {
+      const doc = (await client.query(
+        `INSERT INTO aviz_documents (company_id, batch_id, document_type, file_url,
+           original_filename, status, needs_review)
+         VALUES ($1, $2, 'aviz', $3, $4, 'uploaded', TRUE) RETURNING *`,
+        [req.user.company_id, batch.id, file.file_url, file.original_filename]
+      )).rows[0];
+      docs.push(doc);
+      await logEvent(client, {
+        companyId: req.user.company_id, documentId: doc.id, batchId: batch.id,
+        userId: req.user.id, kind: 'uploaded', summary: file.original_filename,
+        detail: { split_page: file.page, split_pages: split.pages, source_file_url: fileUrl },
+      });
+    }
+    await logEvent(client, {
+      companyId: req.user.company_id, documentId: null, batchId: batch.id,
+      userId: req.user.id, kind: 'uploaded',
+      summary: `Despărțit PDF în ${split.pages} avize`,
+      detail: { split_pages: split.pages, source_file_url: fileUrl },
+    });
+    await client.query(
+      `UPDATE document_batches SET file_count = $1 WHERE id = $2`,
+      [docs.length, batch.id]
+    );
+    return { batchId: batch.id, docs };
+  });
+
+  const docIds = created.docs.map((d) => d.id);
+  // Each child is one page; many children still outrun an interactive wait — background then.
+  const background = created.docs.length >= interactiveOcrMaxPages();
+  if (background) {
+    extractBatchDocuments(req.user.company_id, created.batchId, req.user.id, {
+      force: true,
+      profileId: req.body?.profile_id,
+      documentIds: docIds,
+    }).catch((err) => console.error('[avize extract split background]', err?.message || err));
+  } else {
+    await extractBatchDocuments(req.user.company_id, created.batchId, req.user.id, {
+      force: true,
+      profileId: req.body?.profile_id,
+      documentIds: docIds,
+      timeoutMs: interactiveOcrTimeoutMs(1),
+    });
+  }
+
+  const rows = (await query(
+    `SELECT * FROM aviz_documents WHERE company_id = $1 AND id = ANY($2::uuid[])
+     ORDER BY created_at ASC, original_filename ASC`,
+    [req.user.company_id, docIds]
+  )).rows.map(decorateAviz);
+
+  const first = rows[0];
+  if (!first) return null;
+  return {
+    ...first,
+    extraction_pending: background,
+    pages: 1,
+    split_pages: split.pages,
+    documents: rows.map((r) => ({
+      ...r,
+      extraction_pending: background,
+      split_pages: split.pages,
+    })),
+    reason: background ? 'split_background' : undefined,
+    statusCode: background ? 202 : 200,
+  };
+}
+
 router.post('/extract', async (req, res) => {
   try {
     const limit = hitRateLimit(extractHits, req.user.company_id, { max: 30, windowMs: 60_000 });
@@ -510,7 +604,27 @@ router.post('/extract', async (req, res) => {
       return res.status(400).json({ message: 'Trimite un fișier sau selectează un aviz existent.' });
     }
 
-    // Every aviz is read by one extractor: the profile engine in documents.js, over PaddleOCR.
+    // Mistral unreachable / misconfigured: refuse before the interactive wait.
+    if (isOcrDown(await ocrCapability())) {
+      return res.status(503).json({
+        code: 'OCR_DOWN',
+        message: 'Serviciul OCR nu răspunde. Verifică MISTRAL_API_KEY și conexiunea, apoi încearcă din nou.',
+      });
+    }
+
+    // Fresh upload of a multi-page PDF: one aviz per page, never re-split on re-extract (`id`).
+    if (!id && file_url) {
+      const splitPayload = await extractSplitPdfUpload(req, {
+        fileUrl: file_url,
+        originalFilename: original_filename,
+      });
+      if (splitPayload) {
+        const { statusCode, ...body } = splitPayload;
+        return res.status(statusCode || 200).json(body);
+      }
+    }
+
+    // Every aviz is read by one extractor: the profile engine in documents.js.
     // A document therefore has to belong to a batch before it can be read, rows uploaded from
     // this screen get one here, and rows that predate batches are attached to one on first use.
     let docId = id;
@@ -566,14 +680,6 @@ router.post('/extract', async (req, res) => {
       });
       docId = created.docId;
       batchId = created.batchId;
-    }
-
-    // Mistral unreachable / misconfigured: refuse before the interactive wait.
-    if (isOcrDown(await ocrCapability())) {
-      return res.status(503).json({
-        code: 'OCR_DOWN',
-        message: 'Serviciul OCR nu răspunde. Verifică MISTRAL_API_KEY și conexiunea, apoi încearcă din nou.',
-      });
     }
 
     const pages = await documentPageCount(storedFileUrl);
@@ -667,6 +773,9 @@ router.post('/extract', async (req, res) => {
     });
     res.json(row);
   } catch (err) {
+    if (err instanceof PdfSplitError) {
+      return res.status(err.status || 400).json({ message: err.message, code: err.code });
+    }
     console.error(err);
     res.status(500).json({ message: err.message || 'Extract failed' });
   }

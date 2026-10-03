@@ -6,6 +6,7 @@ import {
   interactiveOcrTimeoutMs,
   isOcrDown,
   mimeTypeFor,
+  needsHandwritingPass,
   ocrConcurrency,
   ocrProvider,
   ocrQueueState,
@@ -56,6 +57,24 @@ describe('isOcrDown', () => {
     expect(isOcrDown('mistral')).toBe(false);
     expect(isOcrDown(false)).toBe(false);
     expect(isOcrDown('paddle-down')).toBe(false);
+  });
+});
+
+describe('needsHandwritingPass', () => {
+  it('asks for OCR when a TRO sheet has no TPO in the text layer', () => {
+    expect(needsHandwritingPass(`
+      Aviz de expeditie: TRO-0009884
+      Num de comanda de transport:
+      Greutate bruta, kg: 1,551.00
+    `)).toBe(true);
+  });
+
+  it('skips when the TPO is already in the layer', () => {
+    expect(needsHandwritingPass('TRO-0009884 TPO / 31027')).toBe(false);
+  });
+
+  it('asks when the transport-order label is present without a TPO', () => {
+    expect(needsHandwritingPass('Num de comanda de transport:\nAuto B 112 VFM')).toBe(true);
   });
 });
 

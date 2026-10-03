@@ -8,7 +8,7 @@ import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import { inputCls, labelCls, lowField } from './avizeUi';
 
 export default function AvizEditModal({
-  editRow, form, setForm, trips, obsCodes, saving, onClose, onSave, onAppendObs,
+  editRow, form, setForm, obsCodes, saving, onClose, onSave, onAppendObs,
 }) {
   return (
     <ModalShell
@@ -37,10 +37,7 @@ export default function AvizEditModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {AVIZ_FORM_FIELDS.map((f) => (
                 <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                  <label className={labelCls}>
-                    {f.label}
-                    {lowField(editRow, f.key) ? ' · verifică (parser nesigur)' : ''}
-                  </label>
+                  <label className={labelCls}>{f.label}</label>
                   {f.type === 'date' ? (
                     <RoDateField
                       className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
@@ -60,22 +57,6 @@ export default function AvizEditModal({
                 </div>
               ))}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />
-              <div className="sm:col-span-2">
-                <label className={labelCls}>Rută birou (nu merge în Excel)</label>
-                <input className={inputCls} value={form.ruta_display ?? ''} onChange={(e) => setForm((prev) => ({ ...prev, ruta_display: e.target.value }))} />
-              </div>
-              <div className="sm:col-span-2">
-                <label className={labelCls}>Cursă (opțional)</label>
-                <select className={inputCls} value={form.trip_id || ''} onChange={(e) => setForm((prev) => ({ ...prev, trip_id: e.target.value }))}>
-                  <option value="">Fără cursă</option>
-                  {trips.map((t) => (
-                    <option key={t.id} value={t.id}>{t.cmr_number} · {t.vehicle_plate || 'fără auto'} · {t.loading_date || ''}</option>
-                  ))}
-                </select>
-                {trips.length === 0 && (
-                  <p className="text-[11px] text-slate-500 mt-1">Nicio cursă pe auto + zi. Poți salva fără cursă.</p>
-                )}
-              </div>
               <div className="sm:col-span-2">
                 <p className="text-xs text-slate-500 mb-1">Coduri observații (textul rămâne editabil)</p>
                 <div className="flex flex-wrap gap-1">

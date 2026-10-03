@@ -65,6 +65,15 @@ export function sanitizeOcrText(text) {
   // Markdown table rulers and box drawing (`|---|---|`, `────`) — layout, not content.
   out = out.replace(/^[\s|:\-=_]{3,}$/gm, '');
   out = out.replace(/[\u2500-\u257F]+/g, ' ');
+  // Bold/italic markers from Mistral markdown (`**72.00** buc` must stay a number + unit).
+  out = out.replace(/\*\*|__/g, '');
+  // Quantity and unit split across table cells: `| 72.00 | buc |` → `72.00 buc`.
+  out = out.replace(
+    /(\d[\d.,]*)\s*\|\s*(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?|ga1eti|galei)\b/gi,
+    '$1 $2',
+  );
+  // Remaining pipes are cell borders, not content.
+  out = out.replace(/\|/g, ' ');
   // A run of 4+ identical punctuation marks is a rendering artefact (`....`, `~~~~`, `####`).
   out = out.replace(/([^\w\s\n])\1{3,}/g, ' ');
   // Trailing spaces per line, collapse inner runs, cap blank lines at one.

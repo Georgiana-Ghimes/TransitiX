@@ -118,7 +118,7 @@ function TariffForm({ contracts, classes, initial, onClose, onSaved }) {
           </Field>
           <Field
             label="Clasă vehicul"
-            hint="Banda comercială, nu MMA"
+            hint="Banda comercială, nu MTMA"
             error={errors.vehicle_class}
           >
             <input
@@ -359,7 +359,7 @@ function ZonesTab({ data, reload }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          Taxa de zonă se calculează după <strong>MMA-ul din talon</strong>, nu după marfa
+          Taxa de zonă se calculează după <strong>MTMA din talon</strong>, nu după marfa
           încărcată.
         </p>
         <button type="button" className={btnPrimary} onClick={() => setZoneForm({ kind: 'oras', priority: 0 })}>
@@ -383,7 +383,7 @@ function ZonesTab({ data, reload }) {
             <div className="ml-auto flex gap-2">
               <button type="button" className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-600 hover:bg-white"
                 onClick={() => setRateForm({ tax_zone_id: zone.id, currency: 'RON' })}>
-                + Tranșă MMA
+                + Tranșă MTMA
               </button>
               <button type="button" className="p-1 text-slate-400 hover:text-slate-700"
                 onClick={() => setZoneForm({ ...zone, matcher: zone.matcher ? JSON.stringify(zone.matcher) : '' })}>
@@ -467,13 +467,13 @@ function ZoneRateModal({ initial, onClose, onSave }) {
   const [form, setForm] = useState({ mma_min_kg: '', mma_max_kg: '', amount: '', currency: 'RON', valid_from: '', valid_to: '', ...initial });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   return (
-    <ModalShell open onClose={onClose} title="Tranșă de MMA">
+    <ModalShell open onClose={onClose} title="Tranșă de MTMA">
       <form className="p-5 space-y-4" onSubmit={(e) => { e.preventDefault(); onSave(form); }}>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="MMA de la (kg)" hint="Gol = fără limită jos">
+          <Field label="MTMA de la (kg)" hint="Gol = fără limită jos">
             <input className={inputCls} value={form.mma_min_kg ?? ''} onChange={(e) => set('mma_min_kg', e.target.value)} placeholder="3500" />
           </Field>
-          <Field label="MMA până la (kg)" hint="Gol = fără limită sus">
+          <Field label="MTMA până la (kg)" hint="Gol = fără limită sus">
             <input className={inputCls} value={form.mma_max_kg ?? ''} onChange={(e) => set('mma_max_kg', e.target.value)} placeholder="7500" />
           </Field>
           <Field label="Sumă (lei)"><input className={inputCls} value={form.amount ?? ''} onChange={(e) => set('amount', e.target.value)} /></Field>

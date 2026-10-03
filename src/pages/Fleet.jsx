@@ -100,7 +100,7 @@ export default function Fleet() {
   const saveMma = async (vehicle, raw) => {
     const kg = parseMmaKg(raw);
     if (raw.trim() !== '' && kg == null) {
-      notifyError('Greutate invalidă', 'Scrie masa în kilograme, de exemplu 40000.');
+      notifyError('MTMA invalid', 'Scrie MTMA în kilograme, de exemplu 40000.');
       return false;
     }
     setSaving(vehicle.id);
@@ -108,7 +108,7 @@ export default function Fleet() {
       // Saving the figure is also the confirmation: somebody looked at this plate and accepted
       // it, so it stops being an unreviewed OCR guess.
       await api.entities.Vehicle.update(vehicle.id, { mma_kg: kg, added_by_ocr: false });
-      notifySuccess(`${vehicle.plate} actualizat`, kg == null ? 'Greutate ștearsă.' : `Greutate ${mmaLabel(kg)}.`);
+      notifySuccess(`${vehicle.plate} actualizat`, kg == null ? 'MTMA șters.' : `MTMA ${mmaLabel(kg)}.`);
       await load();
       return true;
     } catch (err) {
@@ -130,7 +130,7 @@ export default function Fleet() {
     setSaving('new');
     try {
       await api.entities.Vehicle.create({ plate, mma_kg: kg, is_active: true });
-      notifySuccess(`${plate} adăugat`, kg == null ? 'Completează greutatea când o afli.' : `Greutate ${mmaLabel(kg)}.`);
+      notifySuccess(`${plate} adăugat`, kg == null ? 'Completează MTMA când îl afli.' : `MTMA ${mmaLabel(kg)}.`);
       setNewPlate('');
       setNewMma('');
       setAdding(false);
@@ -266,7 +266,7 @@ export default function Fleet() {
         <div>
           <h1 className="text-xl font-bold text-[#0A2B4E]">Autoturisme</h1>
           <p className="text-sm text-slate-500">
-            Numerele văzute pe avize. Greutatea din talon se scrie o dată pe mașină și se folosește
+            Numerele văzute pe avize. MTMA din talon se scrie o dată pe mașină și se folosește
             la taxa de zonă București.
           </p>
         </div>
@@ -283,9 +283,9 @@ export default function Fleet() {
         <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900 flex items-start gap-2">
           <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
-            <strong>{missingMma === 1 ? 'O mașină nu are greutate' : `${missingMma} mașini nu au greutate`}</strong>
+            <strong>{missingMma === 1 ? 'O mașină nu are MTMA' : `${missingMma} mașini nu au MTMA`}</strong>
             {' - '}
-            fără masa din talon nu se poate calcula taxa de zonă pentru cursele lor.
+            fără MTMA din talon nu se poate calcula taxa de zonă pentru cursele lor.
           </span>
         </div>
       ) : null}
@@ -304,7 +304,7 @@ export default function Fleet() {
           </div>
           <div className="w-56">
             <label className="block text-[11px] font-medium text-slate-500 mb-1">
-              Greutate ansamblu (kg)
+              MTMA (kg)
             </label>
             <input
               className={inputCls}
@@ -327,8 +327,8 @@ export default function Fleet() {
             </button>
           </div>
           <p className="w-full text-[11px] text-slate-400">
-            Greutatea este masa totală maximă autorizată din certificatul de înmatriculare, rubrica
-            F.3 pentru ansamblu. Nu este sarcina utilă și nu este greutatea mărfii.
+            MTMA este masa totală maximă autorizată din certificatul de înmatriculare, rubrica
+            F.3 pentru ansamblu. Nu este sarcina utilă și nu este greutatea mărfii de pe aviz.
           </p>
         </form>
       ) : null}
@@ -547,7 +547,7 @@ function VehicleRow({ vehicle, selected, onToggleSelect, busy, onSave, onRemove 
       ) : null}
 
       <div className="ml-auto flex items-center gap-2">
-        <label className="text-[11px] text-slate-500 whitespace-nowrap">Greutate (kg)</label>
+        <label className="text-[11px] text-slate-500 whitespace-nowrap">MTMA (kg)</label>
         <input
           className={`w-28 h-9 px-2 text-sm text-right border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30 ${
             editing
@@ -589,7 +589,7 @@ function VehicleRow({ vehicle, selected, onToggleSelect, busy, onSave, onRemove 
             type="button"
             onClick={() => setEditing(true)}
             disabled={busy}
-            title="Editează greutatea"
+            title="Editează MTMA"
             className="p-2 text-slate-400 hover:text-[#1D4E89] disabled:opacity-40"
           >
             <Pencil className="w-4 h-4" />
@@ -609,7 +609,7 @@ function VehicleRow({ vehicle, selected, onToggleSelect, busy, onSave, onRemove 
 
       {missing ? (
         <p className="w-full text-[11px] text-amber-700 pl-6">
-          Fără greutate nu se poate alege tranșa PMB pentru cursele acestei mașini.
+          Fără MTMA nu se poate alege tranșa PMB pentru cursele acestei mașini.
         </p>
       ) : null}
     </div>

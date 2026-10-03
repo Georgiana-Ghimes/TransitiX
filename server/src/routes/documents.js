@@ -17,6 +17,7 @@ import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
+import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -459,27 +460,85 @@ router.post('/batches', (req, res) => {
         ? req.body.document_type
         : 'aviz';
 
+      // Multi-page PDFs become one row per page before the batch is opened, so file_count
+      // matches what the extractor will actually see.
+      const entries = [];
+      for (const file of files) {
+        const fileUrl = publicUploadUrl(file.filename);
+        let split = null;
+        if (file.mimetype === 'application/pdf' || /\.pdf$/i.test(file.originalname || '')) {
+          try {
+            split = await materializePdfPageFiles(fileUrl, {
+              originalFilename: file.originalname,
+              companyId: req.user.company_id,
+            });
+          } catch (splitErr) {
+            if (splitErr instanceof PdfSplitError) throw splitErr;
+            split = null;
+          }
+        }
+        if (split?.files?.length) {
+          for (const page of split.files) {
+            entries.push({
+              file_url: page.file_url,
+              original_filename: page.original_filename,
+              detail: {
+                size: file.size,
+                mimetype: file.mimetype,
+                split_page: page.page,
+                split_pages: split.pages,
+                source_file_url: fileUrl,
+              },
+            });
+          }
+        } else {
+          entries.push({
+            file_url: fileUrl,
+            original_filename: file.originalname,
+            detail: { size: file.size, mimetype: file.mimetype },
+          });
+        }
+      }
+      if (entries.length > MAX_BATCH_FILES) {
+        throw Object.assign(
+          new Error(
+            `După despărțirea PDF-urilor ar fi ${entries.length} avize. `
+            + `Maximum este ${MAX_BATCH_FILES} odată — încarcă mai puține fișiere.`
+          ),
+          { status: 400 }
+        );
+      }
+
       const result = await withTransaction(async (client) => {
         const batch = (await client.query(
           `INSERT INTO document_batches (company_id, user_id, document_type, label, file_count)
            VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-          [req.user.company_id, req.user.id, documentType, req.body?.label ?? null, files.length]
+          [req.user.company_id, req.user.id, documentType, req.body?.label ?? null, entries.length]
         )).rows[0];
 
         const documents = [];
-        for (const file of files) {
+        for (const entry of entries) {
           const doc = (await client.query(
             `INSERT INTO aviz_documents (company_id, batch_id, document_type, file_url,
                original_filename, status, needs_review)
              VALUES ($1,$2,$3,$4,$5,'uploaded',TRUE) RETURNING *`,
             [req.user.company_id, batch.id, documentType,
-             publicUploadUrl(file.filename), file.originalname]
+             entry.file_url, entry.original_filename]
           )).rows[0];
           documents.push(doc);
           await logEvent(client, {
             companyId: req.user.company_id, documentId: doc.id, batchId: batch.id,
-            userId: req.user.id, kind: 'uploaded', summary: file.originalname,
-            detail: { size: file.size, mimetype: file.mimetype },
+            userId: req.user.id, kind: 'uploaded', summary: entry.original_filename,
+            detail: entry.detail,
+          });
+        }
+        const splitCount = entries.filter((e) => e.detail?.split_pages).length;
+        if (splitCount > 0) {
+          await logEvent(client, {
+            companyId: req.user.company_id, documentId: null, batchId: batch.id,
+            userId: req.user.id, kind: 'uploaded',
+            summary: `Lot cu PDF-uri despărțite (${documents.length} avize)`,
+            detail: { file_count: documents.length, uploaded_files: files.length },
           });
         }
         return { batch, documents };

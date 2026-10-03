@@ -83,7 +83,6 @@ export default function AvizeReports() {
   const [hiddenByFilters, setHiddenByFilters] = useState(0);
   const [emailOpen, setEmailOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
-  const [trips, setTrips] = useState([]);
   const [newCode, setNewCode] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const fileRef = useRef(null);
@@ -294,6 +293,7 @@ export default function AvizeReports() {
           `„${worst.file.name}" iese neclară, s-ar putea să nu se extragă nimic din ea. Restul se încarcă normal.`
         );
       }
+      let splitPagesTotal = 0;
       for (const file of files) {
         try {
           const uploaded = await api.integrations.Core.UploadFile({ file });
@@ -301,9 +301,18 @@ export default function AvizeReports() {
             file_url: uploaded.file_url,
             original_filename: file.name,
           });
-          uploadedRows.push(row);
-          if (row?.duplicate_tpo) dup += 1;
-          if (row?.extraction_pending) pending += 1;
+          const parts = Array.isArray(row?.documents) && row.documents.length > 1
+            ? row.documents
+            : [row];
+          for (const part of parts) {
+            if (!part?.id) continue;
+            uploadedRows.push(part);
+            if (part?.duplicate_tpo) dup += 1;
+            if (part?.extraction_pending) pending += 1;
+          }
+          if (Number(row?.split_pages) > 1) {
+            splitPagesTotal += Number(row.split_pages);
+          }
         } catch (err) {
           failed.push(file.name);
           console.error('[aviz upload]', file.name, err);
@@ -341,11 +350,17 @@ export default function AvizeReports() {
         const pendingNote = pending
           ? ` ${pending} document(e), OCR-ul rulează în fundal; statusul se actualizează singur.`
           : '';
+        const splitNote = splitPagesTotal > 1
+          ? ` PDF despărțit în ${splitPagesTotal} avize (câte o pagină).`
+          : '';
+        const countLabel = uploadedRows.length !== files.length
+          ? `${files.length} fișier(e) → ${uploadedRows.length} aviz(e).`
+          : `${files.length} fișier(e) procesate.`;
         notifySuccess(
           'Avize încărcate',
           dup
-            ? `${files.length} fișier(e). Atenție: ${dup} TPO există deja (salvarea a rămas).${pendingNote}${filterNote}`
-            : `${files.length} fișier(e) procesate.${pendingNote}${filterNote}`
+            ? `${countLabel} Atenție: ${dup} TPO există deja (salvarea a rămas).${splitNote}${pendingNote}${filterNote}`
+            : `${countLabel}${splitNote}${pendingNote}${filterNote}`
         );
       } else if (failed.length < files.length) {
         notifyError('Unele fișiere nu s-au extras', failed.join(', '));
@@ -398,18 +413,9 @@ export default function AvizeReports() {
   const rangeFrom = total === 0 ? 0 : page * pageSize + 1;
   const rangeTo = Math.min(total, (page + 1) * pageSize);
 
-  const openEdit = async (row) => {
+  const openEdit = (row) => {
     setEditRow(row);
     setForm(emptyForm(row));
-    try {
-      const suggestions = await api.avize.tripSuggestions({
-        date: row.data_efectuare_cursa,
-        plate: row.numar_auto,
-      });
-      setTrips(suggestions);
-    } catch {
-      setTrips([]);
-    }
   };
 
   const saveEdit = async () => {
@@ -1347,7 +1353,6 @@ export default function AvizeReports() {
           editRow={editRow}
           form={form}
           setForm={setForm}
-          trips={trips}
           obsCodes={obsCodes}
           saving={saving}
           onClose={() => setEditRow(null)}

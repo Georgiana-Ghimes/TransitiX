@@ -337,6 +337,64 @@ describe('quantity stays separate from weight', () => {
     expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
   });
 
+  it('does not put Greutate brută into Cantitate when columns scramble', () => {
+    // Real SuperPrimer / TRO miss: Cantitate showed 1550.998 next to 1.551,00 kg.
+    const text = `
+Aviz de expeditie: TRO-0009884
+Cantitate: 1.550,998 kg
+72.00 buc SuperPrimer 20 kg (24/pal)
+3.00 pce Palet Euro returnabil
+Greutate neta, kg: 1,440.03
+Greutate bruta, kg: 1,551.00
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+  });
+
+  it('refuses a lone Cantitate-in-kg that is the weighbridge figure', () => {
+    const text = `
+Cantitate: 1.550,998 kg
+Greutate bruta, kg: 1,551.00
+`;
+    expect(extractQuantity(text).value).toBeNull();
+  });
+
+  it('reads 72 buc from a Mistral markdown table row', () => {
+    const text = `
+Aviz de expeditie: TRO-0009884
+| Articol | Descriere | Cantitate |
+| 11000444 | SuperPrimer 20 kg (24/pal) | 72.00 | buc |
+| 11000001 | Palet Euro returnabil | 3.00 | pce |
+Greutate bruta, kg: 1,551.00
+`;
+    const doc = extractDocument(text, { documentType: 'aviz' });
+    expect(doc.values.quantity).toBe(72);
+    // Tip marfă must not become „paleti” from the euro-pallet article code.
+    expect(doc.values.tip_marfa).not.toBe('paleti');
+  });
+
+  it('keeps SuperPrimer 72 buc when a găleți footer label has no total', () => {
+    const text = `
+Cantitate 72.00 buc SuperPrimer
+3.00 pce Palet Euro returnabil
+Numarul de galeti
+Greutate bruta, kg: 1,551.00
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'galeti' });
+  });
+
+  it('does not double 72 buc when the packaging line is echoed twice in the text', () => {
+    // Cached hybrid merge used to append PDF text under OCR → 72+72=144.
+    const text = `
+11000444 SuperPrimer 20 kg (24/pal) 72.00 buc
+11000001 Palet Euro returnabil 3.00 pce
+Greutate bruta, kg: 1,551.00
+11000444 SuperPrimer 20 kg (24/pal) 72.00 buc
+11000001 Palet Euro returnabil 3.00 pce
+Greutate bruta, kg: 1,551.00
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+  });
+
   it('reads a pallet count', () => {
     expect(extractPalletCount('Paleti: 18').value).toBe(18);
   });

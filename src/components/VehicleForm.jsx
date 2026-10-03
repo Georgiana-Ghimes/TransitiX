@@ -39,7 +39,7 @@ function validateVehicle(form) {
 
   if (form.mma_kg !== '' && form.mma_kg != null) {
     const mma = parseOptionalNumber(form.mma_kg);
-    if (!Number.isFinite(mma) || mma <= 0) errors.mma_kg = 'MMA invalidă (min. 1 kg).';
+    if (!Number.isFinite(mma) || mma <= 0) errors.mma_kg = 'MTMA invalid (min. 1 kg).';
     else if (mma > INT_MAX) errors.mma_kg = `Prea mare (max. ${INT_MAX.toLocaleString('ro-RO')} kg).`;
   }
 
@@ -237,12 +237,12 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
             <p className="text-[11px] text-slate-400 mt-1">Banda pe care se negociază tariful.</p>
           </div>
           <div>
-            <label className={labelCls} htmlFor="vehicle-mma_kg">MMA din talon (kg)</label>
+            <label className={labelCls} htmlFor="vehicle-mma_kg">MTMA din talon (kg)</label>
             {field('mma_kg', { type: 'number', min: 0, max: INT_MAX, value: form.mma_kg, onChange: (e) => set('mma_kg', e.target.value) })}
             <FieldError id="vehicle-mma_kg-error" message={errors.mma_kg} />
             <p className="text-[11px] text-slate-400 mt-1">
-              Nu e același lucru cu clasa: un camion de 10t are MMA ~19.000 kg. Taxele de zonă se
-              calculează după MMA.
+              Nu e același lucru cu clasa: un camion de 10t are MTMA ~19.000 kg. Taxele de zonă se
+              calculează după MTMA, nu după greutatea mărfii.
             </p>
           </div>
           <div>

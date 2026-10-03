@@ -186,7 +186,7 @@ router.post('/zones/locate', async (req, res) => {
       ? null
       : Number(req.body.mma_kg);
     if (mmaKg != null && !Number.isFinite(mmaKg)) {
-      return res.status(400).json({ message: 'MMA trebuie să fie un număr, în kilograme' });
+      return res.status(400).json({ message: 'MTMA trebuie să fie un număr, în kilograme' });
     }
 
     // A plate is enough. The mass the fee is charged on is a fact about the lorry, recorded

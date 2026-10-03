@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  INK_DARK,
   LOW_CONTRAST_RANGE,
   MAX_SIDE,
   SKIP_BELOW_BYTES,
   applyContrastStretch,
+  applyInkToBlackGrayscale,
   contrastStretchParams,
   lumaHistogram,
   prepareImageForUpload,
@@ -18,14 +20,41 @@ function hist(fill) {
 }
 
 describe('shouldPrepare', () => {
-  it('takes big or oversized photos and leaves documents and small files alone', () => {
+  it('prepares every photo when ink normalisation is on (default)', () => {
+    expect(shouldPrepare({ type: 'image/jpeg', size: 100 }, { width: 800, height: 600 })).toBe(true);
     expect(shouldPrepare({ type: 'image/jpeg', size: SKIP_BELOW_BYTES + 1 })).toBe(true);
-    expect(shouldPrepare({ type: 'image/jpeg', size: 100 }, { width: MAX_SIDE + 1, height: 10 })).toBe(true);
-    expect(shouldPrepare({ type: 'image/jpeg', size: 100 }, { width: 800, height: 600 })).toBe(false);
+  });
+
+  it('without ink mode, only big or oversized photos', () => {
+    expect(shouldPrepare(
+      { type: 'image/jpeg', size: 100 },
+      { width: 800, height: 600, inkNormalize: false },
+    )).toBe(false);
+    expect(shouldPrepare(
+      { type: 'image/jpeg', size: 100 },
+      { width: MAX_SIDE + 1, height: 10, inkNormalize: false },
+    )).toBe(true);
+  });
+
+  it('leaves PDFs and exotic image types alone', () => {
     expect(shouldPrepare({ type: 'application/pdf', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare({ type: 'image/gif', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare({ type: 'image/svg+xml', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare(null)).toBe(false);
+  });
+});
+
+describe('applyInkToBlackGrayscale', () => {
+  it('turns red ink near-black and leaves grey paper mid-tone', () => {
+    // R,G,B,A — red pen, mid grey paper
+    const rgba = new Uint8ClampedArray([200, 40, 40, 255, 180, 180, 180, 255]);
+    applyInkToBlackGrayscale(rgba);
+    expect(rgba[0]).toBe(INK_DARK);
+    expect(rgba[1]).toBe(INK_DARK);
+    expect(rgba[2]).toBe(INK_DARK);
+    expect(rgba[4]).toBe(180);
+    expect(rgba[5]).toBe(180);
+    expect(rgba[6]).toBe(180);
   });
 });
 

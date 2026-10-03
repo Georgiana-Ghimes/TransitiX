@@ -104,7 +104,7 @@ export function bracketLabel(rate) {
   if (min != null && max != null) return `${kg(min)} - ${kg(max)} kg`;
   if (min != null) return `peste ${kg(min)} kg`;
   if (max != null) return `până la ${kg(max)} kg`;
-  return 'orice MMA';
+  return 'orice MTMA';
 }
 
 /**
@@ -136,7 +136,7 @@ export function validateZoneRate(form) {
   const min = parseAmount(form.mma_min_kg);
   const max = parseAmount(form.mma_max_kg);
   if (parseAmount(form.amount) === null) errors.amount = 'Pune suma taxei.';
-  if (min !== null && max !== null && min > max) errors.mma_max_kg = 'MMA maxim e sub cel minim.';
+  if (min !== null && max !== null && min > max) errors.mma_max_kg = 'MTMA maxim e sub cel minim.';
   if (!String(form.valid_from || '').trim()) errors.valid_from = 'Pune data de la care se aplică.';
   return errors;
 }

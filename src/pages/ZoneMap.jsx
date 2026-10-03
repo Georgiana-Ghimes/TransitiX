@@ -453,7 +453,7 @@ export default function ZoneMap() {
       notifySuccess(
         `${zone.code} intră în calcul`,
         added
-          ? `Contur oficial și ${added} tranșe de MMA (${zone.tariffs.source}, taxa pe zi, `
+          ? `Contur oficial și ${added} tranșe de MTMA (${zone.tariffs.source}, taxa pe zi, `
             + `din ${zone.tariffs.validFrom}).`
           : 'Conturul oficial a fost pus pe zonă. Tranșele existente au rămas neatinse.',
       );
@@ -1196,7 +1196,7 @@ function ZoneCard({
         </ul>
       ) : linked ? (
         <p className="mt-2 text-[11px] text-amber-700">
-          Fără tranșe de MMA, zona nu produce nicio taxă.
+          Fără tranșe de MTMA, zona nu produce nicio taxă.
         </p>
       ) : null}
 

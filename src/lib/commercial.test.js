@@ -129,7 +129,7 @@ describe('bracketLabel', () => {
   });
 
   it('says so when the rate applies to every vehicle', () => {
-    expect(bracketLabel({})).toBe('orice MMA');
+    expect(bracketLabel({})).toBe('orice MTMA');
   });
 });
 
