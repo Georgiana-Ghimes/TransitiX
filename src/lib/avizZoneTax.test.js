@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   avizDeliveryAddress, avizZoneTax, deliveryLegFromRuta, parseSpacedRouteLeg,
-  tractorPlate, zoneBracket, zoneThresholdKg,
+  tractorPlate, zoneBracket, zoneMapHref, zoneThresholdKg,
 } from './avizZoneTax.js';
 
 const FLEET = [
@@ -170,6 +170,44 @@ describe('avizZoneTax, when it refuses to compute', () => {
   it('checks the weight before anything else, an empty aviz asks for the weight', () => {
     const out = avizZoneTax({ aviz: {}, vehicles: [], zoneResult: null, address: null });
     expect(out.status).toBe('no_weight');
+  });
+});
+
+describe('zoneMapHref', () => {
+  it('builds a zone-map deep link with street, number, city and plate', () => {
+    const href = zoneMapHref(
+      {
+        street: 'bulevardul Iuliu Maniu',
+        number: '600A',
+        locality: 'Bucuresti',
+        cityId: 'bucuresti',
+        supported: true,
+      },
+      { plate: 'B-34-BAU' },
+    );
+    expect(href).toBe(
+      '/zone-map?q=bulevardul+Iuliu+Maniu+600A&city=bucuresti&plate=B-34-BAU',
+    );
+  });
+
+  it('includes locality in q when the delivery is outside a zoned city', () => {
+    const href = zoneMapHref(
+      {
+        street: 'strada Republicii',
+        number: '1F',
+        locality: 'Bolintin-Deal',
+        cityId: null,
+        supported: false,
+      },
+      { plate: 'B-34-BAU' },
+    );
+    expect(href).toBe(
+      '/zone-map?q=strada+Republicii+1F%2C+Bolintin-Deal&locality=Bolintin-Deal&plate=B-34-BAU',
+    );
+  });
+
+  it('returns null when there is no street to open on the map', () => {
+    expect(zoneMapHref({ street: null, number: '52' })).toBeNull();
   });
 });
 

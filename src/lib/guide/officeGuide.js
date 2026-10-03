@@ -130,6 +130,7 @@ const HARTA = {
   blocks: [
     p('Arată zonele A și B ale Bucureștiului, desenate după perimetrele oficiale. Zona A e decupată din zona B, ca să se vadă că sunt regimuri diferite, nu una peste alta.'),
     p('Câmpul de căutare primește o stradă și un număr de înmatriculare. Îți spune în ce zonă cade adresa și ce tarif iese pentru mașina aceea, luând MTMA din Autoturisme. Dacă mașina nu are MTMA, îți spune asta și îți dă link direct.'),
+    p('Din Editează, la panoul Taxă zonă, linkul „Vezi pinul pe Harta zonelor” deschide harta cu adresa de livrare deja căutată și pinul pe hartă, ca să verifici vizual că nu e în zona cu taxe.'),
     terms([
       { term: 'Strada nu e în index', text: 'Nu înseamnă „în afara zonelor”. Înseamnă că nu avem scrierea aceea. Verifică pe hartă.' },
       { term: 'Adresa nu decide singură', text: 'Unele străzi sunt tăiate de graniță, deci numărul contează. Când numărul lipsește sau cade între două intervale care nu sunt de acord, întreabă în loc să ghicească.' },

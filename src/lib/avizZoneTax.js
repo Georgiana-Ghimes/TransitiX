@@ -250,6 +250,43 @@ function addressFromParts({ street, number, locality }) {
 }
 
 /**
+ * Free-text query for Harta zonelor: street (+ number) as the index expects it.
+ * Outside a zoned city, append the locality so the geocoder does not land on the
+ * first same-named street in Romania (often București).
+ * Example: `bulevardul Iuliu Maniu 600A` / `strada Republicii 1F, Bolintin-Deal`.
+ */
+export function zoneMapSearchQuery(address) {
+  if (!address?.street) return null;
+  const parts = [address.street, address.number].filter(Boolean);
+  if (!parts.length) return null;
+  let q = parts.join(' ');
+  if (address.locality && !address.supported) {
+    q = `${q}, ${address.locality}`;
+  }
+  return q;
+}
+
+/**
+ * Deep-link to the zone map with the delivery address (and optional plate) prefilled,
+ * so Editează can open the pin without retyping.
+ *
+ * For towns without zone tariffs, `locality` is also passed so the map geocodes against
+ * that place instead of appending the open city tab (București).
+ */
+export function zoneMapHref(address, { plate = null } = {}) {
+  const q = zoneMapSearchQuery(address);
+  if (!q) return null;
+  const params = new URLSearchParams({ q });
+  if (address.cityId) params.set('city', address.cityId);
+  if (address.locality && !address.supported) {
+    params.set('locality', address.locality);
+  }
+  const plateStr = String(plate || '').trim();
+  if (plateStr) params.set('plate', plateStr);
+  return `/zone-map?${params.toString()}`;
+}
+
+/**
  * The delivery address, in the shape the street index wants.
  *
  * Prefer the leg after ` / ` in `ruta_transport` (what the operator sees and edits). Fall

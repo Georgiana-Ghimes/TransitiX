@@ -4,7 +4,8 @@ import { api } from '@/api/client';
 import { toFiniteNumber } from '@/lib/utils';
 import { mmaLabel } from '@/lib/fleetUi';
 import {
-  FLEET_FIXABLE, avizDeliveryAddress, avizZoneTax, resolveAvizZone, zoneTaxMessage,
+  FLEET_FIXABLE, avizDeliveryAddress, avizZoneTax, resolveAvizZone, zoneMapHref,
+  zoneTaxMessage,
 } from '@/lib/avizZoneTax';
 
 const lei = (n) => `${Number(n).toLocaleString('ro-RO')} lei`;
@@ -117,6 +118,7 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const message = zoneTaxMessage(result.status);
   const applied = !isUnset(form.taxe_suplimentare)
     && toFiniteNumber(form.taxe_suplimentare) === amount;
+  const mapHref = zoneMapHref(address, { plate: form.numar_auto });
 
   return (
     <div className={`sm:col-span-2 rounded-lg border px-3 py-2 text-xs ${tone}`}>
@@ -166,8 +168,10 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
         {FLEET_FIXABLE.has(result.status) && (
           <Link to="/fleet" className="underline font-medium">Deschide Autoturisme</Link>
         )}
-        {(result.status === 'address_unsure' || result.status === 'address_unknown') && (
-          <Link to="/zone-map" className="underline font-medium">Verifică pe Harta zonelor</Link>
+        {mapHref && (
+          <Link to={mapHref} className="underline font-medium">
+            Vezi pinul pe Harta zonelor
+          </Link>
         )}
       </div>
     </div>

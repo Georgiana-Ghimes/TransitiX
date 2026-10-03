@@ -14,7 +14,7 @@
  * screen gives is the answer the TPO would give.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   MapContainer, TileLayer, Polygon, CircleMarker, Tooltip, Popup, useMap,
 } from 'react-leaflet';
@@ -42,6 +42,7 @@ import { mmaLabel, resolveVehicleMma, sanitizeMmaInput } from '@/lib/fleetUi';
 import {
   hasStreetIndex, loadStreetIndex, lookupAddress, resolveAddress,
 } from '@/lib/streetZones';
+import { geocodeMapPin } from '@/lib/mapGeocode';
 
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
 const inputCls = 'w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30';
@@ -83,6 +84,7 @@ function bracketLabel(rate) {
 }
 
 export default function ZoneMap() {
+  const [searchParams] = useSearchParams();
   const [cityId, setCityId] = useState(ZONE_CITIES[0].id);
   const [taxZones, setTaxZones] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -103,6 +105,8 @@ export default function ZoneMap() {
   const [importing, setImporting] = useState(null);
   const [choice, setChoice] = useState(null);
   const fileRef = useRef(null);
+  /** Deep-link from Editează (`?q=` / `?address=`) — run once per query string. */
+  const autoSearchKey = useRef(null);
 
   const city = cityById(cityId);
 
@@ -185,129 +189,197 @@ export default function ZoneMap() {
 
   // Loaded on first use, not with the page: a few hundred kilobytes that a map nobody searches
   // should never pay for.
-  const ensureIndex = async () => {
-    if (streetIndex?.cityId === city.id) return streetIndex;
-    if (!hasStreetIndex(city.id)) return null;
-    const loaded = await loadStreetIndex(city.id);
+  const ensureIndex = async (cityIdValue = cityId) => {
+    const id = cityIdValue || city.id;
+    if (streetIndex?.cityId === id) return streetIndex;
+    if (!hasStreetIndex(id)) return null;
+    const loaded = await loadStreetIndex(id);
     setStreetIndex(loaded);
     return loaded;
   };
 
   /**
-   * Answers from the shipped index first, and only asks the geocoder when the street is not in
-   * it. The index never leaves the browser, which is the whole reason it exists: a search box
-   * on this screen is routinely fed a customer's delivery address.
-   */
-  /**
-   * Ask the geocoder for coordinates. When the street index already answered the zone
-   * (`pinOnly`), the geocode must not open a second result card or override the zone —
-   * it only feeds the Leaflet pin.
+   * Place a Leaflet pin via public Photon (OSM), not `/zones/locate`.
+   * That API scores/caches and can refuse a pin the map still needs; the outline check
+   * and tariffs stay local from the already-loaded zones.
    */
   const placePin = async (q, {
     displayLabel = null,
     typedQuery = null,
     pinOnly = false,
+    cityObj = city,
+    mmaKg = effectiveMma,
+    /** Town/locality for geocode when the pin is not in the open zone-city tab. */
+    cityHint = null,
   } = {}) => {
-    const res = await api.commercial.locateZone({
+    const geoCity = String(cityHint || '').trim() || cityObj.label;
+    const point = await geocodeMapPin(q, { locality: geoCity });
+    if (!point) {
+      setHit({
+        point: null,
+        pinOnly,
+        address: q,
+        query: typedQuery || q,
+        zone: null,
+        rate: null,
+        drawn: null,
+        message: 'Adresa nu a putut fi localizată pe hartă.',
+      });
+      return { point: null };
+    }
+
+    // Which drawn outline holds the pin — same client check as before, independent of billing.
+    const drawn = [...cityObj.zones]
+      .sort((a, b) => b.priority - a.priority)
+      .find((z) => pointInGeometry([point.latitude, point.longitude], z.outline))
+      ?? null;
+
+    let zone = null;
+    let rate = null;
+    if (!pinOnly && drawn) {
+      const tax = taxZoneFor(drawn.code);
+      if (tax) {
+        zone = { id: tax.id, code: drawn.code, name: drawn.name };
+        if (mmaKg != null && Number.isFinite(Number(mmaKg))) {
+          rate = pickRate(ratesFor(tax.id), Number(mmaKg));
+        }
+      }
+    }
+
+    const label = String(displayLabel || point.label || q).trim();
+    const hit = {
       address: q,
-      city: city.label,
-      mmaKg: effectiveMma,
-      plate: plate.trim() || null,
-    });
-    // Which drawn outline holds the pin. Asked here because the server answers about
-    // pricing, and a zone on the map that is not linked yet would otherwise come back as
-    // "no zone" while the operator is looking at the pin sitting inside it.
-    const drawn = res.point
-      ? [...city.zones]
-        .sort((a, b) => b.priority - a.priority)
-        .find((z) => pointInGeometry([res.point.latitude, res.point.longitude], z.outline))
-      : null;
-    const label = String(
-      displayLabel || res.point?.label || res.address || res.query || q,
-    ).trim();
-    setHit({
-      ...res,
-      // Index owns zone + tax; a wrong Photon hit (e.g. Universitate) must not flash ZA.
-      zone: pinOnly ? null : res.zone,
-      rate: pinOnly ? null : res.rate,
-      drawn: pinOnly ? null : (drawn ?? null),
+      query: typedQuery || q,
+      point: { ...point, label, query: typedQuery || q },
+      // Index owns zone + tax on pinOnly; a wrong Photon hit must not flash ZA.
+      zone: pinOnly ? null : zone,
+      rate: pinOnly ? null : rate,
+      drawn: pinOnly ? null : drawn,
       pinOnly,
-      point: res.point
-        ? { ...res.point, label, query: typedQuery || q }
-        : null,
-    });
-    return res;
+      matched_by: drawn ? 'polygon' : null,
+      mma_kg: mmaKg,
+    };
+    setHit(hit);
+    return hit;
   };
 
-  const search = async (e) => {
-    e?.preventDefault();
-    const q = address.trim();
+  /**
+   * Answers from the shipped index first, and only asks the geocoder when the street is not in
+   * it. Accepts overrides so a deep-link from Editează can search before React flushes inputs.
+   */
+  const runSearch = async ({
+    q: qIn,
+    cityIdValue = cityId,
+    plateValue = plate,
+    mmaValue = mma,
+    /** Non-zone town from Editează — skip the city street index and geocode there. */
+    localityHint = null,
+  } = {}) => {
+    const q = String(qIn ?? address).trim();
     if (!q) return;
+    const cityObj = cityById(cityIdValue) || city;
+    const geoCityHint = String(localityHint || '').trim() || null;
+    const mmaNum = Number(String(mmaValue ?? '').replace(',', '.'));
+    const mmaKg = mmaValue === '' || mmaValue == null
+      ? resolveVehicleMma(vehicles, plateValue).mmaKg
+      : mmaNum;
+
     setSearching(true);
     setHit(null);
     setLookup(null);
     try {
-      const index = await ensureIndex();
-      let fromIndex = null;
-      if (index) {
-        fromIndex = lookupAddress(index, q, { cityLabel: city.label });
-        // Keep the loaded index on the result so the card can resolve numbers even before
-        // React flushes `streetIndex` state on the first search.
-        setLookup(fromIndex.status === 'unknown' ? fromIndex : { ...fromIndex, index });
-        if (fromIndex.status !== 'unknown') {
-          // Index answers the zone. Geocode with the canonical street label so Photon does
-          // not land on a random "Iuliu Maniu" POI, and keep a single result card.
-          const pinLabel = [
-            fromIndex.found?.label,
-            fromIndex.number,
-          ].filter(Boolean).join(' ');
-          try {
-            const res = await placePin(pinLabel || q, {
-              displayLabel: pinLabel || q,
-              typedQuery: q,
-              pinOnly: true,
-            });
-            if (!res.point) {
-              notifyError(
-                'Strada e în index, dar pinul lipsește',
-                'Zona e calculată mai sus; geocodarea nu a găsit coordonate pentru hartă. '
-                + 'Verifică PHOTON_URL pe server sau mută pinul din Locatii.',
-              );
-            }
-          } catch (err) {
-            if (err?.status === 503) {
-              notifyError(
-                'Strada e în index, dar harta nu are geocoder',
-                'Zona e calculată mai sus. Setează PHOTON_URL în server/.env ca să apară pinul '
-                + '(în dev: https://photon.komoot.io).',
-              );
-            } else {
+      // A Bolintin (etc.) pin must not ask the București street index — same street name,
+      // wrong town — and must not append the tab city to the geocode query.
+      if (!geoCityHint) {
+        const index = await ensureIndex(cityObj.id);
+        let fromIndex = null;
+        if (index) {
+          fromIndex = lookupAddress(index, q, { cityLabel: cityObj.label });
+          // Keep the loaded index on the result so the card can resolve numbers even before
+          // React flushes `streetIndex` state on the first search.
+          setLookup(fromIndex.status === 'unknown' ? fromIndex : { ...fromIndex, index });
+          if (fromIndex.status !== 'unknown') {
+            // Index answers the zone. Geocode with the canonical street label so Photon does
+            // not land on a random "Iuliu Maniu" POI, and keep a single result card.
+            const pinLabel = [
+              fromIndex.found?.label,
+              fromIndex.number,
+            ].filter(Boolean).join(' ');
+            try {
+              const res = await placePin(pinLabel || q, {
+                displayLabel: pinLabel || q,
+                typedQuery: q,
+                pinOnly: true,
+                cityObj,
+                mmaKg,
+              });
+              if (!res.point) {
+                notifyError(
+                  'Strada e în index, dar pinul lipsește',
+                  'Zona e calculată mai sus; Photon/OSM nu a găsit coordonate pe hartă.',
+                );
+              }
+            } catch (err) {
               notifyError('Pinul pe hartă a eșuat', err);
             }
+            return;
           }
-          return;
         }
       }
 
-      const res = await placePin(q);
+      const res = await placePin(q, {
+        cityObj,
+        mmaKg,
+        cityHint: geoCityHint || cityObj.label,
+      });
       if (!res.point) {
-        notifyError('Adresă negăsită', res.message || 'Geocodarea nu a returnat niciun rezultat.');
+        notifyError(
+          'Adresă negăsită',
+          res.message || 'Photon/OSM nu a găsit această adresă pe hartă.',
+        );
       }
     } catch (err) {
-      // With the index answering the common case, a missing geocoder is a note, not a failure.
-      if (err?.status === 503) {
-        notifyError(
-          'Strada nu e în index',
-          'Nu am găsit strada în lista orașului, iar geocodarea nu e configurată pe server '
-          + 'ca rezervă. Verifică scrierea sau caută pe hartă.',
-        );
-      } else {
-        notifyError('Căutarea a eșuat', err);
-      }
+      notifyError('Căutarea a eșuat', err);
     } finally {
       setSearching(false);
     }
   };
+
+  const search = async (e) => {
+    e?.preventDefault();
+    await runSearch();
+  };
+
+  // Prefill + pin from Editează: `/zone-map?q=…&city=bucuresti&plate=…`
+  // or outside zones: `?q=strada+X,+Bolintin-Deal&locality=Bolintin-Deal`
+  useEffect(() => {
+    if (loading) return;
+    const q = (searchParams.get('q') || searchParams.get('address') || '').trim();
+    if (!q) return;
+    const key = searchParams.toString();
+    if (autoSearchKey.current === key) return;
+    autoSearchKey.current = key;
+
+    const cityParam = (searchParams.get('city') || '').trim();
+    const nextCity = cityParam && ZONE_CITIES.some((c) => c.id === cityParam)
+      ? cityParam
+      : cityId;
+    const nextPlate = (searchParams.get('plate') || '').trim();
+    const nextLocality = (searchParams.get('locality') || '').trim();
+
+    if (nextCity !== cityId) setCityId(nextCity);
+    setAddress(q);
+    if (nextPlate) setPlate(nextPlate);
+
+    void runSearch({
+      q,
+      cityIdValue: nextCity,
+      plateValue: nextPlate || plate,
+      localityHint: nextLocality || null,
+    });
+    // runSearch closes over fleet/index; waiting on `loading` is enough for the deep-link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional once-per-query
+  }, [loading, searchParams]);
 
   const pickSuggestion = async (entry) => {
     const q = entry.label;
@@ -323,18 +395,11 @@ export default function ZoneMap() {
       if (!res.point) {
         notifyError(
           'Strada e în index, dar pinul lipsește',
-          'Geocodarea nu a găsit coordonate. Verifică PHOTON_URL pe server.',
+          'Photon/OSM nu a găsit coordonate pe hartă.',
         );
       }
     } catch (err) {
-      if (err?.status === 503) {
-        notifyError(
-          'Harta nu are geocoder',
-          'Setează PHOTON_URL în server/.env (în dev: https://photon.komoot.io).',
-        );
-      } else {
-        notifyError('Pinul pe hartă a eșuat', err);
-      }
+      notifyError('Pinul pe hartă a eșuat', err);
     } finally {
       setSearching(false);
     }
