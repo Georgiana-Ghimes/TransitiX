@@ -26,13 +26,19 @@ async function placeUpload(name, body = '%PDF-1.4 test\n%%EOF\n') {
   return `/uploads/${name}`;
 }
 
-/** A real PDF of `pages` pages, pdf-parse has to be able to count them. */
-async function placeMultiPagePdf(name, pages) {
+/**
+ * A real PDF of `pages` pages. Optional `labelForPage(i)` puts text pdf-parse can read
+ * (e.g. distinct TRO-… per page so the splitter cuts).
+ */
+async function placeMultiPagePdf(name, pages, { labelForPage } = {}) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   for (let i = 0; i < pages; i += 1) {
     if (i) doc.addPage();
-    doc.text(`Aviz pagina ${i + 1}`, 10, 10);
+    const label = labelForPage
+      ? labelForPage(i)
+      : `Aviz pagina ${i + 1}`;
+    doc.text(label, 10, 10);
   }
   // `output()` gives a latin1 string; the arraybuffer form comes back unreadable to pdf-parse.
   await fs.writeFile(path.join(uploadRoot, name), Buffer.from(doc.output(), 'latin1'));
@@ -92,11 +98,13 @@ describe('POST /api/avize/extract', () => {
   });
 
   /**
-   * A multi-page PDF is one aviz per page. Many children still outrun an interactive wait, so
-   * the whole split batch goes to the background (same 202 the UI already polls for).
+   * Distinct TRO per page → one row per aviz. Many children still outrun an interactive wait,
+   * so the whole split batch goes to the background (same 202 the UI already polls for).
    */
-  it('splits a long PDF into one row per page and extracts in the background', async () => {
-    const fileUrl = await placeMultiPagePdf(`dosar-${Date.now()}.pdf`, 12);
+  it('splits a long PDF with distinct TRO per page and extracts in the background', async () => {
+    const fileUrl = await placeMultiPagePdf(`dosar-${Date.now()}.pdf`, 12, {
+      labelForPage: (i) => `Aviz TRO-${String(1001000 + i).padStart(7, '0')}`,
+    });
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ file_url: fileUrl, original_filename: 'dosar.pdf' });
 
@@ -116,8 +124,10 @@ describe('POST /api/avize/extract', () => {
     expect(new Set(rows.rows.map((r) => r.batch_id)).size).toBe(1);
   });
 
-  it('splits a short multi-page PDF and extracts while the caller waits', async () => {
-    const fileUrl = await placeMultiPagePdf(`scurt-${Date.now()}.pdf`, 2);
+  it('splits a short multi-page PDF with distinct TRO and extracts while the caller waits', async () => {
+    const fileUrl = await placeMultiPagePdf(`scurt-${Date.now()}.pdf`, 2, {
+      labelForPage: (i) => `Aviz TRO-${String(2002000 + i).padStart(7, '0')}`,
+    });
     const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
       .send({ file_url: fileUrl, original_filename: 'scurt.pdf' });
 
@@ -125,6 +135,18 @@ describe('POST /api/avize/extract', () => {
     expect(res.body.split_pages).toBe(2);
     expect(res.body.documents).toHaveLength(2);
     expect(res.body.extraction_pending).toBe(false);
+  });
+
+  it('keeps a multi-page PDF as one row when pages share no distinct TRO/PSL', async () => {
+    const fileUrl = await placeMultiPagePdf(`un-aviz-${Date.now()}.pdf`, 2);
+    const res = await api().post('/api/avize/extract').set(auth(ctx.adminToken))
+      .send({ file_url: fileUrl, original_filename: 'un-aviz.pdf' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.split_pages).toBeUndefined();
+    expect(res.body.documents).toBeUndefined();
+    expect(res.body.id).toBeTruthy();
+    expect(res.body.original_filename).toBe('un-aviz.pdf');
   });
 
   it('refuses a request with neither a file nor an id', async () => {
@@ -172,7 +194,7 @@ describe('the list and the export agree about a route', () => {
     const doc = await avizWithoutRoute();
     try {
       const res = await api().get('/api/avize').set(auth(ctx.adminToken));
-      const row = res.body.find((r) => r.id === doc.id);
+      const row = res.body.items.find((r) => r.id === doc.id);
       expect(row.ruta_transport).toBe('Domnesti/Independentei');
     } finally {
       await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
@@ -183,7 +205,7 @@ describe('the list and the export agree about a route', () => {
     const doc = await avizWithoutRoute();
     try {
       const res = await api().get('/api/avize').set(auth(ctx.adminToken));
-      const row = res.body.find((r) => r.id === doc.id);
+      const row = res.body.items.find((r) => r.id === doc.id);
       expect(row.field_confidence.ruta_transport).toBe('ok');
     } finally {
       await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
@@ -198,7 +220,7 @@ describe('the list and the export agree about a route', () => {
     );
     try {
       const res = await api().get('/api/avize').set(auth(ctx.adminToken));
-      expect(res.body.find((r) => r.id === doc.id).ruta_transport).toBe('Ruta de birou');
+      expect(res.body.items.find((r) => r.id === doc.id).ruta_transport).toBe('Ruta de birou');
     } finally {
       await query('DELETE FROM aviz_documents WHERE id = $1', [doc.id]);
     }

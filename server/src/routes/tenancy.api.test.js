@@ -48,7 +48,7 @@ describe('reading across companies', () => {
   it('lists only my own avize', async () => {
     await makeAviz(theirs.company.id, { original_filename: 'al-lor.pdf' });
     const res = await api().get('/api/avize').set(auth(mine.adminToken));
-    const names = res.body.map((d) => d.original_filename);
+    const names = res.body.items.map((d) => d.original_filename);
     expect(names).toContain('al-meu.pdf');
     expect(names).not.toContain('al-lor.pdf');
   });

@@ -32,9 +32,11 @@ describe('fleetQuery', () => {
     expect(params).toContain('VFM');
   });
 
-  it('falls back to the default page size for an unknown limit', () => {
+  it('accepts any page size from 1 to 500; unknown falls back', () => {
     expect(normalizeFleetPage({ limit: 999, offset: -2 }))
       .toEqual({ limit: FLEET_DEFAULT_PAGE_SIZE, offset: 0 });
+    expect(normalizeFleetPage({ limit: 1, offset: 0 }))
+      .toEqual({ limit: 1, offset: 0 });
   });
 
   it('counts with the same filters as the list, including missing MTMA', () => {

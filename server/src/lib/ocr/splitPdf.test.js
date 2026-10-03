@@ -6,6 +6,7 @@ import {
   avizDocumentKeys,
   countPdfPages,
   planAvizPdfSplits,
+  readPdfPageTexts,
   splitAvizFilename,
   splitPageFilename,
   splitPdfByGroups,
@@ -56,6 +57,19 @@ describe('avizDocumentKeys / planAvizPdfSplits', () => {
       'product lines only',
       'TRO-0001002 next aviz',
     ])).toEqual([[0, 1], [2]]);
+  });
+});
+
+describe('jsPDF text layer (same generator as avize.api tests)', () => {
+  it('reads distinct TRO labels so a bulk PDF still splits', async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    doc.text('Aviz TRO-1001000', 10, 10);
+    doc.addPage();
+    doc.text('Aviz TRO-1001001', 10, 10);
+    const buf = Buffer.from(doc.output(), 'latin1');
+    const texts = await readPdfPageTexts(buf);
+    expect(planAvizPdfSplits(texts)).toEqual([[0], [1]]);
   });
 });
 

@@ -123,11 +123,13 @@ describe('avizQuery', () => {
     expect(params.slice(-2)).toEqual([100, 200]);
   });
 
-  it('falls back to the default page size for an unknown limit', () => {
+  it('accepts any page size from 1 to 500; unknown falls back', () => {
     expect(normalizeAvizPage({ limit: 999, offset: -3 }))
       .toEqual({ limit: AVIZ_DEFAULT_PAGE_SIZE, offset: 0 });
     expect(normalizeAvizPage({ limit: 20, offset: 40 }))
       .toEqual({ limit: 20, offset: 40 });
+    expect(normalizeAvizPage({ limit: 1, offset: 0 }))
+      .toEqual({ limit: 1, offset: 0 });
   });
 
   it('counts with the same filters as the list', () => {

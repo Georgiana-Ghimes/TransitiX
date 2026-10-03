@@ -142,13 +142,16 @@ export async function duplicateConsignmentExists(queryFn, { companyId, row, deco
 
 export const AVIZ_ID_CAP = 200;
 
-/** Page sizes the Avize table may ask for. Anything else falls back to the default. */
+/** Page sizes the Avize UI offers. The API also accepts any integer 1…500 (tests / thin pages). */
 export const AVIZ_PAGE_SIZES = [20, 50, 100, 500];
 export const AVIZ_DEFAULT_PAGE_SIZE = 50;
+export const AVIZ_MAX_PAGE_SIZE = 500;
 
 export function normalizeAvizPage({ limit, offset } = {}) {
   const raw = Number(limit);
-  const pageSize = AVIZ_PAGE_SIZES.includes(raw) ? raw : AVIZ_DEFAULT_PAGE_SIZE;
+  const pageSize = Number.isFinite(raw) && raw >= 1 && raw <= AVIZ_MAX_PAGE_SIZE
+    ? Math.floor(raw)
+    : AVIZ_DEFAULT_PAGE_SIZE;
   const off = Math.max(0, Math.floor(Number(offset) || 0));
   return { limit: pageSize, offset: off };
 }

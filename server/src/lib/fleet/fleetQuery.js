@@ -2,14 +2,18 @@
  * List query for Autoturisme: active plates, optional plate search, page sizes shared with the UI.
  */
 
+/** Page sizes the Autoturisme UI offers. The API also accepts any integer 1…500. */
 export const FLEET_PAGE_SIZES = [20, 50, 100, 500];
 export const FLEET_DEFAULT_PAGE_SIZE = 50;
+export const FLEET_MAX_PAGE_SIZE = 500;
 /** Cap for select-all / bulk-delete id lists (fleet is smaller than avize annex batches). */
 export const FLEET_ID_CAP = 5000;
 
 export function normalizeFleetPage({ limit, offset } = {}) {
   const raw = Number(limit);
-  const pageSize = FLEET_PAGE_SIZES.includes(raw) ? raw : FLEET_DEFAULT_PAGE_SIZE;
+  const pageSize = Number.isFinite(raw) && raw >= 1 && raw <= FLEET_MAX_PAGE_SIZE
+    ? Math.floor(raw)
+    : FLEET_DEFAULT_PAGE_SIZE;
   const off = Math.max(0, Math.floor(Number(offset) || 0));
   return { limit: pageSize, offset: off };
 }
