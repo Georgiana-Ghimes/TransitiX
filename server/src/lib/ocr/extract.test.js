@@ -475,6 +475,41 @@ TW
   });
 
   /**
+   * Printed Baumit TRO with blank "Num de comanda de transport"; the driver wrote
+   * `TPO / 31027` in red. Hybrid print + handwriting must not leave numar_tpo empty.
+   */
+  it('reads a handwritten TPO / ##### next to the transport-order label on a printed TRO', () => {
+    const hybrid = `
+BAUMIT ROMANIA COM SRL
+Aviz de expeditie: TRO-0009884
+Data: 21.09.2026
+Adresa de livrare
+Str. Republicii, nr. 1F
+Bolintin-Deal RO 087015
+Num de comanda de transport: TPO / 31027
+Greutate neta: 1.440,03 kg
+Greutate bruta: 1.551,00 kg
+`;
+    const result = extractDocument(hybrid, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_baumit_tro');
+    expect(result.values.numar_tpo).toBe('TPO-31027');
+    expect(result.values.numar_document_marfa).toMatch(/TRO/i);
+    // Five digits ≠ padded 7 — prefill, but review (same rule as truncated codes).
+    expect(result.fields.numar_tpo.status).not.toBe('ok');
+  });
+
+  it('reads handwritten TPO on the line below the blank transport-order label', () => {
+    const hybrid = `
+Aviz de expeditie TRO-0009884 Baumit
+Num de comanda de transport:
+TPO / 31027
+Auto: B 112 VFM
+`;
+    const result = extractDocument(hybrid, { documentType: 'aviz' });
+    expect(result.values.numar_tpo).toBe('TPO-31027');
+  });
+
+  /**
    * A hand over the corner of the page truncates the code without making it look wrong.
    * Copied onto an invoice that is worse than a blank field, so it has to reach an operator.
    */

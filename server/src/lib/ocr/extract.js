@@ -65,7 +65,7 @@ export function extractDocument(text, { documentType, profileId } = {}) {
   // Without a profile the codes stay on the floor, fall back to the generic aviz layout.
   let profile = forced ?? detection.profile;
   if (!profile && (!documentType || documentType === 'aviz')) {
-    const hasLogisticsCode = /\b(?:TPO|PSL|TRO)-?\d{4,}\b/i.test(raw);
+    const hasLogisticsCode = /\b(?:TPO|PSL|TRO)[\s\-._/:]*\d{4,}/i.test(raw);
     if (hasLogisticsCode) profile = getProfile('aviz_generic');
   }
 

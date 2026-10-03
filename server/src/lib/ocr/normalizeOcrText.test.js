@@ -64,6 +64,11 @@ describe('normalizeOcrText', () => {
     expect(normalizeOcrText('TP0-0025629')).toBe('TPO-0025629');
   });
 
+  it('repairs handwritten TPO with a slash separator', () => {
+    expect(normalizeOcrText('Num de comanda de transport: TPO / 31027')).toContain('TPO-31027');
+    expect(normalizeOcrText('TPO/31027')).toContain('TPO-31027');
+  });
+
   it('repairs handwriting TPO with O-as-zero and ampersand noise', () => {
     expect(normalizeOcrText('TPO-O025813')).toContain('TPO-0025813');
     expect(normalizeOcrText('TP0-O0&5813')).toMatch(/TPO-00\d{4,}/);

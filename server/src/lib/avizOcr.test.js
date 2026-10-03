@@ -588,6 +588,11 @@ describe('repairAvizFromStored', () => {
     expect(repairAvizFromStored({ numar_tpo: 'TPO 0025803' }).numar_tpo).toBe('TPO-0025803');
   });
 
+  it('normalises a handwritten slash form TPO / #####', () => {
+    expect(repairAvizFromStored({ numar_tpo: 'TPO / 31027' }).numar_tpo).toBe('TPO-31027');
+    expect(repairAvizFromStored({ numar_tpo: 'TPO/31027' }).numar_tpo).toBe('TPO-31027');
+  });
+
   it('keeps an office-edited date instead of the PDF date', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-0025813',

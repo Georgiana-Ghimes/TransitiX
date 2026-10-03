@@ -167,7 +167,8 @@ function normalizeDocNo(value) {
 export function normalizeTpo(value, minDigits = 1) {
   if (!value) return null;
   const n = Number(minDigits) >= 1 ? Number(minDigits) : 1;
-  const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-.]*(\\d{${n},}(?:[-/.]\\d+)*)`));
+  // `/` is common on handwritten notes ("TPO / 31027") next to a blank printed field.
+  const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-./:]*(\\d{${n},}(?:[-/.]\\d+)*)`));
   return m ? `TPO-${m[1].replace(/[/.]/g, '-')}` : null;
 }
 

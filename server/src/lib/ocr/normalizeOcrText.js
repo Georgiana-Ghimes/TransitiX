@@ -82,21 +82,21 @@ export function normalizeOcrText(text) {
   if (!out.trim()) return out;
 
   // Separate glued prefixes: expeditiePSL-… / transport_TPO-…
-  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._]*\d)/gi, '$1 $2');
-  out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._]*[\dOIl])/gi, ' $1');
+  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._/:]*\d)/gi, '$1 $2');
+  out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._/:]*[\dOIl])/gi, ' $1');
 
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(
-    /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('PSL', digits);
       return code ? `${lead}${code}` : full;
     }
   );
 
-  // TPO: TP0 / TPQ / TPO + digit tail (ampersands / O-as-zero in the number)
+  // TPO: TP0 / TPQ / TPO + digit tail (ampersands / O-as-zero / handwritten "TPO / 31027")
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?P[\s]?[O0Q])[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    /(^|[^A-Za-z0-9])(T[\s]?P[\s]?[O0Q])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TPO', digits);
       return code ? `${lead}${code}` : full;
@@ -105,7 +105,7 @@ export function normalizeOcrText(text) {
 
   // TRO codes (Baumit variant)
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TRO', digits);
       return code ? `${lead}${code}` : full;

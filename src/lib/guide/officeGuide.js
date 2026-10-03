@@ -48,7 +48,7 @@ const OCR = {
   lead: 'Ce poți lăsa în seama programului și ce trebuie oricum scris de mână.',
   blocks: [
     terms([
-      { term: 'Număr TPO', text: 'Citit de pe document. E numărul comenzii, și după el se grupează cursele.' },
+      { term: 'Număr TPO', text: 'Citit de pe document, inclusiv când e scris de mână lângă „comandă de transport” (ex. TPO / 31027 cu roșu pe un aviz tipărit). E numărul comenzii, și după el se grupează cursele. Codurile scurte ajung la verificare, nu se confirmă singure.' },
       { term: 'Data efectuării cursei', text: 'Citită de pe aviz.' },
       { term: 'Număr auto', text: 'Citit și normalizat la forma B-12-FSR. Când avizul are și remorca, apar ambele, tractorul primul.' },
       { term: 'Ruta', text: 'Construită din situl de încărcare (BOL, MIL) și din adresa de livrare de pe document.' },

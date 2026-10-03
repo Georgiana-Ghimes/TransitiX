@@ -39,10 +39,13 @@ function scoreMarkers(text, markers) {
  * (`expeditiePSL-0044362`) or uses `_` instead of space (`transport_TPO-…`).
  * Do not require `\b` before the code, letters/`_` are word chars, so `\b`
  * misses the glued forms. Requiring digits after the prefix keeps false hits low.
+ *
+ * `/` and `:` are handwriting separators ("TPO / 31027" in red on a printed Baumit).
  */
-const TPO_CODE = /(TPO[\s\-._]*\d{3,}[\d./-]*)/i;
-const PSL_CODE = /(PSL[\s\-._]*\d{3,}[\d./-]*)/i;
-const TRO_CODE = /(TRO[\s\-._]*\d{3,}[\d./-]*)/i;
+const CODE_SEP = '[\\s\\-._/:]*';
+const TPO_CODE = new RegExp(`(TPO${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
+const PSL_CODE = new RegExp(`(PSL${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
+const TRO_CODE = new RegExp(`(TRO${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
 
 /**
  * TPO / PSL / TRO codes are zero-padded to this many digits.
@@ -59,13 +62,70 @@ function codeLengthPenalty(value) {
   return digits.length === CODE_DIGITS ? 0 : 0.35;
 }
 
+/** Collapse `TPO / 31027` / `TPO-0025629` into the stored prefix form. */
+function canonicalTpoRaw(raw) {
+  const upper = String(raw || '').toUpperCase();
+  const m = upper.match(new RegExp(`(?:TPO|TP0|TPQ)${CODE_SEP}(\\d{3,}[\\d./-]*)`, 'i'));
+  if (m) return `TPO-${m[1].replace(/[/.]/g, '-')}`;
+  return upper.replace(/[\s_]+/g, '');
+}
+
 const tpoField = (patterns) => (text) => {
   const found = matchPatterns(text, patterns, {
-    transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
+    transform: canonicalTpoRaw,
   });
   if (!found.value) return found;
   const penalty = codeLengthPenalty(found.value);
   return penalty ? { ...found, confidence: Math.max(0, found.confidence - penalty) } : found;
+};
+
+/**
+ * Printed aviz + handwritten TPO (hybrid).
+ *
+ * Baumit leaves "Num de comanda de transport" blank; the driver writes `TPO / 31027`
+ * in red. The printed TRO/PSL stays the document number — only the note by that label
+ * (or a slash-separated TPO anywhere) is the order number.
+ */
+const hybridAvizTpoField = (text) => {
+  const printed = tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/])(text);
+  if (printed.value) return printed;
+
+  const mangled = String(text || '').match(
+    new RegExp(`\\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)${CODE_SEP}(\\d{3,})`, 'i'),
+  );
+  if (mangled) {
+    const value = `TPO-${mangled[1]}`;
+    const penalty = codeLengthPenalty(value);
+    return { value, confidence: Math.max(0, 0.82 - penalty), matched: mangled[0] };
+  }
+
+  // Same line as the transport-order label (print blank, ink filled in).
+  const sameLine = String(text || '').match(
+    /(?:num\.?\s*(?:de\s+)?)?comand[aă]\s+(?:de\s+)?transport\s*[:.\-]?\s*((?:TPO|TP0|TPQ)[\s\-._/:]*\d{3,}|\d{4,7})\b/i,
+  );
+  if (sameLine) {
+    const digits = sameLine[1].match(/\d{3,}/)?.[0];
+    if (digits) {
+      const value = `TPO-${digits}`;
+      const penalty = codeLengthPenalty(value);
+      return { value, confidence: Math.max(0, 0.72 - penalty), matched: sameLine[0] };
+    }
+  }
+
+  // Label on one line, handwritten TPO within the next lines of the cell.
+  const nearby = String(text || '').match(
+    /(?:num\.?\s*(?:de\s+)?)?comand[aă]\s+(?:de\s+)?transport[\s\S]{0,80}?((?:TPO|TP0|TPQ)[\s\-._/:]*\d{3,})/i,
+  );
+  if (nearby) {
+    const digits = nearby[1].match(/\d{3,}/)?.[0];
+    if (digits) {
+      const value = `TPO-${digits}`;
+      const penalty = codeLengthPenalty(value);
+      return { value, confidence: Math.max(0, 0.75 - penalty), matched: nearby[0] };
+    }
+  }
+
+  return NO_MATCH;
 };
 
 const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
@@ -193,7 +253,9 @@ function carnetNumber(raw) {
 
 /** `TPO` in ballpoint reads back as `TP0`, `TPQ`, `IPO`. Fix the prefix, keep the digits. */
 const carnetTpoField = (text) => {
-  const found = String(text || '').match(/\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)[\s\-._:]*(\d{3,})/i);
+  const found = String(text || '').match(
+    new RegExp(`\\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)${CODE_SEP}(\\d{3,})`, 'i'),
+  );
   if (!found) return NO_MATCH;
   const value = `TPO-${found[1]}`;
   const penalty = codeLengthPenalty(value);
@@ -401,7 +463,7 @@ export const OCR_PROFILES = [
     name: 'Aviz Baumit, PSL',
     markers: [/\bpsl\b/, /baumit/, /aviz/],
     fields: {
-      numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
+      numar_tpo: hybridAvizTpoField,
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([PSL_CODE]),
@@ -424,7 +486,7 @@ export const OCR_PROFILES = [
     name: 'Aviz Baumit, TRO',
     markers: [/\btro\b/, /baumit/, /aviz/],
     fields: {
-      numar_tpo: tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/]),
+      numar_tpo: hybridAvizTpoField,
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([TRO_CODE]),
@@ -455,7 +517,7 @@ export const OCR_PROFILES = [
       /comanda\s+de\s+transport/,
     ],
     fields: {
-      numar_tpo: tpoField([TPO_CODE]),
+      numar_tpo: hybridAvizTpoField,
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([
