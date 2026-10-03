@@ -17,7 +17,6 @@ import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
-
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -278,6 +277,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         })
         : extraction;
 
+      // Route is structural only: Expeditor + Adresa de livrare slices (no LLM).
       const columns = toColumns(merged.values);
       const fieldsForValidation = { ...(merged.fields || {}) };
       if (fieldsForValidation.quantity && !fieldsForValidation.cantitate_marfa) {

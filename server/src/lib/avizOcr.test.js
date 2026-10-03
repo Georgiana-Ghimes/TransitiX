@@ -78,7 +78,7 @@ describe('parseBaumitAviz', () => {
     expect(parsed.numar_auto).toBe('B-330-SRS');
     expect(parsed.tip_marfa).toBe('saci');
     expect(parsed.cantitate_marfa).toBe(245);
-    expect(parsed.ruta_transport).toBe('Bol-Domnesti/Independentei121');
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Independentei nr. 121, Domnesti');
     expect(parsed.layout).toBe('psl');
     expect(parsed.numar_curse).toBe(1);
     expect(parsed.valoare_tpo).toBe(0);
@@ -93,7 +93,7 @@ describe('parseBaumitAviz', () => {
     expect(parsed.numar_auto).toBe('B-112-XYZ');
     expect(parsed.tip_marfa).toBe('paleti');
     expect(parsed.cantitate_marfa).toBe(12);
-    expect(parsed.ruta_transport).toMatch(/^Mil/i);
+    expect(parsed.ruta_transport).toBeNull();
     expect(parsed.layout).toBe('tro');
   });
 
@@ -159,7 +159,51 @@ sac
     expect(parsed.numar_document_marfa).toBe('PSL-0044362');
     expect(parsed.numar_auto).toBe('B-330-SRS');
     expect(parsed.cantitate_marfa).toBe(245);
-    expect(parsed.ruta_transport).toBe('Bol-Dobroesti/Ciresului');
+    // Fixture has no house number on the delivery lines.
+    expect(parsed.ruta_transport).toBe('Str. Ciresului, Dobroesti');
+  });
+
+  it('rebuilds Adresa de livrare from Baumit two-column tab OCR (not Client)', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii,	IF Bolintin-Deal RO 087015 ROU
+nr.
+Adresă de livrare	Client
+CS-DEMOS-OBI CIRESULUI	C23901185 DEMOS INTERMED SRL
+STR	NR 31B	Locotenent Moga Nr. 18
+CIRESULUI,
+RO	Fundeni RO 077086
+Dobroești	077085
+ROU	ROU
+Client factură:	C23901185 DEMOS INTERMED SRL
+Comandă de transport TPO-0025629
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Ciresului nr. 31B, Dobroesti');
+    expect(parsed.ruta_transport).not.toMatch(/Fundeni|Locotenent|Moga|Aeroportului/i);
+  });
+
+  it('replaces a stored Client-column delivery leg with Adresa de livrare from raw OCR', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresă de livrare	Client
+CS-DEMOS-OBI CIRESULUI	C23901185 DEMOS INTERMED SRL
+STR	NR 31B	Locotenent Moga Nr. 18
+CIRESULUI,
+RO	Fundeni RO 077086
+Dobroești	077085
+ROU	ROU
+Client factură:	C23901185 DEMOS INTERMED SRL
+`;
+    const repaired = repairAvizFromStored({
+      ruta_transport: 'Str. Republicii, Bolintin-Deal / Str. Locotenent Moga, Fundeni',
+      extracted_data: { raw_text: raw },
+    });
+    expect(repaired.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Ciresului nr. 31B, Dobroesti');
+    expect(repaired.ruta_transport).not.toMatch(/Locotenent|Fundeni/i);
   });
 
   it('reads 11.08.2026 13:10 as 11 August, not 1 August', () => {
@@ -189,6 +233,89 @@ VFM
     expect(parsed.numar_tpo).toBe('TPO-0025813');
   });
 
+  it('strips PDF "PAGINA" footers and does not take the Client AP- street as delivery', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal
+RO 087015
+ROU
+PAGINA 1/1
+Aviz de expeditie: PSL-0044633
+Adresă de livrare
+CS-CONCELEX- OBI LOHN
+Sosea Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+ROU
+Client factură: C23901527 CONCELEX SRL
+C23000014 AP-CONCELEX- OBI LOHN Stradă Aeroportului nr. 120-T București Sector 1 RO 013596 ROU
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/pagina|aeroportului/i);
+  });
+
+  it('unsticks a glued RepubliciiPAGINA OCR token', () => {
+    const raw = `
+Expeditor Site: BOL Bolintin Str. RepubliciiPAGINA nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare Sosea Viilor nr. 52 Bucuresti Sector 5 RO 050151
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Republicii/i);
+    expect(parsed.ruta_transport).not.toMatch(/pagina/i);
+  });
+
+  it('builds the route from Expeditor street + Adresa de livrare (PSL-0044633 layout)', () => {
+    // Real Baumit PDF: Site BOL is a label; the load address is Str. Republicii / Bolintin-Deal.
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F
+Bolintin-Deal
+RO 087015
+ROU
+Aviz de expeditie: PSL-0044633
+Adresă de livrare
+CS-CONCELEX- OBI LOHN
+Sosea Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+ROU
+Client factură: C23901527 CONCELEX SRL
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toBe('Bol');
+    expect(parsed.ruta_transport).not.toMatch(/^Bol-/);
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Bucuresti', streetName: 'viilor', houseNumber: '52',
+    });
+  });
+
+  it('reads any town from the labelled blocks, not from a hard-coded list', () => {
+    const raw = `
+Expeditor
+Site: XYZ Depou
+Strada Luncii nr. 3
+Fagetel-Nord
+RO 123456
+Aviz de expeditie: PSL-99990001
+Adresa de livrare
+SC CLIENT SRL
+Aleea Castanilor nr. 8
+Campina RO 105600
+Placuta de inmatriculare B 11 XYZ
+TPO-00990001
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Luncii nr. 3, Fagetel-Nord / Aleea Castanilor nr. 8, Campina');
+    expect(parsed.ruta_transport).not.toMatch(/Bol|Mil|XYZ/i);
+  });
+
   it('starts the route at the Expeditor site, not at a customer address', () => {
     const raw = `
 Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
@@ -200,9 +327,10 @@ Placuta de inmatriculare B 34 BAU / B 34 BAU
 TPO-0025803
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
-    // The site code, not the town it sits in: the customer's own annex writes "Bol-…".
-    expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    // Origin is the street under Expeditor, not the Site code "BOL".
+    expect(parsed.ruta_transport).toMatch(/Republicii/i);
+    expect(parsed.ruta_transport).toMatch(/Bolintin-Deal/i);
     // Aeroportului 120-T is a second address belonging to the buyer. Starting the route there
     // described a journey between two of the customer's own premises that no lorry made.
     expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
@@ -212,6 +340,43 @@ TPO-0025803
     expect(parsed.delivery_address).toMatchObject({
       locality: 'Bucuresti', streetName: 'viilor', streetType: 'sosea', houseNumber: '52',
     });
+  });
+
+  it('takes destination only from Adresa de livrare and origin only from Expeditor', () => {
+    const raw = `
+Expeditor Site: BOL Bolintin str. Republicii nr. IF Bolintin-Deal RO 087015
+Adresa de livrare CS-DEMO Aleea Teilor nr. 5 Domnesti RO 077000
+Client: C23000014 AP-DEMO Stradă Aeroportului nr. 120 Bucuresti Sector 1 RO 013596
+Placuta de inmatriculare B 111 ABC
+TPO-00110011
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Aleea Teilor nr. 5, Domnesti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('does not invent an origin from the Client block when Expeditor is missing', () => {
+    const raw = `
+Adresa de livrare CS-DEMO Aleea Teilor nr. 5 Domnesti RO 077000
+Client: C23000014 AP-DEMO Stradă Aeroportului nr. 120 Bucuresti Sector 1 RO 013596
+Placuta de inmatriculare B 111 ABC
+TPO-00110011
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Aleea Teilor nr. 5, Domnesti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('ignores MIL printed inside Adresa de livrare when Expeditor is BOL', () => {
+    const raw = `
+Expeditor Site: BOL Bolintin str. Republicii
+Adresa de livrare MIL NEAMTIU Militari Bvd. Iuliu Maniu, nr. 600A Bucuresti Sector 6 RO 061129
+Placuta de inmatriculare B 112 VFM
+TPO-0025813
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii / Bvd. Iuliu Maniu nr. 600A, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/^Mil-/i);
   });
 
   it('ignores the client billing address, which no lorry ever visits', () => {
@@ -226,7 +391,7 @@ TPO-0025629
 PSL-0044362
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
+    expect(parsed.ruta_transport).toBe('Str. Ciresului nr. 31B, Dobroesti');
     expect(parsed.numar_auto).toBe('B-330-SRS');
   });
 
@@ -240,7 +405,7 @@ Placuta de inmatriculare B 111 ABC
 TPO-00110011
 `;
     const parsed = parseBaumitAviz(raw);
-    expect(parsed.ruta_transport).toBe('Bol-Domnesti/Teilor5');
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Aleea Teilor nr. 5, Domnesti');
     // "Aleea Teilor" is read as a street type plus a name, which is what this case is about.
     expect(parsed.ruta_transport).toMatch(/Teilor/i);
     // Blvd Unirii is the buyer's registered address, not a stop on this run.
@@ -269,7 +434,7 @@ Aviz de expeditie TRO-0008053
 `;
     const parsed = parseBaumitAviz(raw);
     expect(parsed.numar_auto).toBe('B-112-VFM / B-475-AGR');
-    expect(parsed.ruta_transport).toBe('Mil-Bucuresti/IuliuManiu600A');
+    expect(parsed.ruta_transport).toBe('Bvd. Iuliu Maniu nr. 600A, Bucuresti');
     expect(parsed.ruta_transport).not.toMatch(/Bolintin/i);
     // A two-word street name survives the split, glued only in the route code.
     expect(parsed.delivery_address).toMatchObject({
@@ -361,20 +526,34 @@ describe('repairAvizFromStored', () => {
     expect(repaired.data_efectuare_cursa).toBe('2026-08-11');
   });
 
-  it('keeps an office-edited route instead of re-parsing the PDF', () => {
+  it('upgrades a glued annex route from raw OCR instead of keeping it', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-0025803',
       ruta_transport: 'Bol-Bucuresti/Viilor52',
       extracted_data: {
-        raw_text: `Expeditor Site: BOL Bolintin str. Republicii Bolintin-Deal
+        raw_text: `Expeditor Site: BOL Bolintin str. Republicii nr. 1F Bolintin-Deal RO 087015
 Adresă de livrare CS-CONCELEX Șosea Viilor nr. 52 București Sector 5 RO 050151
 Client C23000014 AP-CONCELEX Stradă Aeroportului nr. 120-T București Sector 1 RO 013596
 TPO-0025803`,
       },
     });
-    expect(repaired.ruta_transport).toBe('Bol-Bucuresti/Viilor52');
-    // Derived on every read, so a stored row that predates this column still answers.
+    expect(repaired.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
     expect(repaired.delivery_address?.streetName).toBe('viilor');
+  });
+
+  it('keeps a spaced office-edited route when ruta_transport is in corrected_fields', () => {
+    const repaired = repairAvizFromStored({
+      numar_tpo: 'TPO-0025803',
+      ruta_transport: 'Str. Custom, Oras / Str. Alta, Oras',
+      corrected_fields: ['ruta_transport'],
+      extracted_data: {
+        raw_text: `Expeditor Site: BOL Bolintin str. Republicii nr. 1F Bolintin-Deal RO 087015
+Adresă de livrare CS-CONCELEX Șosea Viilor nr. 52 București Sector 5 RO 050151
+Client C23000014 AP-CONCELEX Stradă Aeroportului nr. 120-T București Sector 1 RO 013596
+TPO-0025803`,
+      },
+    });
+    expect(repaired.ruta_transport).toBe('Str. Custom, Oras / Str. Alta, Oras');
   });
 
   it('replaces a false Bolintin-Deal route with Site→livrare from the stored OCR text', () => {
@@ -395,8 +574,8 @@ TPO-0025629
 PSL-0044362`,
       },
     });
-    expect(repaired.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
-    expect(repaired.ruta_transport).not.toMatch(/Bolintin/i);
+    expect(repaired.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Ciresului nr. 31B, Dobroesti');
+    expect(repaired.ruta_transport).toMatch(/Republicii|Ciresului/i);
     expect(repaired.delivery_address?.locality).toBe('Dobroesti');
   });
 
@@ -534,8 +713,9 @@ NUMAR AUTO TEST-101
 describe('review heuristics (#41)', () => {
   it('flags glued street+number routes without locality as suspicious', () => {
     expect(isSuspiciousRoute('Republicii17')).toBe(true);
-    expect(isSuspiciousRoute('Bol-Bucuresti/Viilor52')).toBe(false);
-    expect(isSuspiciousRoute('Bucuresti/Viilor52')).toBe(false);
+    expect(isSuspiciousRoute('Bol')).toBe(true);
+    expect(isSuspiciousRoute('BolintinDeal/Republicii1F-Bucuresti/Viilor52')).toBe(true);
+    expect(isSuspiciousRoute('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti')).toBe(false);
     expect(avizFieldConfidence({ ruta_transport: 'Republicii17' }).ruta_transport).toBe('low');
   });
 

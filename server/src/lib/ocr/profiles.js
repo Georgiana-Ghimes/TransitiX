@@ -102,7 +102,11 @@ const routeField = (text) => {
   return NO_MATCH;
 };
 
-/** Baumit annex route: Site (Bol/Mil) → Adresă de livrare. Falls back to the generic matcher. */
+/**
+ * Baumit annex route: Expeditor (Bol/Mil) → Adresa de livrare.
+ * If that parse is empty, only an explicit "Ruta:" label is accepted — never loose City-City,
+ * which once wrote the Expeditor town (Bolintin-Deal) onto the annex.
+ */
 const baumitRouteField = (text) => {
   try {
     const route = parseBaumitAviz(text)?.ruta_transport;
@@ -110,7 +114,11 @@ const baumitRouteField = (text) => {
   } catch {
     // Profile extractors must not throw the whole document; fall through.
   }
-  return routeField(text);
+  const labelled = matchPatterns(text, [
+    new RegExp(`(?:ruta|traseu|route)\\s*[:\\-]?\\s*([A-ZĂÂÎȘȚ]${CELL}{3,80})`, 'i'),
+  ], { baseConfidence: 0.8 });
+  if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
+  return NO_MATCH;
 };
 
 const goodsField = (text) => {

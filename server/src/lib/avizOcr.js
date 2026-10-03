@@ -209,8 +209,10 @@ function prettyPlace(value) {
 }
 
 function formatHouseNumber(number) {
-  const s = String(number || '').replace(/\s+/g, '');
+  let s = String(number || '').replace(/\s+/g, '');
   if (!s) return '';
+  // Baumit prints "nr. 1F"; OCR often yields "IF" / "LF".
+  if (/^[il]([a-z])$/i.test(s)) s = `1${s.slice(-1)}`;
   return s.replace(/[a-z]+/g, (m) => m.toUpperCase());
 }
 
@@ -221,187 +223,389 @@ function compactStreet(name, number) {
   return num ? `${street}${num}` : street;
 }
 
+/** Find a multi-word label even when OCR/PDF emits one word per line. */
+function findFoldedLabel(folded, label) {
+  const pattern = fold(label).trim().replace(/\s+/g, '\\s+');
+  if (!pattern) return null;
+  const m = folded.match(new RegExp(pattern));
+  if (!m || m.index == null) return null;
+  return { index: m.index, length: m[0].length };
+}
+
 function sliceSection(blob, startLabels, stopLabels) {
   const folded = fold(blob);
   let start = -1;
   let labelLen = 0;
   for (const label of startLabels) {
-    const fl = fold(label);
-    const i = folded.indexOf(fl);
-    if (i >= 0 && (start === -1 || i < start)) {
-      start = i;
-      labelLen = fl.length;
+    const hit = findFoldedLabel(folded, label);
+    if (hit && (start === -1 || hit.index < start)) {
+      start = hit.index;
+      labelLen = hit.length;
     }
   }
   if (start < 0) return '';
   const from = start + labelLen;
   let end = folded.length;
   for (const stop of stopLabels) {
-    const i = folded.indexOf(fold(stop), from);
-    if (i > from && i < end) end = i;
+    const hit = findFoldedLabel(folded.slice(from), stop);
+    if (hit && hit.index > 0) {
+      const abs = from + hit.index;
+      if (abs < end) end = abs;
+    }
   }
   return folded.slice(from, end);
 }
 
-function parseDestBlock(section) {
+/** Grammatical noise — never a locality. No town/street whitelist. */
+const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozit|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client)$/;
+
+/** Second street-name token stops here (grammatical), not at town names — towns vary. */
+const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania)$/;
+
+const STREET_TYPE_RE = /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)/;
+
+function isUsableStreetToken(word, localityFolded = '') {
+  if (!word || word.length < 3) return false;
+  if (STREET_NAME_STOP.test(word) || LOCALITY_NOISE.test(word)) return false;
+  if (/^pagina/i.test(word)) return false;
+  if (localityFolded && localityFolded.startsWith(word)) return false;
+  return true;
+}
+
+/**
+ * Locality from an address block: place before `RO #####`, or `Place ######` when the
+ * two-column PDF drops the "RO" onto the Client column.
+ */
+function localityFromSection(folded) {
+  const roAt = folded.search(/\bro\s*\d{5,6}\b/);
+  if (roAt > 0) {
+    const before = folded
+      .slice(0, roAt)
+      .replace(/\bsector\s*\d*\s*$/i, '')
+      .trim();
+    const m = before.match(/([a-z][a-z]*(?:-[a-z]+)?)$/);
+    if (m?.[1] && !LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) {
+      return m[1];
+    }
+  }
+
+  // Two-column OCR: locality\tpostcode with no "RO" on the delivery side.
+  for (const m of folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(\d{5,6})\b/g)) {
+    if (!LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) return m[1];
+  }
+
+  const afterNr = folded.match(
+    /\bnr\.?\s*[a-z0-9][a-z0-9\-]*\s+([a-z][a-z]*(?:-[a-z]+)?)\b/
+  );
+  if (afterNr?.[1] && !LOCALITY_NOISE.test(afterNr[1]) && !STREET_NAME_STOP.test(afterNr[1])) {
+    return afterNr[1];
+  }
+  return null;
+}
+
+/**
+ * When Adresa de livrare | Client share a row, pdf-parse emits tab-separated cells.
+ * Keep only the left cell(s) — unloading address. Right = Client seat, never parsed.
+ */
+function leftColumnFromInterleaved(section) {
+  const left = [];
+  for (const line of String(section || '').split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const cells = line.split(/\t+/).map((c) => c.trim()).filter(Boolean);
+    if (!cells.length) continue;
+    const firstFold = fold(cells[0]);
+    if (firstFold === 'client') continue;
+    if (cells.length === 1) {
+      left.push(cells[0]);
+      continue;
+    }
+    // locality\tpostcode — both belong to the delivery column.
+    const secondCompact = cells[1].replace(/\s+/g, '');
+    if (cells.length === 2 && /^\d{5,6}$/.test(secondCompact)) {
+      left.push(cells[0], `RO ${secondCompact}`);
+      continue;
+    }
+    // Skip cells that are clearly the Client id column (C######## / AP-…).
+    if (/^c\d{8}\b/.test(firstFold) || /^ap-/.test(firstFold)) continue;
+    left.push(cells[0]);
+    // type\thouse\tclientStreet — middle cell is delivery house number.
+    if (cells.length >= 3 && /^(nr\.?\s*)?[a-z0-9\-]+$/i.test(secondCompact)) {
+      left.push(cells[1]);
+    }
+  }
+  return left.join(' ');
+}
+
+/**
+ * Street + locality inside one labelled block (Expeditor or Adresa de livrare).
+ * Structure only: `Str. …` + place — no hard-coded town list.
+ */
+function parseDestBlock(section, { interleaved = false } = {}) {
   if (!section || !String(section).trim()) {
     return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
   }
-  const folded = fold(section)
+
+  const source = interleaved ? leftColumnFromInterleaved(section) : section;
+  let folded = fold(source)
     .replace(/bucurestisector/g, 'bucuresti sector')
     .replace(/([a-z])sector(\d)/g, '$1 sector $2');
-  const skipLocality = /^(bolintin|bolintin-deal|deal|republicii|rou|romania|sector|lohn|obi|pagina)$/;
-  const streetStop = /^(nr|numar|sector|ro|rou|romania|bucuresti|domnesti|dobroesti|militari|fundeni|comanesti|popesti)$/;
-  // The type word is captured, not just skipped. Bucharest has an Intrarea, a Șoseaua and a
-  // Strada Viilor, and they do not agree about the zone: one is in B, one is outside. The aviz
-  // prints "Șosea Viilor" and dropping that first word turned an address the document states
-  // plainly into a question for the operator.
-  const typeMatch = folded.match(
-    /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)\s+(?<first>[a-z]+)(?:\s+(?<second>[a-z]+))?/
-  );
-  const nrMatch = folded.match(/\bnr\.?\s*(\d+[a-z\-]*)/);
-  let streetName = null;
-  if (typeMatch) {
-    const { first, second } = typeMatch.groups;
-    streetName = first;
-    if (second && !streetStop.test(second)) {
-      streetName = `${first} ${second}`;
+
+  // PDF footers ("PAGINA 1/1") and OCR glue ("RepubliciiPAGINA") are not part of the street.
+  folded = folded
+    .replace(/([a-z])pagina\b/g, '$1 ')
+    .replace(/\bpagina\b(?:\s*\d+(?:\s*[\/.\-]\s*\d+)?)?/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // On a clean single-column block, Client codes still mark the end of the delivery address.
+  // After left-column rebuild they should already be gone — clipping would only hurt.
+  if (!interleaved) {
+    let clipAt = folded.length;
+    for (const re of [/\bc\d{8}\b/, /\bap-[a-z0-9]/]) {
+      const m = re.exec(folded);
+      if (m && m.index >= 8 && m.index < clipAt) clipAt = m.index;
     }
-  } else if (nrMatch) {
-    const loose = folded.match(/([a-z]{4,})(?:\s+([a-z]{3,}))?\s+nr\.?\s*\d+/);
-    if (loose) {
+    folded = folded.slice(0, clipAt);
+  }
+  folded = scrubSectionNoise(folded);
+
+  const localityRaw = localityFromSection(folded);
+  const localityFolded = localityRaw ? fold(localityRaw) : '';
+
+  const typeMatch = folded.match(new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags));
+  let streetType = typeMatch?.groups?.type?.replace(/\.$/, '') || null;
+  let streetName = null;
+
+  if (typeMatch) {
+    const afterType = folded.slice(typeMatch.index + typeMatch[0].length);
+    // Skip `nr. 31B` / OCR `nr IF` that often sits between STR and the street name line.
+    const afterNr = afterType.replace(/^\s*(?:nr\.?\s*)?[a-z]?\d[a-z0-9\-]*\s*/i, ' ');
+    const afterTokens = afterNr.match(/[a-z]{3,}/g) || [];
+    for (const tok of afterTokens) {
+      if (isUsableStreetToken(tok, localityFolded)) {
+        streetName = tok;
+        break;
+      }
+    }
+    // Street name immediately before the type word (`Viilor Șosea`) — not earlier site tags.
+    if (!streetName) {
+      const before = folded.slice(0, typeMatch.index).trim();
+      const prev = before.match(/([a-z]{4,})$/);
+      if (prev && isUsableStreetToken(prev[1], localityFolded)) {
+        streetName = prev[1];
+      }
+    }
+  }
+
+  const nrMatch = folded.match(/\bnr\.?\s*([a-z0-9][a-z0-9\-]*)/);
+  let rawHouse = nrMatch?.[1] && !LOCALITY_NOISE.test(nrMatch[1]) && !/^pagina/i.test(nrMatch[1])
+    ? nrMatch[1]
+    : null;
+  // Baumit often prints `Str. Republicii, IF Bolintin-Deal` with `nr.` on the next line.
+  if (!rawHouse && streetName) {
+    const afterStreet = folded.slice(folded.indexOf(streetName) + streetName.length);
+    const bare = afterStreet.match(/^\s*,?\s*(?:nr\.?\s*)?([0-9]+[a-z]?|[il]f)\b/i);
+    if (bare?.[1] && !LOCALITY_NOISE.test(fold(bare[1]))) rawHouse = bare[1];
+  }
+
+  if (!streetName && rawHouse) {
+    const loose = folded.match(/([a-z]{4,})(?:\s+([a-z]{3,}))?\s+nr\.?\s*[a-z0-9]/);
+    if (loose && isUsableStreetToken(loose[1], localityFolded)) {
       streetName = loose[1];
-      if (loose[2] && !streetStop.test(loose[2])) {
+      if (loose[2] && isUsableStreetToken(loose[2], localityFolded)) {
         streetName = `${loose[1]} ${loose[2]}`;
       }
     }
   }
 
-  let localityRaw = null;
-  if (/\bbucuresti\b/.test(folded)) localityRaw = 'bucuresti';
-  else {
-    const locMatch = folded.match(/(?<![a-z0-9]-)\b(domnesti|dobroesti|militari|fundeni|comanesti|popesti)\b/);
-    localityRaw = locMatch?.[1] || null;
-  }
-  if (!localityRaw) {
-    const beforePostal = folded.match(
-      /\b([a-z][a-z\-]{2,})\s+(?:sector\s*\d+\s+)?ro\s*\d{5}/
-    );
-    if (beforePostal?.[1] && !skipLocality.test(beforePostal[1])) {
-      localityRaw = beforePostal[1];
+  // "Iuliu Maniu" — second token only when it is still a street word, not the town.
+  if (streetName && !/\s/.test(streetName) && typeMatch) {
+    const afterName = folded.slice(folded.indexOf(streetName) + streetName.length);
+    const second = afterName.match(/^\s*([a-z]{3,})/);
+    if (second && isUsableStreetToken(second[1], localityFolded)) {
+      streetName = `${streetName} ${second[1]}`;
     }
   }
 
-  const streetType = typeMatch?.groups?.type?.replace(/\.$/, '') || null;
+  const locality = localityRaw ? displayWords(localityRaw) : null;
+  const street = compactStreet(streetName, rawHouse);
 
-  const locality = localityRaw ? prettyPlace(localityRaw) : null;
-  const street = compactStreet(streetName, nrMatch?.[1]);
-  // `street` is the compact route code ("IuliuManiu600A"): words glued, number appended, which
-  // is what the customer's annex prints. The zone lookup needs the opposite, a spaced name and
-  // a separate number, so both come back rather than having the screen unglue the code and
-  // guess where the name ended.
   return {
     locality,
     street,
     streetName: streetName || null,
     streetType,
-    houseNumber: nrMatch?.[1] ? formatHouseNumber(nrMatch[1]) : null,
+    houseNumber: rawHouse ? formatHouseNumber(rawHouse) : null,
   };
 }
 
-function formatRouteLeg(block) {
-  if (!block) return null;
-  if (block.locality && block.street) return `${block.locality}/${block.street}`;
-  return block.street || block.locality || null;
+function displayWords(value) {
+  const folded = fold(value);
+  if (!folded) return null;
+  return folded.split(/\s+/).filter(Boolean).map((word) => word.split('-').filter(Boolean).map((part) => {
+    if (/^\d/.test(part)) return part.toUpperCase();
+    return part.charAt(0).toUpperCase() + part.slice(1);
+  }).join('-')).join(' ');
 }
 
-/** Client site (C23000014 AP-… + street), not Client factură and not Expeditor. */
-function findClientOrigin(blob) {
-  const folded = fold(blob);
-  const re = /\bc\d{8}\b/g;
-  let best = { locality: null, street: null };
-  let bestScore = 0;
-  let m;
-  while ((m = re.exec(folded)) !== null) {
-    const window = folded.slice(m.index, m.index + 320);
-    const parsed = parseDestBlock(window);
-    if (!parsed.locality && !parsed.street) continue;
-    let score = 0;
-    if (parsed.street) score += 2;
-    if (parsed.locality) score += 1;
-    if (/\bap-/.test(window)) score += 3;
-    if (score >= bestScore) {
-      best = parsed;
-      bestScore = score;
-    }
-  }
-  return best;
-}
-
-function originFromSite(blob) {
-  const folded = fold(blob);
-  if (/\bsite(?:\s+livrare)?\s*[:\s]+bol\b/.test(folded) || /\bsite:\s*bol\b/.test(folded)) return 'Bol';
-  if (
-    /\bsite(?:\s+livrare)?\s*[:\s]+mil\b/.test(folded)
-    || /\bdepozit\s*[:\s]+mil\b/.test(folded)
-    || /\bsite\s+depozit\s*[:\s]+mil\b/.test(folded)
-  ) {
-    return 'Mil';
-  }
+/** Canonical street-type label. The name itself keeps spaces (`Iuliu Maniu`, not `IuliuManiu`). */
+function streetTypeLabel(type) {
+  const t = fold(type).replace(/\.$/, '');
+  if (!t) return null;
+  if (/^str/.test(t)) return 'Str.';
+  if (/^sos|^sosea/.test(t)) return 'Șosea';
+  if (/^(bvd|blvd|bld|bd|bulevard|b-dul|bdul)/.test(t)) return 'Bvd.';
+  if (t === 'al' || /^alee/.test(t)) return 'Aleea';
+  if (/^pta|^piata/.test(t)) return 'Piața';
+  if (/^cale/.test(t)) return 'Calea';
   return null;
 }
 
-/** The `Adresă de livrare` block, parsed. Where the lorry ends up, and what a zone is read from. */
-export function parseDeliveryAddress(blob) {
-  const section = sliceSection(
+/**
+ * One leg for the route column: street + number + locality.
+ * Example: `Str. Republicii nr. 1F, Bolintin-Deal` — never site codes or glued tokens.
+ */
+function formatAddressLine(block) {
+  if (!block) return null;
+  const name = displayWords(block.streetName);
+  const type = streetTypeLabel(block.streetType) || (name ? 'Str.' : null);
+  const street = [type, name].filter(Boolean).join(' ');
+  const nr = block.houseNumber ? `nr. ${block.houseNumber}` : null;
+  const streetLine = [street, nr].filter(Boolean).join(' ');
+  const locality = displayWords(block.locality);
+  if (streetLine && locality) return `${streetLine}, ${locality}`;
+  return streetLine || locality || null;
+}
+
+/**
+ * Drop labels and codes that sit in the Expeditor / Adresa blocks but are not the street.
+ * Keeps the parse focused on Str. … + locality before RO #####.
+ */
+function scrubSectionNoise(folded) {
+  return folded
+    // Label patterns only — not place names.
+    .replace(/\bsite(?:\s+livrare)?\s*[:\s]+[a-z]{2,4}\b/g, ' ')
+    .replace(/\bdepozit\s*[:\s]+[a-z]{2,4}\b/g, ' ')
+    .replace(/\bcs-[a-z0-9\-]+\b/g, ' ')
+    .replace(/\bap-[a-z0-9\-]+\b/g, ' ')
+    .replace(/\bc\d{8}\b/g, ' ')
+    .replace(/\brou\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Text under the Expeditor heading only. Site codes that appear later (e.g. MIL inside
+ * Adresa de livrare) must not become the load origin.
+ */
+function parseExpeditorSection(blob) {
+  return sliceSection(
     blob,
-    ['adresa de livrare', 'adresa livrare'],
+    ['expeditor'],
     [
-      'pagina',
-      'pagină',
+      'adresa de livrare',
+      'adresa livrare',
+      'aviz de expeditie',
+      'aviz de expediție',
       'client factura',
       'client factură',
-      'client',
+      'client:',
       'placuta de inmatriculare',
       'transportator',
+      'destinatar',
       'comanda vanzare',
       'termeni de livrare',
     ]
   );
-  return parseDestBlock(section);
+}
+
+/** Short Site / Depozit code (`Site: BOL` → `Bol`). Any 2–4 letter code the form prints. */
+function siteCodeFromText(folded) {
+  if (!folded) return null;
+  const m = folded.match(/\b(?:site(?:\s+(?:livrare|depozit))?|depozit)\s*[:\s]+([a-z]{2,4})\b/);
+  if (!m?.[1]) return null;
+  const code = m[1];
+  if (/^(site|nr|str|rou?|sos)$/.test(code)) return null;
+  return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase();
 }
 
 /**
- * Origin = the Baumit site the lorry loads at (`Expeditor / Site: BOL`).
- * End = Adresă de livrare (e.g. Viilor 52).
- * The Client block is only a fallback, on documents that name no site.
+ * Origin from Expeditor first. If OCR dropped the "Expeditor" word, still accept Site/Depozit
+ * BOL|MIL printed *before* Adresa de livrare — never from the delivery or Client blocks.
+ */
+function originFromExpeditor(blob) {
+  const fromExpeditor = siteCodeFromText(fold(parseExpeditorSection(blob)));
+  if (fromExpeditor) return fromExpeditor;
+
+  const folded = fold(blob);
+  let deliveryAt = -1;
+  for (const label of ['adresa de livrare', 'adresa livrare']) {
+    const i = folded.indexOf(label);
+    if (i >= 0 && (deliveryAt < 0 || i < deliveryAt)) deliveryAt = i;
+  }
+  const head = deliveryAt >= 0 ? folded.slice(0, deliveryAt) : folded;
+  // Drop Client / billing text that sometimes sits above the delivery label on odd OCR order.
+  let clientAt = -1;
+  for (const label of ['client factura', 'client factură', 'client:']) {
+    const i = head.indexOf(label);
+    if (i >= 0 && (clientAt < 0 || i < clientAt)) clientAt = i;
+  }
+  const loadSide = clientAt >= 0 ? head.slice(0, clientAt) : head;
+  return siteCodeFromText(loadSide);
+}
+
+/** Street + locality under Expeditor (whatever street the document prints). */
+export function parseExpeditorAddress(blob) {
+  return parseDestBlock(parseExpeditorSection(blob));
+}
+
+/** The `Adresă de livrare` block, parsed. Where the lorry ends up, and what a zone is read from. */
+export function parseDeliveryAddress(blob) {
+  // Stop at Client factură / transport — never at the bare "Client" column header that sits
+  // on the same row as "Adresă de livrare" in Baumit's two-column layout.
+  const section = sliceSection(
+    blob,
+    ['adresa de livrare', 'adresa livrare'],
+    [
+      'client factura',
+      'client factură',
+      'referinta client',
+      'referință client',
+      'placuta de inmatriculare',
+      'transportator',
+      'comanda vanzare',
+      'termeni de livrare',
+      'solicitare client',
+      'expeditor',
+    ]
+  );
+  const foldedHead = fold(section).trimStart();
+  const interleaved = /^(client\b|\S+\t)/.test(section.trimStart())
+    || /\bc\d{8}\b/.test(foldedHead)
+    || /\t/.test(section);
+  return parseDestBlock(section, { interleaved });
+}
+
+/**
+ * Always: [street + locality from Expeditor] / [street + locality from Adresa de livrare].
+ * Example: `Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti`.
  */
 function parseRoute(blob) {
-  const destBlock = parseDeliveryAddress(blob);
-  const destLeg = formatRouteLeg(destBlock);
-  const originLeg = formatRouteLeg(findClientOrigin(blob));
-  const site = originFromSite(blob);
-
-  // The lorry leaves the Baumit site, so `Expeditor / Site: BOL` is the origin whenever the
-  // document names one. The Client block used to win, and on a PSL aviz that block is a second
-  // address belonging to the buyer: one document produced
-  // "Bucuresti/Aeroportului120-T-Bucuresti/Viilor52", a route between two of the customer's own
-  // premises that no lorry drove. The customer's own annex reads "Bol-…" and "Buc/I.Maniu600a-…",
-  // both depots, which is the same rule stated from the other side.
-  if (site && destLeg) return `${site}-${destLeg}`;
-  if (originLeg && destLeg && originLeg !== destLeg) return `${originLeg}-${destLeg}`;
-  if (destLeg) return destLeg;
-  if (originLeg) return originLeg;
-  return site;
+  const origin = formatAddressLine(parseExpeditorAddress(blob));
+  const dest = formatAddressLine(parseDeliveryAddress(blob));
+  if (origin && dest) return `${origin} / ${dest}`;
+  if (dest) return dest;
+  return origin;
 }
 
 /**
  * Parse OCR / PDF plain text into Anexa Factura RAI fields.
- * Baumit PDFs often emit one word per line, join before matching.
+ * Codes / quantities use a space-joined blob; addresses keep raw line+tab structure
+ * because Baumit's Adresa|Client columns only survive as tab-separated rows.
  */
 export function parseBaumitAviz(rawText) {
-  const lines = String(rawText || '')
-    .replace(/\r/g, '')
+  const raw = String(rawText || '').replace(/\r/g, '');
+  const lines = raw
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
@@ -428,8 +632,8 @@ export function parseBaumitAviz(rawText) {
     numar_tpo,
     data_efectuare_cursa,
     numar_auto,
-    ruta_transport: parseRoute(blob),
-    delivery_address: parseDeliveryAddress(blob),
+    ruta_transport: parseRoute(raw),
+    delivery_address: parseDeliveryAddress(raw),
     tip_marfa: qty?.tip || null,
     cantitate_marfa: qty?.qty ?? null,
     gross_weight_kg: gross.value ?? null,
@@ -500,27 +704,32 @@ function preferQuantity(row, parsed) {
 export function isFalseRoute(value) {
   const s = String(value || '').trim();
   if (!s) return true;
-  if (/^(Bol|Mil)$/i.test(s)) return true;
-  // Glued hyphen, no slash: compound locality, not Bol-Dest/Street.
-  if (/^[A-Za-zĂÂÎȘȚăâîșț]+-[A-Za-zĂÂÎȘȚăâîșț]+$/u.test(s) && !/^(Bol|Mil)-/i.test(s)) {
+  // Bare 2–4 letter site code alone is not a route.
+  if (/^[A-Za-zĂÂÎȘȚăâîșț]{2,4}$/u.test(s)) return true;
+  // Glued hyphen, no slash: compound locality, not origin/destination.
+  if (/^[A-Za-zĂÂÎȘȚăâîșț]+-[A-Za-zĂÂÎȘȚăâîșț]+$/u.test(s) && !/^[A-Za-z]{2,4}-/i.test(s)) {
     return true;
   }
   return false;
 }
 
 /**
- * Routes that look filled but are incomplete OCR (missing locality / site).
- * Good shapes: `Bol-Bucuresti/Viilor52`, `Bucuresti/Viilor52`. Bad: `Republicii17`.
+ * Good: two legs with ` / `. Bad: glued codes, bare site codes, or a single leg
+ * when the page has both Expeditor and Adresa de livrare labels.
  */
-export function isSuspiciousRoute(value) {
+export function isSuspiciousRoute(value, rawText = null) {
   if (isFalseRoute(value)) return true;
   const s = String(value || '').trim();
-  if (/\//.test(s)) return false;
-  // Street glued to house number with no locality leg (OCR dropped "Bolintin-Deal" / city).
-  if (/^[A-Za-zĂÂÎȘȚăâîșț]+[\d]+[A-Za-z0-9]*$/u.test(s)) return true;
-  // Bare words without Site- or Locality/Street structure.
-  if (!/^(Bol|Mil)-/i.test(s)) return true;
-  return false;
+  if (/\s\/\s/.test(s)) return false;
+  // One leg only while the document clearly has both address labels → incomplete.
+  if (rawText) {
+    const folded = fold(rawText);
+    const hasOrigin = folded.includes('expeditor');
+    const hasDelivery = folded.includes('adresa de livrare') || folded.includes('adresa livrare');
+    if (hasOrigin && hasDelivery) return true;
+  }
+  if (/\s/.test(s) && /nr\.|str\.|șosea|sosea|bvd\.|aleea|piața|piata|calea/i.test(s)) return false;
+  return true;
 }
 
 /**
@@ -534,9 +743,15 @@ export function quantityConflictsWithRaw(qty, tip, rawText) {
   return Number(parsed.qty) !== Number(qty);
 }
 
-function preferRoute(stored, parsed) {
-  if (fieldFilled(stored) && !isFalseRoute(stored)) return stored;
-  if (fieldFilled(parsed)) return parsed;
+function preferRoute(stored, parsed, rawText = null) {
+  const parsedRoute = fieldFilled(parsed) ? parsed : null;
+  // Fresh two-leg parse from labelled slices wins over a stale extract.
+  // Office Editează is protected via corrected_fields in repairAvizFromStored.
+  if (parsedRoute && /\s\/\s/.test(parsedRoute)) return parsedRoute;
+  if (fieldFilled(stored) && !isFalseRoute(stored) && !isSuspiciousRoute(stored, rawText)) {
+    return stored;
+  }
+  if (parsedRoute) return parsedRoute;
   return fieldFilled(stored) ? stored : null;
 }
 
@@ -565,18 +780,22 @@ function preferTipMarfa(row, parsed) {
 }
 
 /**
- * Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values —
- * except a false route (compound place name) which is OCR poison, not an edit.
+ * Fill empty/garbage fields from stored OCR text. Never overwrite office Editează values
+ * listed in corrected_fields. A complete two-leg parse from labelled slices replaces
+ * stale OCR routes (including ones that once read the Client column).
  */
 export function repairAvizFromStored(row) {
   const raw = row?.extracted_data?.raw_text;
   const parsed = raw ? parseBaumitAviz(raw) : null;
+  const corrected = row?.corrected_fields ?? [];
   return {
     ...row,
     numar_tpo: resolveStoredTpo(row, parsed),
     data_efectuare_cursa: preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
     numar_auto: preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
-    ruta_transport: preferRoute(row?.ruta_transport, parsed?.ruta_transport),
+    ruta_transport: corrected.includes('ruta_transport')
+      ? row.ruta_transport
+      : preferRoute(row?.ruta_transport, parsed?.ruta_transport, raw),
     tip_marfa: preferTipMarfa(row, parsed),
     cantitate_marfa: preferQuantity(row, parsed),
     gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
@@ -596,7 +815,7 @@ export function avizFieldConfidence(row) {
   return {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
-    ruta_transport: isSuspiciousRoute(row?.ruta_transport) ? 'low' : 'ok',
+    ruta_transport: isSuspiciousRoute(row?.ruta_transport, raw) ? 'low' : 'ok',
     cantitate_marfa: qtyLow ? 'low' : 'ok',
   };
 }

@@ -445,8 +445,9 @@ Greutate bruta: 9964 kg
 `;
     const result = extractDocument(text, { documentType: 'aviz' });
     expect(result.profile_id).toBe('aviz_baumit_psl');
-    expect(result.values.ruta_transport).toBe('Bol-Dobroesti/Ciresului31B');
-    expect(result.values.ruta_transport).not.toMatch(/Bolintin/i);
+    expect(result.values.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Ciresului nr. 31B, Dobroesti');
+    expect(result.values.ruta_transport).toMatch(/Ciresului/i);
+    expect(result.values.ruta_transport).not.toBe('Bolintin-Deal');
   });
 
   it('still accepts an explicit City - City route with spaces around the dash', () => {
