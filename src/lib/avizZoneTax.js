@@ -187,6 +187,8 @@ const ROUTE_TYPE_TO_QUERY = {
   calea: 'calea',
 };
 
+const ROUTE_TYPE_CAPTURE = String.raw`Str\.?|Șoseaua|Soseaua|Șosea|Sosea|Sos\.?|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea`;
+
 /**
  * Delivery half of `ruta_transport` — everything after ` / `.
  * Single-leg routes (delivery only) are used as-is.
@@ -206,9 +208,21 @@ export function deliveryLegFromRuta(ruta) {
 export function parseSpacedRouteLeg(leg) {
   const raw = String(leg || '').trim();
   if (!raw) return null;
-  const m = raw.match(
-    /^(?:(Str\.?|Șosea|Sosea|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea)\s+)?(.+?)(?:\s+nr\.?\s*([0-9]+[A-Za-z]?))?\s*,\s*(.+)$/iu,
+  // Comma first: `Șosea Viilor nr. 52, sector 5, București`. A space-and-rest pattern
+  // would steal `nr. 52` as the "locality" when the city is missing.
+  const comma = raw.match(
+    new RegExp(
+      String.raw`^(?:(${ROUTE_TYPE_CAPTURE})\s+)?(.+?)(?:\s+nr\.?\s*([0-9]+[A-Za-z]?))?\s*,\s*(.+)$`,
+      'iu',
+    ),
   );
+  const numbered = raw.match(
+    new RegExp(
+      String.raw`^(?:(${ROUTE_TYPE_CAPTURE})\s+)?(.+?)\s+nr\.?\s*([0-9]+[A-Za-z]?)(?:\s+(.+))?$`,
+      'iu',
+    ),
+  );
+  const m = comma || numbered;
   if (!m) return null;
   const typeRaw = (m[1] || '')
     .normalize('NFD')
@@ -220,8 +234,9 @@ export function parseSpacedRouteLeg(leg) {
   const type = ROUTE_TYPE_TO_QUERY[typeRaw] || null;
   const name = String(m[2] || '').replace(/\s+/g, ' ').trim();
   if (!name) return null;
+  let locality = m[4] ? String(m[4]).replace(/\s+/g, ' ').trim() : null;
+  if (locality && !comma && !taxedCityIdFromLocality(locality)) locality = null;
   const number = m[3] ? String(m[3]).toUpperCase() : null;
-  const locality = String(m[4] || '').replace(/\s+/g, ' ').trim() || null;
   const street = type ? `${type} ${name}` : name;
   return { street, number, locality, streetName: name, streetType: type };
 }
@@ -236,13 +251,31 @@ function foldLocality(value) {
     .trim();
 }
 
+/**
+ * `sector 5, București` / bare `sector 5` / `Bucuresti Sector 5` still means the city
+ * with an index. Exact-only matching used to call those "no zones here".
+ */
+export function taxedCityIdFromLocality(value) {
+  const folded = foldLocality(value).replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!folded) return null;
+  if (CITY_BY_LOCALITY[folded]) return CITY_BY_LOCALITY[folded];
+  if (/\bbucuresti\b/.test(folded)) return 'bucuresti';
+  // Bucharest districts alone (OCR often drops the city after the street).
+  if (/^sector(?:ul)?\s*[1-6]\b/.test(folded)) return 'bucuresti';
+  return null;
+}
+
 function addressFromParts({ street, number, locality }) {
   const loc = String(locality || '').trim() || null;
-  const cityId = CITY_BY_LOCALITY[foldLocality(loc)] ?? null;
+  let cityId = taxedCityIdFromLocality(loc);
+  // Only București has a shipped zone index. OCR often prints
+  // `BOL / Șoseaua Viilor nr. 52` with no city — that is still Bucharest, not "no zones".
+  // A named other town (Domnești, …) stays unsupported.
+  if (!cityId && street && !loc) cityId = 'bucuresti';
   return {
     street: street || null,
     number: number ?? null,
-    locality: loc,
+    locality: cityId === 'bucuresti' ? 'Bucuresti' : loc,
     cityId,
     // A locality we have no index for is "no zones here", not "unknown street".
     supported: Boolean(cityId),
@@ -293,11 +326,6 @@ export function zoneMapHref(address, { plate = null } = {}) {
  * back to OCR `delivery_address` when the route has no usable delivery half.
  */
 export function avizDeliveryAddress(aviz) {
-  const fromRoute = parseSpacedRouteLeg(deliveryLegFromRuta(aviz?.ruta_transport));
-  if (fromRoute?.street) {
-    return addressFromParts(fromRoute);
-  }
-
   const addr = aviz?.delivery_address ?? null;
   const name = String(addr?.streetName || '').trim();
   const type = String(addr?.streetType || '').trim();
@@ -305,11 +333,21 @@ export function avizDeliveryAddress(aviz) {
   // Viilor streets that disagree about the zone, so "viilor" alone is a question and
   // "sosea viilor", which is what the aviz actually says, is an answer.
   const typeQuery = ROUTE_TYPE_TO_QUERY[type.toLowerCase().replace(/\.$/, '')] || type || null;
-  const street = name ? (typeQuery ? `${typeQuery} ${name}` : name) : null;
+  const ocrStreet = name ? (typeQuery ? `${typeQuery} ${name}` : name) : null;
+  const ocrLocality = addr?.locality ?? null;
+
+  const fromRoute = parseSpacedRouteLeg(deliveryLegFromRuta(aviz?.ruta_transport));
+  if (fromRoute?.street) {
+    return addressFromParts({
+      ...fromRoute,
+      locality: fromRoute.locality || ocrLocality,
+    });
+  }
+
   return addressFromParts({
-    street,
+    street: ocrStreet,
     number: addr?.houseNumber ?? null,
-    locality: addr?.locality,
+    locality: ocrLocality,
   });
 }
 

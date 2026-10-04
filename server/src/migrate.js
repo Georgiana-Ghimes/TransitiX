@@ -1526,10 +1526,41 @@ CREATE INDEX IF NOT EXISTS idx_aviz_route_rules_company
 
 `
 
+async function uniquifyReportTemplateNames(client) {
+  const { rows } = await client.query(
+    `SELECT id, company_id, name FROM report_templates ORDER BY company_id, created_at, id`,
+  );
+  const used = new Map();
+  for (const row of rows) {
+    const cid = row.company_id;
+    if (!used.has(cid)) used.set(cid, new Set());
+    const set = used.get(cid);
+    const trimmed = String(row.name || '').trim() || 'Șablon';
+    let candidate = trimmed;
+    let n = 2;
+    while (set.has(candidate.toLowerCase())) {
+      candidate = `${trimmed} (${n})`;
+      n += 1;
+    }
+    set.add(candidate.toLowerCase());
+    if (candidate !== row.name) {
+      await client.query(
+        `UPDATE report_templates SET name = $1, updated_at = NOW() WHERE id = $2`,
+        [candidate, row.id],
+      );
+    }
+  }
+}
+
 async function migrate() {
   const client = await pool.connect();
   try {
     await client.query(sql);
+    await uniquifyReportTemplateNames(client);
+    await client.query(`
+CREATE UNIQUE INDEX IF NOT EXISTS report_templates_company_name_lower
+  ON report_templates (company_id, lower(name));
+`);
     console.log('Migration completed successfully.');
   } finally {
     client.release();

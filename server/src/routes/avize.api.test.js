@@ -4,7 +4,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import app from '../app.js';
 import { query } from '../db.js';
 import { uploadRoot } from '../uploadPath.js';
-import { auth, closePool, dropCompany, makeAviz, request, seedCompany } from '../test/harness.js';
+import {
+  auth, closePool, dropCompany, makeAviz, makeTemplate, request, seedCompany,
+} from '../test/harness.js';
 
 let ctx;
 
@@ -403,6 +405,97 @@ describe('POST /api/avize/bulk-delete', () => {
       expect(res.body.deleted).toBe(0);
       const still = await query(`SELECT id FROM aviz_documents WHERE id = $1`, [foreign.id]);
       expect(still.rows).toHaveLength(1);
+    } finally {
+      await dropCompany(other.company.id);
+    }
+  });
+});
+
+describe('POST /api/avize/export HITL gate (#48)', () => {
+  it('refuses Unește when a selected aviz still needs mandatory review', async () => {
+    const tmpl = await makeTemplate(ctx.company.id, `Anexa-HITL-${Date.now()}`, [
+      { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
+    ]);
+    const blocked = await makeAviz(ctx.company.id, {
+      status: 'extracted',
+      needs_review: true,
+      numar_tpo: 'TPO-HITL-48',
+    });
+    await query(
+      `UPDATE aviz_documents
+       SET extracted_data = COALESCE(extracted_data, '{}'::jsonb)
+         || $1::jsonb
+       WHERE id = $2`,
+      [JSON.stringify({ validation: { routing: 'hitl_required' } }), blocked.id],
+    );
+    const ok = await makeAviz(ctx.company.id, {
+      status: 'confirmed',
+      needs_review: false,
+      numar_tpo: 'TPO-OK-48',
+    });
+
+    const refused = await api().post('/api/avize/export').set(auth(ctx.adminToken))
+      .send({ template_id: tmpl.id, aviz_ids: [blocked.id, ok.id] });
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe('NEEDS_REVIEW');
+    expect(refused.body.message).toMatch(/necesită verificare/i);
+    expect(refused.body.blocked?.some((b) => b.id === blocked.id)).toBe(true);
+
+    const allowed = await api().post('/api/avize/export').set(auth(ctx.adminToken))
+      .send({ template_id: tmpl.id, aviz_ids: [ok.id] });
+    expect(allowed.status).toBe(200);
+    expect(String(allowed.headers['content-type'] || '')).toMatch(/spreadsheetml/);
+  });
+});
+
+describe('POST/PUT /api/avize/templates unique name (#50)', () => {
+  const oneCol = [{ key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' }];
+
+  it('refuses a second template with the same name, case-insensitive', async () => {
+    const name = `Template unique ${Date.now()}`;
+    const first = await api().post('/api/avize/templates').set(auth(ctx.adminToken))
+      .send({ name, columns: oneCol });
+    expect(first.status).toBe(201);
+
+    const clash = await api().post('/api/avize/templates').set(auth(ctx.adminToken))
+      .send({ name: name.toUpperCase(), columns: oneCol });
+    expect(clash.status).toBe(409);
+    expect(clash.body.message).toBe('Există deja un șablon cu acest nume');
+
+    const listed = await api().get('/api/avize/templates').set(auth(ctx.adminToken));
+    const same = (listed.body || []).filter((t) => String(t.name).toLowerCase() === name.toLowerCase());
+    expect(same).toHaveLength(1);
+  });
+
+  it('lets a template keep its own name and refuses renaming onto another', async () => {
+    const a = await api().post('/api/avize/templates').set(auth(ctx.adminToken))
+      .send({ name: `Alpha ${Date.now()}`, columns: oneCol });
+    const b = await api().post('/api/avize/templates').set(auth(ctx.adminToken))
+      .send({ name: `Beta ${Date.now()}`, columns: oneCol });
+    expect(a.status).toBe(201);
+    expect(b.status).toBe(201);
+
+    const keep = await api().put(`/api/avize/templates/${a.body.id}`).set(auth(ctx.adminToken))
+      .send({ name: a.body.name, columns: oneCol });
+    expect(keep.status).toBe(200);
+
+    const steal = await api().put(`/api/avize/templates/${b.body.id}`).set(auth(ctx.adminToken))
+      .send({ name: a.body.name, columns: oneCol });
+    expect(steal.status).toBe(409);
+    expect(steal.body.message).toBe('Există deja un șablon cu acest nume');
+  });
+
+  it('allows the same name in another company', async () => {
+    const name = `Shared ${Date.now()}`;
+    const mine = await api().post('/api/avize/templates').set(auth(ctx.adminToken))
+      .send({ name, columns: oneCol });
+    expect(mine.status).toBe(201);
+
+    const other = await seedCompany('avize-tmpl-name');
+    try {
+      const theirs = await api().post('/api/avize/templates').set(auth(other.adminToken))
+        .send({ name, columns: oneCol });
+      expect(theirs.status).toBe(201);
     } finally {
       await dropCompany(other.company.id);
     }

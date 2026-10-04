@@ -19,6 +19,7 @@ import {
   extractQuantity,
   isPlausibleQuantity,
   matchPatterns,
+  packagingWordIn,
   parseNumber,
 } from './fields.js';
 import { parseBaumitAviz } from '../avizOcr.js';
@@ -182,28 +183,22 @@ const baumitRouteField = (text) => {
 };
 
 const goodsField = (text) => {
-  // Do not treat HS / "Cod marfă: 38245090" as the goods description.
+  // RAI Tip marfă is the packaging (saci / găleți / paleți / bucăți), never the product row.
+  // Grabbing `MPI Adeziv 20 kg …` put the whole line on the annex and buried the unit.
+  const unit = extractGoodsUnit(text);
+  if (unit.value) return unit;
+
+  // Labelled tip: keep only a packaging word from the capture, not the rest of the line.
   const labelled = matchPatterns(text, [
     new RegExp(`(?:tip\\s*marf[aă]|denumire\\s*produs)\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
     new RegExp(`(?<!cod\\s)(?<!codul\\s)\\bprodus\\b\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
   ], { baseConfidence: 0.75 });
-  if (labelled.value && !/^\d{6,}$/.test(String(labelled.value).trim())) return labelled;
-
-  // Baumit product lines often start with MPI / MP1 (OCR of MPI).
-  const product = matchPatterns(text, [
-    /\b((?:MPI|MP[Il1])\s*\d+[^\n]{0,50})/i,
-  ], { baseConfidence: 0.7 });
-  if (product.value) {
-    return {
-      ...product,
-      value: String(product.value).replace(/\s+/g, ' ').trim().slice(0, 60),
-    };
+  const fromLabel = packagingWordIn(labelled.value);
+  if (fromLabel) {
+    return { value: fromLabel, confidence: 0.8, matched: labelled.matched };
   }
 
-  // The packaging a document names is a goods type too, and on a transfer aviz it is the only
-  // one present: `Numarul de galeti 768.00` says buckets, where the `Cantitate 768.00 buc` two
-  // lines above is merely counting them. RAI's annex wants the word that names something.
-  return extractGoodsUnit(text);
+  return NO_MATCH;
 };
 
 /**
@@ -315,8 +310,14 @@ const carnetGoodsField = (text) => {
     new RegExp(`\\btip\\s*marf[aăá]?\\s*[:.\\-]?\\s*(${CELL}{3,60})`, 'i'),
   );
   if (!found) return goodsField(text);
-  const value = found[1].replace(/\s+/g, ' ').trim();
-  return value ? { value: value.slice(0, 60), confidence: 0.85, matched: found[0] } : NO_MATCH;
+  const slice = found[1].replace(/\s+/g, ' ').trim();
+  const pack = packagingWordIn(slice);
+  if (pack) return { value: pack, confidence: 0.9, matched: found[0] };
+  // Short handwriting ("Beton") without a packaging word — keep it; a whole OCR row, drop.
+  if (slice.length >= 2 && slice.length <= 20 && !/\d/.test(slice)) {
+    return { value: slice, confidence: 0.75, matched: found[0] };
+  }
+  return goodsField(text);
 };
 
 /** `CANT MARFĂ`, which `extractQuantity` never matched — it only knows `cantitate`. */
@@ -365,9 +366,15 @@ const routeFromBareLine = (line) => {
 };
 
 const goodsFromBareLine = (line) => {
-  const value = String(line || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const value = String(line || '').replace(/\s+/g, ' ').trim();
   if (value.length < 2) return null;
-  return { value, confidence: 0.82, matched: value };
+  const pack = packagingWordIn(value);
+  if (pack) return { value: pack, confidence: 0.9, matched: value };
+  // Numbered sheet slot 6 is usually just the unit word; refuse a leaked product row.
+  if (value.length <= 20 && !/\d/.test(value)) {
+    return { value: value.slice(0, 40), confidence: 0.82, matched: value };
+  }
+  return null;
 };
 
 const qtyFromBareLine = (line) => {

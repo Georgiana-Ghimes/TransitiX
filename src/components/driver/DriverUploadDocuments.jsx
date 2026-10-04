@@ -364,9 +364,12 @@ export default function DriverUploadDocuments({ user }) {
         signal: controller.signal,
       });
       const n = result.documents?.length || files.length;
+      const splitN = Number(result.split_pages) || 0;
       notifySuccess(
         'Documente trimise',
-        `${n} fișier(e) · OCR rulează, apoi completezi câmpurile lipsă`,
+        splitN > 1
+          ? `PDF despărțit în ${splitN} avize · OCR rulează, apoi completezi câmpurile lipsă`
+          : `${n} fișier(e) · OCR rulează, apoi completezi câmpurile lipsă`,
       );
       setDocs((prev) => [...(result.documents || []), ...prev].slice(0, 40));
       setOnline(true);

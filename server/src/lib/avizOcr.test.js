@@ -950,6 +950,40 @@ NUMAR AUTO TEST-101
     });
     expect(repaired.tip_marfa).toBe('saci');
   });
+
+  it('keeps a free-text Tip marfă from Editează instead of OCR găleți/saci', () => {
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'Beton',
+      quantity_unit: 'buc',
+      extracted_data: {
+        raw_text: 'Cantitate 768.00 buc BetonKontakt 20 kg Numarul de galeti 768.00',
+      },
+    });
+    expect(repaired.tip_marfa).toBe('Beton');
+  });
+
+  it('collapses an OCR product-row tip into the packaging unit (#51)', () => {
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'MPI Adeziv 25 kg 245.00 sac',
+      quantity_unit: 'saci',
+      cantitate_marfa: 245,
+      extracted_data: { raw_text: 'Cantitate 245.00 sac MPI Adeziv Numarul de saci 245.00' },
+    });
+    expect(repaired.tip_marfa).toBe('saci');
+  });
+
+  it('does not put packaging-total quantity back over an office-edited count', () => {
+    const lines = [48, 48, 72, 48, 24, 72, 48, 48, 48, 72, 48]
+      .map((n) => `Cantitate ${n}.00 buc`)
+      .join('\n');
+    const repaired = repairAvizFromStored({
+      tip_marfa: 'galeti',
+      cantitate_marfa: 100,
+      corrected_fields: ['cantitate_marfa'],
+      extracted_data: { raw_text: `${lines}\nNumarul de galeti: 576,00` },
+    });
+    expect(repaired.cantitate_marfa).toBe(100);
+  });
 });
 
 describe('review heuristics (#41)', () => {
@@ -1064,6 +1098,16 @@ describe('mapAnnexRows', () => {
       cantitate_marfa: 245,
     }]);
     expect(mapped[0].tip_marfa).toBe('saci');
+  });
+
+  it('keeps office-edited Tip marfă on the annex when the field is pinned', () => {
+    const mapped = mapAnnexRows(DEFAULT_RAI_COLUMNS, [{
+      tip_marfa: 'Beton',
+      quantity_unit: 'saci',
+      cantitate_marfa: 245,
+      corrected_fields: ['tip_marfa'],
+    }]);
+    expect(mapped[0].tip_marfa).toBe('Beton');
   });
 
   it('keeps an edited packaging tip over a stale bucati quantity_unit', () => {

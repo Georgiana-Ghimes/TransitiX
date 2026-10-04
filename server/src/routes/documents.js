@@ -14,7 +14,7 @@ import { summariseFeedback } from '../lib/ocr/feedback.js';
 import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
-import { isGenericCountUnit } from '../lib/ocr/fields.js';
+import { isGenericCountUnit, looksLikeOcrGoodsDump, packagingWordIn } from '../lib/ocr/fields.js';
 import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
@@ -107,14 +107,20 @@ function toColumns(values) {
     if (name === 'quantity') out.cantitate_marfa = value;
     else if (EXTRACT_COLUMNS.includes(name)) out[name] = value;
   }
-  // RAI Tip marfa expects the packaging unit; OCR often parks it only in quantity_unit.
-  // A bare count is not a packaging unit, though. An aviz reading `Cantitate 768.00 buc` two
-  // lines above `Numarul de galeti 768.00` is describing buckets both times, and only the
-  // second says so — writing "bucati" onto the customer's annex puts a word there that names
-  // nothing. Left empty instead, so the repair pass and the operator each still get a turn.
-  if ((out.tip_marfa == null || String(out.tip_marfa).trim() === '')
-      && out.quantity_unit && !isGenericCountUnit(out.quantity_unit)) {
-    out.tip_marfa = normalizeGoodsUnit(out.quantity_unit) || String(out.quantity_unit).trim();
+  // RAI Tip marfa is the packaging unit only. Collapse product-row dumps, then fall back to
+  // quantity_unit. Bare "bucati" is not written — it names nothing on the annex.
+  const tipRaw = out.tip_marfa == null ? '' : String(out.tip_marfa).trim();
+  const tipUnit = normalizeGoodsUnit(tipRaw) || packagingWordIn(tipRaw);
+  if (tipUnit && !isGenericCountUnit(tipUnit)) {
+    out.tip_marfa = tipUnit;
+  } else if (looksLikeOcrGoodsDump(tipRaw) || !tipRaw) {
+    if (out.quantity_unit && !isGenericCountUnit(out.quantity_unit)) {
+      out.tip_marfa = normalizeGoodsUnit(out.quantity_unit) || String(out.quantity_unit).trim();
+    } else if (looksLikeOcrGoodsDump(tipRaw)) {
+      out.tip_marfa = null;
+    }
+  } else if (tipUnit && isGenericCountUnit(tipUnit)) {
+    out.tip_marfa = null;
   }
   return out;
 }

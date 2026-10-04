@@ -1,7 +1,13 @@
 /** Anexa Factura RAI column map (A–N on the model sheet). */
 import { getSource } from './reporting/sources.js';
 import { applyNumarCurseByRuns, isLockedRaiTemplate } from './avizQuery.js';
-import { isGenericCountUnit } from './ocr/fields.js';
+import { isGenericCountUnit, looksLikeOcrGoodsDump, packagingWordIn } from './ocr/fields.js';
+
+export {
+  DEFAULT_NEW_TEMPLATE_NAME,
+  nextUnusedTemplateName,
+  TEMPLATE_NAME_TAKEN,
+} from './templateName.js';
 
 export const ANNEX_SOURCE_KEYS = [
   'nr_crt',
@@ -207,11 +213,25 @@ export function annexTipMarfa(row) {
   const fromTip = normalizeGoodsUnit(row?.tip_marfa);
   if (fromTip && !isGenericCountUnit(fromTip)) return fromTip;
 
+  const buried = packagingWordIn(row?.tip_marfa);
+  if (buried && !isGenericCountUnit(buried)) return buried;
+
+  const tip = String(row?.tip_marfa || '').trim();
+  const officePinned = Array.isArray(row?.corrected_fields) && row.corrected_fields.includes('tip_marfa');
+  // Editează free text is the document; OCR product-row dumps never reach the annex.
+  if (
+    officePinned
+    && tip
+    && !looksLikeOcrGoodsDump(tip)
+    && !(fromTip && isGenericCountUnit(fromTip))
+  ) {
+    return tip;
+  }
+
   const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
   if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
 
-  const tip = String(row?.tip_marfa || '').trim();
-  if (!tip) return '';
+  if (!tip || looksLikeOcrGoodsDump(tip)) return '';
   if (fromTip && isGenericCountUnit(fromTip)) return '';
   return tip;
 }

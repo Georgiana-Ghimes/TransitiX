@@ -146,6 +146,63 @@ describe('POST /api/driver-documents', () => {
     expect(res.status).toBe(400);
   });
 
+  /**
+   * #47 — Admin already splits multi-PSL PDFs; the cab must produce the same N rows.
+   * Text-layer TRO/PSL per page (same planner as `materializePdfPageFiles`).
+   */
+  it('splits a multi-page PDF with distinct PSL into one row per aviz', async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    for (let i = 0; i < 3; i += 1) {
+      if (i) doc.addPage();
+      doc.text(`Aviz PSL-${String(5601000 + i).padStart(7, '0')}`, 10, 10);
+    }
+    const body = Buffer.from(doc.output(), 'latin1');
+
+    const res = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
+      .field('trip_id', trip.id)
+      .field('document_type', 'aviz')
+      .attach('files', body, {
+        filename: 'aviz-multi-psl.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.split_pages).toBe(3);
+    expect(res.body.documents).toHaveLength(3);
+    expect(res.body.documents.every((d) => d.uploaded_from === 'driver')).toBe(true);
+    expect(new Set(res.body.documents.map((d) => d.batch_id)).size).toBe(1);
+
+    const rows = await query(
+      `SELECT original_filename, uploaded_from FROM aviz_documents
+       WHERE company_id = $1 AND batch_id = $2
+       ORDER BY original_filename`,
+      [ctx.company.id, res.body.batch.id]
+    );
+    expect(rows.rows.filter((r) => /aviz-multi-psl/i.test(r.original_filename))).toHaveLength(3);
+  });
+
+  it('keeps a multi-page PDF as one row when pages share no distinct TRO/PSL', async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    doc.text('Aviz pagina 1', 10, 10);
+    doc.addPage();
+    doc.text('Aviz pagina 2', 10, 10);
+    const body = Buffer.from(doc.output(), 'latin1');
+
+    const res = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
+      .field('document_type', 'aviz')
+      .attach('files', body, {
+        filename: 'un-aviz-doua-pagini.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.split_pages).toBeUndefined();
+    expect(res.body.documents).toHaveLength(1);
+    expect(res.body.documents[0].original_filename).toBe('un-aviz-doua-pagini.pdf');
+  });
+
   it('refuses a file type that is neither an image nor a PDF', async () => {
     const res = await api().post('/api/driver-documents').set(auth(ctx.driverToken))
       .field('trip_id', trip.id)

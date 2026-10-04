@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
 import { serializeRow } from '../entities.js';
+import { isPgUniqueViolation } from '../lib/concurrency.js';
 import { REPORT_SOURCES, SOURCE_GROUPS } from '../lib/reporting/sources.js';
 import { getPreset, listPresets } from '../lib/reporting/presets.js';
 import { buildReport, describeColumns } from '../lib/reporting/build.js';
@@ -19,7 +20,7 @@ import {
 } from '../lib/reporting/select.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
-import { normalizeTemplateColumns } from '../lib/avizTemplate.js';
+import { normalizeTemplateColumns, TEMPLATE_NAME_TAKEN } from '../lib/avizTemplate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
 
@@ -103,7 +104,7 @@ router.post('/templates/from-preset', async (req, res) => {
         'SELECT id FROM report_templates WHERE company_id = $1 AND lower(name) = lower($2)',
         [req.user.company_id, name]
       );
-      if (clash.rows[0]) throw httpError('Există deja un șablon cu acest nume', 409);
+      if (clash.rows[0]) throw httpError(TEMPLATE_NAME_TAKEN, 409);
       const row = await client.query(
         `INSERT INTO report_templates (company_id, name, columns, is_default, preset_id, description)
          VALUES ($1, $2, $3::jsonb, FALSE, $4, $5) RETURNING *`,
@@ -113,6 +114,9 @@ router.post('/templates/from-preset', async (req, res) => {
     });
     res.status(201).json(serializeRow(created));
   } catch (err) {
+    if (isPgUniqueViolation(err)) {
+      return fail(res, httpError(TEMPLATE_NAME_TAKEN, 409), 'Crearea șablonului a eșuat');
+    }
     fail(res, err, 'Crearea șablonului a eșuat');
   }
 });

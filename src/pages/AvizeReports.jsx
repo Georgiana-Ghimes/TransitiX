@@ -24,6 +24,8 @@ import { DriverUploadBadge, NeedsReviewBadge, SourceBadge } from './avize/AvizFi
 import {
   AVIZ_ACTION_LEGEND,
   AVIZ_PAGE_SIZES,
+  annexReviewBlockedMessage,
+  annexReviewBlockedRows,
   asAvizPage,
   columnCountOf,
   displayRoute,
@@ -42,6 +44,10 @@ import {
   waitForAvizExtractSettled,
   writeAvizPageSize,
 } from './avize/avizeUi';
+import {
+  DEFAULT_NEW_TEMPLATE_NAME,
+  nextUnusedTemplateName,
+} from '@/lib/templateName';
 
 /** Încărcare label: Bucharest calendar day as DD.MM.YYYY (same as Editează). */
 function formatAvizIncarcare(createdAt) {
@@ -71,7 +77,10 @@ export default function AvizeReports() {
   const [confirmDuplicate, setConfirmDuplicate] = useState(null);
   const [confirmReextract, setConfirmReextract] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  /** Sync guard: React `busy` re-renders too late for a double-click on Unește. */
+  const exportLockRef = useRef(false);
   const [activePreset, setActivePreset] = useState('');
   const [editTemplate, setEditTemplate] = useState(null);
   const [deleteTemplate, setDeleteTemplate] = useState(null);
@@ -510,7 +519,17 @@ export default function AvizeReports() {
     }
   };
 
+  /** Unește / Email / Zip: refuse HITL-required rows before the download starts. */
+  const guardAnnexSelection = (ids) => {
+    const blocked = annexReviewBlockedRows(rows, ids);
+    if (!blocked.length) return true;
+    notifyError('Necesită verificare', annexReviewBlockedMessage(blocked.length));
+    if (blocked[0]?.id) setReviewId(blocked[0].id);
+    return false;
+  };
+
   const exportSelected = () => {
+    if (busy || exporting || exportLockRef.current || confirmDuplicate) return;
     const ids = [...selected];
     if (ids.length === 0) {
       notifyError('Nimic selectat', 'Bifează cel puțin un aviz pentru export.');
@@ -520,6 +539,7 @@ export default function AvizeReports() {
       notifyError('Fără șablon', 'Alege un șablon XLSX.');
       return;
     }
+    if (!guardAnnexSelection(ids)) return;
     const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
     if (dupCount > 0) {
       // Warn before download, a post-export toast was easy to miss under „Export gata”.
@@ -531,6 +551,9 @@ export default function AvizeReports() {
 
   const runExportSelected = async (ids) => {
     if (!templateId || !ids?.length) return;
+    if (exportLockRef.current) return;
+    exportLockRef.current = true;
+    setExporting(true);
     setBusy(true);
     try {
       const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
@@ -543,8 +566,16 @@ export default function AvizeReports() {
         + `${columnCountOf(selectedTemplate)} coloane.`
       );
     } catch (e) {
-      notifyError('Export eșuat', e);
+      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+        notifyError('Necesită verificare', e);
+        const blocked = e?.data?.blocked || [];
+        if (blocked[0]?.id) setReviewId(blocked[0].id);
+      } else {
+        notifyError('Export eșuat', e);
+      }
     } finally {
+      exportLockRef.current = false;
+      setExporting(false);
       setBusy(false);
     }
   };
@@ -713,13 +744,20 @@ export default function AvizeReports() {
       notifyError('Nimic selectat', 'Bifează avize și alege șablonul.');
       return;
     }
+    if (!guardAnnexSelection(ids)) return;
     setBusy(true);
     try {
       const { blob, filename, missing } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
       downloadBlob(blob, filename);
       notifySuccess('Zip gata', missing ? `${filename} (${missing} originale lipsă de pe disk)` : filename);
     } catch (e) {
-      notifyError('Zip eșuat', e);
+      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+        notifyError('Necesită verificare', e);
+        const blocked = e?.data?.blocked || [];
+        if (blocked[0]?.id) setReviewId(blocked[0].id);
+      } else {
+        notifyError('Zip eșuat', e);
+      }
     } finally {
       setBusy(false);
     }
@@ -728,6 +766,7 @@ export default function AvizeReports() {
   const sendAnnexEmail = async () => {
     const ids = [...selected];
     if (!emailTo.trim() || ids.length === 0 || !templateId) return;
+    if (!guardAnnexSelection(ids)) return;
     setBusy(true);
     try {
       const result = await api.avize.emailAnnex({
@@ -770,7 +809,13 @@ export default function AvizeReports() {
         emailFallbackDownloadedRef.current = false;
       }
     } catch (e) {
-      notifyError('Email eșuat', e);
+      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+        notifyError('Necesită verificare', e);
+        const blocked = e?.data?.blocked || [];
+        if (blocked[0]?.id) setReviewId(blocked[0].id);
+      } else {
+        notifyError('Email eșuat', e);
+      }
     } finally {
       setBusy(false);
     }
@@ -843,7 +888,11 @@ export default function AvizeReports() {
         notifySuccess('Șablon salvat', `${name}, ${columns.length} coloane. Alege-l cu „Folosește la export”.`);
       }
     } catch (e) {
-      notifyError('Salvare șablon eșuată', e);
+      if (e?.status === 409) {
+        notifyError('Nume folosit', e);
+      } else {
+        notifyError('Salvare șablon eșuată', e);
+      }
     } finally {
       setSaving(false);
     }
@@ -897,7 +946,7 @@ export default function AvizeReports() {
       default_value: '',
     }));
     setEditTemplate({
-      name: 'Șablon nou',
+      name: nextUnusedTemplateName(templates.map((t) => t.name), DEFAULT_NEW_TEMPLATE_NAME),
       is_default: false,
       columns: JSON.parse(JSON.stringify(base)),
     });
@@ -1069,13 +1118,22 @@ export default function AvizeReports() {
             </div>
             <button
               type="button"
-              disabled={selected.size === 0 || !templateId || busy}
+              disabled={selected.size === 0 || !templateId || busy || exporting}
               onClick={exportSelected}
-              title={selected.size === 0 ? 'Bifează avizele din tabel, apoi apasă aici' : 'Unește rândurile selectate într-un fișier Anexa Factură'}
+              aria-busy={exporting}
+              title={
+                exporting
+                  ? 'Se generează anexa…'
+                  : selected.size === 0
+                    ? 'Bifează avizele din tabel, apoi apasă aici'
+                    : 'Unește rândurile selectate într-un fișier Anexa Factură'
+              }
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium text-white bg-[#0A7A3E] rounded-lg hover:bg-[#096c37] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Download className="w-4 h-4" />
-              Unește în Anexa XLSX ({selected.size})
+              {exporting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Download className="w-4 h-4" />}
+              {exporting ? 'Se unește…' : `Unește în Anexa XLSX (${selected.size})`}
             </button>
             <button
               type="button"

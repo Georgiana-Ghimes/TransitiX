@@ -82,7 +82,7 @@ export default function RoDateField({
             <CalendarIcon className="w-4 h-4" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
+        <PopoverContent className="w-auto p-0 z-[200]" align="end">
           <Calendar
             mode="single"
             selected={isoToLocalDate(iso)}

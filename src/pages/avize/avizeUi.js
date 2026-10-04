@@ -43,7 +43,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Unește în Anexa XLSX',
-    text: 'Bifează rândurile, verifică șablonul din lista de lângă buton (scrie câte coloane exportă), apoi descarcă. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
+    text: 'Bifează rândurile fără „Verificare obligatorie”, verifică șablonul din lista de lângă buton, apoi descarcă. Unește / Email / Zip refuză selecția dacă există documente care mai trebuie verificate. Pe durata generării butonul e blocat. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
   },
 ];
 
@@ -54,7 +54,7 @@ export const TEMPLATE_ACTION_LEGEND = [
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată.',
   },
   {
     name: 'Șterge șablon',
@@ -169,6 +169,33 @@ export function manuallyEditedAvizFields(row) {
 
 export function hasManualAvizEdits(row) {
   return manuallyEditedAvizFields(row).length > 0;
+}
+
+/**
+ * Same gate as Confirmă: anexă / email / zip must not ship OCR that still needs a human.
+ * Confirmed rows are clear even if an old flag lingered.
+ */
+export function requiresAnnexReviewGate(row) {
+  if (!row || row.status === 'confirmed') return false;
+  const routing = row.validation_routing
+    ?? row.extracted_data?.validation?.routing
+    ?? null;
+  return Boolean(row.needs_review) || routing === 'hitl_required';
+}
+
+/** Selected rows (from the known page list) that still need review before annex export. */
+export function annexReviewBlockedRows(rows, selectedIds) {
+  const ids = new Set(selectedIds || []);
+  return (rows || []).filter((r) => ids.has(r.id) && requiresAnnexReviewGate(r));
+}
+
+export function annexReviewBlockedMessage(count) {
+  const n = Number(count) || 0;
+  if (n <= 0) return null;
+  if (n === 1) {
+    return '1 document necesită verificare. Deschide Verifică / Confirmă înainte de anexă.';
+  }
+  return `${n} documente necesită verificare. Deschide Verifică / Confirmă înainte de anexă.`;
 }
 
 /** Field labels for the re-extract warning, so the operator sees what is about to be rewritten. */

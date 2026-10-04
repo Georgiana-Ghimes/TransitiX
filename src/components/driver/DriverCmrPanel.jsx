@@ -227,9 +227,12 @@ export default function DriverCmrPanel({ trip, showBatchUpload = true }) {
         document_type: docType,
       });
       setRoadDocs((prev) => [...(result.documents || []), ...prev]);
+      const splitN = Number(result.split_pages) || 0;
       notifySuccess(
         'Documente în lot',
-        `${result.documents?.length || files.length} fișier(e) → coada biroului (OCR)`
+        splitN > 1
+          ? `PDF despărțit în ${splitN} avize → coada biroului (OCR)`
+          : `${result.documents?.length || files.length} fișier(e) → coada biroului (OCR)`,
       );
     } catch (err) {
       if (isOfflineError(err)) {

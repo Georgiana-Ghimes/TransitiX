@@ -206,6 +206,19 @@ describe('zoneMapHref', () => {
     );
   });
 
+  it('opens Șos. Viilor 52 on the Bucharest index, not as a non-zoned locality', () => {
+    const href = zoneMapHref(
+      avizDeliveryAddress({
+        ruta_transport: 'BOL / Șoseaua Viilor nr. 52, sector 5, București',
+      }),
+      { plate: 'B 112 VFM / B 475 AGR' },
+    );
+    expect(href).toBe(
+      '/zone-map?q=soseaua+Viilor+52&city=bucuresti&plate=B+112+VFM+%2F+B+475+AGR',
+    );
+    expect(href).not.toMatch(/locality=/);
+  });
+
   it('returns null when there is no street to open on the map', () => {
     expect(zoneMapHref({ street: null, number: '52' })).toBeNull();
   });
@@ -225,6 +238,24 @@ describe('deliveryLegFromRuta / parseSpacedRouteLeg', () => {
       locality: 'Bucuresti',
       streetName: 'Iuliu Maniu',
       streetType: 'bulevardul',
+    });
+  });
+
+  it('parses Șoseaua and keeps a sector+city locality for the city check', () => {
+    expect(parseSpacedRouteLeg('Șoseaua Viilor nr. 52, sector 5, București')).toEqual({
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: 'sector 5, București',
+      streetName: 'Viilor',
+      streetType: 'soseaua',
+    });
+  });
+
+  it('parses a numbered street without inventing a locality from nr. 52', () => {
+    expect(parseSpacedRouteLeg('Șoseaua Viilor nr. 52')).toMatchObject({
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: null,
     });
   });
 });
@@ -263,6 +294,58 @@ describe('avizDeliveryAddress', () => {
     });
   });
 
+  it('treats sector 5, București as Bucharest, not as a town with no zones', () => {
+    // PSL-0056102 / TPO-0032203: Șos. Viilor 52, BOL. Exact locality "bucuresti" used to miss.
+    const out = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52, sector 5, București',
+    });
+    expect(out).toMatchObject({
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    });
+  });
+
+  it('fills București from OCR when the route names the street but not the city', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52',
+      delivery_address: {
+        locality: 'sector 5, București',
+        streetName: 'Viilor',
+        streetType: 'soseaua',
+        houseNumber: '52',
+      },
+    });
+    expect(out.supported).toBe(true);
+    expect(out.cityId).toBe('bucuresti');
+    expect(out.street).toBe('soseaua Viilor');
+  });
+
+  it('assumes București when the route has street+nr but no locality at all (#48/#79, #53 matrice Loki)', () => {
+    // Matrice Loki FAIL: ruta="BOL / Șoseaua Viilor nr. 52" → outside_city + href null.
+    const out = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52',
+    });
+    expect(out).toMatchObject({
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    });
+    expect(zoneMapHref(out)).toBe('/zone-map?q=soseaua+Viilor+52&city=bucuresti');
+  });
+
+  it('treats bare sector 5 as București', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52, sector 5',
+    });
+    expect(out.cityId).toBe('bucuresti');
+    expect(out.supported).toBe(true);
+  });
+
   it('marks a locality with no index as unsupported rather than as unknown', () => {
     const out = avizDeliveryAddress({
       delivery_address: { locality: 'Domnesti', streetName: 'garii', houseNumber: '3' },
@@ -274,6 +357,26 @@ describe('avizDeliveryAddress', () => {
   it('survives an aviz with no parsed address at all', () => {
     expect(avizDeliveryAddress({}).street).toBeNull();
     expect(avizDeliveryAddress({}).supported).toBe(false);
+  });
+});
+
+describe('resolveAvizZone for Șos. Viilor 52', () => {
+  it('answers Zone B from the shipped index (even numbers 4–98)', async () => {
+    const { resolveAvizZone } = await import('./avizZoneTax.js');
+    const address = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52, sector 5, București',
+    });
+    const zone = await resolveAvizZone(address);
+    expect(zone).toMatchObject({ zone: 'ZB', certain: true });
+  });
+
+  it('answers Zone B even when OCR never wrote București on the route', async () => {
+    const { resolveAvizZone } = await import('./avizZoneTax.js');
+    const address = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șoseaua Viilor nr. 52',
+    });
+    const zone = await resolveAvizZone(address);
+    expect(zone).toMatchObject({ zone: 'ZB', certain: true });
   });
 });
 

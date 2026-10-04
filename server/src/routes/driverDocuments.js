@@ -5,6 +5,10 @@
  * uploads (created_from: driver). Trip is optional, the cab can send paperwork before
  * the office links a cursă on /avize.
  *
+ * Multi-page PDFs with distinct TRO/PSL in the text layer are split here the same way as
+ * Admin (`materializePdfPageFiles`) — one row per aviz, same batch. A single aviz on two
+ * pages stays one file (#69).
+ *
  * After OCR the driver must confirm logistics fields (TPO, date, plate, qty/weight).
  * Missing required fields block "confirmare" — office still sees the row for backup.
  */
@@ -21,8 +25,9 @@ import {
 } from '../lib/ocr/driverLogistics.js';
 import {
   logEvent, upload, extractBatchDocuments, failStaleUploadedAvize,
-  markExtractFailed, uploadErrorMessage,
+  markExtractFailed, uploadErrorMessage, MAX_BATCH_FILES,
 } from './documents.js';
+import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import { isOcrDown, ocrCapability } from '../lib/ocr/readText.js';
 
 const router = Router();
@@ -30,6 +35,12 @@ router.use(authRequired);
 
 /** A phone sends a few photos at a time, not a month's archive. */
 const DRIVER_FILE_CAP = 8;
+
+/**
+ * After PDF split, one upload can become many rows. Cap matches the office batch ceiling so
+ * an 8-PSL dossier from the cab is accepted, not cut at the photo count.
+ */
+const DRIVER_DOC_CAP = MAX_BATCH_FILES;
 
 const DRIVER_LIST_COLUMNS = `
   id, batch_id, original_filename, file_url, document_type, status, needs_review,
@@ -375,28 +386,95 @@ router.post('/', (req, res) => {
         ? req.body.document_type
         : 'aviz';
 
+      // Same planner as Admin: distinct TRO/PSL per page → one entry per aviz before insert.
+      const entries = [];
+      let splitPagesTotal = 0;
+      for (const file of files) {
+        const fileUrl = publicUploadUrl(file.filename);
+        let split = null;
+        if (file.mimetype === 'application/pdf' || /\.pdf$/i.test(file.originalname || '')) {
+          try {
+            split = await materializePdfPageFiles(fileUrl, {
+              originalFilename: file.originalname,
+              companyId: req.user.company_id,
+            });
+          } catch (splitErr) {
+            if (splitErr instanceof PdfSplitError) throw splitErr;
+            split = null;
+          }
+        }
+        if (split?.files?.length) {
+          splitPagesTotal += split.pages;
+          for (const page of split.files) {
+            entries.push({
+              file_url: page.file_url,
+              original_filename: page.original_filename,
+              detail: {
+                size: file.size,
+                mimetype: file.mimetype,
+                from: 'driver',
+                trip_id: trip?.id || null,
+                split_page: page.page,
+                split_pages: split.pages,
+                source_file_url: fileUrl,
+              },
+            });
+          }
+        } else {
+          entries.push({
+            file_url: fileUrl,
+            original_filename: file.originalname,
+            detail: {
+              size: file.size,
+              mimetype: file.mimetype,
+              from: 'driver',
+              trip_id: trip?.id || null,
+            },
+          });
+        }
+      }
+      if (entries.length > DRIVER_DOC_CAP) {
+        throw Object.assign(
+          new Error(
+            `După despărțirea PDF-urilor ar fi ${entries.length} avize. `
+            + `Maximum este ${DRIVER_DOC_CAP} odată — încarcă mai puține fișiere.`,
+          ),
+          { status: 400 },
+        );
+      }
+
       const result = await withTransaction(async (client) => {
         const batch = await batchForUpload(client, {
           companyId: req.user.company_id, userId: req.user.id, trip, documentType,
         });
 
         const documents = [];
-        for (const file of files) {
+        for (const entry of entries) {
           const doc = (await client.query(
             `INSERT INTO aviz_documents (company_id, batch_id, document_type, file_url,
                original_filename, status, needs_review, trip_id, uploaded_by, uploaded_from)
              VALUES ($1,$2,$3,$4,$5,'uploaded',TRUE,$6,$7,'driver') RETURNING *`,
-            [req.user.company_id, batch.id, documentType, publicUploadUrl(file.filename),
-             file.originalname, trip?.id || null, req.user.id]
+            [req.user.company_id, batch.id, documentType, entry.file_url,
+             entry.original_filename, trip?.id || null, req.user.id]
           )).rows[0];
           documents.push(doc);
           await logEvent(client, {
             companyId: req.user.company_id, documentId: doc.id, batchId: batch.id,
-            userId: req.user.id, kind: 'uploaded', summary: file.originalname,
+            userId: req.user.id, kind: 'uploaded', summary: entry.original_filename,
+            detail: entry.detail,
+          });
+        }
+
+        if (splitPagesTotal > 0) {
+          await logEvent(client, {
+            companyId: req.user.company_id, documentId: null, batchId: batch.id,
+            userId: req.user.id, kind: 'uploaded',
+            summary: `Despărțit PDF în ${documents.length} avize (șofer)`,
             detail: {
-              size: file.size,
-              mimetype: file.mimetype,
               from: 'driver',
+              split_pages: splitPagesTotal,
+              file_count: documents.length,
+              uploaded_files: files.length,
               trip_id: trip?.id || null,
             },
           });
@@ -410,7 +488,7 @@ router.post('/', (req, res) => {
           [batch.id]
         )).rows[0];
 
-        return { batch: counted, documents };
+        return { batch: counted, documents, splitPages: splitPagesTotal || null };
       });
 
       const { notifyCmrPending, notifyDriverUpload } = await import('../lib/officeNotifications.js');
@@ -433,6 +511,7 @@ router.post('/', (req, res) => {
       res.status(201).json({
         batch: serializeRow(result.batch),
         documents: result.documents.map(serializeRow),
+        ...(result.splitPages > 1 ? { split_pages: result.splitPages } : {}),
       });
 
       const docIds = result.documents.map((d) => d.id);

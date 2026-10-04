@@ -72,6 +72,7 @@ export const DRIVER_GUIDE = {
       title: 'Ce documente trimiți',
       blocks: [
         p('Trimiți avize (sau cântarul legat de aviz). Fiecare hârtie separat, nu toate într-o poză - programul face un rând pentru fiecare fotografie.'),
+        p('Un PDF cu mai multe avize (numere PSL/TRO diferite pe pagini) e despărțit automat: vezi mesajul „PDF despărțit în N avize”. Un singur aviz pe două pagini rămâne un document.'),
         p('Dacă nu ai aviz tipărit, completezi pe foaie (lista de mai sus) sau apeși „Completează aviz manual” pe ecran.'),
       ],
     },    {

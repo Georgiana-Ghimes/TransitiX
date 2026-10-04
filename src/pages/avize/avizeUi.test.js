@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  annexReviewBlockedMessage,
+  annexReviewBlockedRows,
   asAvizPage,
   AVIZ_DEFAULT_PAGE_SIZE,
   displayRoute,
@@ -10,7 +12,9 @@ import {
   isLockedRai,
   lowField,
   manualAvizEditLabels,
+  requiresAnnexReviewGate,
   shouldAutoDownloadEmailFallback,
+  TEMPLATE_ACTION_LEGEND,
   waitForAvizExtractSettled,
 } from './avizeUi.js';
 
@@ -19,6 +23,38 @@ describe('avizeUi', () => {
     expect(isLockedRai({ is_default: true, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRai({ is_default: false, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRai({ is_default: true, name: 'Alt șablon' })).toBe(false);
+  });
+
+  it('blocks annex export for Verificare obligatorie, not for Confirmat', () => {
+    expect(requiresAnnexReviewGate({
+      status: 'extracted', validation_routing: 'hitl_required',
+    })).toBe(true);
+    expect(requiresAnnexReviewGate({
+      status: 'extracted', needs_review: true,
+    })).toBe(true);
+    expect(requiresAnnexReviewGate({
+      status: 'confirmed', validation_routing: 'hitl_required', needs_review: true,
+    })).toBe(false);
+    expect(requiresAnnexReviewGate({
+      status: 'extracted', validation_routing: 'hitl_optional', needs_review: false,
+    })).toBe(false);
+
+    const blocked = annexReviewBlockedRows(
+      [
+        { id: 'a', status: 'extracted', validation_routing: 'hitl_required' },
+        { id: 'b', status: 'confirmed', validation_routing: 'hitl_required' },
+        { id: 'c', status: 'extracted', needs_review: false },
+      ],
+      ['a', 'b', 'c'],
+    );
+    expect(blocked.map((r) => r.id)).toEqual(['a']);
+    expect(annexReviewBlockedMessage(2)).toMatch(/2 documente necesită verificare/);
+  });
+
+  it('tells the operator template names are unique per company', () => {
+    const text = TEMPLATE_ACTION_LEGEND.map((item) => item.text).join(' ');
+    expect(text).toMatch(/unic pe firmă/);
+    expect(text).toMatch(/Șablon nou \(2\)/);
   });
 
   it('formats upload metadata for the table', () => {

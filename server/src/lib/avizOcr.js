@@ -10,6 +10,8 @@ import {
   isAcceptableAutoField,
   isGenericCountUnit,
   isPlausibleQuantity,
+  looksLikeOcrGoodsDump,
+  packagingWordIn,
   parseNumber,
   RO_PLATE_COUNTIES,
 } from './ocr/fields.js';
@@ -983,16 +985,29 @@ function preferRoute(stored, parsed, rawText = null) {
 function preferTipMarfa(row, parsed) {
   const storedRaw = row?.tip_marfa;
   const storedUnit = normalizeGoodsUnit(storedRaw);
-  if (storedUnit && !isGenericCountUnit(storedUnit)) return storedUnit;
+  const storedDump = looksLikeOcrGoodsDump(storedRaw);
+  // A filled office value wins — packaging *or* free text ("Beton"). Whole OCR product rows
+  // and bare "bucati" are noise and must not stick across list/repair.
+  if (
+    fieldFilled(storedRaw)
+    && !isGenericCountUnit(storedUnit || storedRaw)
+    && !storedDump
+  ) {
+    return storedUnit && !isGenericCountUnit(storedUnit)
+      ? storedUnit
+      : String(storedRaw).trim();
+  }
 
-  const fromParsed = normalizeGoodsUnit(parsed?.tip_marfa);
+  const buried = packagingWordIn(storedRaw);
+  if (buried && !isGenericCountUnit(buried)) return buried;
+
+  const fromParsed = normalizeGoodsUnit(parsed?.tip_marfa)
+    || packagingWordIn(parsed?.tip_marfa);
   if (fromParsed && !isGenericCountUnit(fromParsed)) return fromParsed;
 
   const fromUnit = normalizeGoodsUnit(row?.quantity_unit);
   if (fromUnit && !isGenericCountUnit(fromUnit)) return fromUnit;
 
-  // Free-text product name (not a unit spelling) stays; bare "bucati" does not.
-  if (fieldFilled(storedRaw) && !storedUnit) return String(storedRaw).trim();
   return null;
 }
 
@@ -1005,19 +1020,34 @@ export function repairAvizFromStored(row) {
   const raw = row?.extracted_data?.raw_text;
   const parsed = raw ? parseBaumitAviz(raw) : null;
   const corrected = row?.corrected_fields ?? [];
+  const keep = (field) => Array.isArray(corrected) && corrected.includes(field);
   return {
     ...row,
-    numar_tpo: resolveStoredTpo(row, parsed),
-    data_efectuare_cursa: preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
-    numar_auto: preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
-    ruta_transport: corrected.includes('ruta_transport')
+    numar_tpo: keep('numar_tpo') ? row.numar_tpo : resolveStoredTpo(row, parsed),
+    data_efectuare_cursa: keep('data_efectuare_cursa')
+      ? row.data_efectuare_cursa
+      : preferStored(row?.data_efectuare_cursa, parsed?.data_efectuare_cursa),
+    numar_auto: keep('numar_auto')
+      ? row.numar_auto
+      : preferStored(row?.numar_auto, parsed?.numar_auto, isGarbageAuto),
+    ruta_transport: keep('ruta_transport')
       ? row.ruta_transport
       : preferRoute(row?.ruta_transport, parsed?.ruta_transport, raw),
-    tip_marfa: preferTipMarfa(row, parsed),
-    cantitate_marfa: preferQuantity(row, parsed),
-    gross_weight_kg: row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null,
-    net_weight_kg: row?.net_weight_kg ?? parsed?.net_weight_kg ?? null,
-    numar_document_marfa: preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
+    tip_marfa: keep('tip_marfa') && fieldFilled(row?.tip_marfa)
+      ? String(row.tip_marfa).trim()
+      : preferTipMarfa(row, parsed),
+    cantitate_marfa: keep('cantitate_marfa')
+      ? row.cantitate_marfa
+      : preferQuantity(row, parsed),
+    gross_weight_kg: keep('gross_weight_kg')
+      ? row.gross_weight_kg
+      : (row?.gross_weight_kg ?? parsed?.gross_weight_kg ?? null),
+    net_weight_kg: keep('net_weight_kg')
+      ? row.net_weight_kg
+      : (row?.net_weight_kg ?? parsed?.net_weight_kg ?? null),
+    numar_document_marfa: keep('numar_document_marfa')
+      ? row.numar_document_marfa
+      : preferStored(row?.numar_document_marfa, parsed?.numar_document_marfa),
     // Derived, never stored and never edited: the delivery address exists only to answer
     // "which zone", and re-reading it from the OCR text each time means a document whose text
     // improves on re-extraction improves here too, with no column to keep in step.

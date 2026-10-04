@@ -16,7 +16,10 @@ export default function ModalShell({
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e) => {
-      if (e.key === 'Escape' && onClose) onClose();
+      if (e.key !== 'Escape' || !onClose) return;
+      // Calendar / popover (portaled) already handled this key.
+      if (e.defaultPrevented) return;
+      onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => {

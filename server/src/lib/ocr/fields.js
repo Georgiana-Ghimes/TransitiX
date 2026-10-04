@@ -460,6 +460,41 @@ export function extractGoodsUnit(text) {
   return result(best.unit, best.rank > 1 ? 0.8 : 0.4, best.matched);
 }
 
+/**
+ * Packaging word inside a longer OCR slice (`TIP MARFA GALETI 15,744` → `galeti`).
+ * Ranked like extractGoodsUnit so găleți beats a bare „buc” on the same line.
+ */
+export function packagingWordIn(text) {
+  const folded = foldUnit(text);
+  if (!folded) return null;
+  let best = null;
+  const re = new RegExp(`\\b${GOODS_UNIT_SOURCE}\\b`, 'gi');
+  let match = re.exec(folded);
+  while (match) {
+    const unit = goodsUnitOf(match[1]);
+    const rank = GOODS_UNIT_RANK[unit] ?? 0;
+    if (unit && (!best || rank > best.rank)) best = unit;
+    match = re.exec(folded);
+  }
+  return best;
+}
+
+/**
+ * True when Tip marfă looks like a whole product / table row, not saci|găleți|….
+ * Those dumps came from `goodsField` grabbing the MPI line; repair must not keep them.
+ */
+export function looksLikeOcrGoodsDump(tip) {
+  const s = String(tip || '').trim();
+  if (!s) return false;
+  if (goodsUnitOf(s) && s.length <= 12) return false;
+  if (s.length > 24) return true;
+  if (/\b(mpi|mp[il1])\b/i.test(s)) return true;
+  if (/\d[\d.,]*\s*kg\b/i.test(s)) return true;
+  if (/[|]/.test(s)) return true;
+  if (/\b\d{6,}\b/.test(s)) return true;
+  return false;
+}
+
 /** Packaging units that name goods (not bare "buc" / euro-pallet "pce"). */
 const SUMMABLE_PACKAGING = new Set(['saci', 'galeti', 'paleti']);
 

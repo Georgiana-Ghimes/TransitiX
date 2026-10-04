@@ -8,6 +8,7 @@ import {
   DEFAULT_RAI_COLUMNS,
   hasUsableColumns,
   normalizeTemplateColumns,
+  TEMPLATE_NAME_TAKEN,
 } from '../lib/avizTemplate.js';
 import { fieldConfidenceForUi, repairAvizFromStored } from '../lib/avizOcr.js';
 import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
@@ -56,6 +57,14 @@ import {
 const router = Router();
 router.use(authRequired, officeRequired);
 const extractHits = new Map();
+const exportHits = new Map();
+/** In-flight annex builds: same user + template + selection must not pile up. */
+const exportInFlight = new Map();
+
+function annexExportKey(userId, templateId, avizIds) {
+  const ids = [...avizIds].map(String).sort();
+  return `${userId}:${templateId}:${ids.join(',')}`;
+}
 
 /**
  * A batch to hang a document on. The extractor works per batch, and document_events are keyed
@@ -95,6 +104,28 @@ async function ensureDefaultTemplate(companyId) {
       return again.rows.map(serializeRow);
     }
   });
+}
+
+function templateNameTakenError() {
+  const err = new Error(TEMPLATE_NAME_TAKEN);
+  err.status = 409;
+  err.code = 'TEMPLATE_NAME_TAKEN';
+  return err;
+}
+
+async function assertTemplateNameFree(client, companyId, name, exceptId = null) {
+  const clash = exceptId
+    ? await client.query(
+      `SELECT id FROM report_templates
+       WHERE company_id = $1 AND lower(name) = lower($2) AND id <> $3`,
+      [companyId, name, exceptId],
+    )
+    : await client.query(
+      `SELECT id FROM report_templates
+       WHERE company_id = $1 AND lower(name) = lower($2)`,
+      [companyId, name],
+    );
+  if (clash.rows[0]) throw templateNameTakenError();
 }
 
 async function writeTemplateDefault(client, companyId, makeDefault, exceptId = null) {
@@ -236,6 +267,38 @@ async function loadAvizeByIds(companyId, avizIds) {
   });
 }
 
+/**
+ * Anexa / email / zip share Confirmă's HITL gate: unverified OCR must not reach a customer sheet.
+ * Confirmed rows are allowed; `hitl_required` or `needs_review` on anything else is a hard stop.
+ */
+function annexExportReviewBlocked(docs) {
+  return (docs || []).filter((d) => {
+    if (!d || d.status === 'confirmed') return false;
+    const routing = d.extracted_data?.validation?.routing ?? null;
+    return Boolean(d.needs_review) || routing === 'hitl_required';
+  });
+}
+
+function refuseAnnexIfNeedsReview(docs) {
+  const blocked = annexExportReviewBlocked(docs);
+  if (!blocked.length) return;
+  const n = blocked.length;
+  const err = new Error(
+    n === 1
+      ? '1 document necesită verificare. Deschide Verifică / Confirmă înainte de anexă.'
+      : `${n} documente necesită verificare. Deschide Verifică / Confirmă înainte de anexă.`,
+  );
+  err.status = 409;
+  err.code = 'NEEDS_REVIEW';
+  err.blocked = blocked.map((d) => ({
+    id: d.id,
+    filename: d.original_filename,
+    routing: d.extracted_data?.validation?.routing ?? null,
+    needs_review: d.needs_review,
+  }));
+  throw err;
+}
+
 async function buildAnnexBuffer(companyId, templateId, avizIds) {
   const tmpl = await query(
     `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
@@ -252,6 +315,7 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     err.status = 400;
     throw err;
   }
+  refuseAnnexIfNeedsReview(avize);
   const template = serializeRow(tmpl.rows[0]);
   const report = buildReport({ template, documents: avize });
   // The annex keeps its exact agreed shape here, no totals row on the legacy path.
@@ -439,6 +503,7 @@ router.post('/templates', async (req, res) => {
     const isDefault = Boolean(req.body?.is_default);
     const row = await withTransaction(async (client) => {
       await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
+      await assertTemplateNameFree(client, req.user.company_id, name);
       await writeTemplateDefault(client, req.user.company_id, isDefault);
       const result = await client.query(
         `INSERT INTO report_templates (company_id, name, columns, is_default)
@@ -450,8 +515,10 @@ router.post('/templates', async (req, res) => {
     });
     res.status(201).json(serializeRow(row));
   } catch (err) {
+    if (err.status === 409) return res.status(409).json({ message: err.message });
+    if (isPgUniqueViolation(err)) return res.status(409).json({ message: TEMPLATE_NAME_TAKEN });
     console.error(err);
-    res.status(500).json({ message: err.message || 'Failed to create template' });
+    res.status(err.status || 500).json({ message: err.message || 'Failed to create template' });
   }
 });
 
@@ -476,6 +543,7 @@ router.put('/templates/:id', async (req, res) => {
         err.status = 400;
         throw err;
       }
+      await assertTemplateNameFree(client, req.user.company_id, name, req.params.id);
       await writeTemplateDefault(client, req.user.company_id, isDefault, req.params.id);
       const result = await client.query(
         `UPDATE report_templates
@@ -489,6 +557,8 @@ router.put('/templates/:id', async (req, res) => {
     if (!row) return res.status(404).json({ message: 'Șablonul nu a fost găsit.' });
     res.json(serializeRow(row));
   } catch (err) {
+    if (err.status === 409) return res.status(409).json({ message: err.message });
+    if (isPgUniqueViolation(err)) return res.status(409).json({ message: TEMPLATE_NAME_TAKEN });
     console.error(err);
     res.status(err.status || 500).json({ message: err.message || 'Failed to save template' });
   }
@@ -821,11 +891,27 @@ router.post('/extract', async (req, res) => {
 });
 
 router.post('/export', async (req, res) => {
+  let flightKey = null;
   try {
     const templateId = req.body?.template_id;
     const avizIds = capAvizIds(req.body?.aviz_ids);
     if (!templateId) return res.status(400).json({ message: 'Alege un șablon pentru export.' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+
+    const rate = hitRateLimit(exportHits, req.user.id, { max: 12, windowMs: 60_000 });
+    if (!rate.ok) {
+      return res.status(429).json({
+        message: 'Prea multe exporturi. Așteaptă un moment, apoi încearcă din nou.',
+      });
+    }
+
+    flightKey = annexExportKey(req.user.id, templateId, avizIds);
+    if (exportInFlight.has(flightKey)) {
+      return res.status(429).json({
+        message: 'Același export e deja în curs. Așteaptă să se termine.',
+      });
+    }
+    exportInFlight.set(flightKey, Date.now());
 
     const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
     const { buffer, filename } = built;
@@ -836,8 +922,17 @@ router.post('/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   } catch (err) {
+    if (err?.code === 'NEEDS_REVIEW') {
+      return res.status(409).json({
+        code: err.code,
+        message: err.message,
+        blocked: err.blocked || [],
+      });
+    }
     console.error(err);
     res.status(err.status || 500).json({ message: err.message || 'Export failed' });
+  } finally {
+    if (flightKey) exportInFlight.delete(flightKey);
   }
 });
 
@@ -1090,6 +1185,13 @@ router.post('/email', async (req, res) => {
         : undefined,
     });
   } catch (err) {
+    if (err?.code === 'NEEDS_REVIEW') {
+      return res.status(409).json({
+        code: err.code,
+        message: err.message,
+        blocked: err.blocked || [],
+      });
+    }
     console.error(err);
     res.status(err.status || 500).json({ message: err.message || 'Email failed' });
   }
@@ -1132,6 +1234,13 @@ router.post('/zip', async (req, res) => {
     res.setHeader('X-Aviz-Missing-Files', String(missing));
     res.send(zip);
   } catch (err) {
+    if (err?.code === 'NEEDS_REVIEW') {
+      return res.status(409).json({
+        code: err.code,
+        message: err.message,
+        blocked: err.blocked || [],
+      });
+    }
     console.error(err);
     res.status(err.status || 500).json({ message: err.message || 'Zip failed' });
   }

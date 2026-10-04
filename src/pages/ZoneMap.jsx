@@ -76,6 +76,29 @@ function formatAmount(rate) {
   return `${amount.toFixed(2)} ${rate.currency || 'RON'}`;
 }
 
+/**
+ * pinOnly hides polygon zone so Photon cannot flash ZA. The tooltip still has to name the
+ * index answer — otherwise it says "în afara zonelor" while the card says ZB.
+ */
+function pinZoneCaption(hit, lookup, city, streetIndex) {
+  if (hit?.pinOnly && lookup && lookup.status !== 'unknown') {
+    const index = lookup.index || streetIndex;
+    if (index && city?.zones) {
+      const answer = resolveAddress(index, lookup, city.zones);
+      if (answer?.zone) return `Zona ${answer.zone}`;
+      if (answer?.certain) return 'În afara zonelor (index)';
+    }
+  }
+  if (hit?.zone?.code) {
+    const extra = hit.drawn?.code && hit.drawn.code !== hit.zone.code
+      ? ` · contur ${hit.drawn.code}`
+      : '';
+    return `Zona ${hit.zone.code}${extra}`;
+  }
+  if (hit?.drawn?.code) return `Contur ${hit.drawn.code}`;
+  return 'În afara zonelor pe hartă';
+}
+
 function bracketLabel(rate) {
   const min = Number(rate.mma_min_kg) || 0;
   const max = rate.mma_max_kg == null ? null : Number(rate.mma_max_kg);
@@ -681,11 +704,7 @@ export default function ZoneMap() {
                       {hit.point.label || hit.address || hit.query}
                     </div>
                     <div style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
-                      {hit.zone?.code
-                        ? `Zona ${hit.zone.code}${hit.drawn?.code && hit.drawn.code !== hit.zone.code ? ` · contur ${hit.drawn.code}` : ''}`
-                        : hit.drawn?.code
-                          ? `Contur ${hit.drawn.code}`
-                          : 'În afara zonelor pe hartă'}
+                      {pinZoneCaption(hit, lookup, city, streetIndex)}
                     </div>
                   </div>
                 </Tooltip>

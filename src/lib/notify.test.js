@@ -62,6 +62,8 @@ describe('friendlyErrorMessage', () => {
   it('keeps a message the server wrote for a person', () => {
     expect(friendlyErrorMessage(httpError(409, 'Cursa are deja un aviz atașat.')))
       .toBe('Cursa are deja un aviz atașat.');
+    expect(friendlyErrorMessage(httpError(409, 'Există deja un șablon cu acest nume')))
+      .toBe('Există deja un șablon cu acest nume');
   });
 });
 

@@ -489,8 +489,9 @@ describe('extractDocument', () => {
     expect(result.values.quantity).toBe(245);
     expect(result.values.pallets).toBe(7);
     expect(result.values.ruta_transport || '').not.toMatch(/Paletizare/i);
-    expect(String(result.values.tip_marfa || '')).toMatch(/MP[I1]/i);
-    expect(String(result.values.tip_marfa || '')).not.toMatch(/^38245090$/);
+    // Tip marfă is packaging only — never the MPI product line.
+    expect(String(result.values.tip_marfa || '')).toMatch(/^(saci|galeti|paleti|bucati)$/i);
+    expect(String(result.values.tip_marfa || '')).not.toMatch(/MP[I1]|38245090/i);
   });
 
   it('does not treat Bolintin-Deal as the route when Adresa de livrare is Dobroești', () => {
@@ -848,6 +849,20 @@ describe('tip marfa: the word that names something', () => {
     expect(extractGoodsUnit('9,5 t').value).toBeNull();
   });
 
+  it('keeps tip marfa as packaging, not the product row', () => {
+    const text = `
+BAUMIT ROMANIA SRL
+AVIZ DE INSOTIRE A MARFII
+Aviz de expeditie: PSL-0044999
+TPO-0025999
+Cantitate 245.00 sac MPI Adeziv 25 kg
+Numarul de saci 245.00
+`;
+    const tip = extractDocument(text, { documentType: 'aviz' }).values.tip_marfa;
+    expect(tip).toBe('saci');
+    expect(String(tip)).not.toMatch(/MPI|Adeziv/i);
+  });
+
   it('knows which words only count', () => {
     for (const unit of ['buc', 'bucati', 'bucăți', 'pcs', 'PCE']) {
       expect(isGenericCountUnit(unit), unit).toBe(true);
@@ -891,7 +906,7 @@ describe('carnet de bord profile', () => {
     expect(values.data_efectuare_cursa).toBe('2026-08-11');
     expect(values.numar_auto).toBe('B-112-VFM');
     expect(values.numar_document_marfa).toBe('TRO-0008053');
-    expect(values.tip_marfa).toBe('GALETI');
+    expect(values.tip_marfa).toBe('galeti');
     expect(values.quantity).toBe(15744);
     expect(values.numar_curse).toBe(1);
   });

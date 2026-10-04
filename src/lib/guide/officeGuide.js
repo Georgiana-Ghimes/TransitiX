@@ -22,7 +22,7 @@ const FLUX = {
       'Aplicația citește documentul (OCR) și completează ce recunoaște: TPO, data cursei, numărul auto, ruta, tipul mărfii, numărul avizului și greutatea brută.',
       'Deschizi Editează pe fiecare rând, verifici ce a citit și completezi restul: km, tarif, valoare TPO, observații.',
       'Rândul primește statusul Confirmat când l-ai verificat.',
-      'Bifezi rândurile confirmate și apeși Unește în Anexa XLSX. Fișierul are exact coloanele din șablon.',
+      'Bifezi rândurile fără „Verificare obligatorie” (sau deja confirmate) și apeși Unește în Anexa XLSX. Fișierul are exact coloanele din șablon.',
     ]),
     p('Nimic nu pleacă automat. Programul citește și propune, tu confirmi. Asta e deliberat: un aviz prost fotografiat produce cifre plauzibile, iar o cifră plauzibilă și greșită e mai scumpă decât o casetă goală.'),
   ],
@@ -37,7 +37,7 @@ const INCARCARE = {
       { term: 'PDF bulk', text: 'Exemplu: 6 avize cu TRO distincte într-un singur PDF → 6 rânduri. Un aviz pe 2 pagini (același TRO) → 1 rând. Re-extrage pe un rând nu le lipește la loc.' },
       { term: 'Limită per fișier', text: '15 MB. Peste asta aplicația îți spune înainte să pornească încărcarea, nu după.' },
       { term: 'Câte odată', text: 'Până la 8 fișiere într-o încărcare. Limita vine de la server și e afișată pe ecran. Un PDF nu poate avea mai mult de 40 de pagini la o despărțire.' },
-      { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul. Pe companion, clopoțelul arată doar alertele de documente / flotă, nu statusuri de curse.' },
+      { term: 'De la șofer', text: 'Documentele trimise din aplicația de telefon intră în aceeași listă, marcate ca venite de la șofer, și sună clopoțelul. Un PDF multi-PSL e despărțit la fel ca la Încarcă avize. Pe companion, clopoțelul arată doar alertele de documente / flotă, nu statusuri de curse.' },
     ]),
     warn('Despărțirea se bazează pe TRO/PSL din stratul de text al PDF-ului, nu pe TPO. Dacă două avize sunt pe aceeași foaie sau PDF-ul e doar scan (fără text), rămân pe același rând: taie PDF-ul înainte sau încarcă poze separate.'),
     note('TPO scris de mână pe un aviz tipărit: pe PDF cu TRO/PSL fără TPO în text se pornește OCR pe imagine, ca să prindă cerneala. Pozele se trimit color (fără aplatizare alb-negru).'),
@@ -160,6 +160,7 @@ const SABLOANE = {
   title: 'Șabloane și exportul XLSX',
   blocks: [
     p('Un șablon spune ce coloane are fișierul și în ce ordine. Anexa Factura RAI e blocată ca bază: are coloanele cerute de client și nu poate fi rescrisă din Șabloane.'),
+    p('Numele e unic pe firmă, fără deosebire de majuscule. Dacă „Șablon nou” e deja folosit, editorul propune „Șablon nou (2)”. Un nume ocupat la salvare e refuzat, ca să nu editezi sau ștergi alt card identic.'),
     p('Coloanele ei de bază, în ordine: Nr. Crt., Numar TPO, Data efectuare cursa, Valoare TPO, Numar auto, Ruta transport, Tip marfa, Cantitate marfa (tone), Numar document marfa, Numar curse, Taxe suplimentare, Km parcursi, Tarif Km, Observatii.'),
     p('Cantitate marfa (tone) vine exclusiv din greutatea brută (kg ÷ 1000, două zecimale). Greutatea netă nu apare pe Anexa Factura RAI și nu intră în nicio cantitate calculată.'),
     terms([
@@ -172,10 +173,11 @@ const SABLOANE = {
 const AVERTISMENTE = {
   id: 'avertismente',
   title: 'Avertismentele dinaintea exportului',
-  lead: 'Niciunul nu blochează fișierul. Există ca alegerea de a trimite un raport incomplet să fie a ta, nu a programului.',
+  lead: 'Unele opresc Unește / Email / Zip. Restul sunt avertismente: alegerea de a trimite un raport incomplet rămâne a ta.',
   blocks: [
     terms([
-      { term: 'Documente neconfirmate', text: 'Rânduri pe care nu le-a verificat nimeni ajung în fișier.' },
+      { term: 'Verificare obligatorie', text: 'Blochează Unește, Email și Zip. Corectează în Verifică / Confirmă, apoi exportă. Nu există ocolire din anexă.' },
+      { term: 'Documente neconfirmate', text: 'Rânduri pe care nu le-a verificat nimeni pot ajunge în fișier dacă nu au badge de verificare obligatorie.' },
       { term: 'Câmpuri neverificate', text: 'Valori puse de OCR pe care nu le-a controlat un operator.' },
       { term: 'Fără număr TPO', text: 'Raportul are coloana, documentul nu are numărul.' },
       { term: 'Fără dată de cursă', text: 'La fel, pentru data efectuării.' },
@@ -208,7 +210,7 @@ const PROBLEME = {
   blocks: [
     terms([
       { term: 'Ruta e goală în tabel dar corectă în Excel', text: 'Nu se mai întâmplă. Lista și exportul repară acum documentul în același fel, tocmai pentru că un ecran care contrazice fișierul produs nu mai poate fi crezut nici când are dreptate.' },
-      { term: 'Tip marfă scrie „bucăți”', text: 'Nu mai ajunge în fișier. Dacă vezi totuși un ambalaj greșit, scrie-l în Editează, valoarea ta nu e suprascrisă de OCR.' },
+      { term: 'Tip marfă scrie „bucăți”', text: 'Nu mai ajunge în fișier. Dacă scrii altceva în Editează (găleți, Beton, text liber), Salvarea rămâne la redeschidere: lista nu pune înapoi saci/găleți din OCR.' },
       { term: 'Taxa de zonă nu apare', text: 'Panoul din Editează aviz spune exact ce lipsește: greutatea, adresa, mașina sau MTMA, cu link către locul unde se rezolvă.' },
       { term: 'Un aviz apare ca duplicat și nu e', text: 'Verifică numărul documentului de marfă pe ambele rânduri. Dacă OCR-ul nu l-a citit pe unul, completează-l și eticheta dispare.' },
       { term: 'Numărul auto e un text fără sens', text: 'OCR-ul a prins altceva de pe pagină. Corectează-l în Editează; mașini noi se adaugă în Autoturisme numai pentru numere recunoscute ca numere de înmatriculare.' },
