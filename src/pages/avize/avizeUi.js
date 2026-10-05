@@ -15,11 +15,11 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat) doar dacă validarea OCR a trecut. Dacă apare „De revizuit” / HITL, deschide Verificare, corectează și marchează verificat - altfel Confirmă e blocat (admin poate forța cu motiv).',
+    text: 'Marchează rândul ca verificat (status Confirmat) când validarea a trecut. Scor OCR ≥ 90 % pe câmpuri nu cere verificare. „Suspect de duplicat” e doar etichetă, nu blochează. Dacă apare „Verificare obligatorie”, deschide Verifică (admin poate forța cu motiv).',
   },
   {
     name: 'Verificare OCR',
-    text: 'Deschide imaginea lângă câmpurile problematice (încredere scăzută, regulă eșuată, duplicat). Salvează corecțiile (audit old→new) apoi Marchează verificat.',
+    text: 'Deschide imaginea lângă câmpurile cu încredere sub 90 % sau regulă eșuată. Salvează corecțiile (audit old→new) apoi Marchează verificat.',
   },
   {
     name: 'Re-extrage',
@@ -39,7 +39,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Aviz duplicat',
-    text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta nu blochează nimic, dar la Confirmă sau export primești un avertisment. Pentru încărcări greșite, folosește Șterge.',
+    text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta e informativă: nu forțează verificare și nu blochează Confirmă / Unește. Pentru încărcări greșite, folosește Șterge.',
   },
   {
     name: 'Unește în Anexa XLSX',

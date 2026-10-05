@@ -18,17 +18,18 @@ describe('avizFieldSchema', () => {
     expect(fieldMeta('observatii').source).toBe('manual');
   });
 
-  it('uses stricter bands on critical fields', () => {
-    expect(confidenceBand('numar_tpo', 0.93)).toBe(ROUTING.HITL_OPTIONAL);
-    expect(confidenceBand('numar_tpo', 0.96)).toBe(ROUTING.AUTO);
-    expect(confidenceBand('ruta_transport', 0.93)).toBe(ROUTING.AUTO);
-    expect(confidenceBand('ruta_transport', 0.75)).toBe(ROUTING.HITL_OPTIONAL);
+  it('treats 90% OCR as auto for critical and ordinary fields', () => {
+    expect(confidenceBand('numar_tpo', 0.90)).toBe(ROUTING.AUTO);
+    expect(confidenceBand('numar_tpo', 0.89)).toBe(ROUTING.HITL_OPTIONAL);
+    expect(confidenceBand('ruta_transport', 0.90)).toBe(ROUTING.AUTO);
+    expect(confidenceBand('ruta_transport', 0.70)).toBe(ROUTING.HITL_OPTIONAL);
     expect(confidenceBand('ruta_transport', 0.5)).toBe(ROUTING.HITL_REQUIRED);
   });
 
   it('exposes documented band constants', () => {
-    expect(CRITICAL_BANDS.auto).toBe(0.95);
-    expect(DEFAULT_BANDS.optional).toBe(0.70);
+    expect(CRITICAL_BANDS.auto).toBe(0.90);
+    expect(DEFAULT_BANDS.auto).toBe(0.90);
+    expect(DEFAULT_BANDS.optional).toBe(0.65);
   });
 
   it('picks the worst routing', () => {

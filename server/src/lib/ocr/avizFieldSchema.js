@@ -11,16 +11,21 @@ export const ROUTING = Object.freeze({
   HITL_REQUIRED: 'hitl_required',
 });
 
-/** Default bands for non-critical OCR fields. */
+/**
+ * HITL bands vs OCR score.
+ *
+ * Auto at 0.90: a clean 90 % read must not force „Verificare”. The old 0.92/0.95 sat
+ * above what most extractors emit (0.75–0.90), so nearly every row needed review.
+ */
 export const DEFAULT_BANDS = Object.freeze({
-  auto: 0.92,
-  optional: 0.70,
+  auto: 0.90,
+  optional: 0.65,
 });
 
-/** Stricter bands for fields that break the annex if wrong. */
+/** Same auto floor for critical fields — 90 % is trusted; below that, optional/required. */
 export const CRITICAL_BANDS = Object.freeze({
-  auto: 0.95,
-  optional: 0.80,
+  auto: 0.90,
+  optional: 0.70,
 });
 
 /**

@@ -5,8 +5,8 @@
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.22.5",
-    "build": 91
+    "version": "1.22.6",
+    "build": 92
   },
   "type": "module",
   "scripts": {

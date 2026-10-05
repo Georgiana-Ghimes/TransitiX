@@ -279,7 +279,9 @@ export function computeRouting({ fields = {}, findings = [] } = {}) {
   let routing = ROUTING.AUTO;
 
   for (const f of findings) {
-    if (f.source === 'duplicate_suspect' || f.severity === 'error') {
+    // Suspect duplicate is an info badge only — it must not force HITL / block Confirm.
+    if (f.source === 'duplicate_suspect' || f.severity === 'info') continue;
+    if (f.severity === 'error') {
       routing = worstRouting(routing, ROUTING.HITL_REQUIRED);
     } else if (f.severity === 'warning') {
       routing = worstRouting(routing, ROUTING.HITL_OPTIONAL);
@@ -323,8 +325,9 @@ export async function validateAvizExtraction({
       findings.push(finding({
         rule: 'duplicate_consignment_90d',
         field: 'numar_tpo',
+        severity: 'info',
         title: 'Suspect de duplicat (90 zile)',
-        message: `Același transport apare deja (${dup.filename || dup.id}).`,
+        message: `Același transport apare deja (${dup.filename || dup.id}). Nu blochează confirmarea.`,
         source: 'duplicate_suspect',
       }));
       findings[findings.length - 1].duplicate_of = dup.id;

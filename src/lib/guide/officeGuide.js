@@ -185,7 +185,7 @@ const AVERTISMENTE = {
       { term: 'Cantitate (tone) goală', text: 'Documentele fără greutate brută. Celula rămâne goală pe ele.' },
       { term: 'Fără greutate brută', text: 'Șablonul are coloană de greutate, documentul nu are valoarea.' },
       { term: 'Greutatea nu ajunge în raport', text: 'Documentele au greutate, dar șablonul ales nu o exportă, deci fișierul nu se poate verifica față de bonul de cântar.' },
-      { term: 'Aviz duplicat', text: 'Același transport apare de două ori în selecție.' },
+      { term: 'Aviz duplicat', text: 'Același transport apare de două ori în selecție. Eticheta e informativă: nu forțează verificare și nu blochează Confirmă / Unește.' },
     ]),
   ],
 };

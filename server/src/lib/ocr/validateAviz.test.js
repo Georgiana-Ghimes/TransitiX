@@ -64,14 +64,30 @@ describe('computeRouting', () => {
     expect(routing).toBe(ROUTING.HITL_REQUIRED);
   });
 
-  it('stays auto when fields are strong and findings empty', () => {
+  it('stays auto when fields are at least 90%', () => {
     const routing = computeRouting({
       findings: [],
       fields: {
-        numar_tpo: { confidence: 0.99 },
-        numar_auto: { confidence: 0.98 },
-        data_efectuare_cursa: { confidence: 0.97 },
-        ruta_transport: { confidence: 0.95 },
+        numar_tpo: { confidence: 0.90 },
+        numar_auto: { confidence: 0.90 },
+        data_efectuare_cursa: { confidence: 0.90 },
+        ruta_transport: { confidence: 0.90 },
+      },
+    });
+    expect(routing).toBe(ROUTING.AUTO);
+  });
+
+  it('does not force HITL for a duplicate suspect', () => {
+    const routing = computeRouting({
+      findings: [{
+        rule: 'duplicate_consignment_90d',
+        severity: 'info',
+        source: 'duplicate_suspect',
+      }],
+      fields: {
+        numar_tpo: { confidence: 0.90 },
+        numar_auto: { confidence: 0.90 },
+        data_efectuare_cursa: { confidence: 0.90 },
       },
     });
     expect(routing).toBe(ROUTING.AUTO);
