@@ -11,8 +11,8 @@ import { formatDate } from '@/lib/utils';
 import { findBlurriest } from '@/lib/imageQuality';
 import { prepareImagesForUpload } from '@/lib/imagePreprocess';
 import {
-  Archive, Camera, Check, ClipboardList, Download, Loader2,
-  Mail, Trash2, Upload, X,
+  Camera, Check, ClipboardList, Download, Loader2,
+  Trash2, Upload, X,
 } from 'lucide-react';
 import AvizEditModal from './avize/AvizEditModal';
 import AvizReviewDrawer from './avize/AvizReviewDrawer';
@@ -40,7 +40,6 @@ import {
   labelCls,
   lowField,
   readAvizPageSize,
-  shouldAutoDownloadEmailFallback,
   waitForAvizExtractSettled,
   writeAvizPageSize,
 } from './avize/avizeUi';
@@ -92,8 +91,6 @@ export default function AvizeReports() {
   const [qInput, setQInput] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [hiddenByFilters, setHiddenByFilters] = useState(0);
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [emailTo, setEmailTo] = useState('');
   const [newCode, setNewCode] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const fileRef = useRef(null);
@@ -101,7 +98,6 @@ export default function AvizeReports() {
   const loadGen = useRef(0);
   const bulkConfirmLock = useRef(false);
   const bulkDeleteLock = useRef(false);
-  const emailFallbackDownloadedRef = useRef(false);
 
   const [ocrDown, setOcrDown] = useState(false);
 
@@ -519,7 +515,7 @@ export default function AvizeReports() {
     }
   };
 
-  /** Unește / Email / Zip: refuse HITL-required rows before the download starts. */
+  /** Unește: refuse HITL-required rows before the download starts. */
   const guardAnnexSelection = (ids) => {
     const blocked = annexReviewBlockedRows(rows, ids);
     if (!blocked.length) return true;
@@ -738,89 +734,6 @@ export default function AvizeReports() {
     }
   };
 
-  const zipSelected = async () => {
-    const ids = [...selected];
-    if (ids.length === 0 || !templateId) {
-      notifyError('Nimic selectat', 'Bifează avize și alege șablonul.');
-      return;
-    }
-    if (!guardAnnexSelection(ids)) return;
-    setBusy(true);
-    try {
-      const { blob, filename, missing } = await api.avize.zipExport({ template_id: templateId, aviz_ids: ids });
-      downloadBlob(blob, filename);
-      notifySuccess('Zip gata', missing ? `${filename} (${missing} originale lipsă de pe disk)` : filename);
-    } catch (e) {
-      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
-        notifyError('Necesită verificare', e);
-        const blocked = e?.data?.blocked || [];
-        if (blocked[0]?.id) setReviewId(blocked[0].id);
-      } else {
-        notifyError('Zip eșuat', e);
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const sendAnnexEmail = async () => {
-    const ids = [...selected];
-    if (!emailTo.trim() || ids.length === 0 || !templateId) return;
-    if (!guardAnnexSelection(ids)) return;
-    setBusy(true);
-    try {
-      const result = await api.avize.emailAnnex({
-        to: emailTo.trim(),
-        template_id: templateId,
-        aviz_ids: ids,
-      });
-      if (result?.email_sent === false || result?.stub || result?.download) {
-        const hasContent = Boolean(result?.content_base64);
-        if (shouldAutoDownloadEmailFallback({
-          alreadyDownloaded: emailFallbackDownloadedRef.current,
-          hasContent,
-        })) {
-          const bin = Uint8Array.from(atob(result.content_base64), (c) => c.charCodeAt(0));
-          downloadBlob(new Blob([bin]), result.filename || 'anexa.xlsx');
-          emailFallbackDownloadedRef.current = true;
-          notifyError(
-            'Email netrimis - anexa descărcată',
-            result?.message
-              || 'Resend nu este configurat. Fișierul s-a salvat în Downloads; poți să-l trimiți tu din mail.'
-          );
-          // Same end-state as a successful send: the action finished (download as fallback).
-          // Leaving the modal open with Trimite still active looked like nothing happened.
-          setEmailOpen(false);
-          emailFallbackDownloadedRef.current = false;
-        } else {
-          notifyError(
-            'Email netrimis',
-            emailFallbackDownloadedRef.current
-              ? 'Anexa a fost deja descărcată pentru această trimitere. Folosește fișierul din Downloads sau „Unește în Anexa XLSX”.'
-              : (result?.message
-                || 'Resend nu este configurat, emailul nu a fost trimis. Descarcă anexa cu „Unește în Anexa XLSX”.')
-          );
-          setEmailOpen(false);
-          emailFallbackDownloadedRef.current = false;
-        }
-      } else {
-        notifySuccess('Email trimis', result?.filename || emailTo);
-        setEmailOpen(false);
-        emailFallbackDownloadedRef.current = false;
-      }
-    } catch (e) {
-      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
-        notifyError('Necesită verificare', e);
-        const blocked = e?.data?.blocked || [];
-        if (blocked[0]?.id) setReviewId(blocked[0].id);
-      } else {
-        notifyError('Email eșuat', e);
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const draftInvoice = async () => {
     const ids = [...selected];
     if (ids.length === 0) {
@@ -960,7 +873,6 @@ export default function AvizeReports() {
   };
 
   const rowLocked = (id) => uploading || busyId === id;
-  const selectedIds = [...selected];
 
   if (loading) {
     return (
@@ -1099,23 +1011,16 @@ export default function AvizeReports() {
               <Camera className="w-4 h-4" />
               Foto
             </button>
-            <div className="flex flex-col gap-1 min-w-[12rem] w-full sm:w-56 sm:flex-none">
-              <select
-                className={`${inputCls} h-10 py-0`}
-                value={templateId}
-                onChange={(e) => setTemplateId(e.target.value)}
-                aria-label="Șablon Anexa Factură"
-              >
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (implicit)' : ''}</option>
-                ))}
-              </select>
-              <p className="text-[11px] text-slate-500 leading-snug">
-                {selectedTemplate
-                  ? `Exportă ${columnCountOf(selectedTemplate)} coloane, cu valorile Default din șablon.`
-                  : 'Exportul folosește acest șablon, inclusiv Default (ex. taxă 100, tarif 20).'}
-              </p>
-            </div>
+            <select
+              className={`${inputCls} h-10 py-0 min-w-[12rem] w-full sm:w-56 sm:flex-none`}
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              aria-label="Șablon Anexa Factură"
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (implicit)' : ''}</option>
+              ))}
+            </select>
             <button
               type="button"
               disabled={selected.size === 0 || !templateId || busy || exporting}
@@ -1142,25 +1047,6 @@ export default function AvizeReports() {
               className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-emerald-200 text-emerald-800 bg-white rounded-lg hover:bg-emerald-50 disabled:opacity-40"
             >
               Confirmă selectate
-            </button>
-            <button
-              type="button"
-              disabled={selected.size === 0 || !templateId}
-              onClick={() => {
-                emailFallbackDownloadedRef.current = false;
-                setEmailOpen(true);
-              }}
-              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
-            >
-              <Mail className="w-4 h-4" /> Email
-            </button>
-            <button
-              type="button"
-              disabled={selected.size === 0 || !templateId || busy}
-              onClick={zipSelected}
-              className="inline-flex h-10 items-center gap-2 px-4 text-sm font-medium border border-slate-200 bg-white rounded-lg hover:bg-slate-50 disabled:opacity-40"
-            >
-              <Archive className="w-4 h-4" /> Zip
             </button>
             {/* The draft lands in Financiar, and the companion has no /finance, a button whose
                 result the operator cannot open anywhere is worse than no button. */}
@@ -1464,41 +1350,6 @@ export default function AvizeReports() {
           onClose={() => setReviewId(null)}
           onSaved={() => load()}
         />
-      )}
-
-      {emailOpen && (
-        <ModalShell
-          onClose={() => {
-            setEmailOpen(false);
-            emailFallbackDownloadedRef.current = false;
-          }}
-          panelClassName="max-w-md"
-          labelledBy="aviz-email-title"
-        >
-          <div className="p-5">
-            <h2 id="aviz-email-title" className="text-lg font-semibold text-[#0A2B4E] mb-3">Trimite anexa</h2>
-            <label className={labelCls}>Email destinatar</label>
-            <input className={inputCls} type="email" value={emailTo} onChange={(e) => setEmailTo(e.target.value)} placeholder="office@firma.ro" />
-            <p className="text-xs text-slate-500 mt-2">
-              {selectedIds.length} aviz(e). Dacă Resend lipsește, anexa se descarcă o singură dată (nu la fiecare Trimite).
-            </p>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                type="button"
-                className="px-4 py-2 text-sm border rounded-lg"
-                onClick={() => {
-                  emailFallbackDownloadedRef.current = false;
-                  setEmailOpen(false);
-                }}
-              >
-                Anulează
-              </button>
-              <button type="button" disabled={busy || !emailTo.trim()} className="px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60" onClick={sendAnnexEmail}>
-                Trimite
-              </button>
-            </div>
-          </div>
-        </ModalShell>
       )}
 
       {editTemplate && (

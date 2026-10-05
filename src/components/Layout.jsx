@@ -293,7 +293,7 @@ export default function Layout() {
             onClick={() => { if (!tourOpen) setMobileOpen(false); }}
             className={cn(
               'flex items-center min-w-0',
-              showIconsOnly ? 'justify-center' : 'gap-2.5 flex-1'
+              showIconsOnly ? 'justify-center' : 'justify-center flex-1'
             )}
           >
             {showIconsOnly ? (
@@ -301,15 +301,15 @@ export default function Layout() {
                 <BrandLogo variant="mark" />
               </span>
             ) : (
-              <div className="min-w-0 flex flex-col gap-0.5">
-                <BrandLogo imgClassName="h-7 max-w-[10.5rem]" />
+              <div className="min-w-0 w-full flex flex-col items-center text-center gap-0.5">
+                <BrandLogo imgClassName="h-7 max-w-[10.5rem] object-center" />
                 {documentsCompanion ? (
                   <>
                     <p className="text-[11px] text-white/70 leading-snug">{companionTagline()}</p>
                     <p className="text-[10px] text-white/45 tabular-nums">{formatAppVersion()}</p>
                   </>
                 ) : (
-                  <p className="text-[10px] text-white/50 pl-0.5">TMS Platform</p>
+                  <p className="text-[10px] text-white/50">TMS Platform</p>
                 )}
               </div>
             )}

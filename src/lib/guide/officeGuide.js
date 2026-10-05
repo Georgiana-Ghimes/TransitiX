@@ -173,10 +173,10 @@ const SABLOANE = {
 const AVERTISMENTE = {
   id: 'avertismente',
   title: 'Avertismentele dinaintea exportului',
-  lead: 'Unele opresc Unește / Email / Zip. Restul sunt avertismente: alegerea de a trimite un raport incomplet rămâne a ta.',
+  lead: 'Unele opresc Unește. Restul sunt avertismente: alegerea de a exporta un raport incomplet rămâne a ta.',
   blocks: [
     terms([
-      { term: 'Verificare obligatorie', text: 'Blochează Unește, Email și Zip. Corectează în Verifică / Confirmă, apoi exportă. Nu există ocolire din anexă.' },
+      { term: 'Verificare obligatorie', text: 'Blochează Unește. Corectează în Verifică / Confirmă, apoi exportă. Nu există ocolire din anexă.' },
       { term: 'Documente neconfirmate', text: 'Rânduri pe care nu le-a verificat nimeni pot ajunge în fișier dacă nu au badge de verificare obligatorie.' },
       { term: 'Câmpuri neverificate', text: 'Valori puse de OCR pe care nu le-a controlat un operator.' },
       { term: 'Fără număr TPO', text: 'Raportul are coloana, documentul nu are numărul.' },

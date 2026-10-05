@@ -43,7 +43,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Unește în Anexa XLSX',
-    text: 'Bifează rândurile fără „Verificare obligatorie”, verifică șablonul din lista de lângă buton, apoi descarcă. Unește / Email / Zip refuză selecția dacă există documente care mai trebuie verificate. Pe durata generării butonul e blocat. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
+    text: 'Bifează rândurile fără „Verificare obligatorie”, verifică șablonul din lista de lângă buton, apoi descarcă. Unește refuză selecția dacă există documente care mai trebuie verificate. Pe durata generării butonul e blocat. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
   },
 ];
 
