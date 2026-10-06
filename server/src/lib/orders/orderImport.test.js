@@ -74,6 +74,11 @@ describe('parseNumber', () => {
     expect(parseNumber('1.50')).toBe(1.5);
   });
 
+  it('keeps cents when several dots remain (OCR thousands comma → dot)', () => {
+    expect(parseNumber('21.326.48')).toBe(21326.48);
+    expect(parseNumber('1.234.567')).toBe(1234567);
+  });
+
   it('strips units and returns null for junk', () => {
     expect(parseNumber('1200 kg')).toBe(1200);
     expect(parseNumber('n/a')).toBeNull();

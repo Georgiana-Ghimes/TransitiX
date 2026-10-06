@@ -43,6 +43,13 @@ describe('normalizePlate', () => {
     expect(normalizePlate('B 112 VFM / B 475AGR')).toBe('B-112-VFM / B-475-AGR');
   });
 
+  it('does not treat product "TM 40 kg" as a trailer plate (#52)', () => {
+    expect(normalizePlate(
+      'IF 14 RAI / IF 14 RAI Tencuiala TM 40 kg (35/pal)',
+    )).toBe('IF-14-RAI');
+    expect(normalizePlate('TM 40 kg')).toBeNull();
+  });
+
   it('does not treat document prose as a plate', () => {
     expect(normalizePlate('DOCUMENT DE TEST BUILDTEST MATERIALE DEMONSTRATIVE PENTRU PLATFORMA DE TEST')).toBeNull();
   });
@@ -262,6 +269,55 @@ Termeni de livrare DAP
 `;
     const parsed = parseBaumitAviz(raw);
     expect(parsed.ruta_transport).toBe('MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal');
+  });
+
+  it('does not turn CONSTRUCT / DISTRIBUTIE into a fake Str. street (#53)', () => {
+    // Photo OCR interleaves Client name with Adresa de livrare. Bare `str` matched inside
+    // those company names → "Str. Uct Srl …" / "Str. Ibutie Srl …".
+    const wa0012 = `
+Expeditor
+Site: BOL Bolintin, Str. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+DEPOZIT TERMOVAL CHIAJNA
+C23906101 TERMOVAL CONSTRUCT SRL
+Strada Garii nr. 12
+Strada Garii nr. 12
+Chiajna RO 077040
+Chiajna RO 077040
+ROU
+ROU
+Client factura C23906100 TERMOVAL GRUP SRL
+Placuta de inmatriculare IF 14 RAI / IF 14 RAI
+Comanda de transport TPO-0032530
+`;
+    const wa0011 = `
+Expeditor
+Site: BOL Bolintin, Str. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+CS-MATCON- OBI DACIA
+C23905512 MATCON DISTRIBUTIE SRL
+Bulevardul Dacia nr. 36
+Strada Fabrica de Glucoza nr. 9
+Bucuresti Sector 2 RO 020051
+Bucuresti Sector 2 RO 020331
+ROU
+ROU
+Client factura C23905512 MATCON DISTRIBUTIE SRL
+Placuta de inmatriculare B 112 VFM / B 475 AGR
+Comanda de transport TPO-0032417
+`;
+    const a = parseBaumitAviz(wa0012);
+    expect(a.ruta_transport).toMatch(/Garii/i);
+    expect(a.ruta_transport).toMatch(/Chiajna/i);
+    expect(a.ruta_transport).not.toMatch(/Uct|Construct/i);
+    expect(a.ruta_transport).not.toMatch(/Str\.\s*Uct/i);
+
+    const b = parseBaumitAviz(wa0011);
+    expect(b.ruta_transport).toMatch(/Dacia/i);
+    expect(b.ruta_transport).toMatch(/Bucuresti/i);
+    expect(b.ruta_transport).not.toMatch(/Ibutie|Distributie/i);
+    expect(b.ruta_transport).not.toMatch(/Str\.\s*Ibutie/i);
+    expect(b.ruta_transport).not.toMatch(/Fabrica|Glucoza/i);
   });
 
   it('rebuilds Adresa de livrare from Baumit two-column tab OCR (not Client)', () => {
@@ -691,8 +747,9 @@ describe('repairAvizFromStored', () => {
   });
 
   it('normalises a handwritten slash form TPO / #####', () => {
-    expect(repairAvizFromStored({ numar_tpo: 'TPO / 31027' }).numar_tpo).toBe('TPO-31027');
-    expect(repairAvizFromStored({ numar_tpo: 'TPO/31027' }).numar_tpo).toBe('TPO-31027');
+    expect(repairAvizFromStored({ numar_tpo: 'TPO / 31027' }).numar_tpo).toBe('TPO-0031027');
+    expect(repairAvizFromStored({ numar_tpo: 'TPO/31027' }).numar_tpo).toBe('TPO-0031027');
+    expect(repairAvizFromStored({ numar_tpo: 'TPO/32755' }).numar_tpo).toBe('TPO-0032755');
   });
 
   it('keeps an office-edited date instead of the PDF date', () => {
@@ -1026,6 +1083,16 @@ describe('review heuristics (#41)', () => {
     });
     expect(ui.ruta_transport).toBe('low');
     expect(ui.cantitate_marfa).toBe('low');
+  });
+
+  it('marks stored confidence below HITL auto (0.90) as low even when status is ok (#56)', () => {
+    const ui = fieldConfidenceForUi({
+      numar_tpo: 'TPO-0010888',
+      field_confidence: {
+        numar_tpo: { status: 'ok', confidence: 0.88 },
+      },
+    });
+    expect(ui.numar_tpo).toBe('low');
   });
 });
 

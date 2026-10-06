@@ -9,6 +9,7 @@ import {
   extractQuantity,
   isAcceptableAutoField,
   isGenericCountUnit,
+  isPlausiblePlateSeries,
   isPlausibleQuantity,
   looksLikeOcrGoodsDump,
   packagingWordIn,
@@ -81,6 +82,7 @@ export function extractPlates(value) {
   let m;
   const re = new RegExp(PLATE_RE.source, 'gi');
   while ((m = re.exec(s)) !== null) {
+    if (!isPlausiblePlateSeries(m[3])) continue;
     const plate = `${m[1]}-${m[2]}-${m[3]}`;
     if (seen.has(plate)) continue;
     seen.add(plate);
@@ -166,12 +168,30 @@ function normalizeDocNo(value) {
  * report that collapses distinct trips onto one identifier and makes the annex's key column
  * useless, and it fires the duplicate-TPO warning on a perfectly clean selection.
  */
+/**
+ * Baumit / RAI TPO identifiers are zero-padded to 7 digits (`TPO-0032755`).
+ * Handwritten `TPO/32755` (4–5 digits) must land the same way, or duplicates miss (#55).
+ * Six-digit values are left short: they usually mean a truncated 7-digit OCR read and stay
+ * in review rather than looking valid after a wrong pad. Compound year forms
+ * (`TPO-2026-0311`) keep their structure.
+ */
+export const TPO_CODE_DIGITS = 7;
+
 export function normalizeTpo(value, minDigits = 1) {
   if (!value) return null;
   const n = Number(minDigits) >= 1 ? Number(minDigits) : 1;
   // `/` is common on handwritten notes ("TPO / 31027") next to a blank printed field.
   const m = String(value).toUpperCase().match(new RegExp(`TPO[\\s\\-./:]*(\\d{${n},}(?:[-/.]\\d+)*)`));
-  return m ? `TPO-${m[1].replace(/[/.]/g, '-')}` : null;
+  if (!m) return null;
+  const body = m[1].replace(/[/.]/g, '-');
+  if (body.includes('-')) return `TPO-${body}`;
+  const digits = body.replace(/\D/g, '');
+  if (digits.length < n) return null;
+  // 4–5 digit shorthand (handwritten) → pad. 6-digit stays short for HITL (likely truncated).
+  const padded = (digits.length >= 4 && digits.length <= 5)
+    ? digits.padStart(TPO_CODE_DIGITS, '0')
+    : digits;
+  return `TPO-${padded}`;
 }
 
 function findTpoNumber(blob) {
@@ -285,7 +305,12 @@ const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|stra
 /** Second street-name token stops here (grammatical), not at town names — towns vary. */
 const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania)$/;
 
-const STREET_TYPE_RE = /(?<type>strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)/;
+/**
+ * Street-type token. Not a bare substring — `str` inside `DISTRIBUTIE` / `CONSTRUCT`
+ * used to become the type and leave `Ibutie Srl` / `Uct Srl` as the street name (#53).
+ * Lookarounds (not `\b`) so `str.` still matches before a space (`.` is non-word).
+ */
+const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)(?![a-z]))/;
 
 /**
  * House number shape: `31B`, `1F`, OCR `IF`/`LF`.
@@ -1092,11 +1117,14 @@ export function fieldConfidenceForUi(row) {
     if (val === 'low' || val === 'ok') {
       fromStored = val;
     } else if (val && typeof val === 'object') {
-      const status = val.status;
-      if (status === 'ok') fromStored = 'ok';
-      else if (status === 'review' || status === 'missing') fromStored = 'low';
-      else if (typeof val.confidence === 'number') {
-        fromStored = val.confidence >= 0.92 ? 'ok' : 'low';
+      // Prefer numeric confidence over status: extractors can mark status "ok" at 0.80 while
+      // HITL auto for TPO/plate/date is 0.90 — a dark-photo misread must stay amber (#56).
+      if (typeof val.confidence === 'number') {
+        fromStored = val.confidence >= 0.90 ? 'ok' : 'low';
+      } else if (val.status === 'ok') {
+        fromStored = 'ok';
+      } else if (val.status === 'review' || val.status === 'missing') {
+        fromStored = 'low';
       }
     }
     if (!fromStored) continue;

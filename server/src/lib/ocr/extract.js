@@ -11,17 +11,76 @@
 import { overallConfidence } from './fields.js';
 import { normalizeOcrText } from './normalizeOcrText.js';
 import { detectProfile, getProfile, normaliseExtracted } from './profiles.js';
+import { criticalOcrKeys, CRITICAL_BANDS } from './avizFieldSchema.js';
+import { matchBlocksForValue } from './matchBlocks.js';
 
 /** At or above this, a field is trusted without review. */
 export const ACCEPT_CONFIDENCE = 0.8;
 /** Below this, the value is too weak to pre-fill at all. */
 export const REJECT_CONFIDENCE = 0.35;
 
+/** Page-mean block confidence at/below this caps critical fields into HITL (#56). */
+export const WEAK_PAGE_BLOCK_CONFIDENCE = 0.8;
+
 export function fieldStatus(confidence) {
   const value = Number(confidence) || 0;
   if (value >= ACCEPT_CONFIDENCE) return 'ok';
   if (value >= REJECT_CONFIDENCE) return 'review';
   return 'missing';
+}
+
+function meanBlockConfidence(blocks) {
+  const scores = (Array.isArray(blocks) ? blocks : [])
+    .map((b) => b?.confidence)
+    .filter((c) => typeof c === 'number' && Number.isFinite(c));
+  if (!scores.length) return null;
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
+/**
+ * Pull provider block confidence onto field scores.
+ *
+ * Regex extractors score layout certainty, not glyph certainty — a dark photo can still
+ * yield `TPO-0010888` at 0.90 structural confidence. When the matching OCR block (or the
+ * whole page) is weak, cap the field so HITL / amber marking fire (#56).
+ */
+export function refineFieldsWithBlocks(fields, blocks) {
+  if (!fields || typeof fields !== 'object') return fields;
+  const list = Array.isArray(blocks) ? blocks : [];
+  if (!list.length) return fields;
+
+  const pageMean = meanBlockConfidence(list);
+  const critical = new Set(criticalOcrKeys());
+  const weakPage = pageMean != null && pageMean <= WEAK_PAGE_BLOCK_CONFIDENCE;
+
+  for (const [name, field] of Object.entries(fields)) {
+    if (!field || field.value == null || field.value === '') continue;
+    const hits = [
+      ...matchBlocksForValue(list, field.value),
+      ...(field.matched ? matchBlocksForValue(list, field.matched) : []),
+    ].sort((a, b) => b.score - a.score || a.index - b.index);
+    const blockConf = hits[0]?.block?.confidence;
+    let next = Number(field.confidence) || 0;
+    let touched = false;
+    if (typeof blockConf === 'number' && Number.isFinite(blockConf)) {
+      next = Math.min(next, blockConf);
+      field.block_confidence = Math.round(blockConf * 1000) / 1000;
+      touched = true;
+    }
+    // Dark / blurry pages: providers still emit high scores on wrong glyphs
+    // (TPO-0010888 vs TPO-0032688). Cap critical fields into HITL regardless (#56).
+    if (weakPage && critical.has(name)) {
+      next = Math.min(next, CRITICAL_BANDS.auto - 0.01);
+      if (field.block_confidence == null) {
+        field.block_confidence = Math.round(pageMean * 1000) / 1000;
+      }
+      touched = true;
+    }
+    if (!touched) continue;
+    field.confidence = Math.round(next * 100) / 100;
+    field.status = fieldStatus(field.confidence);
+  }
+  return fields;
 }
 
 /**
@@ -56,7 +115,7 @@ export function extractWithProfile(text, profile) {
  * @param {string} [options.documentType]  narrows which profiles are considered
  * @param {string} [options.profileId]     forces a profile, overriding detection
  */
-export function extractDocument(text, { documentType, profileId } = {}) {
+export function extractDocument(text, { documentType, profileId, blocks } = {}) {
   const raw = normalizeOcrText(text);
 
   const forced = profileId ? getProfile(profileId) : null;
@@ -85,6 +144,7 @@ export function extractDocument(text, { documentType, profileId } = {}) {
   }
 
   const fields = extractWithProfile(raw, profile);
+  refineFieldsWithBlocks(fields, blocks);
   const confidence = overallConfidence(fields, profile.weights);
 
   // Only values worth showing are pre-filled; anything weaker stays out of the form.
@@ -97,6 +157,14 @@ export function extractDocument(text, { documentType, profileId } = {}) {
     .filter(([, field]) => field.status !== 'ok')
     .map(([name]) => name);
 
+  // Critical fields below the HITL auto floor must surface even when status is still "ok"
+  // (ACCEPT_CONFIDENCE is 0.80; CRITICAL auto is 0.90).
+  const criticalReview = criticalOcrKeys().filter((key) => {
+    const conf = fields[key]?.confidence;
+    return conf != null && conf < CRITICAL_BANDS.auto && fields[key]?.value != null && fields[key].value !== '';
+  });
+  const allReview = [...new Set([...reviewFields, ...criticalReview])];
+
   return {
     profile_id: profile.id,
     profile_name: profile.name,
@@ -106,9 +174,9 @@ export function extractDocument(text, { documentType, profileId } = {}) {
     fields,
     values,
     confidence,
-    status: confidence >= ACCEPT_CONFIDENCE ? 'ok' : 'review',
-    needs_review: confidence < ACCEPT_CONFIDENCE || reviewFields.length > 0,
-    review_fields: reviewFields,
+    status: confidence >= ACCEPT_CONFIDENCE && !criticalReview.length ? 'ok' : 'review',
+    needs_review: confidence < ACCEPT_CONFIDENCE || allReview.length > 0,
+    review_fields: allReview,
     candidates: detection.candidates.map((c) => ({ id: c.profile.id, name: c.profile.name, score: c.score })),
   };
 }
@@ -172,8 +240,10 @@ export function applyCorrections(extraction, corrections = {}, { previouslyCorre
  * Re-extraction that keeps human corrections.
  * This is what "Re-extrage" must do, otherwise it silently discards an operator's work.
  */
-export function reExtract(text, { documentType, profileId, corrections = {}, correctedFields = [] } = {}) {
-  const fresh = extractDocument(text, { documentType, profileId });
+export function reExtract(text, {
+  documentType, profileId, corrections = {}, correctedFields = [], blocks,
+} = {}) {
+  const fresh = extractDocument(text, { documentType, profileId, blocks });
   const keep = {};
   for (const name of correctedFields) {
     const canonical = canonicalFieldName(name);

@@ -279,6 +279,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       const extraction = extractDocument(text.text, {
         documentType: doc.document_type,
         profileId,
+        blocks: text.blocks,
       });
 
       const corrected = doc.corrected_fields ?? [];
@@ -288,6 +289,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           profileId,
           corrections: doc.extracted_data?.values ?? {},
           correctedFields: corrected,
+          blocks: text.blocks,
         })
         : extraction;
 

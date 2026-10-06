@@ -19,6 +19,7 @@ import {
   applyCorrections,
   extractDocument,
   fieldStatus,
+  refineFieldsWithBlocks,
   reExtract,
   summariseExtraction,
 } from './extract.js';
@@ -92,6 +93,21 @@ describe('parseNumber', () => {
     expect(parseNumber('1.5')).toBe(1.5);
   });
 
+  it('keeps cents when OCR turns the thousands comma into a second dot (#51)', () => {
+    // Printed `21,326.48` / `20,950.00` / `5,280.88` / `1,528.06` often come back as
+    // all-dots. Stripping every dot produced ×100 (2132648, 2095000, …).
+    expect(parseNumber('21.326.48')).toBe(21326.48);
+    expect(parseNumber('20.950.00')).toBe(20950);
+    expect(parseNumber('5.280.88')).toBe(5280.88);
+    expect(parseNumber('1.528.06')).toBe(1528.06);
+    expect(parseNumber('21,326.48')).toBe(21326.48);
+    expect(parseNumber('20,950.00')).toBe(20950);
+  });
+
+  it('still reads multi-dot thousands without a decimal group', () => {
+    expect(parseNumber('1.234.567')).toBe(1234567);
+  });
+
   it('returns null for junk', () => {
     expect(parseNumber('abc')).toBeNull();
     expect(parseNumber(null)).toBeNull();
@@ -111,6 +127,19 @@ describe('canonicalPlate', () => {
   it('keeps a tractor and its trailer, in order, without repeating one', () => {
     expect(canonicalPlate('B 112 VFM / B 475AGR')).toBe('B-112-VFM / B-475-AGR');
     expect(canonicalPlate('B 112 VFM / B 112 VFM')).toBe('B-112-VFM');
+  });
+
+  it('does not treat product "TM 40 kg" as a second plate (#52)', () => {
+    // TM is a real county (Timiș). Deduped identical plates + goods line → TM-40-KG.
+    expect(canonicalPlate(
+      'Placuta de inmatriculare IF 14 RAI / IF 14 RAI\n11000151 Tencuiala TM 40 kg (35/pal)',
+    )).toBe('IF-14-RAI');
+    expect(canonicalPlate(
+      'B 34 BAU / B 34 BAU\nTencuiala TM 40 kg (35/pal) 280.00 sac',
+    )).toBe('B-34-BAU');
+    expect(canonicalPlate(
+      'B 207 TRK / B 207 TRK\nTencuiala TM 40 kg (35/pal)',
+    )).toBe('B-207-TRK');
   });
 
   it('returns a string it does not recognise unchanged, never empty', () => {
@@ -141,6 +170,13 @@ describe('extractPlate', () => {
   it('rejects a plate-shaped string without a real county', () => {
     expect(extractPlate('QQ 12 XYZ').value).toBeNull();
     expect(extractPlate('CJ 12 XYZ').value).toBe('CJ-12-XYZ');
+  });
+
+  it('rejects TM-40-KG from the goods table (#52)', () => {
+    expect(extractPlate('Tencuiala TM 40 kg (35/pal)').value).toBeNull();
+    expect(extractPlate(
+      'Placuta IF 14 RAI / IF 14 RAI\nTencuiala TM 40 kg',
+    ).value).toBe('IF-14-RAI');
   });
 
   it('does not keep bookmark/UI noise glued to a partial plate', () => {
@@ -194,6 +230,19 @@ Greutate brută (kg) 9.487,80
   it('reads US-style thousands with parentheses unit', () => {
     expect(extractGrossWeight('Greutate brută (kg) 9,487.80').value).toBe(9487.8);
     expect(extractNetWeight('Greutate netă (kg) 9,450.00').value).toBe(9450);
+  });
+
+  it('reads Montaro photo OCR when the thousands comma becomes a second dot (#51)', () => {
+    // WA0014 / WA0018 / WA0019: printed `21,326.48` often OCR'd as `21.326.48`.
+    const wa0014 = 'Greutate neta, kg: 20.950.00\nGreutate bruta, kg: 21.326.48';
+    const wa0018 = 'Greutate neta, kg 5.280.88\nGreutate bruta, kg 5.560.68';
+    const wa0019 = 'Greutate neta, kg: 1.440.15\nGreutate bruta, kg: 1.528.06';
+    expect(extractGrossWeight(wa0014).value).toBe(21326.48);
+    expect(extractNetWeight(wa0014).value).toBe(20950);
+    expect(extractGrossWeight(wa0018).value).toBe(5560.68);
+    expect(extractNetWeight(wa0018).value).toBe(5280.88);
+    expect(extractGrossWeight(wa0019).value).toBe(1528.06);
+    expect(extractNetWeight(wa0019).value).toBe(1440.15);
   });
 
   it('reads it across the line breaks a PDF puts between tokens', () => {
@@ -334,7 +383,7 @@ describe('quantity stays separate from weight', () => {
 
   it('keeps a single product line and ignores euro-pallet pce', () => {
     const text = 'Cantitate 72.00 buc SuperPrimer\n3.00 pce Palet Euro returnabil';
-    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'galeti' });
   });
 
   it('does not put Greutate brută into Cantitate when columns scramble', () => {
@@ -347,7 +396,7 @@ Cantitate: 1.550,998 kg
 Greutate neta, kg: 1,440.03
 Greutate bruta, kg: 1,551.00
 `;
-    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'galeti' });
   });
 
   it('refuses a lone Cantitate-in-kg that is the weighbridge figure', () => {
@@ -368,6 +417,7 @@ Greutate bruta, kg: 1,551.00
 `;
     const doc = extractDocument(text, { documentType: 'aviz' });
     expect(doc.values.quantity).toBe(72);
+    expect(doc.values.tip_marfa).toBe('galeti');
     // Tip marfă must not become „paleti” from the euro-pallet article code.
     expect(doc.values.tip_marfa).not.toBe('paleti');
   });
@@ -392,7 +442,7 @@ Greutate bruta, kg: 1,551.00
 11000001 Palet Euro returnabil 3.00 pce
 Greutate bruta, kg: 1,551.00
 `;
-    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'bucati' });
+    expect(extractQuantity(text).value).toEqual({ quantity: 72, unit: 'galeti' });
   });
 
   it('reads a pallet count', () => {
@@ -560,6 +610,31 @@ TW
    * Printed Baumit TRO with blank "Num de comanda de transport"; the driver wrote
    * `TPO / 31027` in red. Hybrid print + handwriting must not leave numar_tpo empty.
    */
+  it('does not take house number 220 as document number when TRO is on the page (#54)', () => {
+    // Rezumat: "Bvd. Iuliu Maniu, nr. 220" sat next to aviz/nr. patterns; generic profile
+    // used to capture "220" before TRO-0010203.
+    const rezumat = `
+Aviz de expeditie rezumat: TPO-0032741
+Expeditor Site: MIL Depozit: MMARFA
+Adresa de livrare
+MIL DEPOZIT Militari
+Bvd. Iuliu Maniu, nr. 220 Bucuresti Sector 6 RO 061101 ROU
+Transportator RAI-SPEDITION SRL
+Placuta de inmatriculare PH 09 ZTM / PH 22 ZTM
+Aviz de expeditie TRO-0010203
+Comanda de transfer TRO-0010203
+Greutate neta, kg 5.280,88
+Greutate bruta, kg 5.560,68
+`;
+    const asTro = extractDocument(rezumat, { documentType: 'aviz' });
+    expect(asTro.values.numar_document_marfa).toBe('TRO-0010203');
+    expect(asTro.values.numar_document_marfa).not.toBe('220');
+
+    const asGeneric = extractDocument(rezumat, { profileId: 'aviz_generic' });
+    expect(asGeneric.values.numar_document_marfa).toBe('TRO-0010203');
+    expect(asGeneric.values.numar_document_marfa).not.toBe('220');
+  });
+
   it('reads a handwritten TPO / ##### next to the transport-order label on a printed TRO', () => {
     const hybrid = `
 BAUMIT ROMANIA COM SRL
@@ -574,10 +649,10 @@ Greutate bruta: 1.551,00 kg
 `;
     const result = extractDocument(hybrid, { documentType: 'aviz' });
     expect(result.profile_id).toBe('aviz_baumit_tro');
-    expect(result.values.numar_tpo).toBe('TPO-31027');
+    expect(result.values.numar_tpo).toBe('TPO-0031027');
     expect(result.values.numar_document_marfa).toMatch(/TRO/i);
-    // Five digits ≠ padded 7 — prefill, but review (same rule as truncated codes).
-    expect(result.fields.numar_tpo.status).not.toBe('ok');
+    // Padded to 7 digits — same form as printed TPO-0032xxx on the annex (#55).
+    expect(result.fields.numar_tpo.status).toBe('ok');
   });
 
   it('reads handwritten TPO on the line below the blank transport-order label', () => {
@@ -588,7 +663,61 @@ TPO / 31027
 Auto: B 112 VFM
 `;
     const result = extractDocument(hybrid, { documentType: 'aviz' });
-    expect(result.values.numar_tpo).toBe('TPO-31027');
+    expect(result.values.numar_tpo).toBe('TPO-0031027');
+  });
+
+  it('zero-pads handwritten TPO/32755 to seven digits (#55)', () => {
+    const hybrid = `
+Aviz de expeditie: TRO-0010215
+Num de comanda de transport: TPO/32755
+Greutate neta, kg: 1,440.15
+Greutate bruta, kg: 1,528.06
+`;
+    const result = extractDocument(hybrid, { documentType: 'aviz' });
+    expect(result.values.numar_tpo).toBe('TPO-0032755');
+    expect(result.fields.numar_tpo.status).toBe('ok');
+  });
+
+  /**
+   * Dark photo: structural regex still yields a 7-digit TPO at high confidence, but the OCR
+   * block that carries the digits is weak. Without blending, HITL auto (0.90) never fires (#56).
+   */
+  it('caps TPO confidence when the matching OCR block is weak (#56)', () => {
+    const text = `
+BAUMIT ROMANIA SRL
+AVIZ DE INSOTIRE A MARFII
+Nr. document PSL 4417/2026
+TPO 2026-1088
+Data: 12.03.2026
+Auto: B 112 VFM
+`;
+    const blocks = [
+      { page: 1, type: 'line', text: 'TPO 2026-1088', confidence: 0.62 },
+      { page: 1, type: 'line', text: 'Auto: B 112 VFM', confidence: 0.91 },
+    ];
+    const result = extractDocument(text, { documentType: 'aviz', blocks });
+    expect(result.values.numar_tpo).toBe('TPO-2026-1088');
+    expect(result.fields.numar_tpo.confidence).toBeLessThan(0.9);
+    expect(result.fields.numar_tpo.block_confidence).toBe(0.62);
+    expect(result.needs_review).toBe(true);
+    expect(result.review_fields).toContain('numar_tpo');
+  });
+
+  it('caps critical fields from a weak page mean when no block matches the value (#56)', () => {
+    const fields = {
+      numar_tpo: { value: 'TPO-0010888', confidence: 0.95, matched: 'TPO 0010888', status: 'ok' },
+      numar_auto: { value: 'B-112-VFM', confidence: 0.92, matched: 'B 112 VFM', status: 'ok' },
+    };
+    // Blocks do not contain the TPO digits (OCR misread), but page mean is weak.
+    const blocks = [
+      { text: 'Aviz de expeditie', confidence: 0.55 },
+      { text: 'Greutate bruta', confidence: 0.7 },
+    ];
+    refineFieldsWithBlocks(fields, blocks);
+    // Cap is CRITICAL auto − 0.01 (0.89), not the page-mean threshold itself.
+    expect(fields.numar_tpo.confidence).toBe(0.89);
+    expect(fields.numar_tpo.status).toBe('ok'); // ACCEPT is 0.80; HITL still needs review via criticalReview
+    expect(fields.numar_auto.confidence).toBe(0.89);
   });
 
   /**
@@ -844,6 +973,36 @@ describe('tip marfa: the word that names something', () => {
     expect(bare.confidence).toBeLessThan(ACCEPT_CONFIDENCE);
   });
 
+  it('treats TRO table `buc` as găleți when Numărul de găleți is missing (#57)', () => {
+    const unibaza = `
+Aviz de expeditie: TRO-0010215
+Adresa de livrare
+Str. Industriei, nr. 7 Bolintin-Deal
+Num de comanda de transport: TPO/32755
+1 11000447 UniBaza Grund 20 kg (24/pal) 72.00 buc
+2 11000001 Palet Euro returnabil 3.00 pce
+Greutate neta, kg: 1,440.15
+Greutate bruta, kg: 1,528.06
+`;
+    const a = extractDocument(unibaza, { documentType: 'aviz' });
+    expect(a.values.quantity).toBe(72);
+    expect(a.values.tip_marfa).toBe('galeti');
+    expect(a.values.quantity_unit).toBe('galeti');
+
+    const mixed = `
+Aviz de expeditie: TRO-0010238
+1 11001371 SilikoTop 1.5 K 25 kg (24/pal) 48.00 buc
+2 11000455 Glet FinoLux Superior20KG (24/pal) 24.00 buc
+3 11000001 Palet Euro returnabil 3.00 pce
+Greutate neta, kg: 1,680.15
+Greutate bruta, kg: 1,770.31
+`;
+    const b = extractDocument(mixed, { documentType: 'aviz' });
+    expect(b.values.quantity).toBe(72);
+    expect(b.values.tip_marfa).toBe('galeti');
+    expect(b.values.quantity_unit).toBe('galeti');
+  });
+
   it('never reads a weight as a kind of goods', () => {
     expect(extractGoodsUnit('Greutate bruta, kg 15,744.00').value).toBeNull();
     expect(extractGoodsUnit('9,5 t').value).toBeNull();
@@ -968,7 +1127,7 @@ describe('carnet de bord profile', () => {
     expect(detectProfile(sheet).profile?.id).toBe('carnet_bord');
     const { values, profile_id } = extractDocument(sheet);
     expect(profile_id).toBe('carnet_bord');
-    expect(values.numar_tpo).toBe('TPO-00230');
+    expect(values.numar_tpo).toBe('TPO-0000230');
     expect(values.data_efectuare_cursa).toBe('2026-10-01');
     expect(values.numar_auto).toBe('B-100-PLM');
     expect(values.ruta_transport).toMatch(/Dacia/i);

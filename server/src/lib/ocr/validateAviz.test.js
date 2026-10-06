@@ -53,6 +53,24 @@ describe('validateAvizFields', () => {
     }, {}, { today: '2026-10-01' });
     expect(findings.some((f) => f.rule === 'quantity_invalid')).toBe(true);
   });
+
+  it('flags a bare house number posing as document id (#54)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0032741',
+      data_efectuare_cursa: '2026-10-02',
+      numar_document_marfa: '220',
+    }, {}, { today: '2026-10-06' });
+    expect(findings.some((f) => f.rule === 'doc_no_invalid')).toBe(true);
+  });
+
+  it('accepts TRO/PSL document numbers without doc_no_invalid', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0032741',
+      data_efectuare_cursa: '2026-10-02',
+      numar_document_marfa: 'TRO-0010203',
+    }, {}, { today: '2026-10-06' });
+    expect(findings.some((f) => f.rule === 'doc_no_invalid')).toBe(false);
+  });
 });
 
 describe('computeRouting', () => {

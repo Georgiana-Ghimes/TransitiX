@@ -22,7 +22,7 @@ import {
   packagingWordIn,
   parseNumber,
 } from './fields.js';
-import { parseBaumitAviz } from '../avizOcr.js';
+import { parseBaumitAviz, normalizeTpo, TPO_CODE_DIGITS } from '../avizOcr.js';
 import { countFilledSheetSlots, withNumberedFallback } from './numberedSheet.js';
 
 /** How strongly a text looks like this layout, 0..1. */
@@ -49,13 +49,11 @@ const PSL_CODE = new RegExp(`(PSL${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
 const TRO_CODE = new RegExp(`(TRO${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
 
 /**
- * TPO / PSL / TRO codes are zero-padded to this many digits.
- *
- * A photo where a hand or a fold covers the last digit still reads as a valid-looking code, and
- * a short code copied onto an invoice is worse than a blank field. Length that does not match
- * pulls the value below the accept threshold so it lands in front of an operator.
+ * TPO / PSL / TRO codes are zero-padded to this many digits (`TPO-0032755`).
+ * Handwritten short forms (`TPO/32755`) are padded in `normalizeTpo`; a length that
+ * still does not match (truncated OCR, compound year ids) keeps the confidence penalty.
  */
-const CODE_DIGITS = 7;
+const CODE_DIGITS = TPO_CODE_DIGITS;
 
 function codeLengthPenalty(value) {
   const digits = String(value || '').match(/\d+/g)?.join('') ?? '';
@@ -63,12 +61,9 @@ function codeLengthPenalty(value) {
   return digits.length === CODE_DIGITS ? 0 : 0.35;
 }
 
-/** Collapse `TPO / 31027` / `TPO-0025629` into the stored prefix form. */
+/** Collapse `TPO / 31027` / `TPO-0025629` into the stored 7-digit form. */
 function canonicalTpoRaw(raw) {
-  const upper = String(raw || '').toUpperCase();
-  const m = upper.match(new RegExp(`(?:TPO|TP0|TPQ)${CODE_SEP}(\\d{3,}[\\d./-]*)`, 'i'));
-  if (m) return `TPO-${m[1].replace(/[/.]/g, '-')}`;
-  return upper.replace(/[\s_]+/g, '');
+  return normalizeTpo(raw, 3) || String(raw || '').toUpperCase().replace(/[\s_]+/g, '');
 }
 
 const tpoField = (patterns) => (text) => {
@@ -95,7 +90,7 @@ const hybridAvizTpoField = (text) => {
     new RegExp(`\\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)${CODE_SEP}(\\d{3,})`, 'i'),
   );
   if (mangled) {
-    const value = `TPO-${mangled[1]}`;
+    const value = normalizeTpo(`TPO-${mangled[1]}`, 3) || `TPO-${mangled[1]}`;
     const penalty = codeLengthPenalty(value);
     return { value, confidence: Math.max(0, 0.82 - penalty), matched: mangled[0] };
   }
@@ -107,7 +102,7 @@ const hybridAvizTpoField = (text) => {
   if (sameLine) {
     const digits = sameLine[1].match(/\d{3,}/)?.[0];
     if (digits) {
-      const value = `TPO-${digits}`;
+      const value = normalizeTpo(`TPO-${digits}`, 3) || `TPO-${digits}`;
       const penalty = codeLengthPenalty(value);
       return { value, confidence: Math.max(0, 0.72 - penalty), matched: sameLine[0] };
     }
@@ -120,7 +115,7 @@ const hybridAvizTpoField = (text) => {
   if (nearby) {
     const digits = nearby[1].match(/\d{3,}/)?.[0];
     if (digits) {
-      const value = `TPO-${digits}`;
+      const value = normalizeTpo(`TPO-${digits}`, 3) || `TPO-${digits}`;
       const penalty = codeLengthPenalty(value);
       return { value, confidence: Math.max(0, 0.75 - penalty), matched: nearby[0] };
     }
@@ -129,8 +124,23 @@ const hybridAvizTpoField = (text) => {
   return NO_MATCH;
 };
 
+/** Collapse `TRO / 0010203` / spaces into the stored prefix form; reject bare house numbers. */
+function canonicalDocNo(raw) {
+  const upper = String(raw || '').toUpperCase().trim();
+  const prefixed = upper.match(/\b((?:PSL|TRO|TEST-AVZ)[\s\-._/:]*\d[\d./-]*)\b/i);
+  if (prefixed) {
+    const kind = prefixed[1].match(/^(PSL|TRO|TEST-AVZ)/i)?.[1].toUpperCase() || 'PSL';
+    const digits = prefixed[1].replace(/^[A-Z-]+/i, '').replace(/[^\d]/g, '');
+    return digits ? `${kind}-${digits}` : null;
+  }
+  // `nr. 220` from "Bvd. Iuliu Maniu, nr. 220" is a house number, not an aviz (#54).
+  const compact = upper.replace(/[\s_]+/g, '');
+  if (/^\d{1,4}([./-]\d+)*$/i.test(compact)) return null;
+  return compact || null;
+}
+
 const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
-  transform: (raw) => String(raw).toUpperCase().replace(/[\s_]+/g, ''),
+  transform: canonicalDocNo,
 });
 
 const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf/i;
@@ -246,13 +256,13 @@ function carnetNumber(raw) {
   return Number.isFinite(value) ? value : null;
 }
 
-/** `TPO` in ballpoint reads back as `TP0`, `TPQ`, `IPO`. Fix the prefix, keep the digits. */
+/** `TPO` in ballpoint reads back as `TP0`, `TPQ`, `IPO`. Fix the prefix, pad digits. */
 const carnetTpoField = (text) => {
   const found = String(text || '').match(
     new RegExp(`\\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)${CODE_SEP}(\\d{3,})`, 'i'),
   );
   if (!found) return NO_MATCH;
-  const value = `TPO-${found[1]}`;
+  const value = normalizeTpo(`TPO-${found[1]}`, 3) || `TPO-${found[1]}`;
   const penalty = codeLengthPenalty(value);
   return { value, confidence: Math.max(0, 0.88 - penalty), matched: found[0] };
 };
@@ -400,7 +410,7 @@ const tpoFromBareLine = (line) => {
   if (labelled?.value) return { ...labelled, confidence: Math.min(0.94, (labelled.confidence || 0.88) + 0.04) };
   const digits = String(line || '').match(/(\d{4,})/);
   if (!digits) return null;
-  const value = `TPO-${digits[1]}`;
+  const value = normalizeTpo(`TPO-${digits[1]}`, 3) || `TPO-${digits[1]}`;
   const penalty = codeLengthPenalty(value);
   return { value, confidence: Math.max(0, 0.8 - penalty), matched: digits[0] };
 };
@@ -528,8 +538,10 @@ export const OCR_PROFILES = [
       data_efectuare_cursa: extractDate,
       numar_auto: extractPlate,
       numar_document_marfa: docNoField([
-        /\b(?:aviz|nr\.?)\s*([A-Z]{0,4}[\s\-._]*\d[\d./-]*)\b/i,
+        TRO_CODE,
         PSL_CODE,
+        // Labelled only when a logistics prefix is already there — bare "nr. 220" is a house (#54).
+        /\b(?:aviz|nr\.?)\s*((?:PSL|TRO|TEST-AVZ)[\s\-._/:]*\d[\d./-]*)\b/i,
       ]),
       ruta_transport: routeField,
       tip_marfa: goodsField,

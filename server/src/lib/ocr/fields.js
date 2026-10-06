@@ -35,8 +35,24 @@ export function matchPatterns(text, patterns, { transform, baseConfidence = 0.9 
 export const RO_PLATE_COUNTIES =
   'B|AB|AR|AG|BC|BH|BN|BT|BV|BR|BZ|CS|CL|CJ|CT|CV|DB|DJ|GL|GR|GJ|HR|HD|IL|IS|IF|MM|MH|MS|NT|OT|PH|SM|SJ|SB|SV|TR|TM|TL|VL|VS|VN';
 
+/**
+ * Product units that look like a plate letter-series (county + digits + letters).
+ * `TM 40 kg` on a goods line is Timiș + 40 + KG — a real county code, a false plate (#52).
+ */
+const PLATE_SERIES_BLOCKLIST = new Set([
+  'KG', 'KGS', 'TO', 'TON', 'T',
+  'SAC', 'PCE', 'PCS', 'BUC', 'PAL', 'GAL',
+]);
+
+/** Letter series of a RO plate token — not a weighbridge / packaging unit. */
+export function isPlausiblePlateSeries(letters) {
+  const s = String(letters || '').toUpperCase();
+  if (!/^[A-Z]{2,3}$/.test(s)) return false;
+  return !PLATE_SERIES_BLOCKLIST.has(s);
+}
+
 const RO_PLATE_TOKEN = new RegExp(
-  `^(?:${RO_PLATE_COUNTIES})[\\s-]?\\d{2,3}[\\s-]?[A-Z]{2,3}$`,
+  `^(${RO_PLATE_COUNTIES})[\\s-]?(\\d{2,3})[\\s-]?([A-Z]{2,3})$`,
   'i'
 );
 const SYNTHETIC_PLATE_TOKEN = /^(?:TEST-?\d{1,6}|B\s+TEST\s+\d{1,4})$/i;
@@ -52,7 +68,11 @@ export function isAcceptableAutoField(value) {
     .filter(Boolean);
   if (!parts.length) return false;
   if (parts.some((p) => p.length > 24)) return false;
-  return parts.every((p) => RO_PLATE_TOKEN.test(p) || SYNTHETIC_PLATE_TOKEN.test(p));
+  return parts.every((p) => {
+    if (SYNTHETIC_PLATE_TOKEN.test(p)) return true;
+    const m = p.match(RO_PLATE_TOKEN);
+    return Boolean(m && isPlausiblePlateSeries(m[3]));
+  });
 }
 
 /** Romanian plates: B 123 ABC, B123ABC, CJ 12 XYZ, county required, no loose shape matches. */
@@ -77,6 +97,10 @@ export function canonicalPlate(value) {
   const seen = new Set();
   let m = re.exec(text);
   while (m) {
+    if (!isPlausiblePlateSeries(m[3])) {
+      m = re.exec(text);
+      continue;
+    }
     const plate = `${m[1].toUpperCase()}-${m[2]}-${m[3].toUpperCase()}`;
     if (!seen.has(plate)) {
       seen.add(plate);
@@ -138,7 +162,14 @@ export function extractDate(text) {
   return NO_MATCH;
 }
 
-/** Romanian decimals use a comma; thousands separators are dots or spaces. */
+/**
+ * Romanian decimals use a comma; thousands separators are dots or spaces.
+ *
+ * OCR often turns the thousands comma into another dot (`21,326.48` → `21.326.48`).
+ * The old rule treated any `.NNN` as thousands and stripped *all* dots, so `21.326.48`
+ * became `2132648` (×100). When several dots remain, the last 1–2 digit group is the
+ * decimal; earlier dots are thousands. A lone `.NNN` at the end stays thousands (`9.000`).
+ */
 export function parseNumber(raw) {
   if (raw == null) return null;
   let text = String(raw).trim().replace(/\s/g, '');
@@ -151,10 +182,21 @@ export function parseNumber(raw) {
       ? text.replace(/\./g, '').replace(',', '.')
       : text.replace(/,/g, '');
   } else if (hasComma) {
+    // A single comma is the decimal. Multi-comma handwriting (`15,744,00`) stays null
+    // here on purpose — carnetNumber in profiles.js owns that layout.
     text = text.replace(',', '.');
-  } else if (hasDot && /\.\d{3}\b/.test(text)) {
-    // A dot followed by exactly three digits is a thousands separator, not a decimal.
-    text = text.replace(/\./g, '');
+  } else if (hasDot) {
+    const parts = text.split('.');
+    if (parts.length > 2) {
+      const fraction = parts[parts.length - 1];
+      // `21.326.48` / `20.950.00` — last group is cents; `1.234.567` — all thousands.
+      text = fraction.length >= 1 && fraction.length <= 2
+        ? `${parts.slice(0, -1).join('')}.${fraction}`
+        : parts.join('');
+    } else if (/\.\d{3}$/.test(text)) {
+      // A single trailing `.NNN` is thousands, not a three-decimal weight.
+      text = text.replace('.', '');
+    }
   }
   const num = Number(text);
   return Number.isFinite(num) ? num : null;
@@ -395,6 +437,34 @@ function packagingFooterUnit(folded) {
 }
 
 /**
+ * Printed Baumit/Montaro tables count buckets as `buc` and bags as `sac`.
+ * The TRO expedition summary often omits `Numărul de găleți`; without this, Tip marfă
+ * stays empty and the list writes "72 bucati" (#57). A lone `Cantitate N buc` with no
+ * table still stays `bucati` for review.
+ */
+function bucLinesMeanGaleti(folded) {
+  if (packagingFooterUnit(folded)) return false;
+  if (new RegExp(`\\d[\\d.,]*\\s*sac(?:i)?\\b`, 'i').test(folded)) return false;
+  if (!new RegExp(`\\d[\\d.,]*\\s*buc(?:ati)?\\b`, 'i').test(folded)) return false;
+  if (/\(\s*24\s*\/\s*pal/i.test(folded)) return true;
+  if (/palet\s+euro|\d[\d.,]*\s*pce\b/i.test(folded)) return true;
+  if (/\b(?:unibaza|silikotop|finolux|superprimer|betonk[o0]ntakt|grund|primer|glet)\b/i.test(folded)) {
+    return true;
+  }
+  return /\b(?:tro|psl)[\s\-._/]*\d/i.test(folded) && /\b11\d{5,7}\b/.test(folded);
+}
+
+function inferBucAsGaleti(folded, found) {
+  if (!found?.value || typeof found.value !== 'object') return found;
+  if (found.value.unit !== 'bucati' || !bucLinesMeanGaleti(folded)) return found;
+  return result(
+    { quantity: found.value.quantity, unit: 'galeti' },
+    Math.max(found.confidence, 0.8),
+    found.matched,
+  );
+}
+
+/**
  * Packaging total from the Baumit footer. Photo OCR often splits the label and the number
  * across lines or inserts junk between them — same-line-only matching then falls through to
  * the first product line (48 instead of 576).
@@ -455,6 +525,9 @@ export function extractGoodsUnit(text) {
     match = re.exec(folded);
   }
   if (!best) return NO_MATCH;
+  if (best.unit === 'bucati' && bucLinesMeanGaleti(folded)) {
+    return result('galeti', 0.8, best.matched);
+  }
   // A bare count is the weakest thing a document can say, so it is offered for review rather
   // than written unattended.
   return result(best.unit, best.rank > 1 ? 0.8 : 0.4, best.matched);
@@ -564,7 +637,10 @@ function collapseDoubledPackagingLines(lines, folded) {
 export function extractQuantity(text) {
   const blob = String(text || '');
   const folded = foldUnit(blob);
+  return inferBucAsGaleti(folded, extractQuantityCore(blob, folded));
+}
 
+function extractQuantityCore(blob, folded) {
   const footer = packagingFooterTotal(folded);
   if (
     footer

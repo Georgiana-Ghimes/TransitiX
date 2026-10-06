@@ -167,10 +167,16 @@ export function parseNumber(value) {
   } else if (lastComma >= 0) {
     text = text.replace(/,/g, '.');
   } else if (lastDot >= 0) {
-    const decimals = text.length - lastDot - 1;
-    const onlyOneDot = text.indexOf('.') === lastDot;
-    if (onlyOneDot && decimals === 3) text = text.replace('.', '');
-    else if (!onlyOneDot) text = text.split('.').join('');
+    const parts = text.split('.');
+    if (parts.length > 2) {
+      // OCR / mixed sheets: `21.326.48` keeps cents; `1.234.567` is thousands-only.
+      const fraction = parts[parts.length - 1];
+      text = fraction.length >= 1 && fraction.length <= 2
+        ? `${parts.slice(0, -1).join('')}.${fraction}`
+        : parts.join('');
+    } else if (text.length - lastDot - 1 === 3) {
+      text = text.replace('.', '');
+    }
   }
 
   const parsed = Number(text);

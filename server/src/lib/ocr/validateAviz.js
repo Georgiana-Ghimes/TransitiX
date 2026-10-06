@@ -161,6 +161,19 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
     }));
   }
 
+  const docRaw = String(values.numar_document_marfa || '').trim();
+  if (docRaw && !/^(?:PSL|TRO|TEST-AVZ)[-.\s]?\d/i.test(docRaw)) {
+    // House numbers ("220") that slipped past OCR must not look confirmed (#54).
+    findings.push(finding({
+      rule: 'doc_no_invalid',
+      field: 'numar_document_marfa',
+      severity: 'warning',
+      title: 'Nr. document fără format PSL/TRO',
+      message: `„${docRaw.slice(0, 40)}” nu arată ca un număr de aviz (PSL-/TRO-).`,
+      source: 'rule_failed',
+    }));
+  }
+
   const qty = values.cantitate_marfa;
   if (qty != null && String(qty).trim() !== '') {
     const n = Number(String(qty).replace(',', '.'));
