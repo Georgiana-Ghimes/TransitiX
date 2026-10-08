@@ -17,13 +17,20 @@ import {
   extractPalletCount,
   extractPlate,
   extractQuantity,
+  isPlausibleLoadWeightKg,
   isPlausibleQuantity,
   matchPatterns,
   packagingWordIn,
   parseNumber,
+  resolveAvizDateParts,
 } from './fields.js';
-import { parseBaumitAviz, normalizeTpo, TPO_CODE_DIGITS } from '../avizOcr.js';
-import { countFilledSheetSlots, withNumberedFallback } from './numberedSheet.js';
+import { parseBaumitAviz, normalizeTpo, TPO_CODE_DIGITS, clipRouteGoodsTable } from '../avizOcr.js';
+import {
+  countFilledSheetSlots,
+  numberedLineValue,
+  withCarnetNumberedField,
+  withNumberedFallback,
+} from './numberedSheet.js';
 
 /** How strongly a text looks like this layout, 0..1. */
 function scoreMarkers(text, markers) {
@@ -63,7 +70,8 @@ function codeLengthPenalty(value) {
 
 /** Collapse `TPO / 31027` / `TPO-0025629` into the stored 7-digit form. */
 function canonicalTpoRaw(raw) {
-  return normalizeTpo(raw, 3) || String(raw || '').toUpperCase().replace(/[\s_]+/g, '');
+  // Never keep bare "0000/2000" (Nr. Reg. Com. footer) — only a real TPO (#58).
+  return normalizeTpo(raw, 3) || null;
 }
 
 const tpoField = (patterns) => (text) => {
@@ -79,11 +87,12 @@ const tpoField = (patterns) => (text) => {
  * Printed aviz + handwritten TPO (hybrid).
  *
  * Baumit leaves "Num de comanda de transport" blank; the driver writes `TPO / 31027`
- * in red. The printed TRO/PSL stays the document number — only the note by that label
- * (or a slash-separated TPO anywhere) is the order number.
+ * in red. The printed TRO/PSL stays the document number — only a real TPO (prefix +
+ * digits) by that label is the order number. A bare `0000/2000` from the commercial
+ * register footer must never fill Număr TPO (#58).
  */
 const hybridAvizTpoField = (text) => {
-  const printed = tpoField([TPO_CODE, /\b(\d{4,}\/\d{2,4})\b/])(text);
+  const printed = tpoField([TPO_CODE])(text);
   if (printed.value) return printed;
 
   const mangled = String(text || '').match(
@@ -139,11 +148,35 @@ function canonicalDocNo(raw) {
   return compact || null;
 }
 
-const docNoField = (patterns) => (text) => matchPatterns(text, patterns, {
-  transform: canonicalDocNo,
-});
+/**
+ * Bright / low-contrast photos often turn TRO into TPO (or IRO / TR0) on the
+ * „Aviz de expediție” / „Comanda de transfer” row while the real order TPO stays
+ * in the rezumat title (#75). A code next to those labels whose digits differ from
+ * the page TPO is the document number — store it as TRO- (Baumit transfer aviz).
+ */
+function recoverDocNearLabels(text) {
+  const blob = String(text || '');
+  const orderDigits = String(hybridAvizTpoField(blob)?.value || '').replace(/\D/g, '');
+  const re = /(?:aviz\s+de\s+expedi[tț]ie|comand[aă]\s+de\s+transfer)\s*[:.\-]?\s*((?:PSL|TRO|TR0|TPO|TP0|IRO|T[\s]?R[\s]?[O0])[\s\-._/:]*\d{3,}[\d./-]*)/gi;
+  let m;
+  while ((m = re.exec(blob)) !== null) {
+    const raw = String(m[1] || '').toUpperCase();
+    const digits = raw.replace(/[^\d]/g, '');
+    if (!digits || digits.length < 5) continue;
+    if (orderDigits && digits === orderDigits) continue;
+    const kind = /^PSL/.test(raw) ? 'PSL' : 'TRO';
+    return { value: `${kind}-${digits}`, confidence: 0.72, matched: m[0] };
+  }
+  return null;
+}
 
-const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf/i;
+const docNoField = (patterns) => (text) => {
+  const found = matchPatterns(text, patterns, { transform: canonicalDocNo });
+  if (found?.value) return found;
+  return recoverDocNearLabels(text) ?? NO_MATCH;
+};
+
+const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf|\bprodus\b|\bcantitate\b/i;
 
 /**
  * Loose "City - City" needs spaces (or an arrow / "către") around the separator.
@@ -162,15 +195,33 @@ const LOOSE_CITY_ROUTE = /\b([A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎ�
  */
 const CELL = '[^\\n;\\t]';
 
+const cleanRouteHit = (hit) => {
+  if (!hit?.value) return NO_MATCH;
+  const value = clipRouteGoodsTable(hit.value);
+  if (!value || ROUTE_NOISE.test(value)) return NO_MATCH;
+  return { ...hit, value, matched: hit.matched || value };
+};
+
 const routeField = (text) => {
+  // PSL/TRO pages often land on aviz_generic when "Baumit" is missing from OCR. Without this,
+  // Expeditor is dropped and only Adresa de livrare is shown (#80).
+  try {
+    const route = clipRouteGoodsTable(parseBaumitAviz(text)?.ruta_transport);
+    if (route && /\s\/\s/.test(route)) {
+      return { value: route, confidence: 0.9, matched: route };
+    }
+  } catch {
+    // Keep falling through to labelled / loose patterns.
+  }
+
   const labelled = matchPatterns(text, [
     new RegExp(`(?:ruta|traseu|route)\\s*[:\\-]?\\s*([A-ZĂÂÎȘȚ]${CELL}{3,80})`, 'i'),
   ], { baseConfidence: 0.8 });
-  if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
+  const fromLabel = cleanRouteHit(labelled);
+  if (fromLabel.value) return fromLabel;
 
   const loose = matchPatterns(text, [LOOSE_CITY_ROUTE], { baseConfidence: 0.65 });
-  if (loose.value && !ROUTE_NOISE.test(loose.value)) return loose;
-  return NO_MATCH;
+  return cleanRouteHit(loose);
 };
 
 /**
@@ -180,7 +231,7 @@ const routeField = (text) => {
  */
 const baumitRouteField = (text) => {
   try {
-    const route = parseBaumitAviz(text)?.ruta_transport;
+    const route = clipRouteGoodsTable(parseBaumitAviz(text)?.ruta_transport);
     if (route) return { value: route, confidence: 0.92, matched: route };
   } catch {
     // Profile extractors must not throw the whole document; fall through.
@@ -188,8 +239,7 @@ const baumitRouteField = (text) => {
   const labelled = matchPatterns(text, [
     new RegExp(`(?:ruta|traseu|route)\\s*[:\\-]?\\s*([A-ZĂÂÎȘȚ]${CELL}{3,80})`, 'i'),
   ], { baseConfidence: 0.8 });
-  if (labelled.value && !ROUTE_NOISE.test(labelled.value)) return labelled;
-  return NO_MATCH;
+  return cleanRouteHit(labelled);
 };
 
 const goodsField = (text) => {
@@ -278,13 +328,14 @@ const carnetDateField = (text) => {
     /\bdata\s*[:.\-]?\s*(\d{1,2})\s*[.:\-/]\s*(\d{1,2})\s*[.:\-/]\s*(\d{2,4})\b/i
   );
   if (found) {
-    const day = Number(found[1]);
-    const month = Number(found[2]);
-    let year = Number(found[3]);
-    if (year < 100) year += 2000;
-    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
-      const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      return { value: iso, confidence: 0.88, matched: found[0] };
+    // Same 0↔6 year repair as extractDate (#77).
+    const parsed = resolveAvizDateParts(found[1], found[2], found[3]);
+    if (parsed) {
+      return {
+        value: parsed.iso,
+        confidence: Math.min(0.88, parsed.confidence),
+        matched: found[0],
+      };
     }
   }
   return extractDate(text);
@@ -336,12 +387,13 @@ const carnetQuantityField = (text) => {
   // the `NR` of `NR. DOCUMENT` as a unit — which `toColumns` then copies into Tip marfă when
   // that field is empty, putting a word on the customer's annex that names nothing.
   const found = String(text || '').match(
-    /\bcant(?:itate)?\.?[^\S\n]*marf[aăá]?[^\S\n]*[:.\-]?[^\S\n]*([\d.,]+)[^\S\n]*([a-zăâîșț]{2,8})?/i
+    /\bcant(?:itate)?\.?[^\S\n]*marf[aăá]?[^\S\n]*[:.\-]?[^\S\n]*([\d.,]+)[^\S\n]*(m\s*³|m\s*3|mc|[a-zăâîșț]{2,8})?/i
   );
   if (!found) return extractQuantity(text);
   const value = carnetNumber(found[1]);
-  const unit = (found[2] || '').toLowerCase() || null;
-  if (value == null || !isPlausibleQuantity(value, unit)) return NO_MATCH;
+  let unit = (found[2] || '').toLowerCase().replace(/\s+/g, '') || null;
+  if (unit === 'm3' || unit === 'm³' || unit === 'mc') unit = 'm³';
+  if (value == null || !isPlausibleQuantity(value, unit === 'm³' ? 'm3' : unit)) return NO_MATCH;
   return { value: { quantity: value, unit }, confidence: 0.85, matched: found[0] };
 };
 
@@ -360,24 +412,38 @@ const dateFromBareLine = (line) => {
     /^(\d{1,2})\s*[.:\-/]\s*(\d{1,2})\s*[.:\-/]\s*(\d{2,4})$/,
   );
   if (!found) return null;
-  const day = Number(found[1]);
-  const month = Number(found[2]);
-  let year = Number(found[3]);
-  if (year < 100) year += 2000;
-  if (day < 1 || day > 31 || month < 1 || month > 12) return null;
-  const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  return { value: iso, confidence: 0.9, matched: found[0] };
+  const parsed = resolveAvizDateParts(found[1], found[2], found[3]);
+  if (!parsed) return null;
+  return { value: parsed.iso, confidence: parsed.confidence, matched: found[0] };
 };
 
 const routeFromBareLine = (line) => {
   const value = String(line || '').replace(/\s+/g, ' ').trim().slice(0, 120);
   if (value.length < 3) return null;
+  // Refuse tip-marfă words and plates when the driver renumbered slots (#68).
+  if (extractPlate(value)?.value) return null;
+  if (/\b(?:kg|greutate|m3|m³)\b/i.test(value)) return null;
+  const pack = packagingWordIn(value);
+  if (pack && !/(?:→|->|\/|catre|către|\bbd\b|\bstr\b)/i.test(value) && value.length <= 24) {
+    return null;
+  }
+  if (
+    !/(?:→|->|–|\/|catre|către|\bb-?dul\b|\bbd\b|\bstr\b|\bsos\b|\bcalea\b)/i.test(value)
+    && value.length <= 24
+    && !/\d/.test(value)
+  ) {
+    // "nisip" / "balast" without a route marker is not a route.
+    return null;
+  }
   return { value, confidence: 0.82, matched: value };
 };
 
 const goodsFromBareLine = (line) => {
   const value = String(line || '').replace(/\s+/g, ' ').trim();
   if (value.length < 2) return null;
+  if (extractPlate(value)?.value) return null;
+  if (/\b(?:kg|greutate)\b/i.test(value)) return null;
+  if (/(?:→|->)/i.test(value)) return null;
   const pack = packagingWordIn(value);
   if (pack) return { value: pack, confidence: 0.9, matched: value };
   // Numbered sheet slot 6 is usually just the unit word; refuse a leaked product row.
@@ -388,16 +454,47 @@ const goodsFromBareLine = (line) => {
 };
 
 const qtyFromBareLine = (line) => {
-  const found = String(line || '').match(/([\d.,]+)\s*([a-zăâîșț]{0,8})/i);
+  const blob = String(line || '');
+  if (/\b(?:psl|tro|tpo)\b/i.test(blob)) return null;
+  if (extractPlate(blob)?.value) return null;
+  // Load weight is not cantitate — even when the guide index slipped (#68).
+  if (/\b(?:kg|greutate)\b/i.test(blob)) {
+    const w = carnetNumber(blob.replace(/[^\d.,]/g, ''));
+    if (w != null && isPlausibleLoadWeightKg(w)) return null;
+  }
+  // Shared extractor already knows m3 / m³ / mc (#63). The old carnet regex used
+  // `[a-z…]` for the unit, so `18.5 m3` stopped at `m` and lost the volume (#69).
+  const shared = extractQuantity(blob);
+  if (shared?.value && typeof shared.value === 'object' && shared.value.quantity != null) {
+    return {
+      value: shared.value,
+      confidence: Math.min(0.9, Number(shared.confidence) || 0.86),
+      matched: shared.matched || blob,
+    };
+  }
+  // ASCII `m3` / spaced `m 3` when extractQuantity had nothing else to latch onto.
+  const vol = blob.match(/([\d.,]+)\s*(m\s*3|m³|mc)\b/i);
+  if (vol) {
+    const value = carnetNumber(vol[1]);
+    if (value != null && isPlausibleQuantity(value, 'm3')) {
+      return { value: { quantity: value, unit: 'm³' }, confidence: 0.88, matched: vol[0] };
+    }
+  }
+  const found = blob.match(/([\d.,]+)\s*([a-zăâîșț]{0,8})/i);
   if (!found) return null;
   const value = carnetNumber(found[1]);
   const unit = (found[2] || '').toLowerCase() || null;
+  // Lone `m` is a truncated m³ — not a real unit; leave empty rather than store junk (#69).
+  if (unit === 'm') return null;
   if (value == null || !isPlausibleQuantity(value, unit)) return null;
   return { value: { quantity: value, unit }, confidence: 0.86, matched: found[0] };
 };
 
 const tripsFromBareLine = (line) => {
-  const found = String(line || '').match(/(\d{1,2})/);
+  const blob = String(line || '');
+  if (/\b(?:kg|greutate|psl|tro|tpo)\b/i.test(blob)) return null;
+  if (extractPlate(blob)?.value) return null;
+  const found = blob.match(/(\d{1,2})\s*(?:curs[aeă]|curse)?/i);
   if (!found) return null;
   const value = Number(found[1]);
   if (!Number.isFinite(value) || value < 1 || value > 99) return null;
@@ -417,7 +514,12 @@ const tpoFromBareLine = (line) => {
 
 /** Money / rate on optional sheet lines (3, 12, 14). Blank means "leave empty", not 0. */
 const moneyFromBareLine = (line) => {
-  const found = String(line || '').match(/([\d.,]+)/);
+  const blob = String(line || '');
+  // Plate / PSL / weight digits must never become Valoare TPO (#68).
+  if (extractPlate(blob)?.value) return null;
+  if (/\b(?:psl|tro|tpo|kg|greutate|m3|m³|curs[aeă]|curse)\b/i.test(blob)) return null;
+  if (/[a-zăâîșț]/i.test(blob.replace(/\b(?:lei|ron|eur)\b/gi, ''))) return null;
+  const found = blob.match(/([\d.,]+)/);
   if (!found) return null;
   const value = carnetNumber(found[1]);
   if (value == null || value < 0 || value > 1_000_000) return null;
@@ -425,7 +527,10 @@ const moneyFromBareLine = (line) => {
 };
 
 const kmFromBareLine = (line) => {
-  const found = String(line || '').match(/([\d.,]+)/);
+  const blob = String(line || '');
+  if (extractPlate(blob)?.value) return null;
+  if (/\b(?:psl|tro|tpo|kg|greutate)\b/i.test(blob)) return null;
+  const found = blob.match(/([\d.,]+)/);
   if (!found) return null;
   const value = carnetNumber(found[1]);
   if (value == null || value <= 0 || value > 5000) return null;
@@ -433,10 +538,183 @@ const kmFromBareLine = (line) => {
 };
 
 const weightFromBareLine = (line) => {
-  const n = carnetNumber(String(line).replace(/[^\d.,]/g, ''));
+  const blob = String(line || '');
+  if (/\b(?:psl|tro|tpo)\b/i.test(blob)) return null;
+  if (/\b(?:curs[aeă]|curse)\b/i.test(blob)) return null;
+  if (extractPlate(blob)?.value) return null;
+  const n = carnetNumber(blob.replace(/[^\d.,]/g, ''));
   if (n == null || n < 1) return null;
+  // Carnet slot 8/9 — still refuse CMR box-12 leftovers (#66).
+  if (!isPlausibleLoadWeightKg(n)) return null;
   return { value: n, confidence: 0.84, matched: line };
 };
+
+const plateFromBareLine = (line) => {
+  const blob = String(line || '');
+  const tight = blob.replace(/\s*-\s*/g, '-');
+  const found = extractPlate(tight)?.value ? extractPlate(tight) : extractPlate(blob);
+  if (found?.value) return found;
+  return null;
+};
+
+const docFromBareLine = (line) => {
+  const found = docNoField([TRO_CODE, PSL_CODE])(line);
+  if (found?.value) return found;
+  return null;
+};
+
+/** True when the page is a CMR / scrisoare de trăsură (not a Baumit aviz). */
+export function looksLikeCmrDocument(text) {
+  const blob = String(text || '').toLowerCase();
+  if (/\bcmr\b/.test(blob)) return true;
+  if (/scrisoare\s+de\s+tr[aă]sur/.test(blob)) return true;
+  if (/letter\s+of\s+consignment/.test(blob)) return true;
+  // Numbered CMR boxes with logistics labels (not the driver cheat-sheet alone).
+  if (
+    /locul\s+de\s+(?:incarcare|descarcare|preluare|livrare)/i.test(blob)
+    && /(?:greutate\s*(?:bruta|brută)|gross\s*weight|(?:^|\n)\s*11[.)\-])/i.test(blob)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * CMR document number (top-right serial), never "SCRISOARE".
+ * Examples: `CMR nr. 0247315`, lone `0247315` near the header.
+ */
+const cmrDocumentNumberField = (text) => {
+  const blob = String(text || '');
+  const labelled = matchPatterns(blob, [
+    // `CMR nr. RO-2026-5512` / `CMR nr. 0247315`
+    /\b(?:cmr|seria)\s*(?:nr\.?|no\.?)?\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-/]*\d[A-Z0-9\-/]*)\b/i,
+    /\b(?:nr\.?|no\.?)\s*(?:cmr)?\s*[:\-]?\s*(0\d{6,10})\b/i,
+  ], { transform: (raw) => String(raw).replace(/\s+/g, '').toUpperCase(), baseConfidence: 0.9 });
+  if (labelled.value) return labelled;
+  // First standalone 6–8 digit run near the top of the page (Romanian CMR serials).
+  const head = blob.slice(0, 400);
+  const serial = head.match(/(?:^|\n)\s*(0?\d{6,8})\s*(?:\n|$)/);
+  if (serial?.[1]) {
+    return { value: serial[1], confidence: 0.75, matched: serial[0] };
+  }
+  return NO_MATCH;
+};
+
+/** CMR boxes 3 (încărcare) + 4 (descărcare) → `origine / destinație`. */
+const cmrRouteField = (text) => {
+  const blob = String(text || '');
+  const pick = (patterns) => matchPatterns(blob, patterns, {
+    transform: (raw) => String(raw).replace(/\s+/g, ' ').trim(),
+    baseConfidence: 0.85,
+  });
+  const load = pick([
+    /locul\s+de\s+(?:preluare|incarcare|luare\s+in\s+primire)[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+    /place\s+of\s+taking\s+over[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+    /(?:^|\n)\s*3[.)\-][^\S\n]+([^\n]{3,80})/i,
+  ]);
+  const unload = pick([
+    /locul\s+de\s+(?:livrare|descarcare|destinatie)[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+    /place\s+of\s+delivery[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+    /(?:^|\n)\s*4[.)\-][^\S\n]+([^\n]{3,80})/i,
+  ]);
+  const a = load.value || null;
+  const b = unload.value || null;
+  if (a && b) return { value: `${a} / ${b}`, confidence: 0.88, matched: `${load.matched}+${unload.matched}` };
+  if (b) return { value: b, confidence: 0.8, matched: unload.matched };
+  if (a) return { value: a, confidence: 0.8, matched: load.matched };
+  return NO_MATCH;
+};
+
+/**
+ * CMR box 11 = greutate brută. Never box 12 (volume) and never a sub-100 kg leftover (#66).
+ */
+const cmrGrossWeightField = (text) => {
+  const blob = String(text || '');
+  const box11 = numberedLineValue(blob, 11);
+  if (box11) {
+    const n = parseNumber(String(box11).replace(/[^\d.,]/g, '')) 
+      ?? carnetNumber(String(box11).replace(/[^\d.,]/g, ''));
+    if (n != null && isPlausibleLoadWeightKg(n)) {
+      return { value: n, confidence: 0.9, matched: box11 };
+    }
+  }
+  const labelled = extractGrossWeight(blob);
+  if (labelled?.value != null && isPlausibleLoadWeightKg(labelled.value)) return labelled;
+  // Explicit "11 … 14844 kg" without relying on numberedLineValue spacing.
+  const m = blob.match(/(?:^|\n)\s*11[.)\-][^\S\n]*([\d][\d.,\s]*)\s*(?:kg)?\b/i);
+  if (m) {
+    const n = parseNumber(m[1]);
+    if (n != null && isPlausibleLoadWeightKg(n)) {
+      return { value: n, confidence: 0.88, matched: m[0] };
+    }
+  }
+  return NO_MATCH;
+};
+
+/** CMR: packaging + count from boxes 7–9 / nature of goods — not euro-pallet alone. */
+const cmrQuantityField = (text) => {
+  // Box 7 is the package count. Prefer it over summing "8. saci" (box label) + "720.00 sac" (#66).
+  const box7 = numberedLineValue(text, 7);
+  if (box7) {
+    const n = parseNumber(box7) ?? carnetNumber(String(box7).replace(/[^\d.,]/g, ''));
+    if (n != null && isPlausibleQuantity(n, 'saci')) {
+      const pack = packagingWordIn(numberedLineValue(text, 8) || '')
+        || packagingWordIn(numberedLineValue(text, 9) || '')
+        || packagingWordIn(text)
+        || 'saci';
+      const unit = pack === 'paleti' ? 'saci' : pack;
+      return { value: { quantity: n, unit }, confidence: 0.9, matched: box7 };
+    }
+  }
+  const found = extractQuantity(text);
+  if (found?.value && typeof found.value === 'object') {
+    // Prefer saci/galeți over a lone pallet count when the page also names bags.
+    const unit = String(found.value.unit || '');
+    if (unit === 'paleti' && /\b\d[\d.,]*\s*sac/i.test(text)) {
+      const bags = extractQuantity(String(text).replace(/\d[\d.,]*\s*pce\b/gi, ' '));
+      if (bags?.value?.quantity != null) return bags;
+    }
+    return found;
+  }
+  return NO_MATCH;
+};
+
+const cmrGoodsField = (text) => {
+  const unit = extractGoodsUnit(text);
+  if (unit.value && unit.value !== 'paleti') return unit;
+  const box8 = numberedLineValue(text, 8);
+  const box9 = numberedLineValue(text, 9);
+  for (const line of [box8, box9, text]) {
+    const pack = packagingWordIn(line) || goodsFromBareLine(line)?.value;
+    if (pack && pack !== 'paleti') {
+      return { value: pack, confidence: 0.82, matched: line };
+    }
+  }
+  if (unit.value) return unit;
+  return NO_MATCH;
+};
+
+/** Parsers for content-aware carnet slot assignment (#68). */
+const CARNET_LINE_PARSERS = {
+  numar_tpo: tpoFromBareLine,
+  data_efectuare_cursa: dateFromBareLine,
+  valoare_tpo: moneyFromBareLine,
+  numar_auto: plateFromBareLine,
+  ruta_transport: routeFromBareLine,
+  tip_marfa: goodsFromBareLine,
+  quantity: qtyFromBareLine,
+  gross_weight_kg: weightFromBareLine,
+  net_weight_kg: weightFromBareLine,
+  numar_document_marfa: docFromBareLine,
+  numar_curse: tripsFromBareLine,
+  taxe_suplimentare: moneyFromBareLine,
+  km_parcursi: kmFromBareLine,
+  tarif_km: moneyFromBareLine,
+};
+
+const carnetSlot = (sheetNo, fieldKey, extract, fromLine) => (
+  withCarnetNumberedField(sheetNo, fieldKey, extract, fromLine, CARNET_LINE_PARSERS)
+);
 
 export const OCR_PROFILES = [
   {
@@ -449,29 +727,62 @@ export const OCR_PROFILES = [
       // Numbered cheat-sheet (driver app writing guide): "1. TPO-…" or even "1. 0025999"
       /(?:^|\n)\s*1[.)\-]\s*\S/,
       /(?:^|\n)\s*4[.)\-]\s*\S/,
+      // Short handwritten carnets titled explicitly (#68).
+      /carnet\s+de\s+bord/i,
     ],
     fields: {
-      // DRIVER_SHEET_GUIDE / DRIVER_SHEET_FIELD_BY_NO: 1–14
-      numar_tpo: withNumberedFallback(1, carnetTpoField, tpoFromBareLine),
-      data_efectuare_cursa: withNumberedFallback(2, carnetDateField, dateFromBareLine),
-      valoare_tpo: withNumberedFallback(3, () => NO_MATCH, moneyFromBareLine),
-      numar_auto: withNumberedFallback(4, extractPlate),
-      ruta_transport: withNumberedFallback(5, carnetRouteField, routeFromBareLine),
-      tip_marfa: withNumberedFallback(6, carnetGoodsField, goodsFromBareLine),
-      quantity: withNumberedFallback(7, carnetQuantityField, qtyFromBareLine),
-      gross_weight_kg: withNumberedFallback(8, extractGrossWeight, weightFromBareLine),
-      net_weight_kg: withNumberedFallback(9, extractNetWeight, weightFromBareLine),
-      numar_document_marfa: withNumberedFallback(10, docNoField([TRO_CODE, PSL_CODE])),
-      numar_curse: withNumberedFallback(11, carnetTripCountField, tripsFromBareLine),
-      taxe_suplimentare: withNumberedFallback(12, () => NO_MATCH, moneyFromBareLine),
-      km_parcursi: withNumberedFallback(13, () => NO_MATCH, kmFromBareLine),
-      tarif_km: withNumberedFallback(14, () => NO_MATCH, moneyFromBareLine),
+      // DRIVER_SHEET_GUIDE / DRIVER_SHEET_FIELD_BY_NO: 1–14 — content wins over index (#68).
+      numar_tpo: carnetSlot(1, 'numar_tpo', carnetTpoField, tpoFromBareLine),
+      data_efectuare_cursa: carnetSlot(2, 'data_efectuare_cursa', carnetDateField, dateFromBareLine),
+      valoare_tpo: carnetSlot(3, 'valoare_tpo', () => NO_MATCH, moneyFromBareLine),
+      numar_auto: carnetSlot(4, 'numar_auto', extractPlate, plateFromBareLine),
+      ruta_transport: carnetSlot(5, 'ruta_transport', carnetRouteField, routeFromBareLine),
+      tip_marfa: carnetSlot(6, 'tip_marfa', carnetGoodsField, goodsFromBareLine),
+      quantity: carnetSlot(7, 'quantity', carnetQuantityField, qtyFromBareLine),
+      gross_weight_kg: carnetSlot(8, 'gross_weight_kg', extractGrossWeight, weightFromBareLine),
+      net_weight_kg: carnetSlot(9, 'net_weight_kg', extractNetWeight, weightFromBareLine),
+      numar_document_marfa: carnetSlot(10, 'numar_document_marfa', docNoField([TRO_CODE, PSL_CODE]), docFromBareLine),
+      numar_curse: carnetSlot(11, 'numar_curse', carnetTripCountField, tripsFromBareLine),
+      taxe_suplimentare: carnetSlot(12, 'taxe_suplimentare', () => NO_MATCH, moneyFromBareLine),
+      km_parcursi: carnetSlot(13, 'km_parcursi', () => NO_MATCH, kmFromBareLine),
+      tarif_km: carnetSlot(14, 'tarif_km', () => NO_MATCH, moneyFromBareLine),
     },
     weights: {
       numar_tpo: 3, numar_auto: 3, data_efectuare_cursa: 2,
       numar_document_marfa: 2, quantity: 2, gross_weight_kg: 2, net_weight_kg: 1.5,
       ruta_transport: 1, tip_marfa: 1, numar_curse: 1,
       valoare_tpo: 0.5, taxe_suplimentare: 0.5, km_parcursi: 0.5, tarif_km: 0.5,
+    },
+  },
+  {
+    // Handwritten / printed CMR uploaded on /avize (document_type stays aviz) (#66).
+    id: 'aviz_cmr',
+    documentType: 'aviz',
+    name: 'CMR / scrisoare de trăsură',
+    markers: [
+      /\bcmr\b/,
+      /scrisoare\s+de\s+tr[aă]sur/,
+      /locul\s+de\s+(?:incarcare|descarcare|preluare)/,
+      /place\s+of\s+(?:taking\s+over|delivery)/,
+      /(?:^|\n)\s*11[.)\-]/,
+    ],
+    fields: {
+      numar_tpo: hybridAvizTpoField,
+      data_efectuare_cursa: extractDate,
+      numar_auto: extractPlate,
+      numar_document_marfa: cmrDocumentNumberField,
+      ruta_transport: cmrRouteField,
+      tip_marfa: cmrGoodsField,
+      quantity: cmrQuantityField,
+      gross_weight_kg: cmrGrossWeightField,
+      // CMR has no net weight box — leave empty (do not invent from box 12).
+      net_weight_kg: () => NO_MATCH,
+      pallets: extractPalletCount,
+    },
+    weights: {
+      numar_document_marfa: 3, gross_weight_kg: 3, numar_auto: 2,
+      ruta_transport: 2, quantity: 2, tip_marfa: 1.5,
+      data_efectuare_cursa: 1, numar_tpo: 1, pallets: 0.3,
     },
   },
   {
@@ -560,14 +871,11 @@ export const OCR_PROFILES = [
     id: 'cmr_standard',
     documentType: 'cmr',
     name: 'CMR internațional',
-    markers: [/\bcmr\b/, /expeditor/, /destinatar/, /transportator/],
+    markers: [/\bcmr\b/, /expeditor/, /destinatar/, /transportator/, /scrisoare\s+de\s+tr[aă]sur/],
     fields: {
       // The value must contain a digit. Without that guard the pattern happily matches
       // "CMR SCRISOARE DE TRANSPORT" and the document number comes out as "SCRISOARE".
-      cmr_number: docNoField([
-        /\b(?:cmr|seria)\s*nr\.?\s*([A-Z0-9][A-Z0-9\-/]*\d[A-Z0-9\-/]*)\b/i,
-        /\b(?:cmr|seria)\s*([A-Z0-9][A-Z0-9\-/]*\d[A-Z0-9\-/]*)\b/i,
-      ]),
+      cmr_number: cmrDocumentNumberField,
       loading_date: extractDate,
       numar_auto: extractPlate,
       shipper_name: (text) => matchPatterns(text, [
@@ -576,12 +884,17 @@ export const OCR_PROFILES = [
       consignee_name: (text) => matchPatterns(text, [
         new RegExp(`(?:destinatar|consignee)\\s*[:\\-]?\\s*(${CELL}{3,60})`, 'i'),
       ], { baseConfidence: 0.8 }),
-      gross_weight_kg: extractGrossWeight,
+      ruta_transport: cmrRouteField,
+      tip_marfa: cmrGoodsField,
+      quantity: cmrQuantityField,
+      gross_weight_kg: cmrGrossWeightField,
+      net_weight_kg: () => NO_MATCH,
       pallets: extractPalletCount,
     },
     weights: {
-      cmr_number: 3, numar_auto: 2, loading_date: 2, gross_weight_kg: 2,
-      shipper_name: 1, consignee_name: 1, pallets: 0.5,
+      cmr_number: 3, numar_auto: 2, loading_date: 2, gross_weight_kg: 3,
+      ruta_transport: 2, quantity: 1.5, tip_marfa: 1,
+      shipper_name: 1, consignee_name: 1, pallets: 0.3,
     },
   },
 ];
@@ -602,6 +915,7 @@ export function profilesFor(documentType) {
  */
 export function detectProfile(text, { documentType, profiles = OCR_PROFILES } = {}) {
   const sheetSlots = countFilledSheetSlots(text);
+  const isCmr = looksLikeCmrDocument(text);
   const candidates = profiles
     .filter((p) => !documentType || p.documentType === documentType)
     .map((profile) => {
@@ -609,9 +923,29 @@ export function detectProfile(text, { documentType, profiles = OCR_PROFILES } = 
       // A filled driver guide (1.…13.) must not lose to a lone PSL/TRO token on line 9 —
       // that is what sent the handwritten test sheet through the Baumit profile and left
       // quantity / weight / trip count empty.
+      // CMR boxes are also numbered 1–24 — do not steal those into carnet slots (#66).
       if (profile.id === 'carnet_bord') {
-        if (sheetSlots >= 5) score = Math.max(score, 0.92);
+        if (isCmr) score = Math.min(score, 0.25);
+        else if (sheetSlots >= 5) score = Math.max(score, 0.92);
         else if (sheetSlots >= 3) score = Math.max(score, 0.55);
+      }
+      // /avize uploads stay documentType=aviz → aviz_cmr. Native CMR type → cmr_standard.
+      if (isCmr && profile.id === 'aviz_cmr' && (!documentType || documentType === 'aviz')) {
+        score = Math.max(score, 0.93);
+      }
+      if (isCmr && profile.id === 'cmr_standard' && (!documentType || documentType === 'cmr')) {
+        score = Math.max(score, 0.95);
+      }
+      // When both profiles compete (no documentType filter), prefer the native CMR one.
+      if (isCmr && profile.id === 'aviz_cmr' && !documentType) {
+        score = Math.min(score, 0.9);
+      }
+      // A real PSL-/TRO- code beats generic even when "Baumit" is absent from the photo (#80).
+      if (profile.id === 'aviz_baumit_psl' && /\bpsl[\s\-._/:]*\d{3,}/i.test(String(text || ''))) {
+        score = Math.max(score, 0.88);
+      }
+      if (profile.id === 'aviz_baumit_tro' && /\btro[\s\-._/:]*\d{3,}/i.test(String(text || ''))) {
+        score = Math.max(score, 0.88);
       }
       return { profile, score: Math.round(score * 100) / 100 };
     })

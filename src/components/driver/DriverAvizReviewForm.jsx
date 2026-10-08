@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, ChevronDown, ImagePlus, Loader2, X } from 'lucide-react';
 import { api } from '@/api/client';
+import RoDateField from '@/components/RoDateField';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   DRIVER_LOGISTICS_FIELDS,
@@ -144,14 +145,23 @@ export default function DriverAvizReviewForm({
               <label className={driverLabelCls}>
                 {f.sheetNo}. {f.label}
               </label>
-              <input
-                type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                step={f.type === 'number' ? 'any' : undefined}
-                value={form[f.key] ?? ''}
-                onChange={(e) => setField(f.key, e.target.value)}
-                className={`${driverFieldCls} ${highlight ? 'border-amber-400 bg-amber-50/40' : ''}`}
-                autoCapitalize="characters"
-              />
+              {f.type === 'date' ? (
+                <RoDateField
+                  className={`${driverFieldCls} ${highlight ? 'border-amber-400 bg-amber-50/40' : ''}`}
+                  value={form[f.key] ?? ''}
+                  onChange={(iso) => setField(f.key, iso || '')}
+                  aria-label={f.label}
+                />
+              ) : (
+                <input
+                  type={f.type === 'number' ? 'number' : 'text'}
+                  step={f.type === 'number' ? 'any' : undefined}
+                  value={form[f.key] ?? ''}
+                  onChange={(e) => setField(f.key, e.target.value)}
+                  className={`${driverFieldCls} ${highlight ? 'border-amber-400 bg-amber-50/40' : ''}`}
+                  autoCapitalize="characters"
+                />
+              )}
             </div>
           );
         })}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, fieldConfidenceForUi, isFalseRoute, isSuspiciousRoute, quantityConflictsWithRaw } from './avizOcr.js';
+import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, fieldConfidenceForUi, isFalseRoute, isSuspiciousRoute, quantityConflictsWithRaw, clipRouteGoodsTable } from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
 
 const PSL_FIXTURE = `
@@ -41,6 +41,10 @@ describe('normalizePlate', () => {
 
   it('keeps tractor and trailer plates', () => {
     expect(normalizePlate('B 112 VFM / B 475AGR')).toBe('B-112-VFM / B-475-AGR');
+  });
+
+  it('keeps Bulgarian tractor + Romanian trailer (#60)', () => {
+    expect(normalizePlate('CA 4471 KX / B 63 RTX')).toBe('CA-4471-KX / B-63-RTX');
   });
 
   it('does not treat product "TM 40 kg" as a trailer plate (#52)', () => {
@@ -168,6 +172,20 @@ sac
     expect(parsed.cantitate_marfa).toBe(245);
     // Fixture has no house number on the delivery lines.
     expect(parsed.ruta_transport).toBe('Str. Ciresului, Dobroesti');
+  });
+
+  it('stops the route before the Produs / Cantitate table (#70)', () => {
+    // Few-line OCR: delivery label sits on the same line as the goods header + SKU.
+    const glued = [
+      'Aviz PSL-0056700 TPO-0032700 Expeditor Site BOL Depozit DEAL',
+      'Adresa de livrare / Ruta Str. Bucuresti Produs Cantitate FinoGrande nr. 20 48.00 sac',
+      'Greutate bruta 1000 kg B-220-KLM',
+    ].join(' ');
+    const parsed = parseBaumitAviz(glued);
+    expect(parsed.ruta_transport).toMatch(/Bucuresti/i);
+    expect(parsed.ruta_transport).not.toMatch(/Produs|Cantitate|FinoGrande/i);
+    expect(clipRouteGoodsTable('BOL / Str. Bucuresti Produs Cantitate Finogrande nr. 20'))
+      .toBe('BOL / Str. Bucuresti');
   });
 
   it('keeps nr. and locality when Adresa de livrare shares a row with Referința client', () => {
@@ -752,6 +770,31 @@ describe('repairAvizFromStored', () => {
     expect(repairAvizFromStored({ numar_tpo: 'TPO/32755' }).numar_tpo).toBe('TPO-0032755');
   });
 
+  it('clears Reg. Com. 0000/2000 left as Număr TPO and marks it low (#58)', () => {
+    const repaired = repairAvizFromStored({
+      numar_tpo: '0000/2000',
+      extracted_data: {
+        raw_text: `
+Aviz de expeditie: PSL-0062011
+Comanda de transport
+Nr. Reg. Com.: J00/0000/2000 | CUI: RO000000000
+`,
+      },
+    });
+    expect(repaired.numar_tpo).toBeNull();
+    expect(avizFieldConfidence(repaired).numar_tpo).toBe('low');
+  });
+
+  it('repairs 0000/2000 when raw_text still has a readable TPO (#58)', () => {
+    const repaired = repairAvizFromStored({
+      numar_tpo: '0000/2000',
+      extracted_data: {
+        raw_text: 'Comanda de transport TPO-0033105\nNr. Reg. Com.: J00/0000/2000',
+      },
+    });
+    expect(repaired.numar_tpo).toBe('TPO-0033105');
+  });
+
   it('keeps an office-edited date instead of the PDF date', () => {
     const repaired = repairAvizFromStored({
       numar_tpo: 'TPO-0025813',
@@ -1040,6 +1083,110 @@ NUMAR AUTO TEST-101
       extracted_data: { raw_text: `${lines}\nNumarul de galeti: 576,00` },
     });
     expect(repaired.cantitate_marfa).toBe(100);
+  });
+});
+
+describe('pallet-only return (#64)', () => {
+  it('fills Cantitate from 15.00 pce when that is the only line', () => {
+    const raw = `
+Aviz de expeditie rezumat: TPO-0033293
+Expeditor Site: MIL Depozit: MMARFA
+Adresa de livrare: Str. Industriei nr. 7 Bolintin-Deal RO 087015
+Placuta de inmatriculare: B 77 PLT / B 77 PLT
+Observatii: Retur paleti goi
+11000001 Palet Euro returnabil 15.00 pce
+Greutate bruta: 337.50 kg
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.tip_marfa).toBe('paleti');
+    expect(parsed.cantitate_marfa).toBe(15);
+  });
+});
+
+describe('volume in m³ (#63)', () => {
+  it('prefers m³ over euro-pallet count', () => {
+    const raw = `
+Aviz de expeditie: PSL-0062100
+Comanda de transport: TPO-0033400
+Expeditor Site: BOL Bolintin Str. Industriei nr. 7 Bolintin-Deal
+Adresa de livrare: Sos. Giurgiului nr. 128 Bucuresti Sector 4 RO 040132
+BCA Montaro 600x250x200 mm 28.80 m3
+Palet Euro returnabil 20.00 pce
+Greutate bruta: 12000 kg
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.cantitate_marfa).toBe(28.8);
+    expect(parsed.tip_marfa).toBe('m³');
+  });
+});
+
+describe('mixed saci + găleți quantity (#62)', () => {
+  it('sums both packaging types and labels tip saci/galeti', () => {
+    const raw = `
+Aviz de expeditie: PSL-0062056
+Comanda de transport: TPO-0033299
+Expeditor Site: BOL Bolintin Str. Industriei nr. 7 Bolintin-Deal
+Adresa de livrare: Strada Giurgiului nr. 128 Bucuresti Sector 4 RO 040132
+54.00 sac Adeziv FlexBond
+54.00 sac Adeziv FlexBond
+108.00 sac Beton Montaro
+54.00 sac Nivela Quattro
+54.00 sac Tencuiala
+42.00 sac Tencuiala
+35.00 sac Tencuiala
+24.00 buc UniBaza Grund
+24.00 buc SilikoTop
+48.00 buc Glet FinoLux
+24.00 buc FinishPro
+44.00 buc HidroStop
+33.00 buc Vopsea lavabila
+15.00 pce Palet Euro returnabil
+Greutate bruta: 14,807.89 kg
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.cantitate_marfa).toBe(598);
+    expect(parsed.tip_marfa).toBe('saci/galeti');
+  });
+});
+
+describe('multi delivery addresses (#61)', () => {
+  const DUAL_LIVRARE = `
+Aviz de expeditie: PSL-0062105
+Data avizului de expeditie: 05.10.2026
+Expeditor
+Site: BOL Bolintin, Str. Industriei, nr. 7, Bolintin-Deal, RO 087015, ROU.
+Adrese de livrare
+Livrare 1: CS-PRAHOVA- OBI PLOIESTI, Strada Gheorghe Doja nr. 51, Ploiesti, RO 100090.
+Livrare 2: CS-HERASTRAU- OBI AVIATORILOR, Bulevardul Aviatorilor nr. 72, Bucuresti Sector 1, RO 011864.
+Client: NORDIC BUILD SRL, Bulevardul Aviatorilor nr. 72, Bucuresti Sector 1.
+Referinta client: PO26050044>0731000700>2 PUNCTE LIVRARE
+Transportator: EKAER.
+Placuta de inmatriculare: PH 33 DRV / PH 33 DRV
+Nume delegat: Sandu Liviu
+Comanda de transport: TPO-0033301
+Greutate neta: 10,950.15 kg
+Greutate bruta: 11,157.84 kg
+`;
+
+  it('builds origin / stop1 / stop2 and prefers București for delivery_address', () => {
+    const parsed = parseBaumitAviz(DUAL_LIVRARE);
+    expect(parsed.ruta_transport).toBe(
+      'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
+    );
+    expect(parsed.delivery_address).toMatchObject({
+      streetName: expect.stringMatching(/aviatorilor/i),
+      houseNumber: '72',
+      locality: expect.stringMatching(/bucuresti/i),
+    });
+    expect(parsed.numar_tpo).toMatch(/TPO-0033301/i);
+  });
+
+  it('flags origin-only route as suspicious when Adrese de livrare is on the page', () => {
+    expect(isSuspiciousRoute('Str. Industriei nr. 7, Bolintin-Deal', DUAL_LIVRARE)).toBe(true);
+    expect(isSuspiciousRoute(
+      'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
+      DUAL_LIVRARE,
+    )).toBe(false);
   });
 });
 

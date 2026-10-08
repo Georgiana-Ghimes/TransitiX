@@ -8,9 +8,12 @@ import { readCollapsed, writeCollapsed } from '@/lib/collapsePreference';
  * `<details open>` reopened on every render, so closing it lasted until the next refresh and had
  * to be repeated all day. The open state is React's now, and it is keyed by `id` rather than by
  * the title: rewording "Legendă acțiuni" should not silently reopen a panel everybody had shut.
+ *
+ * First visit (no preference) starts collapsed — the panel ate a third of the viewport before the
+ * list (#67). A saved Ascunde/Arată still wins.
  */
 export default function AvizLegend({ id, title, items }) {
-  const [open, setOpen] = useState(() => !readCollapsed(id, false));
+  const [open, setOpen] = useState(() => !readCollapsed(id, true));
 
   useEffect(() => {
     writeCollapsed(id, !open);

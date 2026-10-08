@@ -71,6 +71,27 @@ describe('normalizeOcrText', () => {
     expect(normalizeOcrText('TP0-0025629')).toBe('TPO-0025629');
   });
 
+  it('repairs IRO / TRQ glare misreads as TRO (#75)', () => {
+    expect(normalizeOcrText('Aviz IRO-0010601')).toContain('TRO-0010601');
+    expect(normalizeOcrText('TRQ-0010601')).toContain('TRO-0010601');
+  });
+
+  it('repairs split sac under yellow / night wash (#76)', () => {
+    expect(normalizeOcrText('210.00 s ac')).toContain('210.00 sac');
+    expect(normalizeOcrText('140.00 sa c')).toContain('140.00 sac');
+  });
+
+  it('repairs letter O as zero in date years (#77)', () => {
+    expect(normalizeOcrText('Data: 02.10.202O')).toContain('02.10.2020');
+  });
+
+  it('repairs MMARFA / Bolintin-Deal / Industriei under night OCR (#79)', () => {
+    expect(normalizeOcrText('Depozit: MIMARFA')).toContain('MMARFA');
+    expect(normalizeOcrText('BOL MBMARFA Bolintin')).toContain('MBMARFA');
+    expect(normalizeOcrText('Bolintin-Dina RO 087015')).toContain('Bolintin-Deal');
+    expect(normalizeOcrText('Str. Industriului, nr. 7')).toContain('Industriei');
+  });
+
   it('repairs handwritten TPO with a slash separator', () => {
     expect(normalizeOcrText('Num de comanda de transport: TPO / 31027')).toContain('TPO-31027');
     expect(normalizeOcrText('TPO/31027')).toContain('TPO-31027');

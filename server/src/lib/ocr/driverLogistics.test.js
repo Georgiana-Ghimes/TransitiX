@@ -4,7 +4,7 @@ import {
   driverLogisticsComplete,
   missingDriverLogistics,
 } from './driverLogistics.js';
-import { numberedLineValue } from './numberedSheet.js';
+import { classifyCarnetLine, numberedLineValue } from './numberedSheet.js';
 
 describe('driverLogistics', () => {
   it('blocks when TPO / date / plate / qty-or-weight are empty', () => {
@@ -56,5 +56,16 @@ describe('numberedSheet', () => {
   it('treats blank / dash optional lines as empty', () => {
     expect(numberedLineValue('3. -\n4. B 1 ABC', 3)).toBe('');
     expect(numberedLineValue('11. gol', 11)).toBe('');
+  });
+
+  it('classifies carnet lines by content when indices slip (#68)', () => {
+    expect(classifyCarnetLine('B 112 VFM')).toBe('numar_auto');
+    expect(classifyCarnetLine('Bol -> Ploiesti')).toBe('ruta_transport');
+    expect(classifyCarnetLine('balast')).toBe('tip_marfa');
+    expect(classifyCarnetLine('15.5 m3')).toBe('quantity');
+    expect(classifyCarnetLine('Greutate 28000 kg')).toBe('weight');
+    expect(classifyCarnetLine('PSL-0056601')).toBe('numar_document_marfa');
+    expect(classifyCarnetLine('1 cursa')).toBe('numar_curse');
+    expect(classifyCarnetLine('450')).toBe('money');
   });
 });

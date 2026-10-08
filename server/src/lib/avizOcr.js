@@ -4,17 +4,17 @@
  */
 import { annexFieldDefaults, normalizeGoodsUnit } from './avizTemplate.js';
 import {
+  canonicalPlate,
   extractGrossWeight,
   extractNetWeight,
   extractQuantity,
   isAcceptableAutoField,
   isGenericCountUnit,
-  isPlausiblePlateSeries,
   isPlausibleQuantity,
   looksLikeOcrGoodsDump,
   packagingWordIn,
   parseNumber,
-  RO_PLATE_COUNTIES,
+  resolveAvizDateParts,
 } from './ocr/fields.js';
 
 function fold(value) {
@@ -37,14 +37,13 @@ function normalizeWs(text) {
 function toIsoDate(value) {
   const s = String(value || '').trim().replace(/\s+\d{1,2}:\d{2}(?::\d{2})?.*$/, '');
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  if (iso) {
+    return resolveAvizDateParts(iso[3], iso[2], iso[1])?.iso ?? null;
+  }
   const dmy = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
   if (!dmy) return null;
-  const day = Number(dmy[1]);
-  const month = Number(dmy[2]);
-  if (day < 1 || day > 31 || month < 1 || month > 12) return null;
-  const year = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3];
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  // Same 0↔6 year repair as extractDate (#77) — repairAvizFromStored uses this path.
+  return resolveAvizDateParts(dmy[1], dmy[2], dmy[3])?.iso ?? null;
 }
 
 /** Prefer the aviz datetime (11.08.2026 13:10), not a split "1 1.08.2026". */
@@ -70,31 +69,17 @@ function findAvizDate(blob) {
   return any ? toIsoDate(any[1]) : null;
 }
 
-const PLATE_RE = new RegExp(
-  `\\b(${RO_PLATE_COUNTIES})[-\\s]?(\\d{2,3})[-\\s]?([A-Z]{2,3})\\b`,
-  'gi'
-);
-
+/** @deprecated prefer canonicalPlate — kept for callers that expect a string[]. */
 export function extractPlates(value) {
-  const s = normalizeWs(value).toUpperCase();
-  const plates = [];
-  const seen = new Set();
-  let m;
-  const re = new RegExp(PLATE_RE.source, 'gi');
-  while ((m = re.exec(s)) !== null) {
-    if (!isPlausiblePlateSeries(m[3])) continue;
-    const plate = `${m[1]}-${m[2]}-${m[3]}`;
-    if (seen.has(plate)) continue;
-    seen.add(plate);
-    plates.push(plate);
-  }
-  return plates;
+  const normalized = normalizePlate(value);
+  if (!normalized) return [];
+  return normalized.split(/\s*\/\s*/).filter(Boolean);
 }
 
-/** Tractor / trailer: `B 112 VFM / B 475AGR` → `B-112-VFM / B-475-AGR`. Never dump prose. */
+/** Tractor / trailer (RO + foreign EU): `CA 4471 KX / B 63 RTX` → both, tractor first (#60). */
 export function normalizePlate(value) {
-  const plates = extractPlates(value);
-  if (plates.length) return plates.join(' / ');
+  const plates = canonicalPlate(value);
+  if (plates && isAcceptableAutoField(plates)) return plates;
   return null;
 }
 
@@ -134,8 +119,8 @@ function findPlates(blob) {
   const folded = fold(blob);
   const labeled = labeledPlateWindow(folded);
   const search = labeled == null ? folded : labeled;
-  const plates = extractPlates(search);
-  if (plates.length) return plates.join(' / ');
+  const plates = normalizePlate(search);
+  if (plates) return plates;
   // Never dump the labelled window as-is: OCR often glues bookmark/UI noise onto a partial
   // plate ("330 SRS FOOTY STREAM TRANSPORTATOR"). Empty + review beats a poisoned Excel cell.
   if (labeled) return syntheticLabeledPlate(labeled);
@@ -201,16 +186,18 @@ function findTpoNumber(blob) {
 function isExtractedGarbageTpo(value) {
   const s = String(value || '').trim();
   if (!s) return true;
-  if (normalizeTpo(s, 1)) return false;
-  return /^(mpi|adeziv|adresa)\b/i.test(s);
+  // Anything that is not a real TPO (Reg. Com. "0000/2000", product names, …) is noise (#58).
+  return !normalizeTpo(s, 1);
 }
 
 function resolveStoredTpo(row, parsed) {
   const stored = String(row?.numar_tpo || '').trim();
   const storedNorm = normalizeTpo(stored, 1);
   if (storedNorm) return storedNorm;
-  if (parsed?.numar_tpo && isExtractedGarbageTpo(stored)) return parsed.numar_tpo;
-  return stored || null;
+  const parsedNorm = normalizeTpo(parsed?.numar_tpo, 1);
+  if (parsedNorm) return parsedNorm;
+  // Do not keep footer leftovers on the row — leave empty for HITL (#58).
+  return null;
 }
 
 function parseQty(blob) {
@@ -222,7 +209,13 @@ function parseQty(blob) {
   const qty = Number(packed.quantity);
   const tip = normalizeGoodsUnit(packed.unit) || String(packed.unit || '').toLowerCase() || 'saci';
   if (!Number.isFinite(qty) || !isPlausibleQuantity(qty, tip)) return null;
-  return { qty, tip, rank: tip === 'galeti' ? 4 : tip === 'saci' ? 3 : tip === 'paleti' ? 2 : 1 };
+  const rank = tip === 'saci/galeti' ? 6
+    : tip === 'm³' || tip === 'm3' || tip === 'mc' ? 5
+      : tip === 'galeti' ? 4
+        : tip === 'saci' ? 3
+          : tip === 'paleti' ? 2
+            : 1;
+  return { qty, tip, rank };
 }
 
 function prettyPlace(value) {
@@ -300,10 +293,27 @@ function sliceSection(blob, startLabels, stopLabels) {
 }
 
 /** Grammatical noise — never a locality. No town/street whitelist. */
-const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client)$/;
+const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client|produs|cantitate|denumire)$/;
 
 /** Second street-name token stops here (grammatical), not at town names — towns vary. */
-const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania)$/;
+const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania|produs|cantitate|denumire|um)$/;
+
+/**
+ * Goods-table headers that sit under Adresa de livrare / Ruta on Baumit PDFs (#70).
+ * When OCR collapses few lines, the delivery slice must end here or the route
+ * swallows `Produs Cantitate FinoGrande nr. 20`.
+ */
+const GOODS_TABLE_STOPS = [
+  'produs cantitate',
+  'produs | cantitate',
+  'denumire produs',
+  'produs',
+  'cantitate',
+  'greutate bruta',
+  'greutate brută',
+  'greutate neta',
+  'greutate netă',
+];
 
 /**
  * Street-type token. Not a bare substring — `str` inside `DISTRIBUTIE` / `CONSTRUCT`
@@ -438,10 +448,10 @@ function parseStreetParts(folded, localityFolded = '') {
 function localityFromSection(folded) {
   const roAt = folded.search(/\bro\s*\d{5,6}\b/);
   if (roAt > 0) {
-    const before = folded
-      .slice(0, roAt)
-      .replace(/\bsector\s*\d*\s*$/i, '')
-      .trim();
+    // Printed forms use commas: "nr. 7, Bolintin-Deal, RO 087015" / "…, Bucuresti Sector 1, RO …".
+    let before = folded.slice(0, roAt).replace(/[,.\s]+$/g, '').trim();
+    // Bare "Bucuresti Sector" (tab OCR drops the digit) still names the city.
+    before = before.replace(/\bsector(?:ul)?\s*[0-9]*\s*$/i, '').replace(/[,.\s]+$/g, '').trim();
     const m = before.match(/([a-z][a-z]*(?:-[a-z]+)?)$/);
     if (m?.[1] && !LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) {
       return m[1];
@@ -449,12 +459,14 @@ function localityFromSection(folded) {
   }
 
   // Two-column OCR: locality\tpostcode with no "RO" on the delivery side.
-  for (const m of folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(\d{5,6})\b/g)) {
+  // Also "Bucuresti Sector\t050151" — strip a trailing sector label before the digits.
+  for (const m of folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(?:sector(?:ul)?\s*[0-9]*\s+)?(\d{5,6})\b/g)) {
     if (!LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) return m[1];
   }
 
+  // Comma after house number is common on sales sheets (#61).
   const afterNr = folded.match(
-    /\bnr\.?\s*[a-z0-9][a-z0-9\-]*\s+([a-z][a-z]*(?:-[a-z]+)?)\b/
+    /\bnr\.?\s*[a-z0-9][a-z0-9\-]*\s*,?\s+([a-z][a-z]*(?:-[a-z]+)?)\b/
   );
   if (afterNr?.[1] && !LOCALITY_NOISE.test(afterNr[1]) && !STREET_NAME_STOP.test(afterNr[1])) {
     return afterNr[1];
@@ -668,12 +680,33 @@ function scrubSectionNoise(folded) {
     .replace(/\bdepozite?\s*[:\s]+[a-z][a-z0-9\-]{0,20}\b/g, ' ')
     // Right-column header glued into the delivery block by OCR.
     .replace(/\breferint[aă]\s+client(?:ului)?\b/g, ' ')
-    .replace(/\bcs-[a-z0-9\-]+\b/g, ' ')
+    // Trailing hyphen on CS codes ("CS-PRAHOVA- OBI …") is not a word boundary — strip it too.
+    .replace(/\bcs-[a-z0-9]+(?:-[a-z0-9]+)*-?/g, ' ')
     .replace(/\bap-[a-z0-9\-]+\b/g, ' ')
     .replace(/\bc\d{8}\b/g, ' ')
+    // Store brand glued to a CS- site name ("OBI PLOIESTI", "OBI AVIATORILOR") — not a street.
+    .replace(/\bobi\b/g, ' ')
     .replace(/\brou\b/g, ' ')
+    // Goods table (and product row) after a route label on the same OCR line (#70).
+    .replace(/\bprodus\b[\s\S]*$/i, ' ')
+    .replace(/\bcantitate\b[\s\S]*$/i, ' ')
+    .replace(/\bdenumire\s+produs\b[\s\S]*$/i, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** Drop goods-table / SKU tail from a finished route string (#70). */
+export function clipRouteGoodsTable(route) {
+  const raw = String(route || '').trim();
+  if (!raw) return raw;
+  const clipped = raw
+    .replace(/\bprodus\b[\s\S]*$/i, '')
+    .replace(/\bcantitate\b[\s\S]*$/i, '')
+    .replace(/\bdenumire\s+produs\b[\s\S]*$/i, '')
+    .replace(/[|/]\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clipped || raw;
 }
 
 /**
@@ -685,6 +718,7 @@ function parseExpeditorSection(blob) {
     blob,
     ['expeditor'],
     [
+      'adrese de livrare',
       'adresa de livrare',
       'adresa livrare',
       'aviz de expeditie',
@@ -701,9 +735,95 @@ function parseExpeditorSection(blob) {
   );
 }
 
+const DELIVERY_SECTION_STOPS = [
+  'client factura',
+  'client factură',
+  'client:',
+  'placuta de inmatriculare',
+  'transportator',
+  'comanda vanzare',
+  'termeni de livrare',
+  'termen de livrare',
+  'cod uit',
+  'num de comanda',
+  'solicitare client',
+  'expeditor',
+  'comanda de transport',
+  // Table under the delivery address — not part of the route (#70).
+  ...GOODS_TABLE_STOPS,
+];
+
+function emptyAddressBlock() {
+  return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
+}
+
+function isUsableAddressBlock(block) {
+  return Boolean(block && (block.streetName || block.locality));
+}
+
+function isBucharestAddressBlock(block) {
+  const loc = fold(block?.locality || '');
+  return /\bbucuresti\b/.test(loc) || /^sector(?:ul)?\s*[1-6]\b/.test(loc);
+}
+
+/**
+ * Baumit multi-stop sales sheets: "Adrese de livrare" + "Livrare 1:" / "Livrare 2:".
+ * Returns one block per stop, document order (#61).
+ */
+function parseMultiDeliveryBlocks(section) {
+  const folded = fold(section);
+  if (!folded.trim()) return [];
+  const markers = [];
+  const re = /\blivrare\s*(\d+)\s*[:.\-]?\s*/gi;
+  let m;
+  while ((m = re.exec(folded)) !== null) {
+    markers.push({ index: m.index, end: m.index + m[0].length, n: Number(m[1]) });
+  }
+  if (markers.length < 2) return [];
+
+  const blocks = [];
+  for (let i = 0; i < markers.length; i += 1) {
+    const from = markers[i].end;
+    const to = i + 1 < markers.length ? markers[i + 1].index : folded.length;
+    const chunk = folded.slice(from, to);
+    const interleaved = /\t/.test(chunk) || /\bc\d{8}\b/.test(chunk);
+    const block = parseDestBlock(chunk, { interleaved });
+    if (isUsableAddressBlock(block)) blocks.push(block);
+  }
+  return blocks;
+}
+
+/**
+ * Text above „Adresa de livrare” when OCR drops the Expeditor heading (#80).
+ * Site/street still print there; without this the route keeps only the delivery leg.
+ */
+function expeditorHeadFallback(blob) {
+  const folded = fold(blob);
+  let deliveryAt = -1;
+  for (const label of ['adrese de livrare', 'adresa de livrare', 'adresa livrare']) {
+    const i = folded.indexOf(label);
+    if (i >= 0 && (deliveryAt < 0 || i < deliveryAt)) deliveryAt = i;
+  }
+  if (deliveryAt <= 0) return '';
+  let from = 0;
+  const exp = folded.lastIndexOf('expeditor', deliveryAt);
+  if (exp >= 0) from = exp + 'expeditor'.length;
+  // Skip a leading title line ("Aviz de expeditie…") if we started at 0.
+  let head = folded.slice(from, deliveryAt);
+  if (from === 0) {
+    const nl = head.indexOf('\n');
+    if (nl >= 0 && /\baviz\b/.test(head.slice(0, nl))) head = head.slice(nl + 1);
+  }
+  return head.trim();
+}
+
 /** Street + locality under Expeditor (whatever street the document prints). */
 export function parseExpeditorAddress(blob) {
-  return parseDestBlock(parseExpeditorSection(blob));
+  const labelled = parseDestBlock(parseExpeditorSection(blob));
+  if (labelled?.streetName) return labelled;
+  const fallback = parseDestBlock(expeditorHeadFallback(blob));
+  if (fallback?.streetName) return fallback;
+  return labelled?.locality ? labelled : (fallback || emptyAddressBlock());
 }
 
 /**
@@ -715,10 +835,10 @@ export function originFromSiteDepozit(blob) {
   const section = fold(parseExpeditorSection(blob));
   let head = section;
   if (!head.trim()) {
-    // OCR dropped the "Expeditor" word — take text before Adresa de livrare only.
+    // OCR dropped the "Expeditor" word — take text before Adresa/Adrese de livrare only.
     const folded = fold(blob);
     let deliveryAt = -1;
-    for (const label of ['adresa de livrare', 'adresa livrare']) {
+    for (const label of ['adrese de livrare', 'adresa de livrare', 'adresa livrare']) {
       const i = folded.indexOf(label);
       if (i >= 0 && (deliveryAt < 0 || i < deliveryAt)) deliveryAt = i;
     }
@@ -765,49 +885,53 @@ export function originFromSiteDepozit(blob) {
   return null;
 }
 
-/** The `Adresă de livrare` block, parsed. Where the lorry ends up, and what a zone is read from. */
-export function parseDeliveryAddress(blob) {
-  // Stop at Client factură / transport. "Referința client" is a same-row column header —
-  // scrubbed as noise, not a hard stop (stopping there used to leave only "Str. Republicii").
+/**
+ * Every delivery stop on the page (one or many).
+ * Multi-stop: "Adrese de livrare" + Livrare 1 / Livrare 2 (#61).
+ */
+export function parseDeliveryAddresses(blob) {
   const section = sliceSection(
     blob,
-    ['adresa de livrare', 'adresa livrare'],
-    [
-      'client factura',
-      'client factură',
-      'placuta de inmatriculare',
-      'transportator',
-      'comanda vanzare',
-      'termeni de livrare',
-      'termen de livrare',
-      'cod uit',
-      'num de comanda',
-      'solicitare client',
-      'expeditor',
-    ]
+    ['adrese de livrare', 'adresa de livrare', 'adresa livrare'],
+    DELIVERY_SECTION_STOPS,
   );
+  const multi = parseMultiDeliveryBlocks(section);
+  if (multi.length) return multi;
+
+  // Stop at Client factură / transport. "Referința client" is a same-row column header —
+  // scrubbed as noise, not a hard stop (stopping there used to leave only "Str. Republicii").
   const foldedHead = fold(section).trimStart();
   const interleaved = /^(client\b|\S+\t)/.test(section.trimStart())
     || /\bc\d{8}\b/.test(foldedHead)
     || /\t/.test(section);
-  return parseDestBlock(section, { interleaved });
+  const one = parseDestBlock(section, { interleaved });
+  return isUsableAddressBlock(one) ? [one] : [];
 }
 
 /**
- * Route = [Expeditor street | Site-Depozit] / [Adresa de livrare street].
- * When Expeditor has no street, Site+Depozit (`MIL-NEAMTIU`) is the load origin.
- * Example: `MIL-NEAMTIU / Str. Republicii nr. 1F, Bolintin-Deal`.
+ * Primary delivery block for zone-tax fallback: București if present, else last stop (#61).
+ */
+export function parseDeliveryAddress(blob) {
+  const all = parseDeliveryAddresses(blob);
+  if (!all.length) return emptyAddressBlock();
+  return all.find(isBucharestAddressBlock) || all[all.length - 1];
+}
+
+/**
+ * Route = [Expeditor street | Site-Depozit] / [each delivery stop].
+ * Multi-stop example (#61):
+ * `Str. Industriei nr. 7, Bolintin-Deal / Strada Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti`.
  */
 function parseRoute(blob) {
   const originBlock = parseExpeditorAddress(blob);
-  const destBlock = parseDeliveryAddress(blob);
+  const destBlocks = parseDeliveryAddresses(blob);
   const streetOrigin = originBlock?.streetName ? formatAddressLine(originBlock) : null;
   const siteOrigin = streetOrigin ? null : originFromSiteDepozit(blob);
   const origin = streetOrigin || siteOrigin;
-  const dest = formatAddressLine(destBlock);
-  if (origin && dest) return `${origin} / ${dest}`;
-  if (dest) return dest;
-  return origin;
+  const dests = destBlocks.map(formatAddressLine).filter(Boolean);
+  const legs = [origin, ...dests].filter(Boolean);
+  if (!legs.length) return null;
+  return clipRouteGoodsTable(legs.join(' / '));
 }
 
 /**
@@ -895,8 +1019,9 @@ function preferQuantity(row, parsed) {
     if (Number(stored) !== Number(parsedQty)) {
       const raw = fold(row?.extracted_data?.raw_text || '');
       const hasPackagingTotal = /numar(?:ul)?\s+de\s+(galeti|saci|paleti)/i.test(raw);
-      const parsedIsPackaging = ['galeti', 'saci', 'paleti'].includes(
-        String(normalizeGoodsUnit(parsedTip) || parsedTip).toLowerCase(),
+      const parsedNorm = String(normalizeGoodsUnit(parsedTip) || parsedTip).toLowerCase();
+      const parsedIsPackaging = ['galeti', 'saci', 'paleti', 'saci/galeti', 'm3', 'mc', 'm³'].includes(
+        parsedNorm,
       );
       if (hasPackagingTotal || (parsedIsPackaging && Number(parsedQty) > Number(stored))) {
         return parsedQty;
@@ -947,9 +1072,10 @@ export function isSuspiciousRoute(value, rawText = null) {
   if (isFalseRoute(value)) return true;
   const s = String(value || '').trim();
   if (/\s\/\s/.test(s)) {
-    const [, dest] = s.split(/\s\/\s/).map((part) => part.trim());
-    // Delivery must be a street (or locality), never another Site-Depozit code alone.
-    if (looksLikeSiteCodeLeg(dest)) return true;
+    const parts = s.split(/\s\/\s/).map((part) => part.trim()).filter(Boolean);
+    const dests = parts.length >= 2 ? parts.slice(1) : parts;
+    // Every delivery leg must be a street (or locality), never another Site-Depozit code alone.
+    if (dests.some((dest) => looksLikeSiteCodeLeg(dest))) return true;
     return false;
   }
   // One leg only while the document has Expeditor + delivery → incomplete when a
@@ -957,7 +1083,9 @@ export function isSuspiciousRoute(value, rawText = null) {
   if (rawText) {
     const folded = fold(rawText);
     const hasOriginLabel = folded.includes('expeditor');
-    const hasDelivery = folded.includes('adresa de livrare') || folded.includes('adresa livrare');
+    const hasDelivery = folded.includes('adrese de livrare')
+      || folded.includes('adresa de livrare')
+      || folded.includes('adresa livrare');
     if (hasOriginLabel && hasDelivery) {
       const originStreet = parseExpeditorAddress(rawText)?.streetName;
       const siteOrigin = originFromSiteDepozit(rawText);

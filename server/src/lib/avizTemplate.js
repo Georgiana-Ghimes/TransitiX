@@ -176,14 +176,17 @@ const GOODS_UNIT_ALIASES = Object.freeze({
   kg: 'kg',
   role: 'role',
   colete: 'colete',
-  mc: 'mc',
-  m3: 'mc',
+  // Cubic metres — tip/unit shown as m³ (#63).
+  mc: 'm³',
+  m3: 'm³',
 });
 
 function foldGoodsToken(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
+    .replace(/m³/g, 'm3')
+    .replace(/³/g, '3')
     .normalize('NFD')
     .replace(/\p{M}/gu, '');
 }
@@ -192,6 +195,9 @@ function foldGoodsToken(value) {
 export function normalizeGoodsUnit(raw) {
   const folded = foldGoodsToken(raw);
   if (!folded) return null;
+  // Mixed bag+bucket tip (#62) — before startsWith('sac'), which would keep only saci.
+  const compact = folded.replace(/\s+/g, '');
+  if (compact === 'saci/galeti' || compact === 'galeti/saci') return 'saci/galeti';
   if (GOODS_UNIT_ALIASES[folded]) return GOODS_UNIT_ALIASES[folded];
   if (folded.startsWith('sac')) return 'saci';
   if (folded.startsWith('gal')) return 'galeti';

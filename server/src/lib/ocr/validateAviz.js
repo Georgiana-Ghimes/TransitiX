@@ -14,8 +14,39 @@ import {
   ocrFieldKeys,
   worstRouting,
 } from './avizFieldSchema.js';
+import {
+  detectHandCorrection,
+  isAcceptableAutoField,
+  isPlausibleLoadWeightKg,
+  LOAD_WEIGHT_MIN_KG,
+} from './fields.js';
+import { avizDocumentKeys } from './splitPdf.js';
 
 const DUPLICATE_LOOKBACK_DAYS = 90;
+
+/**
+ * Two (or more) distinct avize in one OCR blob — typical side-by-side driver photo (#59).
+ * Splitting a single JPEG is not available; force HITL so mixed values never look clean.
+ *
+ * @param {string} text
+ * @returns {{ document_numbers: string[], tpo_numbers: string[] } | null}
+ */
+export function detectMultipleAvizeInText(text) {
+  const document_numbers = [...avizDocumentKeys(text)].sort();
+  const tpo_numbers = [];
+  const seen = new Set();
+  const re = /\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)[\s\-._/:]*(\d{3,}(?:[-/.]\d+)*)/gi;
+  let m;
+  while ((m = re.exec(String(text || '')))) {
+    const norm = normalizeTpo(`TPO-${String(m[1]).replace(/[/.]/g, '-')}`, 3);
+    if (!norm || seen.has(norm)) continue;
+    seen.add(norm);
+    tpo_numbers.push(norm);
+  }
+  tpo_numbers.sort();
+  if (document_numbers.length < 2 && tpo_numbers.length < 2) return null;
+  return { document_numbers, tpo_numbers };
+}
 
 /** Bucharest calendar YYYY-MM-DD. */
 export function bucharestYmd(date = new Date()) {
@@ -70,11 +101,51 @@ function finding({
  * Sync field / format rules (no DB).
  * @param {object} values column-shaped values
  * @param {object} [fields] extract field objects { confidence, status, value }
- * @param {{ today?: string }} [options]
+ * @param {{ today?: string, rawText?: string }} [options]
  */
-export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
+export function validateAvizFields(values = {}, fields = {}, { today, rawText } = {}) {
   const findings = [];
   const day = today || bucharestYmd();
+
+  const multi = detectMultipleAvizeInText(rawText);
+  if (multi) {
+    const labels = [
+      ...multi.document_numbers.slice(0, 4),
+      ...multi.tpo_numbers.slice(0, 4),
+    ];
+    const seen = new Set();
+    const unique = labels.filter((x) => (seen.has(x) ? false : (seen.add(x), true)));
+    findings.push(finding({
+      rule: 'multiple_avize_in_image',
+      severity: 'error',
+      field: null,
+      title: 'Mai multe avize în aceeași poză',
+      message: unique.length
+        ? `Poza conține mai multe avize (${unique.join(', ')}). Separă-le în poze distincte — valorile pot fi amestecate.`
+        : 'Poza conține mai multe avize. Separă-le în poze distincte — valorile pot fi amestecate.',
+      source: 'rule_failed',
+    }));
+  }
+
+  // Printed figures struck with pen + handwritten fix (#65). Force HITL even if OCR kept the print.
+  if (detectHandCorrection(rawText).present) {
+    findings.push(finding({
+      rule: 'hand_correction_on_document',
+      severity: 'error',
+      field: 'cantitate_marfa',
+      title: 'Corectură pe document',
+      message: 'Pe aviz există o corectură de mână (valori tăiate). Verifică Cantitatea — tipăritul poate fi greșit.',
+      source: 'rule_failed',
+    }));
+    findings.push(finding({
+      rule: 'hand_correction_on_document',
+      severity: 'error',
+      field: 'gross_weight_kg',
+      title: 'Corectură pe document',
+      message: 'Pe aviz există o corectură de mână (valori tăiate). Verifică Greutatea brută — tipăritul poate fi greșit.',
+      source: 'rule_failed',
+    }));
+  }
 
   const tpoRaw = values.numar_tpo;
   const tpo = normalizeTpo(tpoRaw, 1);
@@ -99,11 +170,12 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
   const dateRaw = values.data_efectuare_cursa;
   const dateYmd = parseAvizDate(dateRaw);
   if (!String(dateRaw || '').trim()) {
+    // Folded corner / glare often hides „Data avizului…” — empty is correct; HITL must ask to type it (#81).
     findings.push(finding({
       rule: 'date_missing',
       field: 'data_efectuare_cursa',
       title: 'Dată cursă lipsă',
-      message: 'Data efectuării cursei lipsește.',
+      message: 'Data efectuării cursei lipsește pe poză (colț îndoit / OCR) — completează manual Data efectuare cursă.',
       source: 'rule_failed',
     }));
   } else if (!dateYmd) {
@@ -126,12 +198,13 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
         source: 'rule_failed',
       }));
     } else if (dateYmd < minOk) {
+      // OCR often turns 2026→2020; a multi-year-old trip date on a fresh upload is an error (#77).
       findings.push(finding({
         rule: 'date_too_old',
         field: 'data_efectuare_cursa',
-        severity: 'warning',
+        severity: 'error',
         title: 'Dată foarte veche',
-        message: `Data ${dateYmd} e cu peste un an în urmă.`,
+        message: `Data ${dateYmd} e cu peste un an în urmă — verifică anul pe poză (OCR confundă des 6 cu 0).`,
         source: 'rule_failed',
       }));
     }
@@ -139,14 +212,15 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
 
   const plateRaw = values.numar_auto;
   if (String(plateRaw || '').trim()) {
-    const plate = normalizePlate(plateRaw) || (String(plateRaw).match(/\bTEST/i) ? String(plateRaw).trim() : null);
-    if (!plate) {
+    const plate = normalizePlate(plateRaw)
+      || (String(plateRaw).match(/\bTEST/i) ? String(plateRaw).trim() : null);
+    if (!plate || !isAcceptableAutoField(plate)) {
       findings.push(finding({
         rule: 'plate_implausible',
         field: 'numar_auto',
         severity: 'warning',
         title: 'Plăcuță neverosimilă',
-        message: `„${String(plateRaw).slice(0, 40)}” nu arată ca o plăcuță RO.`,
+        message: `„${String(plateRaw).slice(0, 40)}” nu arată ca o plăcuță cunoscută (RO sau UE).`,
         source: 'rule_failed',
       }));
     }
@@ -170,6 +244,19 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
       severity: 'warning',
       title: 'Nr. document fără format PSL/TRO',
       message: `„${docRaw.slice(0, 40)}” nu arată ca un număr de aviz (PSL-/TRO-).`,
+      source: 'rule_failed',
+    }));
+  } else if (
+    !docRaw
+    && /(?:aviz\s+de\s+expedi[tț]ie|comand[aă]\s+de\s+transfer)/i.test(String(rawText || ''))
+  ) {
+    // Label visible but code lost to glare / TRO→TPO misread left empty (#75).
+    findings.push(finding({
+      rule: 'doc_no_missing',
+      field: 'numar_document_marfa',
+      severity: 'error',
+      title: 'Nr. document marfă lipsă',
+      message: 'Pe poză există „Aviz de expediție” / „Comanda de transfer”, dar numărul (PSL-/TRO-) nu s-a citit — verifică pe poză.',
       source: 'rule_failed',
     }));
   }
@@ -202,27 +289,103 @@ export function validateAvizFields(values = {}, fields = {}, { today } = {}) {
         message: `${fieldMeta(key)?.label || key} trebuie să fie un număr pozitiv.`,
         source: 'rule_failed',
       }));
+      continue;
+    }
+    // Gross of 12 kg is usually CMR box 12 (volume), not the weighbridge (#66).
+    if (key === 'gross_weight_kg' && !isPlausibleLoadWeightKg(n)) {
+      findings.push(finding({
+        rule: 'weight_implausible_low',
+        field: key,
+        severity: 'error',
+        title: 'Greutate brută neverosimilă',
+        message: n < LOAD_WEIGHT_MIN_KG
+          ? `${n} kg e prea mică pentru un transport — verifică căsuța 11 (greutate), nu 12.`
+          : `${n} kg nu poate fi greutatea brută a unui camion.`,
+        source: 'rule_failed',
+      }));
     }
   }
 
-  // Low-confidence / missing critical OCR fields (routing signal).
+  // Gross below net cannot be right (stain / OCR dropping a thousands digit → #73).
+  {
+    const gross = Number(values.gross_weight_kg);
+    const net = Number(values.net_weight_kg);
+    if (
+      Number.isFinite(gross)
+      && Number.isFinite(net)
+      && gross > 0
+      && net > 0
+      && gross + 0.05 < net
+    ) {
+      findings.push(finding({
+        rule: 'gross_below_net',
+        field: 'gross_weight_kg',
+        severity: 'error',
+        title: 'Greutate brută sub netă',
+        message: `Brută ${gross} kg e sub neta ${net} kg — cifra e probabil ilizibilă; verifică pe poză.`,
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Net filled but gross empty while the page names „Greutate brută” — coffee stain / OCR miss (#74).
+  {
+    const grossRaw = values.gross_weight_kg;
+    const net = Number(values.net_weight_kg);
+    const grossEmpty = grossRaw == null || String(grossRaw).trim() === '';
+    const hasGrossLabel = /greutate\s*(?:bruta|brută)|masa\s*(?:bruta|brută)|gross\s*weight/i.test(
+      String(rawText || ''),
+    );
+    if (grossEmpty && Number.isFinite(net) && net > 0 && hasGrossLabel) {
+      findings.push(finding({
+        rule: 'gross_missing_near_net',
+        field: 'gross_weight_kg',
+        severity: 'error',
+        title: 'Greutate brută ilizibilă',
+        message: `Neta e ${net} kg, dar greutatea brută lipsește — verifică pe poză (pată / OCR). Fără brută nu se calculează taxa zonă.`,
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Tip + Cantitate both empty while the page clearly has a goods table (#76).
+  {
+    const tipEmpty = !String(values.tip_marfa || '').trim();
+    const qtyEmpty = !String(values.cantitate_marfa ?? values.quantity ?? '').trim();
+    const raw = String(rawText || '');
+    const hasGoodsTable = (
+      /\b11\d{5,7}\b/.test(raw)
+      || /\b(?:cantitate|ambalaj|descriere)\b/i.test(raw)
+      || /\b\d{2}\s*kg\b/i.test(raw)
+    );
+    if (tipEmpty && qtyEmpty && hasGoodsTable) {
+      findings.push(finding({
+        rule: 'goods_missing',
+        field: 'cantitate_marfa',
+        severity: 'error',
+        title: 'Tip marfă / Cantitate lipsă',
+        message: 'Pe poză există tabel de marfă, dar tipul și cantitatea nu s-au citit — verifică pe poză (lumină / OCR).',
+        source: 'rule_failed',
+      }));
+      findings.push(finding({
+        rule: 'goods_missing',
+        field: 'tip_marfa',
+        severity: 'error',
+        title: 'Tip marfă / Cantitate lipsă',
+        message: 'Pe poză există tabel de marfă, dar tipul și cantitatea nu s-au citit — verifică pe poză (lumină / OCR).',
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Low-confidence OCR fields (routing signal). Empty values are covered by dedicated
+  // missing rules (date_missing, tpo_missing, …) — do not also emit „Scor OCR 0%” (#81).
   for (const key of ocrFieldKeys()) {
     const meta = fieldMeta(key);
     if (!meta) continue;
     const field = fields[key] || fields[key === 'cantitate_marfa' ? 'quantity' : key];
     const conf = field?.confidence;
-    if (conf == null && !String(values[key] ?? '').trim()) {
-      if (meta.critical) {
-        findings.push(finding({
-          rule: 'critical_low_confidence',
-          field: key,
-          title: `${meta.label} necunoscut`,
-          message: `Câmpul critic ${meta.label} lipsește după OCR.`,
-          source: 'low_confidence',
-        }));
-      }
-      continue;
-    }
+    if (!String(values[key] ?? '').trim()) continue;
     if (conf == null) continue;
     const band = confidenceBand(key, conf);
     if (band === ROUTING.HITL_REQUIRED) {
@@ -325,8 +488,9 @@ export async function validateAvizExtraction({
   documentId,
   queryFn,
   today,
+  rawText,
 } = {}) {
-  const findings = validateAvizFields(values, fields, { today });
+  const findings = validateAvizFields(values, fields, { today, rawText });
 
   if (queryFn && companyId) {
     const dup = await findDuplicateSuspect(queryFn, {

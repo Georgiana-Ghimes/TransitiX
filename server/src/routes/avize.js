@@ -199,8 +199,9 @@ function decorateAviz(row, { routeRules = [] } = {}) {
     || mapProviderToSource(withRoute.extracted_data?.provider);
   const validation = withRoute.extracted_data?.validation ?? null;
   const field_confidence = fieldConfidenceForUi(withRoute);
-  const heuristicReview = ['numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa']
-    .some((key) => field_confidence[key] === 'low');
+  const heuristicReview = [
+    'numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa', 'data_efectuare_cursa',
+  ].some((key) => field_confidence[key] === 'low');
   const existingRouting = validation?.routing ?? null;
   const validation_routing = heuristicReview
     && (!existingRouting || existingRouting === 'auto')

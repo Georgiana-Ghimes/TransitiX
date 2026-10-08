@@ -5,11 +5,13 @@ import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
 import { Loader2, Pencil, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
-import { inputCls, isLearnedRoute, labelCls, lowField } from './avizeUi';
+import { avizEditFindings, findingsForField, inputCls, isLearnedRoute, labelCls, lowField } from './avizeUi';
 
 export default function AvizEditModal({
   editRow, form, setForm, obsCodes, saving, onClose, onSave, onAppendObs,
 }) {
+  const reviewFindings = avizEditFindings(editRow, { form });
+
   return (
     <ModalShell
       onClose={onClose}
@@ -35,30 +37,54 @@ export default function AvizEditModal({
 
           <div className="min-h-0 overflow-y-auto overscroll-contain pr-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {AVIZ_FORM_FIELDS.map((f) => (
-                <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
-                  <label className={labelCls}>{f.label}</label>
-                  {f.type === 'date' ? (
-                    <RoDateField
-                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
-                      value={form[f.key] ?? ''}
-                      onChange={(iso) => setForm((prev) => ({ ...prev, [f.key]: iso }))}
-                      aria-label={f.label}
-                    />
-                  ) : (
-                    <input
-                      className={`${inputCls} ${lowField(editRow, f.key) ? 'border-amber-300' : ''}`}
-                      type={f.type || 'text'}
-                      step={f.step}
-                      value={form[f.key] ?? ''}
-                      onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-                    />
-                  )}
-                  {f.key === 'ruta_transport' && isLearnedRoute(editRow) ? (
-                    <p className="mt-1 text-[11px] text-slate-500">Completat din regulă învățată</p>
-                  ) : null}
+              {AVIZ_FORM_FIELDS.map((f) => {
+                const fieldFindings = findingsForField(reviewFindings, f.key);
+                const needsAttention = lowField(editRow, f.key) || fieldFindings.length > 0;
+                return (
+                  <div key={f.key} className={f.key === 'ruta_transport' || f.key === 'observatii' ? 'sm:col-span-2' : ''}>
+                    <label className={labelCls}>{f.label}</label>
+                    {f.type === 'date' ? (
+                      <RoDateField
+                        className={`${inputCls} ${needsAttention ? 'border-amber-300' : ''}`}
+                        value={form[f.key] ?? ''}
+                        onChange={(iso) => setForm((prev) => ({ ...prev, [f.key]: iso }))}
+                        aria-label={f.label}
+                      />
+                    ) : (
+                      <input
+                        className={`${inputCls} ${needsAttention ? 'border-amber-300' : ''}`}
+                        type={f.type || 'text'}
+                        step={f.step}
+                        value={form[f.key] ?? ''}
+                        onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      />
+                    )}
+                    {f.key === 'ruta_transport' && isLearnedRoute(editRow) ? (
+                      <p className="mt-1 text-[11px] text-slate-500">Completat din regulă învățată</p>
+                    ) : null}
+                    {fieldFindings.map((issue) => (
+                      <p
+                        key={`${issue.rule}-${issue.field}`}
+                        className="mt-1 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1"
+                      >
+                        <span className="font-semibold">{issue.title}</span>
+                        {issue.message ? ` — ${issue.message}` : ''}
+                      </p>
+                    ))}
+                  </div>
+                );
+              })}
+              {reviewFindings.length > 0 && (
+                <div className="sm:col-span-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 space-y-1">
+                  <p className="font-medium">Verificare necesară</p>
+                  {reviewFindings.map((issue, idx) => (
+                    <p key={`${issue.rule}-${issue.field || 'x'}-${idx}`}>
+                      <span className="font-semibold">{issue.title}</span>
+                      {issue.message ? ` — ${issue.message}` : ''}
+                    </p>
+                  ))}
                 </div>
-              ))}
+              )}
               <AvizZoneTaxPanel editRow={editRow} form={form} setForm={setForm} />
               <div className="sm:col-span-2">
                 <p className="text-xs text-slate-500 mb-1">Coduri observații (textul rămâne editabil)</p>

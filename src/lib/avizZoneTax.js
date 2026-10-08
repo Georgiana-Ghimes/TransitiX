@@ -190,15 +190,29 @@ const ROUTE_TYPE_TO_QUERY = {
 const ROUTE_TYPE_CAPTURE = String.raw`Str\.?|Șoseaua|Soseaua|Șosea|Sosea|Sos\.?|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea`;
 
 /**
- * Delivery half of `ruta_transport` — everything after ` / `.
+ * Origin / destination separators drivers and the office actually type (#71).
+ * Spaced `-` only — never `Bolintin-Deal`. Arrows and ` / ` are unambiguous.
+ */
+const ROUTE_LEG_SPLIT = /\s*(?:→|->|–|—)\s*|\s+\/\s+|\s+-\s+/;
+
+/**
+ * Delivery half of `ruta_transport` for zone tax.
+ * Multi-stop (#61): prefer a București leg among destinations; else the last stop.
  * Single-leg routes (delivery only) are used as-is.
+ * Separators `→` / `->` / ` - ` / ` / ` must all yield the same delivery leg (#71).
  */
 export function deliveryLegFromRuta(ruta) {
   const s = String(ruta || '').trim();
   if (!s) return null;
-  const parts = s.split(/\s\/\s/);
-  const leg = (parts.length >= 2 ? parts[parts.length - 1] : parts[0]).trim();
-  return leg || null;
+  const parts = s.split(ROUTE_LEG_SPLIT).map((p) => p.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const delivery = parts.length >= 2 ? parts.slice(1) : parts;
+  const bucharest = delivery.find((leg) => {
+    const loc = foldLocality(leg);
+    return /\bbucuresti\b/.test(loc) || /,?\s*sector(?:ul)?\s*[1-6]\b/.test(loc);
+  });
+  if (bucharest) return bucharest;
+  return delivery[delivery.length - 1] || null;
 }
 
 /**
@@ -322,8 +336,8 @@ export function zoneMapHref(address, { plate = null } = {}) {
 /**
  * The delivery address, in the shape the street index wants.
  *
- * Prefer the leg after ` / ` in `ruta_transport` (what the operator sees and edits). Fall
- * back to OCR `delivery_address` when the route has no usable delivery half.
+ * Prefer the delivery leg of `ruta_transport` (after ` / `, `→`, `->`, or spaced `-`).
+ * Fall back to OCR `delivery_address` when the route has no usable delivery half.
  */
 export function avizDeliveryAddress(aviz) {
   const addr = aviz?.delivery_address ?? null;

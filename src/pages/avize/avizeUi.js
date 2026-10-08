@@ -274,3 +274,33 @@ export async function waitForAvizExtractSettled(id, fetchRow, {
 export function lowField(row, key) {
   return row?.field_confidence?.[key] === 'low';
 }
+
+/**
+ * Validation findings stored on extract (decorateAviz also mirrors them as validation_findings).
+ * Info / duplicate badges stay out of the edit-form review strip.
+ */
+export function avizEditFindings(row, { form } = {}) {
+  const raw = row?.validation_findings
+    ?? row?.extracted_data?.validation?.findings
+    ?? [];
+  if (!Array.isArray(raw) || !raw.length) return [];
+  const seen = new Set();
+  const out = [];
+  for (const f of raw) {
+    if (!f || f.severity === 'info' || f.source === 'duplicate_suspect') continue;
+    if (f.severity !== 'error' && f.severity !== 'warning') continue;
+    // Hide a field finding once the operator has typed a value in Editează (#81).
+    if (form && f.field && String(form[f.field] ?? '').trim()) continue;
+    const key = `${f.rule}|${f.field || ''}|${f.message || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(f);
+  }
+  return out;
+}
+
+/** Findings that belong under one form field (or under the strip when field is null). */
+export function findingsForField(findings, fieldKey) {
+  if (!Array.isArray(findings) || !fieldKey) return [];
+  return findings.filter((f) => f.field === fieldKey);
+}

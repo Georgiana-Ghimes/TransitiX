@@ -15,7 +15,7 @@ import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit, looksLikeOcrGoodsDump, packagingWordIn } from '../lib/ocr/fields.js';
-import { ensureVehicleForPlate } from '../lib/fleet/plateRegistry.js';
+import { ensureVehicleForPlate, resolveOcrPlateAgainstFleet } from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import {
@@ -315,6 +315,29 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
 
       // Route is structural only: Expeditor + Adresa de livrare slices (no LLM), unless learned.
       const columns = toColumns(merged.values);
+      // Night OCR often flips one tractor digit (B-29-NKL → B-23-NKL). Prefer Autoturisme (#78).
+      if (columns.numar_auto) {
+        try {
+          const plateFix = await resolveOcrPlateAgainstFleet(query, companyId, columns.numar_auto);
+          if (plateFix.repaired && plateFix.numarAuto) {
+            columns.numar_auto = plateFix.numarAuto;
+            merged.values = { ...merged.values, numar_auto: plateFix.numarAuto };
+            if (merged.fields?.numar_auto) {
+              merged.fields.numar_auto = {
+                ...merged.fields.numar_auto,
+                value: plateFix.numarAuto,
+                confidence: Math.min(Number(merged.fields.numar_auto.confidence) || 0.9, 0.55),
+                status: 'review',
+                matched: plateFix.from && plateFix.to
+                  ? `${plateFix.from}→${plateFix.to}`
+                  : merged.fields.numar_auto.matched,
+              };
+            }
+          }
+        } catch (err) {
+          console.error('[documents] fleet plate repair failed', err);
+        }
+      }
       const fieldsForValidation = { ...(merged.fields || {}) };
       if (fieldsForValidation.quantity && !fieldsForValidation.cantitate_marfa) {
         fieldsForValidation.cantitate_marfa = fieldsForValidation.quantity;
@@ -329,6 +352,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         companyId,
         documentId: doc.id,
         queryFn: query,
+        rawText: text.text,
       });
       const needsReview = Boolean(validation.needs_review);
       const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
@@ -925,6 +949,7 @@ router.put('/:id/corrections', async (req, res) => {
       companyId: req.user.company_id,
       documentId: doc.id,
       queryFn: query,
+      rawText: doc.extracted_data?.raw_text,
     });
     const needsReview = Boolean(validation.needs_review);
 

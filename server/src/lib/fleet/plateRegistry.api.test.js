@@ -4,7 +4,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { pool, query } from '../../db.js';
 import {
-  ensureVehicleForPlate, mmaForPlate, primaryPlate, vehiclesMissingMma,
+  ensureVehicleForPlate, mmaForPlate, primaryPlate, resolveOcrPlateAgainstFleet, vehiclesMissingMma,
 } from './plateRegistry.js';
 import { closePool, dropCompany, seedCompany } from '../../test/harness.js';
 
@@ -121,6 +121,31 @@ describe('what still needs an MTMA', () => {
       [ctx.company.id],
     );
     expect(await vehiclesMissingMma(pool, ctx.company.id)).toEqual([]);
+  });
+});
+
+describe('resolveOcrPlateAgainstFleet (#78)', () => {
+  it('rewrites a one-digit OCR slip to the Autoturisme tractor', async () => {
+    await wipe();
+    await query(
+      `INSERT INTO vehicles (company_id, plate, mma_kg, is_active)
+       VALUES ($1, 'B-29-NKL', 40000, TRUE), ($1, 'B-81-NKL', NULL, TRUE)`,
+      [ctx.company.id],
+    );
+    const fixed = await resolveOcrPlateAgainstFleet(pool, ctx.company.id, 'B-23-NKL / B-81-NKL');
+    expect(fixed.repaired).toBe(true);
+    expect(fixed.numarAuto).toBe('B-29-NKL / B-81-NKL');
+
+    // ensure must not invent a phantom B-23-NKL when B-29-NKL is already filed.
+    const ensured = await ensureVehicleForPlate(pool, ctx.company.id, 'B-23-NKL / B-81-NKL');
+    expect(ensured.created).toBe(false);
+    expect(ensured.repaired).toBe(true);
+    expect(ensured.vehicle.plate).toBe('B-29-NKL');
+    const phantoms = await query(
+      `SELECT plate FROM vehicles WHERE company_id = $1 AND plate = 'B-23-NKL'`,
+      [ctx.company.id],
+    );
+    expect(phantoms.rows).toHaveLength(0);
   });
 });
 

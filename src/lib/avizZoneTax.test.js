@@ -231,6 +231,30 @@ describe('deliveryLegFromRuta / parseSpacedRouteLeg', () => {
     )).toBe('Bvd. Iuliu Maniu nr. 600A, Bucuresti');
   });
 
+  it('takes the delivery leg after → / -> / spaced - the same as after / (#71)', () => {
+    const dest = 'Șoseaua Viilor nr. 52, București';
+    expect(deliveryLegFromRuta(`BOL Bolintin → ${dest}`)).toBe(dest);
+    expect(deliveryLegFromRuta(`BOL Bolintin -> ${dest}`)).toBe(dest);
+    expect(deliveryLegFromRuta(`BOL Bolintin - ${dest}`)).toBe(dest);
+    expect(deliveryLegFromRuta(`BOL Bolintin / ${dest}`)).toBe(dest);
+    // Glued hyphen in a place name is not a leg separator.
+    expect(deliveryLegFromRuta('Str. Republicii nr. 1F, Bolintin-Deal')).toBe(
+      'Str. Republicii nr. 1F, Bolintin-Deal',
+    );
+  });
+
+  it('prefers the București stop on a multi-delivery route (#61)', () => {
+    expect(deliveryLegFromRuta(
+      'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
+    )).toBe('Bvd. Aviatorilor nr. 72, Bucuresti');
+  });
+
+  it('still finds București when it is not the last stop (#61)', () => {
+    expect(deliveryLegFromRuta(
+      'Str. Industriei nr. 7, Bolintin-Deal / Bvd. Aviatorilor nr. 72, Bucuresti / Str. Gheorghe Doja nr. 51, Ploiesti',
+    )).toBe('Bvd. Aviatorilor nr. 72, Bucuresti');
+  });
+
   it('parses type, name, number and locality for the street index', () => {
     expect(parseSpacedRouteLeg('Bvd. Iuliu Maniu nr. 600A, Bucuresti')).toEqual({
       street: 'bulevardul Iuliu Maniu',
@@ -288,6 +312,36 @@ describe('avizDeliveryAddress', () => {
     expect(out).toMatchObject({
       street: 'soseaua Viilor',
       number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    });
+  });
+
+  it('resolves zone-tax address the same for → and / (#71)', () => {
+    const dest = 'Șoseaua Viilor nr. 52, București';
+    const expected = {
+      street: 'soseaua Viilor',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    };
+    expect(avizDeliveryAddress({ ruta_transport: dest })).toMatchObject(expected);
+    expect(avizDeliveryAddress({ ruta_transport: `BOL Bolintin → ${dest}` })).toMatchObject(expected);
+    expect(avizDeliveryAddress({ ruta_transport: `BOL Bolintin -> ${dest}` })).toMatchObject(expected);
+    expect(avizDeliveryAddress({ ruta_transport: `BOL Bolintin - ${dest}` })).toMatchObject(expected);
+    expect(avizDeliveryAddress({ ruta_transport: `BOL Bolintin / ${dest}` })).toMatchObject(expected);
+  });
+
+  it('uses the București stop on a multi-delivery route for zone tax (#61)', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport:
+        'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
+    });
+    expect(out).toMatchObject({
+      street: 'bulevardul Aviatorilor',
+      number: '72',
       locality: 'Bucuresti',
       cityId: 'bucuresti',
       supported: true,

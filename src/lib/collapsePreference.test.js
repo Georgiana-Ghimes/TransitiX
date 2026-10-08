@@ -46,6 +46,7 @@ describe('round trip', () => {
 describe('when there is nothing to read', () => {
   it('falls back for a key never written', () => {
     expect(readCollapsed('nou')).toBe(false);
+    // AvizLegend passes true so the action legend starts collapsed (#67).
     expect(readCollapsed('nou', true)).toBe(true);
   });
 

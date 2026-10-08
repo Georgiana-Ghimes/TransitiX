@@ -68,8 +68,9 @@ export function sanitizeOcrText(text) {
   // Bold/italic markers from Mistral markdown (`**72.00** buc` must stay a number + unit).
   out = out.replace(/\*\*|__/g, '');
   // Quantity and unit split across table cells: `| 72.00 | buc |` → `72.00 buc`.
+  // Include m3 / m³ / mc — volume on carnet slot 7 often arrives as a markdown cell (#69).
   out = out.replace(
-    /(\d[\d.,]*)\s*\|\s*(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?|ga1eti|galei)\b/gi,
+    /(\d[\d.,]*)\s*\|\s*(saci?|pal(?:eti|et)?|buc(?:ati)?|pcs|pce|gal(?:eti|eata)?|ga1eti|galei|m\s*³|m\s*3|mc)\b/gi,
     '$1 $2',
   );
   // Remaining pipes are cell borders, not content.
@@ -94,6 +95,25 @@ export function normalizeOcrText(text) {
   out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._/:]*\d)/gi, '$1 $2');
   out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._/:]*[\dOIl])/gi, ' $1');
 
+  // Yellow / night wash often splits packaging units: "s ac" / "sa c" → sac (#76).
+  out = out.replace(/\b([0-9][\d.,]*)\s+s\s+ac\b/gi, '$1 sac');
+  out = out.replace(/\b([0-9][\d.,]*)\s+sa\s+c\b/gi, '$1 sac');
+
+  // Date years: OCR letter O for zero (`02.10.202O`) (#77).
+  out = out.replace(
+    /\b(\d{1,2}[.\-/]\d{1,2}[.\-/])([12][\dOo]{3})\b/g,
+    (_, lead, year) => `${lead}${String(year).replace(/[Oo]/g, '0')}`,
+  );
+
+  // RAI depot / Bolintin place names under night grain (#79). Do not touch MBMARFA / MD MARFA.
+  out = out.replace(/\bMIMARFA\b/gi, 'MMARFA');
+  out = out.replace(/\bMIIMARFA\b/gi, 'MMARFA');
+  out = out.replace(/\bMMMARFA\b/gi, 'MMARFA');
+  out = out.replace(/\bBolintin[\s\-._]*Dina\b/gi, 'Bolintin-Deal');
+  out = out.replace(/\bBolintin[\s\-._]*Dea[l1I]\b/gi, 'Bolintin-Deal');
+  // Str. Industriei often becomes „Industriului” in dark photos.
+  out = out.replace(/\bIndustriului\b/gi, 'Industriei');
+
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(
     /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
@@ -112,9 +132,9 @@ export function normalizeOcrText(text) {
     }
   );
 
-  // TRO codes (Baumit variant)
+  // TRO codes (Baumit variant). Glare / low contrast also yields IRO / TRQ (#75).
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0Q]|I[\s]?R[\s]?[O0])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TRO', digits);
       return code ? `${lead}${code}` : full;

@@ -10,6 +10,8 @@ import {
   hasManualAvizEdits,
   isLearnedRoute,
   isLockedRai,
+  avizEditFindings,
+  findingsForField,
   lowField,
   manualAvizEditLabels,
   requiresAnnexReviewGate,
@@ -133,6 +135,22 @@ describe('avizeUi', () => {
   it('marks low-confidence fields', () => {
     expect(lowField({ field_confidence: { numar_tpo: 'low' } }, 'numar_tpo')).toBe(true);
     expect(lowField({}, 'numar_tpo')).toBe(false);
+  });
+
+  it('surfaces date_missing in Editează until the operator types a date (#81)', () => {
+    const row = {
+      validation_findings: [{
+        rule: 'date_missing',
+        severity: 'error',
+        field: 'data_efectuare_cursa',
+        title: 'Dată cursă lipsă',
+        message: 'completează manual Data efectuare cursă',
+      }],
+    };
+    const open = avizEditFindings(row, { form: { data_efectuare_cursa: '' } });
+    expect(open).toHaveLength(1);
+    expect(findingsForField(open, 'data_efectuare_cursa')).toHaveLength(1);
+    expect(avizEditFindings(row, { form: { data_efectuare_cursa: '2026-10-05' } })).toEqual([]);
   });
 
   it('seeds edit form from a row including trip_id', () => {
