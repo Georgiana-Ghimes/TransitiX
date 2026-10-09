@@ -21,11 +21,16 @@ function pathOf(link) {
 
 /**
  * Map full-TMS paths onto screens companion actually has.
- * `/vehicles` → Autoturisme (`/fleet`).
+ * `/vehicles` → Autoturisme (`/fleet`); vehicle document_expiry → ITP board.
  */
-export function companionNotificationLink(link) {
+export function companionNotificationLink(link, item) {
   const path = pathOf(link);
-  if (path === '/vehicles' || path.startsWith('/vehicles/')) return '/fleet';
+  if (path === '/vehicles' || path.startsWith('/vehicles/')) {
+    // Server stamps every vehicle-doc expiry with `/vehicles`. Companion has no Flotă
+    // full screen — the ITP board is where dates are edited until RCA etc. land.
+    if (item?.type === 'document_expiry') return '/fleet/itp';
+    return '/fleet';
+  }
   return link || null;
 }
 
@@ -35,7 +40,7 @@ export function companionNotificationLink(link) {
 export function isCompanionRelevantNotification(item) {
   if (!item || !COMPANION_TYPES.has(item.type)) return false;
 
-  const link = companionNotificationLink(item.link);
+  const link = companionNotificationLink(item.link, item);
   const path = pathOf(link);
 
   // No destination (or only dead full-TMS destinations) → drop.
@@ -56,5 +61,5 @@ export function filterNotificationsForProfile(items, { companion = isDocumentsPr
   if (!companion) return list;
   return list
     .filter(isCompanionRelevantNotification)
-    .map((n) => ({ ...n, link: companionNotificationLink(n.link) }));
+    .map((n) => ({ ...n, link: companionNotificationLink(n.link, n) }));
 }

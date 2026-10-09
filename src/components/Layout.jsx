@@ -5,8 +5,8 @@ import { useAuth } from '@/lib/AuthContext';
 import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   LogOut, Menu, X, Building2, MapPin, Brain, Package,
-  ChevronsLeft, ChevronsRight, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map,
+  ChevronsLeft, ChevronsRight, ChevronDown, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map, CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -29,6 +29,7 @@ import GlobalSearch from '@/components/GlobalSearch';
 import OfficeTour from '@/components/OfficeTour';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import BrandLogo from '@/components/BrandLogo';
+import { navGroupActive, navPathActive } from '@/lib/layoutNav';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -62,7 +63,15 @@ const COMPANION_OFFICE_NAV = [
   { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
   { label: 'Harta zonelor', path: '/zone-map', icon: Map },
-  { label: 'Autoturisme', path: '/fleet', icon: Truck },
+  {
+    label: 'Flotă',
+    path: '/fleet',
+    icon: Truck,
+    children: [
+      { label: 'Autoturisme', path: '/fleet', icon: Truck },
+      { label: 'ITP', path: '/fleet/itp', icon: CalendarClock },
+    ],
+  },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'transitix_sidebar_collapsed';
@@ -112,6 +121,13 @@ export default function Layout() {
   });
   const [tourOpen, setTourOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
+  const [flotaOpen, setFlotaOpen] = useState(() =>
+    String(location.pathname || '').startsWith('/fleet')
+  );
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/fleet')) setFlotaOpen(true);
+  }, [location.pathname]);
 
   const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
   const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
@@ -206,7 +222,6 @@ export default function Layout() {
     await api.auth.logout();
   };
 
-  const isActive = (path) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
   const displayName = user?.full_name || user?.name || user?.email || 'Utilizator';
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const roleLabel = { admin: 'Admin', dispatcher: 'Dispecer', driver: 'Șofer', finance: 'Finance' }[user?.role] || user?.role || '';
@@ -325,8 +340,78 @@ export default function Layout() {
           <ul className="space-y-1">
             {navItems.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
               const Icon = item.icon;
-              const active = isActive(item.path);
+              const children = Array.isArray(item.children) ? item.children : null;
+              const groupActive = navGroupActive(location.pathname, item);
               const highlighted = isDesktop && tourOpen && tourNavPath === item.path;
+
+              if (children?.length) {
+                const open = flotaOpen || groupActive;
+                return (
+                  <li key={`group-${item.label}`}>
+                    {showIconsOnly ? (
+                      <Link
+                        to={children[0].path}
+                        title={item.label}
+                        onClick={() => { if (!tourOpen) setMobileOpen(false); }}
+                        className={cn(
+                          'flex items-center justify-center h-11 px-0 rounded-lg text-sm font-medium transition-colors',
+                          groupActive
+                            ? 'bg-[#1D4E89] text-white'
+                            : 'text-white/70 hover:text-white hover:bg-white/5',
+                        )}
+                      >
+                        <Icon className="w-5 h-5 shrink-0" />
+                      </Link>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setFlotaOpen((v) => !v)}
+                          className={cn(
+                            'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                            groupActive
+                              ? 'bg-[#1D4E89]/60 text-white'
+                              : 'text-white/70 hover:text-white hover:bg-white/5',
+                          )}
+                          aria-expanded={open}
+                        >
+                          <Icon className="w-5 h-5 shrink-0" />
+                          <span className="truncate flex-1 text-left">{item.label}</span>
+                          <ChevronDown className={cn('w-4 h-4 shrink-0 transition-transform', open && 'rotate-180')} />
+                        </button>
+                        {open && (
+                          <ul className="mt-1 ml-3 pl-3 border-l border-white/15 space-y-0.5">
+                            {children.map((child) => {
+                              const ChildIcon = child.icon || Icon;
+                              const childActive = navPathActive(location.pathname, child.path);
+                              return (
+                                <li key={child.path}>
+                                  <Link
+                                    to={child.path}
+                                    title={child.label}
+                                    onClick={() => { if (!tourOpen) setMobileOpen(false); }}
+                                    className={cn(
+                                      'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
+                                      childActive
+                                        ? 'bg-[#1D4E89] text-white'
+                                        : 'text-white/65 hover:text-white hover:bg-white/5',
+                                    )}
+                                  >
+                                    <ChildIcon className="w-4 h-4 shrink-0" />
+                                    <span className="truncate">{child.label}</span>
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </li>
+                );
+              }
+
+              const active = navPathActive(location.pathname, item.path);
               return (
                 <li key={item.path}>
                   <Link

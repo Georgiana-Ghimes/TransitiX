@@ -94,16 +94,19 @@ export function avizIncarcareDate(row) {
   return bucharestYmd(new Date(row.created_at));
 }
 
-function avizFilterDate(row, dateField = 'cursa') {
-  if (dateField === 'incarcare') return avizIncarcareDate(row);
-  const cursa = String(row?.data_efectuare_cursa || '').slice(0, 10);
-  return cursa || avizIncarcareDate(row);
+function avizFilterDate(row, dateField = 'incarcare') {
+  if (dateField === 'cursa') {
+    const cursa = String(row?.data_efectuare_cursa || '').slice(0, 10);
+    return cursa || avizIncarcareDate(row);
+  }
+  return avizIncarcareDate(row);
 }
 
 /** Client-side mirror of `buildAvizListQuery` so we can tell when a row is hidden by filters. */
 export function avizMatchesListFilters(row, filters = {}) {
   if (!row) return false;
-  const dateField = filters.date_field === 'incarcare' ? 'incarcare' : 'cursa';
+  // List UI filters only by upload day. Keep `cursa` support for callers that pass it explicitly.
+  const dateField = filters.date_field === 'cursa' ? 'cursa' : 'incarcare';
   const dateValue = avizFilterDate(row, dateField);
 
   if (filters.from) {

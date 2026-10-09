@@ -268,7 +268,7 @@ export default function AvizeReports() {
   const applyPreset = (preset) => {
     const range = datePresetRange(preset);
     setActivePreset(preset);
-    setFilters((prev) => ({ ...prev, ...range }));
+    setFilters((prev) => ({ ...prev, ...range, date_field: 'incarcare' }));
   };
 
   const resetAvizFilters = () => {

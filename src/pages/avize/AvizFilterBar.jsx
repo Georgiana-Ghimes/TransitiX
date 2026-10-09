@@ -18,13 +18,9 @@ export default function AvizFilterBar({
     return 'px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700';
   };
 
-  const dateField = filters.date_field === 'incarcare' ? 'incarcare' : 'cursa';
-  const dateFieldLabel = dateField === 'incarcare' ? 'data încărcării' : 'data cursei';
-  const dateFieldBtnClass = (id) => (
-    dateField === id
-      ? 'px-2.5 py-1 text-xs rounded-full border border-[#0A2B4E] bg-[#0A2B4E] text-white'
-      : 'px-2.5 py-1 text-xs rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-slate-700'
-  );
+  // Always filter by upload day (data încărcării). Trip date on the sheet is often older
+  // than the photo, so "Azi / săptămâna asta" would hide freshly uploaded avize.
+  const dateFieldLabel = 'data încărcării';
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 bg-white rounded-xl border border-slate-200/80 p-3">
@@ -48,30 +44,12 @@ export default function AvizFilterBar({
         </button>
         {refreshing && <span className="text-xs text-slate-500 self-center">Se actualizează lista…</span>}
       </div>
-      {/*
-        An aviz photographed today usually carries an older trip date, so the two readings of
-        "săptămâna asta" give different lists. Say which one is active instead of leaving the
-        operator to guess why a freshly uploaded aviz is missing.
-      */}
-      <div className="flex flex-wrap items-center gap-1 lg:col-span-6 -mt-1">
-        <span className="text-xs text-slate-500 mr-1">Datele se filtrează după:</span>
-        {[['cursa', 'Data cursei'], ['incarcare', 'Data încărcării']].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setFilters((p) => ({ ...p, date_field: id }))}
-            className={dateFieldBtnClass(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
       <div>
         <label className={labelCls}>De la ({dateFieldLabel})</label>
         <RoDateField
           className={inputCls}
           value={filters.from}
-          onChange={(iso) => setFilters((p) => ({ ...p, from: iso }))}
+          onChange={(iso) => setFilters((p) => ({ ...p, from: iso, date_field: 'incarcare' }))}
           aria-label={`De la (${dateFieldLabel})`}
         />
       </div>
@@ -80,7 +58,7 @@ export default function AvizFilterBar({
         <RoDateField
           className={inputCls}
           value={filters.to}
-          onChange={(iso) => setFilters((p) => ({ ...p, to: iso }))}
+          onChange={(iso) => setFilters((p) => ({ ...p, to: iso, date_field: 'incarcare' }))}
           aria-label={`Până la (${dateFieldLabel})`}
         />
       </div>

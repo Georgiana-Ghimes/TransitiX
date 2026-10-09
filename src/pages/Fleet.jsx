@@ -11,6 +11,7 @@
  * opens a fresh record through the OCR path.
  */
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Loader2, Truck, Plus, Check, TriangleAlert, ScanLine, Trash2, Search, Pencil, X,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ import {
   sanitizeMmaInput,
   writeFleetPageSize,
 } from '@/lib/fleetUi';
+import { itpExpired } from '@/lib/fleetItpUi';
 
 const cardCls = 'bg-white rounded-xl border border-slate-200/80 shadow-sm';
 const inputCls = 'w-full h-10 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D4E89]/30';
@@ -544,6 +546,16 @@ function VehicleRow({ vehicle, selected, onToggleSelect, busy, onSave, onRemove 
         <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-800">
           <ScanLine className="w-3 h-3" /> din OCR, neverificat
         </span>
+      ) : null}
+
+      {itpExpired(vehicle.itp_expiry) ? (
+        <Link
+          to="/fleet/itp"
+          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-800 border border-red-200 hover:bg-red-100"
+          title="Deschide board-ul ITP"
+        >
+          ITP expirat
+        </Link>
       ) : null}
 
       <div className="ml-auto flex items-center gap-2">

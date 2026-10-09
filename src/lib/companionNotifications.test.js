@@ -9,6 +9,10 @@ describe('companionNotificationLink', () => {
   it('rewrites Autoturisme from the full-TMS vehicles path', () => {
     expect(companionNotificationLink('/vehicles')).toBe('/fleet');
   });
+
+  it('sends vehicle document_expiry to the ITP board', () => {
+    expect(companionNotificationLink('/vehicles', { type: 'document_expiry' })).toBe('/fleet/itp');
+  });
 });
 
 describe('isCompanionRelevantNotification', () => {
@@ -69,10 +73,10 @@ describe('filterNotificationsForProfile', () => {
     expect(filterNotificationsForProfile(mixed, { companion: false })).toEqual(mixed);
   });
 
-  it('keeps only companion rows and rewrites /vehicles', () => {
+  it('keeps only companion rows and rewrites vehicle expiry to ITP', () => {
     expect(filterNotificationsForProfile(mixed, { companion: true })).toEqual([
       { id: '2', type: 'driver_upload', link: '/avize', is_read: false },
-      { id: '3', type: 'document_expiry', link: '/fleet', is_read: true },
+      { id: '3', type: 'document_expiry', link: '/fleet/itp', is_read: true },
     ]);
   });
 });
