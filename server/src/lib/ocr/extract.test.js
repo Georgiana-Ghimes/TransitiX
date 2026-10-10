@@ -469,6 +469,23 @@ Greutate bruta, kg 10,993.83
     expect(extractGrossWeight(text).confidence).toBeLessThanOrEqual(0.55);
   });
 
+  it('recovers handwritten 400 when OCR drops a zero to 40 (#65 reopen)', () => {
+    // IMG-20261001-WA0027 / PSL-0062041: HITL OK, gross OK, qty was 40 not 400.
+    const text = `
+Aviz de expeditie: PSL-0062041
+Comanda de transport: TPO-0033186
+11001457 Adeziv FlexBond 25 kg (54/pal) 432.00 sac 40
+8.00 pal
+corectat la incarcare
+Greutate neta: 10,800.00 kg
+Greutate bruta: 10,993.83 kg 10.193,83
+`;
+    expect(detectHandCorrection(text).present).toBe(true);
+    expect(extractQuantity(text).value).toEqual({ quantity: 400, unit: 'saci' });
+    expect(extractQuantity(text).confidence).toBeLessThan(0.9);
+    expect(extractGrossWeight(text).value).toBe(10193.83);
+  });
+
   it('reads quantity on a pallet-only return (pce is the goods) (#64)', () => {
     const text = `
 Aviz de expeditie rezumat: TPO-0033293
@@ -485,6 +502,38 @@ Greutate bruta: 337,50 kg
     expect(doc.values.tip_marfa).toBe('paleti');
   });
 
+  it('reads pallet return when OCR splits 15.00 and pce (#64 reopen)', () => {
+    // IMG-20261005-WA0037: tip was paleți on VM but Cantitate empty — unit on next line.
+    const split = `
+Aviz de expeditie: TRO-0010370
+Comanda de transport: TPO-0033293
+Observatii: Retur paleți goi
+11000001 Palet Euro returnabil
+15.00
+pce
+Greutate neta: 337,50 kg
+Greutate bruta: 337,50 kg
+`;
+    expect(extractQuantity(split).value).toEqual({ quantity: 15, unit: 'paleti' });
+    expect(extractGoodsUnit(split).value).toBe('paleti');
+    const doc = extractDocument(split, { documentType: 'aviz' });
+    expect(doc.values.quantity).toBe(15);
+    expect(doc.values.tip_marfa).toBe('paleti');
+  });
+
+  it('prefers pce count over noise "1 pal" on a return sheet (#64 reopen)', () => {
+    const text = `
+Aviz de expeditie: TRO-0010370
+Comanda de transport: TPO-0033293
+Observatii: Retur paleți goi
+11000001 Palet Euro returnabil 15.00 pce
+Ambalaj 1 pal
+Greutate neta: 337,50 kg
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 15, unit: 'paleti' });
+    expect(extractGoodsUnit(text).value).toBe('paleti');
+  });
+
   it('reads BCA volume in m³ and ignores euro-pallet pce (#63)', () => {
     // Trailing digit of "m3" used to glue onto the next line's "Palet" → fake 3 paleți.
     const text = `
@@ -499,6 +548,29 @@ Greutate bruta: 12,000.00 kg
     expect(doc.values.quantity).toBe(28.8);
     expect(doc.values.tip_marfa).toBe('m³');
     expect(doc.values.quantity_unit).toBe('m³');
+  });
+
+  it('ignores m3/pal density in Descriere when summing BCA volume (#63 reopen)', () => {
+    // IMG-20261003-WA0031 / PSL-0062084: (1.44 m3/pal) must not add to Cantitate 28.80.
+    const text = `
+Aviz de expeditie: PSL-0062084
+Comanda de transport: TPO-0033251
+1 11002210 BCA Montaro 600x250x200 mm (1.44 m3/pal)
+GTIN: 5945752064540 / Cod marfa: 68101110
+28.80 m³
+20.00 pal
+2 11000001 Palet Euro returnabil
+GTIN: 4023330099977 / Cod marfa: 44152020
+20.00 pce
+Greutate neta: 15,840.00 kg
+Greutate bruta: 16,309.57 kg
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 28.8, unit: 'm³' });
+    expect(extractGoodsUnit(text).value).toBe('m³');
+    const doc = extractDocument(text, { documentType: 'aviz' });
+    expect(doc.values.quantity).toBe(28.8);
+    expect(doc.values.tip_marfa).toBe('m³');
+    expect(doc.values.quantity).not.toBe(30.24);
   });
 
   it('sums sac lines split across rows under night / table OCR (#76)', () => {

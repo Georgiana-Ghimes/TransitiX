@@ -483,6 +483,23 @@ export function detectHandCorrection(text) {
 }
 
 /**
+ * Handwritten bag/bucket counts are often hundreds (400). OCR drops a trailing zero → 40
+ * next to a struck 432.00 (#65 reopen / WA0027). Recover *10 when that is the only
+ * plausible loading correction of the printed total.
+ */
+function recoverTruncatedHandQty(n, printedQty, unit) {
+  const p = Number(printedQty);
+  if (!Number.isFinite(p) || p <= 0 || n == null) return n;
+  const scaled = n * 10;
+  if (scaled >= p || scaled <= p * 0.5) return n;
+  if (n >= 100 || n < 10) return n;
+  if (!isPlausibleQuantity(scaled, unit || 'saci')) return n;
+  // Prefer round loading corrections (…00 / …50), not arbitrary *10.
+  if (scaled % 10 !== 0) return n;
+  return scaled;
+}
+
+/**
  * Bare count written next to a struck packaging total (e.g. "432.00 sac … 400 corectat").
  */
 function handwrittenQuantityOverride(folded, printedQty, unit) {
@@ -500,8 +517,24 @@ function handwrittenQuantityOverride(folded, printedQty, unit) {
     candidates.push(n);
   }
   if (!candidates.length) return null;
-  // Closest to the phrase: last match in the pre-phrase window.
-  return candidates[candidates.length - 1];
+
+  // Drop truncations when the fuller figure is also present (40 when 400 exists).
+  const uniq = [...new Set(candidates)];
+  const filtered = uniq.filter(
+    (n) => !uniq.some((o) => o > n && String(o).startsWith(String(n)) && o >= n * 10),
+  );
+  const pool = filtered.length ? filtered : uniq;
+
+  // Prefer the largest value still below the printed total (loading usually shortens the count).
+  const printed = Number(printedQty);
+  if (Number.isFinite(printed) && printed > 0) {
+    const below = pool.filter((n) => n < printed && n >= printed * 0.5);
+    if (below.length) return below.sort((a, b) => a - b)[below.length - 1];
+  }
+
+  // Closest to the phrase: last match in the pre-phrase window — then fix OCR "40"→400.
+  const last = pool[pool.length - 1];
+  return recoverTruncatedHandQty(last, printedQty, unit);
 }
 
 /**
@@ -922,6 +955,11 @@ export function extractGoodsUnit(text) {
   const re = new RegExp(`(\\d[\\d.,]*)${QTY_UNIT_GAP}${GOODS_UNIT_SOURCE}\\b`, 'gi');
   let match = re.exec(folded);
   while (match) {
+    const end = match.index + match[0].length;
+    if (isPerPalletDensity(folded, end)) {
+      match = re.exec(folded);
+      continue;
+    }
     const unit = goodsUnitOf(match[2]);
     const rank = GOODS_UNIT_RANK[unit] ?? 0;
     // Article codes like `11000001 Palet Euro returnabil` are not a pallet count.
@@ -939,8 +977,8 @@ export function extractGoodsUnit(text) {
     match = re.exec(folded);
   }
   if (!best) {
-    // Retur paleți goi: only `15.00 pce` on the page (#64).
-    if (collectEuroPalletPceLines(folded).length) {
+    // Retur paleți goi: only `15.00 pce` on the page (#64), including OCR line-splits.
+    if (collectEuroPalletPceLines(folded).length || isPalletOnlyReturnPage(folded)) {
       return result('paleti', 0.8, 'pce');
     }
     // Same night-wash path as extractQuantity: net ÷ bag kg → tip saci (#76).
@@ -949,6 +987,10 @@ export function extractGoodsUnit(text) {
       return result('saci', 0.55, fromBag.matched);
     }
     return NO_MATCH;
+  }
+  // On a return sheet, "15 pcs" / bare buc must not become găleți over paleți (#64).
+  if (isPalletOnlyReturnPage(folded) && (best.unit === 'bucati' || best.unit === 'paleti')) {
+    return result('paleti', 0.8, best.matched);
   }
   if (best.unit === 'bucati' && bucLinesMeanGaleti(folded)) {
     return result('galeti', 0.8, best.matched);
@@ -997,6 +1039,15 @@ export function looksLikeOcrGoodsDump(tip) {
 /** Packaging units that name goods (not bare "buc" / euro-pallet "pce"). */
 const SUMMABLE_PACKAGING = new Set(['saci', 'galeti', 'paleti', 'm3']);
 
+/**
+ * Product description density like `(1.44 m3/pal)` is not a load quantity (#63 reopen).
+ * Summing it with the Cantitate column (`28.80 m³`) invents 30.24.
+ */
+function isPerPalletDensity(folded, matchEndIndex) {
+  const after = String(folded || '').slice(matchEndIndex, matchEndIndex + 12);
+  return /^\s*\/\s*pal\b/i.test(after);
+}
+
 /** Push one packaging hit into `lines` when qty/unit are plausible. */
 function pushPackagingLine(lines, qtyRaw, unitRaw, matched) {
   const rawUnit = String(unitRaw || '').toLowerCase();
@@ -1023,7 +1074,10 @@ function collectPackagingLines(folded) {
   );
   let match = re.exec(folded);
   while (match) {
-    pushPackagingLine(lines, match[1], match[2], match[0]);
+    const end = match.index + match[0].length;
+    if (!isPerPalletDensity(folded, end)) {
+      pushPackagingLine(lines, match[1], match[2], match[0]);
+    }
     match = re.exec(folded);
   }
 
@@ -1038,7 +1092,10 @@ function collectPackagingLines(folded) {
   );
   let crossMatch = cross.exec(folded);
   while (crossMatch) {
-    pushPackagingLine(lines, crossMatch[1], crossMatch[2], crossMatch[0]);
+    const end = crossMatch.index + crossMatch[0].length;
+    if (!isPerPalletDensity(folded, end)) {
+      pushPackagingLine(lines, crossMatch[1], crossMatch[2], crossMatch[0]);
+    }
     crossMatch = cross.exec(folded);
   }
 
@@ -1046,25 +1103,56 @@ function collectPackagingLines(folded) {
 }
 
 /**
+ * Empty-pallet return sheet (Retur paleți goi + Palet Euro), not a goods load with
+ * a returnable euro-pallet row beside saci/găleți/m³ (#64 reopen).
+ */
+function isPalletOnlyReturnPage(folded) {
+  const lines = collectPackagingLines(folded);
+  const hasOtherGoods = lines.some(
+    (l) => l.unit === 'saci' || l.unit === 'galeti' || l.unit === 'm3'
+      || (l.unit === 'bucati' && bucLinesMeanGaleti(folded)),
+  );
+  if (hasOtherGoods) return false;
+  if (collectEuroPalletPceLines(folded).length) return true;
+  const retur = /\bretur\b/i.test(folded) && /\bpalet/i.test(folded);
+  const euro = /palet\s*euro|euro\s*returnabil|\breturnabil\b/i.test(folded);
+  return retur && euro;
+}
+
+function pushEuroPalletPceLine(lines, qtyRaw, matched) {
+  const qty = parseNumber(qtyRaw);
+  // One truck of empty returns, not an article code mistaken for a count.
+  if (qty != null && qty > 0 && qty < 500 && isPlausibleQuantity(qty, 'paleti')) {
+    lines.push({
+      qty,
+      unit: 'paleti',
+      rank: GOODS_UNIT_RANK.paleti,
+      matched,
+    });
+  }
+}
+
+/**
  * `N pce` euro-pallet rows. Ignored when the page also has saci/găleți/m³;
  * on a pallet-only return they *are* the goods (#64).
+ * Same-line and cross-line (`15.00\npce`) — real OCR often splits the unit (#64 reopen).
  */
 function collectEuroPalletPceLines(folded) {
   const lines = [];
   const re = new RegExp(`([\\d.,]+)${QTY_UNIT_GAP}pce\\b`, 'gi');
   let match = re.exec(folded);
   while (match) {
-    const qty = parseNumber(match[1]);
-    // One truck of empty returns, not an article code mistaken for a count.
-    if (qty != null && qty > 0 && qty < 500 && isPlausibleQuantity(qty, 'paleti')) {
-      lines.push({
-        qty,
-        unit: 'paleti',
-        rank: GOODS_UNIT_RANK.paleti,
-        matched: match[0],
-      });
-    }
+    pushEuroPalletPceLine(lines, match[1], match[0]);
     match = re.exec(folded);
+  }
+  const cross = new RegExp(
+    `([\\d.,]+)\\s*(?:\\|\\s*)?\\n\\s*(?:\\|\\s*)?pce\\b`,
+    'gi',
+  );
+  let crossMatch = cross.exec(folded);
+  while (crossMatch) {
+    pushEuroPalletPceLine(lines, crossMatch[1], crossMatch[0]);
+    crossMatch = cross.exec(folded);
   }
   return collapseDoubledPackagingLines(lines, folded);
 }
@@ -1072,16 +1160,48 @@ function collectEuroPalletPceLines(folded) {
 /** Quantity when the aviz is only empty-pallet return (`15.00 pce`, no other goods). */
 function quantityFromPalletsOnly(folded, blob) {
   const pceOnly = collectEuroPalletPceLines(folded);
-  if (!pceOnly.length) return null;
-  const sum = Math.round(pceOnly.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
-  if (!isPlausibleQuantity(sum, 'paleti') || isWeightMistakenForQuantity(sum, 'paleti', blob)) {
-    return null;
+  if (pceOnly.length) {
+    const sum = Math.round(pceOnly.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
+    if (!isPlausibleQuantity(sum, 'paleti') || isWeightMistakenForQuantity(sum, 'paleti', blob)) {
+      return null;
+    }
+    return result(
+      { quantity: sum, unit: 'paleti' },
+      0.86,
+      pceOnly.map((l) => l.matched).join(' + '),
+    );
   }
-  return result(
-    { quantity: sum, unit: 'paleti' },
-    0.86,
-    pceOnly.map((l) => l.matched).join(' + '),
+  if (!isPalletOnlyReturnPage(folded)) return null;
+
+  // Retur page but OCR dropped "pce": Cantitate 15.00 / 15.00 pal package column.
+  const labelled = folded.match(
+    /(?:cantitate|quantity)\s*[:\-]?\s*([\d.,]+)(?:\s*(?:pce|pcs|pal(?:eti|et)?))?/i,
   );
+  if (labelled) {
+    const qty = parseNumber(labelled[1]);
+    if (
+      qty != null
+      && qty > 0
+      && qty < 500
+      && isPlausibleQuantity(qty, 'paleti')
+      && !isWeightMistakenForQuantity(qty, 'paleti', blob)
+    ) {
+      return result({ quantity: qty, unit: 'paleti' }, 0.78, labelled[0]);
+    }
+  }
+
+  const palLines = collectPackagingLines(folded).filter((l) => l.unit === 'paleti');
+  if (palLines.length) {
+    // Prefer the largest plausible count — "Ambalaj 1 pal" must not beat "15.00 pal" (#64).
+    const best = [...palLines].sort((a, b) => b.qty - a.qty)[0];
+    if (
+      best
+      && !isWeightMistakenForQuantity(best.qty, 'paleti', blob)
+    ) {
+      return result({ quantity: best.qty, unit: 'paleti' }, 0.8, best.matched);
+    }
+  }
+  return null;
 }
 
 /**
@@ -1230,10 +1350,14 @@ function extractQuantityCore(blob, folded) {
     }
   }
 
-  if (!lines.length) {
-    // Pallet-only return: `Palet Euro returnabil 15.00 pce` — pce was skipped above (#64).
+  // Pallet-only return before summing packaging noise: `15.00 pce` beats "Ambalaj 1 pal",
+  // and cross-line `15.00\npce` still counts (#64 / #64 reopen).
+  if (isPalletOnlyReturnPage(folded) || !lines.length) {
     const palletsOnly = quantityFromPalletsOnly(folded, blob);
     if (palletsOnly) return palletsOnly;
+  }
+
+  if (!lines.length) {
     // Yellow / night wash drops "sac" but leaves net kg + bag size on the product line (#76).
     const fromBag = quantityFromNetAndBagSize(blob, folded);
     if (fromBag) return fromBag;
