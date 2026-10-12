@@ -237,7 +237,9 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
    * on the normal case stops being read before it ever meets the abnormal one.
    */
   it('does not call the second cursă of a TPO a duplicate', async () => {
-    const tpo = `TPO-MULTI-${Date.now()}`;
+    // Digits only after TPO-: decorateAviz → normalizeTpo drops letter suffixes (#58),
+    // so `TPO-MULTI-…` became null on the list and these assertions saw zero rows.
+    const tpo = `TPO-${Date.now()}01`;
     await makeAviz(ctx.company.id, {
       numar_tpo: tpo,
       numar_document_marfa: 'PSL-0044633',
@@ -253,7 +255,7 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
       numar_auto: 'B-34-BAU',
     });
 
-    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    const res = await api().get('/api/avize').query({ q: tpo }).set(auth(ctx.adminToken));
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.items)).toBe(true);
     expect(typeof res.body.total).toBe('number');
@@ -266,7 +268,7 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
   });
 
   it('still catches the same aviz uploaded twice under that TPO', async () => {
-    const tpo = `TPO-DUP-${Date.now()}`;
+    const tpo = `TPO-${Date.now()}02`;
     for (const name of ['prima.pdf', 'aceeasi-din-greseala.pdf']) {
       await makeAviz(ctx.company.id, {
         numar_tpo: tpo,
@@ -278,14 +280,14 @@ describe('GET /api/avize, un TPO cu mai multe curse', () => {
       });
     }
 
-    const res = await api().get('/api/avize').set(auth(ctx.adminToken));
+    const res = await api().get('/api/avize').query({ q: tpo }).set(auth(ctx.adminToken));
     const mine = res.body.items.filter((r) => r.numar_tpo === tpo);
     expect(mine).toHaveLength(2);
     expect(mine.map((r) => r.duplicate_tpo)).toEqual([true, true]);
   });
 
   it('pages the list and still flags a duplicate that lives on another page', async () => {
-    const tpo = `TPO-PAGE-DUP-${Date.now()}`;
+    const tpo = `TPO-${Date.now()}03`;
     const common = {
       numar_tpo: tpo,
       numar_document_marfa: 'PSL-0044999',
@@ -324,7 +326,7 @@ describe('PUT /api/entities/AvizDocument, avertismentul de la Salvează', () => 
    * același TPO" on the screen every time an operator saved the second cursă.
    */
   it('stays quiet when the other row is a different cursă of the same TPO', async () => {
-    const tpo = `TPO-SAVE-${Date.now()}`;
+    const tpo = `TPO-${Date.now()}04`;
     await makeAviz(ctx.company.id, {
       numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
       ruta_transport: 'Bol-Bucuresti/Viilor52',
@@ -343,7 +345,7 @@ describe('PUT /api/entities/AvizDocument, avertismentul de la Salvează', () => 
   });
 
   it('warns when the other row is the same aviz', async () => {
-    const tpo = `TPO-SAVE-DUP-${Date.now()}`;
+    const tpo = `TPO-${Date.now()}05`;
     const common = {
       numar_tpo: tpo, numar_document_marfa: 'PSL-0044633',
       ruta_transport: 'Bol-Bucuresti/Viilor52',
