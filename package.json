@@ -5,8 +5,8 @@
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.24.1",
-    "build": 99
+    "version": "1.25.0",
+    "build": 100
   },
   "type": "module",
   "scripts": {
@@ -31,6 +31,7 @@
     "db:geocode:locations": "npm run geocode:locations --prefix server --",
     "db:backup": "node scripts/backup-companion.js",
     "deploy:companion": "node scripts/deploy-companion.js",
+    "deploy:companion:vps": "node scripts/vps-deploy-companion.js",
     "uploads:prune": "npm run prune:uploads --prefix server --",
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
