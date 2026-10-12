@@ -110,11 +110,18 @@ function main() {
     return;
   }
 
+  // Git / health: COMPANION + DATABASE_URL. Nu forța NODE_ENV=production pe npm ci —
+  // altfel vite (devDependency) lipsește și build:companion crapă cu „vite: not found”.
   const env = {
     ...process.env,
     COMPANION: '1',
-    NODE_ENV: process.env.NODE_ENV || 'production',
     DATABASE_URL: databaseUrl,
+  };
+  const envCi = { ...env };
+  delete envCi.NODE_ENV;
+  const envProd = {
+    ...env,
+    NODE_ENV: 'production',
   };
 
   if (!has('skip-git')) {
@@ -124,8 +131,17 @@ function main() {
   }
 
   if (!has('skip-npm-ci')) {
-    run('npm ci (root)', { command: 'npm', argv: ['ci'], env });
-    run('npm ci (server)', { command: 'npm', argv: ['ci', '--prefix', 'server'], env });
+    // --include=dev: și dacă mediul are NODE_ENV=production (systemd / shell), tot instalăm vite.
+    run('npm ci (root)', {
+      command: 'npm',
+      argv: ['ci', '--include=dev'],
+      env: envCi,
+    });
+    run('npm ci (server)', {
+      command: 'npm',
+      argv: ['ci', '--prefix', 'server', '--include=dev'],
+      env: envCi,
+    });
   }
 
   const deployArgs = [
@@ -138,11 +154,11 @@ function main() {
   if (has('skip-backup')) deployArgs.push('--skip-backup');
   if (has('skip-build')) deployArgs.push('--skip-build');
 
-  run('deploy-companion', { command: process.execPath, argv: deployArgs, env });
+  run('deploy-companion', { command: process.execPath, argv: deployArgs, env: envProd });
 
   // Best-effort: UI e static în dist/; reload nu e obligatoriu dacă Caddy e deja pe root.
   process.stdout.write('\n[vps-deploy] caddy reload\n');
-  const caddy = spawnSync('systemctl', ['reload', 'caddy'], { cwd: ROOT, stdio: 'inherit', env });
+  const caddy = spawnSync('systemctl', ['reload', 'caddy'], { cwd: ROOT, stdio: 'inherit', env: envProd });
   if (caddy.status !== 0) {
     process.stdout.write('[vps-deploy] caddy reload a eșuat (ignorat — verifică manual dacă e nevoie)\n');
   }
@@ -150,7 +166,7 @@ function main() {
   if (!has('skip-health')) {
     run('health', {
       line: 'curl -fsS http://127.0.0.1:3002/api/health',
-      env,
+      env: envProd,
     });
   }
 
