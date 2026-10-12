@@ -5,8 +5,8 @@
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.25.1",
-    "build": 101
+    "version": "1.25.2",
+    "build": 102
   },
   "type": "module",
   "scripts": {
@@ -18,7 +18,7 @@
     "dev:server": "npm run dev --prefix server",
     "dev:all": "npm run dev:server & npm run dev",
     "build": "vite build",
-    "build:companion": "vite build --mode companion",
+    "build:companion": "node ./node_modules/vite/bin/vite.js build --mode companion",
     "start:companion": "npm run build:companion && npm start --prefix server",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",

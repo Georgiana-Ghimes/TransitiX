@@ -81,10 +81,11 @@ function run(label, { command, args = [], line = null, options = {} }) {
 }
 
 /** An npm script, started the way the platform allows. */
-function npmStep(label, script) {
+function npmStep(label, script, envExtra = {}) {
+  const env = { ...process.env, ...envExtra };
   return process.platform === 'win32'
-    ? run(label, { line: `npm run ${script}` })
-    : run(label, { command: 'npm', args: ['run', script] });
+    ? run(label, { line: `npm run ${script}`, options: { env } })
+    : run(label, { command: 'npm', args: ['run', script], options: { env } });
 }
 
 function main() {
@@ -134,7 +135,11 @@ function main() {
   npmStep('migrare', 'db:migrate');
 
   if (!has('skip-build')) {
-    npmStep('build companion', 'build:companion');
+    // Build needs vite from node_modules; don't let a production NODE_ENV confuse npm's PATH/scripts.
+    npmStep('build companion', 'build:companion', {
+      NODE_ENV: 'production',
+      NPM_CONFIG_PRODUCTION: 'false',
+    });
   }
 
   if (restart) {

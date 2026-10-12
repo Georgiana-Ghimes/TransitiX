@@ -117,8 +117,14 @@ function main() {
     COMPANION: '1',
     DATABASE_URL: databaseUrl,
   };
-  const envCi = { ...env };
-  delete envCi.NODE_ENV;
+  // npm tratează production din NODE_ENV *și* din npm_config_*; ambele trebuie oprite la ci,
+  // altfel vite (devDependency) lipsește și build:companion crapă.
+  const envCi = {
+    ...env,
+    NODE_ENV: 'development',
+    NPM_CONFIG_PRODUCTION: 'false',
+    npm_config_production: 'false',
+  };
   const envProd = {
     ...env,
     NODE_ENV: 'production',
@@ -131,18 +137,27 @@ function main() {
   }
 
   if (!has('skip-npm-ci')) {
-    // --include=dev: și dacă mediul are NODE_ENV=production (systemd / shell), tot instalăm vite.
     run('npm ci (root)', {
       command: 'npm',
-      argv: ['ci', '--include=dev'],
+      argv: ['ci', '--include=dev', '--no-fund', '--no-audit'],
       env: envCi,
     });
     run('npm ci (server)', {
       command: 'npm',
-      argv: ['ci', '--prefix', 'server', '--include=dev'],
+      argv: ['ci', '--prefix', 'server', '--include=dev', '--no-fund', '--no-audit'],
       env: envCi,
     });
   }
+
+  const viteBin = path.join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js');
+  if (!fs.existsSync(viteBin)) {
+    console.error(
+      `[vps-deploy] Lipsește ${viteBin}. Rulează fără --skip-npm-ci, sau:\n` +
+        '  NPM_CONFIG_PRODUCTION=false npm ci --include=dev',
+    );
+    process.exit(1);
+  }
+  process.stdout.write(`[vps-deploy] vite ok  ${viteBin}\n`);
 
   const deployArgs = [
     path.join(ROOT, 'scripts', 'deploy-companion.js'),
