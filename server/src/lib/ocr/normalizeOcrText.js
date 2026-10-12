@@ -52,6 +52,9 @@ export function sanitizeOcrText(text) {
   if (!out) return out;
 
   out = out.normalize('NFC');
+  // Mistral often confuses Romanian ă with German ä (same glyph family on forms):
+  // `Greutate brutä` / `netä` then miss every weight regex that only allows bruta|brută.
+  out = out.replace(/ä/g, 'ă').replace(/Ä/g, 'Ă');
   // Zero-width / BOM / soft hyphen.
   out = out.replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '');
   // Control characters except tab and newline; CR → LF.
@@ -94,6 +97,17 @@ export function normalizeOcrText(text) {
   // Separate glued prefixes: expeditiePSL-… / transport_TPO-…
   out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._/:]*\d)/gi, '$1 $2');
   out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._/:]*[\dOIl])/gi, ' $1');
+
+  // Baumit goods-table lines are TRO/PSL; Mistral often writes TPO there (R→P). Leave the
+  // real transport header alone (`Aviz de expediție rezumat: TPO-…`, `comandă de transport`).
+  out = out.replace(
+    /(Aviz\s+de\s+expedi(?:ț|t)ie)(?!\s+rezumat)(\s*[:\-]?\s*)(?:TPO|TP0|TPQ|TPD)\b/gi,
+    '$1$2TRO',
+  );
+  out = out.replace(
+    /(Comanda\s+de\s+transfer)(\s*[:\-]?\s*)(?:TPO|TP0|TPQ|TPD)\b/gi,
+    '$1$2TRO',
+  );
 
   // Yellow / night wash often splits packaging units: "s ac" / "sa c" → sac (#76).
   out = out.replace(/\b([0-9][\d.,]*)\s+s\s+ac\b/gi, '$1 sac');

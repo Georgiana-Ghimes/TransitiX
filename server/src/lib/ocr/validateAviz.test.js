@@ -259,6 +259,25 @@ Greutate bruta, kg: 6,882.72
     }, {}, { today: '2026-10-07', rawText: raw });
     expect(findings.some((f) => f.rule === 'multiple_avize_in_image')).toBe(false);
   });
+
+  it('does not treat OCR TRO→TPO on the goods table as a second aviz (BAU 24/28)', () => {
+    // Summary header is the real TPO; table lines are TRO-0010692 misread as TPO-0010692.
+    const raw = `
+# Aviz de expediție rezumat: TPO-0033395
+Num de comandă de transport TPO-0033395
+Nr Descriere Comanda de transfer TPO-0010692 Ambalaj Cantitate
+Aviz de expediție TPO-0010692 Referinta client
+Greutate bruta, kg 21,421.60
+`;
+    expect(detectMultipleAvizeInText(raw)).toBeNull();
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033395',
+      data_efectuare_cursa: '2026-10-06',
+      numar_document_marfa: 'TRO-0010692',
+      numar_auto: 'B-29-RAS / B-112-SYT',
+    }, {}, { today: '2026-10-12', rawText: raw });
+    expect(findings.some((f) => f.rule === 'multiple_avize_in_image')).toBe(false);
+  });
 });
 
 describe('computeRouting', () => {

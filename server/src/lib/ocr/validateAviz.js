@@ -25,6 +25,29 @@ import { avizDocumentKeys } from './splitPdf.js';
 const DUPLICATE_LOOKBACK_DAYS = 90;
 
 /**
+ * Baumit prints TRO/PSL on the goods table ("Aviz de expediție", "Comanda de transfer").
+ * Mistral often reads that prefix as TPO, so a single summary page looks like two transport
+ * orders (header TPO-0033395 + table "TPO"-0010692). Those table hits are not a second aviz.
+ *
+ * @param {string} text
+ * @returns {Set<string>} normalised TPO-… strings to ignore for multi-avize detection
+ */
+function tpoMisreadFromDocumentLine(text) {
+  const out = new Set();
+  // Label + mangled TPO prefix + digits (OCR TRO→TPO on the goods table).
+  const re = new RegExp(
+    String.raw`(?:aviz\s+de\s+expedi(?:ț|t)ie(?!\s+rezumat)|comanda\s+de\s+transfer)\s*[:\-]?\s*(?:TPO|TP0|TPQ|TPD|IPO|7PO)[\s\-._/:]*(\d{3,}(?:[-/.]\d+)*)`,
+    'gi',
+  );
+  let m;
+  while ((m = re.exec(String(text || '')))) {
+    const norm = normalizeTpo(`TPO-${String(m[1]).replace(/[/.]/g, '-')}`, 3);
+    if (norm) out.add(norm);
+  }
+  return out;
+}
+
+/**
  * Two (or more) distinct avize in one OCR blob — typical side-by-side driver photo (#59).
  * Splitting a single JPEG is not available; force HITL so mixed values never look clean.
  *
@@ -33,13 +56,14 @@ const DUPLICATE_LOOKBACK_DAYS = 90;
  */
 export function detectMultipleAvizeInText(text) {
   const document_numbers = [...avizDocumentKeys(text)].sort();
+  const ignoreTpo = tpoMisreadFromDocumentLine(text);
   const tpo_numbers = [];
   const seen = new Set();
   const re = /\b(?:TPO|TP0|TPQ|TPD|IPO|7PO)[\s\-._/:]*(\d{3,}(?:[-/.]\d+)*)/gi;
   let m;
   while ((m = re.exec(String(text || '')))) {
     const norm = normalizeTpo(`TPO-${String(m[1]).replace(/[/.]/g, '-')}`, 3);
-    if (!norm || seen.has(norm)) continue;
+    if (!norm || seen.has(norm) || ignoreTpo.has(norm)) continue;
     seen.add(norm);
     tpo_numbers.push(norm);
   }

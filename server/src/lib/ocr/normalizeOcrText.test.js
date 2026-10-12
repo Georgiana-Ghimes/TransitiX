@@ -48,6 +48,30 @@ describe('sanitizeOcrText (provider boundary)', () => {
     expect(sanitizeOcrText('')).toBe('');
     expect(sanitizeOcrText(null)).toBe('');
   });
+
+  it('maps OCR German ä to Romanian ă so weight labels match (07.10.2026.BAU)', () => {
+    const line = 'Greutate netä: 9,100.06 kg\tGreutate brutä: 9,317.90 kg';
+    const out = sanitizeOcrText(line);
+    expect(out).toContain('Greutate netă:');
+    expect(out).toContain('Greutate brută:');
+    expect(out).not.toMatch(/brutä|netä/);
+  });
+});
+
+describe('normalizeOcrText TRO misread as TPO', () => {
+  it('repairs goods-table TPO back to TRO, keeps rezumat / transport header', () => {
+    const raw = [
+      'Aviz de expediție rezumat: TPO-0033395',
+      'Num de comandă de transport TPO-0033395',
+      'Comanda de transfer TPO-0010692',
+      'Aviz de expediție TPO-0010692 Referinta client',
+    ].join('\n');
+    const out = normalizeOcrText(raw);
+    expect(out).toContain('rezumat: TPO-0033395');
+    expect(out).toContain('transport TPO-0033395');
+    expect(out).toContain('Comanda de transfer TRO-0010692');
+    expect(out).toContain('Aviz de expediție TRO-0010692');
+  });
 });
 
 describe('normalizeOcrText', () => {

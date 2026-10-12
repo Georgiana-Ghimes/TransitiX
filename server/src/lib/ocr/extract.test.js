@@ -276,6 +276,15 @@ describe('gross weight, the field the report actually needs', () => {
     expect(extractNetWeight('Greutate neta, kg 15,360.00').value).toBe(15360);
   });
 
+  it('reads weights when OCR swaps Romanian ă for German ä (07.10.2026.BAU batch)', () => {
+    // Digitized PSL pages: Mistral writes `brutä`/`netä`. Labels only had bruta|brută, so
+    // 22/28 pages in that upload left both weight columns empty while bags still extracted.
+    const line = 'Greutate netä: 9,100.06 kg\tGreutate brutä: 9,317.90 kg';
+    const doc = extractDocument(`${line}\nPSL-0058459\nTPO-0033656\nB 330 SRS\n210.00 sac`);
+    expect(doc.values.gross_weight_kg).toBe(9317.9);
+    expect(doc.values.net_weight_kg).toBe(9100.06);
+  });
+
   it('reads Greutate brută/netă (kg) 9.487,80 — unit in parentheses', () => {
     const block = `
 Greutate netă (kg) 9.450,00

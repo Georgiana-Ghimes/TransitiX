@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, ChevronDown, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map, CalendarClock,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map, CalendarClock, Ticket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -441,6 +441,23 @@ export default function Layout() {
         </nav>
 
         <div className={cn('py-3 border-t border-white/10 space-y-1', showIconsOnly ? 'px-2' : 'px-3')}>
+          <a
+            href="https://forms.clickup.com/9015304542/f/8cnn8ay-8235/L6FIOW2W95XZD2LNL9"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Tichet suport"
+            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
+            className={cn(
+              'flex items-center w-full rounded-lg text-sm font-semibold transition-all',
+              'bg-gradient-to-r from-[#F5A623]/20 to-[#F5A623]/05 text-[#F5A623]',
+              'border border-[#F5A623]/35 hover:border-[#F5A623]/60 hover:from-[#F5A623]/30 hover:to-[#F5A623]/10',
+              'hover:text-[#ffb84d] shadow-sm shadow-black/10',
+              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+            )}
+          >
+            <Ticket className="w-5 h-5 shrink-0" />
+            {!showIconsOnly && <span>Tichet suport</span>}
+          </a>
           <Link
             to="/ghid"
             data-tour-ghid
