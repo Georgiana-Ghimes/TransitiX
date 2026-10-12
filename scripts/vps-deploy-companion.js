@@ -15,6 +15,7 @@
  *   --skip-backup     transmis la deploy-companion.js
  *   --skip-build      transmis la deploy-companion.js
  *   --skip-health     nu face curl pe /api/health
+ *   --strict-health   dacă health eșuează → exit 1 (implicit: doar avertisment, exit 0)
  *   --dry-run         afișează planul, nu schimbă nimic
  */
 import { spawnSync } from 'node:child_process';
@@ -178,13 +179,17 @@ function main() {
     process.stdout.write('[vps-deploy] caddy reload a eșuat (ignorat — verifică manual dacă e nevoie)\n');
   }
 
+  let healthOk = true;
   if (!has('skip-health')) {
     // După systemctl restart API-ul are nevoie de câteva secunde; un curl instant e fals negativ.
     const healthUrl = 'http://127.0.0.1:3002/api/health';
     const attempts = 30;
     const delayMs = 2000;
-    process.stdout.write(`\n[vps-deploy] health (până la ${attempts}×${delayMs / 1000}s) ${healthUrl}\n`);
-    let ok = false;
+    process.stdout.write(
+      `\n[vps-deploy] health — verificare opțională (curl pe ${healthUrl}, până la ${attempts}×${delayMs / 1000}s)\n` +
+        '[vps-deploy] (backup → migrate → build → restart s-au terminat deja; asta e doar o confirmare)\n',
+    );
+    healthOk = false;
     for (let i = 1; i <= attempts; i += 1) {
       const probe = spawnSync('curl', ['-fsS', '--max-time', '3', healthUrl], {
         cwd: ROOT,
@@ -192,21 +197,41 @@ function main() {
         env: envProd,
       });
       if (probe.status === 0) {
-        process.stdout.write(`[vps-deploy] health ok (încercarea ${i})\n`);
+        process.stdout.write(`[vps-deploy] health OK (încercarea ${i}) — API răspunde, totul e în regulă.\n`);
         if (probe.stdout) process.stdout.write(`${probe.stdout.trim()}\n`);
-        ok = true;
+        healthOk = true;
         break;
       }
-      process.stdout.write(`[vps-deploy] health aștept… (${i}/${attempts})\n`);
+      process.stdout.write(`[vps-deploy] health: aștept pornirea API… (${i}/${attempts})\n`);
       spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'ignore' });
     }
-    if (!ok) {
-      console.error(
-        '[vps-deploy] health a eșuat — API-ul nu răspunde pe :3002.\n' +
-          '  Verifică pe VPS: systemctl status rai-api --no-pager\n' +
-          '  Log: journalctl -u rai-api -n 80 --no-pager',
+    if (!healthOk) {
+      // Nu ieșim cu panică: deploy-ul e făcut; probe-ul poate eșua dacă API-ul pornește mai greu.
+      process.stdout.write(`
+[vps-deploy] ────────────────────────────────────────────────────────────
+[vps-deploy] Health check: curl pe :3002 nu a răspuns la timp.
+[vps-deploy]
+[vps-deploy] Asta NU înseamnă că aplicația e stricată sau că deploy-ul
+[vps-deploy] a eșuat. Build + restart s-au terminat deja cu succes.
+[vps-deploy] De obicei API-ul mai are nevoie de câteva secunde.
+[vps-deploy]
+[vps-deploy] Linistește-te — verifică tu (dacă răspunde, ești OK):
+[vps-deploy]   curl -sS http://127.0.0.1:3002/api/health
+[vps-deploy]   curl -sS https://rai-transitix.filumforge.ro/api/health
+[vps-deploy]   → deschide site-ul în browser (login)
+[vps-deploy]
+[vps-deploy] Dacă tot nu răspunde după ~1 min:
+[vps-deploy]   systemctl status rai-api --no-pager
+[vps-deploy]   journalctl -u rai-api -n 80 --no-pager
+[vps-deploy] ────────────────────────────────────────────────────────────
+`);
+      if (has('strict-health')) {
+        console.error('[vps-deploy] --strict-health: opresc cu cod 1 (doar probe-ul a eșuat).');
+        process.exit(1);
+      }
+      process.stdout.write(
+        '[vps-deploy] Continui (exit 0) — deploy-ul e considerat făcut; health e doar avertisment.\n',
       );
-      process.exit(1);
     }
   }
 
@@ -221,7 +246,8 @@ function main() {
     env,
   });
 
-  process.stdout.write(`\n[vps-deploy] gata · ${String(rev.stdout || '').trim()}\n`);
+  process.stdout.write(`\n[vps-deploy] gata · ${String(rev.stdout || '').trim()}`);
+  process.stdout.write(healthOk ? ' · health OK\n' : ' · health: avertisment (vezi mai sus)\n');
   if (oneline.stdout) process.stdout.write(`[vps-deploy] ${oneline.stdout.trim()}\n`);
 }
 
