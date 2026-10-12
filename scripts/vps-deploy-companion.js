@@ -179,10 +179,35 @@ function main() {
   }
 
   if (!has('skip-health')) {
-    run('health', {
-      line: 'curl -fsS http://127.0.0.1:3002/api/health',
-      env: envProd,
-    });
+    // După systemctl restart API-ul are nevoie de câteva secunde; un curl instant e fals negativ.
+    const healthUrl = 'http://127.0.0.1:3002/api/health';
+    const attempts = 30;
+    const delayMs = 2000;
+    process.stdout.write(`\n[vps-deploy] health (până la ${attempts}×${delayMs / 1000}s) ${healthUrl}\n`);
+    let ok = false;
+    for (let i = 1; i <= attempts; i += 1) {
+      const probe = spawnSync('curl', ['-fsS', '--max-time', '3', healthUrl], {
+        cwd: ROOT,
+        encoding: 'utf8',
+        env: envProd,
+      });
+      if (probe.status === 0) {
+        process.stdout.write(`[vps-deploy] health ok (încercarea ${i})\n`);
+        if (probe.stdout) process.stdout.write(`${probe.stdout.trim()}\n`);
+        ok = true;
+        break;
+      }
+      process.stdout.write(`[vps-deploy] health aștept… (${i}/${attempts})\n`);
+      spawnSync('sleep', [String(delayMs / 1000)], { stdio: 'ignore' });
+    }
+    if (!ok) {
+      console.error(
+        '[vps-deploy] health a eșuat — API-ul nu răspunde pe :3002.\n' +
+          '  Verifică pe VPS: systemctl status rai-api --no-pager\n' +
+          '  Log: journalctl -u rai-api -n 80 --no-pager',
+      );
+      process.exit(1);
+    }
   }
 
   const rev = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
