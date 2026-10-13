@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ModalShell from '@/components/ModalShell';
 import RoDateField from '@/components/RoDateField';
 import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
+import { appendObservationCode } from '@/lib/observationCodes';
 import { Loader2, Pencil, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
-import { avizEditFindings, findingsForField, inputCls, isLearnedRoute, labelCls, lowField } from './avizeUi';
+import {
+  avizEditFindings, emptyForm, findingsForField, inputCls, isLearnedRoute, labelCls, lowField,
+} from './avizeUi';
 
+/**
+ * Editează owns its draft. Parent list poll / zone-tax / findings must not wipe typed values
+ * by re-seeding from the saved row on every re-render.
+ *
+ * `formRevision` bumps only when the parent deliberately reloads the draft (Re-extrage).
+ */
 export default function AvizEditModal({
-  editRow, form, setForm, obsCodes, saving, onClose, onSave, onAppendObs,
+  editRow, formRevision = 0, obsCodes, saving, onClose, onSave,
 }) {
+  const [form, setForm] = useState(() => emptyForm(editRow));
+
+  useEffect(() => {
+    setForm(emptyForm(editRow));
+  }, [editRow?.id, formRevision]);
+
   const reviewFindings = avizEditFindings(editRow, { form });
 
   return (
@@ -53,8 +68,9 @@ export default function AvizEditModal({
                     ) : (
                       <input
                         className={`${inputCls} ${needsAttention ? 'border-amber-300' : ''}`}
-                        type={f.type || 'text'}
-                        step={f.step}
+                        type="text"
+                        inputMode={f.inputMode || undefined}
+                        autoComplete="off"
                         value={form[f.key] ?? ''}
                         onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                       />
@@ -90,7 +106,16 @@ export default function AvizEditModal({
                 <p className="text-xs text-slate-500 mb-1">Coduri observații (textul rămâne editabil)</p>
                 <div className="flex flex-wrap gap-1">
                   {obsCodes.map((c) => (
-                    <button key={c.id} type="button" className="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50" onClick={() => onAppendObs(c.code)} title={c.label || c.code}>
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="text-xs px-2 py-1 rounded-full border border-slate-200 hover:bg-slate-50"
+                      onClick={() => setForm((prev) => ({
+                        ...prev,
+                        observatii: appendObservationCode(prev.observatii, c.code),
+                      }))}
+                      title={c.label || c.code}
+                    >
                       {c.code}{c.label ? ` · ${c.label}` : ''}
                     </button>
                   ))}
@@ -105,7 +130,7 @@ export default function AvizEditModal({
           <button
             type="button"
             disabled={saving}
-            onClick={onSave}
+            onClick={() => onSave(form)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}

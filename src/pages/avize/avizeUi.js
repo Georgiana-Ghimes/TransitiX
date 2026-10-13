@@ -218,10 +218,16 @@ export function columnCountOf(t) {
 export function emptyForm(row = {}) {
   const form = {};
   for (const f of AVIZ_FORM_FIELDS) {
-    const raw = row[f.key] ?? '';
-    form[f.key] = f.type === 'date' ? toDateIso(raw) : raw;
+    const raw = row[f.key];
+    if (f.type === 'date') {
+      form[f.key] = toDateIso(raw ?? '');
+    } else {
+      // Always strings for controlled text inputs — pg NUMERIC / JSON numbers in the
+      // row used to leave number values that fought React on every blur/tab.
+      form[f.key] = raw == null || raw === '' ? '' : String(raw);
+    }
   }
-  form.ruta_display = row.ruta_display ?? '';
+  form.ruta_display = row.ruta_display == null ? '' : String(row.ruta_display);
   form.trip_id = row.trip_id ?? '';
   return form;
 }

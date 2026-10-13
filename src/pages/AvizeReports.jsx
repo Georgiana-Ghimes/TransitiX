@@ -4,7 +4,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { isDocumentsProfile } from '@/lib/appProfile';
-import { appendObservationCode, validateObservationCodeInput } from '@/lib/observationCodes';
+import { validateObservationCodeInput } from '@/lib/observationCodes';
 import { AVIZ_SOURCE_OPTIONS, STATUS_LABEL, nextAvizStatusOnSave } from '@/lib/avizAnnex';
 import { datePresetRange, avizIncarcareDate, avizMatchesListFilters, filtersToRevealUploads } from '@/lib/avizOps';
 import { formatDate } from '@/lib/utils';
@@ -30,7 +30,6 @@ import {
   columnCountOf,
   displayRoute,
   downloadBlob,
-  emptyForm,
   formatIncarcareLabel,
   hasManualAvizEdits,
   inputCls,
@@ -67,8 +66,9 @@ export default function AvizeReports() {
   const [selected, setSelected] = useState(() => new Set());
   const [templateId, setTemplateId] = useState('');
   const [editRow, setEditRow] = useState(null);
+  /** Bumps when Re-extrage should re-seed the Editează draft (not on list poll). */
+  const [editFormRevision, setEditFormRevision] = useState(0);
   const [reviewId, setReviewId] = useState(null);
-  const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
   const [deleteBulkOpen, setDeleteBulkOpen] = useState(false);
@@ -421,11 +421,11 @@ export default function AvizeReports() {
   const rangeTo = Math.min(total, (page + 1) * pageSize);
 
   const openEdit = (row) => {
+    setEditFormRevision(0);
     setEditRow(row);
-    setForm(emptyForm(row));
   };
 
-  const saveEdit = async () => {
+  const saveEdit = async (form) => {
     if (!editRow) return;
     setSaving(true);
     try {
@@ -647,9 +647,8 @@ export default function AvizeReports() {
           setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...settled } : r)));
           setEditRow((prev) => {
             if (prev?.id !== row.id) return prev;
-            const next = { ...prev, ...settled };
-            setForm(emptyForm(next));
-            return next;
+            setEditFormRevision((n) => n + 1);
+            return { ...prev, ...settled };
           });
         }
       }
@@ -863,13 +862,6 @@ export default function AvizeReports() {
       is_default: false,
       columns: JSON.parse(JSON.stringify(base)),
     });
-  };
-
-  const appendObs = (code) => {
-    setForm((prev) => ({
-      ...prev,
-      observatii: appendObservationCode(prev.observatii, code),
-    }));
   };
 
   const rowLocked = (id) => uploading || busyId === id;
@@ -1334,13 +1326,11 @@ export default function AvizeReports() {
       {editRow && (
         <AvizEditModal
           editRow={editRow}
-          form={form}
-          setForm={setForm}
+          formRevision={editFormRevision}
           obsCodes={obsCodes}
           saving={saving}
           onClose={() => setEditRow(null)}
           onSave={saveEdit}
-          onAppendObs={appendObs}
         />
       )}
 

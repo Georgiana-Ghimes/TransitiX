@@ -50,9 +50,29 @@ import { etransportCapability, etransportConfigured } from './lib/compliance/etr
 import { efacturaCapability } from './lib/compliance/efactura.js';
 import { fileURLToPath } from 'url';
 
-const APP_VERSION = JSON.parse(
-  fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')
-).version;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serverPkg = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'),
+);
+const APP_VERSION = serverPkg.version;
+
+/** Root package.json companion numbering — UI reloads when this build changes after deploy. */
+function readCompanionMeta() {
+  try {
+    const rootPkg = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'),
+    );
+    const c = rootPkg?.companion;
+    if (!c || c.version == null || c.build == null) return null;
+    return {
+      version: String(c.version).trim(),
+      build: String(c.build).trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+const COMPANION_META = readCompanionMeta();
 
 if (!process.env.JWT_SECRET) {
   console.error('JWT_SECRET is required. Copy server/.env.example to server/.env');
@@ -146,12 +166,20 @@ async function healthCapabilities() {
 
 app.get('/api/health', async (_req, res) => {
   const capabilities = await healthCapabilities();
+  const body = {
+    ok: true,
+    service: 'transitix-api',
+    db: true,
+    version: APP_VERSION,
+    capabilities,
+  };
+  if (COMPANION_META) body.companion = COMPANION_META;
   try {
     await query('SELECT 1');
-    res.json({ ok: true, service: 'transitix-api', db: true, version: APP_VERSION, capabilities });
+    res.json(body);
   } catch (err) {
     console.error(err);
-    res.status(503).json({ ok: false, service: 'transitix-api', db: false, version: APP_VERSION, capabilities });
+    res.status(503).json({ ...body, ok: false, db: false });
   }
 });
 

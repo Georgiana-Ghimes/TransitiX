@@ -26,6 +26,14 @@ describe('avizAnnex field map', () => {
     expect(AVIZ_FORM_FIELDS.map((f) => f.key)).toContain('net_weight_kg');
   });
 
+  it('keeps Editează numeric fields as text (no type=number snap-back)', () => {
+    for (const f of AVIZ_FORM_FIELDS) {
+      expect(f.type === 'number').toBe(false);
+    }
+    expect(AVIZ_FORM_FIELDS.find((f) => f.key === 'gross_weight_kg')?.inputMode).toBe('decimal');
+    expect(AVIZ_FORM_FIELDS.find((f) => f.key === 'numar_curse')?.inputMode).toBe('numeric');
+  });
+
   it('keeps every XLSX annex source editable on the form (except generated Nr. crt)', () => {
     const formKeys = AVIZ_FORM_FIELDS.map((f) => f.key);
     expect(formKeys).toEqual(expect.arrayContaining(

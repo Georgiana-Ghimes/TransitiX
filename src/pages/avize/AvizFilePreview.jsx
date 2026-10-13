@@ -105,17 +105,20 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
   useEffect(() => {
     let objectUrl = '';
     let cancelled = false;
-    setSrc('');
+    // Keep the previous preview visible until the new blob is ready — blanking src on
+    // every parent re-render felt like a full refresh while typing in Editează.
     setError('');
     setNatural(null);
 
     if (!fileUrl) {
+      setSrc('');
       setError('Nu există fișier atașat acestui aviz.');
       return undefined;
     }
 
     // Manual cab entry - no bytes on disk.
     if (String(fileUrl).startsWith('manual://')) {
+      setSrc('');
       setError('Aviz completat manual de șofer - fără fișier atașat.');
       return undefined;
     }
@@ -137,6 +140,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           setSrc(tokenUrl);
           return;
         }
+        setSrc('');
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       } catch {
         if (cancelled) return;
@@ -144,6 +148,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           setSrc(tokenUrl);
           return;
         }
+        setSrc('');
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       }
     })();

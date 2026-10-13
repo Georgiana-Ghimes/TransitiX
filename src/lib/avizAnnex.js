@@ -1,20 +1,20 @@
 export const AVIZ_FORM_FIELDS = [
   { key: 'numar_tpo', label: 'Număr TPO' },
   { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', type: 'date' },
-  { key: 'valoare_tpo', label: 'Valoare TPO', type: 'number', step: '0.01' },
+  // Text + inputMode, not type=number: spinner / controlled-state fights cleared typed
+  // values when tabbing between empty fields (same class of bug as numar_curse).
+  { key: 'valoare_tpo', label: 'Valoare TPO', inputMode: 'decimal' },
   { key: 'numar_auto', label: 'Număr auto' },
   { key: 'ruta_transport', label: 'Rută transport' },
   { key: 'tip_marfa', label: 'Tip marfă' },
-  { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³)', type: 'number', step: '0.001' },
-  { key: 'gross_weight_kg', label: 'Greutate brută (kg)', type: 'number', step: '0.01' },
-  { key: 'net_weight_kg', label: 'Greutate netă (kg)', type: 'number', step: '0.01' },
+  { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³)', inputMode: 'decimal' },
+  { key: 'gross_weight_kg', label: 'Greutate brută (kg)', inputMode: 'decimal' },
+  { key: 'net_weight_kg', label: 'Greutate netă (kg)', inputMode: 'decimal' },
   { key: 'numar_document_marfa', label: 'Număr document marfă' },
-  // Text, not type=number: spinner steppers fight controlled React state and made
-  // typed values (e.g. 2) snap back to 1 while editing.
-  { key: 'numar_curse', label: 'Număr curse' },
-  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', type: 'number', step: '0.01' },
-  { key: 'km_parcursi', label: 'Km parcurși', type: 'number', step: '0.01' },
-  { key: 'tarif_km', label: 'Tarif km', type: 'number', step: '0.0001' },
+  { key: 'numar_curse', label: 'Număr curse', inputMode: 'numeric' },
+  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', inputMode: 'decimal' },
+  { key: 'km_parcursi', label: 'Km parcurși', inputMode: 'decimal' },
+  { key: 'tarif_km', label: 'Tarif km', inputMode: 'decimal' },
   { key: 'observatii', label: 'Observații' },
 ];
 

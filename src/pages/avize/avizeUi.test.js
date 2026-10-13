@@ -173,6 +173,17 @@ describe('avizeUi', () => {
     expect(form.ruta_display).toBe('B');
   });
 
+  it('stringifies numeric row values for controlled Editează inputs', () => {
+    const form = emptyForm({
+      gross_weight_kg: 1234.5,
+      cantitate_marfa: 0,
+      valoare_tpo: null,
+    });
+    expect(form.gross_weight_kg).toBe('1234.5');
+    expect(form.cantitate_marfa).toBe('0');
+    expect(form.valoare_tpo).toBe('');
+  });
+
   it('auto-downloads the email stub annex only once per attempt', () => {
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: true })).toBe(true);
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: true, hasContent: true })).toBe(false);

@@ -60,11 +60,17 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
 
   useEffect(() => {
     let alive = true;
-    setZoneResult(undefined);
-    resolveAvizZone(address)
-      .then((res) => { if (alive) setZoneResult(res); })
-      .catch(() => { if (alive) setZoneResult(null); });
-    return () => { alive = false; };
+    // Debounce while the operator types Rută / greutate — sync resolve on every key
+    // swapped the panel for „se calculează…” and felt like the modal was refreshing.
+    const timer = window.setTimeout(() => {
+      resolveAvizZone(address)
+        .then((res) => { if (alive) setZoneResult(res); })
+        .catch(() => { if (alive) setZoneResult(null); });
+    }, 350);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
   }, [address]);
 
   const loading = vehicles === null || zoneResult === undefined;
