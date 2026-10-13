@@ -5,8 +5,8 @@
   "_comment_companion": "The RAI documents companion ships on its own numbering; the semver hook only touches \"version\".",
   "companion": {
     "title": "RAI Spedition · Documente",
-    "version": "1.26.4",
-    "build": 110
+    "version": "1.26.5",
+    "build": 111
   },
   "type": "module",
   "scripts": {
@@ -35,6 +35,7 @@
     "uploads:prune": "npm run prune:uploads --prefix server --",
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
+    "db:ensure:stefan": "npm run ensure:stefan --prefix server",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:api": "vitest run --config server/vitest.config.js",

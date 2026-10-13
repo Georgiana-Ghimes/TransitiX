@@ -7,6 +7,7 @@ import {
   LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, ChevronDown, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
   MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map, CalendarClock, Ticket,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
@@ -24,9 +25,11 @@ import {
   tourNavHighlightPath,
   tourMobileHighlightMenuButton,
 } from '@/lib/officeTour';
+import { fetchWhatsNewClientIp, shouldAutoOpenWhatsNew } from '@/lib/whatsNew';
 import NotificationBell from '@/components/NotificationBell';
 import GlobalSearch from '@/components/GlobalSearch';
 import OfficeTour from '@/components/OfficeTour';
+import WhatsNewModal from '@/components/WhatsNewModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
@@ -123,9 +126,18 @@ export default function Layout() {
   });
   const [tourOpen, setTourOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [whatsNewShowAll, setWhatsNewShowAll] = useState(false);
+  const [whatsNewClientIp, setWhatsNewClientIp] = useState(null);
   const [flotaOpen, setFlotaOpen] = useState(() =>
     String(location.pathname || '').startsWith('/fleet')
   );
+
+  const openWhatsNew = (all = true) => {
+    setWhatsNewShowAll(all);
+    setWhatsNewOpen(true);
+    if (!isDesktop) setMobileOpen(false);
+  };
 
   useEffect(() => {
     if (location.pathname.startsWith('/fleet')) setFlotaOpen(true);
@@ -150,6 +162,22 @@ export default function Layout() {
       setTourStep(0);
       setTourOpen(true);
     }
+  }, [isDriver, documentsCompanion]);
+
+  // Companion: show „Ce este nou?” after a new build, or again from another IP.
+  useEffect(() => {
+    if (isDriver || !documentsCompanion) return;
+    let cancelled = false;
+    (async () => {
+      const ip = await fetchWhatsNewClientIp();
+      if (cancelled) return;
+      setWhatsNewClientIp(ip);
+      if (shouldAutoOpenWhatsNew(undefined, undefined, ip)) {
+        setWhatsNewShowAll(false);
+        setWhatsNewOpen(true);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [isDriver, documentsCompanion]);
 
   // Navigate when the tour *step* changes, not whenever the user leaves the step path.
@@ -312,33 +340,42 @@ export default function Layout() {
             showIconsOnly ? 'justify-center px-2' : 'gap-2.5 px-4'
           )}
         >
-          <Link
-            to={documentsCompanion ? '/avize' : '/'}
-            title={documentsCompanion ? 'Avize OCR' : 'Dashboard'}
-            onClick={() => { if (!tourOpen) setMobileOpen(false); }}
-            className={cn(
-              'flex items-center min-w-0',
-              showIconsOnly ? 'justify-center' : 'justify-center flex-1'
-            )}
-          >
-            {showIconsOnly ? (
-              <span title={documentsCompanion ? `${companionTagline()} · ${formatAppVersion()}` : `Transitix · ${formatAppVersion()}`}>
-                <BrandLogo variant="mark" />
-              </span>
-            ) : (
-              <div className="min-w-0 w-full flex flex-col items-center text-center gap-0.5">
+          {showIconsOnly ? (
+            <Link
+              to={documentsCompanion ? '/avize' : '/'}
+              title={documentsCompanion ? `${companionTagline()} · ${formatAppVersion()}` : `Transitix · ${formatAppVersion()}`}
+              onClick={() => { if (!tourOpen) setMobileOpen(false); }}
+              className="flex items-center justify-center min-w-0"
+            >
+              <BrandLogo variant="mark" />
+            </Link>
+          ) : (
+            <div className="min-w-0 w-full flex flex-col items-center text-center gap-0.5 flex-1">
+              <Link
+                to={documentsCompanion ? '/avize' : '/'}
+                title={documentsCompanion ? 'Avize OCR' : 'Dashboard'}
+                onClick={() => { if (!tourOpen) setMobileOpen(false); }}
+                className="flex justify-center min-w-0 w-full"
+              >
                 <BrandLogo imgClassName="h-7 max-w-[10.5rem] object-center" />
-                {documentsCompanion ? (
-                  <>
-                    <p className="text-[11px] text-white/70 leading-snug">{companionTagline()}</p>
-                    <p className="text-[10px] text-white/45 tabular-nums">{formatAppVersion()}</p>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-white/50">TMS Platform</p>
-                )}
-              </div>
-            )}
-          </Link>
+              </Link>
+              {documentsCompanion ? (
+                <>
+                  <p className="text-[11px] text-white/70 leading-snug">{companionTagline()}</p>
+                  <button
+                    type="button"
+                    onClick={() => openWhatsNew(true)}
+                    title="Ce este nou?"
+                    className="text-[10px] text-white/45 tabular-nums hover:text-white/80 transition-colors"
+                  >
+                    {formatAppVersion()}
+                  </button>
+                </>
+              ) : (
+                <p className="text-[10px] text-white/50">TMS Platform</p>
+              )}
+            </div>
+          )}
           {!isDesktop && (
             <button type="button" className="shrink-0 ml-auto" onClick={() => setMobileOpen(false)} aria-label="Închide meniul">
               <X className="w-5 h-5" />
@@ -474,6 +511,20 @@ export default function Layout() {
             <Ticket className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Tichet suport</span>}
           </a>
+          {documentsCompanion && (
+          <button
+            type="button"
+            title="Ce este nou?"
+            onClick={() => openWhatsNew(true)}
+            className={cn(
+              'flex items-center w-full rounded-lg text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors',
+              showIconsOnly ? 'justify-center h-11 px-0' : 'gap-3 px-3 py-2.5',
+            )}
+          >
+            <Sparkles className="w-5 h-5 shrink-0" />
+            {!showIconsOnly && <span>Ce este nou?</span>}
+          </button>
+          )}
           <Link
             to="/ghid"
             data-tour-ghid
@@ -623,6 +674,15 @@ export default function Layout() {
             step={tourStep}
             onStepChange={setTourStep}
             onClose={closeTour}
+          />
+        )}
+
+        {documentsCompanion && (
+          <WhatsNewModal
+            open={whatsNewOpen}
+            showAll={whatsNewShowAll}
+            clientIp={whatsNewClientIp}
+            onClose={() => setWhatsNewOpen(false)}
           />
         )}
       </div>

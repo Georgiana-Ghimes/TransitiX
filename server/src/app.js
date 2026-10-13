@@ -48,6 +48,7 @@ import { tomtomConfigured } from './lib/geo/tomtom.js';
 import { vroomConfigured } from './lib/planning/vroom.js';
 import { etransportCapability, etransportConfigured } from './lib/compliance/etransport.js';
 import { efacturaCapability } from './lib/compliance/efactura.js';
+import { ipFrom } from './lib/audit/events.js';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -169,7 +170,7 @@ async function healthCapabilities() {
   };
 }
 
-app.get('/api/health', async (_req, res) => {
+app.get('/api/health', async (req, res) => {
   const capabilities = await healthCapabilities();
   const body = {
     ok: true,
@@ -179,6 +180,9 @@ app.get('/api/health', async (_req, res) => {
     capabilities,
   };
   if (COMPANION_META) body.companion = COMPANION_META;
+  // Used by companion „Ce este nou?” so notes can reappear on another network.
+  const clientIp = ipFrom(req);
+  if (clientIp) body.clientIp = clientIp;
   try {
     await query('SELECT 1');
     res.json(body);

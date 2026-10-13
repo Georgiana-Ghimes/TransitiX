@@ -11,6 +11,7 @@
     "seed": "node src/seed.js",
     "seed:demo": "node src/seed-demo.js",
     "seed:fleet": "node src/seed-fleet-data.js",
+    "ensure:stefan": "node scripts/ensure-stefan-accounts.js",
     "backfill:locations": "node src/backfill-locations.js",
     "geocode:locations": "node src/geocode-locations.js"
   },
