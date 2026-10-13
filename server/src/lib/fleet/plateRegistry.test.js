@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   applyFleetPlateCorrection,
   digitEditDistance,
   pickFleetPlateCorrection,
   plateParts,
+  resolveOcrPlateAgainstFleet,
+  runDbQuery,
 } from './plateRegistry.js';
 
 describe('plateParts / digitEditDistance', () => {
@@ -46,5 +48,29 @@ describe('pickFleetPlateCorrection (#78)', () => {
       from: 'B-23-NKL',
       to: 'B-29-NKL',
     });
+  });
+});
+
+describe('resolveOcrPlateAgainstFleet db handle (#78 reopen)', () => {
+  it('accepts the bare query(text, params) from db.js, not only pool.query', async () => {
+    // extractBatchDocuments used to pass `query` → db.query undefined → silent catch.
+    const queryFn = vi.fn(async () => ({ rows: [{ plate: 'B-29-NKL' }, { plate: 'B-81-NKL' }] }));
+    const fixed = await resolveOcrPlateAgainstFleet(
+      queryFn,
+      'company-1',
+      'B-23-NKL / B-81-NKL',
+    );
+    expect(queryFn).toHaveBeenCalled();
+    expect(fixed.repaired).toBe(true);
+    expect(fixed.numarAuto).toBe('B-29-NKL / B-81-NKL');
+  });
+
+  it('accepts pool-shaped { query }', async () => {
+    const db = {
+      query: vi.fn(async () => ({ rows: [{ plate: 'B-29-NKL' }] })),
+    };
+    expect(await runDbQuery(db, 'SELECT 1', [])).toEqual({ rows: [{ plate: 'B-29-NKL' }] });
+    const fixed = await resolveOcrPlateAgainstFleet(db, 'c1', 'B-23-NKL / B-81-NKL');
+    expect(fixed.numarAuto).toBe('B-29-NKL / B-81-NKL');
   });
 });

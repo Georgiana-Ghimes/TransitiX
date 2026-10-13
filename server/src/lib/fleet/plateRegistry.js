@@ -93,6 +93,16 @@ export function primaryPlate(value) {
 }
 
 /**
+ * Accept pool/client (`db.query`) or the bare `query(text, params)` from `db.js`.
+ * Passing the bare function used to throw and the OCR catch swallowed it (#78 reopen).
+ */
+export async function runDbQuery(db, text, params) {
+  if (typeof db === 'function') return db(text, params);
+  if (db && typeof db.query === 'function') return db.query(text, params);
+  throw new TypeError('runDbQuery: need pool/client with .query or query(text, params)');
+}
+
+/**
  * Against Autoturisme: if OCR misread one digit on the tractor, prefer the known plate (#78).
  * Loads only active vehicles sharing county + letter series (small set).
  */
@@ -104,7 +114,8 @@ export async function resolveOcrPlateAgainstFleet(db, companyId, numarAuto) {
   const parts = plateParts(primary);
   if (!parts) return applyFleetPlateCorrection(numarAuto, []);
 
-  const res = await db.query(
+  const res = await runDbQuery(
+    db,
     `SELECT plate FROM vehicles
      WHERE company_id = $1
        AND is_active IS NOT FALSE

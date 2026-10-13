@@ -318,7 +318,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       // Night OCR often flips one tractor digit (B-29-NKL → B-23-NKL). Prefer Autoturisme (#78).
       if (columns.numar_auto) {
         try {
-          const plateFix = await resolveOcrPlateAgainstFleet(query, companyId, columns.numar_auto);
+          // pool (has .query), not bare `query` — plateRegistry calls db.query (#78 reopen).
+          const plateFix = await resolveOcrPlateAgainstFleet(pool, companyId, columns.numar_auto);
           if (plateFix.repaired && plateFix.numarAuto) {
             columns.numar_auto = plateFix.numarAuto;
             merged.values = { ...merged.values, numar_auto: plateFix.numarAuto };

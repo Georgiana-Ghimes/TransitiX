@@ -495,6 +495,37 @@ Greutate bruta: 10,993.83 kg 10.193,83
     expect(extractGrossWeight(text).value).toBe(10193.83);
   });
 
+  it('recovers 400 when OCR attaches the truncated hand count to sac (#65)', () => {
+    // Extractor latches onto `40 sac`; struck print `432.00 sac` is still on the page.
+    const text = `
+11001457 Adeziv FlexBond 25 kg (54/pal) 432.00 sac
+40 sac
+corectat la incarcare
+Greutate bruta: 10,993.83 kg 10.193,83
+`;
+    expect(extractQuantity(text).value).toEqual({ quantity: 400, unit: 'saci' });
+    expect(extractGrossWeight(text).value).toBe(10193.83);
+  });
+
+  it('glues split / O-as-zero OCR for handwritten 400 (#65)', () => {
+    expect(extractQuantity(`432.00 sac 4 00\ncorectat la incarcare`).value.quantity).toBe(400);
+    expect(extractQuantity(`432.00 sac 40O\ncorectat la incarcare`).value.quantity).toBe(400);
+    expect(extractQuantity(`432.00 sac 4oo\ncorectat la incarcare`).value.quantity).toBe(400);
+  });
+
+  it('locks the live Mistral read of IMG-20261001-WA0027 (#65)', () => {
+    // Snapshot from runMistralOcr on the QA photo (PSL-0062041) — ink 400 + 10.193,83.
+    const text = `
+1 11001457 Adeziv FlexBond 25 kg (54/pal) GTIN: 5945752041163 / Cod marfă: 38245090 432.00 sac 400 8.00 pal
+2 11001674 Servicii Paletizare-Infoliere Cod marfă: 00000000 8.00 pce corectat la încărcare
+Greutate netă: 10,800.00 kg
+Greutate brută: 10,993.83 kg 10.193,83
+`;
+    expect(detectHandCorrection(text).present).toBe(true);
+    expect(extractQuantity(text).value).toEqual({ quantity: 400, unit: 'saci' });
+    expect(extractGrossWeight(text).value).toBe(10193.83);
+  });
+
   it('reads quantity on a pallet-only return (pce is the goods) (#64)', () => {
     const text = `
 Aviz de expeditie rezumat: TPO-0033293
@@ -1308,6 +1339,38 @@ Auto: B 112 VFM
     expect(result.values.gross_weight_kg).toBe(14844);
     expect(result.values.net_weight_kg ?? null).toBeNull();
     expect(result.values.gross_weight_kg).not.toBe(12);
+  });
+
+  it('reads live Mistral OCR of handwritten CMR WA0041 (#66 reopen)', () => {
+    // IMG-20261005-WA0041.jpg / CMR 0247315 / TPO-0033322 — headers on one line, values on the next.
+    const text = `
+1 Expeditor (nume, adresă, țară) / Absender / Sender VERDALIT MATERIALE SRL Str. Fabricii nr. 14, Ploiești jud. Prahova, România SCRISOARE DE TRĂSURĂ INTERNAȚIONALĂ CMR Nr. 0247315 Acest transport este supus
+
+2 Destinatar (nume, adresă, țară) / Consignee CASA NOVA CONSTRUCT SRL Șos. Giurgiului nr. 120 București Sector 4, România 16 Transportator RAI-SPEDITION SRL București, România
+3 Locul prevăzut pentru ferarea mărții (localitate, țară) București Sector 4, Șos. Giurgiului 120, RO 17 Transportatori succesivi
+4 Locul și data încărcării mărții (localitate, țară, dată) Ploiești, România 05.10.2026 18 Rezerve și observații ale transportatorului
+5 Documente anexate Aviz însoțire VRD-0018342
+6 Mărci și numere 7 Număr de colete 8 Mod de ambalare 9 Natura mărții 10 Nr. statului 11 Greutate brută, kg 12 Volum m³
+VARMAX 720 18 pal. saci pe paleți Var hidratat VARMAX 20 kg 14 844
+13 Instrucțiunile expeditorului Comandă transport TPO-0033322 Descărcare la rampă
+25 Nr. de înmatriculare PH 71 KRV / PH 18 KRV
+`;
+    expect(looksLikeCmrDocument(text)).toBe(true);
+    expect(detectProfile(text, { documentType: 'aviz' }).profile?.id).toBe('aviz_cmr');
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.profile_id).toBe('aviz_cmr');
+    expect(result.values.numar_document_marfa).toBe('0247315');
+    expect(result.values.numar_tpo).toMatch(/TPO-0033322/);
+    expect(result.values.ruta_transport).toMatch(/Ploiești/i);
+    expect(result.values.ruta_transport).toMatch(/Giurgiului/i);
+    expect(result.values.ruta_transport).toMatch(/București/i);
+    expect(result.values.ruta_transport).not.toMatch(/Fabricii/i);
+    expect(result.values.tip_marfa).toBe('saci');
+    expect(result.values.quantity).toBe(720);
+    expect(result.values.gross_weight_kg).toBe(14844);
+    expect(result.values.net_weight_kg ?? null).toBeNull();
+    expect(result.values.gross_weight_kg).not.toBe(12);
+    expect(result.values.quantity).not.toBe(18);
   });
 });
 

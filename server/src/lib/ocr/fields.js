@@ -500,13 +500,53 @@ function recoverTruncatedHandQty(n, printedQty, unit) {
 }
 
 /**
+ * OCR near „corectat” often splits or mangles the ink figure: "4 00", "40O", "4oo".
+ * Glue / repair before scanning bare counts (#65).
+ */
+function normalizeHandQtyWindow(window) {
+  return String(window || '')
+    // "4 00" / "40 0" → 400 (round loading corrections).
+    .replace(/\b([1-9])\s+(00|50)\b/g, '$1$2')
+    .replace(/\b([1-9]\d)\s+0\b/g, (_, a) => `${a}0`)
+    // O/o as zero in ink figures: 40O, 4oo, 4o0 → 400.
+    .replace(/\b(\d{1,3})[oO]{2}\b/g, (_, a) => `${a}00`)
+    .replace(/\b(\d{1,3})[oO]\b/g, (_, a) => `${a}0`)
+    .replace(/\b(\d)[oO](\d)\b/g, (_, a, b) => `${a}0${b}`);
+}
+
+/**
+ * Two packaging counts of the same unit next to „corectat”: larger = struck print,
+ * smaller = ink (sometimes OCR even tags the ink with `sac`). Recover 40→400 (#65).
+ */
+function handQtyFromPackagingPair(folded, unit) {
+  const key = quantityKey(unit || 'saci');
+  const qtys = [...new Set(
+    collectPackagingLines(folded)
+      .filter((l) => quantityKey(l.unit) === key)
+      .map((l) => l.qty),
+  )].sort((a, b) => b - a);
+  if (qtys.length < 2) return null;
+  const printed = qtys[0];
+  for (const n of qtys.slice(1)) {
+    const recovered = recoverTruncatedHandQty(n, printed, unit);
+    if (recovered != null && recovered !== n && recovered < printed) return recovered;
+    if (n < printed && n >= printed * 0.5) return n;
+  }
+  return null;
+}
+
+/**
  * Bare count written next to a struck packaging total (e.g. "432.00 sac … 400 corectat").
  */
 function handwrittenQuantityOverride(folded, printedQty, unit) {
   const phraseAt = folded.search(/corectat/);
   if (phraseAt < 0) return null;
-  const window = folded.slice(Math.max(0, phraseAt - 160), phraseAt + 24);
-  const re = /\b(\d{2,5})(?:[.,]\d{1,2})?\b(?!\s*(?:sac|gale|buc|pce|kg|pal|m3|mc|lei|ron)\b)/gi;
+  const window = normalizeHandQtyWindow(
+    folded.slice(Math.max(0, phraseAt - 160), phraseAt + 24),
+  );
+  // Reject `432` peeled off `432.00 sac` — optional decimals must stay attached to the unit
+  // lookahead, or the struck print is misread as the ink figure (#65).
+  const re = /\b(\d{2,5})(?:[.,]\d{1,2})?\b(?![.,]\d{1,2}\s*(?:sac|gale|buc|pce|kg|pal|m3|mc|lei|ron)\b)(?!\s*(?:sac|gale|buc|pce|kg|pal|m3|mc|lei|ron)\b)/gi;
   const candidates = [];
   let m;
   while ((m = re.exec(window)) !== null) {
@@ -526,15 +566,36 @@ function handwrittenQuantityOverride(folded, printedQty, unit) {
   const pool = filtered.length ? filtered : uniq;
 
   // Prefer the largest value still below the printed total (loading usually shortens the count).
+  // Always run recoverTruncatedHandQty — a "below" pick of 40 against an 80 print still needs *10.
   const printed = Number(printedQty);
   if (Number.isFinite(printed) && printed > 0) {
     const below = pool.filter((n) => n < printed && n >= printed * 0.5);
-    if (below.length) return below.sort((a, b) => a - b)[below.length - 1];
+    if (below.length) {
+      const pick = below.sort((a, b) => a - b)[below.length - 1];
+      return recoverTruncatedHandQty(pick, printedQty, unit);
+    }
   }
 
   // Closest to the phrase: last match in the pre-phrase window — then fix OCR "40"→400.
   const last = pool[pool.length - 1];
   return recoverTruncatedHandQty(last, printedQty, unit);
+}
+
+/**
+ * When „corectat” is present and the extractor latched onto a small count (OCR "40" for
+ * ink "400", sometimes even as `40 sac`), prefer the largest same-unit packaging line on
+ * the page as the struck print total for the override (#65).
+ */
+function struckPrintedQuantity(foundQty, foundUnit, folded) {
+  const printed = Number(foundQty);
+  if (!Number.isFinite(printed) || printed <= 0) return printed;
+  const key = quantityKey(foundUnit);
+  const lines = collectPackagingLines(folded).filter((l) => quantityKey(l.unit) === key);
+  if (!lines.length) return printed;
+  const largest = Math.max(...lines.map((l) => l.qty));
+  // Only promote when the extractor figure looks like a truncated hand count vs the table.
+  if (largest > printed * 1.5) return largest;
+  return printed;
 }
 
 /**
@@ -1286,17 +1347,41 @@ export function extractQuantity(text) {
   const { present, folded: correctionFolded } = detectHandCorrection(blob);
   if (!present || !found?.value || typeof found.value !== 'object') return found;
 
-  const hand = handwrittenQuantityOverride(
-    correctionFolded,
+  const printedQty = struckPrintedQuantity(
     found.value.quantity,
     found.value.unit,
+    correctionFolded,
   );
+  // Packaging pair (432 sac + 40 sac) before bare-number scan: summing those lines would
+  // invent 472 and then "prefer" the struck 432 as if it were the ink (#65).
+  const hand = handQtyFromPackagingPair(correctionFolded, found.value.unit)
+    ?? handwrittenQuantityOverride(
+      correctionFolded,
+      printedQty,
+      found.value.unit,
+    );
   if (hand != null) {
     return result(
       { quantity: hand, unit: found.value.unit },
       0.55,
       `hand-correction-qty:${hand}`,
     );
+  }
+  // Phrase seen, extractor on a truncated hand count, but no bare alternate — still try *10
+  // against the struck packaging total on the page (40 sac vs 432.00 sac).
+  if (printedQty > found.value.quantity * 1.5) {
+    const recovered = recoverTruncatedHandQty(
+      found.value.quantity,
+      printedQty,
+      found.value.unit,
+    );
+    if (recovered != null && recovered !== found.value.quantity) {
+      return result(
+        { quantity: recovered, unit: found.value.unit },
+        0.55,
+        `hand-correction-qty:${recovered}`,
+      );
+    }
   }
   // Phrase seen but no alternate figure in OCR — keep printed value, force review via confidence.
   return withHandCorrectionConfidence(found);

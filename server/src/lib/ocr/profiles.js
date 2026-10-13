@@ -600,23 +600,126 @@ const cmrDocumentNumberField = (text) => {
   return NO_MATCH;
 };
 
-/** CMR boxes 3 (încărcare) + 4 (descărcare) → `origine / destinație`. */
+/**
+ * Printed CMR boxes are often `3 Locul…` (space, no dot). Content runs until the next
+ * two-digit box on the same line (right-hand column 16–26) (#66 reopen / WA0041).
+ */
+function cmrPrintedBoxContent(blob, boxNo) {
+  const n = Number(boxNo);
+  if (!Number.isFinite(n) || n < 1) return '';
+  const re = new RegExp(`(?:^|\\n)\\s*${n}(?:[.)\\-]|\\s)(?!\\d)([^\\n]+)`, 'i');
+  const m = String(blob || '').match(re);
+  if (!m) return '';
+  let line = String(m[1]).replace(/\s+/g, ' ').trim();
+  // Drop the right-column continuation (`17 Transportatori…`, `18 Rezerve…`).
+  line = line.replace(/\s+\d{2}\s+[A-Za-zĂÂÎȘȚăâîșț].*$/u, '').trim();
+  // Drop the printed form label up to `(localitate…)` when present.
+  if (/\)/.test(line)) {
+    line = line.replace(/^[\s\S]*?\)\s*/, '').trim();
+  } else {
+    line = line
+      .replace(/^Locul\s+(?:prevazut\s+pentru\s+|si\s+data\s+)?[^\n]{0,60}?\s+/i, '')
+      .trim();
+  }
+  if (!line || /^(?:[-–—x]|gol|n\/?a|\.+)$/i.test(line)) return '';
+  return line;
+}
+
+/**
+ * Values row under CMR headers 6–12. Photo OCR puts counts on the next line, not as `7. 720`
+ * (#66 reopen): `VARMAX 720 18 pal. saci pe paleți … 14 844`.
+ */
+function cmrGoodsGridRow(blob) {
+  const m = String(blob || '').match(
+    /(?:^|\n)\s*6\s+M[aă]rci[^\n]*\b11\s*Greutate[^\n]*\n([^\n]+)/i,
+  );
+  return m?.[1] ? String(m[1]).replace(/\s+/g, ' ').trim() : '';
+}
+
+/**
+ * Package count from the goods grid: prefer the bag/bucket figure (720), not `18 pal`
+ * (#66 reopen / WA0041).
+ */
+function cmrQuantityFromGridRow(row) {
+  if (!row) return null;
+  const folded = row.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+  // `720 … saci` even when `18 pal.` sits between count and unit.
+  const beforeSaci = folded.match(
+    /\b(\d{2,5})(?:[.,]\d+)?\b(?=[^\n]{0,60}?\bsaci?\b)/i,
+  );
+  if (beforeSaci) {
+    const n = parseNumber(beforeSaci[1]);
+    if (n != null && isPlausibleQuantity(n, 'saci')) {
+      return { quantity: n, unit: 'saci', matched: beforeSaci[0] };
+    }
+  }
+  const beforeGaleti = folded.match(
+    /\b(\d{2,5})(?:[.,]\d+)?\b(?=[^\n]{0,60}?\bgal(?:eti|eata)?\b)/i,
+  );
+  if (beforeGaleti) {
+    const n = parseNumber(beforeGaleti[1]);
+    if (n != null && isPlausibleQuantity(n, 'galeti')) {
+      return { quantity: n, unit: 'galeti', matched: beforeGaleti[0] };
+    }
+  }
+  return null;
+}
+
+/** Box 11 gross from the grid row — spaced thousands `14 844`, never bag size `20 kg`. */
+function cmrGrossFromGridRow(row) {
+  if (!row) return null;
+  const spaced = [...row.matchAll(/\b(\d{1,3}(?:\s\d{3}){1,2})\b/g)]
+    .map((m) => ({ raw: m[1], n: parseNumber(m[1]) }))
+    .filter((x) => x.n != null && isPlausibleLoadWeightKg(x.n));
+  if (spaced.length) {
+    const pick = spaced[spaced.length - 1];
+    return { value: pick.n, matched: pick.raw };
+  }
+  const plain = [...row.matchAll(/\b(\d{4,5})(?:[.,]\d+)?\b/g)]
+    .map((m) => ({ raw: m[1], n: parseNumber(m[1]) }))
+    .filter((x) => x.n != null && isPlausibleLoadWeightKg(x.n));
+  if (plain.length) {
+    const pick = plain[plain.length - 1];
+    return { value: pick.n, matched: pick.raw };
+  }
+  return null;
+}
+
+/**
+ * CMR: box 4 = încărcare (origine), box 3 = livrare (destinație) → `origine / destinație`.
+ * Printed forms use a space after the box number, not only `3.` (#66 reopen).
+ */
 const cmrRouteField = (text) => {
   const blob = String(text || '');
+  const clean = (raw) => {
+    let s = String(raw || '').replace(/\s+/g, ' ').trim();
+    // Drop trailing date on the loading box (`Ploiești, România 05.10.2026`).
+    s = s.replace(/\s+\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}\s*$/, '').trim();
+    s = s.replace(/,\s*RO(?:U|M[AÂ]NIA)?\s*$/i, '').trim();
+    return s;
+  };
+  const fromPrinted = {
+    delivery: clean(cmrPrintedBoxContent(blob, 3)),
+    load: clean(cmrPrintedBoxContent(blob, 4)),
+  };
   const pick = (patterns) => matchPatterns(blob, patterns, {
-    transform: (raw) => String(raw).replace(/\s+/g, ' ').trim(),
+    transform: (raw) => clean(raw),
     baseConfidence: 0.85,
   });
-  const load = pick([
-    /locul\s+de\s+(?:preluare|incarcare|luare\s+in\s+primire)[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
-    /place\s+of\s+taking\s+over[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
-    /(?:^|\n)\s*3[.)\-][^\S\n]+([^\n]{3,80})/i,
-  ]);
-  const unload = pick([
-    /locul\s+de\s+(?:livrare|descarcare|destinatie)[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
-    /place\s+of\s+delivery[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
-    /(?:^|\n)\s*4[.)\-][^\S\n]+([^\n]{3,80})/i,
-  ]);
+  const load = fromPrinted.load
+    ? { value: fromPrinted.load, confidence: 0.9, matched: fromPrinted.load }
+    : pick([
+      /locul\s+(?:si\s+data\s+)?(?:de\s+)?(?:preluare|incarcare|incarcarii|luare\s+in\s+primire)[^:\n]{0,60}[:\-)]?\s*([^\n]{3,80})/i,
+      /place\s+of\s+taking\s+over[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+      /(?:^|\n)\s*4[.)\-][^\S\n]+([^\n]{3,80})/i,
+    ]);
+  const unload = fromPrinted.delivery
+    ? { value: fromPrinted.delivery, confidence: 0.9, matched: fromPrinted.delivery }
+    : pick([
+      /locul\s+(?:prevazut\s+pentru\s+)?(?:livrare|ferare|descarcare|destinatie)[^:\n]{0,60}[:\-)]?\s*([^\n]{3,80})/i,
+      /place\s+of\s+delivery[^:\n]{0,40}[:\-]?\s*([^\n]{3,80})/i,
+      /(?:^|\n)\s*3[.)\-][^\S\n]+([^\n]{3,80})/i,
+    ]);
   const a = load.value || null;
   const b = unload.value || null;
   if (a && b) return { value: `${a} / ${b}`, confidence: 0.88, matched: `${load.matched}+${unload.matched}` };
@@ -630,9 +733,12 @@ const cmrRouteField = (text) => {
  */
 const cmrGrossWeightField = (text) => {
   const blob = String(text || '');
-  const box11 = numberedLineValue(blob, 11);
+  const grid = cmrGrossFromGridRow(cmrGoodsGridRow(blob));
+  if (grid) return { value: grid.value, confidence: 0.9, matched: grid.matched };
+
+  const box11 = numberedLineValue(blob, 11) || cmrPrintedBoxContent(blob, 11);
   if (box11) {
-    const n = parseNumber(String(box11).replace(/[^\d.,]/g, '')) 
+    const n = parseNumber(String(box11).replace(/[^\d.,\s]/g, ''))
       ?? carnetNumber(String(box11).replace(/[^\d.,]/g, ''));
     if (n != null && isPlausibleLoadWeightKg(n)) {
       return { value: n, confidence: 0.9, matched: box11 };
@@ -641,7 +747,7 @@ const cmrGrossWeightField = (text) => {
   const labelled = extractGrossWeight(blob);
   if (labelled?.value != null && isPlausibleLoadWeightKg(labelled.value)) return labelled;
   // Explicit "11 … 14844 kg" without relying on numberedLineValue spacing.
-  const m = blob.match(/(?:^|\n)\s*11[.)\-][^\S\n]*([\d][\d.,\s]*)\s*(?:kg)?\b/i);
+  const m = blob.match(/(?:^|\n)\s*11[.)\-\s][^\S\n]*([\d][\d.,\s]*)\s*(?:kg)?\b/i);
   if (m) {
     const n = parseNumber(m[1]);
     if (n != null && isPlausibleLoadWeightKg(n)) {
@@ -653,16 +759,25 @@ const cmrGrossWeightField = (text) => {
 
 /** CMR: packaging + count from boxes 7–9 / nature of goods — not euro-pallet alone. */
 const cmrQuantityField = (text) => {
+  const gridQty = cmrQuantityFromGridRow(cmrGoodsGridRow(text));
+  if (gridQty) {
+    return {
+      value: { quantity: gridQty.quantity, unit: gridQty.unit },
+      confidence: 0.9,
+      matched: gridQty.matched,
+    };
+  }
   // Box 7 is the package count. Prefer it over summing "8. saci" (box label) + "720.00 sac" (#66).
-  const box7 = numberedLineValue(text, 7);
+  const box7 = numberedLineValue(text, 7) || cmrPrintedBoxContent(text, 7);
   if (box7) {
     const n = parseNumber(box7) ?? carnetNumber(String(box7).replace(/[^\d.,]/g, ''));
     if (n != null && isPlausibleQuantity(n, 'saci')) {
-      const pack = packagingWordIn(numberedLineValue(text, 8) || '')
-        || packagingWordIn(numberedLineValue(text, 9) || '')
+      const pack = packagingWordIn(numberedLineValue(text, 8) || cmrPrintedBoxContent(text, 8) || '')
+        || packagingWordIn(numberedLineValue(text, 9) || cmrPrintedBoxContent(text, 9) || '')
+        || packagingWordIn(cmrGoodsGridRow(text) || '')
         || packagingWordIn(text)
         || 'saci';
-      const unit = pack === 'paleti' ? 'saci' : pack;
+      const unit = pack === 'paleti' || pack === 'm3' ? 'saci' : pack;
       return { value: { quantity: n, unit }, confidence: 0.9, matched: box7 };
     }
   }
@@ -670,9 +785,19 @@ const cmrQuantityField = (text) => {
   if (found?.value && typeof found.value === 'object') {
     // Prefer saci/galeți over a lone pallet count when the page also names bags.
     const unit = String(found.value.unit || '');
-    if (unit === 'paleti' && /\b\d[\d.,]*\s*sac/i.test(text)) {
-      const bags = extractQuantity(String(text).replace(/\d[\d.,]*\s*pce\b/gi, ' '));
-      if (bags?.value?.quantity != null) return bags;
+    if (unit === 'paleti' && /\bsaci?\b/i.test(text)) {
+      // Strip pallet lines so extractQuantity can see the bag count (720), not 18 pal (#66).
+      const withoutPal = String(text).replace(/\b\d[\d.,]*\s*pal(?:eti|et|e|\.)?\b/gi, ' ');
+      const bags = extractQuantity(withoutPal);
+      if (bags?.value?.quantity != null && bags.value.unit !== 'paleti') return bags;
+      const gridAgain = cmrQuantityFromGridRow(cmrGoodsGridRow(text));
+      if (gridAgain) {
+        return {
+          value: { quantity: gridAgain.quantity, unit: gridAgain.unit },
+          confidence: 0.85,
+          matched: gridAgain.matched,
+        };
+      }
     }
     return found;
   }
@@ -680,17 +805,26 @@ const cmrQuantityField = (text) => {
 };
 
 const cmrGoodsField = (text) => {
+  // Never take "m³" from the empty volume header (box 12) when bags are on the sheet (#66).
+  const gridRow = cmrGoodsGridRow(text);
+  const fromGrid = packagingWordIn(gridRow || '');
+  if (fromGrid && fromGrid !== 'paleti' && fromGrid !== 'm3') {
+    return { value: fromGrid, confidence: 0.9, matched: gridRow };
+  }
+  if (/\bsaci?\b/i.test(text)) {
+    return { value: 'saci', confidence: 0.85, matched: 'saci' };
+  }
   const unit = extractGoodsUnit(text);
-  if (unit.value && unit.value !== 'paleti') return unit;
-  const box8 = numberedLineValue(text, 8);
-  const box9 = numberedLineValue(text, 9);
-  for (const line of [box8, box9, text]) {
+  if (unit.value && unit.value !== 'paleti' && unit.value !== 'm3') return unit;
+  const box8 = numberedLineValue(text, 8) || cmrPrintedBoxContent(text, 8);
+  const box9 = numberedLineValue(text, 9) || cmrPrintedBoxContent(text, 9);
+  for (const line of [box8, box9, gridRow, text]) {
     const pack = packagingWordIn(line) || goodsFromBareLine(line)?.value;
-    if (pack && pack !== 'paleti') {
+    if (pack && pack !== 'paleti' && pack !== 'm3') {
       return { value: pack, confidence: 0.82, matched: line };
     }
   }
-  if (unit.value) return unit;
+  if (unit.value && unit.value !== 'm3') return unit;
   return NO_MATCH;
 };
 
