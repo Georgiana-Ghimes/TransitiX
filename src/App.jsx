@@ -5,6 +5,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import PageLoader from '@/components/PageLoader';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -24,6 +25,10 @@ import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import VerifyEmail from '@/pages/VerifyEmail';
 import ChangePassword from '@/pages/ChangePassword';
+// Companion primary screens ship in the main shell so the first /avize hit after login
+// does not suspend (and used to blank the sidebar when Suspense wrapped all Routes).
+import AvizeReports from '@/pages/AvizeReports';
+import Reports from '@/pages/Reports';
 
 const TripDetail = lazy(() => import('@/pages/TripDetail'));
 const GPSMap = lazy(() => import('@/pages/GPSMap'));
@@ -38,8 +43,6 @@ const LoadPlanner2D = lazy(() => import('@/loadplanner/LoadPlannerPage'));
 const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
 const Finance = lazy(() => import('@/pages/Finance'));
 const Documents = lazy(() => import('@/pages/Documents'));
-const AvizeReports = lazy(() => import('@/pages/AvizeReports'));
-const Reports = lazy(() => import('@/pages/Reports'));
 const Checks = lazy(() => import('@/pages/Checks'));
 const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
@@ -52,14 +55,6 @@ const SharpnessCalibration = import.meta.env.DEV
   ? lazy(() => import('@/pages/dev/SharpnessCalibration'))
   : null;
 const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
-
-function PageLoader() {
-  return (
-    <div className="flex items-center justify-center h-96">
-      <div className="w-8 h-8 border-4 border-slate-200 border-t-[#0A2B4E] rounded-full animate-spin" />
-    </div>
-  );
-}
 
 function LoginRedirect() {
   const location = useLocation();
@@ -137,9 +132,10 @@ const AuthenticatedApp = () => {
   return (
     // Last resort: a crash in the router, the layout or a provider still has to leave something
     // on screen rather than a blank page.
+    // Suspense for lazy pages lives inside Layout (around Outlet) so the sidebar does not
+    // unmount while a route chunk downloads.
     <ErrorBoundary label="app">
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+      <Routes>
         <Route path="/login" element={<Login />} />
         {/* Offered on both profiles; the page itself asks the server whether sign-up is open. */}
         <Route path="/register" element={<Register />} />
@@ -147,7 +143,14 @@ const AuthenticatedApp = () => {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/confirm/:token" element={<ClientPortal />} />
+        <Route
+          path="/confirm/:token"
+          element={(
+            <Suspense fallback={<PageLoader className="min-h-[100dvh]" />}>
+              <ClientPortal />
+            </Suspense>
+          )}
+        />
         <Route element={<ProtectedRoute unauthenticatedElement={<LoginRedirect />} />}>
           <Route element={<Layout />}>
             {OfficeRoutes()}
@@ -156,9 +159,8 @@ const AuthenticatedApp = () => {
             )}
           </Route>
         </Route>
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
-      </Suspense>
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
     </ErrorBoundary>
   );
 };

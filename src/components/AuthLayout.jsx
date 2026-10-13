@@ -1,6 +1,6 @@
 import React from "react";
 import { formatAppVersion } from "@/lib/appVersion";
-import { logoColor } from "@/components/BrandLogo";
+import logoColor from "@/images/transitix-logo-color.png";
 
 export default function AuthLayout({ icon: Icon, brandLogo = false, title, subtitle, footer = null, children }) {
   return (
@@ -11,6 +11,10 @@ export default function AuthLayout({ icon: Icon, brandLogo = false, title, subti
             <img
               src={logoColor}
               alt="Transitix"
+              width={795}
+              height={120}
+              decoding="sync"
+              fetchPriority="high"
               className="h-12 sm:h-14 w-auto max-w-[min(100%,18rem)] mx-auto mb-4 object-contain"
             />
           ) : Icon ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -29,7 +29,9 @@ import GlobalSearch from '@/components/GlobalSearch';
 import OfficeTour from '@/components/OfficeTour';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import BrandLogo from '@/components/BrandLogo';
+import PageLoader from '@/components/PageLoader';
 import { navGroupActive, navPathActive } from '@/lib/layoutNav';
+import { prefetchOfficeChunks, prefetchPath } from '@/lib/routePrefetch';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -128,6 +130,10 @@ export default function Layout() {
   useEffect(() => {
     if (location.pathname.startsWith('/fleet')) setFlotaOpen(true);
   }, [location.pathname]);
+
+  useEffect(() => {
+    prefetchOfficeChunks();
+  }, []);
 
   const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
   const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
@@ -241,12 +247,16 @@ export default function Layout() {
       <div className="min-h-[100dvh] bg-[#F8F9FA]">
         {documentsCompanion ? (
           <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
-            <Outlet />
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         ) : (
           <main className="p-4 lg:p-6">
             <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
-              <Outlet />
+              <Suspense fallback={<PageLoader />}>
+                <Outlet />
+              </Suspense>
             </ErrorBoundary>
           </main>
         )}
@@ -352,6 +362,8 @@ export default function Layout() {
                       <Link
                         to={children[0].path}
                         title={item.label}
+                        onMouseEnter={() => prefetchPath(children[0].path)}
+                        onFocus={() => prefetchPath(children[0].path)}
                         onClick={() => { if (!tourOpen) setMobileOpen(false); }}
                         className={cn(
                           'flex items-center justify-center h-11 px-0 rounded-lg text-sm font-medium transition-colors',
@@ -389,6 +401,8 @@ export default function Layout() {
                                   <Link
                                     to={child.path}
                                     title={child.label}
+                                    onMouseEnter={() => prefetchPath(child.path)}
+                                    onFocus={() => prefetchPath(child.path)}
                                     onClick={() => { if (!tourOpen) setMobileOpen(false); }}
                                     className={cn(
                                       'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -418,6 +432,8 @@ export default function Layout() {
                     to={item.path}
                     data-tour-nav={item.path}
                     title={item.demo ? `${item.label} (demo)` : item.label}
+                    onMouseEnter={() => prefetchPath(item.path)}
+                    onFocus={() => prefetchPath(item.path)}
                     onClick={() => { if (!tourOpen) setMobileOpen(false); }}
                     className={cn(
                       'flex items-center rounded-lg text-sm font-medium transition-colors',
@@ -595,7 +611,9 @@ export default function Layout() {
 
         <main className="flex-1 p-3 sm:p-4 lg:p-6 min-w-0 overflow-x-hidden">
           <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
-            <Outlet />
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </main>
 
