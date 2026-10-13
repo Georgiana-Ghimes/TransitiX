@@ -27,12 +27,16 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    optimizeDeps: {
+      // pdfjs ships its own worker; prebundling it breaks the module worker URL.
+      exclude: ['pdfjs-dist'],
+    },
     build: {
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
-            if (id.includes('leaflet') || id.includes('react-leaflet')) return 'leaflet';
+            if (id.includes('pdfjs-dist')) return 'pdfjs';
             if (id.includes('recharts')) return 'recharts';
             if (id.includes('react-dom') || id.includes('react-router')) return 'react-vendor';
           },

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PdfCanvasViewer from '@/components/PdfCanvasViewer';
 import { previewKind } from '@/lib/avizOps';
 import { containedRect } from '@/lib/ocrBlocks';
 import { fetchUploadBlob, resolvePreviewSource, withAccessToken } from '@/lib/uploadUrl';
@@ -71,15 +72,18 @@ const PREVIEW_FRAME_FILL =
  * @param {boolean} [props.fill]
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
  *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
- *   (so percentage-positioned children land on the page, not in the letterbox). Ignored for
- *   PDFs - an iframe cannot be drawn over.
+ *   (so percentage-positioned children land on the page, not in the letterbox). PDFs are
+ *   drawn on a canvas, so the overlay stays image-only.
  */
 export default function AvizFilePreview({ fileUrl, fill = false, overlay = null }) {
   const [src, setSrc] = useState('');
+  const [pdfBlob, setPdfBlob] = useState(null);
   const [error, setError] = useState('');
   const [natural, setNatural] = useState(null);
   const [boxSize, setBoxSize] = useState(null);
   const boxRef = useRef(null);
+  /** Last fileUrl we already painted — keep the same blob/object URL across soft remounts. */
+  const loadedUrlRef = useRef('');
   const kind = previewKind(fileUrl);
   const frame = fill ? PREVIEW_FRAME_FILL : PREVIEW_FRAME_FIXED;
   const wantsOverlay = Boolean(overlay) && kind === 'image';
@@ -111,14 +115,18 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
     setNatural(null);
 
     if (!fileUrl) {
+      loadedUrlRef.current = '';
       setSrc('');
+      setPdfBlob(null);
       setError('Nu există fișier atașat acestui aviz.');
       return undefined;
     }
 
     // Manual cab entry - no bytes on disk.
     if (String(fileUrl).startsWith('manual://')) {
+      loadedUrlRef.current = '';
       setSrc('');
+      setPdfBlob(null);
       setError('Aviz completat manual de șofer - fără fișier atașat.');
       return undefined;
     }
@@ -136,15 +144,31 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           hasVerifiedFile: Boolean(blob),
         });
         if (choice.mode === 'token') {
+          loadedUrlRef.current = fileUrl;
+          setPdfBlob(null);
           setSrc(choice.url);
           return;
         }
         if (choice.mode === 'blob' && blob) {
+          if (kind === 'pdf') {
+            setSrc('');
+            // Same fileUrl → keep the previous Blob instance so PdfCanvasViewer does not redraw.
+            setPdfBlob((prev) => {
+              if (loadedUrlRef.current === fileUrl && prev) return prev;
+              loadedUrlRef.current = fileUrl;
+              return blob;
+            });
+            return;
+          }
           objectUrl = URL.createObjectURL(blob);
+          loadedUrlRef.current = fileUrl;
+          setPdfBlob(null);
           setSrc(objectUrl);
           return;
         }
+        loadedUrlRef.current = '';
         setSrc('');
+        setPdfBlob(null);
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       } catch {
         if (cancelled) return;
@@ -155,10 +179,14 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           hasVerifiedFile: false,
         });
         if (choice.mode === 'token') {
+          loadedUrlRef.current = fileUrl;
+          setPdfBlob(null);
           setSrc(choice.url);
           return;
         }
+        loadedUrlRef.current = '';
         setSrc('');
+        setPdfBlob(null);
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       }
     })();
@@ -196,7 +224,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
     );
   }
 
-  if (!src) {
+  if (!src && !pdfBlob) {
     return (
       <p className={`text-xs text-slate-500 p-4 ${fill ? 'absolute inset-0 flex items-center' : ''}`}>
         Se încarcă preview…
@@ -204,14 +232,12 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
     );
   }
 
-  if (kind === 'pdf') {
-    // <embed> — Safari synthesises a broken PDF wrapper around iframe+application/pdf.
+  if (kind === 'pdf' && pdfBlob) {
     return (
-      <embed
-        title="Previzualizare aviz"
-        type="application/pdf"
-        className={frame}
-        src={src}
+      <PdfCanvasViewer
+        blob={pdfBlob}
+        fill={fill}
+        onError={(message) => setError(message)}
       />
     );
   }
@@ -228,6 +254,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           alt="Aviz"
           className="absolute inset-0 w-full h-full object-contain"
           src={src}
+          onError={() => setError('Nu am putut afișa imaginea.')}
           onLoad={(e) => setNatural({ naturalWidth: e.currentTarget.naturalWidth, naturalHeight: e.currentTarget.naturalHeight })}
         />
         {rect ? (
@@ -242,7 +269,14 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
     );
   }
   if (kind === 'image') {
-    return <img alt="Aviz" className={frame} src={src} />;
+    return (
+      <img
+        alt="Aviz"
+        className={frame}
+        src={src}
+        onError={() => setError('Nu am putut afișa imaginea.')}
+      />
+    );
   }
 
   return (

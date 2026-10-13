@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalShell from '@/components/ModalShell';
@@ -98,6 +98,9 @@ export default function AvizeReports() {
   const loadGen = useRef(0);
   const bulkConfirmLock = useRef(false);
   const bulkDeleteLock = useRef(false);
+  /** Skip background list poll while a modal holds typed draft / PDF preview. */
+  const modalOpenRef = useRef(false);
+  modalOpenRef.current = Boolean(editRow) || Boolean(reviewId);
 
   const [ocrDown, setOcrDown] = useState(false);
 
@@ -214,7 +217,7 @@ export default function AvizeReports() {
     if (tab !== 'avize') return undefined;
 
     const tick = async () => {
-      if (document.hidden || uploading || busyId) return;
+      if (document.hidden || uploading || busyId || modalOpenRef.current) return;
       const gen = ++loadGen.current;
       try {
         const pageData = asAvizPage(await api.avize.list({
@@ -425,7 +428,13 @@ export default function AvizeReports() {
     setEditRow(row);
   };
 
-  const saveEdit = async (form) => {
+  const closeEditModal = useCallback(() => setEditRow(null), []);
+  const closeReviewDrawer = useCallback(() => setReviewId(null), []);
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  const refreshAfterReview = useCallback(() => { void loadRef.current(); }, []);
+
+  const saveEdit = useCallback(async (form) => {
     if (!editRow) return;
     setSaving(true);
     try {
@@ -439,13 +448,13 @@ export default function AvizeReports() {
           : 'Câmpurile au fost actualizate.'
       );
       setEditRow(null);
-      await load();
+      await loadRef.current();
     } catch (e) {
       notifyError('Salvare eșuată', e);
     } finally {
       setSaving(false);
     }
-  };
+  }, [editRow]);
 
   const confirmRow = (row) => {
     if (row.duplicate_tpo) {
@@ -1326,7 +1335,7 @@ export default function AvizeReports() {
           formRevision={editFormRevision}
           obsCodes={obsCodes}
           saving={saving}
-          onClose={() => setEditRow(null)}
+          onClose={closeEditModal}
           onSave={saveEdit}
         />
       )}
@@ -1334,8 +1343,8 @@ export default function AvizeReports() {
       {reviewId && (
         <AvizReviewDrawer
           documentId={reviewId}
-          onClose={() => setReviewId(null)}
-          onSaved={() => load()}
+          onClose={closeReviewDrawer}
+          onSaved={refreshAfterReview}
         />
       )}
 

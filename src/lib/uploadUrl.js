@@ -58,9 +58,9 @@ export async function fetchUploadBlob(url) {
 /**
  * Pick how the preview element should load bytes we already verified are a real upload.
  *
- * PDFs: Safari (esp. iOS) blanks `blob:` inside iframe/embed. After the Bearer fetch proved
- * the file is not the SPA HTML shell, the `?access_token=` URL is safe to embed same-origin.
- * Images: keep the blob so the JWT is not hanging in an <img src>.
+ * Both kinds stay a blob. PDF.js draws those bytes onto a canvas — an iframe/embed of the
+ * token URL is what goes blank on the client's phones. Images stay a blob so the JWT is
+ * not sitting in an <img src>. The token URL is only a fallback when the image fetch failed.
  *
  * @param {{ kind: string, fileUrl: string, tokenUrl: string, hasVerifiedFile: boolean }} args
  * @returns {{ mode: 'token' | 'blob' | 'none', url?: string }}
@@ -71,10 +71,6 @@ export function resolvePreviewSource({ kind, fileUrl, tokenUrl, hasVerifiedFile 
       return { mode: 'token', url: tokenUrl };
     }
     return { mode: 'none' };
-  }
-  if (kind === 'pdf') {
-    if (tokenUrl && tokenUrl !== fileUrl) return { mode: 'token', url: tokenUrl };
-    return { mode: 'blob' };
   }
   return { mode: 'blob' };
 }

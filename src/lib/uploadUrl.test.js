@@ -75,10 +75,10 @@ describe('resolvePreviewSource', () => {
   const fileUrl = '/uploads/a.pdf';
   const tokenUrl = '/uploads/a.pdf?access_token=tok';
 
-  it('uses the token URL for verified PDFs (Safari blanks blob: in embed/iframe)', () => {
+  it('keeps a verified PDF as a blob for the canvas viewer', () => {
     expect(resolvePreviewSource({
       kind: 'pdf', fileUrl, tokenUrl, hasVerifiedFile: true,
-    })).toEqual({ mode: 'token', url: tokenUrl });
+    })).toEqual({ mode: 'blob' });
   });
 
   it('does not put an unverified PDF on a token URL (SPA shell risk)', () => {

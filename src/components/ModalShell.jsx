@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
@@ -12,21 +12,24 @@ export default function ModalShell({
   panelClassName,
   labelledBy,
 }) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e) => {
-      if (e.key !== 'Escape' || !onClose) return;
+      if (e.key !== 'Escape' || !onCloseRef.current) return;
       // Calendar / popover (portaled) already handled this key.
       if (e.defaultPrevented) return;
-      onClose();
+      onCloseRef.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  }, [onClose]);
+  }, []);
 
   if (typeof document === 'undefined') return null;
 

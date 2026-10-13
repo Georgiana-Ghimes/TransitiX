@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/api/client';
 import ModalShell from '@/components/ModalShell';
 import RoDateField from '@/components/RoDateField';
@@ -29,6 +29,26 @@ const FIELD_LABELS = {
   net_weight_kg: 'Greutate netă',
 };
 
+const CORE_DRAFT_KEYS = ['numar_tpo', 'numar_auto', 'data_efectuare_cursa', 'cantitate_marfa'];
+
+/** Build the editable draft from a review payload (issues first, then core values). */
+function draftFromReview(data) {
+  const next = {};
+  for (const issue of data?.issues || []) {
+    if (issue.field) {
+      const raw = issue.value ?? '';
+      next[issue.field] = issue.field === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+    }
+  }
+  for (const key of CORE_DRAFT_KEYS) {
+    if (next[key] === undefined) {
+      const raw = data?.values?.[key] ?? '';
+      next[key] = key === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+    }
+  }
+  return next;
+}
+
 /**
  * HITL drawer: original scan beside problematic fields; corrections go through the API.
  */
@@ -39,6 +59,12 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
   const [draft, setDraft] = useState({});
   const [activeField, setActiveField] = useState(null);
   const [showAllBlocks, setShowAllBlocks] = useState(false);
+  // Parent often passes inline `() => …` — keep latest without putting them in effect deps
+  // (that was remounting the load, wiping the draft, and flickering the PDF every list poll).
+  const onCloseRef = useRef(onClose);
+  const onSavedRef = useRef(onSaved);
+  onCloseRef.current = onClose;
+  onSavedRef.current = onSaved;
 
   useEffect(() => {
     let cancelled = false;
@@ -47,30 +73,17 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
       .then((data) => {
         if (cancelled) return;
         setPayload(data);
-        const next = {};
-        for (const issue of data.issues || []) {
-          if (issue.field) {
-            const raw = issue.value ?? '';
-            next[issue.field] = issue.field === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
-          }
-        }
-        for (const key of ['numar_tpo', 'numar_auto', 'data_efectuare_cursa', 'cantitate_marfa']) {
-          if (next[key] === undefined) {
-            const raw = data.values?.[key] ?? '';
-            next[key] = key === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
-          }
-        }
-        setDraft(next);
+        setDraft(draftFromReview(data));
       })
       .catch((err) => {
         if (!cancelled) {
           notifyError('Verificare', err);
-          onClose?.();
+          onCloseRef.current?.();
         }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [documentId, onClose]);
+  }, [documentId]);
 
   const saveCorrections = async () => {
     if (!payload) return;
@@ -87,9 +100,11 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
     try {
       await api.documents.correct(documentId, corrections);
       notifySuccess('Corecții salvate', 'Valorile au fost înregistrate în audit.');
-      onSaved?.();
+      // Soft refresh: keep the pane mounted (no setLoading) so the preview does not flash.
       const refreshed = await api.documents.review(documentId);
       setPayload(refreshed);
+      setDraft(draftFromReview(refreshed));
+      onSavedRef.current?.();
     } catch (err) {
       notifyError('Salvare eșuată', err);
     } finally {
@@ -102,8 +117,8 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
     try {
       await api.documents.approveReview(documentId);
       notifySuccess('Verificat', 'Documentul poate fi confirmat.');
-      onSaved?.();
-      onClose?.();
+      onSavedRef.current?.();
+      onCloseRef.current?.();
     } catch (err) {
       notifyError('Aprobare eșuată', err);
     } finally {
