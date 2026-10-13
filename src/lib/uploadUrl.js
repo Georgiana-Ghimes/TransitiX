@@ -43,5 +43,38 @@ export async function fetchUploadBlob(url) {
   // A 200 HTML shell (SPA catch-all / wrong path) must not become a blob iframe —
   // that is what showed a UUID + „Încarcă” instead of the PDF.
   if (!isUploadFileResponse(res)) return null;
-  return res.blob();
+  const blob = await res.blob();
+  // Some stacks omit Content-Type; Safari then refuses to render a typeless PDF blob.
+  const declared = String(res.headers?.get?.('content-type') || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (declared && declared !== blob.type) {
+    return blob.slice(0, blob.size, declared);
+  }
+  return blob;
+}
+
+/**
+ * Pick how the preview element should load bytes we already verified are a real upload.
+ *
+ * PDFs: Safari (esp. iOS) blanks `blob:` inside iframe/embed. After the Bearer fetch proved
+ * the file is not the SPA HTML shell, the `?access_token=` URL is safe to embed same-origin.
+ * Images: keep the blob so the JWT is not hanging in an <img src>.
+ *
+ * @param {{ kind: string, fileUrl: string, tokenUrl: string, hasVerifiedFile: boolean }} args
+ * @returns {{ mode: 'token' | 'blob' | 'none', url?: string }}
+ */
+export function resolvePreviewSource({ kind, fileUrl, tokenUrl, hasVerifiedFile }) {
+  if (!hasVerifiedFile) {
+    if (kind === 'image' && tokenUrl && tokenUrl !== fileUrl) {
+      return { mode: 'token', url: tokenUrl };
+    }
+    return { mode: 'none' };
+  }
+  if (kind === 'pdf') {
+    if (tokenUrl && tokenUrl !== fileUrl) return { mode: 'token', url: tokenUrl };
+    return { mode: 'blob' };
+  }
+  return { mode: 'blob' };
 }

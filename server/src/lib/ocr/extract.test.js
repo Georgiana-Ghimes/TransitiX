@@ -25,6 +25,7 @@ import {
   reExtract,
   summariseExtraction,
 } from './extract.js';
+import { CRITICAL_BANDS } from './avizFieldSchema.js';
 
 const PSL_AVIZ = `
 BAUMIT ROMANIA SRL
@@ -1186,7 +1187,7 @@ Nr. Reg. Com.: J00/0000/2000 | CUI: RO00000000
 
   /**
    * Dark photo: structural regex still yields a 7-digit TPO at high confidence, but the OCR
-   * block that carries the digits is weak. Without blending, HITL auto (0.90) never fires (#56).
+   * block that carries the digits is weak. Blending must pull it under HITL auto (#56).
    */
   it('caps TPO confidence when the matching OCR block is weak (#56)', () => {
     const text = `
@@ -1203,7 +1204,7 @@ Auto: B 112 VFM
     ];
     const result = extractDocument(text, { documentType: 'aviz', blocks });
     expect(result.values.numar_tpo).toBe('TPO-2026-1088');
-    expect(result.fields.numar_tpo.confidence).toBeLessThan(0.9);
+    expect(result.fields.numar_tpo.confidence).toBeLessThan(CRITICAL_BANDS.auto);
     expect(result.fields.numar_tpo.block_confidence).toBe(0.62);
     expect(result.needs_review).toBe(true);
     expect(result.review_fields).toContain('numar_tpo');
@@ -1216,14 +1217,29 @@ Auto: B 112 VFM
     };
     // Blocks do not contain the TPO digits (OCR misread), but page mean is weak.
     const blocks = [
-      { text: 'Aviz de expeditie', confidence: 0.55 },
-      { text: 'Greutate bruta', confidence: 0.7 },
+      { text: 'Aviz de expeditie', confidence: 0.45 },
+      { text: 'Greutate bruta', confidence: 0.5 },
     ];
     refineFieldsWithBlocks(fields, blocks);
-    // Cap is CRITICAL auto − 0.01 (0.89), not the page-mean threshold itself.
-    expect(fields.numar_tpo.confidence).toBe(0.89);
-    expect(fields.numar_tpo.status).toBe('ok'); // ACCEPT is 0.80; HITL still needs review via criticalReview
-    expect(fields.numar_auto.confidence).toBe(0.89);
+    // Cap is CRITICAL optional − 0.01 → HITL_REQUIRED, not a soft optional (#56/#85).
+    const cap = Math.round((CRITICAL_BANDS.optional - 0.01) * 100) / 100;
+    expect(fields.numar_tpo.confidence).toBe(cap);
+    expect(fields.numar_tpo.status).toBe('review');
+    expect(fields.numar_auto.confidence).toBe(cap);
+  });
+
+  it('does not treat a normal page mean as weak (#85)', () => {
+    const fields = {
+      numar_tpo: { value: 'TPO-0010888', confidence: 0.95, matched: 'TPO 0010888', status: 'ok' },
+    };
+    const blocks = [
+      { text: 'Aviz de expeditie', confidence: 0.72 },
+      { text: 'Greutate bruta', confidence: 0.78 },
+      { text: 'TPO 0010888', confidence: 0.88 },
+    ];
+    refineFieldsWithBlocks(fields, blocks);
+    // Matched block may blend; page-mean alone must not force the weak-page cap.
+    expect(fields.numar_tpo.confidence).toBeGreaterThanOrEqual(CRITICAL_BANDS.auto);
   });
 
   /**

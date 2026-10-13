@@ -1232,14 +1232,24 @@ describe('review heuristics (#41)', () => {
     expect(ui.cantitate_marfa).toBe('low');
   });
 
-  it('marks stored confidence below HITL auto (0.90) as low even when status is ok (#56)', () => {
+  it('marks stored confidence below HITL auto as low even when status is ok (#56/#85)', () => {
     const ui = fieldConfidenceForUi({
       numar_tpo: 'TPO-0010888',
       field_confidence: {
-        numar_tpo: { status: 'ok', confidence: 0.88 },
+        numar_tpo: { status: 'ok', confidence: 0.72 },
       },
     });
     expect(ui.numar_tpo).toBe('low');
+  });
+
+  it('treats 80% OCR as ok in the UI amber map (#85)', () => {
+    const ui = fieldConfidenceForUi({
+      numar_tpo: 'TPO-0010888',
+      field_confidence: {
+        numar_tpo: { status: 'ok', confidence: 0.80 },
+      },
+    });
+    expect(ui.numar_tpo).toBe('ok');
   });
 });
 

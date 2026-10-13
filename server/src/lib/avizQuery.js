@@ -23,7 +23,15 @@ export function annexDraftAmount(row, rule = 'tpo') {
   return tpo;
 }
 
+/** Built-in Anexa layout id — survives rename (#83). */
+export const RAI_ANEXA_PRESET_ID = 'rai_anexa';
+
+/**
+ * Locked Anexa layout (14 columns). Identity is `preset_id = rai_anexa`, with the
+ * historical name as fallback for rows seeded before preset_id was filled (#83).
+ */
 export function isLockedRaiTemplate(row) {
+  if (String(row?.preset_id || '').trim() === RAI_ANEXA_PRESET_ID) return true;
   return String(row?.name || '').trim() === 'Anexa Factura RAI';
 }
 
@@ -168,12 +176,18 @@ export function templateDeleteDecision({ count, existing }) {
   if (Number(count) <= 1) return 'keep_one';
   if (!existing) return 'not_found';
   if (isLockedRaiTemplate(existing)) return 'locked_rai';
+  // „Implicit” may be renamed but not deleted (#83).
+  if (existing.is_default) return 'is_default';
   return 'ok';
 }
 
+/**
+ * Updates are allowed for every template including locked Anexa (#83 rename).
+ * Column writes for locked Anexa are ignored in the route, not refused with 400 —
+ * so a name change still saves when the form also posts the frozen columns.
+ */
 export function templateUpdateDecision(existing) {
   if (!existing) return 'not_found';
-  if (isLockedRaiTemplate(existing)) return 'locked_rai';
   return 'ok';
 }
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarCheck, Download, FileSpreadsheet, History, Layers, Loader2, RefreshCw, Search,
-  Sparkles, Trash2, TriangleAlert,
+  Trash2, TriangleAlert,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -197,7 +197,6 @@ function ExportHistory({ rows, onRedownload, onInspect, onDelete, busyId, detail
 
 export default function Reports() {
   const [templates, setTemplates] = useState([]);
-  const [presets, setPresets] = useState([]);
   const [templateId, setTemplateId] = useState('');
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
   const [preview, setPreview] = useState(null);
@@ -207,7 +206,6 @@ export default function Reports() {
   const [history, setHistory] = useState([]);
   const [detail, setDetail] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [creatingPreset, setCreatingPreset] = useState('');
   const [pendingDelete, setPendingDelete] = useState(null); // { type: 'one'|'all', row? }
   const [deleting, setDeleting] = useState(false);
   const [invoiceDate, setInvoiceDate] = useState('');
@@ -228,8 +226,7 @@ export default function Reports() {
     (async () => {
       try {
         await loadTemplates();
-        const [presetRes] = await Promise.all([api.reports.presets(), loadHistory()]);
-        setPresets(presetRes.presets);
+        await loadHistory();
       } catch (err) {
         notifyError('Nu am putut încărca ecranul de rapoarte', err);
       }
@@ -344,26 +341,10 @@ export default function Reports() {
     }
   }
 
-  async function handleCreatePreset(presetId) {
-    setCreatingPreset(presetId);
-    try {
-      const created = await api.reports.createFromPreset({ preset_id: presetId });
-      await loadTemplates();
-      setTemplateId(created.id);
-      notifySuccess(`Șablon creat: ${created.name}`);
-    } catch (err) {
-      notifyError('Șablonul nu a putut fi creat', err);
-    } finally {
-      setCreatingPreset('');
-    }
-  }
-
   const set = (key) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
-
-  const usedPresets = new Set(templates.map((t) => t.preset_id).filter(Boolean));
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -440,24 +421,6 @@ export default function Reports() {
           </div>
         )}
 
-        {presets.length ? (
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            <Sparkles className="w-4 h-4 text-slate-400" />
-            <span className="text-xs text-slate-500">Șabloane gata făcute:</span>
-            {presets.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                disabled={usedPresets.has(p.id) || creatingPreset === p.id}
-                onClick={() => handleCreatePreset(p.id)}
-                title={usedPresets.has(p.id) ? 'Există deja în listă' : p.description}
-                className="text-xs px-2 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {p.name} ({p.column_count})
-              </button>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       {preview?.warnings?.length ? (

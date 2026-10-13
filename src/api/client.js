@@ -950,12 +950,6 @@ export const api = {
     sources() {
       return request('/reports/sources');
     },
-    presets() {
-      return request('/reports/presets');
-    },
-    createFromPreset({ preset_id, name }) {
-      return request('/reports/templates/from-preset', { method: 'POST', body: { preset_id, name } });
-    },
     /** Rows, totals and warnings, before anything is written to a file. */
     preview({ template_id, filters }) {
       return request('/reports/preview', { method: 'POST', body: { template_id, filters } });

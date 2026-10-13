@@ -766,10 +766,6 @@ export default function AvizeReports() {
       notifyError('Nume obligatoriu', 'Completează numele șablonului.');
       return;
     }
-    if (isLockedRai(editTemplate)) {
-      notifyError('Șablon blocat', 'Anexa Factura RAI nu poate fi suprascrisă.');
-      return;
-    }
     const columns = editTemplate.columns || [];
     if (columns.length === 0) {
       notifyError('Fără coloane', 'Adaugă cel puțin o coloană, altfel exportul nu ar avea ce scrie.');
@@ -777,6 +773,7 @@ export default function AvizeReports() {
     }
     setSaving(true);
     try {
+      // Locked Anexa: name / is_default OK; server ignores column edits (#83).
       const payload = {
         name,
         is_default: Boolean(editTemplate.is_default),
@@ -1349,6 +1346,12 @@ export default function AvizeReports() {
               <h2 id="tmpl-edit-title" className="text-lg font-semibold text-[#0A2B4E]">Șablon XLSX</h2>
               <button type="button" onClick={() => setEditTemplate(null)} aria-label="Închide"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
+            {isLockedRai(editTemplate) ? (
+              <p className="mb-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Coloanele Anexei sunt blocate (layout agreat cu clientul). Poți schimba numele și bifa „implicit”;
+                pentru alt set de coloane, fă un șablon nou din Anexă.
+              </p>
+            ) : null}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div>
                 <label className={labelCls}>Nume</label>
@@ -1363,7 +1366,7 @@ export default function AvizeReports() {
                 Șablon implicit
               </label>
             </div>
-            <div className="space-y-2">
+            <div className={`space-y-2 ${isLockedRai(editTemplate) ? 'opacity-70 pointer-events-none' : ''}`}>
               {(editTemplate.columns || []).map((col, idx) => (
                 <div key={`${col.key}-${idx}`} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end bg-slate-50 rounded-lg p-2">
                   <div className="sm:col-span-3">
@@ -1371,6 +1374,7 @@ export default function AvizeReports() {
                     <input
                       className={inputCls}
                       value={col.header || ''}
+                      disabled={isLockedRai(editTemplate)}
                       onChange={(e) => {
                         const columns = [...editTemplate.columns];
                         columns[idx] = { ...col, header: e.target.value };
@@ -1383,6 +1387,7 @@ export default function AvizeReports() {
                     <select
                       className={inputCls}
                       value={col.source || ''}
+                      disabled={isLockedRai(editTemplate)}
                       onChange={(e) => {
                         const columns = [...editTemplate.columns];
                         columns[idx] = { ...col, source: e.target.value, key: e.target.value || col.key };
@@ -1400,6 +1405,7 @@ export default function AvizeReports() {
                     <input
                       className={inputCls}
                       value={col.default_value ?? ''}
+                      disabled={isLockedRai(editTemplate)}
                       onChange={(e) => {
                         const columns = [...editTemplate.columns];
                         columns[idx] = { ...col, default_value: e.target.value };
@@ -1408,28 +1414,32 @@ export default function AvizeReports() {
                     />
                   </div>
                   <div className="sm:col-span-2 flex justify-end">
-                    <button
-                      type="button"
-                      className="text-red-500 p-2"
-                      onClick={() => setEditTemplate((p) => ({ ...p, columns: p.columns.filter((_, i) => i !== idx) }))}
-                      aria-label="Șterge coloana"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {!isLockedRai(editTemplate) ? (
+                      <button
+                        type="button"
+                        className="text-red-500 p-2"
+                        onClick={() => setEditTemplate((p) => ({ ...p, columns: p.columns.filter((_, i) => i !== idx) }))}
+                        aria-label="Șterge coloana"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              className="mt-3 text-sm text-[#1D4E89]"
-              onClick={() => setEditTemplate((p) => ({
-                ...p,
-                columns: [...(p.columns || []), { key: `col_${Date.now()}`, header: 'Coloană', source: '', default_value: '' }],
-              }))}
-            >
-              + Adaugă coloană
-            </button>
+            {!isLockedRai(editTemplate) ? (
+              <button
+                type="button"
+                className="mt-3 text-sm text-[#1D4E89]"
+                onClick={() => setEditTemplate((p) => ({
+                  ...p,
+                  columns: [...(p.columns || []), { key: `col_${Date.now()}`, header: 'Coloană', source: '', default_value: '' }],
+                }))}
+              >
+                + Adaugă coloană
+              </button>
+            ) : null}
             <div className="flex justify-end gap-2 mt-5">
               <button type="button" className="px-4 py-2 text-sm border rounded-lg" onClick={() => setEditTemplate(null)}>Anulează</button>
               <button

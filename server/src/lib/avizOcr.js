@@ -16,6 +16,7 @@ import {
   parseNumber,
   resolveAvizDateParts,
 } from './ocr/fields.js';
+import { DEFAULT_BANDS, fieldMeta } from './ocr/avizFieldSchema.js';
 
 function fold(value) {
   return String(value || '')
@@ -1245,10 +1246,10 @@ export function fieldConfidenceForUi(row) {
     if (val === 'low' || val === 'ok') {
       fromStored = val;
     } else if (val && typeof val === 'object') {
-      // Prefer numeric confidence over status: extractors can mark status "ok" at 0.80 while
-      // HITL auto for TPO/plate/date is 0.90 — a dark-photo misread must stay amber (#56).
+      // Prefer numeric confidence over status — amber follows the field's HITL auto band (#56/#85).
       if (typeof val.confidence === 'number') {
-        fromStored = val.confidence >= 0.90 ? 'ok' : 'low';
+        const auto = fieldMeta(key)?.bands?.auto ?? DEFAULT_BANDS.auto;
+        fromStored = val.confidence >= auto ? 'ok' : 'low';
       } else if (val.status === 'ok') {
         fromStored = 'ok';
       } else if (val.status === 'review' || val.status === 'missing') {

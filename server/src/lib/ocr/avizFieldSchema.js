@@ -14,18 +14,19 @@ export const ROUTING = Object.freeze({
 /**
  * HITL bands vs OCR score.
  *
- * Auto at 0.90: a clean 90 % read must not force „Verificare”. The old 0.92/0.95 sat
- * above what most extractors emit (0.75–0.90), so nearly every row needed review.
+ * Auto must match `ACCEPT_CONFIDENCE` (0.80) in extract.js: a field marked `ok` must not
+ * still force „Verificare”. 0.90 sat above typical extractor scores (0.80–0.88) and above
+ * what Mistral emits on clear photos, so valid avize stayed in review (#85).
  */
 export const DEFAULT_BANDS = Object.freeze({
-  auto: 0.90,
-  optional: 0.65,
+  auto: 0.80,
+  optional: 0.50,
 });
 
-/** Same auto floor for critical fields — 90 % is trusted; below that, optional/required. */
+/** Critical fields (TPO / placă / dată): same auto floor; optional slightly higher. */
 export const CRITICAL_BANDS = Object.freeze({
-  auto: 0.90,
-  optional: 0.70,
+  auto: 0.80,
+  optional: 0.55,
 });
 
 /**

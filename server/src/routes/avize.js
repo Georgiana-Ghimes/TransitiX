@@ -38,6 +38,7 @@ import {
   buildAvizListQuery,
   capAvizIds,
   flagDuplicateTpos,
+  isLockedRaiTemplate,
   mapProviderToSource,
   pickConfirmedAvize,
   templateDeleteDecision,
@@ -82,6 +83,15 @@ async function createAvizBatch(client, { companyId, userId, label }) {
 async function ensureDefaultTemplate(companyId) {
   return withTransaction(async (client) => {
     await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [companyId]);
+    // Stamp preset_id on the historical Anexa row so rename keeps the layout lock (#83).
+    await client.query(
+      `UPDATE report_templates
+       SET preset_id = 'rai_anexa', updated_at = NOW()
+       WHERE company_id = $1
+         AND name = 'Anexa Factura RAI'
+         AND (preset_id IS NULL OR btrim(preset_id) = '')`,
+      [companyId],
+    );
     const existing = await client.query(
       `SELECT * FROM report_templates WHERE company_id = $1 ORDER BY is_default DESC, created_at ASC`,
       [companyId]
@@ -89,8 +99,8 @@ async function ensureDefaultTemplate(companyId) {
     if (existing.rows.length > 0) return existing.rows.map(serializeRow);
     try {
       const inserted = await client.query(
-        `INSERT INTO report_templates (company_id, name, columns, is_default)
-         VALUES ($1, $2, $3::jsonb, TRUE)
+        `INSERT INTO report_templates (company_id, name, columns, is_default, preset_id)
+         VALUES ($1, $2, $3::jsonb, TRUE, 'rai_anexa')
          RETURNING *`,
         [companyId, 'Anexa Factura RAI', JSON.stringify(DEFAULT_RAI_COLUMNS)]
       );
@@ -539,19 +549,20 @@ router.put('/templates/:id', async (req, res) => {
         [req.params.id, req.user.company_id]
       );
       if (!existing.rows[0]) return null;
-      if (templateUpdateDecision(existing.rows[0]) === 'locked_rai') {
-        const err = new Error('Anexa Factura RAI nu poate fi suprascrisă. Duplică-l ca șablon nou.');
-        err.status = 400;
-        throw err;
-      }
+      const prev = existing.rows[0];
+      if (templateUpdateDecision(prev) === 'not_found') return null;
       await assertTemplateNameFree(client, req.user.company_id, name, req.params.id);
       await writeTemplateDefault(client, req.user.company_id, isDefault, req.params.id);
+      // Locked Anexa: rename OK; never overwrite the 14-column layout from the client (#83).
+      const columnsJson = isLockedRaiTemplate(prev)
+        ? JSON.stringify(prev.columns)
+        : JSON.stringify(columns);
       const result = await client.query(
         `UPDATE report_templates
          SET name = $1, columns = $2::jsonb, is_default = $3, updated_at = NOW()
          WHERE id = $4 AND company_id = $5
          RETURNING *`,
-        [name, JSON.stringify(columns), isDefault, req.params.id, req.user.company_id]
+        [name, columnsJson, isDefault, req.params.id, req.user.company_id]
       );
       return result.rows[0];
     });
@@ -595,6 +606,9 @@ router.delete('/templates/:id', async (req, res) => {
     }
     if (deleted.error === 'locked_rai') {
       return res.status(400).json({ message: 'Anexa Factura RAI nu poate fi ștearsă' });
+    }
+    if (deleted.error === 'is_default') {
+      return res.status(400).json({ message: 'Șablonul implicit nu poate fi șters. Redenumește-l sau alege alt implicit, apoi șterge.' });
     }
     if (deleted.error === 'not_found') {
       return res.status(404).json({ message: 'Șablonul nu a fost găsit.' });

@@ -59,6 +59,18 @@ export function securityHeaders(req) {
   return headers;
 }
 
+/**
+ * `/uploads` is framed by the office preview (same origin). Global DENY would blank the
+ * pane — including Safari/iOS, which cannot fall back to a blob: PDF inside an iframe.
+ * Everything else keeps DENY; clickjacking a JPEG of an aviz from our own UI is not the threat.
+ */
+export function uploadFrameHeaders() {
+  return {
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Content-Security-Policy': "frame-ancestors 'self'",
+  };
+}
+
 /** Express middleware wrapper around `securityHeaders`. */
 export function securityHeadersMiddleware(req, res, next) {
   for (const [name, value] of Object.entries(securityHeaders(req))) {

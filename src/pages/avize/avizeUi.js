@@ -15,11 +15,11 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat) când validarea a trecut. Scor OCR ≥ 90 % pe câmpuri nu cere verificare. „Suspect de duplicat” e doar etichetă, nu blochează. Dacă apare „Verificare obligatorie”, deschide Verifică (admin poate forța cu motiv).',
+    text: 'Marchează rândul ca verificat (status Confirmat) când validarea a trecut. Scor OCR ≥ 80 % pe câmpuri nu cere verificare. „Suspect de duplicat” e doar etichetă, nu blochează. Dacă apare „Verificare obligatorie”, deschide Verifică (admin poate forța cu motiv).',
   },
   {
     name: 'Verificare OCR',
-    text: 'Deschide imaginea lângă câmpurile cu încredere sub 90 % sau regulă eșuată. Salvează corecțiile (audit old→new) apoi Marchează verificat.',
+    text: 'Deschide imaginea lângă câmpurile cu încredere sub 80 % sau regulă eșuată. Salvează corecțiile (audit old→new) apoi Marchează verificat.',
   },
   {
     name: 'Re-extrage',
@@ -50,20 +50,30 @@ export const AVIZ_ACTION_LEGEND = [
 export const TEMPLATE_ACTION_LEGEND = [
   {
     name: 'Cum se aplică',
-    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize OCR. „Implicit” este doar preselecția la deschiderea paginii. Anexa Factura RAI nu se poate suprascrie, duplică-l ca șablon nou.',
+    text: 'Cardul marcat „Folosit la export” este cel care ajunge în XLSX, îl poți schimba de aici cu „Folosește la export” sau din lista de lângă Unește, în tab-ul Avize OCR. „Implicit” este preselecția la deschiderea paginii — îl poți redenumi, nu îl poți șterge. Anexa Factura RAI are coloanele blocate (layout client); numele se poate schimba; pentru alt layout, duplică-l ca șablon nou.',
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată. Șabloanele implicite și Anexa se pot redenumi din Editează.',
   },
   {
     name: 'Șterge șablon',
-    text: 'Elimină doar șablonul, nu avizele. Păstrează Anexa Factura RAI dacă vrei exportul standard pe 14 coloane.',
+    text: 'Elimină doar șablonul, nu avizele. Șablonul implicit și Anexa Factura RAI nu se șterg; alege alt implicit dacă vrei să cureți lista.',
   },
 ];
 
+/** Anexa layout lock — by preset_id after rename, or historical name (#83). */
 export function isLockedRai(t) {
+  if (String(t?.preset_id || '').trim() === 'rai_anexa') return true;
   return String(t?.name || '').trim() === 'Anexa Factura RAI';
+}
+
+/** Implicit or locked Anexa — rename OK, delete blocked (#83). */
+export function canDeleteTemplate(t) {
+  if (!t) return false;
+  if (t.is_default) return false;
+  if (isLockedRai(t)) return false;
+  return true;
 }
 
 /** Must stay aligned with `AVIZ_PAGE_SIZES` on the server. */

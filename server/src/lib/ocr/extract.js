@@ -19,8 +19,12 @@ export const ACCEPT_CONFIDENCE = 0.8;
 /** Below this, the value is too weak to pre-fill at all. */
 export const REJECT_CONFIDENCE = 0.35;
 
-/** Page-mean block confidence at/below this caps critical fields into HITL (#56). */
-export const WEAK_PAGE_BLOCK_CONFIDENCE = 0.8;
+/**
+ * Page-mean block confidence at/below this caps critical fields into HITL (#56).
+ * Kept well under typical Mistral page means (~0.70–0.90) so only genuinely dark/blurry
+ * pages force review — 0.80 marked almost every photo (#85).
+ */
+export const WEAK_PAGE_BLOCK_CONFIDENCE = 0.60;
 
 export function fieldStatus(confidence) {
   const value = Number(confidence) || 0;
@@ -68,9 +72,9 @@ export function refineFieldsWithBlocks(fields, blocks) {
       touched = true;
     }
     // Dark / blurry pages: providers still emit high scores on wrong glyphs
-    // (TPO-0010888 vs TPO-0032688). Cap critical fields into HITL regardless (#56).
+    // (TPO-0010888 vs TPO-0032688). Cap below optional → HITL_REQUIRED (#56).
     if (weakPage && critical.has(name)) {
-      next = Math.min(next, CRITICAL_BANDS.auto - 0.01);
+      next = Math.min(next, CRITICAL_BANDS.optional - 0.01);
       if (field.block_confidence == null) {
         field.block_confidence = Math.round(pageMean * 1000) / 1000;
       }
@@ -157,8 +161,8 @@ export function extractDocument(text, { documentType, profileId, blocks } = {}) 
     .filter(([, field]) => field.status !== 'ok')
     .map(([name]) => name);
 
-  // Critical fields below the HITL auto floor must surface even when status is still "ok"
-  // (ACCEPT_CONFIDENCE is 0.80; CRITICAL auto is 0.90).
+  // Keep the critical-key pass so a future band drift cannot hide TPO/plate/date again.
+  // With CRITICAL auto === ACCEPT (0.80), this matches status !== 'ok' for those keys (#85).
   const criticalReview = criticalOcrKeys().filter((key) => {
     const conf = fields[key]?.confidence;
     return conf != null && conf < CRITICAL_BANDS.auto && fields[key]?.value != null && fields[key].value !== '';

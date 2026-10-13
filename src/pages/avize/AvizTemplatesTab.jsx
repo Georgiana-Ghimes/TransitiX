@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, FileSpreadsheet, Plus } from 'lucide-react';
 import AvizLegend from './AvizLegend';
-import { TEMPLATE_ACTION_LEGEND, inputCls, isLockedRai } from './avizeUi';
+import { TEMPLATE_ACTION_LEGEND, canDeleteTemplate, inputCls, isLockedRai } from './avizeUi';
 
 export default function AvizTemplatesTab({
   templates, obsCodes, newCode, setNewCode, newLabel, setNewLabel,
@@ -24,6 +24,8 @@ export default function AvizTemplatesTab({
         {templates.map((t) => {
           const active = t.id === activeTemplateId;
           const columnCount = Array.isArray(t.columns) ? t.columns.length : 0;
+          const lockedLayout = isLockedRai(t);
+          const deletable = canDeleteTemplate(t);
           return (
             <div
               key={t.id}
@@ -35,7 +37,7 @@ export default function AvizTemplatesTab({
                   <p className="text-xs text-slate-500 mt-1">
                     {columnCount} coloane
                     {t.is_default ? ' · implicit' : ''}
-                    {isLockedRai(t) ? ' · blocat' : ''}
+                    {lockedLayout ? ' · coloane blocate' : ''}
                   </p>
                 </div>
                 <FileSpreadsheet className="w-5 h-5 text-emerald-700" />
@@ -53,14 +55,20 @@ export default function AvizTemplatesTab({
                   Folosește la export
                 </button>
               )}
-              <div className="flex gap-3 mt-4 text-xs">
-                {isLockedRai(t) ? (
-                  <span className="text-slate-400">Nu se poate modifica</span>
+              <div className="flex flex-wrap gap-3 mt-4 text-xs">
+                <button
+                  type="button"
+                  className="text-[#1D4E89]"
+                  onClick={() => onEdit({ ...t, columns: t.columns || [] })}
+                >
+                  Editează
+                </button>
+                {deletable ? (
+                  <button type="button" className="text-red-500" onClick={() => onDelete(t)}>Șterge</button>
                 ) : (
-                  <>
-                    <button type="button" className="text-[#1D4E89]" onClick={() => onEdit({ ...t, columns: t.columns || [] })}>Editează</button>
-                    <button type="button" className="text-red-500" onClick={() => onDelete(t)}>Șterge</button>
-                  </>
+                  <span className="text-slate-400" title={lockedLayout ? 'Anexa / layout blocat' : 'Șablon implicit'}>
+                    Nu se poate șterge
+                  </span>
                 )}
               </div>
             </div>

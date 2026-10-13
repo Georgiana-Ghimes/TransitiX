@@ -241,10 +241,12 @@ describe('avizQuery', () => {
     expect(sameTrip.map((r) => r.numar_curse)).toEqual([2, 2, 2]);
   });
 
-  it('locks the Anexa Factura RAI template by name', () => {
+  it('locks the Anexa Factura RAI template by name or preset_id (#83)', () => {
     expect(isLockedRaiTemplate({ is_default: true, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRaiTemplate({ is_default: false, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRaiTemplate({ is_default: true, name: 'Alt șablon' })).toBe(false);
+    // After rename, preset_id keeps the layout lock.
+    expect(isLockedRaiTemplate({ name: 'Anexa custom', preset_id: 'rai_anexa' })).toBe(true);
   });
 
   it('drafts invoice amount from TPO or km x tarif', () => {
@@ -260,13 +262,19 @@ describe('avizQuery', () => {
     ]).map((r) => r.id)).toEqual(['2']);
   });
 
-  it('blocks deleting or overwriting locked Anexa Factura RAI', () => {
+  it('blocks deleting locked Anexa or implicit; allows rename of Anexa (#83)', () => {
     const locked = { is_default: false, name: 'Anexa Factura RAI' };
+    const renamedLocked = { is_default: false, name: 'Anexa birou', preset_id: 'rai_anexa' };
+    const implicit = { is_default: true, name: 'Raport lunar' };
     expect(templateDeleteDecision({ count: 3, existing: locked })).toBe('locked_rai');
+    expect(templateDeleteDecision({ count: 3, existing: renamedLocked })).toBe('locked_rai');
+    expect(templateDeleteDecision({ count: 3, existing: implicit })).toBe('is_default');
     expect(templateDeleteDecision({ count: 1, existing: { name: 'Altul' } })).toBe('keep_one');
     expect(templateDeleteDecision({ count: 2, existing: null })).toBe('not_found');
     expect(templateDeleteDecision({ count: 2, existing: { name: 'Altul' } })).toBe('ok');
-    expect(templateUpdateDecision(locked)).toBe('locked_rai');
+    // Rename / is_default updates are allowed; column writes are ignored in the route.
+    expect(templateUpdateDecision(locked)).toBe('ok');
+    expect(templateUpdateDecision(renamedLocked)).toBe('ok');
     expect(templateUpdateDecision({ name: 'Custom' })).toBe('ok');
   });
 });

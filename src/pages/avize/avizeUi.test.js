@@ -9,6 +9,7 @@ import {
   formatIncarcareLabel,
   hasManualAvizEdits,
   isLearnedRoute,
+  canDeleteTemplate,
   isLockedRai,
   avizEditFindings,
   findingsForField,
@@ -21,10 +22,20 @@ import {
 } from './avizeUi.js';
 
 describe('avizeUi', () => {
-  it('locks the Anexa Factura RAI template by name', () => {
+  it('locks the Anexa layout by name or preset_id; defaults can be renamed not deleted (#83)', () => {
     expect(isLockedRai({ is_default: true, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRai({ is_default: false, name: 'Anexa Factura RAI' })).toBe(true);
     expect(isLockedRai({ is_default: true, name: 'Alt șablon' })).toBe(false);
+    expect(isLockedRai({ name: 'Anexa birou', preset_id: 'rai_anexa' })).toBe(true);
+    expect(canDeleteTemplate({ name: 'Anexa Factura RAI' })).toBe(false);
+    expect(canDeleteTemplate({ is_default: true, name: 'Raport' })).toBe(false);
+    expect(canDeleteTemplate({ is_default: false, name: 'Raport' })).toBe(true);
+  });
+
+  it('explains implicit rename vs Anexa column lock (#83)', () => {
+    const text = TEMPLATE_ACTION_LEGEND.map((i) => `${i.name} ${i.text}`).join(' ');
+    expect(text).toMatch(/redenumi/i);
+    expect(text).toMatch(/nu îl poți șterge|Nu se șterg|nu se șterg/i);
   });
 
   it('blocks annex export for Verificare obligatorie, not for Confirmat', () => {

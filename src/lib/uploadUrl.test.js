@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchUploadBlob, isUploadFileResponse, withAccessToken } from './uploadUrl.js';
+import {
+  fetchUploadBlob,
+  isUploadFileResponse,
+  resolvePreviewSource,
+  withAccessToken,
+} from './uploadUrl.js';
 
 describe('withAccessToken', () => {
   it('appends the access token on /uploads paths', () => {
@@ -50,5 +55,53 @@ describe('fetchUploadBlob', () => {
     })));
     expect(await fetchUploadBlob('/uploads/missing.pdf')).toBeNull();
     vi.unstubAllGlobals();
+  });
+
+  it('re-types the blob from Content-Type when the browser left it empty', async () => {
+    vi.stubGlobal('localStorage', { getItem: () => 'tok' });
+    const raw = new Blob(['%PDF'], { type: '' });
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      headers: { get: () => 'application/pdf' },
+      blob: async () => raw,
+    })));
+    const out = await fetchUploadBlob('/uploads/a.pdf');
+    expect(out.type).toBe('application/pdf');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('resolvePreviewSource', () => {
+  const fileUrl = '/uploads/a.pdf';
+  const tokenUrl = '/uploads/a.pdf?access_token=tok';
+
+  it('uses the token URL for verified PDFs (Safari blanks blob: in embed/iframe)', () => {
+    expect(resolvePreviewSource({
+      kind: 'pdf', fileUrl, tokenUrl, hasVerifiedFile: true,
+    })).toEqual({ mode: 'token', url: tokenUrl });
+  });
+
+  it('does not put an unverified PDF on a token URL (SPA shell risk)', () => {
+    expect(resolvePreviewSource({
+      kind: 'pdf', fileUrl, tokenUrl, hasVerifiedFile: false,
+    })).toEqual({ mode: 'none' });
+  });
+
+  it('prefers a blob for verified images', () => {
+    expect(resolvePreviewSource({
+      kind: 'image',
+      fileUrl: '/uploads/a.jpg',
+      tokenUrl: '/uploads/a.jpg?access_token=tok',
+      hasVerifiedFile: true,
+    })).toEqual({ mode: 'blob' });
+  });
+
+  it('falls back to token URL for images when Bearer fetch failed', () => {
+    expect(resolvePreviewSource({
+      kind: 'image',
+      fileUrl: '/uploads/a.jpg',
+      tokenUrl: '/uploads/a.jpg?access_token=tok',
+      hasVerifiedFile: false,
+    })).toEqual({ mode: 'token', url: '/uploads/a.jpg?access_token=tok' });
   });
 });

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { previewKind } from '@/lib/avizOps';
 import { containedRect } from '@/lib/ocrBlocks';
-import { fetchUploadBlob, withAccessToken } from '@/lib/uploadUrl';
+import { fetchUploadBlob, resolvePreviewSource, withAccessToken } from '@/lib/uploadUrl';
 
 const SOURCE_LABEL = {
   driver_manual: 'Manual șofer',
@@ -129,23 +129,33 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
       try {
         const blob = await fetchUploadBlob(fileUrl);
         if (cancelled) return;
-        if (blob) {
-          objectUrl = URL.createObjectURL(blob);
-          setSrc(objectUrl);
+        const choice = resolvePreviewSource({
+          kind,
+          fileUrl,
+          tokenUrl,
+          hasVerifiedFile: Boolean(blob),
+        });
+        if (choice.mode === 'token') {
+          setSrc(choice.url);
           return;
         }
-        // Images may still load via ?access_token= when Bearer failed.
-        // PDFs must not: a 200 HTML shell in an iframe looked like „UUID + Încarcă”.
-        if (kind === 'image' && tokenUrl && tokenUrl !== fileUrl) {
-          setSrc(tokenUrl);
+        if (choice.mode === 'blob' && blob) {
+          objectUrl = URL.createObjectURL(blob);
+          setSrc(objectUrl);
           return;
         }
         setSrc('');
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       } catch {
         if (cancelled) return;
-        if (kind === 'image' && tokenUrl && tokenUrl !== fileUrl) {
-          setSrc(tokenUrl);
+        const choice = resolvePreviewSource({
+          kind,
+          fileUrl,
+          tokenUrl,
+          hasVerifiedFile: false,
+        });
+        if (choice.mode === 'token') {
+          setSrc(choice.url);
           return;
         }
         setSrc('');
@@ -195,8 +205,14 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
   }
 
   if (kind === 'pdf') {
+    // <embed> — Safari synthesises a broken PDF wrapper around iframe+application/pdf.
     return (
-      <iframe title="Previzualizare aviz" className={frame} src={src} />
+      <embed
+        title="Previzualizare aviz"
+        type="application/pdf"
+        className={frame}
+        src={src}
+      />
     );
   }
   if (wantsOverlay) {

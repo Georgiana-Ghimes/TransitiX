@@ -289,14 +289,14 @@ describe('computeRouting', () => {
     expect(routing).toBe(ROUTING.HITL_REQUIRED);
   });
 
-  it('stays auto when fields are at least 90%', () => {
+  it('stays auto when fields are at least 80% (#85)', () => {
     const routing = computeRouting({
       findings: [],
       fields: {
-        numar_tpo: { confidence: 0.90 },
-        numar_auto: { confidence: 0.90 },
-        data_efectuare_cursa: { confidence: 0.90 },
-        ruta_transport: { confidence: 0.90 },
+        numar_tpo: { confidence: 0.80 },
+        numar_auto: { confidence: 0.82 },
+        data_efectuare_cursa: { confidence: 0.85 },
+        ruta_transport: { confidence: 0.80 },
       },
     });
     expect(routing).toBe(ROUTING.AUTO);
@@ -310,9 +310,9 @@ describe('computeRouting', () => {
         source: 'duplicate_suspect',
       }],
       fields: {
-        numar_tpo: { confidence: 0.90 },
-        numar_auto: { confidence: 0.90 },
-        data_efectuare_cursa: { confidence: 0.90 },
+        numar_tpo: { confidence: 0.80 },
+        numar_auto: { confidence: 0.80 },
+        data_efectuare_cursa: { confidence: 0.80 },
       },
     });
     expect(routing).toBe(ROUTING.AUTO);

@@ -1,5 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { HSTS_MAX_AGE, securityHeaders, trustProxySetting } from './security.js';
+import {
+  HSTS_MAX_AGE, securityHeaders, trustProxySetting, uploadFrameHeaders,
+} from './security.js';
 
 const env = { ...process.env };
 afterEach(() => { process.env = { ...env }; });
@@ -54,5 +56,13 @@ describe('securityHeaders', () => {
   /** A policy written blind would break the screen quietly; only the safe directive is set. */
   it('does not ship an untested full content policy', () => {
     expect(securityHeaders({ secure: true })['Content-Security-Policy']).not.toMatch(/script-src/);
+  });
+});
+
+describe('uploadFrameHeaders', () => {
+  it('allows same-origin framing so the office preview can embed the file', () => {
+    const h = uploadFrameHeaders();
+    expect(h['X-Frame-Options']).toBe('SAMEORIGIN');
+    expect(h['Content-Security-Policy']).toBe("frame-ancestors 'self'");
   });
 });

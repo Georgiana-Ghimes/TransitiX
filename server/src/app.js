@@ -39,7 +39,7 @@ import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
 import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
-import { securityHeadersMiddleware, trustProxySetting } from './lib/security.js';
+import { securityHeadersMiddleware, trustProxySetting, uploadFrameHeaders } from './lib/security.js';
 import { emailConfigured } from './lib/email.js';
 import { ocrCapability } from './lib/ocr/readText.js';
 import { osrmConfigured } from './lib/geo/osrm.js';
@@ -112,6 +112,8 @@ app.use(compression({
     if (req.path?.includes('/telematics/stream') || req.headers.accept === 'text/event-stream') {
       return false;
     }
+    // Binary uploads must stay untouched — gzip on a PDF has broken mobile preview before.
+    if (req.path?.startsWith('/uploads')) return false;
     return compression.filter(req, res);
   },
 }));
@@ -141,6 +143,9 @@ app.get('/uploads/:filename', bearerFromQuery, authRequired, async (req, res) =>
   }
   fs.access(filePath, fs.constants.R_OK, (err) => {
     if (err) return res.status(404).json({ message: 'Fișierul nu a fost găsit.' });
+    for (const [name, value] of Object.entries(uploadFrameHeaders())) {
+      res.setHeader(name, value);
+    }
     res.sendFile(filePath, { maxAge: '7d' });
   });
 });
