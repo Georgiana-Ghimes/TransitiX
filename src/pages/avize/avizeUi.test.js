@@ -40,6 +40,19 @@ describe('avizeUi', () => {
     expect(requiresAnnexReviewGate({
       status: 'extracted', validation_routing: 'hitl_optional', needs_review: false,
     })).toBe(false);
+    // After „Marchează verificat”, stored validation is auto + needs_review false;
+    // list decoration may still set needs_review true — annex must follow stored.
+    expect(requiresAnnexReviewGate({
+      status: 'extracted',
+      needs_review: true,
+      validation_routing: 'hitl_optional',
+      extracted_data: { validation: { routing: 'auto', needs_review: false } },
+    })).toBe(false);
+    expect(requiresAnnexReviewGate({
+      status: 'extracted',
+      needs_review: true,
+      extracted_data: { validation: { routing: 'hitl_optional', needs_review: true } },
+    })).toBe(true);
 
     const blocked = annexReviewBlockedRows(
       [

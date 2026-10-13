@@ -131,15 +131,16 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
           setSrc(objectUrl);
           return;
         }
-        // Bearer fetch failed (proxy/session), query-token URL still works for <img>/<iframe>.
-        if (tokenUrl && tokenUrl !== fileUrl) {
+        // Images may still load via ?access_token= when Bearer failed.
+        // PDFs must not: a 200 HTML shell in an iframe looked like „UUID + Încarcă”.
+        if (kind === 'image' && tokenUrl && tokenUrl !== fileUrl) {
           setSrc(tokenUrl);
           return;
         }
         setError('Nu am putut încărca documentul. Reautentifică-te și încearcă din nou.');
       } catch {
         if (cancelled) return;
-        if (tokenUrl && tokenUrl !== fileUrl) {
+        if (kind === 'image' && tokenUrl && tokenUrl !== fileUrl) {
           setSrc(tokenUrl);
           return;
         }
@@ -151,7 +152,7 @@ export default function AvizFilePreview({ fileUrl, fill = false, overlay = null 
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [fileUrl]);
+  }, [fileUrl, kind]);
 
   const isManualPlaceholder = String(fileUrl || '').startsWith('manual://');
   const openUrl = !isManualPlaceholder && (src || withAccessToken(fileUrl));

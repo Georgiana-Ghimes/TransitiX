@@ -19,6 +19,19 @@ export function withAccessToken(url) {
   return `${url}${sep}access_token=${encodeURIComponent(token)}`;
 }
 
+/** True when the response looks like an uploaded file, not an HTML SPA fallback. */
+export function isUploadFileResponse(res) {
+  if (!res?.ok) return false;
+  const type = String(res.headers?.get?.('content-type') || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (!type) return true;
+  if (type === 'text/html' || type === 'application/xhtml+xml') return false;
+  if (type.startsWith('application/json')) return false;
+  return true;
+}
+
 /** Fetch /uploads with Authorization so the JWT is not stored in the document URL. */
 export async function fetchUploadBlob(url) {
   if (!url || typeof url !== 'string') return null;
@@ -27,6 +40,8 @@ export async function fetchUploadBlob(url) {
   const res = await fetch(clean, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) return null;
+  // A 200 HTML shell (SPA catch-all / wrong path) must not become a blob iframe —
+  // that is what showed a UUID + „Încarcă” instead of the PDF.
+  if (!isUploadFileResponse(res)) return null;
   return res.blob();
 }

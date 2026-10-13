@@ -172,15 +172,22 @@ export function hasManualAvizEdits(row) {
 }
 
 /**
- * Same gate as Confirmă: anexă / email / zip must not ship OCR that still needs a human.
+ * Same gate as server `annexExportReviewBlocked`: anexă must not ship OCR that still
+ * needs a human. Prefer stored validation (DB), not list-decoration heuristics that
+ * OR `needs_review` for low-confidence fields and would block after „Marchează verificat”.
  * Confirmed rows are clear even if an old flag lingered.
  */
 export function requiresAnnexReviewGate(row) {
   if (!row || row.status === 'confirmed') return false;
-  const routing = row.validation_routing
-    ?? row.extracted_data?.validation?.routing
+  const stored = row.extracted_data?.validation ?? null;
+  const routing = stored?.routing
+    ?? row.validation_routing
     ?? null;
-  return Boolean(row.needs_review) || routing === 'hitl_required';
+  if (routing === 'hitl_required') return true;
+  if (stored && typeof stored.needs_review === 'boolean') {
+    return stored.needs_review;
+  }
+  return Boolean(row.needs_review);
 }
 
 /** Selected rows (from the known page list) that still need review before annex export. */
