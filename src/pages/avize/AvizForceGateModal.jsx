@@ -99,13 +99,19 @@ export default function AvizForceGateModal({
     ? 'max-w-5xl w-full'
     : 'max-w-md w-full';
 
+  // Cap to dynamic viewport so mobile browser chrome cannot hide Nu / Confirmă (#94).
+  // Fixed height only when the carousel needs a flex budget; empty queue stays compact.
+  const panelHeight = queue.length > 0
+    ? 'max-h-[min(92vh,100dvh-1.5rem)] h-[min(92vh,100dvh-1.5rem)]'
+    : 'max-h-[min(92vh,100dvh-1.5rem)]';
+
   return (
     <ModalShell
       onClose={busy ? undefined : onCancel}
-      panelClassName={`${panelWidth} max-h-[92vh] overflow-hidden flex flex-col`}
+      panelClassName={`${panelWidth} ${panelHeight} overflow-hidden flex flex-col`}
       labelledBy="force-gate-title"
     >
-      <div className="flex flex-col min-h-0 flex-1">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         <div className="shrink-0 flex items-start justify-between gap-3 px-5 pt-5 pb-3">
           <div className="min-w-0 flex-1">
             <h2 id="force-gate-title" className="text-lg font-semibold text-[#0A2B4E] text-balance">
@@ -129,7 +135,7 @@ export default function AvizForceGateModal({
         </div>
 
         {queue.length > 0 ? (
-          <div className="min-h-0 flex-1 px-5 pb-3">
+          <div className="min-h-0 flex-1 overflow-hidden px-5 pb-2 flex flex-col">
             <AvizQueueCarousel
               queue={queue}
               initialId={initialId}
@@ -141,7 +147,7 @@ export default function AvizForceGateModal({
             />
           </div>
         ) : (
-          <div className="px-5 pb-2">
+          <div className="px-5 pb-2 shrink-0">
             <p className="text-sm text-slate-700 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-3 leading-relaxed text-pretty">
               Nimic de completat pe câmpurile obligatorii (TPO, dată, auto, rută).
               {' '}
@@ -150,12 +156,12 @@ export default function AvizForceGateModal({
           </div>
         )}
 
-        <div className="shrink-0 flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-200 bg-white">
+        <div className="shrink-0 flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
             disabled={busy}
             onClick={onCancel}
-            className="px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-60 min-h-[44px]"
           >
             {cancelLabel}
           </button>
@@ -163,7 +169,7 @@ export default function AvizForceGateModal({
             type="button"
             disabled={busy}
             onClick={() => onConfirm?.({ ready, cleanExport })}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 min-h-[44px]"
           >
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {confirmLabel}

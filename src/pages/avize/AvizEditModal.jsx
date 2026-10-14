@@ -63,17 +63,18 @@ export default function AvizEditModal({
   return (
     <ModalShell
       onClose={onClose}
-      panelClassName="max-w-6xl w-full h-[min(90vh,920px)] overflow-hidden flex flex-col"
+      panelClassName="max-w-6xl w-full h-[min(90vh,100dvh-1.5rem,920px)] max-h-[min(90vh,100dvh-1.5rem)] overflow-hidden flex flex-col"
       labelledBy="aviz-edit-title"
     >
-      <div className="flex flex-col min-h-0 flex-1">
+      <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
         <div className="shrink-0 flex items-center justify-between gap-3 px-5 pt-5 pb-3">
           <h2 id="aviz-edit-title" className="text-lg font-semibold text-[#0A2B4E]">Editează aviz</h2>
           <button type="button" onClick={onClose} aria-label="Închide"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pb-2">
-          <div className="min-h-[38vh] sm:min-h-[42vh] lg:min-h-0 flex flex-col border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pb-2 overflow-hidden">
+          {/* Cap preview on phone so landscape photos cannot bury Salvează (#94). */}
+          <div className="min-h-[160px] h-[min(28vh,240px)] max-h-[min(28vh,240px)] sm:h-[min(34vh,300px)] sm:max-h-[min(34vh,300px)] lg:h-auto lg:max-h-none lg:min-h-0 flex flex-col border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
             <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
               <span className="truncate min-w-0 flex-1">
                 Document
@@ -183,13 +184,13 @@ export default function AvizEditModal({
           </div>
         </div>
 
-        <div className="shrink-0 flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-white">
-          <button type="button" className="px-4 py-2 text-sm border rounded-lg" onClick={onClose}>Anulează</button>
+        <div className="shrink-0 flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <button type="button" className="px-4 py-2.5 text-sm border rounded-lg min-h-[44px]" onClick={onClose}>Anulează</button>
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || rotating}
             onClick={() => onSave(form)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60 min-h-[44px]"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
             Salvează

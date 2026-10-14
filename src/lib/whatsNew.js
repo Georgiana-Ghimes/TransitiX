@@ -19,6 +19,16 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 116,
+    version: '1.26.10',
+    dateLabel: 'octombrie 2026',
+    title: 'Salvează / Confirmă rămân la vedere',
+    highlights: [
+      'Pe telefon și pe ecran mic: poza din modal (inclusiv landscape) nu mai împinge butoanele Salvează / Confirmă sub ecran. Footer-ul rămâne lipit jos; câmpurile se derulează deasupra.',
+      'În Editează aviz, pe poze: butoane 90° și 180° ca să îndrepți pagina pe loc.',
+    ],
+  },
+  {
     build: 115,
     version: '1.26.9',
     dateLabel: 'octombrie 2026',

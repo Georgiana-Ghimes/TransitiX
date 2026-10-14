@@ -150,7 +150,7 @@ export default function AvizQueueCarousel({
   };
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col min-h-0">
+    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col min-h-0 h-full max-h-full">
       <div className="shrink-0 border-b border-slate-200 bg-slate-50">
         <div className="flex items-center justify-between gap-2 px-3 py-2">
           <button
@@ -210,14 +210,18 @@ export default function AvizQueueCarousel({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 max-h-[min(56vh,520px)]">
-        <div className="min-h-[180px] lg:min-h-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col">
+      {/*
+        Preview is height-capped on narrow viewports so landscape photos cannot push
+        „Salvează” / modal footer below the fold (#94). Form fields scroll; save stays sticky.
+      */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 overflow-hidden">
+        <div className="min-h-0 h-[min(28vh,220px)] max-h-[min(28vh,220px)] lg:h-auto lg:max-h-none border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col overflow-hidden">
           {gluedLabel ? (
             <p className="shrink-0 px-3 py-1.5 text-[11px] font-medium text-[#0A2B4E] bg-sky-50 border-b border-sky-100">
               {gluedLabel}
             </p>
           ) : null}
-          <div className="relative flex-1 min-h-[180px]">
+          <div className="relative flex-1 min-h-0 overflow-hidden">
             {gluedUrls.length > 0 ? (
               <AvizFilePreview
                 fileUrl={gluedUrls[0]}
@@ -230,7 +234,7 @@ export default function AvizQueueCarousel({
           </div>
         </div>
 
-        <div className="min-h-0 flex flex-col bg-white">
+        <div className="min-h-0 flex flex-col overflow-hidden bg-white">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-3 pb-2 space-y-2.5">
             {missing.length > 0 ? (
               <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
@@ -292,7 +296,7 @@ export default function AvizQueueCarousel({
                 type="button"
                 disabled={saving || !current}
                 onClick={() => { void handleSave(); }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 shadow-sm"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 shadow-sm min-h-[44px]"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {index < ordered.length - 1
