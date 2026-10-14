@@ -44,6 +44,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      // Excel locking qa/**/*.xlsx used to crash Vite's FSWatcher (EBUSY).
+      watch: {
+        ignored: ['**/qa/**', '**/dist/**', '**/.git/**'],
+      },
       host: mode === 'companion' ? '0.0.0.0' : '127.0.0.1',
       port: mode === 'companion' ? 5174 : 5173,
       // The companion port is not a preference, it is what the tunnel points at. Without this a

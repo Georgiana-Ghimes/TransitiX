@@ -46,18 +46,19 @@ function sablonNouColumns() {
 }
 
 /** The same path the export route takes: buildReport owns columns + rows. */
-function annexWorkbook(template, avize) {
+function annexWorkbook(template, avize, { mergeTpoCells = false } = {}) {
   const report = buildReport({ template, documents: avize });
   return renderReportWorkbook({
     name: template.name || 'Anexa',
     columns: report.columns,
     rows: report.rows,
     totals: null,
+    mergeTpoCells,
   });
 }
 
-async function loadSheet(template, avize) {
-  const built = annexWorkbook(template, avize);
+async function loadSheet(template, avize, opts) {
+  const built = annexWorkbook(template, avize, opts);
   const buffer = await built.xlsx.writeBuffer();
   const loaded = new ExcelJS.Workbook();
   await loaded.xlsx.load(buffer);
@@ -332,3 +333,56 @@ describe('anexa exportată, custom Șablon nou defaults', () => {
     expect(rows[0]['Tarif Km']).toBe(20);
   });
 });
+
+describe('merge_tpo_cells on annex workbook', () => {
+  const tpoCol = DEFAULT_RAI_COLUMNS.findIndex((c) => c.source === 'numar_tpo') + 1;
+
+  it('merges consecutive rows that share a TPO', async () => {
+    const tripA = { ...EXTRACTED_AVIZ, numar_auto: 'B-01-AAA', numar_document_marfa: 'PSL-1' };
+    const tripB = { ...EXTRACTED_AVIZ, numar_auto: 'B-02-BBB', numar_document_marfa: 'PSL-2' };
+    const other = { ...DUAL_PLATE_AVIZ };
+    const built = annexWorkbook(
+      { name: 'Baumit', columns: DEFAULT_RAI_COLUMNS },
+      [tripA, tripB, other],
+      { mergeTpoCells: true },
+    );
+    const sheet = built.worksheets[0];
+    const master = sheet.getCell(2, tpoCol);
+    expect(master.value).toBe('TPO-0025803');
+    expect(Boolean(master.isMerged)).toBe(true);
+    // Third row is a different TPO — not part of the first merge.
+    expect(sheet.getCell(4, tpoCol).value).toBe('TPO-0025813');
+  });
+
+  it('does not merge when flag is off', async () => {
+    const tripA = { ...EXTRACTED_AVIZ, numar_auto: 'B-01-AAA' };
+    const tripB = { ...EXTRACTED_AVIZ, numar_auto: 'B-02-BBB' };
+    const built = annexWorkbook(
+      { name: 'Baumit', columns: DEFAULT_RAI_COLUMNS },
+      [tripA, tripB],
+      { mergeTpoCells: false },
+    );
+    const sheet = built.worksheets[0];
+    expect(Boolean(sheet.getCell(2, tpoCol).isMerged)).toBe(false);
+    expect(Boolean(sheet.getCell(3, tpoCol).isMerged)).toBe(false);
+  });
+
+  it('groups scattered same-TPO rows before merging (not only upload-adjacent)', async () => {
+    const a1 = { ...EXTRACTED_AVIZ, numar_tpo: 'TPO-0099104', numar_auto: 'B-44-DDD', numar_document_marfa: 'PSL-1' };
+    const mid = { ...DUAL_PLATE_AVIZ, numar_tpo: 'TPO-0099105', numar_auto: 'B-88-HHH', numar_document_marfa: 'PSL-m' };
+    const a2 = { ...EXTRACTED_AVIZ, numar_tpo: 'TPO-0099104', numar_auto: 'B-55-EEE', numar_document_marfa: 'PSL-2' };
+    const a3 = { ...EXTRACTED_AVIZ, numar_tpo: 'TPO-0099104', numar_auto: 'B-66-FFF', numar_document_marfa: 'PSL-3' };
+    const built = annexWorkbook(
+      { name: 'Baumit', columns: DEFAULT_RAI_COLUMNS },
+      [a1, mid, a2, a3],
+      { mergeTpoCells: true },
+    );
+    const sheet = built.worksheets[0];
+    // All three 0099104 curse sit together and share one merged TPO cell.
+    expect(sheet.getCell(2, tpoCol).value).toBe('TPO-0099104');
+    expect(Boolean(sheet.getCell(2, tpoCol).isMerged)).toBe(true);
+    expect(sheet.getCell(5, tpoCol).value).toBe('TPO-0099105');
+    expect(Boolean(sheet.getCell(5, tpoCol).isMerged)).toBe(false);
+  });
+});
+

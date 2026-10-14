@@ -184,10 +184,27 @@ export function splitPageFilename(originalName, pageIndex, total) {
   return `${base} · pag. ${pageIndex + 1}/${total}`;
 }
 
-/** Display name for an aviz part (may span several pages). */
-export function splitAvizFilename(originalName, partIndex, totalParts) {
+/**
+ * Display name for an aviz part (may span several source pages).
+ * Multi-page parts get `pag. A–B` so the list/preview shows how many pages are glued.
+ *
+ * @param {string} originalName
+ * @param {number} partIndex 0-based
+ * @param {number} totalParts
+ * @param {{ pageFrom?: number, pageTo?: number }} [range] 1-based inclusive source pages
+ */
+export function splitAvizFilename(originalName, partIndex, totalParts, range = {}) {
   const base = String(originalName || 'document.pdf').trim() || 'document.pdf';
-  return `${base} · aviz ${partIndex + 1}/${totalParts}`;
+  const aviz = `aviz ${partIndex + 1}/${totalParts}`;
+  const from = Number(range.pageFrom);
+  const to = Number(range.pageTo);
+  if (Number.isFinite(from) && Number.isFinite(to) && to > from) {
+    return `${base} · ${aviz} · pag. ${from}–${to}`;
+  }
+  if (Number.isFinite(from) && (!Number.isFinite(to) || to === from)) {
+    return `${base} · ${aviz} · pag. ${from}`;
+  }
+  return `${base} · ${aviz}`;
 }
 
 /**
@@ -241,14 +258,19 @@ export async function materializePdfPageFiles(fileUrl, {
       { companyId }
     );
     await fs.writeFile(path.resolve(uploadRoot, filename), partBuffers[i]);
-    const firstPage = plan[i][0];
+    const group = plan[i];
+    const firstPage = group[0];
+    const lastPage = group[group.length - 1];
     files.push({
       file_url: publicUploadUrl(filename),
       original_filename: allSinglePage
         ? splitPageFilename(label, firstPage, pageCount)
-        : splitAvizFilename(label, i, totalParts),
+        : splitAvizFilename(label, i, totalParts, {
+          pageFrom: firstPage + 1,
+          pageTo: lastPage + 1,
+        }),
       page: firstPage + 1,
-      pages_in_part: plan[i].length,
+      pages_in_part: group.length,
     });
   }
   return { pages: totalParts, files };

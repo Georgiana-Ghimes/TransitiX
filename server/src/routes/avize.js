@@ -22,6 +22,7 @@ import {
 } from '../lib/ocr/readText.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
+import { normalizeTemplateOptions, wantsMergeTpoCells } from '../lib/templateOptions.js';
 import { buildReport } from '../lib/reporting/build.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
 import { isPgUniqueViolation, repairNeedsWrite } from '../lib/concurrency.js';
@@ -239,7 +240,7 @@ async function decorateAvizForCompany(row, companyId) {
  * and as re-downloadable, as history from `/reports`. Before this the two paths wrote different
  * amounts of detail, and only one of them could reproduce its own file.
  */
-async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename, built }) {
+async function logAvizExport(companyId, userId, { kind, templateId, avizIds, filename, built, note }) {
   await recordExport({
     companyId,
     userId,
@@ -252,6 +253,7 @@ async function logAvizExport(companyId, userId, { kind, templateId, avizIds, fil
     rows: built?.report?.rows ?? [],
     totals: null,
     warnings: built?.report?.warnings ?? [],
+    note: note || null,
   });
 }
 
@@ -290,7 +292,8 @@ function annexExportReviewBlocked(docs) {
   });
 }
 
-function refuseAnnexIfNeedsReview(docs) {
+function refuseAnnexIfNeedsReview(docs, { allowUnconfirmed = false } = {}) {
+  if (allowUnconfirmed) return;
   const blocked = annexExportReviewBlocked(docs);
   if (!blocked.length) return;
   const n = blocked.length;
@@ -310,7 +313,13 @@ function refuseAnnexIfNeedsReview(docs) {
   throw err;
 }
 
-async function buildAnnexBuffer(companyId, templateId, avizIds) {
+/** Office operators (not drivers) may force confirm / unverified export with an explicit reason. */
+function canForceAnnexActions(user) {
+  const role = String(user?.role || '');
+  return role && role !== 'driver';
+}
+
+async function buildAnnexBuffer(companyId, templateId, avizIds, { allowUnconfirmed = false } = {}) {
   const tmpl = await query(
     `SELECT * FROM report_templates WHERE id = $1 AND company_id = $2`,
     [templateId, companyId]
@@ -326,8 +335,9 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     err.status = 400;
     throw err;
   }
-  refuseAnnexIfNeedsReview(avize);
+  refuseAnnexIfNeedsReview(avize, { allowUnconfirmed });
   const template = serializeRow(tmpl.rows[0]);
+  template.options = normalizeTemplateOptions(template.options);
   const report = buildReport({ template, documents: avize });
   // The annex keeps its exact agreed shape here, no totals row on the legacy path.
   // report.columns already includes Editează Include-în-XLSX weight column choices.
@@ -337,6 +347,7 @@ async function buildAnnexBuffer(companyId, templateId, avizIds) {
     columns,
     rows: report.rows,
     totals: null,
+    mergeTpoCells: wantsMergeTpoCells(template),
   });
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   const stamp = new Date().toISOString().slice(0, 10);
@@ -516,11 +527,12 @@ router.post('/templates', async (req, res) => {
       await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
       await assertTemplateNameFree(client, req.user.company_id, name);
       await writeTemplateDefault(client, req.user.company_id, isDefault);
+      const options = normalizeTemplateOptions(req.body?.options);
       const result = await client.query(
-        `INSERT INTO report_templates (company_id, name, columns, is_default)
-         VALUES ($1, $2, $3::jsonb, $4)
+        `INSERT INTO report_templates (company_id, name, columns, is_default, options)
+         VALUES ($1, $2, $3::jsonb, $4, $5::jsonb)
          RETURNING *`,
-        [req.user.company_id, name, JSON.stringify(columns), isDefault]
+        [req.user.company_id, name, JSON.stringify(columns), isDefault, JSON.stringify(options)]
       );
       return result.rows[0];
     });
@@ -542,6 +554,7 @@ router.put('/templates/:id', async (req, res) => {
     }
     const columns = normalizeTemplateColumns(req.body?.columns);
     const isDefault = Boolean(req.body?.is_default);
+    const options = normalizeTemplateOptions(req.body?.options);
     const row = await withTransaction(async (client) => {
       await client.query(`SELECT id FROM companies WHERE id = $1 FOR UPDATE`, [req.user.company_id]);
       const existing = await client.query(
@@ -554,15 +567,16 @@ router.put('/templates/:id', async (req, res) => {
       await assertTemplateNameFree(client, req.user.company_id, name, req.params.id);
       await writeTemplateDefault(client, req.user.company_id, isDefault, req.params.id);
       // Locked Anexa: rename OK; never overwrite the 14-column layout from the client (#83).
+      // Options (ex. merge_tpo_cells) remain editable even on locked layout.
       const columnsJson = isLockedRaiTemplate(prev)
         ? JSON.stringify(prev.columns)
         : JSON.stringify(columns);
       const result = await client.query(
         `UPDATE report_templates
-         SET name = $1, columns = $2::jsonb, is_default = $3, updated_at = NOW()
-         WHERE id = $4 AND company_id = $5
+         SET name = $1, columns = $2::jsonb, is_default = $3, options = $4::jsonb, updated_at = NOW()
+         WHERE id = $5 AND company_id = $6
          RETURNING *`,
-        [name, columnsJson, isDefault, req.params.id, req.user.company_id]
+        [name, columnsJson, isDefault, JSON.stringify(options), req.params.id, req.user.company_id]
       );
       return result.rows[0];
     });
@@ -910,8 +924,12 @@ router.post('/export', async (req, res) => {
   try {
     const templateId = req.body?.template_id;
     const avizIds = capAvizIds(req.body?.aviz_ids);
+    const allowUnconfirmed = Boolean(req.body?.allow_unconfirmed);
     if (!templateId) return res.status(400).json({ message: 'Alege un șablon pentru export.' });
     if (avizIds.length === 0) return res.status(400).json({ message: 'Selectează cel puțin un aviz' });
+    if (allowUnconfirmed && !canForceAnnexActions(req.user)) {
+      return res.status(403).json({ message: 'Nu poți exporta neverificate cu acest rol.' });
+    }
 
     const rate = hitRateLimit(exportHits, req.user.id, { max: 12, windowMs: 60_000 });
     if (!rate.ok) {
@@ -928,10 +946,15 @@ router.post('/export', async (req, res) => {
     }
     exportInFlight.set(flightKey, Date.now());
 
-    const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds);
+    const built = await buildAnnexBuffer(req.user.company_id, templateId, avizIds, { allowUnconfirmed });
     const { buffer, filename } = built;
     await logAvizExport(req.user.company_id, req.user.id, {
-      kind: 'xlsx', templateId, avizIds, filename, built,
+      kind: 'xlsx',
+      templateId,
+      avizIds,
+      filename,
+      built,
+      note: allowUnconfirmed ? 'operator_confirmed_unverified_export' : undefined,
     });
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -1018,8 +1041,8 @@ router.post('/bulk-confirm', async (req, res) => {
         })),
       });
     }
-    if (force && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Doar un administrator poate forța confirmarea.' });
+    if (force && !canForceAnnexActions(req.user)) {
+      return res.status(403).json({ message: 'Nu poți forța confirmarea cu acest rol.' });
     }
     if (force && !forceReason) {
       return res.status(400).json({ message: 'La force este obligatoriu un motiv scurt.' });
@@ -1076,8 +1099,8 @@ router.post('/doc/:id/confirm', async (req, res) => {
         findings: doc.extracted_data?.validation?.findings ?? [],
       });
     }
-    if (force && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Doar un administrator poate forța confirmarea.' });
+    if (force && !canForceAnnexActions(req.user)) {
+      return res.status(403).json({ message: 'Nu poți forța confirmarea cu acest rol.' });
     }
     if (force && !forceReason) {
       return res.status(400).json({ message: 'La force este obligatoriu un motiv scurt.' });

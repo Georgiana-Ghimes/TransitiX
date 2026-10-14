@@ -19,13 +19,15 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
-    build: 111,
-    version: '1.26.5',
+    build: 112,
+    version: '1.26.6',
     dateLabel: 'octombrie 2026',
-    title: 'Noutățile apar în aplicație',
+    title: 'Anexa Baumit: TPO-uri unite cum trebuie',
     highlights: [
-      'După o actualizare, vezi pe scurt ce s-a schimbat — fără termeni tehnici.',
-      'Poți redeschide oricând din meniu: Ce este nou?.',
+      'Pe șablon poți bifa „Unește celulele TPO”: în Excel, toate cursele aceluiași TPO stau împreună și Număr TPO e sudat pe verticală.',
+      'La Unește / Confirmă, dacă lipsesc câmpuri, treci prin documente unul câte unul — previzualizare + salvare, fără să pierzi firul.',
+      'În preview, paginile adiacente cu același TPO apar lipite, ca pe avizul multi-pagină.',
+      'PDF-urile cu mai multe avize păstrează continuările pe același document într-un singur fișier (cu intervalul de pagini în nume).',
     ],
   },
   {

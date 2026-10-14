@@ -70,6 +70,11 @@ export default function AvizFilterBar({
           <option value="extracted">Extras</option>
           <option value="confirmed">Confirmat</option>
         </select>
+        {filters.status === 'extracted' ? (
+          <p className="mt-1 text-[10px] text-slate-500 leading-snug">
+            După Confirmă, rândul iese din „Extras” (nu se reordonează lista).
+          </p>
+        ) : null}
       </div>
       <div>
         <label className={labelCls}>Proveniență</label>

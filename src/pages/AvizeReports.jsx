@@ -15,6 +15,7 @@ import {
   Trash2, Upload, X,
 } from 'lucide-react';
 import AvizEditModal from './avize/AvizEditModal';
+import AvizForceGateModal from './avize/AvizForceGateModal';
 import AvizReviewDrawer from './avize/AvizReviewDrawer';
 import AvizFilterBar from './avize/AvizFilterBar';
 import AvizLegend from './avize/AvizLegend';
@@ -24,10 +25,10 @@ import { DriverUploadBadge, NeedsReviewBadge, SourceBadge } from './avize/AvizFi
 import {
   AVIZ_ACTION_LEGEND,
   AVIZ_PAGE_SIZES,
-  annexReviewBlockedMessage,
   annexReviewBlockedRows,
   asAvizPage,
   columnCountOf,
+  confirmBlockedRows,
   displayRoute,
   downloadBlob,
   formatIncarcareLabel,
@@ -39,6 +40,9 @@ import {
   labelCls,
   lowField,
   readAvizPageSize,
+  requiresAnnexReviewGate,
+  rowsNeedingCarouselEdit,
+  sortAvizeByUploadAsc,
   waitForAvizExtractSettled,
   writeAvizPageSize,
 } from './avize/avizeUi';
@@ -75,6 +79,8 @@ export default function AvizeReports() {
   const [deleteBulkCount, setDeleteBulkCount] = useState(0);
   const [confirmDuplicate, setConfirmDuplicate] = useState(null);
   const [confirmReextract, setConfirmReextract] = useState(null);
+  /** { mode: 'confirm-single'|'confirm-bulk'|'export', ids, row?, queue } */
+  const [forceGate, setForceGate] = useState(null);
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -100,7 +106,7 @@ export default function AvizeReports() {
   const bulkDeleteLock = useRef(false);
   /** Skip background list poll while a modal holds typed draft / PDF preview. */
   const modalOpenRef = useRef(false);
-  modalOpenRef.current = Boolean(editRow) || Boolean(reviewId);
+  modalOpenRef.current = Boolean(editRow) || Boolean(reviewId) || Boolean(forceGate);
 
   const [ocrDown, setOcrDown] = useState(false);
 
@@ -456,25 +462,76 @@ export default function AvizeReports() {
     }
   }, [editRow]);
 
+  const saveForceGateItem = useCallback(async (row, form) => {
+    if (!row?.id) return;
+    const payload = { ...form, status: nextAvizStatusOnSave(row.status) };
+    if (!payload.trip_id) payload.trip_id = null;
+    const saved = await api.entities.AvizDocument.update(row.id, payload);
+    notifySuccess('Aviz salvat', row.numar_tpo || row.original_filename || 'Câmpuri actualizate.');
+    // Keep modal open and preserve queue order/ids so the carousel can advance without
+    // snapping back to the first item (do not rebuild queue from a filtered list here).
+    setForceGate((prev) => {
+      if (!prev) return prev;
+      const patch = { ...payload, ...(saved || {}), file_url: row.file_url || saved?.file_url };
+      const nextQueue = (prev.queue || []).map((r) => (
+        r.id === row.id ? { ...r, ...patch } : r
+      ));
+      const nextPeers = Array.isArray(prev.peerRows)
+        ? prev.peerRows.map((r) => (r.id === row.id ? { ...r, ...patch } : r))
+        : prev.peerRows;
+      return { ...prev, queue: nextQueue, peerRows: nextPeers };
+    });
+    void loadRef.current();
+  }, []);
+
+  const forceGatePeers = useCallback((ids) => {
+    const idSet = new Set(ids || []);
+    return sortAvizeByUploadAsc((rows || []).filter((r) => idSet.has(r.id)));
+  }, [rows]);
+
+  const mergeTpoPreviewEnabled = Boolean(selectedTemplate?.options?.merge_tpo_cells);
+
   const confirmRow = (row) => {
     if (row.duplicate_tpo) {
       setConfirmDuplicate({ mode: 'single', row });
       return;
     }
+    if (requiresAnnexReviewGate(row)) {
+      const editQueue = rowsNeedingCarouselEdit([row]);
+      setForceGate({
+        mode: 'confirm-single',
+        ids: [row.id],
+        row,
+        // Only walk pages that still have empty required fields.
+        queue: editQueue,
+        peerRows: forceGatePeers([row.id]),
+        mergeTpoPreview: mergeTpoPreviewEnabled,
+      });
+      return;
+    }
     runConfirmRow(row);
   };
 
-  const runConfirmRow = async (row) => {
+  const runConfirmRow = async (row, { force = false } = {}) => {
     if (busyId) return;
     setBusyId(row.id);
     try {
-      await api.avize.confirm(row.id);
+      await api.avize.confirm(row.id, force
+        ? { force: true, force_reason: 'operator_bulk_confirm_empty_fields' }
+        : {});
       notifySuccess('Aviz confirmat', row.numar_tpo || row.original_filename || 'Rând marcat ca confirmat.');
+      setForceGate(null);
       await load();
     } catch (e) {
       if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
-        notifyError('Necesită verificare', e);
-        setReviewId(row.id);
+        setForceGate({
+          mode: 'confirm-single',
+          ids: [row.id],
+          row,
+          queue: sortAvizeByUploadAsc([row]),
+          peerRows: forceGatePeers([row.id]),
+          mergeTpoPreview: mergeTpoPreviewEnabled,
+        });
       } else {
         notifyError('Confirmare eșuată', e);
       }
@@ -494,27 +551,47 @@ export default function AvizeReports() {
       setConfirmDuplicate({ mode: 'bulk', ids, dupCount });
       return;
     }
+    const blocked = confirmBlockedRows(rows, ids);
+    if (blocked.length) {
+      setForceGate({
+        mode: 'confirm-bulk',
+        ids,
+        queue: rowsNeedingCarouselEdit(blocked),
+        peerRows: forceGatePeers(ids),
+        mergeTpoPreview: mergeTpoPreviewEnabled,
+      });
+      return;
+    }
     runBulkConfirm(ids);
   };
 
-  const runBulkConfirm = async (ids) => {
+  const runBulkConfirm = async (ids, { force = false } = {}) => {
     if (bulkConfirmLock.current) return;
     bulkConfirmLock.current = true;
     setBusy(true);
     try {
-      const updated = await api.avize.bulkConfirm(ids);
+      const updated = await api.avize.bulkConfirm(ids, force
+        ? { force: true, force_reason: 'operator_bulk_confirm_empty_fields' }
+        : {});
       notifySuccess(
         'Confirmate',
         updated.length
           ? `${updated.length} aviz(e) marcate ca confirmate.`
           : 'Rândurile selectate erau deja confirmate.'
       );
+      setForceGate(null);
       await load();
     } catch (e) {
       if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
-        const blocked = e?.data?.blocked || [];
-        notifyError('Necesită verificare', e);
-        if (blocked[0]?.id) setReviewId(blocked[0].id);
+        const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
+        const blocked = confirmBlockedRows(rows, blockedIds.length ? blockedIds : ids);
+        setForceGate({
+          mode: 'confirm-bulk',
+          ids,
+          queue: rowsNeedingCarouselEdit(blocked),
+          peerRows: forceGatePeers(ids),
+          mergeTpoPreview: mergeTpoPreviewEnabled,
+        });
       } else {
         notifyError('Confirmare eșuată', e);
       }
@@ -524,17 +601,8 @@ export default function AvizeReports() {
     }
   };
 
-  /** Unește: refuse HITL-required rows before the download starts. */
-  const guardAnnexSelection = (ids) => {
-    const blocked = annexReviewBlockedRows(rows, ids);
-    if (!blocked.length) return true;
-    notifyError('Necesită verificare', annexReviewBlockedMessage(blocked.length));
-    if (blocked[0]?.id) setReviewId(blocked[0].id);
-    return false;
-  };
-
   const exportSelected = () => {
-    if (busy || exporting || exportLockRef.current || confirmDuplicate) return;
+    if (busy || exporting || exportLockRef.current || confirmDuplicate || forceGate) return;
     const ids = [...selected];
     if (ids.length === 0) {
       notifyError('Nimic selectat', 'Bifează cel puțin un aviz pentru export.');
@@ -544,7 +612,18 @@ export default function AvizeReports() {
       notifyError('Fără șablon', 'Alege un șablon XLSX.');
       return;
     }
-    if (!guardAnnexSelection(ids)) return;
+    const blocked = sortAvizeByUploadAsc(annexReviewBlockedRows(rows, ids));
+    if (blocked.length) {
+      setForceGate({
+        mode: 'export',
+        ids,
+        // Skip avize that only need HITL/confirm but already have TPO/dată/auto/rută filled.
+        queue: rowsNeedingCarouselEdit(blocked),
+        peerRows: forceGatePeers(ids),
+        mergeTpoPreview: mergeTpoPreviewEnabled,
+      });
+      return;
+    }
     const dupCount = rows.filter((r) => ids.includes(r.id) && r.duplicate_tpo).length;
     if (dupCount > 0) {
       // Warn before download, a post-export toast was easy to miss under „Export gata”.
@@ -554,14 +633,18 @@ export default function AvizeReports() {
     runExportSelected(ids);
   };
 
-  const runExportSelected = async (ids) => {
+  const runExportSelected = async (ids, { allowUnconfirmed = false } = {}) => {
     if (!templateId || !ids?.length) return;
     if (exportLockRef.current) return;
     exportLockRef.current = true;
     setExporting(true);
     setBusy(true);
     try {
-      const { blob, filename } = await api.avize.exportXlsx({ template_id: templateId, aviz_ids: ids });
+      const { blob, filename } = await api.avize.exportXlsx({
+        template_id: templateId,
+        aviz_ids: ids,
+        allow_unconfirmed: allowUnconfirmed,
+      });
       downloadBlob(blob, filename);
       // Naming the template here is the only place the operator can tell which layout landed
       // in the file, the filename alone reads the same for every export of the day.
@@ -570,11 +653,20 @@ export default function AvizeReports() {
         `${filename}, șablon ${selectedTemplate?.name || 'selectat'}, `
         + `${columnCountOf(selectedTemplate)} coloane.`
       );
+      setForceGate(null);
     } catch (e) {
       if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
-        notifyError('Necesită verificare', e);
-        const blocked = e?.data?.blocked || [];
-        if (blocked[0]?.id) setReviewId(blocked[0].id);
+        const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
+        const blocked = sortAvizeByUploadAsc(
+          annexReviewBlockedRows(rows, blockedIds.length ? blockedIds : ids),
+        );
+        setForceGate({
+          mode: 'export',
+          ids,
+          queue: rowsNeedingCarouselEdit(blocked),
+          peerRows: forceGatePeers(ids),
+          mergeTpoPreview: mergeTpoPreviewEnabled,
+        });
       } else {
         notifyError('Export eșuat', e);
       }
@@ -582,6 +674,42 @@ export default function AvizeReports() {
       exportLockRef.current = false;
       setExporting(false);
       setBusy(false);
+    }
+  };
+
+  const runForceGateConfirm = async (opts = {}) => {
+    if (!forceGate) return;
+    const ready = Boolean(opts.ready);
+    const cleanExport = Boolean(opts.cleanExport);
+    if (forceGate.mode === 'confirm-single' && forceGate.row) {
+      await runConfirmRow(forceGate.row, { force: true });
+      return;
+    }
+    if (forceGate.mode === 'confirm-bulk') {
+      await runBulkConfirm(forceGate.ids, { force: true });
+      return;
+    }
+    if (forceGate.mode === 'export') {
+      // Required fields complete but not yet Confirmat → confirm first, then clean export.
+      if (ready && !cleanExport && forceGate.ids?.length) {
+        try {
+          await api.avize.bulkConfirm(forceGate.ids, {
+            force: true,
+            force_reason: 'operator_bulk_confirm_empty_fields',
+          });
+        } catch (e) {
+          // Still allow export if confirm is refused; operator already filled required fields.
+          if (!(e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW')) {
+            notifyError('Confirmare eșuată', e);
+            return;
+          }
+        }
+        await runExportSelected(forceGate.ids, { allowUnconfirmed: true });
+        return;
+      }
+      await runExportSelected(forceGate.ids, {
+        allowUnconfirmed: !cleanExport,
+      });
     }
   };
 
@@ -787,6 +915,10 @@ export default function AvizeReports() {
         name,
         is_default: Boolean(editTemplate.is_default),
         columns,
+        options: {
+          ...(editTemplate.options && typeof editTemplate.options === 'object' ? editTemplate.options : {}),
+          merge_tpo_cells: Boolean(editTemplate.options?.merge_tpo_cells),
+        },
       };
       let keepId = editTemplate.id;
       if (editTemplate.id) {
@@ -867,6 +999,7 @@ export default function AvizeReports() {
       name: nextUnusedTemplateName(templates.map((t) => t.name), DEFAULT_NEW_TEMPLATE_NAME),
       is_default: false,
       columns: JSON.parse(JSON.stringify(base)),
+      options: { merge_tpo_cells: false },
     });
   };
 
@@ -1348,6 +1481,20 @@ export default function AvizeReports() {
         />
       )}
 
+      {forceGate && (
+        <AvizForceGateModal
+          mode={forceGate.mode === 'export' ? 'export' : 'confirm'}
+          queue={forceGate.queue || []}
+          initialId={forceGate.queue?.[0]?.id || forceGate.row?.id}
+          busy={busy || exporting || Boolean(busyId)}
+          onCancel={() => setForceGate(null)}
+          onConfirm={runForceGateConfirm}
+          onSaveItem={saveForceGateItem}
+          peerRows={forceGate.peerRows || null}
+          mergeTpoPreview={Boolean(forceGate.mergeTpoPreview)}
+        />
+      )}
+
       {editTemplate && (
         <ModalShell onClose={() => setEditTemplate(null)} panelClassName="max-w-3xl" labelledBy="tmpl-edit-title">
           <div className="p-5 max-h-[85vh] overflow-y-auto">
@@ -1375,6 +1522,27 @@ export default function AvizeReports() {
                 Șablon implicit
               </label>
             </div>
+            <label className="flex items-start gap-2 text-sm text-slate-700 mb-4">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={Boolean(editTemplate.options?.merge_tpo_cells)}
+                onChange={(e) => setEditTemplate((p) => ({
+                  ...p,
+                  options: {
+                    ...(p.options && typeof p.options === 'object' ? p.options : {}),
+                    merge_tpo_cells: e.target.checked,
+                  },
+                }))}
+              />
+              <span>
+                <span className="font-medium text-[#0A2B4E]">Unește celulele TPO</span>
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  Grupează curse după TPO, sudează Număr TPO în XLSX (toate cursele aceluiași TPO)
+                  și lipește în preview paginile adiacente cu același TPO (ex. Baumit).
+                </span>
+              </span>
+            </label>
             <div className={`space-y-2 ${isLockedRai(editTemplate) ? 'opacity-70 pointer-events-none' : ''}`}>
               {(editTemplate.columns || []).map((col, idx) => (
                 <div key={`${col.key}-${idx}`} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end bg-slate-50 rounded-lg p-2">

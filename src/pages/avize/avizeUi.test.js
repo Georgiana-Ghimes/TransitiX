@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   annexReviewBlockedMessage,
   annexReviewBlockedRows,
+  confirmBlockedRows,
   asAvizPage,
+  consecutiveSameTpoPeers,
+  previewFileUrlsForPeers,
+  rowsNeedingCarouselEdit,
+  sortAvizeByUploadAsc,
   AVIZ_DEFAULT_PAGE_SIZE,
   displayRoute,
   emptyForm,
@@ -75,6 +80,53 @@ describe('avizeUi', () => {
     );
     expect(blocked.map((r) => r.id)).toEqual(['a']);
     expect(annexReviewBlockedMessage(2)).toMatch(/2 documente necesită verificare/);
+
+    const ordered = confirmBlockedRows(
+      [
+        { id: 'new', status: 'extracted', needs_review: true, created_at: '2026-10-14T12:00:00Z' },
+        { id: 'old', status: 'extracted', needs_review: true, created_at: '2026-10-14T08:00:00Z' },
+      ],
+      ['new', 'old'],
+    );
+    expect(ordered.map((r) => r.id)).toEqual(['old', 'new']);
+    expect(sortAvizeByUploadAsc([
+      { id: 'b', created_at: '2026-10-14T11:00:00Z' },
+      { id: 'a', created_at: '2026-10-14T09:00:00Z' },
+    ]).map((r) => r.id)).toEqual(['a', 'b']);
+
+    const editOnly = rowsNeedingCarouselEdit([
+      {
+        id: 'full',
+        created_at: '2026-10-14T08:00:00Z',
+        numar_tpo: 'TPO-1',
+        data_efectuare_cursa: '2026-10-07',
+        numar_auto: 'B-01-XXX',
+        ruta_transport: 'A-B',
+        needs_review: true,
+      },
+      {
+        id: 'gap',
+        created_at: '2026-10-14T09:00:00Z',
+        numar_tpo: '',
+        data_efectuare_cursa: '2026-10-07',
+        numar_auto: 'B-02-YYY',
+        ruta_transport: 'A-B',
+        needs_review: true,
+      },
+    ]);
+    expect(editOnly.map((r) => r.id)).toEqual(['gap']);
+  });
+
+  it('glues only adjacent same-TPO peers for merge preview', () => {
+    const rows = [
+      { id: 'a', numar_tpo: 'TPO-1', file_url: '/a.pdf', created_at: '2026-10-14T08:00:00Z' },
+      { id: 'b', numar_tpo: 'TPO-1', file_url: '/b.pdf', created_at: '2026-10-14T09:00:00Z' },
+      { id: 'c', numar_tpo: 'TPO-2', file_url: '/c.pdf', created_at: '2026-10-14T10:00:00Z' },
+      { id: 'd', numar_tpo: 'TPO-1', file_url: '/d.pdf', created_at: '2026-10-14T11:00:00Z' },
+    ];
+    expect(consecutiveSameTpoPeers(rows, 'b').map((r) => r.id)).toEqual(['a', 'b']);
+    expect(consecutiveSameTpoPeers(rows, 'd').map((r) => r.id)).toEqual(['d']);
+    expect(previewFileUrlsForPeers(consecutiveSameTpoPeers(rows, 'a'))).toEqual(['/a.pdf', '/b.pdf']);
   });
 
   it('tells the operator template names are unique per company', () => {

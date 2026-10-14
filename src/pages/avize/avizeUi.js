@@ -15,7 +15,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Confirmă',
-    text: 'Marchează rândul ca verificat (status Confirmat) când validarea a trecut. Scor OCR ≥ 80 % pe câmpuri nu cere verificare. „Suspect de duplicat” e doar etichetă, nu blochează. Dacă apare „Verificare obligatorie”, deschide Verifică (admin poate forța cu motiv).',
+    text: 'Marchează rândul ca verificat (status Confirmat). Dacă există câmpuri de verificat, apare un modal cu carousel pe documentele problematice: poți corecta pe loc sau confirma oricum (îți asumi câmpurile goale). „Suspect de duplicat” e doar etichetă, nu blochează.',
   },
   {
     name: 'Verificare OCR',
@@ -43,7 +43,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Unește în Anexa XLSX',
-    text: 'Bifează rândurile fără „Verificare obligatorie”, verifică șablonul din lista de lângă buton, apoi descarcă. Unește refuză selecția dacă există documente care mai trebuie verificate. Pe durata generării butonul e blocat. Valorile Default din șablon (ex. Taxă 100, Tarif km 20) se scriu în Excel când pe aviz câmpul e gol sau 0.',
+    text: 'Bifează rândurile, verifică șablonul, apoi descarcă. Dacă selecția include neverificate, apare un modal cu carousel: poți edita pe loc sau continua oricum (îți asumi). Pe durata generării butonul e blocat. Valorile Default din șablon se scriu când pe aviz câmpul e gol sau 0. Opțiunea „Unește celulele TPO” grupează după TPO, sudează Număr TPO în XLSX pe toate cursele aceluiași TPO și lipește în preview paginile adiacente.',
   },
 ];
 
@@ -54,7 +54,7 @@ export const TEMPLATE_ACTION_LEGEND = [
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Un șablon nou pornește de la cele 14 coloane ale Anexei, șterge-le pe cele care nu îți trebuie, pentru că exportul scrie exact ce rămâne salvat. Un șablon fără nicio coloană nu se salvează. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată. Șabloanele implicite și Anexa se pot redenumi din Editează.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Bifă „Unește celulele TPO” ca pe Baumit: grupează și sudează Număr TPO în Excel pe toate cursele aceluiași TPO; în preview lipește paginile adiacente. Un șablon nou pornește de la cele 14 coloane ale Anexei. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată.',
   },
   {
     name: 'Șterge șablon',
@@ -204,6 +204,81 @@ export function requiresAnnexReviewGate(row) {
 export function annexReviewBlockedRows(rows, selectedIds) {
   const ids = new Set(selectedIds || []);
   return (rows || []).filter((r) => ids.has(r.id) && requiresAnnexReviewGate(r));
+}
+
+/** Same gate as confirm/HITL: queue for the force-confirm carousel, oldest upload first. */
+export function confirmBlockedRows(rows, selectedIds) {
+  const blocked = annexReviewBlockedRows(rows, selectedIds);
+  return [...blocked].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+}
+
+export function sortAvizeByUploadAsc(rows) {
+  return [...(rows || [])].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+}
+
+/** Required keys in the Unește/Confirmă carousel (must stay aligned with AvizQueueCarousel). */
+export const CAROUSEL_REQUIRED_KEYS = [
+  'numar_tpo',
+  'data_efectuare_cursa',
+  'numar_auto',
+  'ruta_transport',
+];
+
+export function missingRequiredCarouselFields(source = {}) {
+  return CAROUSEL_REQUIRED_KEYS.filter((key) => {
+    const value = source[key];
+    return value == null || String(value).trim() === '';
+  });
+}
+
+/**
+ * Carousel should only walk documents with empty required fields.
+ * HITL / neconfirmat without gaps still block export, but do not need an edit page.
+ */
+export function rowsNeedingCarouselEdit(rows) {
+  return sortAvizeByUploadAsc(
+    (rows || []).filter((r) => missingRequiredCarouselFields(r).length > 0),
+  );
+}
+
+/** Normalize TPO for grouping (trim + upper). Empty → ''. */
+export function normalizeTpoKey(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+/**
+ * Consecutive peers sharing the same TPO around `focusId` in upload order.
+ * Used when „Unește celulele TPO” is on: glue adjacent same-TPO pages in preview.
+ *
+ * @param {Array<{ id: string, numar_tpo?: string|null, file_url?: string|null }>} rows
+ * @param {string|null|undefined} focusId
+ * @returns {typeof rows}
+ */
+export function consecutiveSameTpoPeers(rows, focusId) {
+  const ordered = sortAvizeByUploadAsc(rows);
+  if (!ordered.length) return [];
+  const at = ordered.findIndex((r) => r.id === focusId);
+  if (at < 0) return [];
+  const key = normalizeTpoKey(ordered[at]?.numar_tpo);
+  if (!key) return [ordered[at]];
+  let lo = at;
+  let hi = at;
+  while (lo > 0 && normalizeTpoKey(ordered[lo - 1]?.numar_tpo) === key) lo -= 1;
+  while (hi < ordered.length - 1 && normalizeTpoKey(ordered[hi + 1]?.numar_tpo) === key) hi += 1;
+  return ordered.slice(lo, hi + 1);
+}
+
+/** Distinct file_url list for glued preview (skip blanks / duplicates). */
+export function previewFileUrlsForPeers(peers) {
+  const seen = new Set();
+  const urls = [];
+  for (const row of peers || []) {
+    const url = String(row?.file_url || '').trim();
+    if (!url || url.startsWith('manual://') || seen.has(url)) continue;
+    seen.add(url);
+    urls.push(url);
+  }
+  return urls;
 }
 
 export function annexReviewBlockedMessage(count) {

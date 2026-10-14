@@ -1324,6 +1324,8 @@ CREATE INDEX IF NOT EXISTS idx_aviz_export_log_created
 -- template someone wrote by hand.
 ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS preset_id TEXT;
 ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS description TEXT;
+-- Template behaviour flags (ex. merge_tpo_cells for multi-trip TPO rowspan in XLSX).
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS options JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 -- The digital CMR lives on the same row as a scanned one. A trip has one consignment note
 -- whichever way it came into being; two tables would let a scan and a typed note disagree about

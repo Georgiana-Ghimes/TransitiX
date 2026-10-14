@@ -1053,7 +1053,7 @@ export const api = {
     deleteTemplate(id) {
       return request(`/avize/templates/${encodeURIComponent(id)}`, { method: 'DELETE' });
     },
-    async exportXlsx({ template_id, aviz_ids }, retried = false) {
+    async exportXlsx({ template_id, aviz_ids, allow_unconfirmed = false }, retried = false) {
       const token = getToken();
       const res = await fetch('/api/avize/export', {
         method: 'POST',
@@ -1061,16 +1061,17 @@ export const api = {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ template_id, aviz_ids }),
+        body: JSON.stringify({ template_id, aviz_ids, allow_unconfirmed }),
       });
       if (res.status === 401 && !retried) {
         await refreshAccessToken();
-        return api.avize.exportXlsx({ template_id, aviz_ids }, true);
+        return api.avize.exportXlsx({ template_id, aviz_ids, allow_unconfirmed }, true);
       }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const err = new Error(data?.message || res.statusText || 'Export failed');
         err.status = res.status;
+        err.data = data;
         throw err;
       }
       const blob = await res.blob();

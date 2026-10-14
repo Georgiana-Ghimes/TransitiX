@@ -110,6 +110,8 @@ describe('splitPdf', () => {
     expect(splitPageFilename('lot.pdf', 0, 6)).toBe('lot.pdf · pag. 1/6');
     expect(splitPageFilename('lot.pdf', 5, 6)).toBe('lot.pdf · pag. 6/6');
     expect(splitAvizFilename('lot.pdf', 0, 2)).toBe('lot.pdf · aviz 1/2');
+    expect(splitAvizFilename('lot.pdf', 5, 28, { pageFrom: 6, pageTo: 7 }))
+      .toBe('lot.pdf · aviz 6/28 · pag. 6–7');
   });
 
   it('PdfSplitError carries an HTTP status', () => {

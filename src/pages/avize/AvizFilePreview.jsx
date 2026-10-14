@@ -68,14 +68,59 @@ const PREVIEW_FRAME_FILL =
 
 /**
  * @param {object} props
- * @param {string} props.fileUrl
+ * @param {string} [props.fileUrl]
+ * @param {string[]} [props.fileUrls]  When set (and length > 1), pages from each file are
+ *   stacked in one scroll — used for „Unește TPO” adjacent peers.
  * @param {boolean} [props.fill]
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
  *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
  *   (so percentage-positioned children land on the page, not in the letterbox). PDFs are
  *   drawn on a canvas, so the overlay stays image-only.
  */
-export default function AvizFilePreview({ fileUrl, fill = false, overlay = null }) {
+export default function AvizFilePreview({
+  fileUrl,
+  fileUrls = null,
+  fill = false,
+  overlay = null,
+}) {
+  const urls = Array.isArray(fileUrls) && fileUrls.length
+    ? fileUrls.filter(Boolean)
+    : (fileUrl ? [fileUrl] : []);
+
+  // Adjacent same-TPO peers: stack each file's pages in one scroll pane.
+  if (urls.length > 1) {
+    return (
+      <div
+        className={
+          fill
+            ? 'absolute inset-0 overflow-y-auto overscroll-contain bg-slate-100'
+            : 'w-full min-h-[240px] h-[36vh] max-h-[420px] overflow-y-auto overscroll-contain bg-slate-100'
+        }
+      >
+        {urls.map((url, i) => (
+          <div
+            key={`${url}-${i}`}
+            className="relative border-b border-slate-200 last:border-b-0 min-h-[220px]"
+          >
+            <p className="sticky top-0 z-[1] px-2 py-1 text-[11px] font-medium text-slate-600 bg-slate-200/90 backdrop-blur-sm">
+              Fișier {i + 1} / {urls.length}
+            </p>
+            <div className="relative min-h-[200px]">
+              <AvizFilePreview fileUrl={url} fill={false} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const singleUrl = urls[0] || '';
+  return (
+    <AvizFilePreviewSingle fileUrl={singleUrl} fill={fill} overlay={overlay} />
+  );
+}
+
+function AvizFilePreviewSingle({ fileUrl, fill = false, overlay = null }) {
   const [src, setSrc] = useState('');
   const [pdfBlob, setPdfBlob] = useState(null);
   const [error, setError] = useState('');
