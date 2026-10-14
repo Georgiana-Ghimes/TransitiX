@@ -7,7 +7,8 @@
  * out.
  *
  *   1. apply the EXIF orientation (the pixels are rotated, the tag is dropped),
- *   2. optionally force landscape → portrait (`preferPortrait`, aviz office upload),
+ *   2. optionally upright the page (`preferPortrait`: try 0/90/180/270, keep portrait +
+ *      horizontal text + header toward the top — fixes sideways and upside-down phone shots),
  *   3. downscale so the longest side is at most `MAX_SIDE` - ~300 dpi for an A4 page,
  *   4. stretch the contrast when the frame is washed out,
  *   5. re-encode as JPEG.
@@ -150,35 +151,197 @@ export function orientationAxesDiffer(oriented, raw) {
   return oriented.width !== raw.width || oriented.height !== raw.height;
 }
 
+/** Max side of the thumbnail used to pick 0/90/180/270. */
+export const ORIENT_SAMPLE_SIDE = 480;
+
+/** Paper / ink thresholds on Rec.601 luma (0..255). */
+export const PAPER_LUMA_MIN = 175;
+export const INK_LUMA_MAX = 140;
+
+function arrayVariance(values) {
+  if (!values || !values.length) return 0;
+  let sum = 0;
+  for (let i = 0; i < values.length; i += 1) sum += values[i];
+  const mean = sum / values.length;
+  let acc = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const d = values[i] - mean;
+    acc += d * d;
+  }
+  return acc / values.length;
+}
+
+/**
+ * Score a decoded RGBA frame for “upright A4 paperwork”.
+ * Higher is better: text lines run horizontally, and the denser header band sits toward the top.
+ *
+ * @param {Uint8ClampedArray} rgba
+ * @param {number} width
+ * @param {number} height
+ * @returns {number}
+ */
+export function scoreDocumentOrientation(rgba, width, height) {
+  if (!rgba || width < 8 || height < 8) return -Infinity;
+  const gray = toGrayscale(rgba);
+
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let paper = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (gray[y * width + x] < PAPER_LUMA_MIN) continue;
+      paper += 1;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (paper < width * height * 0.04) {
+    minX = 0;
+    minY = 0;
+    maxX = width - 1;
+    maxY = height - 1;
+  }
+
+  const pw = maxX - minX + 1;
+  const ph = maxY - minY + 1;
+  const rowInk = new Float64Array(ph);
+  const colInk = new Float64Array(pw);
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      if (gray[y * width + x] > INK_LUMA_MAX) continue;
+      rowInk[y - minY] += 1;
+      colInk[x - minX] += 1;
+    }
+  }
+
+  const rowVar = arrayVariance(rowInk);
+  const colVar = arrayVariance(colInk);
+  // Horizontal text → row projection varies more than column projection.
+  const horiz = (rowVar - colVar) / (rowVar + colVar + 1e-6);
+
+  const band = Math.max(1, Math.floor(ph * 0.33));
+  let topInk = 0;
+  let botInk = 0;
+  for (let i = 0; i < band; i += 1) topInk += rowInk[i];
+  for (let i = ph - band; i < ph; i += 1) botInk += rowInk[i];
+  const header = (topInk - botInk) / (topInk + botInk + 1e-6);
+
+  // Portrait pages of forms: horizontality first, then header-up.
+  return horiz * 2 + header;
+}
+
+/**
+ * Output size after rotating the source by `degrees` (0/90/180/270 CW).
+ */
+export function sizeAfterRotation(width, height, degrees) {
+  const deg = ((Number(degrees) % 360) + 360) % 360;
+  if (deg === 90 || deg === 270) return { width: height, height: width };
+  return { width, height };
+}
+
+/**
+ * Pick the rotation (CW degrees) that best uprights a document thumbnail.
+ * When `preferPortrait` is set, landscape results are skipped.
+ *
+ * @param {Array<{ degrees: number, score: number, width: number, height: number }>} candidates
+ * @param {{ preferPortrait?: boolean }} [opts]
+ * @returns {number} degrees CW
+ */
+export function pickBestDocumentRotation(candidates, { preferPortrait = false } = {}) {
+  const list = Array.isArray(candidates) ? candidates : [];
+  let pool = preferPortrait
+    ? list.filter((c) => Number(c.height) >= Number(c.width))
+    : list;
+  if (!pool.length) pool = list;
+  let best = pool[0] || { degrees: 0, score: -Infinity };
+  for (let i = 1; i < pool.length; i += 1) {
+    const c = pool[i];
+    if (c.score > best.score) best = c;
+  }
+  return Number(best.degrees) || 0;
+}
+
 function jpegName(name) {
   const base = String(name || 'foto').replace(/\.[^.]+$/, '');
   return `${base}.jpg`;
 }
 
 /**
- * Draw `bitmap` into `ctx` at `width`×`height`, optionally rotating 90° clockwise first
- * (landscape → portrait). Canvas must already be sized to the *output* dimensions.
+ * Draw `bitmap` into `ctx` at `width`×`height`, with optional CW rotation.
+ * Canvas must already be sized to the *output* dimensions (axes swapped for 90/270).
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {ImageBitmap|CanvasImageSource} bitmap
+ * @param {number} width
+ * @param {number} height
+ * @param {{ degrees?: number, rotateCw90?: boolean }} [opts]  `rotateCw90` kept for callers; prefers `degrees`.
  */
-export function drawBitmapOriented(ctx, bitmap, width, height, { rotateCw90 = false } = {}) {
+export function drawBitmapOriented(ctx, bitmap, width, height, { degrees, rotateCw90 = false } = {}) {
   if (!ctx || !bitmap) return;
+  let deg = degrees == null ? (rotateCw90 ? 90 : 0) : Number(degrees);
+  deg = ((deg % 360) + 360) % 360;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  if (!rotateCw90) {
+  if (deg === 0) {
     ctx.drawImage(bitmap, 0, 0, width, height);
     return;
   }
-  // CW 90°: output (w,h) was (srcH, srcW) scaled — draw into rotated space (h × w).
   ctx.save();
-  ctx.translate(width, 0);
-  ctx.rotate(Math.PI / 2);
-  ctx.drawImage(bitmap, 0, 0, height, width);
+  if (deg === 90) {
+    ctx.translate(width, 0);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(bitmap, 0, 0, height, width);
+  } else if (deg === 180) {
+    ctx.translate(width, height);
+    ctx.rotate(Math.PI);
+    ctx.drawImage(bitmap, 0, 0, width, height);
+  } else if (deg === 270) {
+    ctx.translate(0, height);
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(bitmap, 0, 0, height, width);
+  } else {
+    ctx.drawImage(bitmap, 0, 0, width, height);
+  }
   ctx.restore();
+}
+
+/**
+ * Score 0/90/180/270 on a small canvas and pick the upright portrait rotation.
+ * @returns {number} degrees CW
+ */
+function chooseDocumentRotation(bitmap, { preferPortrait = false } = {}) {
+  if (!preferPortrait || !bitmap || typeof document === 'undefined') return 0;
+  const candidates = [];
+  for (const degrees of [0, 90, 180, 270]) {
+    const natural = sizeAfterRotation(bitmap.width, bitmap.height, degrees);
+    const { width, height } = sampleSize(natural.width, natural.height, ORIENT_SAMPLE_SIDE);
+    if (width < 8 || height < 8) continue;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) continue;
+    drawBitmapOriented(ctx, bitmap, width, height, { degrees });
+    let score = -Infinity;
+    try {
+      const image = ctx.getImageData(0, 0, width, height);
+      score = scoreDocumentOrientation(image.data, width, height);
+    } catch {
+      score = -Infinity;
+    }
+    candidates.push({ degrees, score, width, height });
+  }
+  return pickBestDocumentRotation(candidates, { preferPortrait });
 }
 
 /**
  * Prepares one file. Resolves to the original on any failure or when there is nothing to gain.
  * @param {object} [opts]
- * @param {boolean} [opts.preferPortrait]  Aviz phone photos: after EXIF, turn landscape → portrait (90° CW).
+ * @param {boolean} [opts.preferPortrait]  Aviz phone photos: pick upright portrait (0/90/180/270).
  * @returns {Promise<File>}
  */
 export async function prepareImageForUpload(file, {
@@ -204,8 +367,9 @@ export async function prepareImageForUpload(file, {
       // Older engines without `none` — leave bake decision to size / preferPortrait.
       needsOrientBake = false;
     }
-    const needsPortrait = preferPortrait && needsPortraitRotate(bitmap.width, bitmap.height);
-    const mustReencode = needsOrientBake || needsPortrait;
+    const rotationDeg = preferPortrait ? chooseDocumentRotation(bitmap, { preferPortrait }) : 0;
+    const needsContentRotate = rotationDeg !== 0;
+    const mustReencode = needsOrientBake || needsContentRotate;
 
     if (!shouldPrepare(file, {
       width: bitmap.width,
@@ -216,11 +380,8 @@ export async function prepareImageForUpload(file, {
       return file;
     }
 
-    const srcW = bitmap.width;
-    const srcH = bitmap.height;
-    const naturalW = needsPortrait ? srcH : srcW;
-    const naturalH = needsPortrait ? srcW : srcH;
-    const { width, height } = sampleSize(naturalW, naturalH, maxSide);
+    const natural = sizeAfterRotation(bitmap.width, bitmap.height, rotationDeg);
+    const { width, height } = sampleSize(natural.width, natural.height, maxSide);
     if (width < 16 || height < 16) return file;
 
     const canvas = document.createElement('canvas');
@@ -230,7 +391,7 @@ export async function prepareImageForUpload(file, {
       willReadFrequently: Boolean(contrast || inkNormalize),
     });
     if (!ctx) return file;
-    drawBitmapOriented(ctx, bitmap, width, height, { rotateCw90: needsPortrait });
+    drawBitmapOriented(ctx, bitmap, width, height, { degrees: rotationDeg });
 
     if (inkNormalize || contrast) {
       const image = ctx.getImageData(0, 0, width, height);

@@ -10,9 +10,12 @@ import {
   lumaHistogram,
   needsPortraitRotate,
   orientationAxesDiffer,
+  pickBestDocumentRotation,
   prepareImageForUpload,
   prepareImagesForUpload,
+  scoreDocumentOrientation,
   shouldPrepare,
+  sizeAfterRotation,
 } from './imagePreprocess.js';
 
 function hist(fill) {
@@ -65,6 +68,56 @@ describe('needsPortraitRotate / orientationAxesDiffer', () => {
     expect(orientationAxesDiffer({ width: 1600, height: 900 }, { width: 900, height: 1600 })).toBe(true);
     expect(orientationAxesDiffer({ width: 800, height: 600 }, { width: 800, height: 600 })).toBe(false);
     expect(orientationAxesDiffer(null, { width: 1, height: 1 })).toBe(false);
+  });
+});
+
+describe('document upright scoring', () => {
+  function rgbaCanvas(w, h, paint) {
+    const rgba = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < rgba.length; i += 4) {
+      rgba[i] = 220;
+      rgba[i + 1] = 220;
+      rgba[i + 2] = 220;
+      rgba[i + 3] = 255;
+    }
+    paint(rgba, w, h);
+    return rgba;
+  }
+
+  function fillDark(rgba, w, x0, y0, x1, y1) {
+    for (let y = y0; y < y1; y += 1) {
+      for (let x = x0; x < x1; x += 1) {
+        const i = (y * w + x) * 4;
+        rgba[i] = 40;
+        rgba[i + 1] = 40;
+        rgba[i + 2] = 40;
+      }
+    }
+  }
+
+  it('scores an upright header above an upside-down one', () => {
+    const w = 80;
+    const h = 120;
+    const upright = rgbaCanvas(w, h, (rgba) => {
+      fillDark(rgba, w, 4, 4, w - 4, 28);
+      for (let y = 40; y < 90; y += 5) fillDark(rgba, w, 8, y, w - 8, y + 1);
+    });
+    const upsideDown = rgbaCanvas(w, h, (rgba) => {
+      fillDark(rgba, w, 4, h - 28, w - 4, h - 4);
+      for (let y = 30; y < 80; y += 5) fillDark(rgba, w, 8, y, w - 8, y + 1);
+    });
+    expect(scoreDocumentOrientation(upright, w, h))
+      .toBeGreaterThan(scoreDocumentOrientation(upsideDown, w, h));
+  });
+
+  it('picks portrait rotation with the best score', () => {
+    expect(sizeAfterRotation(1600, 900, 90)).toEqual({ width: 900, height: 1600 });
+    expect(pickBestDocumentRotation([
+      { degrees: 0, score: 0.9, width: 1600, height: 900 },
+      { degrees: 90, score: 0.2, width: 900, height: 1600 },
+      { degrees: 180, score: 0.8, width: 1600, height: 900 },
+      { degrees: 270, score: 1.1, width: 900, height: 1600 },
+    ], { preferPortrait: true })).toBe(270);
   });
 });
 
