@@ -93,18 +93,28 @@ export default function AvizForceGateModal({
     cancelLabel = 'Nu';
   }
 
+  // Wide only when the carousel needs side-by-side preview; empty queue stayed
+  // max-w-5xl and stretched the green banner across a 20″ screen (#92).
+  const panelWidth = queue.length > 0
+    ? 'max-w-5xl w-full'
+    : 'max-w-md w-full';
+
   return (
     <ModalShell
       onClose={busy ? undefined : onCancel}
-      panelClassName="max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col"
+      panelClassName={`${panelWidth} max-h-[92vh] overflow-hidden flex flex-col`}
       labelledBy="force-gate-title"
     >
       <div className="flex flex-col min-h-0 flex-1">
         <div className="shrink-0 flex items-start justify-between gap-3 px-5 pt-5 pb-3">
-          <div className="min-w-0">
-            <h2 id="force-gate-title" className="text-lg font-semibold text-[#0A2B4E]">{title}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 id="force-gate-title" className="text-lg font-semibold text-[#0A2B4E] text-balance">
+              {title}
+            </h2>
             {description ? (
-              <p className="mt-1.5 text-sm text-slate-600 leading-snug">{description}</p>
+              <p className="mt-1.5 text-sm text-slate-600 leading-relaxed text-pretty">
+                {description}
+              </p>
             ) : null}
           </div>
           <button
@@ -132,8 +142,9 @@ export default function AvizForceGateModal({
           </div>
         ) : (
           <div className="px-5 pb-2">
-            <p className="text-sm text-slate-600 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+            <p className="text-sm text-slate-700 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-3 leading-relaxed text-pretty">
               Nimic de completat pe câmpurile obligatorii (TPO, dată, auto, rută).
+              {' '}
               Rămâne doar acțiunea din josul ferestrei.
             </p>
           </div>
