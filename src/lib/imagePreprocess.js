@@ -7,9 +7,13 @@
  * out.
  *
  *   1. apply the EXIF orientation (the pixels are rotated, the tag is dropped),
- *   2. downscale so the longest side is at most `MAX_SIDE` - ~300 dpi for an A4 page,
- *   3. stretch the contrast when the frame is washed out,
- *   4. re-encode as JPEG.
+ *   2. optionally force landscape → portrait (`preferPortrait`, aviz office upload),
+ *   3. downscale so the longest side is at most `MAX_SIDE` - ~300 dpi for an A4 page,
+ *   4. stretch the contrast when the frame is washed out,
+ *   5. re-encode as JPEG.
+ *
+ * Small WhatsApp JPEGs used to skip re-encode under `SKIP_BELOW_BYTES`, which left EXIF
+ * sideways or a landscape frame of an A4 page. Orientation / portrait always force a bake.
  *
  * Ink→black greyscale is opt-in only (`inkNormalize: true`). Warm notebook photos have a
  * colour cast across the whole frame; treating that chroma as "pen" turns the page black
@@ -122,14 +126,28 @@ export function applyInkToBlackGrayscale(rgba, {
  * Decide, without touching pixels, whether a file is worth preparing.
  * Exported so the decision is testable without a canvas.
  *
- * Default: only oversized frames. Opt-in ink mode prepares every photo.
+ * Default: only oversized frames. Opt-in ink mode / `force` prepares every photo.
  */
-export function shouldPrepare(file, { width, height, inkNormalize = false } = {}) {
+export function shouldPrepare(file, { width, height, inkNormalize = false, force = false } = {}) {
   if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) return false;
   if (file.type === 'image/gif' || file.type === 'image/svg+xml') return false;
-  if (inkNormalize) return true;
+  if (force || inkNormalize) return true;
   const tooLarge = Math.max(width || 0, height || 0) > MAX_SIDE;
   return tooLarge || file.size > SKIP_BELOW_BYTES;
+}
+
+/** A4-style paperwork should end up taller than wide after upload. */
+export function needsPortraitRotate(width, height) {
+  return Number(width) > Number(height) && Number(height) > 0;
+}
+
+/**
+ * Compare oriented vs raw bitmap sizes. When EXIF Orientation flips axes, we must re-encode
+ * or small WhatsApp JPEGs skip preparation and keep the sideways tag/pixels.
+ */
+export function orientationAxesDiffer(oriented, raw) {
+  if (!oriented || !raw) return false;
+  return oriented.width !== raw.width || oriented.height !== raw.height;
 }
 
 function jpegName(name) {
@@ -138,7 +156,29 @@ function jpegName(name) {
 }
 
 /**
+ * Draw `bitmap` into `ctx` at `width`×`height`, optionally rotating 90° clockwise first
+ * (landscape → portrait). Canvas must already be sized to the *output* dimensions.
+ */
+export function drawBitmapOriented(ctx, bitmap, width, height, { rotateCw90 = false } = {}) {
+  if (!ctx || !bitmap) return;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  if (!rotateCw90) {
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    return;
+  }
+  // CW 90°: output (w,h) was (srcH, srcW) scaled — draw into rotated space (h × w).
+  ctx.save();
+  ctx.translate(width, 0);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(bitmap, 0, 0, height, width);
+  ctx.restore();
+}
+
+/**
  * Prepares one file. Resolves to the original on any failure or when there is nothing to gain.
+ * @param {object} [opts]
+ * @param {boolean} [opts.preferPortrait]  Aviz phone photos: after EXIF, turn landscape → portrait (90° CW).
  * @returns {Promise<File>}
  */
 export async function prepareImageForUpload(file, {
@@ -146,19 +186,41 @@ export async function prepareImageForUpload(file, {
   quality = JPEG_QUALITY,
   contrast = true,
   inkNormalize = false,
+  preferPortrait = false,
 } = {}) {
   if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) return file;
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
 
   let bitmap;
+  let rawBitmap;
   try {
     // `from-image` bakes the EXIF orientation into the pixels; the re-encoded JPEG has none.
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    if (!shouldPrepare(file, { width: bitmap.width, height: bitmap.height, inkNormalize })) {
+    let needsOrientBake = false;
+    try {
+      rawBitmap = await createImageBitmap(file, { imageOrientation: 'none' });
+      needsOrientBake = orientationAxesDiffer(bitmap, rawBitmap);
+    } catch {
+      // Older engines without `none` — leave bake decision to size / preferPortrait.
+      needsOrientBake = false;
+    }
+    const needsPortrait = preferPortrait && needsPortraitRotate(bitmap.width, bitmap.height);
+    const mustReencode = needsOrientBake || needsPortrait;
+
+    if (!shouldPrepare(file, {
+      width: bitmap.width,
+      height: bitmap.height,
+      inkNormalize,
+      force: mustReencode,
+    })) {
       return file;
     }
 
-    const { width, height } = sampleSize(bitmap.width, bitmap.height, maxSide);
+    const srcW = bitmap.width;
+    const srcH = bitmap.height;
+    const naturalW = needsPortrait ? srcH : srcW;
+    const naturalH = needsPortrait ? srcW : srcH;
+    const { width, height } = sampleSize(naturalW, naturalH, maxSide);
     if (width < 16 || height < 16) return file;
 
     const canvas = document.createElement('canvas');
@@ -168,9 +230,7 @@ export async function prepareImageForUpload(file, {
       willReadFrequently: Boolean(contrast || inkNormalize),
     });
     if (!ctx) return file;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(bitmap, 0, 0, width, height);
+    drawBitmapOriented(ctx, bitmap, width, height, { rotateCw90: needsPortrait });
 
     if (inkNormalize || contrast) {
       const image = ctx.getImageData(0, 0, width, height);
@@ -188,8 +248,10 @@ export async function prepareImageForUpload(file, {
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
     if (!blob || blob.size === 0) return file;
     // Ink / contrast passes may grow a tiny JPEG; still worth sending the readable page.
+    // Never discard a bake that fixed EXIF or portrait — that was the whole point.
     if (
-      !inkNormalize
+      !mustReencode
+      && !inkNormalize
       && blob.size >= file.size
       && Math.max(bitmap.width, bitmap.height) <= maxSide
     ) {
@@ -200,6 +262,7 @@ export async function prepareImageForUpload(file, {
     return file;
   } finally {
     bitmap?.close?.();
+    rawBitmap?.close?.();
   }
 }
 

@@ -19,6 +19,16 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 113,
+    version: '1.26.7',
+    dateLabel: 'octombrie 2026',
+    title: 'Pozele landscape se îndreaptă la încărcare',
+    highlights: [
+      'La încărcare pe Avize, pozele făcute cu telefonul pe landscape (inclusiv din WhatsApp) sunt rotite automat în portret, ca să citești documentul drept.',
+      'Se aplică și orientarea din EXIF: nu mai rămân pagini pe o parte după upload.',
+    ],
+  },
+  {
     build: 112,
     version: '1.26.6',
     dateLabel: 'octombrie 2026',

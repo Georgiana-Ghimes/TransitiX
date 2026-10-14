@@ -8,6 +8,8 @@ import {
   applyInkToBlackGrayscale,
   contrastStretchParams,
   lumaHistogram,
+  needsPortraitRotate,
+  orientationAxesDiffer,
   prepareImageForUpload,
   prepareImagesForUpload,
   shouldPrepare,
@@ -36,11 +38,33 @@ describe('shouldPrepare', () => {
     )).toBe(true);
   });
 
+  it('force prepares small photos (EXIF / portrait bake)', () => {
+    expect(shouldPrepare(
+      { type: 'image/jpeg', size: 100 },
+      { width: 800, height: 600, force: true },
+    )).toBe(true);
+  });
+
   it('leaves PDFs and exotic image types alone', () => {
     expect(shouldPrepare({ type: 'application/pdf', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare({ type: 'image/gif', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare({ type: 'image/svg+xml', size: 10_000_000 })).toBe(false);
     expect(shouldPrepare(null)).toBe(false);
+  });
+});
+
+describe('needsPortraitRotate / orientationAxesDiffer', () => {
+  it('flags landscape frames only', () => {
+    expect(needsPortraitRotate(1600, 900)).toBe(true);
+    expect(needsPortraitRotate(900, 1600)).toBe(false);
+    expect(needsPortraitRotate(1000, 1000)).toBe(false);
+    expect(needsPortraitRotate(800, 0)).toBe(false);
+  });
+
+  it('detects EXIF axis flip vs matching sizes', () => {
+    expect(orientationAxesDiffer({ width: 1600, height: 900 }, { width: 900, height: 1600 })).toBe(true);
+    expect(orientationAxesDiffer({ width: 800, height: 600 }, { width: 800, height: 600 })).toBe(false);
+    expect(orientationAxesDiffer(null, { width: 1, height: 1 })).toBe(false);
   });
 });
 

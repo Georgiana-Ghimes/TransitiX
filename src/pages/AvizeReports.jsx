@@ -298,8 +298,9 @@ export default function AvizeReports() {
     let listFilters = filters;
     try {
       // Orientation, size and contrast are settled here, before anything is measured or
-      // sent. Best-effort: a file that cannot be prepared goes as it was picked.
-      const files = await prepareImagesForUpload(picked);
+      // sent. Landscape phone/WhatsApp shots are turned to portrait (EXIF bake + 90° CW).
+      // Best-effort: a file that cannot be prepared goes as it was picked.
+      const files = await prepareImagesForUpload(picked, { preferPortrait: true });
       // Photos taken at a desk blur too. Unlike the cab, a batch of scans is not interrupted for
       // it, the operator is told which file may not read and the upload carries on.
       const worst = await findBlurriest(files).catch(() => null);
