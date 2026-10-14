@@ -67,16 +67,16 @@ export default function AvizForceGateModal({
     if (ready) {
       title = cleanExport
         ? 'Gata de unire în Anexa XLSX'
-        : 'Câmpurile sunt complete — poți uni';
+        : 'Câmpurile sunt complete: poți uni';
       description = noEditNeeded
-        ? 'Nu lipsește niciun câmp obligatoriu pe selecție. Documentele sunt încă neverificate / neconfirmate pentru anexă — poți uni oricum.'
+        ? 'Nu lipsește niciun câmp obligatoriu pe selecție. Documentele sunt încă neverificate / neconfirmate pentru anexă: poți uni oricum.'
         : cleanExport
           ? 'Toate avizele din coadă au câmpurile obligatorii și sunt confirmate. Poți genera Anexa.'
           : 'Toate câmpurile obligatorii sunt complete. Poți uni în XLSX; dacă unele nu sunt încă Confirmat, le marcăm la export.';
       confirmLabel = 'Unește în XLSX';
     } else {
       title = 'Sigur unești și avize neverificate / neconfirmate?';
-      description = 'Selecția include documente cu câmpuri obligatorii goale. Completează-le în carousel sau unește oricum — responsabilitatea e a ta.';
+      description = 'Selecția include documente cu câmpuri obligatorii goale. Completează-le în carousel sau unește oricum: responsabilitatea e a ta.';
       confirmLabel = 'Da, unește oricum';
       cancelLabel = 'Nu';
     }
@@ -88,7 +88,7 @@ export default function AvizForceGateModal({
     confirmLabel = 'Confirmă';
   } else {
     title = 'Sigur confirmi și avize cu câmpuri de verificat?';
-    description = 'Există câmpuri obligatorii goale. Poți edita în carousel, apoi Da confirmă oricum — îți asumi datele incomplete.';
+    description = 'Există câmpuri obligatorii goale. Poți edita în carousel, apoi Da confirmă oricum: îți asumi datele incomplete.';
     confirmLabel = 'Da, confirmă oricum';
     cancelLabel = 'Nu';
   }

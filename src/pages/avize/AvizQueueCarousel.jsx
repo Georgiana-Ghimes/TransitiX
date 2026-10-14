@@ -301,7 +301,7 @@ export default function AvizQueueCarousel({
               </button>
               {index < ordered.length - 1 ? (
                 <p className="text-[11px] text-center text-slate-500">
-                  După salvare rămâi pe coadă — poți reveni oricând la avizul {index + 1}.
+                  După salvare rămâi pe coadă: poți reveni oricând la avizul {index + 1}.
                 </p>
               ) : null}
             </div>
