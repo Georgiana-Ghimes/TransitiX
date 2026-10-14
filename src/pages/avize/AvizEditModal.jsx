@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import ModalShell from '@/components/ModalShell';
 import RoDateField from '@/components/RoDateField';
+import { api } from '@/api/client';
 import { AVIZ_FORM_FIELDS } from '@/lib/avizAnnex';
+import { previewKind } from '@/lib/avizOps';
+import { rotateImageFile } from '@/lib/imagePreprocess';
+import { notifyError, notifySuccess } from '@/lib/notify';
 import { appendObservationCode } from '@/lib/observationCodes';
-import { Loader2, Pencil, X } from 'lucide-react';
+import { fetchUploadBlob } from '@/lib/uploadUrl';
+import { Loader2, Pencil, RotateCw, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import {
@@ -17,15 +22,43 @@ import {
  * `formRevision` bumps only when the parent deliberately reloads the draft (Re-extrage).
  */
 export default function AvizEditModal({
-  editRow, formRevision = 0, obsCodes, saving, onClose, onSave,
+  editRow, formRevision = 0, obsCodes, saving, onClose, onSave, onFileReplaced,
 }) {
   const [form, setForm] = useState(() => emptyForm(editRow));
+  const [rotating, setRotating] = useState(false);
 
   useEffect(() => {
     setForm(emptyForm(editRow));
   }, [editRow?.id, formRevision]);
 
   const reviewFindings = avizEditFindings(editRow, { form });
+  const canRotateImage = previewKind(editRow?.file_url) === 'image' && typeof onFileReplaced === 'function';
+
+  const rotatePreview = async (degrees) => {
+    if (!canRotateImage || !editRow?.id || rotating) return;
+    setRotating(true);
+    try {
+      const blob = await fetchUploadBlob(editRow.file_url);
+      if (!blob) throw new Error('Nu am putut citi fișierul.');
+      const source = new File(
+        [blob],
+        editRow.original_filename || 'aviz.jpg',
+        { type: blob.type || 'image/jpeg' },
+      );
+      const rotated = await rotateImageFile(source, degrees);
+      const uploaded = await api.integrations.Core.UploadFile({ file: rotated });
+      const saved = await api.entities.AvizDocument.update(editRow.id, {
+        file_url: uploaded.file_url,
+        original_filename: rotated.name || editRow.original_filename,
+      });
+      onFileReplaced(saved || { ...editRow, file_url: uploaded.file_url });
+      notifySuccess('Imagine rotită', 'Previzualizarea e actualizată. Salvează câmpurile dacă ai modificări.');
+    } catch (e) {
+      notifyError('Rotirea imaginii a eșuat', e);
+    } finally {
+      setRotating(false);
+    }
+  };
 
   return (
     <ModalShell
@@ -41,9 +74,34 @@ export default function AvizEditModal({
 
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pb-2">
           <div className="min-h-[38vh] sm:min-h-[42vh] lg:min-h-0 flex flex-col border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-            <div className="shrink-0 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide truncate">
-              Document
-              {editRow?.original_filename ? ` · ${editRow.original_filename}` : ''}
+            <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+              <span className="truncate min-w-0 flex-1">
+                Document
+                {editRow?.original_filename ? ` · ${editRow.original_filename}` : ''}
+              </span>
+              {canRotateImage ? (
+                <span className="flex items-center gap-1 shrink-0 normal-case tracking-normal font-normal">
+                  <button
+                    type="button"
+                    disabled={rotating || saving}
+                    onClick={() => rotatePreview(90)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    title="Rotește 90° în sens orar"
+                  >
+                    {rotating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
+                    90°
+                  </button>
+                  <button
+                    type="button"
+                    disabled={rotating || saving}
+                    onClick={() => rotatePreview(180)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    title="Întoarce cu capul în sus (180°)"
+                  >
+                    180°
+                  </button>
+                </span>
+              ) : null}
             </div>
             <div className="relative flex-1 min-h-0">
               <AvizFilePreview fileUrl={editRow.file_url} fill />

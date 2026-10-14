@@ -1471,6 +1471,11 @@ export default function AvizeReports() {
           saving={saving}
           onClose={closeEditModal}
           onSave={saveEdit}
+          onFileReplaced={(row) => {
+            if (!row?.id) return;
+            setEditRow((prev) => (prev?.id === row.id ? { ...prev, ...row } : prev));
+            setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...row } : r)));
+          }}
         />
       )}
 

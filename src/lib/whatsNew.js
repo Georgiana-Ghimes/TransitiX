@@ -19,22 +19,22 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 115,
+    version: '1.26.9',
+    dateLabel: 'octombrie 2026',
+    title: 'Poze pe dos: buton 180° în Editează',
+    highlights: [
+      'În Editează aviz, pe poze: butoane 90° și 180° ca să îndrepți pagina pe loc (fără să reîncarci tot).',
+      'La încărcare, orientarea automată e mai atentă: antetul pe lățime bate ștampilele din colț, ca pagina să nu rămână cu capul în jos.',
+    ],
+  },
+  {
     build: 114,
     version: '1.26.8',
     dateLabel: 'octombrie 2026',
     title: 'Pozele se îndreaptă la încărcare (și pe dos)',
     highlights: [
       'La încărcare pe Avize, pozele de pe telefon (inclusiv WhatsApp) sunt rotite automat: landscape → portret, iar dacă pagina e cu capul în jos se întoarce cum trebuie.',
-      'Se aplică și orientarea din EXIF: nu mai rămân pagini pe o parte după upload.',
-    ],
-  },
-  {
-    build: 113,
-    version: '1.26.7',
-    dateLabel: 'octombrie 2026',
-    title: 'Pozele landscape se îndreaptă la încărcare',
-    highlights: [
-      'La încărcare pe Avize, pozele făcute cu telefonul pe landscape (inclusiv din WhatsApp) sunt rotite automat în portret, ca să citești documentul drept.',
       'Se aplică și orientarea din EXIF: nu mai rămân pagini pe o parte după upload.',
     ],
   },

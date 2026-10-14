@@ -223,15 +223,33 @@ export function scoreDocumentOrientation(rgba, width, height) {
   // Horizontal text → row projection varies more than column projection.
   const horiz = (rowVar - colVar) / (rowVar + colVar + 1e-6);
 
-  const band = Math.max(1, Math.floor(ph * 0.33));
-  let topInk = 0;
-  let botInk = 0;
-  for (let i = 0; i < band; i += 1) topInk += rowInk[i];
-  for (let i = ph - band; i < ph; i += 1) botInk += rowInk[i];
-  const header = (topInk - botInk) / (topInk + botInk + 1e-6);
+  // Full-width ink rows (title / field labels) beat localized stamps at the foot of the page.
+  // A stamp blob adds a lot of ink but spans only a fraction of the page width.
+  const rowSpan = new Float64Array(ph);
+  for (let y = minY; y <= maxY; y += 1) {
+    let lo = maxX + 1;
+    let hi = minX - 1;
+    for (let x = minX; x <= maxX; x += 1) {
+      if (gray[y * width + x] > INK_LUMA_MAX) continue;
+      if (x < lo) lo = x;
+      if (x > hi) hi = x;
+    }
+    rowSpan[y - minY] = hi >= lo ? (hi - lo + 1) / pw : 0;
+  }
 
-  // Portrait pages of forms: horizontality first, then header-up.
-  return horiz * 2 + header;
+  const band = Math.max(1, Math.floor(ph * 0.36));
+  let topWide = 0;
+  let botWide = 0;
+  for (let i = 0; i < band; i += 1) {
+    if (rowSpan[i] >= 0.45) topWide += rowSpan[i];
+  }
+  for (let i = ph - band; i < ph; i += 1) {
+    if (rowSpan[i] >= 0.45) botWide += rowSpan[i];
+  }
+  const header = (topWide - botWide) / (topWide + botWide + 1e-6);
+
+  // Portrait pages of forms: horizontality first, then full-width header toward the top.
+  return horiz * 2 + header * 1.5;
 }
 
 /**
@@ -424,6 +442,45 @@ export async function prepareImageForUpload(file, {
   } finally {
     bitmap?.close?.();
     rawBitmap?.close?.();
+  }
+}
+
+/**
+ * Force-rotate one image by CW `degrees` (90 / 180 / 270) and re-encode as JPEG.
+ * Used from Editează when auto-orient still leaves the page on its head.
+ * @returns {Promise<File>}
+ */
+export async function rotateImageFile(file, degrees = 90, {
+  maxSide = MAX_SIDE,
+  quality = JPEG_QUALITY,
+} = {}) {
+  if (!file || typeof file.type !== 'string' || !file.type.startsWith('image/')) return file;
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file;
+  const deg = ((Number(degrees) % 360) + 360) % 360;
+  if (deg === 0) return file;
+
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const natural = sizeAfterRotation(bitmap.width, bitmap.height, deg);
+    const { width, height } = sampleSize(natural.width, natural.height, maxSide);
+    if (width < 16 || height < 16) return file;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    drawBitmapOriented(ctx, bitmap, width, height, { degrees: deg });
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob || blob.size === 0) return file;
+    return new File([blob], jpegName(file.name), {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  } finally {
+    bitmap?.close?.();
   }
 }
 

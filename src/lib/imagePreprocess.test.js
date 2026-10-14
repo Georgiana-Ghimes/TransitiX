@@ -110,6 +110,25 @@ describe('document upright scoring', () => {
       .toBeGreaterThan(scoreDocumentOrientation(upsideDown, w, h));
   });
 
+  it('prefers a full-width header over a dense stamp blob at the foot', () => {
+    const w = 80;
+    const h = 120;
+    // Correct: wide title at top, compact stamp bottom-right.
+    const upright = rgbaCanvas(w, h, (rgba) => {
+      fillDark(rgba, w, 2, 6, w - 2, 22);
+      for (let y = 35; y < 85; y += 6) fillDark(rgba, w, 6, y, w - 6, y + 1);
+      fillDark(rgba, w, w - 28, h - 30, w - 4, h - 6);
+    });
+    // Same page upside-down: stamp near top, title at bottom.
+    const upsideDown = rgbaCanvas(w, h, (rgba) => {
+      fillDark(rgba, w, 4, 6, 28, 30);
+      for (let y = 35; y < 85; y += 6) fillDark(rgba, w, 6, y, w - 6, y + 1);
+      fillDark(rgba, w, 2, h - 22, w - 2, h - 6);
+    });
+    expect(scoreDocumentOrientation(upright, w, h))
+      .toBeGreaterThan(scoreDocumentOrientation(upsideDown, w, h));
+  });
+
   it('picks portrait rotation with the best score', () => {
     expect(sizeAfterRotation(1600, 900, 90)).toEqual({ width: 900, height: 1600 });
     expect(pickBestDocumentRotation([
