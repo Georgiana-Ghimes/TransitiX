@@ -24,11 +24,11 @@ export const WHATS_NEW_RELEASES = [
     dateLabel: 'octombrie 2026',
     title: 'Anexa Baumit: TPO-uri unite cum trebuie',
     highlights: [
-      'Pe șablon: bifă „Unește celulele TPO”. În Excel, cursele aceluiași TPO sunt grupate și Număr TPO e sudat pe verticală — nu mai rămân rupte dacă în listă erau amestecate cu alte TPO-uri.',
+      'Pe șablon: bifă „Unește celulele TPO”. În Excel, cursele aceluiași TPO sunt grupate și Număr TPO e sudat pe verticală. Nu mai rămân rupte dacă în listă erau amestecate cu alte TPO-uri.',
       'La Unește în Anexă sau Confirmă selectate: dacă lipsesc TPO / dată / auto / rută, treci documentele unul câte unul (preview + formular). Salvezi și treci la următorul; butonul de salvare rămâne jos, la vedere.',
-      'Când totul e complet, Unește / Confirmă din josul ferestrei. Dacă tot vrei să continui cu goluri, poți — îți asumi.',
+      'Când totul e complet, Unește / Confirmă din josul ferestrei. Dacă tot vrei să continui cu goluri, poți: îți asumi.',
       'Cu bifă ON, în preview paginile adiacente cu același TPO apar lipite (ca pe un aviz multi-pagină).',
-      'PDF cu mai multe avize: continuările pe același document rămân un fișier; în listă vezi intervalul de pagini (ex. pag. 6–7).',
+      'PDF cu mai multe avize: continuările pe același document rămân un fișier; în listă vezi intervalul de pagini (ex. pag. 6/7).',
     ],
   },
   {
