@@ -3,27 +3,19 @@ import RoDateField from '@/components/RoDateField';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import {
+  CAROUSEL_EDIT_FIELDS,
   consecutiveSameTpoPeers,
   emptyForm,
   inputCls,
+  isGoodsDocOnly,
+  isMissingTpo,
   labelCls,
+  lowField,
   missingRequiredCarouselFields,
   normalizeTpoKey,
   previewFileUrlsForPeers,
+  unackedLowOcrFields,
 } from './avizeUi';
-
-/** Essential fields for the force/export carousel (subset of AVIZ_FORM_FIELDS). */
-export const CAROUSEL_EDIT_FIELDS = [
-  { key: 'numar_tpo', label: 'Număr TPO', required: true },
-  { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', type: 'date', required: true },
-  { key: 'numar_auto', label: 'Număr auto', required: true },
-  { key: 'ruta_transport', label: 'Rută transport', wide: true, required: true },
-  { key: 'km_parcursi', label: 'Km parcurși', inputMode: 'decimal' },
-  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', inputMode: 'decimal' },
-  { key: 'observatii', label: 'Observații', wide: true },
-];
-
-export { missingRequiredCarouselFields };
 
 function labelForKey(key) {
   return CAROUSEL_EDIT_FIELDS.find((f) => f.key === key)?.label || key;
@@ -43,6 +35,8 @@ export default function AvizQueueCarousel({
   /** Full selection (upload order) for adjacent same-TPO preview when merge is on. */
   peerRows = null,
   mergeTpoPreview = false,
+  /** When template „Unește celulele TPO” is on — empty TPO is a hard requirement. */
+  mergeTpoRequired = false,
 }) {
   const ordered = useMemo(() => {
     const list = Array.isArray(queue) ? [...queue] : [];
@@ -88,11 +82,14 @@ export default function AvizQueueCarousel({
     setForm(emptyForm(current));
   }, [current?.id]);
 
+  const goodsDocOnly = Boolean(form.goods_doc_only);
   const missing = useMemo(() => missingRequiredCarouselFields(form), [form]);
   const missingSet = useMemo(() => new Set(missing), [missing]);
 
   const completeness = useMemo(() => ordered.map((row) => {
-    const snap = row.id === current?.id ? form : row;
+    const snap = row.id === current?.id
+      ? form
+      : { ...row, goods_doc_only: isGoodsDocOnly(row) };
     return {
       id: row.id,
       missing: missingRequiredCarouselFields(snap),
@@ -236,6 +233,51 @@ export default function AvizQueueCarousel({
 
         <div className="min-h-0 flex flex-col overflow-hidden bg-white">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-3 pb-2 space-y-2.5">
+            <label className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="mt-0.5 shrink-0"
+                checked={goodsDocOnly}
+                disabled={saving}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setForm((prev) => ({
+                    ...prev,
+                    goods_doc_only: on,
+                    ...(on ? { numar_tpo: '' } : {}),
+                  }));
+                }}
+              />
+              <span className="min-w-0 leading-snug text-pretty">
+                <span className="font-medium text-[#0A2B4E]">Doar document marfă (fără TPO pe pagină)</span>
+                <span className="block mt-0.5 text-xs text-slate-500">
+                  Aviz de transfer / TRO-PSL fără comandă de transport. În Anexă rămâne la coada listei (după TPO-uri).
+                </span>
+              </span>
+            </label>
+
+            {mergeTpoRequired && isMissingTpo(form) && !goodsDocOnly ? (
+              <div className="flex gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-700" />
+                <div className="min-w-0">
+                  <p className="font-semibold">Număr TPO obligatoriu pentru Unește celulele TPO</p>
+                  <p className="mt-0.5 leading-snug">
+                    Fără TPO pe acest aviz nu poți uni în Anexă cu bifa ON. Completează TPO, marchează „Doar document marfă”, sau oprește „Unește celulele TPO” pe șablon.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+            {current && unackedLowOcrFields({ ...current, goods_doc_only: goodsDocOnly }).length > 0 ? (
+              <div className="flex gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-700" />
+                <div className="min-w-0">
+                  <p className="font-semibold">OCR nesigur — verifică pe poză</p>
+                  <p className="mt-0.5 leading-snug">
+                    Confirmă / Unește sunt blocate până salvezi aici (chiar dacă nu schimbi valorile) sau deschizi Verifică → Marchează verificat.
+                  </p>
+                </div>
+              </div>
+            ) : null}
             {missing.length > 0 ? (
               <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
@@ -245,7 +287,11 @@ export default function AvizQueueCarousel({
                     {missing.map(labelForKey).join(' · ')}
                   </p>
                   <p className="mt-1 text-amber-800/80">
-                    Poți derula liber și salva oricum; evidențierea dispare pe măsură ce completezi.
+                    {goodsDocOnly && missingSet.has('numar_document_marfa')
+                      ? 'Pentru „Doar document marfă” completează TRO/PSL (Număr document marfă).'
+                      : mergeTpoRequired && missingSet.has('numar_tpo')
+                        ? 'TPO e obligatoriu când Unește celulele TPO e activ — Unește oricum e blocat până completezi.'
+                        : 'Poți derula liber și salva oricum; evidențierea dispare pe măsură ce completezi.'}
                   </p>
                 </div>
               </div>
@@ -259,15 +305,26 @@ export default function AvizQueueCarousel({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2.5">
               {CAROUSEL_EDIT_FIELDS.map((f) => {
                 const needs = missingSet.has(f.key);
+                const tpoDisabled = f.key === 'numar_tpo' && goodsDocOnly;
+                const docRequired = f.key === 'numar_document_marfa' && goodsDocOnly;
+                const showRequired = (f.required && !tpoDisabled) || docRequired;
+                const ocrUnsure = f.key === 'numar_tpo' && current && lowField(current, 'numar_tpo') && !needs && !goodsDocOnly;
+                const warn = needs || ocrUnsure;
                 return (
                   <div key={f.key} className={f.wide ? 'sm:col-span-2' : ''}>
-                    <label className={`${labelCls} ${needs ? 'text-amber-800' : ''}`}>
+                    <label className={`${labelCls} ${warn ? 'text-amber-800' : ''} ${tpoDisabled ? 'text-slate-400' : ''}`}>
                       {f.label}
-                      {f.required ? <span className="text-amber-700"> *</span> : null}
+                      {showRequired ? <span className="text-amber-700"> *</span> : null}
+                      {ocrUnsure ? (
+                        <span className="ml-1.5 text-[10px] font-bold text-red-700">OCR nesigur</span>
+                      ) : null}
+                      {tpoDisabled ? (
+                        <span className="ml-1.5 text-[10px] font-normal text-slate-400">dezactivat</span>
+                      ) : null}
                     </label>
                     {f.type === 'date' ? (
                       <RoDateField
-                        className={`${inputCls} ${needs ? 'border-amber-400 bg-amber-50/60 focus:border-amber-500' : ''}`}
+                        className={`${inputCls} ${warn ? 'border-amber-400 bg-amber-50/60 focus:border-amber-500' : ''}`}
                         value={form[f.key] ?? ''}
                         onChange={(iso) => setForm((prev) => ({ ...prev, [f.key]: iso }))}
                         aria-label={f.label}
@@ -275,10 +332,11 @@ export default function AvizQueueCarousel({
                       />
                     ) : (
                       <input
-                        className={`${inputCls} ${needs ? 'border-amber-400 bg-amber-50/60 focus:border-amber-500' : ''}`}
+                        className={`${inputCls} ${warn ? 'border-amber-400 bg-amber-50/60 focus:border-amber-500' : ''} ${tpoDisabled ? 'bg-slate-100 text-slate-400' : ''}`}
                         type="text"
                         inputMode={f.inputMode || undefined}
                         autoComplete="off"
+                        disabled={tpoDisabled || saving}
                         value={form[f.key] ?? ''}
                         onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
                         aria-invalid={needs || undefined}

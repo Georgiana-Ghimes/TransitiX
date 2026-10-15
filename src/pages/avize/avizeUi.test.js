@@ -6,9 +6,18 @@ import {
   asAvizPage,
   consecutiveSameTpoPeers,
   previewFileUrlsForPeers,
+  rowsMissingTpo,
   rowsNeedingCarouselEdit,
   sortAvizeByUploadAsc,
+  AVIZ_ACTION_LEGEND,
   AVIZ_DEFAULT_PAGE_SIZE,
+  AVIZ_STATUS_DOT_LEGEND,
+  AVIZ_STATUS_DOT_ONELINER,
+  LOW_FIELD_TEXT_CLS,
+  isGoodsDocOnly,
+  missingRequiredCarouselFields,
+  rowsNeedingOcrVerify,
+  unackedLowOcrFields,
   displayRoute,
   emptyForm,
   formatIncarcareLabel,
@@ -127,6 +136,97 @@ describe('avizeUi', () => {
     expect(consecutiveSameTpoPeers(rows, 'b').map((r) => r.id)).toEqual(['a', 'b']);
     expect(consecutiveSameTpoPeers(rows, 'd').map((r) => r.id)).toEqual(['d']);
     expect(previewFileUrlsForPeers(consecutiveSameTpoPeers(rows, 'a'))).toEqual(['/a.pdf', '/b.pdf']);
+  });
+
+  it('lists rows missing Număr TPO (whitespace counts as missing)', () => {
+    const rows = [
+      { id: 'a', numar_tpo: 'TPO-1', created_at: '2026-10-14T10:00:00Z' },
+      { id: 'b', numar_tpo: '  ', created_at: '2026-10-14T08:00:00Z' },
+      { id: 'c', numar_tpo: null, created_at: '2026-10-14T09:00:00Z' },
+      { id: 'd', numar_tpo: 'TPO-2', created_at: '2026-10-14T11:00:00Z' },
+    ];
+    expect(rowsMissingTpo(rows).map((r) => r.id)).toEqual(['b', 'c']);
+    expect(rowsMissingTpo(rows, ['a', 'c']).map((r) => r.id)).toEqual(['c']);
+    expect(rowsMissingTpo(rows, ['a', 'd'])).toEqual([]);
+  });
+
+  it('treats goods-doc-only as optional TPO and required document marfă', () => {
+    const goods = {
+      id: 'g',
+      numar_tpo: '',
+      numar_document_marfa: 'TRO-0010722',
+      data_efectuare_cursa: '2026-10-06',
+      numar_auto: 'B-01-XXX',
+      ruta_transport: 'A-B',
+      goods_doc_only: true,
+      created_at: '2026-10-14T08:00:00Z',
+    };
+    expect(isGoodsDocOnly(goods)).toBe(true);
+    expect(isGoodsDocOnly({ extracted_data: { goods_doc_only: true } })).toBe(true);
+    expect(missingRequiredCarouselFields(goods)).toEqual([]);
+    expect(missingRequiredCarouselFields({ ...goods, numar_document_marfa: '' }))
+      .toEqual(['numar_document_marfa']);
+    expect(rowsMissingTpo([goods, { id: 'b', numar_tpo: '', created_at: '2026-10-14T09:00:00Z' }])
+      .map((r) => r.id)).toEqual(['b']);
+  });
+
+  it('explains red-bold OCR text and hard TPO when merge is on', () => {
+    const text = AVIZ_ACTION_LEGEND.map((i) => `${i.name} ${i.text}`).join(' ');
+    expect(text).toMatch(/Text roșu bold|roșu bold/i);
+    expect(text).toMatch(/OCR/i);
+    expect(text).toMatch(/ștampilă|stampila/i);
+    expect(text).toMatch(/Unește celulele TPO/);
+    expect(text).toMatch(/fără Număr TPO|Număr TPO/i);
+    expect(text).toMatch(/blocate|Verifică/i);
+    expect(text).toMatch(/Doar document marfă|TRO\/PSL/i);
+  });
+
+  it('keeps HITL annex gate and status-dot strip copy', () => {
+    expect(LOW_FIELD_TEXT_CLS).toMatch(/text-red-700/);
+    expect(LOW_FIELD_TEXT_CLS).toMatch(/font-bold/);
+    expect(AVIZ_STATUS_DOT_LEGEND.some((i) => i.key === 'hitl')).toBe(true);
+    expect(AVIZ_STATUS_DOT_ONELINER).toMatch(/OCR nesigur/);
+    expect(AVIZ_STATUS_DOT_ONELINER).toMatch(/blocate/i);
+    expect(requiresAnnexReviewGate({
+      status: 'extracted', validation_routing: 'hitl_required',
+    })).toBe(true);
+    // Confirmă pe HITL must still route through the gate (carousel when fields gap).
+    expect(requiresAnnexReviewGate({
+      status: 'extracted', needs_review: true, validation_routing: 'hitl_required',
+    })).toBe(true);
+  });
+
+  it('treats unacked low OCR as needing carousel even when fields are filled', () => {
+    const low = {
+      id: 'low',
+      status: 'extracted',
+      created_at: '2026-10-14T09:00:00Z',
+      numar_tpo: 'TPO-0033600',
+      data_efectuare_cursa: '2026-10-07',
+      numar_auto: 'B-42-RAI',
+      ruta_transport: 'A-B',
+      field_confidence: { numar_tpo: 'low' },
+    };
+    const ok = {
+      id: 'ok',
+      status: 'extracted',
+      created_at: '2026-10-14T08:00:00Z',
+      numar_tpo: 'TPO-1',
+      data_efectuare_cursa: '2026-10-07',
+      numar_auto: 'B-01-XXX',
+      ruta_transport: 'A-B',
+      field_confidence: { numar_tpo: 'ok' },
+    };
+    const acked = {
+      ...low,
+      id: 'acked',
+      corrected_fields: ['numar_tpo'],
+    };
+    expect(unackedLowOcrFields(low)).toEqual(['numar_tpo']);
+    expect(unackedLowOcrFields(acked)).toEqual([]);
+    expect(unackedLowOcrFields({ ...low, status: 'confirmed' })).toEqual([]);
+    expect(rowsNeedingOcrVerify([low, ok, acked]).map((r) => r.id)).toEqual(['low']);
+    expect(rowsNeedingCarouselEdit([low, ok]).map((r) => r.id)).toEqual(['low']);
   });
 
   it('tells the operator template names are unique per company', () => {

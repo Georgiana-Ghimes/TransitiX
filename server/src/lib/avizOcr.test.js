@@ -1251,6 +1251,20 @@ describe('review heuristics (#41)', () => {
     });
     expect(ui.numar_tpo).toBe('ok');
   });
+
+  it('clears UI low confidence when the field is in corrected_fields', () => {
+    const ui = fieldConfidenceForUi({
+      numar_tpo: 'TPO-0033600',
+      numar_auto: '32',
+      corrected_fields: ['numar_tpo', 'numar_auto'],
+      field_confidence: {
+        numar_tpo: 'low',
+        numar_auto: { status: 'review', confidence: 0.4 },
+      },
+    });
+    expect(ui.numar_tpo).toBe('ok');
+    expect(ui.numar_auto).toBe('ok');
+  });
 });
 
 describe('mapAnnexRows', () => {

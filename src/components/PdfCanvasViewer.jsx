@@ -34,14 +34,18 @@ function waitForWidth(el, signal) {
  * Draws a PDF onto canvases. The browser's own PDF viewer (iframe / embed) is not involved:
  * that viewer is blank on a lot of phones, which is the failure this replaces.
  *
- * @param {{ blob: Blob, fill?: boolean, onError?: (message: string) => void }} props
+ * `zoom` multiplies fit-width scale (1 = fit pane). Above 1, canvases keep pixel width so
+ * the scroll pane can pan horizontally.
+ *
+ * @param {{ blob: Blob, fill?: boolean, zoom?: number, onError?: (message: string) => void }} props
  */
-export default function PdfCanvasViewer({ blob, fill = false, onError }) {
+export default function PdfCanvasViewer({ blob, fill = false, zoom = 1, onError }) {
   const hostRef = useRef(null);
   const hasPagesRef = useRef(false);
   const [status, setStatus] = useState('loading');
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const zoomFactor = Number.isFinite(Number(zoom)) && Number(zoom) > 0 ? Number(zoom) : 1;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -84,18 +88,26 @@ export default function PdfCanvasViewer({ blob, fill = false, onError }) {
           if (cancelled) return;
           const page = await pdfDoc.getPage(i);
           const base = page.getViewport({ scale: 1 });
-          const scale = pdfPageScale(paneWidth, base.width);
+          const scale = pdfPageScale(paneWidth, base.width) * zoomFactor;
           const viewport = page.getViewport({ scale });
           const dpr = Math.min(window.devicePixelRatio || 1, 2);
           const canvas = document.createElement('canvas');
           canvas.width = Math.floor(viewport.width * dpr);
           canvas.height = Math.floor(viewport.height * dpr);
-          canvas.style.width = '100%';
+          if (zoomFactor === 1) {
+            canvas.style.width = '100%';
+            canvas.style.maxWidth = '100%';
+          } else {
+            canvas.style.width = `${Math.floor(viewport.width)}px`;
+            canvas.style.maxWidth = 'none';
+          }
           canvas.style.height = 'auto';
-          canvas.style.maxWidth = '100%';
           canvas.className = 'block bg-white';
           const frame = document.createElement('div');
           frame.className = 'mb-2 last:mb-0 bg-white shadow-sm';
+          if (zoomFactor !== 1) {
+            frame.style.width = 'max-content';
+          }
           frame.appendChild(canvas);
           const task = page.render({
             canvasContext: canvas.getContext('2d'),
@@ -134,7 +146,7 @@ export default function PdfCanvasViewer({ blob, fill = false, onError }) {
       try { loadingTask?.destroy(); } catch { /* already settled */ }
       try { pdfDoc?.destroy(); } catch { /* already destroyed */ }
     };
-  }, [blob]);
+  }, [blob, zoomFactor]);
 
   const frame = fill
     ? 'absolute inset-0 overflow-auto bg-slate-100 p-2'

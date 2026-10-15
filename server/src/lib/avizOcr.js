@@ -1229,35 +1229,46 @@ function worseConfidence(a, b) {
   return confidenceRank(a) >= confidenceRank(b) ? a : b;
 }
 
+/** Keys the OCR verify hard-lock cares about (aligned with companion OCR_VERIFY_KEYS). */
+const OCR_VERIFY_FIELD_KEYS = new Set(['numar_tpo', 'numar_auto', 'ruta_transport']);
+
 /**
  * Prefer stored OCR field objects for the UI amber flags; fall back to heuristics
  * when a row predates field_confidence JSON or only has low/ok strings.
  * Heuristic "low" always wins over a stored "ok" — otherwise a wrong-but-confident
  * parse (Republicii17, first-line quantity 48) hides the review label.
+ * Office-corrected fields are always ok: the operator accepted the value.
  */
 export function fieldConfidenceForUi(row) {
   const heuristic = avizFieldConfidence(row);
   const stored = row?.field_confidence;
-  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return heuristic;
+  const corrected = new Set(
+    Array.isArray(row?.corrected_fields) ? row.corrected_fields : [],
+  );
 
   const out = { ...heuristic };
-  for (const [key, val] of Object.entries(stored)) {
-    let fromStored = null;
-    if (val === 'low' || val === 'ok') {
-      fromStored = val;
-    } else if (val && typeof val === 'object') {
-      // Prefer numeric confidence over status — amber follows the field's HITL auto band (#56/#85).
-      if (typeof val.confidence === 'number') {
-        const auto = fieldMeta(key)?.bands?.auto ?? DEFAULT_BANDS.auto;
-        fromStored = val.confidence >= auto ? 'ok' : 'low';
-      } else if (val.status === 'ok') {
-        fromStored = 'ok';
-      } else if (val.status === 'review' || val.status === 'missing') {
-        fromStored = 'low';
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    for (const [key, val] of Object.entries(stored)) {
+      let fromStored = null;
+      if (val === 'low' || val === 'ok') {
+        fromStored = val;
+      } else if (val && typeof val === 'object') {
+        // Prefer numeric confidence over status — amber follows the field's HITL auto band (#56/#85).
+        if (typeof val.confidence === 'number') {
+          const auto = fieldMeta(key)?.bands?.auto ?? DEFAULT_BANDS.auto;
+          fromStored = val.confidence >= auto ? 'ok' : 'low';
+        } else if (val.status === 'ok') {
+          fromStored = 'ok';
+        } else if (val.status === 'review' || val.status === 'missing') {
+          fromStored = 'low';
+        }
       }
+      if (!fromStored) continue;
+      out[key] = worseConfidence(heuristic[key] || 'ok', fromStored);
     }
-    if (!fromStored) continue;
-    out[key] = worseConfidence(heuristic[key] || 'ok', fromStored);
+  }
+  for (const key of corrected) {
+    if (key in out || OCR_VERIFY_FIELD_KEYS.has(key)) out[key] = 'ok';
   }
   return out;
 }

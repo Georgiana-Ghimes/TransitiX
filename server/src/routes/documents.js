@@ -866,14 +866,34 @@ router.post('/:id/approve-review', async (req, res) => {
 
     const updated = await withTransaction(async (client) => {
       const prevValidation = doc.extracted_data?.validation ?? {};
+      // Mark TPO/auto/rută as operator-accepted so list OCR-nesigur / hard lock clear.
+      const prevConf = (doc.field_confidence && typeof doc.field_confidence === 'object'
+        && !Array.isArray(doc.field_confidence))
+        ? doc.field_confidence
+        : {};
+      const nextConf = { ...prevConf };
+      for (const key of ['numar_tpo', 'numar_auto', 'ruta_transport']) {
+        const cur = nextConf[key];
+        if (cur && typeof cur === 'object' && !Array.isArray(cur)) {
+          nextConf[key] = { ...cur, status: 'ok', confidence: Math.max(Number(cur.confidence) || 0, 0.9) };
+        } else {
+          nextConf[key] = 'ok';
+        }
+      }
+      const already = Array.isArray(doc.corrected_fields) ? doc.corrected_fields : [];
+      const nextCorrected = [...new Set([...already, 'numar_tpo', 'numar_auto', 'ruta_transport'])];
       const row = (await client.query(
         `UPDATE aviz_documents SET
            needs_review = FALSE,
-           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $1::jsonb,
+           field_confidence = $1::jsonb,
+           corrected_fields = $2::text[],
+           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $3::jsonb,
            updated_at = NOW()
-         WHERE id = $2 AND company_id = $3
+         WHERE id = $4 AND company_id = $5
          RETURNING *`,
         [
+          JSON.stringify(nextConf),
+          nextCorrected,
           JSON.stringify({
             validation: {
               ...prevValidation,

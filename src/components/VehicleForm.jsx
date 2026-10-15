@@ -83,20 +83,23 @@ export default function VehicleForm({ vehicle, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
-  const [form, setForm] = useState({
-    plate: '', brand: '', model: '', year: '', vehicle_class: '', mma_kg: '',
-    capacity_kg: '', capacity_mc: '',
-    capacity_pallets: '', capabilities: '', cost_per_km: '', cost_per_hour: '',
-    cargo_length_m: '', cargo_width_m: '', cargo_height_m: '',
-    axle_front_m: '', axle_rear_m: '', axle_front_max_kg: '', axle_rear_max_kg: '',
-    fuel_price_per_l: '', wage_per_hour: '', toll_per_km: '',
-    depreciation_per_km: '', maintenance_per_km: '',
-    fuel_consumption: '', fuel_type: 'diesel', chassis_number: '', engine_number: '',
-    mileage: '', itp_number: '', itp_expiry: '', rca_number: '', rca_expiry: '',
-    rovinieta_number: '', rovinieta_expiry: '', casco_number: '', casco_expiry: '',
-    status: 'available', is_active: true,
-    ...vehicle,
-    capabilities: formatCapabilities(vehicle?.capabilities) || '',
+  const [form, setForm] = useState(() => {
+    const { capabilities: vehicleCapabilities, ...restVehicle } = vehicle || {};
+    return {
+      plate: '', brand: '', model: '', year: '', vehicle_class: '', mma_kg: '',
+      capacity_kg: '', capacity_mc: '',
+      capacity_pallets: '', cost_per_km: '', cost_per_hour: '',
+      cargo_length_m: '', cargo_width_m: '', cargo_height_m: '',
+      axle_front_m: '', axle_rear_m: '', axle_front_max_kg: '', axle_rear_max_kg: '',
+      fuel_price_per_l: '', wage_per_hour: '', toll_per_km: '',
+      depreciation_per_km: '', maintenance_per_km: '',
+      fuel_consumption: '', fuel_type: 'diesel', chassis_number: '', engine_number: '',
+      mileage: '', itp_number: '', itp_expiry: '', rca_number: '', rca_expiry: '',
+      rovinieta_number: '', rovinieta_expiry: '', casco_number: '', casco_expiry: '',
+      status: 'available', is_active: true,
+      ...restVehicle,
+      capabilities: formatCapabilities(vehicleCapabilities) || '',
+    };
   });
 
   const set = (k, val) => {

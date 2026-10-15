@@ -1,12 +1,12 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import ModalShell from '@/components/ModalShell';
 import { Loader2, X } from 'lucide-react';
 import AvizQueueCarousel from './AvizQueueCarousel';
+import { rowsMissingTpo, rowsNeedingOcrVerify } from './avizeUi';
 
 /**
  * Disclaimer + carousel before force-confirm or unverified export.
- * When every required field in the queue is filled (or the edit queue is empty because
- * nothing had gaps), the footer switches from „Da / Nu oricum” to Unește / Confirmă.
+ * Empty TPO with merge ON, and unacked OCR-low TPO/auto/rută, hard-block Confirm/Unește.
  */
 export default function AvizForceGateModal({
   mode = 'export',
@@ -18,8 +18,10 @@ export default function AvizForceGateModal({
   onSaveItem,
   peerRows = null,
   mergeTpoPreview = false,
+  mergeTpoRequired = false,
 }) {
   const [savingItem, setSavingItem] = useState(false);
+  const [ackRisk, setAckRisk] = useState(false);
   const [completeness, setCompleteness] = useState({
     allRequiredComplete: false,
     allConfirmed: false,
@@ -50,6 +52,21 @@ export default function AvizForceGateModal({
     }
   };
 
+  const selectionRows = useMemo(() => {
+    if (Array.isArray(peerRows) && peerRows.length) return peerRows;
+    return queue || [];
+  }, [peerRows, queue]);
+
+  const missingTpoCount = useMemo(() => {
+    if (!mergeTpoRequired) return 0;
+    return rowsMissingTpo(selectionRows).length;
+  }, [mergeTpoRequired, selectionRows]);
+
+  const ocrVerifyCount = useMemo(
+    () => rowsNeedingOcrVerify(selectionRows).length,
+    [selectionRows],
+  );
+
   const isExport = mode === 'export';
   // Empty edit queue = blocked only by HITL/status, nothing left to type → treat as ready.
   const noEditNeeded = !queue.length;
@@ -57,13 +74,37 @@ export default function AvizForceGateModal({
   const cleanExport = ready && (noEditNeeded
     ? false
     : completeness.allConfirmed);
+  // Merge-TPO ON + blank TPO on selection: never allow Confirmă / Unește oricum.
+  const mergeBlocksForce = mergeTpoRequired && missingTpoCount > 0;
+  // OCR nesigur (unacked): hard block Confirm / Unește until Verifică or Salvează.
+  const ocrBlocksForce = ocrVerifyCount > 0;
+  const hardBlocked = mergeBlocksForce || ocrBlocksForce;
+  const needsAck = !ready && !hardBlocked;
 
   let title;
   let description;
   let confirmLabel;
   let cancelLabel = 'Anulează';
 
-  if (isExport) {
+  if (mergeBlocksForce) {
+    title = isExport
+      ? 'Completează Număr TPO înainte de unire'
+      : 'Completează Număr TPO înainte de confirmare';
+    description = missingTpoCount === 1
+      ? (isExport
+        ? '„Unește celulele TPO” e activ: un aviz din selecție nu are Număr TPO. Completează-l în carousel (sau oprește bifa pe șablon). Nu poți uni oricum — un TPO gol nu intră în grup, iar unul greșit ajunge în cursa greșită din Excel.'
+        : '„Unește celulele TPO” e activ: un aviz din selecție nu are Număr TPO. Completează-l în carousel (sau marchează „Doar document marfă”, sau oprește bifa pe șablon). Nu poți confirma oricum.')
+      : (isExport
+        ? `„Unește celulele TPO” e activ: ${missingTpoCount} avize din selecție nu au Număr TPO. Completează-le în carousel (sau oprește bifa pe șablon). Nu poți uni oricum.`
+        : `„Unește celulele TPO” e activ: ${missingTpoCount} avize din selecție nu au Număr TPO. Completează-le în carousel (sau oprește bifa pe șablon). Nu poți confirma oricum.`);
+    confirmLabel = 'Completează TPO';
+  } else if (ocrBlocksForce) {
+    title = 'Verifică pe document (OCR nesigur)';
+    description = ocrVerifyCount === 1
+      ? 'Un aviz are TPO / auto / rută cu OCR nesigur (ex. ștampilă). Confirmă și Unește sunt blocate până verifici pe poză: Salvează în carusel sau deschide Verifică → Marchează verificat.'
+      : `${ocrVerifyCount} avize au TPO / auto / rută cu OCR nesigur. Confirmă și Unește sunt blocate până verifici pe document (Salvează în carusel sau Verifică).`;
+    confirmLabel = 'Verifică pe document';
+  } else if (isExport) {
     if (ready) {
       title = cleanExport
         ? 'Gata de unire în Anexa XLSX'
@@ -76,31 +117,31 @@ export default function AvizForceGateModal({
       confirmLabel = 'Unește în XLSX';
     } else {
       title = 'Sigur unești și avize neverificate / neconfirmate?';
-      description = 'Selecția include documente cu câmpuri obligatorii goale. Completează-le în carousel sau unește oricum: responsabilitatea e a ta.';
+      description = 'Selecția include documente cu câmpuri obligatorii goale. Completează în carousel sau unește oricum — doar după ce îți asumi mai jos.';
       confirmLabel = 'Da, unește oricum';
       cancelLabel = 'Nu';
     }
   } else if (ready) {
     title = 'Gata de confirmare';
     description = noEditNeeded
-      ? 'Nu lipsește niciun câmp obligatoriu. Poți confirma selecția (inclusiv documente marcate pentru verificare OCR).'
+      ? 'Nu lipsește niciun câmp obligatoriu. Poți confirma selecția.'
       : 'Câmpurile obligatorii sunt complete pe avizele din coadă. Poți confirma selecția.';
     confirmLabel = 'Confirmă';
   } else {
     title = 'Sigur confirmi și avize cu câmpuri de verificat?';
-    description = 'Există câmpuri obligatorii goale. Poți edita în carousel, apoi Da confirmă oricum: îți asumi datele incomplete.';
+    description = 'Există câmpuri obligatorii goale. Poți edita în carousel, apoi confirmă oricum — doar după ce îți asumi mai jos.';
     confirmLabel = 'Da, confirmă oricum';
     cancelLabel = 'Nu';
   }
 
-  // Wide only when the carousel needs side-by-side preview; empty queue stayed
-  // max-w-5xl and stretched the green banner across a 20″ screen (#92).
+  const confirmDisabled = busy
+    || hardBlocked
+    || (needsAck && !ackRisk);
+
   const panelWidth = queue.length > 0
     ? 'max-w-5xl w-full'
     : 'max-w-md w-full';
 
-  // Cap to dynamic viewport so mobile browser chrome cannot hide Nu / Confirmă (#94).
-  // Fixed height only when the carousel needs a flex budget; empty queue stays compact.
   const panelHeight = queue.length > 0
     ? 'max-h-[min(92vh,100dvh-1.5rem)] h-[min(92vh,100dvh-1.5rem)]'
     : 'max-h-[min(92vh,100dvh-1.5rem)]';
@@ -144,6 +185,7 @@ export default function AvizForceGateModal({
               onCompletenessChange={handleCompleteness}
               peerRows={peerRows}
               mergeTpoPreview={mergeTpoPreview}
+              mergeTpoRequired={mergeTpoRequired}
             />
           </div>
         ) : (
@@ -156,24 +198,50 @@ export default function AvizForceGateModal({
           </div>
         )}
 
-        <div className="shrink-0 flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onCancel}
-            className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-60 min-h-[44px]"
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => onConfirm?.({ ready, cleanExport })}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 min-h-[44px]"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {confirmLabel}
-          </button>
+        <div className="shrink-0 px-5 py-3 border-t border-slate-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2.5">
+          {needsAck ? (
+            <label className="flex items-start gap-2.5 text-sm text-slate-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="mt-0.5 shrink-0"
+                checked={ackRisk}
+                disabled={busy}
+                onChange={(e) => setAckRisk(e.target.checked)}
+              />
+              <span className="leading-snug text-pretty">
+                Am verificat pe document / îmi asum datele incomplete sau nesigure.
+              </span>
+            </label>
+          ) : null}
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onCancel}
+              className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-60 min-h-[44px]"
+            >
+              {cancelLabel}
+            </button>
+            <button
+              type="button"
+              disabled={confirmDisabled}
+              onClick={() => {
+                if (hardBlocked) return;
+                onConfirm?.({ ready, cleanExport });
+              }}
+              title={
+                mergeBlocksForce
+                  ? 'Completează Număr TPO pe fiecare aviz din selecție'
+                  : ocrBlocksForce
+                    ? 'Salvează în carusel sau Verifică → Marchează verificat'
+                    : undefined
+              }
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 min-h-[44px]"
+            >
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {confirmLabel}
+            </button>
+          </div>
         </div>
       </div>
     </ModalShell>

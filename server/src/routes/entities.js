@@ -20,6 +20,7 @@ import {
   nextAvizStatusOnSave,
 } from '../lib/concurrency.js';
 import { duplicateConsignmentExists } from '../lib/avizQuery.js';
+import { refuseAnnexIfUnackedLowTpo } from '../lib/annexOcrVerifyGate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { avizOcrFieldChanges } from '../lib/ocr/feedback.js';
 import { learnRouteFromCorrection } from '../lib/ocr/routeLearn.js';
@@ -383,6 +384,19 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
         data.status = nextAvizStatusOnSave(avizPrev.status, data.status);
       }
       if (data.status === 'confirmed') {
+        // Hard OCR lock — same as POST /avize/doc/:id/confirm (force cannot clear via entity update).
+        try {
+          refuseAnnexIfUnackedLowTpo([serializeRow(avizPrev)]);
+        } catch (gateErr) {
+          if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
+            return res.status(gateErr.status || 409).json({
+              code: gateErr.code,
+              message: gateErr.message,
+              blocked: gateErr.blocked || [],
+            });
+          }
+          throw gateErr;
+        }
         const routing = avizPrev.extracted_data?.validation?.routing;
         if (avizPrev.needs_review || routing === 'hitl_required') {
           return res.status(409).json({

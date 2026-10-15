@@ -72,6 +72,7 @@ const PREVIEW_FRAME_FILL =
  * @param {string[]} [props.fileUrls]  When set (and length > 1), pages from each file are
  *   stacked in one scroll — used for „Unește TPO” adjacent peers.
  * @param {boolean} [props.fill]
+ * @param {number} [props.zoom]  Fit-width multiplier (1 = fit). PDFs re-render; images use CSS scale.
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
  *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
  *   (so percentage-positioned children land on the page, not in the letterbox). PDFs are
@@ -81,6 +82,7 @@ export default function AvizFilePreview({
   fileUrl,
   fileUrls = null,
   fill = false,
+  zoom = 1,
   overlay = null,
 }) {
   const urls = Array.isArray(fileUrls) && fileUrls.length
@@ -106,7 +108,7 @@ export default function AvizFilePreview({
               Fișier {i + 1} / {urls.length}
             </p>
             <div className="relative min-h-[200px]">
-              <AvizFilePreview fileUrl={url} fill={false} />
+              <AvizFilePreview fileUrl={url} fill={false} zoom={zoom} />
             </div>
           </div>
         ))}
@@ -116,11 +118,11 @@ export default function AvizFilePreview({
 
   const singleUrl = urls[0] || '';
   return (
-    <AvizFilePreviewSingle fileUrl={singleUrl} fill={fill} overlay={overlay} />
+    <AvizFilePreviewSingle fileUrl={singleUrl} fill={fill} zoom={zoom} overlay={overlay} />
   );
 }
 
-function AvizFilePreviewSingle({ fileUrl, fill = false, overlay = null }) {
+function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null }) {
   const [src, setSrc] = useState('');
   const [pdfBlob, setPdfBlob] = useState(null);
   const [error, setError] = useState('');
@@ -277,11 +279,14 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, overlay = null }) {
     );
   }
 
+  const zoomFactor = Number.isFinite(Number(zoom)) && Number(zoom) > 0 ? Number(zoom) : 1;
+
   if (kind === 'pdf' && pdfBlob) {
     return (
       <PdfCanvasViewer
         blob={pdfBlob}
         fill={fill}
+        zoom={zoomFactor}
         onError={(message) => setError(message)}
       />
     );
@@ -314,13 +319,39 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, overlay = null }) {
     );
   }
   if (kind === 'image') {
+    if (zoomFactor === 1) {
+      return (
+        <img
+          alt="Aviz"
+          className={frame}
+          src={src}
+          onError={() => setError('Nu am putut afișa imaginea.')}
+        />
+      );
+    }
     return (
-      <img
-        alt="Aviz"
-        className={frame}
-        src={src}
-        onError={() => setError('Nu am putut afișa imaginea.')}
-      />
+      <div
+        className={
+          fill
+            ? 'absolute inset-0 overflow-auto bg-slate-100'
+            : 'w-full min-h-[240px] h-[36vh] max-h-[420px] overflow-auto bg-slate-100'
+        }
+      >
+        <div
+          className="origin-top-left"
+          style={{
+            transform: `scale(${zoomFactor})`,
+            width: `${100 / zoomFactor}%`,
+          }}
+        >
+          <img
+            alt="Aviz"
+            className="w-full h-auto object-contain bg-white"
+            src={src}
+            onError={() => setError('Nu am putut afișa imaginea.')}
+          />
+        </div>
+      </div>
     );
   }
 

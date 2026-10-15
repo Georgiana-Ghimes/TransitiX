@@ -19,6 +19,50 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 120,
+    version: '1.26.14',
+    dateLabel: 'octombrie 2026',
+    title: 'Acțiuni compacte, zoom PDF, porți TPO/OCR strânse',
+    highlights: [
+      'În listă: un singur buton Acțiuni (Editează, Verifică, Confirmă, Re-extrage, Șterge) în loc de stivă de linkuri.',
+      'În Editează: zoom pe document (− / % / +) și Descarcă fișierul stocat.',
+      'Cu „Unește celulele TPO” pe șablon: fără Număr TPO nu poți nici Confirma, nici Uni (doar „Doar document marfă” sau oprești bifa).',
+      'Confirmă pe server nu mai trece peste OCR nesigur pe TPO, nici cu „oricum”: trebuie Verifică / Salvează pe document.',
+    ],
+  },
+  {
+    build: 119,
+    version: '1.26.13',
+    dateLabel: 'octombrie 2026',
+    title: 'TRO / document marfă în carusel',
+    highlights: [
+      'La Unește / Confirmă: vezi și Număr document marfă (TRO/PSL), nu doar TPO.',
+      'Bifă „Doar document marfă (fără TPO pe pagină)” pentru avize de transfer: TPO nu e obligatoriu; în Anexă rămân la coada listei după TPO-uri.',
+    ],
+  },
+  {
+    build: 118,
+    version: '1.26.12',
+    dateLabel: 'octombrie 2026',
+    title: 'OCR nesigur blochează Confirmă / Unește',
+    highlights: [
+      'TPO / auto / rută în roșu bold = OCR nesigur. Confirmă și Unește sunt blocate până verifici pe document: Verifică → Marchează verificat, sau Salvează în carusel (chiar dacă nu schimbi valoarea).',
+      'Nu mai apare „Gata de confirmare” doar pentru că TPO-ul e umplut greșit (ex. sub ștampilă).',
+      'Serverul refuză anexa dacă Număr TPO e încă OCR nesigur și neverificat.',
+    ],
+  },
+  {
+    build: 117,
+    version: '1.26.11',
+    dateLabel: 'octombrie 2026',
+    title: 'OCR nesigur vizibil; TPO obligatoriu la Unește',
+    highlights: [
+      'TPO / auto / rută evidențiate când OCR-ul nu e sigur (ștampilă, citire slabă), nu „editat manual”. În listă: eticheta „OCR nesigur”.',
+      'La Unește oricum: bifezi explicit că îți asumi datele incomplete sau nesigure.',
+      'Cu „Unește celulele TPO” pe șablon: fără Număr TPO pe un aviz nu poți uni oricum; completezi TPO în carousel (sau oprești bifa). Serverul blochează la fel.',
+    ],
+  },
+  {
     build: 116,
     version: '1.26.10',
     dateLabel: 'octombrie 2026',

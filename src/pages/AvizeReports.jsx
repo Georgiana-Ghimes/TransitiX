@@ -20,11 +20,14 @@ import AvizReviewDrawer from './avize/AvizReviewDrawer';
 import AvizFilterBar from './avize/AvizFilterBar';
 import AvizLegend from './avize/AvizLegend';
 import AvizReportsTab from './avize/AvizReportsTab';
+import AvizRowActions from './avize/AvizRowActions';
 import AvizTemplatesTab from './avize/AvizTemplatesTab';
 import { DriverUploadBadge, NeedsReviewBadge, SourceBadge } from './avize/AvizFilePreview';
 import {
   AVIZ_ACTION_LEGEND,
   AVIZ_PAGE_SIZES,
+  AVIZ_STATUS_DOT_LEGEND,
+  AVIZ_STATUS_DOT_ONELINER,
   annexReviewBlockedRows,
   asAvizPage,
   columnCountOf,
@@ -39,10 +42,14 @@ import {
   isLockedRai,
   labelCls,
   lowField,
+  LOW_FIELD_TEXT_CLS,
   readAvizPageSize,
   requiresAnnexReviewGate,
+  rowsMissingTpo,
   rowsNeedingCarouselEdit,
+  rowsNeedingOcrVerify,
   sortAvizeByUploadAsc,
+  unackedLowOcrFields,
   waitForAvizExtractSettled,
   writeAvizPageSize,
 } from './avize/avizeUi';
@@ -465,15 +472,73 @@ export default function AvizeReports() {
 
   const saveForceGateItem = useCallback(async (row, form) => {
     if (!row?.id) return;
-    const payload = { ...form, status: nextAvizStatusOnSave(row.status) };
+    const goodsDocOnly = Boolean(form?.goods_doc_only);
+    const hadUnackedOcr = unackedLowOcrFields({
+      ...row,
+      goods_doc_only: goodsDocOnly,
+    }).length > 0;
+    const { goods_doc_only: _flag, ...formFields } = form || {};
+    const prevEd = (row.extracted_data && typeof row.extracted_data === 'object')
+      ? row.extracted_data
+      : {};
+    const payload = {
+      ...formFields,
+      status: nextAvizStatusOnSave(row.status),
+      extracted_data: {
+        ...prevEd,
+        goods_doc_only: goodsDocOnly,
+      },
+    };
+    if (goodsDocOnly) payload.numar_tpo = '';
     if (!payload.trip_id) payload.trip_id = null;
-    const saved = await api.entities.AvizDocument.update(row.id, payload);
-    notifySuccess('Aviz salvat', row.numar_tpo || row.original_filename || 'Câmpuri actualizate.');
+    let saved = null;
+    try {
+      saved = await api.entities.AvizDocument.update(row.id, payload);
+    } catch (e) {
+      // No field delta: still allow Salvează to unlock OCR-nesigur via approve-review.
+      if (!hadUnackedOcr) throw e;
+      const msg = String(e?.message || e?.data?.message || '');
+      if (!/nu ai modificat|niciun câmp/i.test(msg) && e?.status !== 400) throw e;
+    }
+    if (hadUnackedOcr) {
+      const approved = await api.documents.approveReview(row.id);
+      saved = { ...(saved || {}), ...(approved?.document || {}), needs_review: false };
+    }
+    notifySuccess(
+      hadUnackedOcr ? 'Verificat pe document' : 'Aviz salvat',
+      row.numar_tpo || form?.numar_document_marfa || row.original_filename || 'Câmpuri actualizate.',
+    );
     // Keep modal open and preserve queue order/ids so the carousel can advance without
     // snapping back to the first item (do not rebuild queue from a filtered list here).
     setForceGate((prev) => {
       if (!prev) return prev;
-      const patch = { ...payload, ...(saved || {}), file_url: row.file_url || saved?.file_url };
+      const patch = {
+        ...payload,
+        ...(saved || {}),
+        file_url: row.file_url || saved?.file_url,
+        goods_doc_only: goodsDocOnly,
+        extracted_data: {
+          ...prevEd,
+          ...(saved?.extracted_data || {}),
+          goods_doc_only: goodsDocOnly,
+        },
+        // Clear local low flags so ocrBlocksForce drops without waiting for list reload.
+        field_confidence: {
+          ...(row.field_confidence || {}),
+          ...(saved?.field_confidence || {}),
+          numar_tpo: 'ok',
+          numar_auto: 'ok',
+          ruta_transport: 'ok',
+        },
+        corrected_fields: [
+          ...new Set([
+            ...(Array.isArray(row.corrected_fields) ? row.corrected_fields : []),
+            ...(Array.isArray(saved?.corrected_fields) ? saved.corrected_fields : []),
+            'numar_tpo', 'numar_auto', 'ruta_transport',
+          ]),
+        ],
+        needs_review: false,
+      };
       const nextQueue = (prev.queue || []).map((r) => (
         r.id === row.id ? { ...r, ...patch } : r
       ));
@@ -497,16 +562,17 @@ export default function AvizeReports() {
       setConfirmDuplicate({ mode: 'single', row });
       return;
     }
-    if (requiresAnnexReviewGate(row)) {
-      const editQueue = rowsNeedingCarouselEdit([row]);
+    const editQueue = rowsNeedingCarouselEdit([row]);
+    if (requiresAnnexReviewGate(row) || editQueue.length > 0) {
       setForceGate({
         mode: 'confirm-single',
         ids: [row.id],
         row,
-        // Only walk pages that still have empty required fields.
+        // Gaps + unacked OCR-low TPO/auto/rută.
         queue: editQueue,
         peerRows: forceGatePeers([row.id]),
         mergeTpoPreview: mergeTpoPreviewEnabled,
+        mergeTpoRequired: mergeTpoPreviewEnabled,
       });
       return;
     }
@@ -524,14 +590,16 @@ export default function AvizeReports() {
       setForceGate(null);
       await load();
     } catch (e) {
-      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+      const code = e?.data?.code;
+      if (e?.status === 409 || code === 'NEEDS_REVIEW' || code === 'OCR_VERIFY_REQUIRED') {
         setForceGate({
           mode: 'confirm-single',
           ids: [row.id],
           row,
-          queue: sortAvizeByUploadAsc([row]),
+          queue: rowsNeedingCarouselEdit([row]),
           peerRows: forceGatePeers([row.id]),
           mergeTpoPreview: mergeTpoPreviewEnabled,
+          mergeTpoRequired: mergeTpoPreviewEnabled,
         });
       } else {
         notifyError('Confirmare eșuată', e);
@@ -553,13 +621,17 @@ export default function AvizeReports() {
       return;
     }
     const blocked = confirmBlockedRows(rows, ids);
-    if (blocked.length) {
+    const ocrQueue = rowsNeedingCarouselEdit(
+      blocked.length ? blocked : rows.filter((r) => ids.includes(r.id)),
+    );
+    if (blocked.length || ocrQueue.length) {
       setForceGate({
         mode: 'confirm-bulk',
         ids,
-        queue: rowsNeedingCarouselEdit(blocked),
+        queue: ocrQueue,
         peerRows: forceGatePeers(ids),
         mergeTpoPreview: mergeTpoPreviewEnabled,
+        mergeTpoRequired: mergeTpoPreviewEnabled,
       });
       return;
     }
@@ -583,15 +655,20 @@ export default function AvizeReports() {
       setForceGate(null);
       await load();
     } catch (e) {
-      if (e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW') {
+      const code = e?.data?.code;
+      if (e?.status === 409 || code === 'NEEDS_REVIEW' || code === 'OCR_VERIFY_REQUIRED') {
         const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
-        const blocked = confirmBlockedRows(rows, blockedIds.length ? blockedIds : ids);
+        const fromIds = blockedIds.length ? blockedIds : ids;
+        const blocked = code === 'OCR_VERIFY_REQUIRED'
+          ? rowsNeedingOcrVerify(rows, fromIds)
+          : confirmBlockedRows(rows, fromIds);
         setForceGate({
           mode: 'confirm-bulk',
           ids,
-          queue: rowsNeedingCarouselEdit(blocked),
+          queue: rowsNeedingCarouselEdit(blocked.length ? blocked : rows.filter((r) => fromIds.includes(r.id))),
           peerRows: forceGatePeers(ids),
           mergeTpoPreview: mergeTpoPreviewEnabled,
+          mergeTpoRequired: mergeTpoPreviewEnabled,
         });
       } else {
         notifyError('Confirmare eșuată', e);
@@ -614,14 +691,20 @@ export default function AvizeReports() {
       return;
     }
     const blocked = sortAvizeByUploadAsc(annexReviewBlockedRows(rows, ids));
-    if (blocked.length) {
+    const missingTpo = mergeTpoPreviewEnabled ? rowsMissingTpo(rows, ids) : [];
+    const ocrLow = rowsNeedingOcrVerify(rows, ids);
+    if (blocked.length || missingTpo.length || ocrLow.length) {
+      const byId = new Map();
+      for (const r of [...blocked, ...missingTpo, ...ocrLow]) byId.set(r.id, r);
+      const combined = sortAvizeByUploadAsc([...byId.values()]);
       setForceGate({
         mode: 'export',
         ids,
-        // Skip avize that only need HITL/confirm but already have TPO/dată/auto/rută filled.
-        queue: rowsNeedingCarouselEdit(blocked),
+        // Gaps, missing TPO (merge ON), and unacked OCR-low fields.
+        queue: rowsNeedingCarouselEdit(combined),
         peerRows: forceGatePeers(ids),
         mergeTpoPreview: mergeTpoPreviewEnabled,
+        mergeTpoRequired: mergeTpoPreviewEnabled,
       });
       return;
     }
@@ -667,7 +750,32 @@ export default function AvizeReports() {
           queue: rowsNeedingCarouselEdit(blocked),
           peerRows: forceGatePeers(ids),
           mergeTpoPreview: mergeTpoPreviewEnabled,
+          mergeTpoRequired: mergeTpoPreviewEnabled,
         });
+      } else if (e?.data?.code === 'MERGE_TPO_REQUIRED') {
+        const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
+        const missing = rowsMissingTpo(rows, blockedIds.length ? blockedIds : ids);
+        setForceGate({
+          mode: 'export',
+          ids,
+          queue: rowsNeedingCarouselEdit(missing.length ? missing : annexReviewBlockedRows(rows, ids)),
+          peerRows: forceGatePeers(ids),
+          mergeTpoPreview: true,
+          mergeTpoRequired: true,
+        });
+        if (!missing.length) notifyError('Export eșuat', e);
+      } else if (e?.data?.code === 'OCR_VERIFY_REQUIRED') {
+        const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
+        const ocrRows = rowsNeedingOcrVerify(rows, blockedIds.length ? blockedIds : ids);
+        setForceGate({
+          mode: 'export',
+          ids,
+          queue: rowsNeedingCarouselEdit(ocrRows.length ? ocrRows : annexReviewBlockedRows(rows, ids)),
+          peerRows: forceGatePeers(ids),
+          mergeTpoPreview: mergeTpoPreviewEnabled,
+          mergeTpoRequired: mergeTpoPreviewEnabled,
+        });
+        if (!ocrRows.length) notifyError('Export eșuat', e);
       } else {
         notifyError('Export eșuat', e);
       }
@@ -682,6 +790,32 @@ export default function AvizeReports() {
     if (!forceGate) return;
     const ready = Boolean(opts.ready);
     const cleanExport = Boolean(opts.cleanExport);
+    const gateSource = Array.isArray(forceGate.peerRows) && forceGate.peerRows.length
+      ? forceGate.peerRows
+      : rows;
+    const stillOcr = rowsNeedingOcrVerify(gateSource, forceGate.ids);
+    if (stillOcr.length) {
+      notifyError(
+        'OCR nesigur',
+        stillOcr.length === 1
+          ? 'Verifică pe document (Salvează în carusel sau Verifică → Marchează verificat) înainte de Confirmă / Unește.'
+          : `${stillOcr.length} avize cu OCR nesigur. Verifică pe document înainte de Confirmă / Unește.`,
+      );
+      return;
+    }
+    // Hard lock for Confirmă and Unește: merge-TPO ON cannot proceed with blank numar_tpo.
+    if (mergeTpoPreviewEnabled || forceGate.mergeTpoRequired) {
+      const stillMissing = rowsMissingTpo(gateSource, forceGate.ids);
+      if (stillMissing.length) {
+        notifyError(
+          'TPO obligatoriu',
+          stillMissing.length === 1
+            ? '„Unește celulele TPO” e activ: completează Număr TPO pe avizul fără TPO înainte de Confirmă / Unește.'
+            : `„Unește celulele TPO” e activ: ${stillMissing.length} avize fără Număr TPO. Completează TPO înainte de Confirmă / Unește.`,
+        );
+        return;
+      }
+    }
     if (forceGate.mode === 'confirm-single' && forceGate.row) {
       await runConfirmRow(forceGate.row, { force: true });
       return;
@@ -699,7 +833,16 @@ export default function AvizeReports() {
             force_reason: 'operator_bulk_confirm_empty_fields',
           });
         } catch (e) {
-          // Still allow export if confirm is refused; operator already filled required fields.
+          // OCR hard lock must not fall through to allow_unconfirmed export.
+          if (e?.data?.code === 'OCR_VERIFY_REQUIRED') {
+            notifyError(
+              'OCR nesigur',
+              e?.data?.message
+                || 'Verifică pe document (Salvează în carusel sau Verifică) înainte de Unește.',
+            );
+            return;
+          }
+          // HITL force-confirm may still refuse; operator already filled required fields — export with allow_unconfirmed.
           if (!(e?.status === 409 || e?.data?.code === 'NEEDS_REVIEW')) {
             notifyError('Confirmare eșuată', e);
             return;
@@ -1214,6 +1357,20 @@ export default function AvizeReports() {
             </button>
           </div>
 
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-600"
+            role="note"
+            aria-label="Legendă statusuri"
+          >
+            {AVIZ_STATUS_DOT_LEGEND.map((item) => (
+              <span key={item.key} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${item.dotCls}`} aria-hidden />
+                {item.label}
+              </span>
+            ))}
+            <span className="text-slate-500 min-w-0 text-pretty">{AVIZ_STATUS_DOT_ONELINER}</span>
+          </div>
+
           {rows.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm space-y-3">
               <ClipboardList className="w-10 h-10 mx-auto mb-1 opacity-40" />
@@ -1264,20 +1421,23 @@ export default function AvizeReports() {
                     <div className="flex items-start gap-3">
                       <input type="checkbox" className="mt-1" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                       <div className="min-w-0 flex-1">
-                        <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`}>
+                        <p className={`font-semibold truncate ${lowField(row, 'numar_tpo') ? LOW_FIELD_TEXT_CLS : 'text-[#0A2B4E]'}`}>
                           {row.status === 'uploaded'
                             ? <span className="font-normal text-sky-800">Se procesează…</span>
                             : (row.numar_tpo || 'Fără TPO')}
+                          {lowField(row, 'numar_tpo') && row.status !== 'uploaded' ? (
+                            <span className="ml-2 text-[10px] font-bold text-red-700" title="OCR nu e sigur pe acest câmp — verifică pe document">OCR nesigur</span>
+                          ) : null}
                           {row.duplicate_tpo ? <span className="ml-2 text-[11px] font-normal text-amber-700">aviz duplicat</span> : null}
                         </p>
                         <p className="text-xs text-slate-500 truncate">{row.numar_document_marfa || row.original_filename}</p>
-                        <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? 'text-amber-700' : 'text-slate-500'}`}>
+                        <p className={`text-xs mt-1 truncate ${lowField(row, 'numar_auto') ? LOW_FIELD_TEXT_CLS : 'text-slate-500'}`}>
                           {row.numar_auto || '-'} · {formatDate(row.data_efectuare_cursa)}
                         </p>
-                        <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? 'text-amber-700' : 'text-slate-500'}`} title={displayRoute(row)}>
+                        <p className={`text-xs mt-1 truncate ${lowField(row, 'ruta_transport') ? LOW_FIELD_TEXT_CLS : 'text-slate-500'}`} title={displayRoute(row)}>
                           {displayRoute(row) || '-'}
                           {isLearnedRoute(row) ? (
-                            <span className="ml-1 text-[10px] text-slate-400">· învățată</span>
+                            <span className="ml-1 text-[10px] font-normal text-slate-400">· învățată</span>
                           ) : null}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
@@ -1302,18 +1462,18 @@ export default function AvizeReports() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
-                      <button type="button" className="text-[#1D4E89] disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
-                      {row.status !== 'confirmed' && (row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
-                        <button type="button" className="text-amber-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
-                      )}
-                      {row.status !== 'confirmed' && (
-                        <button type="button" className="text-emerald-700 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
-                      )}
-                      <button type="button" className="text-slate-600 disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id) || ocrDown} onClick={() => requestReextract(row)} title={ocrDown ? 'OCR indisponibil' : undefined}>
-                        {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
-                      </button>
-                      <button type="button" className="text-red-500 disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                    <div className="flex justify-end mt-3 pt-3 border-t border-slate-100">
+                      <AvizRowActions
+                        row={row}
+                        locked={rowLocked(row.id)}
+                        ocrDown={ocrDown}
+                        reextracting={busyId === row.id}
+                        onEdit={openEdit}
+                        onReview={(r) => setReviewId(r.id)}
+                        onConfirm={confirmRow}
+                        onReextract={requestReextract}
+                        onDelete={setDeleteRow}
+                      />
                     </div>
                   </div>
                 ))}
@@ -1343,7 +1503,7 @@ export default function AvizeReports() {
                         <th className="text-left font-medium px-2 py-2.5 min-w-[5rem] hidden 2xl:table-cell">Document</th>
                         <th className="text-left font-medium px-2 py-2.5 min-w-[6.5rem]">Stare</th>
                         <th className="text-left font-medium px-2 py-2.5 min-w-[7.5rem]">Încărcare</th>
-                        <th className="text-right font-medium px-2 py-2.5 min-w-[9.5rem] sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)]">
+                        <th className="text-right font-medium px-2 py-2.5 min-w-[6.5rem] sticky right-0 z-10 bg-white shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)]">
                           Acțiuni
                         </th>
                       </tr>
@@ -1359,7 +1519,7 @@ export default function AvizeReports() {
                           <td className="px-2 py-2.5">
                             <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleSelect(row.id)} disabled={busyId === row.id} />
                           </td>
-                          <td className={`px-2 py-2.5 font-medium truncate max-w-[9rem] ${lowField(row, 'numar_tpo') ? 'text-amber-700' : 'text-[#0A2B4E]'}`} title={row.numar_tpo || row.original_filename || ''}>
+                          <td className={`px-2 py-2.5 font-medium truncate max-w-[9rem] ${lowField(row, 'numar_tpo') ? LOW_FIELD_TEXT_CLS : 'text-[#0A2B4E]'}`} title={lowField(row, 'numar_tpo') ? `${row.numar_tpo || ''} · OCR nesigur` : (row.numar_tpo || row.original_filename || '')}>
                             {busyId === row.id ? (
                               <span className="inline-flex items-center gap-1.5 font-normal text-sky-800">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
@@ -1371,16 +1531,21 @@ export default function AvizeReports() {
                                 Se procesează…
                               </span>
                             ) : row.numar_tpo ? (
-                              row.numar_tpo
+                              <>
+                                {row.numar_tpo}
+                                {lowField(row, 'numar_tpo') ? (
+                                  <span className="ml-1 text-[10px] font-bold text-red-700">OCR nesigur</span>
+                                ) : null}
+                              </>
                             ) : (
                               <span className="font-normal text-slate-400">{row.original_filename || '-'}</span>
                             )}
                             {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
                           <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{formatDate(row.data_efectuare_cursa)}</td>
-                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? 'text-amber-700' : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
+                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? LOW_FIELD_TEXT_CLS : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
                           <td
-                            className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? 'text-amber-700' : ''}`}
+                            className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? LOW_FIELD_TEXT_CLS : ''}`}
                             title={isLearnedRoute(row) ? `${displayRoute(row)} (regulă învățată)` : displayRoute(row)}
                           >
                             {displayRoute(row) || '-'}
@@ -1414,18 +1579,18 @@ export default function AvizeReports() {
                           <td className={`px-2 py-2.5 sticky right-0 z-10 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.08)] ${
                             busyId === row.id ? 'bg-sky-50/80' : 'bg-white group-hover:bg-slate-50/50'
                           }`}>
-                            <div className="flex flex-col items-end gap-0.5">
-                              <button type="button" className="text-[#1D4E89] hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => openEdit(row)}>Editează</button>
-                              {row.status !== 'confirmed' && (row.needs_review || row.validation_routing === 'hitl_required' || row.validation_routing === 'hitl_optional') && (
-                                <button type="button" className="text-amber-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setReviewId(row.id)}>Verifică</button>
-                              )}
-                              {row.status !== 'confirmed' && (
-                                <button type="button" className="text-emerald-700 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => confirmRow(row)}>Confirmă</button>
-                              )}
-                              <button type="button" className="text-slate-600 hover:underline text-xs disabled:opacity-40 inline-flex items-center gap-1" disabled={rowLocked(row.id) || ocrDown} onClick={() => requestReextract(row)} title={ocrDown ? 'OCR indisponibil' : undefined}>
-                                {busyId === row.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Re-extrag…</> : 'Re-extrage'}
-                              </button>
-                              <button type="button" className="text-red-500 hover:underline text-xs disabled:opacity-40" disabled={rowLocked(row.id)} onClick={() => setDeleteRow(row)}>Șterge</button>
+                            <div className="flex justify-end">
+                              <AvizRowActions
+                                row={row}
+                                locked={rowLocked(row.id)}
+                                ocrDown={ocrDown}
+                                reextracting={busyId === row.id}
+                                onEdit={openEdit}
+                                onReview={(r) => setReviewId(r.id)}
+                                onConfirm={confirmRow}
+                                onReextract={requestReextract}
+                                onDelete={setDeleteRow}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -1498,6 +1663,7 @@ export default function AvizeReports() {
           onSaveItem={saveForceGateItem}
           peerRows={forceGate.peerRows || null}
           mergeTpoPreview={Boolean(forceGate.mergeTpoPreview)}
+          mergeTpoRequired={Boolean(forceGate.mergeTpoRequired ?? forceGate.mergeTpoPreview)}
         />
       )}
 

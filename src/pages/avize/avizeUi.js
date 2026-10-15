@@ -42,8 +42,12 @@ export const AVIZ_ACTION_LEGEND = [
     text: 'Același transport există deja pe alt rând, adică același număr de aviz (PSL/TRO) sub același TPO. Un TPO cu mai multe curse nu primește eticheta: acelea sunt avize diferite și rămân rânduri separate. Eticheta e informativă: nu forțează verificare și nu blochează Confirmă / Unește. Pentru încărcări greșite, folosește Șterge.',
   },
   {
+    name: 'Text roșu bold (OCR nesigur)',
+    text: 'TPO, auto sau rută în roșu bold înseamnă că OCR-ul nu e sigur (ștampilă peste text, citire slabă, format ciudat). Nu înseamnă „editat manual”. Confirmă / Unește sunt blocate până verifici pe document (Verifică → Marchează verificat, sau Salvează în carusel). Un TPO greșit ajunge în grupul greșit din Excel.',
+  },
+  {
     name: 'Unește în Anexa XLSX',
-    text: 'Bifează rândurile, verifică șablonul, apoi descarcă. Dacă selecția include neverificate, apare un modal cu carousel: poți edita pe loc sau continua oricum (îți asumi). Pe durata generării butonul e blocat. Valorile Default din șablon se scriu când pe aviz câmpul e gol sau 0. Opțiunea „Unește celulele TPO” grupează după TPO, sudează Număr TPO în XLSX pe toate cursele aceluiași TPO și lipește în preview paginile adiacente.',
+    text: 'Bifează rândurile, verifică șablonul, apoi descarcă. Dacă selecția include neverificate, apare un modal cu carousel: poți edita pe loc (inclusiv document marfă TRO/PSL) sau continua oricum (îți asumi — bifezi explicit). Pe durata generării butonul e blocat. Valorile Default din șablon se scriu când pe aviz câmpul e gol sau 0. Opțiunea „Unește celulele TPO” grupează după TPO: fără Număr TPO, Unește e blocat — completezi TPO-ul, marchezi „Doar document marfă” (rămâne la coada Anexei), sau oprești bifa pe șablon.',
   },
 ];
 
@@ -216,7 +220,7 @@ export function sortAvizeByUploadAsc(rows) {
   return [...(rows || [])].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
 }
 
-/** Required keys in the Unește/Confirmă carousel (must stay aligned with AvizQueueCarousel). */
+/** Required keys in the Unește/Confirmă carousel (must stay aligned with CAROUSEL_EDIT_FIELDS). */
 export const CAROUSEL_REQUIRED_KEYS = [
   'numar_tpo',
   'data_efectuare_cursa',
@@ -224,20 +228,97 @@ export const CAROUSEL_REQUIRED_KEYS = [
   'ruta_transport',
 ];
 
+/** Essential fields for the force/export carousel (subset of AVIZ_FORM_FIELDS). */
+export const CAROUSEL_EDIT_FIELDS = [
+  { key: 'numar_tpo', label: 'Număr TPO', required: true },
+  { key: 'numar_document_marfa', label: 'Număr document marfă (TRO/PSL)', required: false },
+  { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', type: 'date', required: true },
+  { key: 'numar_auto', label: 'Număr auto', required: true },
+  { key: 'ruta_transport', label: 'Rută transport', wide: true, required: true },
+  { key: 'km_parcursi', label: 'Km parcurși', inputMode: 'decimal' },
+  { key: 'taxe_suplimentare', label: 'Taxe suplimentare', inputMode: 'decimal' },
+  { key: 'observatii', label: 'Observații', wide: true },
+];
+
+/** Baumit transfer / goods-only page: no transport TPO; TRO/PSL lives in numar_document_marfa. */
+export function isGoodsDocOnly(row) {
+  if (!row) return false;
+  if (row.goods_doc_only === true) return true;
+  return Boolean(row?.extracted_data?.goods_doc_only);
+}
+
 export function missingRequiredCarouselFields(source = {}) {
-  return CAROUSEL_REQUIRED_KEYS.filter((key) => {
+  const goodsOnly = isGoodsDocOnly(source);
+  const missing = CAROUSEL_REQUIRED_KEYS.filter((key) => {
+    if (key === 'numar_tpo' && goodsOnly) return false;
     const value = source[key];
     return value == null || String(value).trim() === '';
   });
+  if (goodsOnly) {
+    const doc = source?.numar_document_marfa;
+    if (doc == null || String(doc).trim() === '') missing.push('numar_document_marfa');
+  }
+  return missing;
+}
+
+/** True when Număr TPO is blank (whitespace counts as missing). */
+export function isMissingTpo(row) {
+  return !String(row?.numar_tpo || '').trim();
 }
 
 /**
- * Carousel should only walk documents with empty required fields.
- * HITL / neconfirmat without gaps still block export, but do not need an edit page.
+ * Selected / listed rows that still lack TPO — used when merge-TPO is ON.
+ * Goods-doc-only rows (explicit flag) are allowed blank and sort to annex bottom.
+ */
+export function rowsMissingTpo(rows, ids = null) {
+  const list = rows || [];
+  const idSet = ids == null ? null : new Set(ids);
+  return sortAvizeByUploadAsc(
+    list.filter((r) => (
+      (idSet == null || idSet.has(r.id))
+      && isMissingTpo(r)
+      && !isGoodsDocOnly(r)
+    )),
+  );
+}
+
+/**
+ * TPO / auto / rută with low OCR that the operator has not yet accepted
+ * (not in corrected_fields). Confirmed rows are clear.
+ */
+export const OCR_VERIFY_KEYS = ['numar_tpo', 'numar_auto', 'ruta_transport'];
+
+export function unackedLowOcrFields(row) {
+  if (!row || row.status === 'confirmed') return [];
+  const corrected = new Set(
+    Array.isArray(row.corrected_fields) ? row.corrected_fields : [],
+  );
+  const goodsOnly = isGoodsDocOnly(row);
+  return OCR_VERIFY_KEYS.filter((key) => {
+    if (goodsOnly && key === 'numar_tpo') return false;
+    if (corrected.has(key)) return false;
+    return row?.field_confidence?.[key] === 'low';
+  });
+}
+
+export function rowsNeedingOcrVerify(rows, ids = null) {
+  const list = rows || [];
+  const idSet = ids == null ? null : new Set(ids);
+  return sortAvizeByUploadAsc(
+    list.filter((r) => (idSet == null || idSet.has(r.id)) && unackedLowOcrFields(r).length > 0),
+  );
+}
+
+/**
+ * Carousel walks empty required fields and unacked OCR-low TPO/auto/rută.
+ * HITL without gaps or low confidence still blocks export, but needs no edit page.
  */
 export function rowsNeedingCarouselEdit(rows) {
   return sortAvizeByUploadAsc(
-    (rows || []).filter((r) => missingRequiredCarouselFields(r).length > 0),
+    (rows || []).filter((r) => (
+      missingRequiredCarouselFields(r).length > 0
+      || unackedLowOcrFields(r).length > 0
+    )),
   );
 }
 
@@ -314,6 +395,7 @@ export function emptyForm(row = {}) {
   }
   form.ruta_display = row.ruta_display == null ? '' : String(row.ruta_display);
   form.trip_id = row.trip_id ?? '';
+  form.goods_doc_only = isGoodsDocOnly(row);
   return form;
 }
 
@@ -372,6 +454,24 @@ export async function waitForAvizExtractSettled(id, fetchRow, {
 export function lowField(row, key) {
   return row?.field_confidence?.[key] === 'low';
 }
+
+/** List / table class when OCR confidence on a field is low. */
+export const LOW_FIELD_TEXT_CLS = 'text-red-700 font-bold';
+
+/**
+ * Compact status-color strip under Șterge selectate (dots + short labels).
+ * HITL amber matches NeedsReviewBadge; red matches LOW_FIELD_TEXT_CLS.
+ */
+export const AVIZ_STATUS_DOT_LEGEND = [
+  { key: 'uploaded', label: 'Se procesează', dotCls: 'bg-sky-500' },
+  { key: 'extracted', label: 'Extras', dotCls: 'bg-slate-400' },
+  { key: 'confirmed', label: 'Confirmat', dotCls: 'bg-emerald-500' },
+  { key: 'hitl', label: 'Verificare obligatorie', dotCls: 'bg-amber-500' },
+  { key: 'ocr', label: 'OCR nesigur', dotCls: 'bg-red-600' },
+];
+
+export const AVIZ_STATUS_DOT_ONELINER =
+  'Bulinele = status în coloana Stare; text roșu bold pe TPO / auto / rută = OCR nesigur — Confirmă / Unește blocate până verifici pe document (Verifică sau Salvează în carusel).';
 
 /**
  * Validation findings stored on extract (decorateAviz also mirrors them as validation_findings).

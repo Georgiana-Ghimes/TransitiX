@@ -22,6 +22,8 @@ import {
 } from '../lib/ocr/readText.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
+import { refuseAnnexIfMergeMissingTpo } from '../lib/annexMergeTpoGate.js';
+import { refuseAnnexIfUnackedLowTpo } from '../lib/annexOcrVerifyGate.js';
 import { normalizeTemplateOptions, wantsMergeTpoCells } from '../lib/templateOptions.js';
 import { buildReport } from '../lib/reporting/build.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
@@ -338,6 +340,10 @@ async function buildAnnexBuffer(companyId, templateId, avizIds, { allowUnconfirm
   refuseAnnexIfNeedsReview(avize, { allowUnconfirmed });
   const template = serializeRow(tmpl.rows[0]);
   template.options = normalizeTemplateOptions(template.options);
+  // Hard lock even when allow_unconfirmed: merge groups need a real TPO key.
+  refuseAnnexIfMergeMissingTpo(avize, template);
+  // Hard lock: stamped / low-confidence TPO must be verified before annex.
+  refuseAnnexIfUnackedLowTpo(avize);
   const report = buildReport({ template, documents: avize });
   // The annex keeps its exact agreed shape here, no totals row on the legacy path.
   // report.columns already includes Editează Include-în-XLSX weight column choices.
@@ -960,8 +966,8 @@ router.post('/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   } catch (err) {
-    if (err?.code === 'NEEDS_REVIEW') {
-      return res.status(409).json({
+    if (err?.code === 'NEEDS_REVIEW' || err?.code === 'MERGE_TPO_REQUIRED' || err?.code === 'OCR_VERIFY_REQUIRED') {
+      return res.status(err.status || 409).json({
         code: err.code,
         message: err.message,
         blocked: err.blocked || [],
@@ -1022,7 +1028,21 @@ router.post('/bulk-confirm', async (req, res) => {
     const docs = (await query(
       `SELECT * FROM aviz_documents WHERE company_id = $1 AND id = ANY($2::uuid[])`,
       [req.user.company_id, ids]
-    )).rows;
+    )).rows.map((row) => serializeRow(row));
+
+    // Hard lock: force cannot Confirm past unacked low TPO (would clear annex OCR gate via status=confirmed).
+    try {
+      refuseAnnexIfUnackedLowTpo(docs);
+    } catch (gateErr) {
+      if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
+        return res.status(gateErr.status || 409).json({
+          code: gateErr.code,
+          message: gateErr.message,
+          blocked: gateErr.blocked || [],
+        });
+      }
+      throw gateErr;
+    }
 
     const blocked = docs.filter((d) => {
       const routing = d.extracted_data?.validation?.routing;
@@ -1077,16 +1097,31 @@ router.post('/bulk-confirm', async (req, res) => {
   }
 });
 
-/** Confirm one aviz (gates on validation / needs_review). */
+/** Confirm one aviz (gates on validation / needs_review + hard OCR verify lock). */
 router.post('/doc/:id/confirm', async (req, res) => {
   try {
     const force = Boolean(req.body?.force);
     const forceReason = String(req.body?.force_reason || '').trim();
-    const doc = (await query(
+    const raw = (await query(
       `SELECT * FROM aviz_documents WHERE id = $1 AND company_id = $2`,
       [req.params.id, req.user.company_id]
     )).rows[0];
-    if (!doc) return res.status(404).json({ message: 'Aviz inexistent' });
+    if (!raw) return res.status(404).json({ message: 'Aviz inexistent' });
+    const doc = serializeRow(raw);
+
+    // Hard lock: force cannot Confirm past unacked low TPO (would clear annex OCR gate via status=confirmed).
+    try {
+      refuseAnnexIfUnackedLowTpo([doc]);
+    } catch (gateErr) {
+      if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
+        return res.status(gateErr.status || 409).json({
+          code: gateErr.code,
+          message: gateErr.message,
+          blocked: gateErr.blocked || [],
+        });
+      }
+      throw gateErr;
+    }
 
     const routing = doc.extracted_data?.validation?.routing;
     const needsHitl = doc.needs_review || routing === 'hitl_required';
@@ -1223,8 +1258,8 @@ router.post('/email', async (req, res) => {
         : undefined,
     });
   } catch (err) {
-    if (err?.code === 'NEEDS_REVIEW') {
-      return res.status(409).json({
+    if (err?.code === 'NEEDS_REVIEW' || err?.code === 'MERGE_TPO_REQUIRED' || err?.code === 'OCR_VERIFY_REQUIRED') {
+      return res.status(err.status || 409).json({
         code: err.code,
         message: err.message,
         blocked: err.blocked || [],
@@ -1272,8 +1307,8 @@ router.post('/zip', async (req, res) => {
     res.setHeader('X-Aviz-Missing-Files', String(missing));
     res.send(zip);
   } catch (err) {
-    if (err?.code === 'NEEDS_REVIEW') {
-      return res.status(409).json({
+    if (err?.code === 'NEEDS_REVIEW' || err?.code === 'MERGE_TPO_REQUIRED' || err?.code === 'OCR_VERIFY_REQUIRED') {
+      return res.status(err.status || 409).json({
         code: err.code,
         message: err.message,
         blocked: err.blocked || [],

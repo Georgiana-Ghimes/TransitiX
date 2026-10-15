@@ -450,6 +450,48 @@ describe('POST /api/avize/export HITL gate (#48)', () => {
   });
 });
 
+describe('POST /api/avize/export merge_tpo_cells hard TPO lock', () => {
+  it('refuses annex when merge is ON and any selected aviz has blank numar_tpo — even with allow_unconfirmed', async () => {
+    const tmpl = await makeTemplate(ctx.company.id, `Anexa-MergeTPO-${Date.now()}`, [
+      { key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' },
+      { key: 'numar_auto', header: 'Auto', source: 'numar_auto', default_value: '' },
+    ]);
+    await query(
+      `UPDATE report_templates SET options = $1::jsonb WHERE id = $2`,
+      [JSON.stringify({ merge_tpo_cells: true }), tmpl.id],
+    );
+
+    const blank = await makeAviz(ctx.company.id, {
+      status: 'confirmed',
+      needs_review: false,
+      numar_tpo: '',
+    });
+    await query(`UPDATE aviz_documents SET numar_tpo = NULL WHERE id = $1`, [blank.id]);
+
+    const ok = await makeAviz(ctx.company.id, {
+      status: 'confirmed',
+      needs_review: false,
+      numar_tpo: 'TPO-MERGE-OK',
+    });
+
+    const refused = await api().post('/api/avize/export').set(auth(ctx.adminToken))
+      .send({
+        template_id: tmpl.id,
+        aviz_ids: [blank.id, ok.id],
+        allow_unconfirmed: true,
+      });
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe('MERGE_TPO_REQUIRED');
+    expect(refused.body.message).toMatch(/Unește celulele TPO|Număr TPO/i);
+    expect(refused.body.blocked?.some((b) => b.id === blank.id)).toBe(true);
+
+    const allowed = await api().post('/api/avize/export').set(auth(ctx.adminToken))
+      .send({ template_id: tmpl.id, aviz_ids: [ok.id], allow_unconfirmed: true });
+    expect(allowed.status).toBe(200);
+    expect(String(allowed.headers['content-type'] || '')).toMatch(/spreadsheetml/);
+  });
+});
+
 describe('POST/PUT /api/avize/templates unique name (#50)', () => {
   const oneCol = [{ key: 'numar_tpo', header: 'Numar TPO', source: 'numar_tpo', default_value: '' }];
 
