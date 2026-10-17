@@ -2,11 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import ModalShell from '@/components/ModalShell';
 import { Loader2, X } from 'lucide-react';
 import AvizQueueCarousel from './AvizQueueCarousel';
-import { rowsMissingTpo, rowsNeedingOcrVerify } from './avizeUi';
+import { rowsMissingTpo, rowsNeedingHitlCaution, rowsNeedingOcrVerify } from './avizeUi';
 
 /**
  * Disclaimer + carousel before force-confirm or unverified export.
  * Empty TPO with merge ON, and unacked OCR-low TPO/auto/rută, hard-block Confirm/Unește.
+ * HITL / verificare obligatorie never shows „Gata de confirmare” — warn + ack (#95).
  */
 export default function AvizForceGateModal({
   mode = 'export',
@@ -67,10 +68,19 @@ export default function AvizForceGateModal({
     [selectionRows],
   );
 
+  const hitlCautionCount = useMemo(
+    () => rowsNeedingHitlCaution(selectionRows).length,
+    [selectionRows],
+  );
+
   const isExport = mode === 'export';
-  // Empty edit queue = blocked only by HITL/status, nothing left to type → treat as ready.
+  // Empty edit queue = no gaps / unacked low OCR left to type in the carousel.
+  // HITL („Verificare obligatorie”) is not „ready” — see hitlNeedsCaution (#95).
   const noEditNeeded = !queue.length;
-  const ready = noEditNeeded || completeness.allRequiredComplete;
+  const fieldsComplete = noEditNeeded || completeness.allRequiredComplete;
+  // Confirm mode: HITL still open → never claim ready / „Gata de confirmare”.
+  const hitlNeedsCaution = !isExport && hitlCautionCount > 0;
+  const ready = fieldsComplete && !hitlNeedsCaution;
   const cleanExport = ready && (noEditNeeded
     ? false
     : completeness.allConfirmed);
@@ -79,6 +89,7 @@ export default function AvizForceGateModal({
   // OCR nesigur (unacked): hard block Confirm / Unește until Verifică or Salvează.
   const ocrBlocksForce = ocrVerifyCount > 0;
   const hardBlocked = mergeBlocksForce || ocrBlocksForce;
+  // HITL caution keeps ready false → ack required before Confirmă.
   const needsAck = !ready && !hardBlocked;
 
   let title;
@@ -121,6 +132,13 @@ export default function AvizForceGateModal({
       confirmLabel = 'Da, unește oricum';
       cancelLabel = 'Nu';
     }
+  } else if (hitlNeedsCaution) {
+    title = 'Verifică cu atenție înainte de confirmare';
+    description = hitlCautionCount === 1
+      ? 'Avizul are „Verificare obligatorie” (adresă / rută sau alte date pot fi incomplete sau greșite din OCR). Nu e „gata de confirmare”: verifică pe document, apoi confirmă doar dacă datele sunt corecte.'
+      : `${hitlCautionCount} avize au „Verificare obligatorie”. Verifică cu atenție adresa și celelalte date pe document înainte să confirmi — nu e „gata de confirmare” automat.`;
+    confirmLabel = 'Da, am verificat — confirmă';
+    cancelLabel = 'Nu';
   } else if (ready) {
     title = 'Gata de confirmare';
     description = noEditNeeded
@@ -187,6 +205,14 @@ export default function AvizForceGateModal({
               mergeTpoPreview={mergeTpoPreview}
               mergeTpoRequired={mergeTpoRequired}
             />
+          </div>
+        ) : hitlNeedsCaution ? (
+          <div className="px-5 pb-2 shrink-0">
+            <p className="text-sm text-amber-950 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 leading-relaxed text-pretty">
+              Câmpurile obligatorii sunt umplute, dar avizul rămâne pe „Verificare obligatorie”.
+              {' '}
+              Verifică adresa / ruta și restul datelor pe document înainte să confirmi.
+            </p>
           </div>
         ) : (
           <div className="px-5 pb-2 shrink-0">

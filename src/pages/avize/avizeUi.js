@@ -322,6 +322,19 @@ export function rowsNeedingCarouselEdit(rows) {
   );
 }
 
+/**
+ * HITL / „Verificare obligatorie” still open on the selection.
+ * Confirm must not claim „Gata de confirmare” for these — warn the operator to
+ * check address and other OCR fields carefully (bug #95).
+ */
+export function rowsNeedingHitlCaution(rows, ids = null) {
+  const list = rows || [];
+  const idSet = ids == null ? null : new Set(ids);
+  return sortAvizeByUploadAsc(
+    list.filter((r) => (idSet == null || idSet.has(r.id)) && requiresAnnexReviewGate(r)),
+  );
+}
+
 /** Normalize TPO for grouping (trim + upper). Empty → ''. */
 export function normalizeTpoKey(value) {
   return String(value || '').trim().toUpperCase();

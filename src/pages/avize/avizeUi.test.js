@@ -8,6 +8,7 @@ import {
   previewFileUrlsForPeers,
   rowsMissingTpo,
   rowsNeedingCarouselEdit,
+  rowsNeedingHitlCaution,
   sortAvizeByUploadAsc,
   AVIZ_ACTION_LEGEND,
   AVIZ_DEFAULT_PAGE_SIZE,
@@ -227,6 +228,38 @@ describe('avizeUi', () => {
     expect(unackedLowOcrFields({ ...low, status: 'confirmed' })).toEqual([]);
     expect(rowsNeedingOcrVerify([low, ok, acked]).map((r) => r.id)).toEqual(['low']);
     expect(rowsNeedingCarouselEdit([low, ok]).map((r) => r.id)).toEqual(['low']);
+  });
+
+  it('#95 HITL / verificare obligatorie needs caution even when carousel has nothing to type', () => {
+    const hitl = {
+      id: 'hitl',
+      status: 'extracted',
+      created_at: '2026-10-14T10:00:00Z',
+      numar_tpo: 'TPO-0033244',
+      data_efectuare_cursa: '2026-10-03',
+      numar_auto: 'IF-90-SMB',
+      ruta_transport: 'Str. Industries nr. 7, Bolintin-Deal / Str. Garii nr. 12, Chiajna',
+      validation_routing: 'hitl_required',
+      needs_review: true,
+      field_confidence: { ruta_transport: 'ok' },
+    };
+    const clear = {
+      id: 'clear',
+      status: 'extracted',
+      created_at: '2026-10-14T09:00:00Z',
+      numar_tpo: 'TPO-1',
+      data_efectuare_cursa: '2026-10-03',
+      numar_auto: 'B-01-XXX',
+      ruta_transport: 'A-B',
+      validation_routing: 'auto',
+      needs_review: false,
+    };
+    // Fields complete → no carousel page, but confirm gate must still warn (#95).
+    expect(rowsNeedingCarouselEdit([hitl])).toEqual([]);
+    expect(rowsNeedingHitlCaution([hitl, clear]).map((r) => r.id)).toEqual(['hitl']);
+    expect(rowsNeedingHitlCaution([hitl, clear], ['clear'])).toEqual([]);
+    expect(requiresAnnexReviewGate(hitl)).toBe(true);
+    expect(requiresAnnexReviewGate({ ...hitl, status: 'confirmed' })).toBe(false);
   });
 
   it('tells the operator template names are unique per company', () => {
