@@ -1,0 +1,83 @@
+Operații proaste A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de clienți
+Cum să lucrați cu tipurile de clienți
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipuri de clienți permite specificarea tipurilor de clienți existente. În mod normal,
+tipul de client este pur și simplu un ID și o descriere, dar puteți atribui tipurile
+clienților săi să distingă depozitele clienților și furnizorilor, separate
+departamente într-un supermarket — nenumărate utilizări. Dacă utilizați
+tipuri de clienți pentru a diferenția diferitele departamente ale unui singur magazin, cum ar fi a
+supermarket, puteți sincroniza Roadnet Transportation Suite
+selectați automat câmpuri pentru fiecare tip atunci când adăugați sau editați un client;
+consultați pagina Opțiuni Setarea clienților pentru mai multe informații. Se
+Dacă utilizați partea de contabilitate a MobileCast, puteți asocia un tip de
+monitorizarea unui tip de client, pentru a diferenția costul livrării la diferite tipuri
+a clienților.
+Roadnet Transportation Suite vine cu două tipuri implicite de clienți: depozite
+(DPT) și fabrici (SIT), dar puteți adăuga câte sunt necesare.
+[ME Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Ls — Pasul 2: Faceți clic pe meniul Înregistrări și apoi selectați Tipuri de clienți. Fereastra
+Apare Tipuri de clienți, listând toate tipurile de clienți actuale.
+[ Notă: Pentru a vedea o listă actualizată de tipuri de clienți, faceți clic pe pictograma Actualizare; fereastra
+va fi actualizat cu cele mai recente informații din baza de date,
+4W Pasul 3: În fereastra Tipuri de clienți, faceți clic pe pictograma Adăugați sau apăsați [Insert]. Pentru a
+= Apare fereastra Adăugați tipuri de clienți.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+AAdd este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 3 caractere pentru tip și până la 30 de caractere pentru descriere. Tipul
+trebuie introdus.
+Exc
+Și fereastra Adăugați tip de client
+vă permite să specificați un tip și a
+= descriere pentru fiecare tip de
+— a adăugat clientul.
+P —
+cel
+Pasul 5: Dacă utilizați tipuri de monitorizare pentru a monitoriza costurile
+conturi în MobileCast, faceți clic pe săgeata tip de monitorizare și selectați a
+. tipul de monitorizare care trebuie asociat cu tipul de client. Pentru a obține mai mult
+informații, consultați Tipuri de oprire.
+Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noul tip de
+client.
+IINI A Si Roadrerul Tranporiafon Sue
+' Copyright 2006 United Parcel Service of America, lc
+Toate drepturile rezervate.
+Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte tipuri de clienți.
+Pasul 8: Când ați terminat de adăugat tipurile de clienți, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați tip de client.
+Pictograma întreținere — Înregistrări — Clienți — Tip client — Adăugați pictograma
+(nsert]) — pictograma Satvar ([Ctril+[S)
+Tipurile de clienți existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Important: ștergerea tipurilor de clienți afectează alte articole de întreținere. Înainte
+excludeți tipurile de clienți, trebuie să excludeți clienții care au acest tip de
+client.
+Ghid de operațiuni m
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+(Cum să lucrezi cu clienții
+Cum să lucrezi cu clienții
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Clienții sunt orice punct în care este expediat un vehicul, cum ar fi adresele de expediere.
+clienți, depozite, furnizori de produse etc. Roadnet Transportation Suite pune
+clienții pe o hartă în funcție de geocodurile lor (latitudine și longitudine). Este posibil
+asociați mai multe caracteristici cu un client, inclusiv adresa, numărul de telefon și
+fax; segmentul de clienți, fereastra de serviciu și tipul de timp al serviciului și
+fereastră și modificarea orei de service. Clienții pot fi importați de
+prin modulul Import sau adăugat individual. Consultați Import
+clienților pentru mai multe informații despre utilizarea modulului Import pentru import
+clienţilor. Trebuie adăugate tipuri de clienți pentru a putea adăuga clienți
+EM | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați Clienți și apoi Clienți. Fereastra
+.. Clienți se deschide cu o listă cu toți clienții actuali. La lista curentă de
+clienții nu vor fi afișați. Acest lucru face ca sistemul să ruleze mai repede decât dacă
+lista completă a fost încărcată de fiecare dată. Pentru a vizualiza lista curentă de clienți
+„sau doar anumiți clienți, utilizați funcția de căutare.
+8 Notă: Pentru a vedea o listă actualizată de clienți, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date,
+W Pasul 3: În fereastra Clienți, faceți clic pe pictograma Adăugare sau apăsați [Insert]. La fereastră
+= |AENA ENE S EA sSA RPA la NME

@@ -1,0 +1,82 @@
+(Como trabalhar com áreas
+Como trabalhar com áreas
+Utilizado com: Roadnet
+As áreas no Roadnet Transportation Suite são simplesmente as regiões — estados,
+provincias, etc. — percorridas pelo equipamento. Sua finalidade no Roadnet é permitir
+monitorar e relatar as milhas percorridas pelo equipamento em cada área. Consulte Como
+trabalhar com as distâncias das áreas para obter mais informações.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Entrada de dados reais e selecione Áreas. A janela Áreas é
+exibida.
+Nota: Para ver uma lista atualizada de áreas, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+Etapa 3: Na janela Áreas, clique no ícone Adicionar ou pressione [Insert]. A janeta
+Adicionar área é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 3 caracteres na Área. Esse campo deve ser preenchido.
+Quando as áreas tiverem — | 16)
+sido adicionadas, você =
+pode inserir a distância. —
+que uma rota percome ma — | S
+á
+Etapa 5: Insira até 30 caracteres na Descrição
+G Etapa6: Cliqueno icone Salvar ou pressione [Ctrl]:[S] para salvar a nova entrada de
+área
+x — Etapa7: Repitaas etapas 4 a 6 para adicionar qualquer outra área.
+— — EtapaS: Quando terminar, clique na caixa Fechar para fechar a janela Adicionar área.
+Ícone Manutenção — Entrada de dados reais — Áreas — ícone Adicionar ([Insert])
+—ícone Salvar ([CtrI+[S])
+AAsáreas existentes podem ser editadas ou excluídas, conforme necessário. Consulte
+Edição de itens e Exclusão de ítens para obter mais informações.
+. Importante: À exclusão das áreas afeta outros itens de manutenção. Antes de excluir as
+áreas, você deve confirmar a precisão das distâncias das áreas.
+Buadeoperaçães AA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com zonas
+Como trabalhar com zonas
+Utilizado com: Roadnet, Territory Planner, FleetLoader
+As zonas são utilizadas no Roadnet para agrupar locais de entrega semelhantes em
+roteirização dinâmica, de maneira que eles fiquem na mesma rota. ÀAs zonas são
+configuradas e, em seguida, atribuídas aos clientes, se necessário. Na roteirização
+dinâmica, é possível aplicar um filtro somente às paradas da rota em zonas específicas.
+Embora o nome zona indique que os clientes devem ser agrupados geograficamente, as
+Zonas são na verdade muito mais flexíveis do que isto. Naturaimente, zonas podem ser
+utilizadas geograficamente. Por exemplo, você pode decidir que todos os clientes em um
+CEP específico devem ser roteirizados em conjunto. Mas também é possível utilizar
+Zonas para roteirizar, por exemplo, todos os locais de uma cadeia de lojas de alto volume
+que garante seu próprio equipamento.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros e selecione Zonas. A janela Zonas é exibida.
+Nota: Para ver uma lista atualizada de áreas, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+ae&l Ftapa3: Na janela Zonas, clique no ícone Adicionar on pressione [Insert] A janela
+= Adicionar zonas é exibida.
+É) Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres como a Zona. Esse campo deve ser preenchido.
+EE u
+É possível adicionar zonas 2
+para agrupar clientes por o
+área ou por qualquer outro n
+Sator comun. ——
+( E
+Etapa 5: Insira até 30 caracteres na Descrição da zona.
+1G| Etapa 6: Clique no ícone Salvar ou pressione [Ctri][S] para salvar a zona.
+Etapa 7: Repita as etapas 4 a 6 para adicionar qualquer outra zona.
+m — Etapa8: Quando terminar, clique na caixa Fechar para fechar a janela Adicionar zonas.
+Ícone Manutenção — Cadastros —Zonas — ícone Adicionar ([Insert]) — ícone
+Satvar ([Ctri+[S])
+As zonas existentes podem ser editadas ou excluídas, conforme necessário. Consute
+Edição de itens e Exclusão de ítens para obter mais informações.
+MET AA o Roadhet Travporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com zonas
+Importante: A exclusão das zonas afeta outros itens de manutenção. Antes de excluir as
+Zonas, é necessário editar os clientes com essa zona.

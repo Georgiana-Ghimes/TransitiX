@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition · Documente · Sprint 5 · Changelog builds 52–62 (închis)</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3, h4 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 20pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.2em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 1em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    h4 { font-size: 10.5pt; margin-top: 0.85em; color: var(--accent); }
+    p { margin: 0.35em 0 0.6em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 20px 22px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.25em 0 0.65em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.6em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.4em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.7em 0 0.25em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-after: avoid; }
+      h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Sprint 5 · Changelog builds 52–62 <em style="opacity:0.85;font-weight:500">(închis)</em></h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune finală perioadă <strong>v1.8.3 · build 62</strong> ·
+      deschis <strong>17 septembrie 2026</strong> · închis <strong>18 septembrie 2026</strong><br />
+      Builds <strong>52–62</strong> · PDF lângă HTML
+    </div>
+    <div class="badge-row">
+      <span class="badge">Sprint 5</span>
+      <span class="badge">Builds 52–62</span>
+      <span class="badge">Închis</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Companion <strong>RAI Spedition · Documente</strong> — <strong>Sprint 5</strong> perioadă închisă (builds 52–62).
+    Fișier: <code>ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-52-62.html</code>.
+    Continuarea (builds 63+) e în
+    <code>docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-63.html</code>.
+  </p>
+
+  <div class="note">
+    <strong>Sprint 5 · perioadă închisă:</strong> builds 52–62 (OCR carnet / paddle, profil carnet,
+    Google Auth + invite Loki, re-extrage în fundal). Sprintul rămâne 5; următorul fișier deschis pornește de la 63.
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> OCR foto carnet (det 1920, ink, perspectivă, scan, drop_score);
+    profil <code>carnet_bord</code>; re-extrage în fundal; Google CORS + invite + MTMA (Loki).
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>52</td><td>1.7.4</td><td>OCR pe imagine curată + rută Site → livrare</td></tr>
+        <tr><td>53</td><td>1.7.5</td><td>OCR foto carnet: pass-uri când citirea e goală</td></tr>
+        <tr><td>54</td><td>1.7.6</td><td>OCR carnet: ink întâi, det mai sensibil, timeout 120s</td></tr>
+        <tr><td>55</td><td>1.7.7</td><td>OCR foto: corecție perspectivă OpenCV</td></tr>
+        <tr><td>56</td><td>1.7.8</td><td>OCR: det_side 1920 + ink gray-world (cauza „nimic extras”)</td></tr>
+        <tr><td>57</td><td>1.7.9</td><td>OCR: drop_score 0.10 + scan deskew/de-rule</td></tr>
+        <tr><td>58</td><td>1.7.10</td><td>Google Auth CORS + env Resend/Google (Loki · pulled)</td></tr>
+        <tr><td>59</td><td>1.8.0</td><td>Profil OCR carnet de bord (câmpuri + nr. curse)</td></tr>
+        <tr><td>60</td><td>1.8.1</td><td>MTMA numeric + Google login vs invite (Loki · pulled)</td></tr>
+        <tr><td>61</td><td>1.8.2</td><td>Re-extrage OCR în fundal + fail-fast paddle-down</td></tr>
+        <tr><td>62</td><td>1.8.3</td><td>Teste API: re-extrage 202 + mock health Paddle</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Build sections appended below, each with Changelog + Bugfix -->
+
+  <section class="build-block">
+    <h3>Build 62 · v1.8.3 · Teste API aliniate la re-extrage 202</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Suite API: re-extrage așteaptă <code>202</code> / <code>reextract_background</code>; mock Paddle răspunde la <code>/health</code> dar blochează OCR.</li>
+      <li><code>resetOcrCapabilityCache()</code> pentru probe-ul cached între teste.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>CI: 4 teste eșuau (așteptau 200 / <code>ocr_timeout_retry</code> după build 61).</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 61 · v1.8.2 · Re-extrage OCR în fundal (fără spinner infinit)</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Re-extrage pe aviz existent → <strong>202 + OCR în fundal</strong> (buget lung), nu mai ține request-ul sub spinner.</li>
+      <li>Dacă Paddle e down: <strong>503 imediat</strong>; buton Re-extrage dezactivat + probe health la 15s.</li>
+      <li>Client: abort la 130s; rândurile blocate pe <code>uploaded</code> se curăță după <code>updated_at</code> (nu <code>created_at</code>).</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Pe poze grele: <code>OCR_TIMEOUT</code> la 120s; tunelul tăia răspunsul înainte de retry → UI rămânea pe „Se re-extrage…” la nesfârșit.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 60 · v1.8.1 · MTMA numeric + Google login vs invite <span class="muted">(Loki · build pulled de la el)</span></h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Câmp MTMA: doar cifre / separatori de masă la tastare (<code>sanitizeMmaInput</code>) — literele nu mai apar în casetă.</li>
+      <li>Google pe Login: dacă domeniul firmei e deja pe Transitix dar mailbox-ul nu, răspunde <code>GOOGLE_NEEDS_INVITE</code> (cere invitație) în loc să forțeze o firmă nouă; legare și pe <code>google_sub</code>.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Login cu Google pe un domeniu deja folosit deschidea crearea de firmă goală lângă cea reală.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 59 · v1.8.0 · Profil OCR carnet de bord</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Profil nou <code>carnet_bord</code>: etichete tipărite de mână (<code>TIP MARFĂ</code>, <code>CANT MARFĂ</code>, <code>NR. CURSE</code>, <code>RUTA TRANS.</code>, <code>DATA</code>, TPO cu OCR greșit <code>TP0</code>/<code>IPO</code>).</li>
+      <li>Ruta pe 2+ linii (origine + adresă livrare cu săgeată); cantitate <code>15,744,00</code> fără a schimba <code>parseNumber</code> global.</li>
+      <li><code>numar_curse</code> ajunge pe document (inclus în <code>EXTRACT_COLUMNS</code>).</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Pe carnet, <code>aviz_generic</code> lua doar placa/TRO — restul rămânea gol deși OCR-ul citise pagina.</li>
+      <li>Unitatea cantității nu mai sare pe linia următoare (<code>NR</code> din <code>NR. DOCUMENT</code> pe anexă).</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 58 · v1.7.10 · Google Auth CORS + env Resend/Google <span class="muted">(Loki · build pulled de la el)</span></h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>CLIENT_ORIGIN</code> acceptă listă separată prin virgulă (ex. <code>localhost</code> + <code>127.0.0.1</code> pentru companion local) — CORS nu mai blochează unul din cele două host-uri.</li>
+      <li>Env example: documentat OAuth <strong>Web Client ID</strong> (nu Firebase) + Resend pentru invitații / reset / verificare.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Google sign-in eșua local când origin-ul din browser nu era exact cel din <code>CLIENT_ORIGIN</code> (localhost vs 127.0.0.1).</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 57 · v1.7.9 · OCR — drop_score 0.10 + pass scan</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>drop_score</code> default <strong>0.10</strong> (era 0.35) — scrisul de mână nu mai e șters după recunoaștere.</li>
+      <li>Pass nou <code>scan_like_document</code>: deskew pe liniile carnetului, ștergere linii (păstrează literele), binarizare.</li>
+      <li>Env pe compose companion + paddle; teste + README.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>După det 1920, Paddle tot putea întoarce gol: filtrul de încredere pe linie (0.35) arunca textul handwriting citit la 0.1–0.3.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 56 · v1.7.8 · OCR — detector 1920px + ink illuminant-invariant</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>det_limit_side_len</code> = 1920 (era 960 implicit Paddle) — scrisul de mână nu mai e strivit la ~22px.</li>
+      <li>Preprocesare: <code>fit_for_detector</code> redimensionează o dată la mărimea pe care o citește detectorul.</li>
+      <li><code>emphasize_ink</code>: gray-world + împărțire la blur local (nu <code>min(R,G)</code> pe fundal verde).</li>
+      <li><code>bench.py</code> + note README pentru măsurat pe poze reale; env pe compose companion + paddle.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Carnet tot gol după ink/perspectivă: upscale-ul era anulat de capul Paddle la 960px — liniile de mână rămâneau sub pragul de detecție.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 55 · v1.7.7 · OCR foto — corecție perspectivă</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Pe poze (carnet / telefon): înainte de ink/OCR, detectează colțurile paginii și warpează la dreptunghi (OpenCV).</li>
+      <li>Scanuri full-bleed / fără pagină clară: fără warp fals. Oprire cu <code>PADDLE_OCR_PERSPECTIVE=0</code>.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Telefon oblic pe carnet: liniile rămâneau strâmbe și detecția Paddle rata scrisul — acum pagina e frontală înainte de citire.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 54 · v1.7.6 · OCR carnet — ink întâi + detecție mai sensibilă</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Pozele (carnet / telefon): întâi upscale + cerneală albastră, apoi rotații — nu mai arde timpul pe raw gol.</li>
+      <li>Paddle: prag detecție mai jos (cerneală slabă pe hârtie), timeout interactiv 120s (era 45s).</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Poze de carnet pe fundal de monitor tot nu extrăgeau nimic: raw RGB era gol, timeout-ul oprea înainte de pass-urile utile, iar detecția Paddle ignora trasăturile fine.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 53 · v1.7.5 · OCR foto carnet (citire goală)</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Dacă Paddle întoarce gol / text foarte scurt pe o poză, rulează totuși enhance, upscale, umbră, CLAHE și un pas care scoate cerneala albastră de pe hârtie (util la carnet pe fundal de monitor).</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Pe poze de carnet (scris de mână), când prima citire era goală, pipeline-ul <em>oprea</em> pass-urile foto — rămânea „nimic extras”. Acum gol = încearcă mai departe.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 52 · v1.7.4 · OCR pe imagine curată + rută Site → livrare</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Paddle citește întâi <strong>imaginea curată</strong>; contrast / sharpen (pentru poze de carnet) doar dacă lipsesc coduri sau plăcuța — nu pe fiecare pagină.</li>
+      <li>Scan PDF: DPI implicit 280 (era 200), ca textul mic de pe aviz să rămână lizibil.</li>
+      <li>Ruta pe anexă: Site (Bol/Mil) → Adresa de livrare; matcher-ul „oraș-oraș” nu mai ia localități cu cratimă lipită drept rută.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>După optimizările pentru scris de mână, preprocessarea agresivă pe toate paginile înrăutățea OCR-ul pe avize tipărite / scanuri (mai slab decât cu câteva build-uri în urmă).</li>
+      <li><strong>Ticket 35:</strong> export cu <code>Bolintin-Deal</code> în loc de adresa de livrare (ex. Dobroești) — simptom al matcher-ului de rută + câmp ne-gol pe care repair-ul nu îl mai corecta.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    Sprint 5 · închis 18 septembrie 2026 · builds 52–62 ·
+    branch RAI-spedition-driver-app · docs/ local only · PDF lângă HTML
+  </footer>
+
+</body>
+</html>

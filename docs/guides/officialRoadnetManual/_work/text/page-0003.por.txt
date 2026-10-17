@@ -1,0 +1,136 @@
+Campos disponíveis da tabela de detalhes financeiros do pedido 330
+Campos disponíveis da tabela de atividades do pedido 331
+Campos disponíveis da tabela de equipamentos da rota 332
+(Campos disponíveis do funcionário 332
+Campos disponíveis de motoristas 334
+Campos disponíveis do container 337
+Campos disponíveis de equipamentos 338
+Campos disponíveis de tipo de embalagem 339
+Campos disponíveis de SKU 340
+Campos disponíveis de marcas de SKU 341
+Campos disponíveis de tipos de equipamento 342
+Campos disponíveis do conjunto de habilidades 344
+Campos disponíveis de atividades 344
+Campos disponíveis de conjunto de habilidades - atividades 345
+Roadnet - Editor de roteirização
+Criação de rotas no Editor de roteirização 347
+Acesso ao Editor de roteirização 349
+Manutenção de itens no Editor de roteirização 350
+Utilização de mapas no Editor de roteirização 351
+Exibição de rotas no Editor de roteirização 359
+Utilização das barras de ferramentas no Editor de roteirização 361
+Configuração das opções do Editor de roteirização 364
+Como trabalhar com rotas padrão 376
+Criação de conjuntos de rotas padrão 376
+Criação de rotas padrão 378
+Criação de rotas paárão e alterações de rota padrão com base em rotas existentes
+381
+Adição de rotas padrão a um conjunto de rotas padrão 381
+Adicionar paradas a uma rota padrão 382
+AAdição de intervalos e pernoites às rotas padrão 385
+Adição de depósitos intermediários às rotas padrão 386
+Sequenciamento de rotas padrão 387
+(Como salvar rotas padrão no Editor de roteirização 388
+Criação de rotas diárias 389
+FITTTATTTII A , s Foadnet Transporiation Sule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Utilização do menu Opções de simulação de roteirização 391
+Criação de simulações de roteirização 391
+Bloqueio e desbloqueio de pedidos 409
+AAvaliação das rotas no Editor de roteirização 410
+Balanceamento das rotas 412
+Agregação das rotas 412
+Troca de janela de atendimento 443
+Listagem de geocódigos duplicados 415
+Nova geocodificação de uma parada no Editor de roteirização 416
+Como trabalhar com recargas da rota 417
+Roteirização de paradas não atendidas ou transferência de paradas 419
+Adição de pedidos não georreferenciados, inativos ou futuros a uma rota 4233
+Sequenciamento de paradas no Editor de roteirização 425
+Remoção da atribuição das paradas de uma rota 427
+Localização de rotas, paradas ou pedidos 2s
+AAlteração das propriedades de uma rota no Editor de roteirização 430
+Adição de uma rota 432
+Como trabalhar com propriedades da rota preferencial 435
+Atribuição de motoristas e equipamentos às rotas 8
+Atribuição de IDs de rota sequencial 442
+Atribuição de horários de início às rotas 443
+Divisão de um pedido 444
+Como salvar os atributos da rota 446
+Como salvar rotas no Editor de roteirização 447
+Exportação de seletores 448
+Adição de intervalos a uma rota no Editor de roteirização 449
+Inserção de um depósito em uma rota 452
+AAjuste do tempo de atendimento de uma parada 454
+Atribuição da prioridade de carregamento 456
+Atualização da ID da rota preferencial dos clientes 457
+Impressão de relatórios no Editor de roteirização 459
+Impressão de orientações do motorista 460
+Criação de rotas 462
+Envio de pedidos pelo Editor de roteirização 463
+Remoção de pedidos do Editor de roteirização 466
+Envio de rotas ao MobileCast" 467
+Arquivamento da sessão de roteirização 468
+Agregação de sessões de roteirização no Editor de roteirização 460
+Exportação de rotas do Editor de roteirização 471
+Criação de uma nova sessão de roteirização 473
+Transferência de rotas e pedidos para uma nova sessão 475
+Como trabalhar com promotores de vendas 476
+Territory Planner - Editor de planejamento
+Criação de rotas estratégicas no Editor de planejamento 479
+Como entrar no Editor de planejamento 480
+MBE OpEraçãe V
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Manutenção de itens no Editor de planejamento 481
+Definição das opções 482
+Utilização de mapas no Editor de planejamento 487
+Exibição de territórios e rotas 405
+Utilização das barras de ferramentas 497
+Criação de territórios 501
+Utilização do menu Opções de criação de territórios 502
+Avaliação de territórios 507
+Edição de territórios su
+Atribuição de motoristas, equipamento e outros itens a um território 53
+Exibição de informações de distribuição de segmentos de cliente 515
+Adição de um território 516
+Atribuição de IDs a diversos territórios 519
+Criação de rotas 520
+Utilização do menu Opções de atribuição de dias su
+Avaliação das rotas 526
+Edição de rotas 529
+Como salvar os territórios e rotas 534
+Localização de territórios, semanas, rotas, paradas ou extensões de cliente 535
+AAlteração das propriedades de uma rota 537
+Atribuição de horários de início a diversas rotas 538
+Atribuição de IDs de rota sequencial 540
+Atribuição de intervalos e esperas às rotas 542
+Atribuição de novos conjuntos de padrões de atendimento a extensões de clientes 544
+Atribuição de alterações de tempo de atendimento a extensões de clientes 546
+Ancoragem de extensões de clientes 547
+Definição dos dias e semanas anteriores 550
+Geocodificação de um cliente no mapa do Editor de planejamento 552
+Impressão de orientações do motorista no Editor de planejamento 553
+Retrocesso dos dias de entrega 555
+Impressão de relatórios no Editor de planejamento 557
+Impressão de mapas no Editor de planejamento 558
+Transferência de dados para uma nova sessão de planejamento 559
+Arquivamento da sessão de planejamento 562
+Exportação de rotas de planejamento 563
+AAtualização dos dias de entrega no Roaánet 564
+Envio de rotas ao Roadnet 564
+Envio das rotas de planejamento ao MobileCastr 564
+Como trabalhar com o Depot Planner 564
+Inicialização do Depot Planner 564
+Adição de um depósito 564
+Geocodificação de um depósito no Depot Planner 564
+Atribuição de extensões de cliente aos depósitos 564
+Avaliação dos resultados do Depot Planner 564
+Carregamento de veículos no Editor de carregamentos do FleetLoader 565
+Configuração para carregamento de veículos de compartimentos 566
+—— QA
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.

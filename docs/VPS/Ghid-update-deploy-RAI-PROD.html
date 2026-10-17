@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>Update &amp; deploy · RAI PROD pe VPS</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --ok: #166534;
+      --warn: #92400e;
+      --danger: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0 2mm 10mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.25; page-break-after: avoid; }
+    h1 { font-size: 18pt; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.2em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.9em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    ul, ol { margin: 0.25em 0 0.65em; padding-left: 1.25em; }
+    li { margin: 0.22em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      page-break-inside: avoid;
+      margin: 0.4em 0 0.85em;
+    }
+    pre .c { color: #94a3b8; }
+    table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 0.4em 0 0.8em; }
+    th, td { text-align: left; padding: 6px 8px; border: 1px solid var(--line); vertical-align: top; }
+    th { background: var(--soft); color: var(--brand); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; margin-top: 6px; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .box {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+    .box.warn { border-left-color: #d97706; background: #fffbeb; color: var(--warn); }
+    .box.ok { border-left-color: #16a34a; background: #f0fdf4; color: var(--ok); }
+    .box.danger { border-left-color: #dc2626; background: #fef2f2; color: var(--danger); }
+    .check { list-style: none; padding-left: 0; }
+    .check li { padding-left: 1.4em; position: relative; margin: 0.3em 0; }
+    .check li::before { content: "☐ "; position: absolute; left: 0; }
+    .foot {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .flow {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Update &amp; deploy · RAI PROD</h1>
+    <div class="meta">
+      Site: <strong>https://rai-transitix.filumforge.ro</strong><br />
+      VPS: <code>ssh root@185.137.122.45</code> · app în <code>/opt/rai/TransitiX</code><br />
+      Branch test: <strong>MISTRAL-experimenting-rai-documents</strong><br />
+      Branch prod: <strong>TRANSITIX-RAI-PROD</strong> · Environment GitHub: <strong>RAI-PROD</strong><br />
+      Document: 12 octombrie 2026 · folosește-l la fiecare urcare de versiune
+    </div>
+    <div class="badge-row">
+      <span class="badge">ACELAȘI HASH pe ambele branch-uri</span>
+      <span class="badge">backup → migrate → build → restart</span>
+      <span class="badge">Fără cherry-pick pe ambele</span>
+    </div>
+  </header>
+
+  <div class="box ok">
+    <strong>Regula de aur:</strong> pe MISTRAL și pe <code>TRANSITIX-RAI-PROD</code> trebuie să fie
+    <strong>același commit SHA</strong> după merge. Nu face cherry-pick pe ambele — creează două hash-uri și „1 ahead / 1 behind”.
+  </div>
+
+  <div class="box danger">
+    <strong>Pe VPS nu folosi</strong> <code>npm run dev:companion</code>.
+    Doar pull + <code>deploy-companion.js</code> + servicii (systemd / Caddy).
+  </div>
+
+  <div class="flow">PC (MISTRAL, test)
+        │  commit + push
+        │  merge --ff-only → TRANSITIX-RAI-PROD
+        │  push PROD
+        ▼
+GitHub  TRANSITIX-RAI-PROD  (același SHA ca MISTRAL)
+        │
+        ▼
+VPS     git reset --hard origin/TRANSITIX-RAI-PROD
+        deploy-companion.js  (backup → migrate → build → restart)
+        │
+        ▼
+https://rai-transitix.filumforge.ro</div>
+
+  <!-- ========== A ========== -->
+  <h2>A. Pe PC — trimiți codul pe branch-ul de prod</h2>
+
+  <h3>A1. Lucrezi și testezi</h3>
+  <ol>
+    <li>Branch: <code>MISTRAL-experimenting-rai-documents</code></li>
+    <li>Faci modificările, testezi local (<code>dev:companion</code> pe PC).</li>
+    <li>Commit + push pe MISTRAL.</li>
+  </ol>
+
+  <h3>A2. Urci pe PROD (același hash)</h3>
+<pre>git checkout TRANSITIX-RAI-PROD
+git fetch origin
+git merge --ff-only MISTRAL-experimenting-rai-documents
+git push origin TRANSITIX-RAI-PROD
+
+<span class="c"># verificare: același SHA</span>
+git rev-parse HEAD
+git rev-parse MISTRAL-experimenting-rai-documents
+
+git checkout MISTRAL-experimenting-rai-documents</pre>
+
+  <div class="box warn">
+    Dacă <code>merge --ff-only</code> eșuează, branch-urile au divergat.
+    Nu forța pe prod până nu înțelegi de ce. Aliniază (merge corect sau reset controlat), apoi verifică din nou SHA-urile.
+  </div>
+
+  <ul class="check">
+    <li>Test ok pe MISTRAL</li>
+    <li>Merge FF pe <code>TRANSITIX-RAI-PROD</code></li>
+    <li>Push pe origin</li>
+    <li>SHA MISTRAL = SHA PROD</li>
+  </ul>
+
+  <!-- ========== B ========== -->
+  <h2>B. Pe VPS — o singură comandă</h2>
+
+  <p>Conectare:</p>
+<pre>ssh root@185.137.122.45</pre>
+
+  <p>Deploy:</p>
+<pre>cd /opt/rai/TransitiX
+npm run deploy:companion:vps</pre>
+
+  <p>Rulează, în ordine:</p>
+  <ol>
+    <li><strong>git</strong> — <code>fetch</code> + <code>checkout</code> + <code>reset --hard</code> pe
+      <code>origin/TRANSITIX-RAI-PROD</code>
+      (actualizează codul; <strong>nu</strong> mai faci <code>git pull</code> separat —
+      pe VPS <code>reset --hard</code> e mai sigur decât <code>pull</code>)</li>
+    <li><strong>npm ci</strong> — root + <code>server/</code></li>
+    <li><strong>deploy-companion</strong> — backup → migrate → build → <code>systemctl restart rai-api</code></li>
+    <li><strong>caddy reload</strong> (best-effort)</li>
+    <li><strong>health</strong> — curl pe <code>/api/health</code></li>
+  </ol>
+
+  <div class="box">
+    Dacă un pas eșuează, scriptul se oprește. Nu „jumătate deploy”.
+    Repari, rulezi din nou. Clientul rămâne pe versiunea veche până reușește tot lanțul.
+  </div>
+  <div class="box warn">
+    Dacă pe VPS încă lipsește scriptul (cod înainte de build 100): o dată
+    <code>git fetch origin TRANSITIX-RAI-PROD &amp;&amp; git reset --hard origin/TRANSITIX-RAI-PROD</code>,
+    apoi <code>npm run deploy:companion:vps</code>.
+  </div>
+
+  <ul class="check">
+    <li><code>curl</code> health: <code>"ok":true</code>, <code>"db":true</code>, <code>"ocr":"mistral"</code></li>
+    <li>Browser: https://rai-transitix.filumforge.ro (hard refresh Ctrl+Shift+R dacă UI vechi)</li>
+    <li>Login + o acțiune scurtă (ex. listă avize)</li>
+    <li>Versiunea / build-ul din UI corespunde cu ce ai pus pe PROD</li>
+  </ul>
+
+  <!-- ========== C ========== -->
+  <h2>C. Rollback (dacă ceva e greșit)</h2>
+
+  <h3>C1. Rollback cod (păstrezi baza)</h3>
+<pre>cd /opt/rai/TransitiX
+git log --oneline -15
+<span class="c"># alegi COMMIT_BUN</span>
+git reset --hard COMMIT_BUN
+
+<span class="c"># fără git pull; skip-backup dacă ai dump recent</span>
+npm run deploy:companion:vps -- --skip-git --skip-backup</pre>
+
+  <p>Pe PC / GitHub: aliniază <code>TRANSITIX-RAI-PROD</code> (și MISTRAL, dacă e cazul) la <strong>același</strong> commit.</p>
+
+  <h3>C2. Rollback date</h3>
+  <p>Restore din <code>/var/backups/rai/</code> (vezi ghidul mare de instalare, §12).
+  Snapshot Contabo = doar dacă mașina e stricată, nu pentru o greșeală de cod.</p>
+
+  <!-- ========== D ========== -->
+  <h2>D. Comenzi utile pe VPS</h2>
+<pre><span class="c"># status</span>
+systemctl status rai-api caddy --no-pager
+docker compose -f /opt/rai/TransitiX/docker-compose.companion.yml ps
+journalctl -u rai-api -n 80 --no-pager
+
+<span class="c"># health public</span>
+curl -sS https://rai-transitix.filumforge.ro/api/health | head -c 400; echo
+
+<span class="c"># backup manual (între deploy-uri)</span>
+cd /opt/rai/TransitiX
+export COMPANION=1
+export DATABASE_URL="$(grep ^DATABASE_URL= server/.env.companion | cut -d= -f2-)"
+npm run db:backup -- --out /var/backups/rai --keep 14</pre>
+
+  <!-- ========== E ========== -->
+  <h2>E. Ce NU faci</h2>
+  <ul>
+    <li>Nu lucra direct pe VPS în fișiere (apoi <code>git pull</code> se încurcă).</li>
+    <li>Nu rula <code>dev:companion</code> pe VPS.</li>
+    <li>Nu face cherry-pick pe MISTRAL <em>și</em> pe PROD separat.</li>
+    <li>Nu deschide în firewall porturile 3002 / 5435 spre internet.</li>
+    <li>Nu comita <code>.env.companion</code> / <code>.env.postgres</code>.</li>
+  </ul>
+
+  <!-- ========== F ========== -->
+  <h2>F. Mai târziu — deploy automat (opțional)</h2>
+  <p>Când vrei zero SSH la update: GitHub Actions pe push la <code>TRANSITIX-RAI-PROD</code>,
+  environment <strong>RAI-PROD</strong>, rulează pe VPS același bloc ca la §B.
+  Până atunci, pașii A + B sunt sursa de adevăr.</p>
+
+  <!-- ========== G ========== -->
+  <h2>G. Fișiere / căi de reținut</h2>
+  <table>
+    <tr><th>Ce</th><th>Unde</th></tr>
+    <tr><td>Cod</td><td><code>/opt/rai/TransitiX</code> (branch <code>TRANSITIX-RAI-PROD</code>)</td></tr>
+    <tr><td>UI build</td><td><code>/opt/rai/TransitiX/dist</code></td></tr>
+    <tr><td>Secrete</td><td><code>/opt/rai/TransitiX/server/.env.companion</code></td></tr>
+    <tr><td>Parolă Postgres</td><td><code>/opt/rai/TransitiX/.env.postgres</code></td></tr>
+    <tr><td>Uploads</td><td><code>/opt/rai/TransitiX/server/uploads-companion</code> (sau cum e în .env)</td></tr>
+    <tr><td>Backup-uri</td><td><code>/var/backups/rai/</code></td></tr>
+    <tr><td>API serviciu</td><td><code>rai-api.service</code></td></tr>
+    <tr><td>HTTPS</td><td><code>/etc/caddy/Caddyfile</code></td></tr>
+    <tr><td>Ghid instalare inițială</td><td><code>docs/VPS/Ghid-deploy-RAI-PROD-VPS.html</code></td></tr>
+  </table>
+
+  <h2>H. Checklist pe o foaie</h2>
+  <ul class="check">
+    <li>MISTRAL: commit + push, test ok</li>
+    <li>PROD: <code>merge --ff-only</code> + push (același SHA)</li>
+    <li>VPS: blocul din §B</li>
+    <li>Health + browser OK</li>
+    <li>Snapshot Contabo doar după schimbări mari</li>
+  </ul>
+
+  <footer class="foot">
+    Ghid update/deploy RAI PROD · rai-transitix.filumforge.ro · VPS Contabo ·
+    docs/VPS/Ghid-update-deploy-RAI-PROD.html · local (gitignored)
+  </footer>
+
+</body>
+</html>

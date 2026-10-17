@@ -1,0 +1,82 @@
+Etapa 7: Para alterar a cor usada para exibir áreas ou caminhos de horário de rush,
+clique na seta de cor apropriada para abrir uma paleta de cores. Clique em uma
+cor para selecioná-la. Para alterar a largura das áreas ou caminhos, insira a
+nova largura em pixels, no campo Largura apropriado.
+Etapa 8: Para exibir as áreas e caminhos de horário de rush no mapa, mesmo quando
+não estiver em modo Horário de rush, selecione Exibir áreas e caminhos do
+horário de rush. As áreas e caminhos serão exibidos quando você estiver em
+modo Horário de rush mesmo se esta caixa não estiver selecionada.
+Etapa 9: Clique no botão [Salvar] para salvar as opções.
+Manutenção — Arquivo —Mapa —ícone Propriedades do mapa — [OK]
+M T , ,, , ,, — —Roadhet Tranporiation Sute
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+Adição de uma área do horário de rush
+Após criar um modelo para horário de rush, você pode criar áreas de horário de rush,
+definir variações de velocidade e restrições de percurso exclusivas desta área. As áreas de
+horário de rush são simplesmente regiões geográficas que você cria e às quais associa
+atributos específicos. É possível ter tantas áreas de horário de rush quantas forem
+necessárias para cada modelo; as áreas podem até estar sobrepostas. Se você deseja definir
+variações de velocidade, alterações de direção ou restrições de percurso em ruas
+individuais, é necessário criar caminhos de horário de rush.
+Ao criar áreas de horário de rush, é necessário escolher se as áreas sendo criadas são
+Simples ou Avançadas. As áreas avançadas permitem especificar variações de velocidade
+e restrições de percurso por tipo de via; as áreas simples permitem definir uma variação
+de velocidade para todas as vias da área. Se o modelo para horário de rush for usado com
+“uma sessão de roteirização ou planejamento que utiliza XY como calculadora de tempo/
+distância, ou utiliza o RouteNet/SuperMatrix mas não os recursos de Horário de rush
+avançado, crie somente áreas Simples. Se a sessão de roteirização ou planejamento utiliza
+o RouteNet com os recursos de Horário de rush avançado, você pode criar áreas Simples
+ou Avançadas.
+Asáreas de horário de rush são adicionadas 2o mapa no módulo Manutenção, ou no Editor
+de roteirização ou de planejamento. Estas etapas supõem que você esteja trabalhando no
+— móduloManutenção.
+EM Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+Wn — Etapa 2: Clique no menu Arquivo e selecione Mapa. O mapa é exibido.
+) Etapa3: Clique no ícone Modelo para horário de rush. O mapa entra no modo Horário
+.. de rush e o cursor muda para um relógio. O título do mapa exibe o modelo para
+horário de rush atual.
+. Nota: Para entrar em modo Horário de rush, é necessário selecionar um Modelo para
+horário de rush atual no menu Opções do mapa.
+Etapa 4: Clique com o botão direito no mapa e selecione Adicionar área de horário de
+Tush no menu que será exibido. A janela Adicionar área de horário de rush é
+exibida.
+Etapa 5: No mapa, clique onde deseja que seja o início da área de horário de rush. Um
+quadrado é exibido no mapa. Continue clicando para criar o contomo da área
+de horário de rush; as linhas conectando os quadrados serão desenhadas
+automaticamente, de modo que é necessário clicar somente onde o contorno
+fará uma curva ou volta. Quando tiver completado a área, clique no botão
+Guiadeoperaçães o o c ==-=--25
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com modelos para horário de rush
+[Conctuir/fechar área]; não é necessário desenhar o último segmento. A janela
+Editar atributos da área do horário de rush é exibida.
+o criar uma área de horário de rush, você não precisa desenhar o
+último segmento. Basta clicar no botão [Concluir(fechar área] e o
+último segmento será desenhado.
+Nota: No modo Horário de rush, você pode utilizar as opções Zoom e Centro para mover-
+se pelo mapa conforme necessário.
+Etapa 6: Insira um nome e uma descrição para a área de horário de rush. Você deve
+digitar um nome.
+Etapa 7: Selecione se deseja inserir informações de área Simples ou de área Avançada.
+Se você estiver utilizando Avançada, vá para a etapa 11
+Dica: Para definir variações de velocidade por tipo de via ou para impor restrições de
+percurso sobre tipos de equipamento restritos, selecione Avançada. As áreas
+Avançadas podem ser usadas somente com sessões de roteirização e planejamento
+que utilizem o RouteNet e estejam com a opção Horário de rush avançado
+selecionada.
+Etapa 8: Se 2 área estiver sobreposta a outra área de horário de rush, insira a prioridade
+desta área. Caso as áreas estejam sobrepostas, serão usados os atributos da área
+206 “Roadhet Transportaton Suite
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+de horário de rush com prioridade mais alta. A prioridade pode variar de uma
+baixa de O para uma alta de 99.
+n — =
+E si C pc ti mcm ec atao)
+fembiniio |aa inmetvaio] Twsitancio|
+Em o ma TS
+mm SENÇãOS Masçio PBE

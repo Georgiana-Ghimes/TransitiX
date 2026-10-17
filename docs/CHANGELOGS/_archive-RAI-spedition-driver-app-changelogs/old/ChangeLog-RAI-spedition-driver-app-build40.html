@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 40 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 40 <em style="opacity:0.85;font-weight:500">(deschis)</em></h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.5.1 · build 40</strong> · deschis <strong>15 septembrie 2026</strong><br />
+      De la commit <code>4aabe2b</code> (după build 39) — append până la semnalul de închidere
+    </div>
+    <div class="badge-row">
+      <span class="badge">MTMA din plăcuță</span>
+      <span class="badge">Autoturisme lock</span>
+      <span class="badge">unknown ≠ missing</span>
+      <span class="badge">WIP — se actualizează</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Local în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> pe hartă, „fără MTMA” era același mesaj pentru camion necunoscut și
+    pentru camion fără cifră — operatorul reintroducea greutatea pe ecranul greșit. În
+    Autoturisme, MTMA era mereu editabil pe listă: un click greșit schimba tranșa PMB pe
+    toate cursele viitoare.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Harta zonelor — MTMA din Autoturisme, mesaje clare</h3>
+      <ul>
+        <li>La încărcare, harta ia și flota; <code>resolveVehicleMma</code> rezolvă plăcuța
+          local (inclusiv pe calea indexului de străzi, fără round-trip per căutare).</li>
+        <li>Cinci stări: fără număr / invalid / necunoscut / fără MTMA / găsit.</li>
+        <li>Mesaje cu link: <strong>Adaugă mașina</strong> sau <strong>Completează în
+          Autoturisme</strong> → <code>/fleet</code> (aceleași pe index stradal și pe locate).</li>
+        <li>Cifră tastată pe hartă rămâne prioritară față de flota; dacă vine din flotă,
+          se arată și plăcuța lângă tarif.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>API locate — mașină cunoscută vs incompletă</h3>
+      <ul>
+        <li><code>vehicleForPlate</code>: id + <code>known</code> + <code>mmaKg</code>
+          (nu doar greutatea sau tăcere).</li>
+        <li>Răspuns: <code>vehicle: { plate, known, has_mma }</code> în loc de
+          <code>mma_from_plate</code>.</li>
+        <li>Teste: unknown plate / fără plate / text care nu e plăcuță.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Autoturisme — MTMA blocat după salvare</h3>
+      <ul>
+        <li>Fără MTMA: câmpul rămâne deschis (motivul ecranului).</li>
+        <li>Cu MTMA: afișare read-only; <strong>creion</strong> → editare; Escape / X renunță;
+          Enter salvează dacă e modificat.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <p class="muted" style="margin:0">
+        (gol deocamdată — append aici pe măsură ce apar remedieri în același increment)
+      </p>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Autoturisme: vehicul cu MTMA → câmp blocat; creion → editează → Escape anulează.</li>
+        <li>Vehicul fără MTMA → câmp deschis, salvează → se blochează.</li>
+        <li>Harta: doar nr. auto cunoscut cu MTMA → tarif + plăcuță; fără MTMA pe flotă →
+          link „Completează în Autoturisme”.</li>
+        <li>Nr. auto inexistent → „nu e în Autoturisme” + link Adaugă.</li>
+        <li>MTMA tastat pe hartă bate cifra din flotă.</li>
+        <li>Login / topbar: <strong>v1.5.1 - build 40</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.5.1 build 40 · deschis 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    append până la închidere · docs/ local only
+  </footer>
+
+</body>
+</html>

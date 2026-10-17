@@ -1,0 +1,83 @@
+Modelo do relatório Folha de coleta de paletes da rota 945
+Modelo do relatório Folha de coleta da rota 247
+Modelo do relatório de análise de nova roteirização 948
+Modelo do relatório Rota de recurso por dia 949
+Modelo do relatório Lista de paradas do recurso 951
+Modelo do relatório Utilização de recursos 953
+Modelo do relatório Exceções de rotas 954
+Modelo do relatório Métricas da rota 955
+Modelo do relatório Estatísticas de resumo da rota 956
+Modelo do relatório Variação da rota 957
+Modelo do relatório Resumo de seleção 958
+Modelo do relatório Anáise da sessão 959
+Modelo do relatório Resumo da sessão 960
+Modelo do relatório SKU por tipo de embalagem 961
+Modelo do relatório Folha de resumo de SKU 962
+Modelo do relatório Pesquisa com motorista de rota padrão 963
+Modelo do relatório Lista de paradas de rotas padrão 964
+Modelo do relatório Lista de paradas 965
+Modelo do relatório Folha de parada 966
+Modelo do relatório Cliente do território 967
+Modelo do relatório Lista de paradas no território 968
+Modelo do relatório Resumo de território 969
+Modelo do relatório Exceção da janela de atendimento 970
+Modelo do relatório Alterações da janela de atendimento 972
+Modelo do relatório Todos os carregamentos 974
+Modelo do relatório Resumo da semana 975
+Utilização de janelas
+Utilização de mapas e janelas no Roadnet Transportation Suite 977
+Utilização de janelas de listagem 978
+Utilização de janelas de manutenção 980
+Pesquisa no banco de dados 981
+Organização de janelas de listagem e de manutenção 982
+—— Q0 o
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Utilização do Gerenciador de pesquisa 987
+Mapas é o RouteNetra 993
+Configuração do mapa 994
+Menu Propriedades do mapa 995
+Ícones do mapa 1000
+Opções de navegação do mapa 1002
+Teclas de acesso do mapa 1003
+Localização de um cliente no mapa 1004
+Como trabalhar com pontos de referência 1007
+Edição da rede 1008
+Adição de segmentos de rua 1008
+Edição de segmentos de rua 1009
+(Como trabalhar com impasses 1011
+Editor de penalidades 1013
+Configuração de penaidades globais 1014
+Atualização por tipo de via 1016
+Avaliação da rede 1017
+Opções de menu
+Opções de menu 1019
+Opções de menu do módulo Manutenção 1019
+(Opções de menu do módulo Importação 1022
+(Opções de menu do Editor de planejamento do Territory Planner 1024
+(Opções de menu do Editor de roteirização do Roadnet 1027
+(Opções de menu do Editor de carregamentos do FleetLoader 1031
+(Opções de menu do Analista do MobileCast 1033
+Opções de menu do módulo Administração 1037
+(Opções de menu do módulo Relatórios 1038
+Histórico da rota
+Utilização do Histórico da rota. 1041
+Recuperação de informações do Histórico da rota 1043
+Exibições da rota 1045
+Exibições de parada 1071
+Tabelas de Histórico da rota 1081
+ERD (Diagramas de relacionamento de entidade) do Histórico da rota 1096
+ERD de exibições de parada 1096
+ERD de exibições da rota 1097
+ERD de tabelas do Histórico da rota 1098
+Glossário e índice
+Glossário. 1099
+Indice u3
+MIABOperaçõe ÇÃ
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+EEs———ccqqcqcqcccc
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.

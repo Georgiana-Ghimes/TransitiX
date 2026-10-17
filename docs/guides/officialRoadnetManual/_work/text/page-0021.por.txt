@@ -1,0 +1,88 @@
+Definição dos padrões da sessão de planejamento
+Utilizado com: Territory Planner
+A página Planejamento - Geral do menu Opções permite estabelecer os padrões que serão
+vtilizados ao criar sessões de planejamento para o Editor de planejamento. Para uma nova
+sessão de planejamento, selecione o método que deseja utilizar para calcular os tempos e
+distâncias de percurso, bem como o período de tempo coberto pela sessão de
+E “Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+planejamento. Estes itens podem ser alterados para uma sessão de planejamento
+individual, ao adicionar a sessão.
+A guia Sessões de planejamento contém itens padrão utilizados para sessões no
+“Editor de planejamento.
+Etapa 1: Clique nos circulos/caixas apropriados para selecionar as opções de Cálculo de
+tempo/distância.
+XY é um método de roteirização que utiliza uma linha direta para medir a
+distância entre dois pontos. Ele conta com modelos de distância e de tempo de
+percurso para curvas e voltas no percurso, bem como velocidades variáveis. Se
+comparado ao RouteNet, o método XY é mais rápido de usar, porém menos
+preciso.
+Usar barreiras pode ser selecionado somente quando o método XY estiver
+sendo usado. Esta opção explica as barreiras reais entre dois pontos, como um
+corpo de água, uma montanha, etc. As barreiras devem ser criadas no modo
+Barreira no mapa.
+RouteNet é um método de cálculo que utiliza mapas para replicar as condições
+Teais das vias, levando tudo em consideração, desde placas de Pare e semáforos
+até os limites de velocidade e alterações de percurso. Comparado ao método
+XY, o RouteNet demora um pouco mais para ser processado, mas é mais
+preciso.
+Nota: Utilizar o RouteNet pode causar uma demora significativa ao entrar no Editor de
+roteirização ou de planejamento, enquanto os tempos e distâncias são calculados.
+A duração desse atraso é baseada em diversos fatores, incluindo:
+* o número de clientes com pedidos
+Guia de operações E
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+* o número de depósitos
+* o número de ruas na área geográfica
+* o poder de processamento do computador
+Se você deseja evitar esta demora, utilize o SuperMatrix.
+SuperMatrix é um outro método de cálculo que utiliza a rede de vias para
+Teplicar as condições reais das vias, levando tudo em consideração, desde placas
+de Pare e semáforos até os limites de velocidade e alterações de percurso. É
+possível programar o SuperMatrix para que seja executado à noite, de forma que
+não seja necessário aguardar o cálculo dos tempos e distâncias de percurso 20
+entrar nos editores. Se estiver utilizando o SuperMatrix, é necessário especificar
+como você deseja que o Editor de planejamento trate os clientes que foram
+adicionados desde a última execução do SuperMatrix. Na área Atualização em
+tempo real, selecione se deseja usar o método XY ou o RouteNet para calcular
+s distâncias até esses clientes.
+O Horário de rush avançado utiliza caminhos e áreas de horário de rush para
+determinar as ruas reais que as rotas utilizarão. Se estiver utilizando os recursos
+de horário de rush avançado, ainda é possível usar áreas simples, além das áreas
+e trajetos avançados. Se você deseja impor restrições de percurso ou alterar a
+mão da rua durante um período de horário de rush, é necessário marcar Horário
+de rush avançado. O uso de horário de rush avançado pode exigir tempo
+adicional ao iniciar o Editor de planejamento.
+Nota: Utilizar o horário de rush avançado pode causar uma demora significativa ao entrar
+no Editor de roteirização ou de planejamento, enquanto os tempos e distâncias são
+calculados. Esta demora é adicional à causada pelo uso do RouteNet. À duração
+desse atraso é baseada em diversos fatores, incluindo:
+* o número de períodos de horário de rush no modelo
+* se houve criação de restrições de equipamento para os períodos
+* o número de áreas e caminhos de horário de rush no modelo
+Horário de rush permite escolher um modelo para horário de rush para designar
+períodos nos quais ocorre atividade em horário de rush. Para selecionar um modelo
+para horário de rush, clique na seta Modelo para horário de rush; a janela Pesquisa
+- Modelo para horário de rush é exibida. Clique áuas vezes em um modelo para
+selecioná-lo ou clique no modelo e no ícone Processar. Se você estiver utilizando
+' RouteNet ou SuperMatrix e deseja utilizar recursos de horário de rush avançado,
+como, por exemplo, restrições de caminhos ou de percursos, marque Horário de
+mush avançado.
+Etapa 2: Insira um número entre 1 e 24 para indicar o número de Semanas do ciclo da
+sessão de planejamento. Ao determinar o número de semanas do ciclo,
+verifique se o ciclo é longo o suficiente para que cada extensão de cliente
+receba pelo menos uma entrega.
+Etapa 3: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+o “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Definição dos padrões de cliente
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+A página Cliente do menu Opções permite selecionar os padrões de tipo de tempo de
+atendimento, zona, estado, tipo de janela de atendimento, fator de janela de atendimento
+e limite de bulk dos novos clientes. Esses padrões são inseridos automaticamente com

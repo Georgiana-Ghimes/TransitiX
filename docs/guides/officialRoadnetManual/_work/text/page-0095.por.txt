@@ -1,0 +1,114 @@
+alcançado, o tempo de atendimento do cliente não será atualizado. À
+configuração padrão é 10 entregas.
+Semelhante ao Número mínimo de entregas aceitas, a Porcentagem min. de
+entregas aceitas específica a porcentagem minima de entregas que devem recair
+FT A ,, , ,,, , , ,y L LOOO — Roadhet Trareporiation Su
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+dentro da variação permitida para serem inseridas no cálcuto. Se a porcentagem
+minima de entregas não for alcançada, o tempo de atendimento do cliente não
+será atualizado. A configuração padrão é 50%.
+j) Dica: Quanto maior for o número de entregas usado, mais preciso será o cálculo. Se o
+número de entregas for pequeno demais, qualquer variação no histórico de tempo
+de atendimento terá um impacto maior, e poderá resultar em tempos menos
+precisos.
+Etapa 5: Insira as datas de início e término a serem consideradas na área Faixa de datas.
+Ao inserir informações de data, você pode digitar a data ou clicar na seta para
+exibir o calendário. Use as setas na parte superior da janela para rolar pelos
+meses , em seguida, clique em uma data para selecioná-la.
+Ferramentas — Atualizar tempos de atendimento — Por cliente/Por tipo de tempo de
+atendimento
+Após estabelecer os critérios de atualização, é possível imprimir um relatório de
+Manutenção do tempo de atendimento ou atualizar os tempos de atendimento. A UPS
+Logistics Technologies recomenda imprimir e verificar o relatório de Manutenção do
+tempo de atendimento antes de atualizar os tempos de atendimento.
+Relatório de manutenção do tempo de atendimento
+O recurso de Manutenção do tempo de atendimento do Roadnet permite atualizar os
+tempos de atendimento dos clientes com base no tempo concluído, se você estiver
+utilizando o MobileCast, ou em dados reais da rota inseridos manualmente do Roadnet.
+Ao executar o relatório Manutenção do tempo de atendimento, é possível visualizar
+exatamente como a Manutenção do tempo de atendimento atualizará os tempos de
+atendimento dos clientes. O relatório detalha que tempos dos clientes serão e não serão
+atualizados, com base nos critérios de atualização selecionados. Também será possível
+Vver os tempos de atendimento anterior e recém-calculado para cada cliente, e qual a
+porcentagem de alteração. Executar o relatório não atualiza os tempos de atendimento,
+mmas simplesmente mostra o que irá ocorrer quando a atualização for executada.
+Aviso: Não execute uma atualização do tempo de atendimento sem antes executar um
+Telatório. Após a atualização, os tempos de atendimento são alterados e não podem
+ser restaurados.
+Méif | Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+É pupa2: Clique no meno Ferramentas e selecione Atualizar tempos de atendimento, em
+— seguida selecione Por cliente ou Por tipo de tempo de atendimento. A janela
+Manutenção do tempo de atendimento é exibida.
+Etapa 3: Altere os critérios de atualização se necessário. Consutte Definição dos
+critérios de atualização para obter mais informações.
+Etapa 4: Na janela Manutenção do tempo de atendimento, clique no botão [Relatório]
+para gerar o relatório. Os tempos de atendimento são calculados - mas não
+atualizados - e a janela Relatório de manutenção de tempo de atendimento é
+Bmadeoperaçõães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Atualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+exibida. As informações no afto da janela do relatório detalham o número de
+páginas do relatório, bem como o número de entradas (clientes).
+O relatório lista o nome e D de cada cliente, os tempos de atendimento anterior
+e caleulado (novo), o porcentual de alteração no tempo de atendimento e as
+estatísticas de número de entregas aceitas e rejeitadas com base nos critérios
+atualizados. Consutte 2 tabela Dados do relatório de manutenção de tempo de
+atendimento para obter mais informações sobre os itens contidos no relatório.
+Dados do relatório de manutenção de tempo de atendimento
+“Coluna T Deserição
+Descrição 1D e nome do cliente
+Ajudante Tndica se foi usado um ajudante
+Status de atualização — Indica se o tempo de atendimento será atualizado
+(ACPT) ou não (RJCT) para este cliente
+Ant de espera Tempo de espera anterior do cliente
+Antdedescarga — — Tempodedescarga anterior do cliente
+Cale. de espera Tempo de espera computado usando o histórico de
+enteça
+Cale dedescarga — ) Tempode descarga computado usando o histórico
+de entrega
+Pore.alterada espera — Diferença de porcentagem entre o tempo de espera
+anterior e computado
+Porc. alterada Diferença de porcentagem entre o tempo de
+descarga descarga anterior e computado
+Entregas aceitas Nâmero fotal de entregas que recairam na faixa
+aceitável com base nas variações definidas
+Entregas rejeitadas — Número total de entregas que ficaram fora da faixa
+aceitável
+Porc.entregas usado — Entregas aceitas + número total de entregas do
+cliente
+Etapa 5: Você pode visualizar o relatório na tela, imprimi-lo ou exportar os dados em
+outro formato (arquivo de texto, Crystal Reports””, Excel*, Lotusº, etc.).
+& Para imprimir o relatório, clique no icone Imprimir. A janela Imprimir é
+exibida. Clique em [OK] para imprimir ou em [Cancelar] para abortar.
+a Para exportar os dados do relatório, clique no ícone Exportar. À janela
+Exportar é exibida. Selecione o formato e o destino dos dados e clique em [OK]
+para exportar ou [Cancelar] para abortar.
+Ferramentas — Atualizar tempos de atendimento — Por cliente/Por tipo de tempo de
+atendimento — [Relatório]
+FE F A o Roadhet Travporiafion Su
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+Atualização de tempos de atendimento
+A ferramenta Manutenção do tempo de atendimento permite atualizar os tempos de
+atendimento facilmente, com base nos dados reais. Você pode atualizar os tempos de
+atendimento de clientes individuais ou dos tipos de tempo de atendimento. Antes de
+atualizar os tempos de atendimento, você deve visualizar os dados reais no relatório ouno
+gráfico.
+AAviso: Não execute uma atualização de tempo de atendimento sem antes executar um
+Telatório. Após a atualização, os tempos de atendimento são alterados e não podem
+ser restaurados. Se após executar o Relatório de manutenção do tempo de
+atendimento você concordar com as atualizações dos tempos de atendimento,
+prossiga com a atualização do tempo de atendimento.
+MES! — Etapal: Clique no icone Manutenção para abrir o respectivo módulo.
+a Etapa ?: Clique no menu Ferramentas e selecione Atualizar tempos de atendimento, em
+— seguida selecione Por cliente ou Por tipo de tempo de atendimento. A janela
+Manutenção do tempo de atendimento é exibida.
+Etapa 3: Altere os critérios de atualização se necessário e execute um relatório para
+exibir os dados projetados. Consulte Definição dos critérios de atualização e
+Relatório de manutenção de tempo de atendimento para obter mais
+informações.
+Etapa 4: Na janela Manutenção do tempo de atendimento, clique no botão [Atualizar]

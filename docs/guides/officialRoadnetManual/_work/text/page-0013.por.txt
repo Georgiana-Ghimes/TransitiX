@@ -1,0 +1,93 @@
+/6 ustário possa exibir ou alterar grupos de relatórios, marque Can access report
+groups (Pode acessar grupos de relatórios). Os usuários que não tiverem
+permissão de acesso às opções de relatório ou 2os grupos de relatórios poderão
+utilizar as opções/grupos criados por outros usuários. Para exibir o
+miniaplicativo de exibição de relatórios no RIC, o usuário precisa receber este
+privilégio.
+Pode imprimir mapas — o usuário pode imprimir mapas no móduto
+Relatórios, no Editor de planejamento e de orientações do motorista. O usuário
+também deve ter acesso 2o módulo para imprimir mapas nele incluídos. Se ele
+não tíver acesso para imprimir mapas, qualquer relatório que inclua mapas não
+poderá ser impresso.
+Pode editar mapas — o usuário pode fazer alterações nas ruas e nos nós do
+mapa. Se esta opção não estiver selecionada, o usuário só poderá alterar as
+opções do mapa que afetem sua exibição.
+Pode acessar o Editor de roteirização — o usuário pode utilizar o Editor de
+Toteirização para criar, exibir e editar rotas. Para permitir que o usuário abra o
+menu Opções de simulação de roteirização e altere as opções utilizadas para
+criar as rotas, marque Can change Routing Pass Options (Pode alterar opções de
+simulação de roteirização). Para que o usuário possa enviar as rotas do Editor
+de roteirização para o MobileCast, marque a opção Pode atualizar o
+MobileCast.
+Pode acessar o Editor de planejamento — o usuário pode utilizar o Editor de
+Planejamento para criar, exibir e editar territórios e rotas.
+Para que o usuário possa abrir o menu Opções de criação de territórios e/ou
+Opções de atribuição de dias, marque Can change Make Territory/Assign Days
+Options (Pode alterar opções de criação de territórios/atribuição de dias).
+Para que o usuário possa enviar as rotas do Editor de planejamento para o
+MobileCast, marque 2 opção Pode atualizar o MobileCast.
+Para permitir que o usuário utilize o Depot Planner, marque 2 opção Can access
+Depot Planner (Pode acessar o Depot Planner).
+Pode acessar o Editor de carregamentos — o usuário pode utilizar o Editor
+de carregamentos para carregar, exibir e editar veículos. Para permitir que o
+usuário abra o menu Opções de carregamento, marque Can change Loading
+Options (Pode alterar as opções de carregamento).
+Pode exibir rotas de outro analista— o usuário pode exibir informações de
+Tota de outro analista de uma região. Esta permissão deve estar ativada para que
+0 analista possa acessar outras rotas além de suas próprias em uma região. Se
+esta opção não estiver selecionada, os analistas só conseguirão ver as rotas
+atribuídas a eles.
+Pode acessar o Analista — o usuário pode utilizar o módulo Analista para
+monitorar rotas no decorrer do dia.
+Guia de operações n”
+€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com privilégios
+Para permitir que o usuário ressequencie as rotas ou faça outras alterações nelas,
+marque 2 opção Pode fazer alterações. Para que o usuário possa desativar a rota
+no disposítivo sem fio, marque a opção Pode desativar a comunicação sem fio.
+Para permitir que o usuário faça alterações nas informações financeiras de um
+pedido, marque a opção Pode editar detalhes financeiros do pedido.
+Para que o usuário possa adicionar novos itens contábeis da rota, marque a
+opção Pode inserir itens contábeis.
+Para que o usuário trabalhe com cargas, é preciso selecionar a opção User is a
+oad user (O usuário é um usuário de carregamento) ou User is 2 1oad admin (O
+usuário é um administrador de carregamento). Consulte Direitos do usuário em
+(Como trabalhar com cargas para obter mais informações sobre como utilizar
+essas opções.
+Pode executar contabilidade — o usuário poderá acessar o módulo
+Contabilidade, bem como acessar tipos de monitoramento e a página Expedir -
+Contabilidade do menu Opções de manutenção, se tíver acesso ao módulo
+Manutenção. Se o usuário tiver acesso ao Analista, a contabilidade das rotas
+desse módulo também poderá ser feita.
+Pode gerenciar rotas estáticas — o usuário pode acessar o módulo Rotas
+estáticas, bem como criar rotas estáticas no módulo Analista, se tíver acesso a
+esse módulo,
+Pode acessar o RIC (Roadnet Information Center) — o usuário pode acessar
+o RIC. Selecione os miniaplicativos específicos do RIC que o usuário pode
+acessar.
+Can access Day Commander (Pode acessar o Day Commander) — o usuário
+pode acessar o módulo Day Commander do eRoadnet para avaliar as rotas do
+dia. Para permitir que o usuário faça alterações no Day Commander, marque a
+opção Pode fazer alterações.
+Can access Cost Analyzer (Pode acessar o Cost Analyzer) — o usuário pode
+acessar o móduto Cost Analyzer do eRpadnet para analisar os custos associados
+205 negócios.
+Notas: Nem todas as permissões podem estar disponíveis; a disponibilidade depende das
+partes adquiridas do Roadnet Transportation Suite.
+Se você selecionar Pode acessar o RIC (Roadnet Information Center) como uma
+das permissões, talvez seja conveniente definir as opções do RIC de maneira 2
+permitir que o usuário adicione novos usuários do RIC. Consulte Definição das
+opções do módulo Administração para obter mais informações.
+Etapa 6: Clique no ícone Salvar ou pressione [Ctri]+[S] para salvar o privilégio.
+Etapa 7: Repita as etapas 4 a 6 para adicionar outros privilégios.
+Etapa 8: Quando terminar de adicionar privilégios, clique na caixa Fechar para fechar a
+Jjanela Add Privilege (Adicionar privilégio).
+" “Roadhet Transportation Suite
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com privilégios
+Ícone Administração — Cadastros — Privilégios —ícone Adicionar ([Insert]) >
+icone Salvar ([CtrI]+[S]).
+Os privilégios existentes podem ser editados ou excluídos, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.

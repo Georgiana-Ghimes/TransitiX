@@ -1,0 +1,76 @@
+ET eeee—— PP
+Faadopaçõãoo M s TAA A
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+(Como trabalhar com pesquisas
+Etapa 2: Na área Perguntas disponíveis, selecione as perguntas que deseja adicionar à
+pesquisa. Arraste as perguntas selecionadas da área Perguntas disponíveis para
+a área Perguntas da pesquisa. Quando perguntado se as perguntas requerem
+Tespostas, selecione [Sim] ou [Não]
+Notas: Se você defínir que uma pergunta é necessária, o motorista não poderá passar para
+outra pergunta sem respondê-la
+Se desejar alterar a necessidade de uma pergunta, clique na coluna Necessária? na
+área Perguntas da pesquisa
+Etapa 3: Confirme se as perguntas estão listadas na ordem em que você deseja que
+apareçam no disposítivo sem fio. Para mover uma pergunta para uma posição
+diferente na oráem, clique na pergunta e arraste-a para a posição desejada.
+MET E , , ,,, ,: LL Foadat Tranporifon Sãe.
+( Copyright 2006 United Parcel Service f Aerica nc
+Todos os diveitos reservados
+(Como trabalhar com mensagens de texto gravadas
+Como trabalhar com mensagens de texto gravadas
+Utilizado com: MobileCast
+Se você estiver utilizando comunicações sem fio, é possível configurar para que as
+mensagens de texto gravadas sejam enviadas e recebidas no dispositivo móvel do
+motorista Por exemplo, no caso de um engarrafamento no tráfego ou de qualquer outra
+situação, o motorista pode selecionar uma mensagem rapidamente em uma lista para
+enviar ao analista, em vez de digitar a mensagem. De um modo semelhante, o analista
+pode escolher uma mensagem em uma lista para enviar ao motorista, a qualquer
+momento.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo,
+—— — Etapa2: Clique no menu Cadastros, selecione Expedir e Mensagens de texto gravadas.
+A janela Mensagens de texto gravadas é exibida, listando as mensagens
+existentes.
+* E Nota: Para ver uma lista atualizada de mensagens de texto gravadas, clique no ícone
+“Atualizar; a janela será atualizada com todas as informações alteradas do banco de
+EJ dados.
+3 Etapa3: Najanela Mensagens de texto gravadas, clique no ícone Adicionar ou
+<) pressione a tecla [Insert]. À janela Mensagens de texto gravadas é exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. À janela
+AAdicionar mensagem de texto gravada é exibida com algumas informações já
+Preenchidas; altere as informações necessárias na nova mensagem de texto
+eravada.
+[G| Etapa 4: Insiraaté 255 caracteres para a mensagem que o motorista verá. Tente manter a
+" mensasem o mais concisa possível. O motorista ou o analista pode adicionar
+" texto à mensagem antes de enviá-la, se necessário.
+Etapa 5: Clique no ícone Salvar ou pressione [Ctrl]-[S] para salvar as informações,
+Etapa 6: Quando tiver terminado de adicionar as mensagens de texto gravadas,
+pressione a caixa Fechar para fechar a janela Adicionar mensagem de texto
+eravada.
+f NE A S E A A A
+Adicionar ([Insert]) —icone Salvar ([Ctri]*+[S])
+As mensagens de texto gravadas existentes podem ser editadas ou excluídas, conforme
+mecessário. Consutte Edição de itens e Exclusão de itens para obter mais informações,
+Fadopeação M s AAA R
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+(Como trabalhar com tipos de container
+Como trabalhar com tipos de container
+Utilizado com: MobileCast
+|O MobileCast oferece a capacidade de usar containers como forma de monitorar os
+pedidos associados às rotas. Para ajudar a organizar os containers, é possível configurar
+diferentes tipos de container, cada um com um custo a ele associado. Por exemplo, é
+possível configurar tipos de container de acordo com o material, como transportadores,
+paletes, sacolas, etc.. ou de acordo com o tamanho. Cada tipo de container que você cria
+é disponibilizado para todas as suas regiões.
+Dica: Diferente dos outros itens do módulo Manutenção, é possível adicionar containers
+sem adicionar tipos de containers,
+M Etapa 1: Clique no ícone Manutenção para abrir o módulo Manutenção
+Wun — Etapa 2: Clique no menu Cadastros, selecione Expedir e Tipos de container À janela
+Tipo de container é exibida, listando os tipos de container existentes.
+& — NoasO mem refieião alias de conteiner inserido na página Alizses do menu Opções
+Portanto, o menu poderá exibir algo diferente de “container”.
+Para ver uma lista atualizada de tipos de container, clique no ícone Atualizar; a
+” janela será atualizada com todas as informações alteradas do banco de dados.
+RAA AAA AAAA

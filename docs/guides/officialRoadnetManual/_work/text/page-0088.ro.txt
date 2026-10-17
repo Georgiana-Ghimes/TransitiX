@@ -1,0 +1,87 @@
+NN ctapa s; Faceți clic pe prima pictogramă și apăsați [uifTL >) pentru a ieși din animații.
+Fișier > pictograma Hartă Editare sector Anulare/Ieși din modul Adăugare — Setări implicite pentru sector
+— Editare — Pictograma Salvare ((Ctr/*+[S])
+Schimbarea standardelor din industrie
+Este posibil să se stabilească un standard industrial ca standard care este deschis automat
+când intri în modul sector pe hartă. Cu toate acestea, dacă doriți să lucrați cu un
+standard industrial diferit, va trebui să schimbați această parolă.
+! Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+WWm — Pasul ?2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+EM | Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+” adăugare lângă indicator, pentru a indica modul Adăugare sector.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Anulare/Ieșire din modul Hartă.
+adăugare în meniul care va fi afișat, pentru a ieși din modul Adăugare sector (the
+implicit)
+TT AA o Roadhet Travporiafion Sudte
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrezi cu sectoare
+Pasul 5: Faceți clic dreapta pe hartă și selectați Standarde industriale din meniul care apare.
+va fi afișat. Apare fereastra Standard industrial.
+Faceți clic dreapta pe
+mouse în standardul industrial
+pentru care vrei
+proiectarea unui sector este o alegere
+Schimbați standardul industriei.
+Pasul 6: pentru a trece la un alt standard industrial decât cel afișat în prezent,
+Faceți clic dreapta pe standard și selectați Schimbați standardul sectorului în
+meniul care va fi afișat. Standardul industriei selectat va fi afișat pe hartă.
+Fișier > Hartă — pictograma Editare sector > Anulare/Ieșire din modul Adăugare — Setări implicite ale industriei
+sectoare — Modificați implicit sectorul
+Excluderea standardelor industriale
+Dacă există un standard industrial pe care nu îl mai utilizați, îl puteți șterge. Înainte de a șterge
+modelul sectorului, asigurați-vă că nu aveți nevoie de sectoarele conținute în model.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+It) — Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+- adăugare lângă indicator, pentru a indica modul Adăugare sector.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Anulare/Ieșire din modul Hartă.
+adăugare în meniul care va fi afișat, pentru a ieși din modul Adăugare sector (the
+implicit)
+Pasul 5: Faceți clic dreapta pe hartă și selectați Standarde industriale din meniul care apare.
+va fi afișat. Apare fereastra Standard industrial.
+Pasul 6: În fereastra Standard industrial, faceți clic dreapta pe standardul industrial respectiv
+doriți să ștergeți.
+EW| Pasul 7: Selectați Ștergere din meniul care apare. De asemenea, puteți șterge
+' modele de industrie selectând modelul de industrie pe care doriți să-l ștergeți și
+făcând clic pe pictograma Ștergere.
+Pasul 8: Faceți clic pe [OK] pentru a confirma ștergerea.
+Fișier > Hartă — pictograma Editare sector > Anulare/Ieșire din modul Adăugare — Setări implicite pentru sector
+sectoare — Șterge ([Șterge]) > [OK]
+Adăugarea de sectoare
+După adăugarea unui standard industrial, puteți defini orice număr de sectoare
+individual pentru acest tipar. De asemenea, puteți adăuga mai multe sectoare la modele
+Şi
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+Cum să lucrezi cu sectoare
+existente. Sectoarele se pot adapta oricărei zone geografice dorite, urmați
+drumuri, limite ale corpurilor de apă, coduri poștale etc.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+adăugare de lângă indicator pentru a indica modul Adăugare sector. Standardul de
+Sectoarele implicite vor fi afișate pe hartă.
+Notă: Dacă doriți să adăugați un sector la un model de sector care nu este
+afișat implicit, treceți la standardul industrial corespunzător.
+Pasul 4: Faceți clic unde doriți să înceapă sectorul. Apare un nod, care marchează
+punctul de plecare al sectorului.
+Pasul 5: Faceți clic unde doriți să se rotească sectorul. Un alt nod este afișat în acest moment, cu a
+linie care leagă cele două puncte. Această linie este limita sectorului. Continuă
+dând clic până când sunteți gata să închideți sectorul.
+Notă: Nu este necesar să închideți sectorul la crearea acestuia. Când selectați Completează sectorul curent în
+meniul derulant, Roadnet va închide automat sectorul pentru dvs.
+Pasul 6: Faceți clic dreapta pe hartă și selectați Salvare sector curent din meniul care apare.
+va fi afișat. Apare fereastra Atribute sectorului. Introduceți informațiile
+necesar și faceți clic pe [ K. Consultați Editarea atributelor industriei pentru
+obține mai multe informații.
+(ã) Sfat: Dacă credeți că două sectoare din apropiere au o limită comună, desenați
+un sector mai mare care acoperă întreaga zonă a celor două sectoare, apoi împărțiți
+sector. Pentru mai multe informații, consultați Defalcarea sectorului,
+Pasul 7: Pentru a salva sectoarele și a ieși din modul de adăugare, faceți clic dreapta pe
+harta și selectați Anulare/Ieși din modul adăugare. Apoi faceți clic
+din nou și selectați Salvare/Ieșire din meniul care apare,
+Fișier > Hartă — Editare pictogramă sector — Terminare sector curent — Salvare sector curent
+Cancel/Exit Add Mode — Salvare/Ieșire
+Diviziunea sectoarelor
+Sectoarele existente pot fi împărțite pentru a crea două sau mai multe sectoare noi. La

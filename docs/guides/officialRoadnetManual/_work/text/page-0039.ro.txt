@@ -1,0 +1,95 @@
+imaginea este specificată aici, imaginea implicită va fi utilizată în editor.
+Notă LS: imaginea trebuie să fie un fișier .omp de 28x28 pixeli și 256 de culori sau mai puțin.
+Pasul 7: În zona Proprietăți tip ambalaj, introduceți 2 înălțime, lățime și
+adâncimea tipului. Introduceți greutatea tipului în lire sau kilograme.
+Pasul 8: Dacă utilizați echivalențe pentru a lega diferite tipuri de
+ambalare între ele, introduceți în câmp factorul de echivalență corespunzător
+Echivalența.
+BT A , , ,, ,,;,; FFF Roadhet Traporiation Suh
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de ambalaje
+Sfat: Puteți utiliza echivalențe pentru a egala condițiile de joc între diferite tipuri de
+ambalarea sau calcularea timpului de service, capacitatea sau costul. De exemplu,
+Dacă un palet ocupă de șase ori mai mult spațiu decât o cutie în vehicul, introduceți
+echivalenta 1 pentru cutie si 6 pentru palet. Deci, când Editorul
+rutarea determină cât de mult produs poate fi încărcat în vehicul,
+Se va lua în considerare diferențele de dimensiune.
+Pentru a introduce detalii despre
+„straturi, faceți dublu clic pe
+metoda de stratificare. Introduceți
+informații în fereastra Editare
+detalii ale straturilor care este
+Informațiile afișate nu sunt
+savas pana la tipul de
+ambalajul este salvat.
+Important: Dimensiunile trebuie introduse cu aceeași unitate de măsură ca
+dimensiunile tipului de compartiment. De exemplu, ambele tipuri trebuie
+vsar inci sau picioare sau centimetri. Când echipamentul este încărcat,
+aceste dimensiuni vor fi folosite pentru a calcula volumul fiecărui SKU.
+Pasul 9: În zona Detalii strat, introduceți Cantitatea pe strat și straturi
+pe palet pentru fiecare metodă de stratificare a paletului. Pentru a introduce acestea
+informații, faceți clic de două ori pe metoda stratului și introduceți informațiile
+Va apărea o fereastră Editați detaliile stratului. Faceți clic pe butonul [OK].
+pentru a salva informațiile straturilor de metodă. Această informație este
+obligatoriu numai atunci când utilizați FleetLoader și încărcați vehicule în vrac; în aceasta
+În acest caz, câmpurile sunt obligatorii.
+Cantitate per strat — cantitatea de tip necesară pentru a crea a
+strat complet de paleți.
+Straturi pe palet — numărul de straturi de acest tip care poate fi
+stivuite pe un palet.
+EE:
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de ambalaje
+Notă: Trebuie să creați metode de strat de paleți pentru a le popula
+informaţii.
+Pasul 10: Definirea cantității fiecărui tip de ambalaj care se încadrează în tipul de
+compartiment, faceți clic pe butonul [Capabilități]. În fereastra Întreținere
+este afișată capacitatea tipului de recipient.
+Notă: Tipurile de compartimente trebuie adăugate pentru a intra în
+capabilități de tip compartiment.
+Pentru ca capacitățile să fie calculate automat, introduceți
+procentul din compartimentul de umplut și faceți clic pe butonul [Calculate].
+Faceți clic pe butonul [OK] pentru a accepta capacitățile calculate.
+În această fereastră puteți
+specificați câte tipuri
+a unui pachet
+specifice se vor încadra în
+compartimente de
+vehicul. De asemenea, puteți
+cere sistemului să
+calculați capacitatea
+pentru tine, dar trebuie
+introduceți dimensiunile de
+tipurile tale de
+compartiment și
+Pentru a introduce manual capabilități, faceți clic pe ID-ul tipului de capabilități.
+compartiment pentru a-l selecta și a introduce numărul maxim de acel tip de
+ambalaj care se potrivește tipului de compartiment. Faceți clic pe butonul [Actualizare].
+Continuați până când ați terminat de introdus toate capacitățile. Faceți clic pe butonul [OK],
+Aceste informații vor fi utilizate numai dacă utilizați FleetLoader
+pentru a vehiculelor cu compartimentul de încărcare.
+AVERTISMENT: Făcând clic pe butonul [Calculate], orice capacitate existentă va fi
+înlocuit cu capacitatea calculată.
+Zx, Sfat: Pentru a preveni încărcarea unui anumit tip de ambalaj într-un anumit tip de ambalaj
+compartiment, modificați capacitatea acestuia la 0. Compartimentele de acest tip vor fi
+ignorat la încărcarea tipului de ambalaj.
+Pasul 11: Faceți clic pe butonul [OK]. Apoi faceți clic pe pictograma Salvare sau apăsați
+x [Cti]+[S] pentru a salva noul tip de ambalaj.
+Și , ,, ,,, ,,;, A Roadhet Traporiation Suh
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de ambalaje
+Pasul 12: Repetați pașii de la 4 la 11 pentru a adăuga orice alte tipuri de ambalare.
+Pasul 13: Când ați terminat de adăugat tipuri de ambalaje, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugare tip de ambalare.
+Pictograma întreținere — Înregistrări — Produs — Tip ambalaj -> Adăugați pictograma
+(Mnsert]) — Pictograma Salvare ([Ctri/+[S])
+Tipurile de pachete existente pot fi editate sau șterse după cum este necesar.
+Pentru mai multe informații, combinați editarea articolului și ștergerea articolului.
+Important: Ștergerea unui tip de ambalaj afectează alte articole de întreținere.
+Înainte de a șterge un tip de ambalaj, trebuie să:
+* excludeți SKU-urile cu acest tip de ambalaj.
+* verifica acuratetea capacitatilor tipurilor de compartimente.
+* verificați acuratețea restricțiilor echipamentelor.

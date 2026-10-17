@@ -1,0 +1,94 @@
+madeaperaçães o TÊ
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Etapa 1: No menu Cliente, clique na guia Extensão de cliente.
+Pa ssc E sic = Eac0e sua s uvue e aa o vane ee sscraato
+o adicionar informações de extensão do cliente, é possível selecionar as sessões de
+“Planejamento às quais deseja adicioná-la.
+Etapa 2: Remova a seleção da caixa Não usar extensão com este cliente.
+. Nota: Ao editar informações de extensão de cliente, verifique se a sessão atual é a sessão
+que deseja alterar. Caso contrário, mude a sessão atual para aquela que deseja
+alterar.
+Etapa 3: Selecione o Território e o Conjunto de padrões de atendimento para ser
+atribuído à extensão de cliente. Para abrir uma lista de territórios/conjuntos de
+padrões de atendimento, clique na seta apropriada e, em seguida, clique em
+uma entrada para selecioná-la. Se o território ao qual deseja atribuir a extensão
+não existir, insira o nome no campo.
+Etapa 4: Insira a quantidade total do cíclo nos campos de tamanho apropriados. Os
+nomes dos campos de tamanho refletem os aliases inseridos no menu Opções.
+ME T A A A A E Foadet Transporiation Sufe
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+AAs informações de Tamanho 1 são necessárias, os tamanhos restantes são
+opcionais.
+Etapa 5: Escolha as sessões de planejamento às quais deseja que as informações de
+extensão sejam adicionadas. Elas serão automaticamente adicionadas à Sessão
+exibida. Para adicioná-las a outras sessões, clique nelas na área Sessões a
+serem modificadas.
+Etapa 6: Para atribuir a extensão de cliente a um território nas sessões de planejamento
+selecionadas. Clique na seta Território e selecione o território ao qual deseja
+atribuir a extensão. Se o território não estiver listado, digite-o no campo; ele
+será adicionado automaticamente.
+Etapa 7: Se a extensão deve usar um tipo de tempo de atendimento diferente nas sessões
+de planejamento selecionadas, clique na seta Tipo de tempo de atend. para
+abrir a janela Pesquisa - Tipo de tempo de atendimento. Clique duas vezes no
+tipo que deseja que a extensão utilize na sessão de planejamento. Se nenhum
+tipo de tempo de atendimento for selecionado, o tempo de atendimento
+associado ao cliente será usado na sessão de planejamento.
+Etapa 8: Insira qualquer informação anterior que deva ser incluída com a extensão.
+Etapa 9: Insira o número de dias que a extensão deverá ser movida quando o Retroceder
+um dia for executado, na área Retroceder um dia.
+Nota: Retroceder um dia é uma ferramenta do Territory Planner que permite retroceder
+facilmente os dias de entrega de um grupo de extensões de cliente por um período
+de tempo especificado. Isto pode ser muito útil para fazer com que os motoristas da
+rota passem nas paradas após os vcndedores.
+Etapa 10: Para evitar que os dias de entrega da extensão do cliente se movam além de
+"um determinado número de dias, marque Selecionar intervalo de dias. Na
+caixa, digite o número máximo de dias a partir de Dias anteriores em que a
+extensão do cliente pode receber suas entregas quando uma nova rota for
+criada. Por exemplo, se o Dia anterior de uma extensão do cliente for quarta-
+feira e você digitar 1, a extensão do cliente poderá ser programada para
+rTeceber sua entrega na terça, quarta ou quinta-feira, quando a nova rota for
+criada (desde que esses dias sejam permitidos pelo conjunto de padrões de
+atendimento). Se você digitar 0, a extensão do cliente deverá ser programada
+para entrega na quarta-feira. Para permitir o envolvimento de dias que não
+são de entrega no intervalo de dias de entrega permitida, marque Permitir
+. embrulho.
+Nota: Se a opção Qualquer dia for selecionada, não será usada nenhuma ancoragem de
+dias. Isto permitirá que a extensão de cliente tenha entregas programadas em
+qualquer dia permitido por seu conjunto de padrões de atendimento, quando
+ocorrer uma nova roteirização.
+Etapa 11: Para evitar que as semanas de entrega da extensão do cliente se movam além
+de um determinado número de semanas, marque Selecionar intervalo de
+semanas. Na caixa, digite o número máximo de semanas a partir de Semanas
+Guiadeoperaçães o 78
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+anteriores em que a extensão do cliente pode receber suas entregas quando
+uma nova rota for criada. Por exemplo, se a Semana anterior da extensão do
+cliente for a semana 7 de um ciclo de entregas de $ semanas e você digitar 1,
+a extensão do cliente poderá ser programada para receber sua entrega na
+semana 6, 7 ou 8, quando uma nova rota for criada (desde que essas semanas
+sejam permitidas pelo conjunto de padrões de atendimento). Se você digitar
+0, a extensão do cliente deverá ser programada para entrega na semana 7.
+Para permitir que o intervalo de semanas de entrega permitida continue da
+primeira à última semana do ciclo, marque Permitir embrulho.
+Nota: Se a opção Qualquer semana for selecionada, não será usada nenhuma ancoragem
+de semanas. Isto permitirá que a extensão de cliente tenha entregas programadas
+em qualquer semana permitida por seu conjunto de padrões de atendimento,
+quando ocorrer uma nova roteirização.
+Etapa 12: Para que a extensão de cliente seja roteirizada quando a função Atribuir dias
+for executada, selecione Considerar para Atribuir dias. Se esta opção não for
+selecionada, a extensão não será roteirizada automaticamente. Será
+necessário roteirizá-la manualmente.
+Etapa 13: Insira as informações de campo definido pelo usuário para a extensão. Para
+digitar as informações, clique no campo na lista; o cabeçalho do campo
+definido pelo usuário aparece acima do campo de entrada à direita. Insira o
+texto do campo definido pelo usuário e clique no botão [Definir valor].
+L Nota: Oscabeçalhos dos campos definidos pelo usuário estabelscidos na janela Campos
+definidos pelo usuário serão refletidos aqui.
+M Etapa14: Cliqueno ícone Salvar ou pressione [Ctr1]-[S] para salvar o cliente, ou clique
+em outra guia para inserir informações adicionais sobre o cliente.

@@ -1,0 +1,73 @@
+TMT A E o Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com motoristas
+Como trabalhar com motoristas
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os motoristas são os funcionários monitorados diariamente por meio do Roadnet
+Transportation Suíte. Você pode especificar como cada motorista é pago; estas
+informações de pagamento serão usadas para ajudar a determinar o custo total de uma
+rota. Ao adicionar um motorista, você também pode atribuir o equipamento que ele
+normalmente usa, especificar datas para exames físicos e testes de árogas e inserir as
+informações da carteira de habilitação para o monitoramento do Transportation Suite.
+Você pode adicionar motoristas somente depois que eles tiverem sido inseridos como.
+funcionários. Você pode adicionar os motoristas individualmente ou importá-los;
+consulte Importação de itens de manutenção para obter mais informações sobre como
+importar motoristas.
+. Notas: Se não recebeu permissão para visualizar informações confidenciais dos
+motoristas no módulo Administração, você não poderá visualizar ou inserir as
+informações de pagamento, de carteira de habilitação, data do último exame físico
+e do último teste de drogas dos motoristas.
+Se o motorista foi criado em outra região, não será possível fazer qualquer
+alteração nas informações do motorista
+EN | Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo
+úm — Etapa?2: Clique no menu Cadastros, selecione Funcionários e, em seguida, Motoristas.
+.A janela Motoristas se abre com uma lista de todos os motoristas atuais.
+EW Nota:Paraveruma lista atualizada de motoristas, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+FG Etapa3: Najanela Motoristas, clique no ícone Adicionar ou pressione [Insert]. À janela
+— “Adicionar motorista é exibida.
+() Dica: Paraadicionarnma entrada semelhamte a outra existente, clue com o bofão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+[E| Etapa 4: Clique na seta ID para abrir a janela Pesquisa - Funcionários. Clique duas
+vezes no funcionário correto na lista para inserir esse funcionário no campo D,
+u clique uma vez e, em seguida, clique no ícone Processar. À ID deve ser
+inserida; as outras informações são opcionais. Este equipamento pode ser
+automaticamente atribuído 2 uma rota com o motorista no Editor de
+s Toteirização, se desejado.
+Etapa 5: Clique na seta Equipamento para abrir 2 janela Pesquisa - Equipamento.
+Utilize o recurso Pesquisar para localizar o equipamento desejado. Quando o
+equipamento for exibido na lista, clique duas vezes para selecioná-lo ou clique
+em um item de equipamento e, em seguida, no ícone Processar. O equipamento
+ª pode ser atribuído automaticamente à rota do motorista, utilizando a
+“Atribuição rápida no Editor de roteirização.
+Bmadeoperaçõães A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+(Como trabalhar com motoristas
+Etapa 6: Clique na seta Depósito para abrir a janela Pesquisa - Depósito. Clique duas
+vezes no depósito correto para inseri-lo nos campos Depósito, ou clique uma
+vez e, em seguida, clique no icone Processar.
+Etapa 7: Insira o ID da rota normalmente percorrida pelo motorista, se apropriado. A ID
+da rota pode ser atribuída automaticamente à rota, utilizando a Atribuição
+Tápida para atribuir um motorista no Editor de roteirização.
+Etapa 8: Se estiver utilizando o MobileCast, clique na seta Tipo e selecione o tipo de
+motorista.
+Etapa 9: Preencha as informações de carteira de habilitação, DT e médicas, conforme
+necessário.
+o inserir informações de data, clique n seta para exibir o calendário. Use os
+ícones de rolagem no alto da janela do calendário para percorrer os meses.
+Clique em uma data para selecioná-la
+EEA Pa SAe
+pagamento de um
+motorista de diferentes
+maneiras, como por hora,
+“por parada ou por
+quantidade enregue.
+Essas informações são
+utilizadas quando o custo
+da rota é calculado.
+Mmnsi cos — —
+ecocces Em s

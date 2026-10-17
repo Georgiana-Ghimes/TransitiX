@@ -1,0 +1,90 @@
+(Como trabalhar com equipamentos
+Como trabalhar com equipamentos
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Equipamentos geraimente refere-se aos veículos utilizados para entregar produtos;
+entretanto, um item de equipamento pode ser qualquer item utilizado em uma entrega.
+Para que o equipamento possa ser adicionado, os tipos de equipamento devem ser
+adicionados. Você pode adicionar os tipos de equipamento individualmente ou importá-
+los; consulte Importação de itens de manutenção para obter mais informações sobre como
+importar tipos de equipamento.
+[) Etapa 1: Clique no ícone Manvtenção para abrir o respectivo módulo
+w — Etapa2: Cliquenomenu Cadastros, selecione Equipamento e, em seguida,
+Equipamento. A lista atual dos tipos de equipamento não será exibida. Isto faz
+0 sistema funcionar mais rápido do que se a lista completa fosse carregada
+todas as vezes. Para ver a lista atual de tipos de equipamento ou apenas tipos
+” específicos de equipamento, utilize o recurso Pesquisar.
+Notas: Para ver uma lista atualizada de equipamentos, clique no ícone Atualizar; a janela
+será atualizada com as informações mais recentes do banco de dados,
+|s equipamentos exibidos em vermelho são compartilhados por outra região; é
+" possível atribuí-los às rotas e exibir suas informações, mas você não pode
+m modificar suas informações.
+2 Etapa3: Najanela Equipamento, clique no ícone Adicionar ou pressione [Insert]. À
+Q) janela Adicionar equipamento é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse n entrada existente e selecione Clonar no menu exibido. A janela
+TTAA AAA Roadrer Traporiafon SÃe
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com equipamentos
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+t
+E
+—— Fh
+ee DM p
+p
+) n
+- 4
+Você pode atribuir um motorista preferencial para esse veículo de porte
+médio, que pode ser atribuído à rota com o equipamento no Editor de
+Etapa 4: Insira até 20 caracteres para a ID do equipamento. Este campo deve ser
+preenchido.
+j Etapa 5: Insira até 255 caracteres na Descrição.
+É) Ftapa 6: Clique na seta ID do tipo de equipamento para abrir a janela Pesquisa - Tipo de
+equipamento. Clique duas vezes em um item para selecioná-lo ou clique no
+item e no ícone Processar. É necessário selecionar um tipo de equipamento.
+Etapa 7: Se você estiver utilizando o Roadnet, atribua um motorista de preferência e
+equipamento associado, se necessário. Clique na seta apropriada para abrir a
+. Jjanela Pesquisa. Clique duas vezes em um item para selecioná-lo ou clique no
+item e no ícone Processar. Ao selecionar equipamento associado, use o recurso
+Pesquisar para encontrar o equipamento procurado. Quando o equipamento for
+exibido na lista, clique duas vezes para selecioná-lo ou clique em um item de
+equipamento e, em seguida, no ícone Processar.
+Nota: Ao selecionar um motorista de preferência e atribuir em seguida um item de
+equipamento a uma rota no Editor de roteirização, o motorista de preferência pode
+ser atribuído automaticamente à rota (mas isso pode ser alterado).
+Etapa 8: Digite um status para o equipamento. Se você estiver utilizando o MobileCast,
+este campo deve ser preenchido.
+AA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com equipamentos
+Etapa 9: Digite a data em que o equipamento deve ser inspecionado no campo Data da
+inspeção.
+Etapa 10: Se o equipamento puder ser utilizado por qualquer outra região, selecione as
+regiões na caixa Compartilhado por regiões. Para selecionar mais de uma
+região, selecione a primeira região e, em seguida, pressione e mantenha
+pressionada a tecla [Ctrl] enquanto seleciona as outras.
+Etapa 11: Selecione um status de propriedade para o equipamento. Se o equipamento
+pertencer à região, selecione Dedicado. Se o equipamento for um substituto
+de outro equipamento, selecione Substituir. Se o equipamento for atugado,
+selecione Aluguel.
+Etapa 12: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar as informações
+sobre o equipamento.
+Se você estiver utilizando o FleetLoader, consuíte Restrições de equipamento
+e o FleetLoader.
+Se estiver utilizando o MobileCast, consulte Equipamento e o MobileCast.
+Etapa 13: Repita 2s etapas 4 a 11 para adicionar qualquer outro equipamento.
+mi — Etapa 14: Quando terminar de adicionar equipamentos, clique na caixa Fechar para
+fechar a janela Adicionar equipamento.
+Ícone Manutenção — Cadastros — Equipamento — Equipamento-> icone Adicionar
+(Mnsert]) — icone Salvar ([Ctri/+[S])
+Os equipamentos existentes podem ser editados ou excluídos, conforme necessário.
+Consuíte Edição de itens e Exclusão de itens para obter mais informações.
+Importante: A exclusão dos equipamentos afeta outros itens de manutenção. Antes de
+excluir um equipamento, é necessário editar ou excluir os motoristas de
+preferência deste equipamento.
+Restrições de equipamento e o FleetLoader
+Se você adquiriu o FleetLoader e deseja definir as restrições do equipamento (como o
+produto é carregado nos compartimentos) para um item de equipamento, clique em
+TEA TESRACIOS e o CrEAoA Eeo taa A AScar Se ÓBA D RRENSRAAO A

@@ -1,0 +1,108 @@
+T sURSATADA
+7 em insamer teus tonánanita [G
+Etapa 2: Escolha as configurações desejadas para lidar com opções de pedidos e/ou
+Telatórios. Consulte a tabela Opções de importação de pedidos para obter uma
+explicação das configurações.
+Etapa 3: Para salvar as configurações, clique em [OK] para retornar à janela Importar
+pedidos.
+Para sair da janela Opções de importação de pedidos sem salvar as
+configurações, clique na caixa Fechar.
+Importador >Importar —Pedidos — [Outras opções] > [OK]
+Opções de importação de pedidos
+Adicionar pedidos a — | Se você importar pedidos para um cliente mais de uma vez
+Totas prontas por sessão e o cliente já estiver em uma rota pronta, o novo
+pedido será adicionado 2o cliente na rota pronta em vez de
+ser criada uma nova parada no Editor de roteirização. Da
+mesma maneira, pode importar novas paradas para uma rota
+pronta.
+Nota: Se essa opção for escolhida, você deverá sempre
+verificar as alterações de qualquer rota pronta. Pedidos
+adicionais podem resultar em rotas que excedem 2.
+capacidade do equipamento ou as definições de tempo em
+rota.
+Alterar pedidos nas — | Se você importar pedidos para um cliente mais de uma vez
+Totas prontas or sessão e esse cliente já estiver em uma rota pronta, você
+poderá alterar o pedido n rota pronta.
+MET FFFA A A o Roadhat Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Importação diária de pedidos
+Configuração Descrição
+Alterar pedidos Se existirem pedidos inseridos manualmente, os pedidos
+inseridos oderão ser alterados, conforme necessário, desde que você
+manualmente tenha uma D de região correspondente, ma data de entrega,
+sessão, múmero de pedido, seletor, ID de cliente e tipo de
+cliente.
+Aplicar condensação | Agrupa dois ou mais clientes alocando uma ID de cliente
+de clientes para vários clientes, conforme configurado no módulo
+Manutenção.
+Tratarcampos de — | Sevocêimportar detalhes da SKU na importação do pedido
+SKU como ee se houver mais de uma ocorrência de uma SKU em uma
+comulativos Tegistro (linha), os campos da SKU serão totalizados. Se essa
+opção não for selecionada, a última ocorrência da SKU no
+Tegistro determinará o total dessa SKU.
+Tratar um seletor P” | Sealetra P” aparecer no campo seletor, o Editor de
+comoumacoleta — | roteirização incluirá o item na rota como uma coleta.
+| Usarequivalências — | Sevocêtiver configurado equivalências para os tipos de
+embalagem. escolha o alias de tamanho que contém a
+quantidade do pedido original como Origem e o alias de
+tamanho que conterá a quantidade equivalente (quantidade
+original * fator de equivalência) como Destino.
+Bloquear pedidos que | Ao usar a opção de agregar pedidos, qualquer pedido
+estão combinados com | importado combinado com um existente será bloqueado se o.
+pedidos bloqueados — | pedido existente estiver bloqueado. Se essa opção não for
+existentes selecionada, os pedidos importados combinados com
+pedidos existentes bloqueados não serão bloqueados.
+Imprimir Imprime automaticamente todos os relatórios de resumo.
+automaticamente os — | (pedidos inativos, pedidos com ID de cliente inválida e
+Telatórios resumidos — | pedidos de clientes em rotas prontas) na impressora padrão.
+maimpressora padrão | Se não for selecionado, os relatórios aparecerão em uma
+janela separada na tela para exibição. Então, você poderá
+imprimir os relatórios ou fechar a janela.
+Bmadaperaçães o A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os dirertos reservados
+Importação de informações de rotas diárias no MobileCast
+Importação de informações de rotas diárias no MobileCast
+Utilizado com: MobileCast
+Se você estiver utilizando o Roadnet ou o Territory Planner para criar rotas, terá de baixar
+as rotas do pacote de roteirização para o MobileCast executando uma importação diária.
+A importação diária baixará as rotas do dia, incluindo quantidades de entrega, atribuições
+de container (se disponível), qualquer intervalo, espera, pernoite ou depósito
+intermediário, pedidos não atendidos, cenários e outras informações necessárias. Rotas
+estáticas também podem ser importadas diariamente. Para obter mais informações,
+consulte Configuração dos layouts de arquivos de importação, Importação de atribuições
+de container ou Importação de rotas estáticas.
+. Notas: Se você estiver utilizando o Roadnet ou o Territory Planner para criar rotas, não
+precisará importá-las. Basta transferi-las do Editor de roteirização ou do Editor de
+Planejamento para o MobileCast. Consuíte Envio de rotas diárias ao MobileCast
+u Envio de rotas de planejamento ao MobileCast para obter mais informações.
+.Ao importar rotas estáticas ou conjuntos de rotas estáticas, consulte Importação
+de rotas estáticas.
+Para que as rotas possam ser importadas, todos os status e tipos devem ser
+inseridos no MobileCast. Se você importar informações de motoristas e
+equipamentos para as rotas, os motoristas e os equipamentos também deverão
+S ser inseridos.
+Todos as IDs de rota devem estar em letras maiúsculas para fins de importação.
+Etapa 1: Clique no ícone Importação para abrir o módulo Importação.
+Nota: Se você tiver várias regiões, verifique se a região apropriada é exibida na parte
+inferior da tela. Para alterar a região, basta clicar na seta e escolher outra na lista
+exibida. O cenário mostrado aqui não é usado durante essa importação.
+Etapa 2: Clique no menu Importar e selecione Expedir, Diariamente e Completo. A
+janela Importação diária é exibida.
+. Notas: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+importação. Consutte Altemância entre conjuntos de layouts para obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar layout e o nome do layout no menu suspenso.
+Consute Configuração de layouts de arquivo de importação para obter mais
+informações.
+Para visualizar um retatório que resuma as informações do layout, incluindo o
+nome e o local do arquivo de importação e as posições iniciais e o tamanho de
+cada campo, clique na seta [Layout do arquivo] e escolha Visualizar relatório e
+0 layout desejado no menu suspenso. A janela Visualizar relatório é exibida
+com o relatório. Nessa janela, você pode imprimir ou exportar o relatório. Se
+FE AAA AA A oadher TForEporiaton Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.

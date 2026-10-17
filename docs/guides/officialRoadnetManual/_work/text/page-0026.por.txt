@@ -1,0 +1,79 @@
+ssaeemii ul tss =
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+vtilizará nesta página. O nível de detalhe deve ser definido quando uma região é
+configurada inicialmente, e não deve ser alterado.
+— m—— . .R . >
+E T aaa te aam A RE MR eca T aa atihoo Rm aótica
+A página Expedir - Nível de detalhe será utilizada se você estíver monitorando
+Etapa 1: Na seção Suporte ao nível de detalhe, clique no circulo apropriado para
+selecionar um nível de detalhe. O nível de detalhe selecionado aqui determina
+|o niível que será monitorado por todo o MobileCast.
+Etapa 2: Se estiver utilizando containers, marque Usar containers. Se esta opção estiver
+marcada, você poderá associar containers aos pedidos no módulo Analista.
+. Nota: Se você estiver monitorando rotas no nível de parada, não será possível monitorar
+s containers, e as opções de Usar containers estarão desabilitadas.
+Etapa 3: Na seção Opções de container, clique nas caixas apropriadas para selecionar
+Suas opções de container.
+Usar ID do container como código de barras - marque para usar a ID do
+container como seu número de código de barras.
+Requer verificação de containers antes das partidas das rotas - marque para
+exigir que os motoristas rastreiem e verifiquem os containers antes que a
+viagem possa ser iniciada no dispositivo sem fio.
+Exigir verificação de containers a cada parada — marque para exigir que os
+motoristas rastreiem e verifiquem os containers em cada parada antes que possa
+partir da parada no disposítivo sem fio.
+Requer verificação de containers antes da conclusão da rota — marque para
+exigir que os motoristas rastreiem e verifiquem os containers antes que a rota
+possa ser concluída no dispositivo sem fio.
+FT A L L L Foadnet Transporiation Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Descarregamento de grupo — marque se o motorista puder fazer a entrega de
+várias paradas ao mesmo tempo. Isso pode ocorrer se as paradas estiverem
+localizadas em um prédio de escritórios ou um local semelhante onde o
+motorista estaciona para várias paradas. Se essa opção estiver selecionada, o
+motorista poderá escolher as paradas que serão entregues juntas. Digite a
+distância máxima entre as paradas no campo Agrupamento de tolerância de
+candidatos.
+Agrupamento de tolerância de candidatos — se a opção Descarregamento de
+Brupo estiver marcada, insira a distância máxima entre as paradas, em milhas ou
+quilômetros, para que possam ser entregues ao mesmo tempo. Por exemplo, se
+você digitar 0,10 e a Parada 3 estiver a 0,10 milha de distância da Parada 4,
+então o motorista será notificado de que essas paradas poderão ser
+descarregadas e entregues simultaneamente.
+Etapa 4: Se você estiver rastreando qualquer quantidade (container, item do pedido,
+etc), marque Verificar por exceção na área Opções de quantidade. Se essa
+opção estiver selecionada e o motorista não rastrear as quantidades de entrega,
+0 o campos reais serão preenchidos com os valores planejados. Se essa opção
+não estiver selecionada, o motorista precisará rastrear todas as quantidades
+entregues.
+Etapa 5: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+Configuração das Exceções de rotas
+Utilizado com: MobileCast
+A página Expedir - Exceção de rota do menu Opções permite estabelecer que exceções de
+rotas você deseja monitorar no MobileCast, bem como definir os parâmetros que as
+madeaperaçães o
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+tornam exceções. Quando uma rota exceder os parâmetros definidos aqui, uma exceção
+será adicionada à rota, permitindo ver quando e onde a rota excedeu seus limites.
+T— M G
+aA ENE EA ETA tA ES |
+oc a eec RDA aa
+PE e i
+dEAERA, e c (S
+E dmmna 1Ex Á
+P e eommtmmta TE mm
+l a EEn m
+san e TE 5 ee
+5m
+Ufilza apágina Expedir - Exceções de roias para configurar as exceções a serem
+utilizadas com o MobileCast.
+Etapa 1: Para definir os parâmetros de ativação de exceções de rotas para rotas pré-
+Planejadas, clique no botão [Entrega].
+Para definir os parâmetros de ativação de exceções de rotas para rotas não
+planejadas, clique no botão [On Track].

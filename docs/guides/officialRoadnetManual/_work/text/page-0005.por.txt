@@ -1,0 +1,131 @@
+ESPA DS Pal SV Fáéad
+Resumo da rota real vs. planejada 782
+Detalhe da parada real vs. planejada 783
+Diagrama de carregamento bulk 785
+Diagrama de validação bulk 786
+Entregas em dia livre e inferior às paradas mínimas consolidadas 787
+Dias atendidos 789
+Detalhe da entrega 791
+Distância por área 793
+Distância por jurisdição 794
+Esboço diário 795
+Folha de verificação de saída do motorista 797
+Ttinerário do motorista 798
+Manifesto do motorista 800
+Desempenho do motorista 802
+MAdEaperaçõe Ã
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Desempenho do motorista do MobileCast 804
+Produtividade do motorista 805
+Retomos do motorista 806
+Estatísticas do motorista 807
+Pesquisa com os motoristas 808
+Utilização do motorista 810
+Utilização de equipamentos su
+Métricas de utilização de equipamentos 813
+Custo global 815
+Ttinerário global 816
+Manifesto global 17
+Tempo/distância global 819
+Inferior aos pedidos minimos 820
+Inferior às paradas mínimas 82
+Diagrama da carga do veículo E
+Produtividade de carregamento 826
+Diagrama de validação da carga 827
+Custo de entrega no cliente 829
+Retomos ao cliente 81
+Estatística do cliente 832
+Folha de coleta de vários paletes 833
+Notas 835
+Exceção de entrega em dia livre 836
+Exceção abertura/fechamento 837
+Resumo do pedido 839
+Folha de coleta de paletes ES
+Folha de coleta 843
+Fatura do cliente para pedidos semiprontos s4
+Folha de coleta de paletes semipronta 846
+Folha de coleta semipronta 848
+Análise de nova roteirização 850
+Rotas de recurso por dia 852
+Lista de paradas do recurso 853
+Utilização de recursos 854
+Exceções de rotas 855
+Métricas da rota 857
+Folha de coleta de paletes da rota 858
+Folha de coleta da rota 860
+Estatística do resumo da rota 862
+Variação darota 864
+Resumo de seleção 865
+Análise de sessão 866
+Resumo da sessão 867
+SKU por tipo de embalagem 868
+Folha de resumo de SKU 869
+Pesquisa com motorista de rota padrão 870
+— AÇAE NTNT
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Lista de paradas de rota padrão E
+Lista de paradas 872
+Folha de parada 874
+Clientes do território 875
+Lista de paradas no território 877
+Resumo do território 879
+Exceção da janela de atendimento 880
+AAlterações das janelas de atendimento 882
+Todos os carregamentos 884
+Resumo da semana 885
+Modelos de relatórios
+Modelos de relatórios. 887
+Modelo do relatório Resumo de rota RvP 890
+Modelo do relatório Detalhe de parada RvP ES
+Modelo do relatório Resumo da rota real vs. projetada 892
+Modelo do relatório Detalhe da parada real vs. projetada 894
+Modelo do relatório Diagrama de carregamento bulk 896
+Modelo do relatório Diagrama de validação bulk 897
+Relatório Entregas em dia livre e inferior às paradas mínimas consolidadas 899
+Modelo do relatório Dias atendidos 900
+Modelo do relatório Detalhe da entrega 901
+Modelo do relatório Distância por área 902
+Modelo do relatório Distância por jurisdição 903
+Modelo do relatório Esboço diário 904
+Modelo do relatório Folha de verificação de saída do motorista 905
+Modelo do relatório Itinerário do motorista 907
+Modelo do relatório Manifesto dos motoristas 908
+Modelo do relatório Desempenho do motorista 909
+Modelo do relatório Produtividade do motorista 210
+Modelo do relatório Retomos do motorista ou1
+Modelo do relatório Estatisticas do motorista 2912
+Modelo do relatório Pesquisa com os motoristas 913
+Modelo do relatório Utilização do motorista ou4
+Modelo do relatório Utilização de equipamentos 2915
+Modelo do relatório Métricas de utilização de equipamentos 216
+Modelo do relatório Custo global 7
+Modelo do relatório Itinerário global 218
+Modelo do relatório Manifesto global 919
+Modelo do relatório Tempo/distância global 920
+Modelo do relatório Inferior aos pedidos mínimos 921
+Modelo do relatório Inferior às paradas minimas 922
+Modelo do relatório Diagrama da carga do veículo 923
+Modelo do relatório Produtividade de carregamento 924
+Modelo do relatório Diagrama de validação da carga 925
+Modelo do relatório Custo de entrega no local 926
+MAAEOperaçõe Ã
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Modelo do Relatório Retornos ao cliente 927
+Modelo do relatório Estatísticas do local 928
+Modelo do relatório Desempenho do motorista do MobileCast 929
+Modelo do relatório Folha de coleta de vários paletes 931
+Modelo do relatório Notas 933
+Modelo do relatório Exceção de entrega em dia livre 934
+Modelo do relatório Exceção aberta/fechada 935
+Modelo do relatório Resumo do pedido 936
+Modelo do relatório Folha de coleta de paletes 937
+Modelo do relatório Folha de coleta 939
+Modelo do relatório Fatura de cliente para pedidos semiprontos 940
+Modelo do relatório Folha de coleta de paletes semipronta 942
+Moddis do ceblcoa Ecdiia dé colets sosh in 043

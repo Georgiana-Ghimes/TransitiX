@@ -1,0 +1,121 @@
+Bin stae en on aa tu maa SN DRSIca a EA Va SE SA Drnior aa a c onAo À caiacis critatas ccn aaac
+D A MobileCast será salva em vez da rota gerada no Roadnet.
+Etapa 2: Insira o horário em que os dados serão salvos no banco de dados do Histórico
+da rota. Ao inserir o horário, utilize um relógio de 24 horas, portanto 1:00 PM
+deve ser inserido como 13:00.
+Dica: À UPS Logistics Technologies recomenda que os dados sejam salvos durante a
+Tmoite ou em algum outro horário no qual poucas pessoas estejam usando
+Transportation Suíte
+Etapa 3: Clique no botão [OK] para salvar as opções ou contínue com outra guia.
+Definição das opções do SuperMatrix
+Utilizado com: Roadnet, Terrtory Planner
+A página Atualização do SuperMatrix no menu Opções de manutenção permite
+Programar o horário no qual o SuperMatrix será atualizado. Quando o SuperMatrix é
+atualizado, qualquer cliente adicionado ou geocodificado novamente será adicionado ao
+SuperMatrix. Como a atualização pode demorar muito para ser concluída, recomendamos
+que você a programe para ser executada quando não estiver ocorrendo nenhuma
+roteirização. Só será necessário atualizar o SuperMatrix se ele for selecionado para
+calcular os tempos e as distâncias no Editor de roteirização ou de planejamento.
+. Nota: É necessário configurar o arquivo superserver.cfe para que a atualização funcione
+conforme esperado. Normalmente, isso é feito durante o processo de instalação
+Etapa 1: Para programar o SuperMatrix para ser atualizado diariamente, marque a caixa
+“Ativar atualização do SuperMatrix.
+Etapa 2: No campo Atualizar SuperMatrix todos os dias às, digite o horário em que
+deseja que o SuperMatrix seja executado. Este campo utiliza um relógio de 24
+horas, portanto 1:00 PM deve ser inserido como 13:00
+Ã) Dica: A UPS Logistics Technologies recomenda que 2 atualização seja fuita durante a
+moite ou em algum outro horário no qual poucas pessoas estejam usando
+Transportation Suíte
+Etapa 3: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+Fadopeaçãeo M FFAA S
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+(Como trabalhar com status e tipos
+Como trabalhar com status e tipos
+Utilizado com: Roadnet, Temitory Planner, FleetLoader e MobileCast
+(O módulo Manutenção contém diversos tipos e status diferentes que podem ser utilizados
+para acompanhar e classificar informações sobre as rotas sendo monitoradas. Esses tipos
+e status definem as escolhas possíveis ao inserir informações sobre funcionários,
+equipamentos, clientes, paradas e rotas. Todos os status e tipos criados estão disponíveis
+para serem usados com todas as regiões. Para obter mais informações sobre como
+adicionar esses ífens, consulte Adição de status e tipos.
+Nota: Nem todas as opções estarão disponíveis para todos os usuários; as opções
+disponíveis dependem das partes do Transportation Suíte que foram instaladas
+bem como das permissões de usuário. Você deve ter permissões de contabilidade
+para trabalhar com tipos de motorista e de monitoramento.
+Segmentos de clientes
+Os segmentos de clientes ajudam a agrupar cliente por um traço comum, como redes de
+Ianchonete, ou clientes que exigem pagamento contra entrega Segmentos de clientes
+também são um método de agrupar clientes para fins de relatórios, como a produção de
+"um relatório de Custo de entrega por cliente. Em outras palavras, segmentos de clientes
+são uma ferramenta flexível que pode ser utilizada para quase qualquer fim. o adicionar
+"um cliente, é necessário atribuir um segmento de cliente. Consulte Como trabalhar com
+segmentos de clientes para obter mais informações.
+Manutenção — Cadastros —Segmentos de clientes
+Tipos de compartimento
+Os tipos de compartimentos são utilizados no setor de bebidas para definir os tipos de
+compartimentos disponíveis no equipamento. O FleetL.oader utiliza informações de tipos
+de compartimento ao determinar a quantidade de produto que pode caber em um dado
+compartimento. Como os tipos de compartimentos são utilizados somente para
+determinar a quantidade de um tipo de embalagem que pode ser carreada nele, é
+mecessário criar tipos somente para compartimentos com capacidades diferentes, embora
+Yários compartimentos de um tipo possam ter dimensões levemente diferentes. Os tipos
+de compartimento óevem ser adicionados antes que os tipos de equipamento possam ser
+adicionados. Essa opção cstá disponível somente sc o FlectLoader cstiver carregado.
+Consulte Como trabalhar com tipos de compartimentos para obter mais informações.
+Manutenção — Cadastros * Equipamento —Tipos de compartimento
+Tipos de compartimento
+Tipos de compartimento são utilizados para áefinir os tipos de compartimentos de um
+Yeículo. Os tipos de compartimento podem ser, por exemplo, freezer ou refrizerador.
+Você pode especifícar que tipos de produto podem ser carregados em cada tipo de
+compartimento, e quantos tipos de compartimento estão presentes em cada tipo de
+equipamento. Se os compartimentos forem ajustáveis (tiverem uma antepara móvel),
+você pode permitir que o Roaánet Transportation Suite ajuste os compartimentos para
+"um aproveitamento ideal do espaço de carea. Os compartimentos devem ser criados
+TTA ,,, , ;; ,l T Foadat Traporiafon SãEe.
+' Copyright 2006 United Parcel Service f Aerica nc
+Todos os diveitos reservados
+(Como trabalhar com status e tipos
+somente se você tiver a intenção de utilizar roteirização com compartimentos ao gerar
+rotas
+Manutenção — Cadastros > Equipamento —Tipos de compartimento
+Tipo de atraso
+.A opção Tipos de atraso explica o motivo de o tempo de uma parada planejada não ter
+sido cumprido. O tráfego, problemas mecânicos ou situações relacionadas ao cliente são
+alguns exemplos de tipos de atraso. Você pode atribuir tipos de atraso no Analista ao
+iniciar uma rota, quando uma rota chega em uma parada, parte de uma parada ou quando
+arota é concluída. Qualquer tipo de atraso criado fica disponível para todas as regiões. Os
+tipos de atraso, usados somente para finalidades de relatório, estão disponíveis somente
+se o MobileCast estiver carregado.
+Manutenção — Cadastros > Expedir — Tipos de atraso
+Status do funcionário
+Os status do funcionário permitem classificar funcionários de acordo com os critérios que
+você definir. Você pode utilizar o status para ajudar a determinar que funcionários estão
+disponíveis para serem atribuídos a uma rota no Analista. Treinamento ou doença/
+deficiência são alguns tipos de status de funcionário. Cada status de funcionário que você
+cria é disponibilizado para todas as suas regiões. O Transportation Suíte é fomecido com
+dois status de funcionário preenchidos automaticamente: RDY (Pronto) e USE (Em uso).
+Manutenção —Cadastros —Funcionários — Status do funcionário
+Tipo de funcionário
+Os tipos de funcionários permitem classifcar os tipos de funcionários em sua
+organização. Motorista, analista, promotor de vendas ou ajudante são alguns exemplos de
+tipos de funcionário. Consulte Como trabalhar com tipos de funcionários para obter mais
+informações. Os funcionários podem ser associados aos tipos quando forem adicionados.
+Manutenção — Cadastros —>Funcionários — Tipos de funcionários
+Status do equipamento
+Os status dos equipamentos permitem especifícar o status de itens de equipamento e
+pesquisá-los o selecionar equipamentos a serem visualizados. Alguns exemplos de status
+de equipamentos são inativo ou pronto. Todos os status de equipamento criados ficam
+disponíveis para todas as regiões. O Transportation Suite é fornecido com dois status de
+equipamento preenchidos automaticamente: RDY (Pronto) e USE (Em uso).
+Manutenção — Cadastros — Equipamento — Status dos equipamentos
+Tipos de equipamento
+Tipos de equipamento define os tipos de equipamentos utilizados, como por exemplo o
+"so de veículos de médio porte ou reboques, e o número e a posição dos compartimentos
+ou paletes de um tipo de veículo específico. Você pode definir as dimensões de um tipo
+de equipamento, incfuindo o peso, e especificar sua capacidade. Além disso, é possível
+associar tipos de equipamentos a clientes, para que o tipo seja utilizado quando esse
+cliente for roteirizado. No setor de bebidas, os tipos de compartimento devem ser
+Gumadeoperaçães 5N
+€ Copyrigi 2006 United Parcel Service of America, nc
+p ds

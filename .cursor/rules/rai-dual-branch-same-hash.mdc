@@ -1,0 +1,38 @@
+---
+description: MISTRAL + TRANSITIX-RAI-PROD must share the same commit hash (no cherry-pick twins)
+alwaysApply: true
+---
+
+# RAI: același hash pe ambele branch-uri
+
+**Poartă:** nu rula merge/push pe `TRANSITIX-RAI-PROD` decât când turul curent cere explicit merge — vezi `no-prod-merge-unless-asked.mdc`. „Commit + push” singur **nu** e merge.
+
+Când utilizatorul cere **cherry-pick**, **merge**, sau „pe ambele” / „ambele branch-uri” pentru:
+
+- `MISTRAL-experimenting-rai-documents` (test)
+- `TRANSITIX-RAI-PROD` (prod client)
+
+## Obligatoriu
+
+1. **Un singur commit SHA** pe ambele tipuri — `git rev-parse` pe cele două branch-uri (local și `origin/…`) trebuie să fie **identic** după operație.
+2. **Interzis** `git cherry-pick` pe al doilea branch dacă primul are deja commit-ul: cherry-pick creează hash nou → „1 ahead / 1 behind” cu diff gol.
+3. **Metoda corectă** ca tipurile să coincidă:
+   - commit + push pe **sursă** (de obicei MISTRAL);
+   - pe țintă: `git checkout TRANSITIX-RAI-PROD` → `git merge <sursă>` (**fast-forward** când e posibil) → `git push`;
+   - sau, dacă ținta e doar în urmă și trebuie egală cu sursa: `git reset --hard <același-SHA>` + `git push --force-with-lease` (doar cu acord explicit pentru force pe prod).
+4. După sync, verifică:  
+   `git rev-parse origin/MISTRAL-experimenting-rai-documents origin/TRANSITIX-RAI-PROD`  
+   — cele două linii **identice**. Dacă nu, repară înainte să închizi task-ul.
+5. Fluxul preferat pe termen lung: lucrezi pe MISTRAL → **merge** (FF) în `TRANSITIX-RAI-PROD` → push. Nu dubla commit-ul pe ambele cu cherry-pick.
+
+## Nu face
+
+```text
+# GREȘIT — două hash-uri, același mesaj
+commit pe MISTRAL → cherry-pick pe TRANSITIX-RAI-PROD → push ambele
+```
+
+```text
+# BINE — același hash
+commit pe MISTRAL → push → checkout PROD → merge --ff-only MISTRAL → push
+```

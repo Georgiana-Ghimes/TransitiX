@@ -1,0 +1,77 @@
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul utilizatorului și numele.
+Parola face distincție între majuscule și minuscule
+litere mici; prin urmare, verificați asta
+«tasta [Caps Lock] este activată sau
+Pasul 5: Introduceți parola. Introduceți parola din nou în câmpul de verificare a parolei pentru
+confirma.
+Notă: Parola ține cont de majuscule și minuscule: prin urmare, verificați dacă tasta [Majuscule].
+Blocare] este activată sau dezactivată.
+n „Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu utilizatorii
+Pasul 6: Faceți clic pe săgeata Fus orar și selectați fusul orar pentru care va fi utilizat
+afișați data și ora care nu sunt desemnate în mod special pentru a utiliza o altă zonă
+timp. De obicei, acesta va fi fusul orar în care lucrează utilizatorul.
+Pasul 7: Faceți clic pe fila Membru pentru a adăuga utilizatorul la grupurile corespunzătoare.
+ETA NE Ç AN
+grupuri de utilizatori în fereastră
+„Adăugați utilizatori sau în fereastră
+Adăugați un grup de utilizatori.
+Pasul 8: Pe pagina de membru, faceți clic pe butonul [Adăugați]. În fereastra de căutare -
+Se afișează Grupuri de utilizatori.
+Pasul 9: Selectați grupurile din care face parte utilizatorul și faceți clic pe pictograma Editați.
+Pentru a selecta mai multe grupuri, țineți apăsată tasta [Ctr]] în timp ce
+faceți clic pe grupuri.
+Pentru a elimina un utilizator dintr-un grup, faceți clic pe grup și faceți clic pe
+[Eliminați]. Faceți clic pe [Da] pentru a confirma că doriți să eliminați utilizatorul din
+Grupul B.
+Notă: De asemenea, puteți adăuga utilizatori la grupuri atunci când creați grupuri de utilizatori.
+Pasul 10: Dacă utilizatorul este un administrator sau o altă persoană la care ar trebui să aibă acces
+toate modulele din toate regiunile, bifați acest utilizator este a
+superutilizator (acces deplin la toate regiunile). Doar super utilizatorii au
+acces la modulul Administrare.
+Pasul 1: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]-[S] pentru a salva informațiile despre fișier.
+utilizator nou.
+Pasul 12: Repetați pașii de la 4 la 10 pentru a adăuga alți utilizatori,
+Pasul 13: Faceți clic pe caseta Închidere pentru a închide fereastra Adăugați utilizator.
+Pictograma de administrare — Înregistrări — Utilizatori — Adăugați pictograma (inserați/) — Pictograma Salvare
+(CiJiS).
+Utilizatorii existenți pot fi editați sau șterși după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Ghid de operațiuni 2
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu destinatarii notificărilor
+Cum să lucrați cu destinatarii notificărilor
+Folosit cu: MobileCast
+Destinatarii notificărilor sunt programe externe care colectează informații despre
+evenimente care au loc în Transportation Suite. Ca evenimentele acelui destinatar
+apar, Transportation Suite le colectează și atunci când programul caută Transportation Suite
+Suite, informațiile sunt transferate în program. De exemplu, poate că ai
+un software numit Update care are nevoie de informațiile de sosire și plecare ale
+opririle șoferilor conținute pe dispozitivele lor fără fir pentru a actualiza sistemul
+intern companiei; Pentru ca aceste informații să fie transferate, configurați un
+destinatarul notificării către programul de actualizare și selectează Sosire la oprire -
+Device and Stop Start - Dispozitiv în lista de abonament. The
+destinatarii notificărilor trebuie să fie utilizați cu Serviciul Platformei de Integrare.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Înregistrări și selectați Destinatari de notificare. Fereastra
+Destinatari notificări este afișat conținând destinatarii notificărilor
+existente.
+Pasul 3: În fereastra Destinatari de notificare, faceți clic pe pictograma Adăugați sau apăsați
+[Inserați]. Fereastra Adăugați un destinatar de notificare
+notificare) este afișată.
+Pasul 4: Introduceți ID-ul destinatarului și descrierea. Trebuie să introduceți un ID.
+pA
+'evenimente sau abonamente o
+destinatarul primește informații.
+Pasul 5: Dacă destinatarul ar trebui să primească numai notificări pentru rutele încărcate în a
+dispozitiv wireless, bifați opțiunea Numai rutele încărcate. Dacă această opțiune
+n „Suită de transport Roadhnet
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu destinatarii notificărilor
+nu este selectată, vor fi trimise notificări pentru ambele rute,

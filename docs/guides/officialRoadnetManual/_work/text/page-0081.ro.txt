@@ -1,0 +1,78 @@
+Mai jos sunt instrucțiuni pentru crearea antetelor de coloană sau nume pentru
+câmpuri definite de utilizator. Informațiile de câmp definite de utilizator pentru fiecare
+extensiile client individuale sunt introduse în pagina Extensie client a meniului
+Client.
+s Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+ló — Pasul 2: Faceți clic pe meniul Înregistrări și selectați Câmpuri definite de utilizator. Fereastra
+m Se afișează Câmpuri definite de utilizator, afișând toate câmpurile
+definit de utilizator.
+EM Notă: Pentru a vedea o listă actualizată de câmpuri definite de utilizator, faceți clic pe pictogramă
+„Actualizați; fereastra va fi actualizată cu cele mai recente informații din baza de date.
+date.
+[) Pasul 3: În fereastra Câmpuri definite de utilizator, faceți clic pe pictograma Adăugați sau
+= apăsați [Insert]. Apare fereastra Adăugare câmp definit de utilizator.
+(Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+AAdd este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți descrierea câmpului definit de utilizator. Descrierea va fi afișată
+mos anteturi de coloană și în meniul Client Extensions.
+Pasul 5: Dacă câmpul poate conține doar valori numerice, selectați caseta
+Numeric. Coloanele numerice vor fi totalizate în fereastra Extensii de fișiere.
+clienţilor.
+MG| Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [CtrI]+[S].
+X Pasul 7: Repetați pașii de la 4 la 6 până când ați adăugat toate câmpurile definite de utilizator.
+Faceți clic pe caseta Închidere pentru a închide fereastra Adăugați câmpuri definite de utilizator.
+utilizator.
+Pictograma întreținere — Înregistrări — Câmpuri definite de utilizator — pictogramă
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctri]+[S])
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum să lucrați cu câmpuri definite de utilizator
+Câmpurile existente definite de utilizator pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+MTA FFFA E Roadhei Tranporiafion Su
+„Copsright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+Cum să lucrați cu șabloane pentru orele de vârf
+Folosit cu: Roadnet, Territory Planner
+Multe zone au modele de trafic care se schimbă pe parcursul zilei din cauza creșterii
+sau reducerea volumului de trafic pe străzi. De exemplu, pe o porțiune de drum
+5 km ar fi norma! conducând cu 80 km/h, este posibil să se circule doar cu 40 km/h
+în anumite momente ale zilei. Roadnet Transportation Suite vă permite să creați un
+model de oră de vârf care compensează schimbarea tiparelor de trafic pe parcursul zilei.
+Puteți chiar să creați șabloane separate pentru diferite perioade ale anului. De către
+De exemplu, dacă faceți traseul într-o zonă de vacanță în care traficul de vară
+Și mai intens decât modelul de iarnă, s-ar putea crea un model de vară și un
+iarnă cu diferite variații de viteză. La rutare, puteți selecta
+șablon de oră de vârf adecvat pentru sesiunea cu care lucrați.
+„Modelele pentru orele de vârf variază de la cele mai elementare la cele mai complexe.
+creați un model pentru orele de vârf care ajustează pur și simplu viteza
+drumuri în anumite perioade de timp sau creați zone în care viteze
+sunt schimbate, sau chiar schimba 2 viteză sau direcție pe anumite străzi în timpul
+oră de vârf. De asemenea, puteți restricționa tipurile de echipamente la care puteți
+permis să circule prin anumite zone sau străzi în timpul orelor de vârf.
+Fiecare model de oră de vârf poate avea până la trei perioade de timp, fără a include
+perioadă de timp normală, deci este posibil să aveți o perioadă de dimineață,
+prânz și o oră de vârf de seară în plus față de traficul normal. Pentru a crea zone sau
+informații despre orele de vârf pentru anumite străzi, utilizați harta pentru a desena zonele
+și ale străzilor și specificați atributele orelor de vârf ale acestora.
+Configurarea unui șablon pentru ora de vârf este un proces unic. După
+creați șablonul, îl puteți atribui pentru a fi utilizat de diferite sesiuni de rutare
+si planificare. Modelul oră de vârf poate fi utilizat cu XY, RouteNet sau
+cu SuperMatrix ca calculator de timp/distanță. Dacă o sesiune folosește XY, tu
+se poate folosi un model pentru orele de vârf cu zone de oră de vârf unde 2s
+vitezele sunt modificate în funcție de valoarea specificată în momentele definite ale
+zi. Dacă 2 sesiuni folosesc RouteNet sau SuperMatrix, puteți folosi un model care
+specifică informații despre orele de vârf pentru zone sau străzi individuale, inclusiv
+schimbări de direcție și restricții asupra tipului de echipament. În plus, este posibil să luați
+informații despre orele de vârf în considerare atunci când sunt create trasee,
+sau numai când se calculează timpii de călătorie pe rută. Consuite Definiţia
+opțiuni și Lucrul cu sesiunile de planificare pentru mai multe informații.
+Primul pas pentru a lucra cu șabloane pentru orele de vârf este să creați șabloanele.
+După ce creați modelul, puteți crea zonele și căile de oră de vârf ale modelului.
+Bmiadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate

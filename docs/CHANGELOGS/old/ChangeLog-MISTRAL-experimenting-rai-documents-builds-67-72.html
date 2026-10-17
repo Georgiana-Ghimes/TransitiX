@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL-experimenting-rai-documents · Changelog · builds 67–72</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-after: avoid; }
+      h3 { break-after: avoid; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · branch MISTRAL · builds 67–72</h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong><br />
+      Doar livrările de pe acest branch, de la trecerea pe
+      <strong>Mistral Document AI</strong> (build <strong>67</strong>) până la
+      <strong>v1.13.0 · build 72</strong> (1 octombrie 2026).<br />
+      Companion <strong>RAI Spedition · Documente</strong> · app Transitix aliniat la
+      <strong>1.14.0</strong> pe ultimul release.
+    </div>
+    <div class="badge-row">
+      <span class="badge">MISTRAL</span>
+      <span class="badge">Builds 67–72</span>
+      <span class="badge">Închis pe build 72</span>
+    </div>
+  </header>
+
+  <div class="note">
+    <strong>Domeniu:</strong> extrase din Changelog #1 (builds 63+), filtrate la acest branch.
+    Demo / builds 63–65 rămân în changelog-ul deschis pe
+    <code>demo-experimenting-RAISpedition</code>.
+    Build-urile companion 66 și gap-urile dinainte de Mistral nu apar aici.
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> OCR cloud Mistral → validare + HITL → feedback / overlay / preprocesare
+    → foaie șofer 1–14 aliniată cu extragerea pe numere. Upload fără tip/cursă; număr curse editabil.
+  </div>
+
+  <div class="toc">
+    <strong>Index</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>72</td><td>v1.13.0</td><td>Foaie 1–14 + OCR pe numere; upload simplificat; nr. curse text</td></tr>
+        <tr><td>71</td><td>v1.12.1</td><td>Overlay: contur blocuri neutre vizibil pe poze luminoase</td></tr>
+        <tr><td>70</td><td>v1.12.0</td><td>Feedback OCR, overlay bbox, preprocesare, graniță post-OCR</td></tr>
+        <tr><td>69</td><td>v1.11.0</td><td>Validare OCR + HITL (coadă / drawer)</td></tr>
+        <tr><td>68</td><td>v1.10.1</td><td>Env companion + loader cheie Mistral</td></tr>
+        <tr><td>67</td><td>v1.10.0</td><td>Mistral Document AI; scos Paddle / Tesseract local</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 72 · v1.13.0 · 1 octombrie 2026</h3>
+    <p class="muted">App Transitix <strong>1.14.0</strong> · branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Foaie șofer 1–14</strong> (ghid pe ecran + OCR): 8 = greutate brută, 9 = netă, 10 = nr. document, 11 = nr. curse, 12–14 = taxe / km / tarif. Scris minimal pe linii numerotate e suficient.</li>
+      <li>Upload Documente: scoase dropdown-urile Tip document și Cursă — totul e aviz, biroul leagă ulterior.</li>
+      <li>Ghid șofer actualizat; etichetă „Verificare obligatorie”; ascunse badge-urile Text PDF / Mistral pe preview.</li>
+      <li>Flotă: ștergere hard (nu doar soft-delete) pentru mașini inactive.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Foaia numerotată cu PSL pe linie era clasată greșit ca aviz Baumit tipărit — cantitate / greutăți / curse rămâneau goale. ≥5 sloturi umplute forțează profilul carnet.</li>
+      <li>Linie goală <code>3.</code> putea fura cifrele de pe linia următoare (whitespace peste newline).</li>
+      <li>„Număr curse”: input text (fără săgeți) + lista nu mai rescrie valoarea salvată cu un calcul automat (rămânea 1 după ce scriai 2).</li>
+      <li>Linii opționale goale (<code>-</code> / <code>gol</code>) nu mai inventează 0 pe valoare TPO / taxe / km.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 71 · v1.12.1 · 1 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta — doar bugfix)</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Drawer Verifică: cu „toate blocurile” bifat, conturul blocurilor neutre era aproape invizibil pe o foaie albă fotografiată — contur mai închis și un voal fin, ca să se vadă unde a citit OCR-ul fără să acopere scrisul.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 70 · v1.12.0 · 1 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Calitate OCR</strong> (tab Sinteze pe <code>/avize</code>): documente citite vs atinse de om, touch rate pe bandă de rutare, câmpurile corectate cel mai des cu exemplu old → new, reguli picate, sugestii — doar peste 10 documente. Endpoint <code>GET /api/documents/feedback</code>.</li>
+      <li>Editările din „Editează aviz” pe câmpuri OCR intră în audit ca <code>corrected</code> și în <code>corrected_fields</code>.</li>
+      <li><strong>Overlay bbox</strong> în drawer-ul Verifică: casete peste poză; click pe casetă preia textul în câmp.</li>
+      <li><strong>Preprocesare poză în browser</strong> (birou + șofer): EXIF, max 2600 px, contrast doar când e spălată, JPEG. Nu blochează niciodată.</li>
+      <li>Formă canonică pentru blocuri OCR + sanitizare unică a textului înainte de extract; cache OCR păstrează și blocurile (pipeline v3).</li>
+      <li>ADR local <code>docs/adr/0001</code> — deciziile pipeline-ului OCR.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>„Marchează verificat” pica pe constraint-ul <code>document_events.kind</code> (lipsea <code>review_approved</code>).</li>
+      <li>Blocurile Mistral pierdeau indexul paginii și dimensiunile la aplatizare — overlay-ul nu avea pe ce scala.</li>
+      <li>Test <code>ocrCapability</code> depindea de cheia din <code>server/.env</code> — acum stabil pe orice mașină.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 69 · v1.11.0 · 1 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Validare deterministă pe aviz (TPO, dată, duplicate 90z, plăcuță/cantitate) + praguri pe 3 benzi.</li>
+      <li>Rutare <code>auto</code> / <code>hitl_optional</code> / <code>hitl_required</code>; persistă findings + blocks OCR.</li>
+      <li>Confirm blocat până la verificare; API HITL + drawer Verifică (imagine + câmpuri).</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta)</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 68 · v1.10.1 · 1 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>loadEnv</code>: cu <code>COMPANION=1</code> încarcă <code>server/.env.companion</code> (DB :5435, Mistral).</li>
+      <li>Script <code>npm run dev:companion-api</code> pentru API companion cu OCR cloud.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta)</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 67 · v1.10.0 · 1 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>OCR prin <strong>Mistral Document AI</strong> (cloud) — <code>MISTRAL_API_KEY</code>; fără containere OCR locale.</li>
+      <li>Scoase Paddle / Paddle-VL / Tesseract (tools + compose); companion rămâne pe Postgres.</li>
+      <li>Contractul de extract neschimbat: PDF text layer → Mistral; health <code>mistral</code> / <code>mistral-down</code> / <code>none</code>.</li>
+      <li>Badge sursă <strong>Mistral</strong>; etichetele istorice Paddle/Vision rămân pentru rânduri vechi.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta)</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    Changelog branch MISTRAL · builds 67–72 · închis pe build 72 (v1.13.0) ·
+    1 octombrie 2026 · docs/ local only
+  </footer>
+
+</body>
+</html>

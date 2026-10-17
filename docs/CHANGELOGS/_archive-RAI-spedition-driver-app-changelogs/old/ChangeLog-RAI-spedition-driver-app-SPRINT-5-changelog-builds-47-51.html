@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition · Documente · Sprint 5 · Changelog builds 47–51 (închis)</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3, h4 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 20pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.2em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 1em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    h4 { font-size: 10.5pt; margin-top: 0.85em; color: var(--accent); }
+    p { margin: 0.35em 0 0.6em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 20px 22px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.25em 0 0.65em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.6em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.4em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.7em 0 0.25em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-after: avoid; }
+      h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Sprint 5 · Changelog builds 47–51 <em style="opacity:0.85;font-weight:500">(închis)</em></h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune finală sprint <strong>v1.7.3 · build 51</strong> ·
+      deschis <strong>17 septembrie 2026</strong> · închis <strong>17 septembrie 2026</strong><br />
+      Builds <strong>47–51</strong> · PDF lângă HTML
+    </div>
+    <div class="badge-row">
+      <span class="badge">Sprint 5</span>
+      <span class="badge">Builds 47–51</span>
+      <span class="badge">Închis</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Companion <strong>RAI Spedition · Documente</strong> — <strong>Sprint 5</strong> închis (builds 47–51).
+    Fișier: <code>ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-47-51.html</code>.
+    Perioada anterioară (până la build 46) e în <code>docs/CHANGELOGS/old/</code>.
+  </p>
+
+  <div class="note">
+    <strong>Sprint 5 · închis:</strong> ultimele livrări pe builds 48–51 (47 fără release separat).
+    Următorul sprint deschide un fișier nou.
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> înregistrare clienți noi (email firmă / personal / Google + confirmare),
+    conturi manuale și invitații; buton Google aliniat UI; meniuri Avize OCR / Șabloane / Sinteze;
+    ștergere istoric exporturi.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>47</td><td class="muted">—</td><td class="muted">Fără release separat (serie deschisă de la 47)</td></tr>
+        <tr><td>48</td><td>1.7.0</td><td>Înregistrare clienți noi · Google · conturi manuale</td></tr>
+        <tr><td>49</td><td>1.7.1</td><td>Buton „Autentifică-te cu Google”</td></tr>
+        <tr><td>50</td><td>1.7.2</td><td>Meniuri Avize OCR · Șabloane · Sinteze</td></tr>
+        <tr><td>51</td><td>1.7.3</td><td>Ștergere istoric exporturi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Build sections appended below, each with Changelog + Bugfix -->
+
+  <section class="build-block">
+    <h3>Build 51 · v1.7.3 · Ștergere istoric exporturi</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Pe <strong>Rapoarte</strong> și pe tab-ul <strong>Sinteze</strong>: buton <strong>Șterge</strong> pe fiecare export din istoric.</li>
+      <li>Buton <strong>Șterge tot istoricul</strong>, cu confirmare — golește istoricul firmei.</li>
+      <li>API: <code>DELETE /api/reports/exports/:id</code> și <code>DELETE /api/reports/exports</code>.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Istoricul nu putea fi curățat manual; retenția automată tot nu atinge tabela — ștergerea e doar la cererea operatorului. Avizele rămân neschimbate; re-descărcarea dispare odată cu rândul.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 50 · v1.7.2 · Meniuri Avize OCR · Șabloane · Sinteze</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Meniul <strong>Avize / Rapoarte</strong> se numește acum <strong>Avize OCR</strong> (meniul <strong>Rapoarte</strong> rămâne neschimbat).</li>
+      <li>Taburile din ecran: <strong>Avize OCR</strong>, <strong>Șabloane</strong>, <strong>Sinteze</strong> (fostul tab „Rapoarte” din interior).</li>
+      <li>Texte aliniate în Ghid, tur, app șofer și legende.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Două meniuri cu „Rapoarte” în nume confundau operatorii: acum ecranul de lucru OCR e clar separat de exporturile Excel.</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 49 · v1.7.1 · Buton „Autentifică-te cu Google”</h3>
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Buton propriu, în stilul ecranelor de autentificare: „Autentifică-te cu Google” la login, „Înregistrează-te cu Google” la înregistrare.</li>
+      <li>Clicul ajunge tot la butonul oficial Google (suprapus, transparent), deci verificarea tokenului pe server rămâne aceeași.</li>
+      <li>În development butonul apare și fără <code>GOOGLE_CLIENT_ID</code> și spune ce lipsește; în producție rămâne ascuns până e configurat.</li>
+    </ul>
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Butonul oficial Google (branding GIS) nu se potrivea cu restul ecranelor și folosea „Continuă cu Google” în loc de formulările de autentificare / înregistrare.</li>
+      <li>Fără <code>GOOGLE_CLIENT_ID</code>, pe login/register nu apărea niciun indiciu că Google e dezactivat (doar în development e vizibil acum, cu mesaj).</li>
+    </ul>
+  </section>
+
+  <section class="build-block">
+    <h3>Build 48 · v1.7.0 · Înregistrare, Google, conturi manuale</h3>
+
+    <p class="section-label">Changelog</p>
+    <h4>Înregistrare clienți noi</h4>
+    <ul>
+      <li>Link „Creează unul” pe ecranul de autentificare și în companion (când serverul permite, <code>ALLOW_SIGNUP</code>).</li>
+      <li>Alegere <strong>Email de firmă</strong> / <strong>Email personal</strong>; cine se înregistrează devine administratorul firmei noi.</li>
+      <li>Avertismente: adresă personală declarată ca firmă, adresă deja folosită, colegi pe același domeniu (cu bifă „vreau o firmă separată”), parolă prea scurtă, parole diferite.</li>
+      <li><strong>Confirmare pe email</strong> (Resend, link 48 h). Fără confirmare nu se poate autentifica; „Retrimite linkul” din ecranul de login. Fără Resend, linkul apare pe ecran.</li>
+      <li>Pagini noi: verificare email și schimbare parolă obligatorie după cont manual.</li>
+    </ul>
+    <h4>Google</h4>
+    <ul>
+      <li>Buton „Continuă cu Google” la login și la înregistrare (apare doar cu <code>GOOGLE_CLIENT_ID</code>).</li>
+      <li>Adresă existentă → intră direct (inclusiv invitații în așteptare). Adresă nouă → se cere doar numele firmei.</li>
+      <li>Token Google verificat pe server (audiență, emitent, expirare, email confirmat).</li>
+    </ul>
+    <h4>Setări › Utilizatori</h4>
+    <ul>
+      <li><strong>Invită coleg</strong> și <strong>Adaugă manual</strong>, în același formular.</li>
+      <li>Cont manual: parolă temporară generată (afișată o dată) sau aleasă; la prima intrare persoana e obligată să-și aleagă parola (blocaj pe server).</li>
+      <li>Stare nouă „Creat manual”, avertismente pentru adrese personale / alt domeniu, banner când emailul nu e configurat.</li>
+      <li>Email de invitație cu numele firmei și buton.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>Invitația verifica adresa doar în firma curentă; aceeași adresă putea exista în două firme și unul dintre conturi nu se mai putea autentifica.</li>
+      <li>Linkurile de resetare / invitație foloseau originea trimisă de browser — acum doar <code>CLIENT_ORIGIN</code>.</li>
+      <li>Înregistrarea accepta orice parolă; acum minimum 10 caractere, fără spații la capete, fără email în parolă.</li>
+      <li>Pagina „Resetare parolă” era în engleză.</li>
+      <li>Contul cu parolă temporară putea folosi restul API-ului înainte de schimbare — middleware blochează tot ce nu e <code>/api/auth/</code>.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    Sprint 5 · închis 17 septembrie 2026 · builds 47–51 ·
+    branch RAI-spedition-driver-app · docs/ local only · PDF lângă HTML
+  </footer>
+
+</body>
+</html>

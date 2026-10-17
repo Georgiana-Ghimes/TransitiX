@@ -1,0 +1,75 @@
+Bmadeaperções sau A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum să lucrați cu codurile computerului de bord
+Cum să lucrați cu codurile computerului de bord
+Folosit cu: Roadnet
+|Roadnet vă permite să importați informații reale despre rută, colectate de șofer în timpul
+0 zi pe un computer de bord. Odată importate în sistemul Roadnet, acestea
+Informațiile reale pot fi utilizate atunci când rulați unele rapoarte sau când utilizați
+întreținere timp de service pentru a actualiza timpii de service. Unii
+a sistemelor informatice de bord permit șoferului să introducă coduri care
+indica pauze, așteptări sau înnoptări. Pentru ca Roadnet să recunoască aceste intervale
+ca atare, este necesar să se informeze codurile pe care șoferul le va introduce și dacă codul indică
+o pauză plătită sau neplătită, așteptare sau peste noapte. Codurile computerului de bord
+permiteți-ne să furnizăm aceste informații către 2nd Roadnet.
+În timpul procesului de import, dacă Roadnet întâlnește una dintre acestea
+computer de bord, caută următoarea apariție a unui interval/așteptare/peste noapte
+narotae inserează informațiile reale din acel interval. De exemplu, dacă există codul
+TELEFON computer de bord configurat ca interval plătit. când Roadnet
+găsește o intrare TELEFON în timpul 2 importului de pe computerul de bord, va fi
+asociază-l cu următoarea pauză plătită de pe traseu. Dacă nu există o pauză plătită planificată în
+Foda, notează intervalul real în jurnalul de erori de import, dar nu îl adaugă la
+traseu
+BĂRBAȚI | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+» — Pasul 2: Faceți clic pe meniul Înregistrare și selectați Codurile computerului de bord. Pentru a
+Apare fereastra Codurile computerului de călătorie.
+[W)| Notă: Pentru a vedea o listă actualizată de zone, faceți clic pe pictograma Actualizare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+4W Pasul 3: În fereastra Codurile computerului de călătorie, faceți clic pe pictograma Adăugați sau
+— apăsați [Insert]. Fereastra Adăugați codul computerului de călătorie este
+z afișat.
+„ Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+TIITI A AA E Roadha Tranporiafion Sl
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrați cu codurile computerului de bord
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introdu codul și descrierea. Un cod care se potrivește cu
+cod introdus de șoferi
+| cod introdus de
+driver pe computer
+la bord trebuie
+codul de potrivire
+inserat aici sau Roadnet
+nu-l va recunoaște
+Pasul 5: În zona Tip de oprire, selectați dacă codul indică o pauză, o reținere sau
+peste noapte. Dacă codul indică o pauză/reținere plătită peste noapte, selectați
+Cutie plătită.
+M6] Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctri]=[S] pentru a salva codul
+= computer de bord.
+mx — Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alt cod de computer.
+" arțar.
+Pasul 8: Când ați terminat, faceți clic pe caseta Închidere pentru a închide fereastra Adăugare cod
+computer de bord.
+Pictograma întreținere — Înregistrări — Cod computer de bord — pictogramă
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctrll+[S])
+Codurile existente ale computerului de bord pot fi editate sau șterse,
+după cum este necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe
+informaţii.
+(T
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum să lucrați cu segmentele de clienți
+Cum să lucrați cu segmentele de clienți
+Folosit cu: Roadnet, Territory Planner
+Segmentele de clienți ajută la gruparea clienților după un fir comun, cum ar fi rețelele de clienți.
+cantină sau clienți care solicită plata la livrare. Segmente de clienți
+sunt, de asemenea, o metodă de grupare a clienților în scopuri de raportare, cum ar fi producția
+„un raport Costul de livrare după client. Cu alte cuvinte, segmente de clienți
+Sunt un instrument flexibil care poate fi folosit în aproape orice scop. Când adăugați
+un client, trebuie să atribuiți un segment de clienți.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări și apoi selectați Segmente de clienți. THE

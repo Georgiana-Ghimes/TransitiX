@@ -1,0 +1,99 @@
+Informațiile reale exclud datele de oprire reale importate de pe computer
+la bord sau introdus manual pentru toate sesiunile care au avut loc în timpul
+1 perioadă de timp specificată.
+Informațiile de expediere exclud rutele finalizate în MobileCast care
+a avut loc în perioada de timp specificată. Această opțiune poate fi doar
+utilizat cu opțiunile Ștergere date înainte: și Ștergere date după interval.
+data
+Compact Database caută în baza de date și elimină înregistrările
+care au fost marcate pentru ștergere (recomandat). Această opțiune va fi
+disponibil numai dacă utilizați Microsoft Access.
+Avertismente: Datele șterse nu pot fi recuperate după compactarea bazei de date.
+date.
+Dacă ștergeți informații reale, nu veți putea folosi aceste date pentru
+calculați timpi de service mai precis cu programul de întreținere
+timp de serviciu.
+Pasul 5: Faceți clic pe butonul [OK] pentru a șterge datele. Ștergeți unul dintre rutele selectate
+la un moment dat din editorul de rutare, folosind butonul [X]. Acest buton este
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Întreținerea bazei de date
+dezactivat (gri) dacă privilegiile necesare pentru ștergere nu au fost
+acordat.
+Instrumente — Întreținerea bazei de date — Ștergeți rute — [OK]
+Configurarea intretinerii automate a bazei de date
+Folosit cu: Roadnet, FleetLoader
+Notă: Nu veți putea deschide acest modul dacă nu vi s-a dat permisiunea de a controla
+ștergerea sesiunilor de rutare din modulul Administrare.
+Prin ștergerea informațiilor din istoric, puteți ajuta la controlul dimensiunii bazei de date.
+date. Când efectuați ștergerea, puteți alege să compactați baza de date, care
+Eliminați toate elementele marcate pentru ștergere sau eliminați informațiile de rutare
+reale. Puteți șterge manual datele sau puteți configura Roadnet Transportation
+Suită pentru ștergerea datelor atunci când comenzile sunt importate. Această secțiune prevede
+instrucțiuni pentru configurarea Roadnet Transportation Suite pentru a șterge datele vechi
+20 comenzi de import.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Întreținere baze de date; in
+Apoi selectați Ștergeți automat conf. Fereastra de întreținere
+baza de date - Ștergeți conf. este afișat automat.
+Avertismente: Utilizarea funcției de ștergere automată va determina ca Roadnet să șteargă datele
+selectat automat în timpul procesului de import al comenzii,
+Datele șterse nu pot fi recuperate după compactarea bazei de date
+date.
+Dacă ștergeți informații reale, nu veți putea folosi aceste date pentru
+calculați timpi de service mai precis cu programul de întreținere
+timp de serviciu.
+Pasul 3: În menținerea bazei de date - Ștergeți conf. automat,
+stabiliți dacă Roadnet Transportation Suite ar trebui să șteargă cel mai mult
+mai vechi decât perioada specificată înainte de sesiunea de rutare
+MT A o Roadhet Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Întreținerea bazei de date
+(sau numărul de zile, săptămâni sau luni de date pe care doriți să le păstrați în
+baza de date) în caseta Ștergere date.
+Fereastra de întreținere
+din baza de date -
+Ștergeți conf
+„în mod automat
+vă permite să specificaţi dacă
+anumite date care
+vor fi excluse
+automat
+în timpul procesului de
+Pasul 4: Stabiliți ce opțiuni de ștergere doriți să apară automat
+în timpul procesului de import al comenzii.
+Informațiile de rutare șterg datele anterioare de comandă, traseu și oprire
+dintre toate sesiunile care au avut loc în perioada de timp specificată.
+Informațiile reale exclud datele de oprire reale importate de pe computer
+la bord sau introdus manual pentru toate sesiunile care au avut loc în timpul
+1 perioadă de timp specificată.
+Compact Database caută în baza de date și elimină înregistrările
+care au fost marcate pentru ștergere (recomandat) Această opțiune va fi
+disponibil numai dacă utilizați Microsoft Access.
+Pasul 5: Faceți clic pe butonul [Salvare] pentru a salva opțiunile de ștergere automată sau
+faceți clic pe [Anulare] pentru a anula.
+Tools - Database maintenance — Delete conf. automat
+Comprimarea bazei de date
+Folosit cu: Roadnet, Territory Planner, FleetLoader
+Pentru a vă asigura că Roadnet Transportation Suite are performanțe de vârf, este
+Este necesar să compactați periodic baza de date, eliminând datele inutile
+and reducing the overall database size. When executing the Compact Bank function
+baza de date, toate înregistrările șterse sunt șterse definitiv din baza de date.
+date.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Meinsa — Pasul 2: Faceți clic pe meniul Instrumente și selectați Întreținere baze de date; in
+Then select Compact Database. Baza de date este
+comprimat.
+Instrumente — Întreținerea bazei de date — Bază de date compactă
+Bmadeoperations A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate
+Transport de date
+Transport de date
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Roadnet Transportation Suite conține un instrument care facilitează transportul mari
+cantități de date către UPS Logistics Technologies 2nd Customer Service către
+assistance with troubleshooting. The Data Transport tool allows you to create
+Angivos deeeooliar sh de didós colendo-only-os data accessSóos saravesolveram:

@@ -1,0 +1,63 @@
+A 0S ENEA OOSTA:
+Important: Dupa 201, vei fi atent, vei fi apiicagas
+pe termen nelimitat. Dacă introduceți modificări pentru o perioadă de
+oră prestabilită (o zi, o săptămână etc.), amintiți-vă să editați sau
+ștergeți modificările după caz.
+Modificările existente ale clienților pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+1 „Roadhet Transportation Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+E En s i o ss sm ss s v om sc
+Mn — Pasul? 2: Faceți clic pe meniul Înregistrări, selectați Clienți și apoi selectați
+Condensarea clienților. Apare fereastra Condens client.
+[6] Notă: Pentru a vedea o listă condensată actualizată de clienți, faceți clic pe pictograma Actualizare;
+1 fereastră va fi actualizată cu cele mai recente informații din baza de date.
+W Pasul 3: În fereastra Condensare client, faceți clic pe pictograma Adăugați sau apăsați
+= [Inserare]. Apare fereastra Add Customer Condense.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul de client original și Tipul de client original pentru clientul dvs
+doresc să se schimbe.
+Pasul 5: Introduceți ID-ul de client nou și Tipul de client nou al adresei clientului respectiv
+ar trebui să înlocuiască adresa originală a clientului.
+8 Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva condensul
+către clienți.
+Pasul 7: Când ați terminat de adăugat condensurile clienților, faceți clic pe casetă
+Închideți pentru a închide fereastra Adăugați un client Condens.
+Ê S AA RAA o
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctril+[S])
+Condensurile clienților existente pot fi editate sau șterse după cum este necesar.
+mezesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Operații proaste A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrezi cu clienți inactivi
+Cum să lucrezi cu clienți inactivi
+Folosit cu: Roadnet
+Clienții inactivi împiedică un anumit client să primească comenzi, dar fără
+Să te temi din baza de date. Puteți utiliza această opțiune atunci când un client nu a plătit
+o factură sau dacă clientul nu mai dorește să fie servit, dar doriți să păstrați clientul
+în scopuri de raportare. Clienții inactivi pot fi introduși și folosind
+meniul Client.
+u Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+huunss — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Clienți și apoi selectați
+” Clienți inactivi.
+Notă: Pentru a vedea o listă actualizată de clienți inactivi, faceți clic pe pictograma Reîmprospătare; la
+Jjanela va fi actualizat cu cele mai recente informații din baza de date.
+Și Fin hada Clcage fanlivos, Diyaeno-oa: Ádm su pesdnoe lhaer À
+„ Apare fereastra Adăugați clienți inactivi.
+ã
+Ã) Este un truc: Pentru a adăuga o intrare similară uneia existente, faceți clic cu butonul din dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+și informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul clientului și Tipul de client și faceți clic pe pictograma Salvare sau apăsați
+x [CtI]+[S] pentru a salva clientul inactiv.
+Pasul 5: Când ați terminat de adăugat clienți inactivi, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați un client inactiv.
+Pictograma Întreținere — Înregistrări — Clienți — Clienți inactivi > Pictograma Adăugați
+(Mnsert]) — Pictograma Salvare ([Ctri]+[S])
+Clienții inactivi existenți pot fi șterși dacă este necesar. A se vedea Ștergerea

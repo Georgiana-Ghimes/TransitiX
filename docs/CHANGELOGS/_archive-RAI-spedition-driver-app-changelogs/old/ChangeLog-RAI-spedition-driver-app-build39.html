@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 39 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid var(--warn);
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--warn);
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 39</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.5.0 · build 39</strong> · închis <strong>15 septembrie 2026</strong><br />
+      De la commit <code>b824bb1</code> (build 38) — urmat de build 40
+    </div>
+    <div class="badge-row">
+      <span class="badge">Autoturisme</span>
+      <span class="badge">MTMA</span>
+      <span class="badge">Plăcuțe B-112-VFM</span>
+      <span class="badge">Anexa RAI locked</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Local în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> taxa de zonă București se alege după MTMA din talon — un fapt despre
+    camion, nu despre cursă. Până acum OCR-ul citea doar plăcuța, iar operatorul bătea taxa
+    manual în „Taxe suplimentare”. Acum fiecare plăcuță deschide un înregistrare în
+    <strong>Autoturisme</strong>; MTMA se completează o dată pe vehicul.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Autoturisme (<code>/fleet</code>)</h3>
+      <ul>
+        <li>Pagină nouă în companion și pe TMS full: listă plăcuțe, căutare, adăugare manuală.</li>
+        <li>Editare <strong>MTMA (kg)</strong> pe rând; salvare = confirmare (scoate marcajul OCR).</li>
+        <li>Vehicule deschise de OCR: badge „din OCR” — o plăcuță greșită citită nu se prezintă
+          ca flotă introdusă de birou.</li>
+        <li>Alertă verificare date: <code>vehicle_no_mma</code> (error) → link la Autoturisme.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>OCR → flotă + Harta zonelor</h3>
+      <ul>
+        <li>La extracție, plăcuța primară (tractoare, nu remorca din „B-… / B-…”) deschide
+          <code>vehicles</code> cu <code>added_by_ocr</code>.</li>
+        <li>Formă unică de plăcuță: <code>B-112-VFM</code> (<code>canonicalPlate</code>) —
+          OCR + backfill DB (vehicles + avize).</li>
+        <li><code>brand</code> / <code>model</code> nu mai sunt obligatorii (înregistrare doar
+          din plăcuță).</li>
+        <li>Harta zonelor: câmp <strong>Nr. auto</strong>; dacă MTMA e gol, se ia din flotă
+          (<code>mmaForPlate</code>). Cifră tastată pe hartă rămâne prioritară.</li>
+        <li>Placeholder MMA → <strong>MTMA (kg)</strong>.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Anexa Factura RAI — headere din cod</h3>
+      <ul>
+        <li>Șablonul locked nu mai citește coloanele vechi din DB (seed neschimbat) —
+          exportul folosește mereu <code>DEFAULT_RAI_COLUMNS</code>.</li>
+        <li>Headere aliniate la foaia clientului: Nr. Crt., Cantitate marfa (tone),
+          Taxe suplimentare, Tarif Km, etc.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <ul>
+        <li><strong>Greutate brută Baumit</strong>: etichetă cu unitatea înainte de cifră
+          (<code>Greutate bruta, kg  15,744.00</code>) — înainte rămânea goală și anexa cădea
+          pe numărul de găleți.</li>
+        <li><strong>Ruta pe listă vs export</strong>: <code>decorateAviz</code> aplică
+          <code>repairAvizFromStored</code> ca la export — tabela nu mai arată rută goală
+          când XLSX-ul o are.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Migrare / restart API → coloană <code>added_by_ocr</code>, plăcuțe normalizate.</li>
+        <li>Companion → <strong>Autoturisme</strong>: adaugă plăcuță + MTMA; filtrează.</li>
+        <li>Extrage un aviz cu nr. auto nou → apare în listă cu badge OCR; completează MTMA.</li>
+        <li>Harta zonelor: doar nr. auto (fără MTMA) → tarif din flotă; sau MTMA tastat câștigă.</li>
+        <li>Export Anexa RAI: headere tone / Taxe suplimentare; greutate Baumit pe tone.</li>
+        <li>Avize: document cu rută doar în OCR text → coloana Ruta e umplută pe listă.</li>
+        <li>Login / topbar: <strong>v1.5.0 - build 39</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="note">
+    <strong>Atenție:</strong> backfill-ul de plăcuțe rulează din baseline <code>migrate.js</code>
+    (UPDATE idempotent). Pe DB-uri deja migrate, pornește din nou migrarea / rulează UPDATE-urile
+    dacă plăcuțele vechi încă apar spațiate.
+  </div>
+
+  <footer class="foot">
+    Companion v1.5.0 build 39 · închis 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    docs/ local only
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+E
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com sessões de planejamento
+Como trabalhar com sessões de planejamento
+Utilizado com: Territory Planner
+As sessões de planejamento são uma maneira de agrupar as informações necessárias para
+resolver problemas de roteirização no Territory Planner. Elas também permitem alterar
+parâmetros e tentar diferentes variáveis “possíveis” sem perder rotas existentes. Quando
+Você entra no Editor de planejamento, deve selecionar uma sessão específica com a qual
+trabalhar. As sessões de planejamento podem ser adicionadas importando extensões de
+clientes ou escolhendo Transferência de sessão quando estiver no Editor de planejamento.
+M Etapal: Clique no icone Manutenção para abrir o respectivo módulo
+Mm — Etapa 2: Clique no menu Cadastros e selecione Sessões de planejamento.
+&W| Nota:Paraver uma lista atualizada de sessões de planejamento, clique no ícone
+Atualizar; a janela será atualizada com as informações mais recentes do banco de
+- dados.
+2 Etapa 3: Na janela Sessões, clique no ícone Adicionar ou pressione [Insert]. A janela
+" Adicionar sessão é exibida.
+ã
+S É Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+EE
+E
+E -)
+Ãs cx E
+o '
+Semanas do ciclo indicam a extensão da sessão de
+[É| Etapa 4: Clique na seta para abrir 2 janela Pesquisa - Cenário. Para selecionar um
+cenário, clique duas vezes no mesmo ou clique no cenário e no ícone
+Processar.
+MT ,,, ,,, , ; EElAEL DL — Roadhet Trarporiation Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com sessões de planejamento
+2 Etapa5: Digiteuma Descrição para a sessão de planejamento. A combinação de
+Q) Descrição e Cenário deve ser exclusiva para cada sessão de planejamento.
+Dica: Use como descrição da sessão algo de fácil identificação, para que você possa
+selecionar a sessão apropriada ao entrar no Editor de planejamento.
+Etapa 6: Selecione o tipo de Cálculo de tempo/distância a ser usado para 2 sessão de
+planejamento.
+XY é um método de roteirização que utiliza uma linha direta para medir a
+distância entre dois pontos. Ele conta com modelos de distância e de tempo de
+percurso para curvas e voltas no percurso, bem como velocidades variáveis. Se
+comparado 20 RouteNet, o método XY é mais rápido de usar, porém menos
+preciso.
+Usar barreiras pode ser selecionado somente quando o método XY estiver
+sendo usado. Esta opção explica as barreiras reais entre dois pontos, como um
+corpo de água, uma montanha, etc. As barreiras devem ser criadas no modo
+Barreira no mapa.
+RouteNet é um método de cálculo que utiliza mapas para replicar as condições
+Teais das vias, levando tudo em consideração, desde placas de Pare e semáforos
+até os limites de velocidade e alterações de percurso. Comparado ao método
+XY, o RouteNet demora um pouco mais para ser processado, mas é mais
+preciso.
+. Nota: Utilizar o RouteNet pode causar uma demora significativa ao entrar no Editor de
+roteirização ou de planejamento, enquanto os tempos e distâncias são calculados.
+A duração desse atraso é baseada em diversos fatores, incluindo:
+* o número de clientes com pedidos
+* o número de depósitos
+* o número de ruas na área geográfica
+* o poder de processamento do computador
+Se você deseja evitar esta demora, utilize o SuperMatrix.
+SuperMatrix é um outro método de cálculo que utiliza a rede de vias para replicar
+s condições reais das vias, levando tudo em consideração, desde placas de Pare e
+semáforos até os limites de velocidade e alterações de percurso. É possível
+programar o SuperMatrix para que seja executado à noite, de forma que não seja
+necessário aguardar o cálculo dos tempos e distâncias de percurso 2o entrar nos
+editores. Se estiver utilizando o SuperMatrix, é necessário especificar como você
+deseja que o Editor de planejamento trate os clientes que foram adicionados desde
+2 última execução do SuperMatrix. Na área Atualização em tempo real, selecione
+se deseja utilizar XY ou RouteNet para calcular as distâncias até esses clientes,
+-O Horário de rush avançado utiliza caminhos e áreas de horário de rush para
+determinar as ruas reais que as rotas utilizarão. Se estiver utilizando os recursos de
+horário de rush avançado, ainda é possível usar áreas simples, além das áreas e
+trajetos avançados. Se você deseja impor restrições de percurso ou alterar a mão da
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+(Como trabalhar com sessões de planejamento
+Tua durante um período de horário de rush, é necessário marcar Horário de rush
+avançado. O uso de horário de rush avançado pode exigir tempo adicional ao
+iniciar o Editor de planejamento.
+Nota: Utilizar o horário de rush avançado pode causar uma demora significativa 2o entrar
+no Editor de roteirização ou de planejamento, enquanto os tempos e distâncias são
+calculados. Esta demora é adicional à causada pelo uso do RouteNet. A duração
+desse atraso é baseada em diversos fatores, incluindo:
+* o número de períodos de horário de rush no modelo
+* se houve criação de restrições de equipamento para os períodos
+* o número de áreas e caminhos de horário de rush no modeto
+FHorário de rush permite escolher um modelo para horário de rush para designar
+períodos nos quais ocorre atividade em horário de rush. Para selecionar um modelo
+para horário de rush, clique na seta Modelo para horário de rush; a janela Pesquisa
+“ Modelo para horário de rush é exibida. Clique duas vezes em um modelo para
+EE S SE SS NE - SA M e o e

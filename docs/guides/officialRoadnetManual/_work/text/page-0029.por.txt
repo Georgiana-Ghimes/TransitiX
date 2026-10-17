@@ -1,0 +1,103 @@
+(Como trabalhar com status e tipos
+inseridos antes dos tipos de equipamento, se você estiver utilizando o FleetLoader. Após
+0 preenchimento dos tipos de equipamento, os ítens individuais de equipamento podem
+ser inseridos. Consulte Como trabalhar com tipos de equipamentos para obter mais
+informações.
+Manutenção — Cadastros — Equipamento — Tipos de equipamento
+Tipos de cliente
+Tipos de cliente permite a especificação dos tipos de clientes existentes. Normalmente, o
+tipo de cliente é simplesmente uma ID e uma descrição, e você pode atribuir os tipos aos
+seus clientes para distinguir os depósitos de clientes e de fornecedores, separar
+departamentos em um supermercado — inúmeras utilizações. Se você estiver utilizando
+tipos de clientes para diferenciar os diversos departamentos de uma única loja, como um
+supermercado, é possível fazer com que o Roadnet Transportation Suite sincronize
+avtomaticamente os campos selecionados para cada tipo ao adicionar ou editar um cliente;
+consulte a página Clientes de Configuração dos padrões para obter mais informações. Se
+estiver utilizando a parte de contabilidade do MobileCast, é possível atríbuir um tipo de
+monitoramento 2 um tipo de cliente, para diferenciar o custo de entrega em diferentes
+tipos de clientes. O Roadnet Transportation Suíte é fornecido com dois tipos de clientes
+padrão: depósitos (DPT) e fábricas (SIT), mas você pode adicionar quantos forem
+mecessários.
+Manutenção — Cadastros — Clientes —Tipos de cliente
+Tipos de embalagem
+Os tipos de embalagem definem os vários tipos de embalagem carregadas no
+equipamento, como latas de refrigerante de 350 m! ou garrafas de 2 litros. Os tipos de
+embalagem são utilizados para definir a capacidade de um palete/compartimento ou de
+uma camada em um palete. Depois que os tipos de embalagem e as marcas de SKU forem
+inseridos, as SKUs poderão ser adicionadas. Se você adquiriu o FleetLoader, você deve
+inserir os tipos de embalagem para determinar como seu equipamento será carregado. Os
+tipos de embalagem serão usados somente se você adquiriu o Fleetl.oader ou se pretende
+importar detalhe do nível de SKU para o arquivo de pedido. Consuite Como trabalhar com
+tipos de embalagem para obter mais informações.
+Manutenção — Cadastros > Produto — Tipos de embalagem
+Tipos de produto
+Os tipos de produto são atribuídos às SKUs, e classificam as SKUs com base no tipo de
+compartimento em que elas podem ser carregadas. Alguns exemplos de tipos de
+produtos são congelados ou refrigerados. Os tipos de produtos serão usados somente se
+for utilizada roteirização de compartimento.
+Manutenção — Cadastros — Produto — Tipos de produto
+Tipo de rota
+Os tipos de rota formecem uma maneira de classificar diferentes tipos de cargas
+transportadas pelos veiculos. Alguns exemplos de tipos de rotas são inflamáveis ou
+T AA R Roadha Trarporiafion ST
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com status e tipos
+refrigerados. Qualquer tipo de rota criado fica disponível para todas as regiões. Essa
+opção está disponível somente se o MobileCast estiver carregado.
+Manutenção — Cadastros — Rotas —Tipos de rota
+Status da rota
+Os status da rota podem ser usados para classifícar as rotas de acordo com a urgência, o
+estágio de conclusão ou com algum outro critério. Alguns exemplos de status de rota
+podem incluir atrasada ou sem status. Os status de rota são atribuídos às rotas no Analista.
+Todos os status de rota criados ficam disponíveis para todas as regiões. Essa opção está
+disponível somente se o MobileCast estiver carregado.
+Manutenção — Cadastros — Rotas — Status da rota
+Tipo de motorista
+Os tipos de motorista permitem categorizar os motoristas e monitorar as taxas de
+pagamento através dessas categorias. Por exemplo, é possível usar um tipo de motorista
+para motoristas experientes e outro para novos motoristas, e atribuir uma taxa de
+pagamento a cada tipo. Os tipos de motorista são mantidos no módulo Manutenção, mas
+como envolvem informações de folha de pagamento, é necessário possuir permissões de
+contabilidade para trabalhar com os tipos de motorista.
+Manutenção —Cadastros — Funcionários — Tipos de motorista
+Tipo de monitoramento
+Os tipos de monitoramento são utilizados para controlar informações contábeis e
+operacionais, que podem ser combinadas a dados de rotas específicas para produzir
+relatórios de contabilidade detalhados. Os tipos de monitoramento são mantidos no
+módulo Manutenção, mas como envolvem informações financeiras, é necessário possuir
+permissões de contabilidade para trabalhar com os tipos de monitoramento. Consute
+Como trabalhar com tipos de monitoramento para obter mais informações. Esta opção
+está disponível somente se o MobileCast estiver carregado e você possuir permissões de
+contabilidade.
+Manutenção > Cadastros * Expedir > Tipos de monitoramento
+Adição de um status ou tipo
+Abaixo encontram-se instruções básicas para adicionar um status ou tipo; alguns status e
+tipos possuem campos adicionais que devem ser preenchidos. Consulte as instruções para
+trabalhar com o tipo individual para obter mais informações.
+[ EMN Etapal: Clique no icone Manutenção para abrir o móduto Configuração.
+ee — Etapa 2: Clique no menu Cadastros, selecione o tipo/status desejado. A janela do tipo/
+: status é aberta, listando os tipos/status atuais.
+Bmadeaperaçães o A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com status e tipos
+Nota: Para ver uma lista atualizada de tipos/status, clique no ícone Atualizar; a janela será
+atualizada com todas as informações alteradas do banco de dados.
+Etapa 3: Para adicionar um status ou tipo, clique no ícone Adicionar ou pressione a tecla
+[Insert]. A janela Adicionar é exibida.
+Etapa 4: Preencha os campos conforme necessário. O campo Tipo ou Status é
+Oobrigatório; a Descrição é opcional.
+A janela Adicionar tipo de
+b ipo
+) motorista é uma janela típica
+maaA tilizada para adicionar status
+B f ou tipos. Basta inserir um tipo
+E € uma descrição e clicar no
+Etapa 5: Se o status/tipo tiver uma cor usada para identificá-lo, clique na seta para abrir
+ma paleta de cores e selecione a cor desejada.
+1W Etapa6: Clique no icone Satvar ou pressione [Ctril+[S] para salvar o tipo ou status.
+mi — Etapa7: Clique na caixa Fechar para fechar 2 janela.
+Manutenção Cadastros —Status/Tipo — Adicionar ([Insert]) — ícone Salvar ([Ctrl]+[S])
+Os status e tipos existentes podem ser editados ou excluídos, conforme necessário.
+Consuite Edição de itens e Exclusão de itens para obter mais informações.

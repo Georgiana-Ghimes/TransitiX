@@ -1,0 +1,92 @@
+tipul de client cu care lucrați în prezent. Partea dreaptă a
+fereastra este un meniu cu mai multe pagini:
+Atributele conțin numele clientului, adresa și informațiile de telefon. Toate
+Informațiile necesare pot fi găsite pe această pagină.
+Atributele extinse conțin informații suplimentare despre client, cum ar fi
+indicații de orientare, tarif, detalii despre zonă și prioritate, precum și alte informații.
+Tipuri de echipamente vă permite să atribuiți anumite tipuri de echipamente
+client. Când clientul este direcționat, acesta va fi plasat pe o rută cu
+acest tip de echipament, cu excepția cazului în care face parte dintr-o rută standard.
+Modificările aduse ferestrei de service conțin informații despre ferestrele de service
+serviciul pentru clienți în anumite zile.
+Service Time Changes conține informații despre orele de service.
+serviciul pentru clienți în anumite zile.
+Expedierea conține informații specifice MobileCast
+Extensiile pentru clienți conține informații utilizate de Territory Planner 2o
+creează rute strategice.
+Harta poate fi folosită pentru a geocoda clientul sau pur și simplu pentru a vizualiza
+Unde este geocodat,
+TMT , ,, ,,, , ;E EE E Roadnet Tranporiation Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrezi cu clienții
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+O) Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul clientului. Acest câmp trebuie completat.
+2
+amisio f mo D tmnbando 1 s |
+Este EE T ammantas Í Egeta T Tretiniõets
+Și mm
+DACA
+BEE a fm al
+m|— S
+mz
+Trebuie completată doar prima pagină a meniului Client, the
+„Paginile rămase conțin informații opționale.
+Pasul 5: Faceți clic pe săgeata Tip curent pentru a deschide o listă de tipuri de clienți. Faceți clic
+un tip de client pentru a-l selecta. Acest câmp trebuie completat.
+. Notă: Dacă pe pagina Clienți este selectat Sincronizare elemente de întreținere
+din meniul Opțiuni, pot fi selectate diferite tipuri de clienți din lista Tipuri
+client; acestea sunt tipurile selectate în meniul Opțiuni pentru a fi
+sincronizate. Când introduceți informații pentru tipul curent, orice câmp
+Sincronizat va fi populat pentru toate tipurile selectate.
+Bmadeaperações R
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum să lucrezi cu clienții
+Pasul 6: Introduceți informațiile despre client în meniu. Consultați Utilizarea meniului Client
+pentru mai multe informații. Pagina Atribute trebuie completată, dar
+toate celelalte informații sunt opționale.
+Dacă sincronizați elemente de întreținere pentru a adăuga tipuri
+diferit de același ID, simultan:
+Când ați terminat cu primul tip de client, faceți clic pe săgeata Tip curent și selectați
+0 următor tip de client cu care! doresc să lucreze. Toate informatiile de la
+câmpurile selectate pentru sincronizare vor fi deja completate și
+Este necesar doar să introduceți informații din câmpurile nesincronizate.
+1) Pasul 7: Faceți clic pe pictograma Satvar sau apăsați [Ctrl]+[S] pentru a salva informațiile.
+e — PASI: După introducerea tuturor clienților, faceți clic pe caseta Închidere pentru a închide fereastra
+Adăugați client.
+Pictograma de întreținere — Înregistrări — Clienți — Clienți — Pictograma Adăugați ([Tnsert])
+— Pictograma Salvare ([CtrI+[S])
+. Note: Dacă doriți să înlocuiți anumite informații pentru mai mulți clienți,
+cum să schimbați tipul de timp de serviciu, selectați clienții în fereastră
+Clienții. Faceți clic dreapta pe un client ales și selectați
+Înlocuiți în meniul afișat. Selectați elementul de înlocuit (Tip de timp
+service), introduceți noile informații și faceți clic pe butonul [OK]; apoi
+Faceți clic pe [Da] pentru a confirma că doriți să efectuați modificarea. Noile informații
+sunt introduse pentru toți clienții selectați.
+Dacă doriți să ștergeți timpul de service sau modificările ferestrei de răspuns,
+care deservesc mai mulți clienți, selectați clienții în fereastra Clienți. Faceți clic
+Faceți clic dreapta pe un client ales și selectați Ștergere
+modificări la meniul afișat. Confirmați că caseta corespunzătoare tipului de modificare
+pe care doriți să îl ștergeți este selectat (Timp de prezență și/sau
+service) și selectați scenariile din care doriți să ștergeți modificările. Faceți clic
+butonul [Ștergere]. Apare un mesaj care vă informează câte modificări vor fi făcute.
+exclus; faceți clic pe [OK] pentru a continua.
+Dacă editați clienți cu tipuri sincronizate și nu doriți ca
+alte tipuri sunt actualizate cu noile informații, verificați dacă opțiunea
+Sincronizarea acelorași ID-uri nu este bifată.
+Clienții existenți pot fi editați sau șterși după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații. Ao
+ștergeți un client, acesta va fi eliminat din orice rută implicită din care face parte;
+În plus, extensia client corespunzătoare va fi, de asemenea, ștearsă.
+TT AA E Roadhe Traporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Utilizarea meniului Client
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Meniul Client vă permite să introduceți informații despre locațiile de livrare. Puteți deschide
+meniul Client pentru a adăuga un client nou sau a edita un client existent. La

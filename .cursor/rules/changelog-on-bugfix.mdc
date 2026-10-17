@@ -1,0 +1,29 @@
+---
+description: După fiecare bug fix — append obligatoriu în changelog-ul deschis (nu aștepta commit)
+alwaysApply: true
+---
+
+# Changelog: la fiecare bug fixat
+
+## Obligatoriu
+
+Când repari un **bug** (ticket QA, reopen, defect raportat de client/utilizator — cu sau fără număr `#N`):
+
+1. **În același tur** în care consideri fix-ul gata (cod + teste relevante), **înainte** să spui „gata” / să oferi commit:
+   - deschide changelog-ul **deschis** al branch-ului (vezi `rai-changelog.mdc` / `companion-bump-on-commit.mdc`);
+   - append **explicit** sub **Bugfix** că ai reparat problema (titlu + ce vede operatorul / ce s-a schimbat);
+   - actualizează **indexul** Bugfix (tabel `# | Problemă | Build | Status`) cu status **reparat** (sau „reparat (local)” dacă încă nu e bump);
+   - actualizează **Pe scurt** din hero dacă e cazul.
+2. Dacă **încă nu** există bump/build pentru acest set de schimbări (cod nerelat):
+   - pune bug-ul într-un bloc **„Următorul build (nerelat)”** / **în lucru** deasupra build-urilor deja release-uite, **sau** pe build-ul curent deschis dacă tocmai lucrezi la el;
+   - la **commit + push** (bump), mută/încorporează acele note în blocul noului build și marchează build-ul în index.
+3. Nu lăsa doar `docs/changes/*.md` — changelog-ul HTML deschis e sursa pe care o citește utilizatorul.
+
+## Nu amâni
+
+- Nu aștepta „commit și push” ca să scrii bugfix-ul în changelog.
+- Nu presupune că „o să apară la bump” fără să fi scris deja textul.
+
+## Cu bump (commit + push)
+
+Respectă în plus `companion-bump-on-commit.mdc`: blocul build-ului nou trebuie să conțină aceleași Bugfix-uri (consolidate), index + footer actualizate.

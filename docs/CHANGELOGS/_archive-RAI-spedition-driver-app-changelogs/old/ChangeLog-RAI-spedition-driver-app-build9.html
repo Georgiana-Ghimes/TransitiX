@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 9</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --ok: #166534;
+      --warn: #92400e;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      /* Fără fundal explicit, textul aproape negru rămâne invizibil într-un browser sau
+         cititor PDF pe temă întunecată — documentul ajunge la client, deci nu poate depinde
+         de setările lui. */
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .tag {
+      display: inline-block;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 4px;
+      margin-right: 6px;
+      vertical-align: 2px;
+    }
+    .tag-urgent { background: #fee2e2; color: #991b1b; }
+    .tag-fix { background: #dbeafe; color: #1e40af; }
+    table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 0.5em 0 0.8em; }
+    th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+    th { background: var(--soft); color: var(--brand); font-size: 9pt; }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>RAI Spedition — Documente · build 9</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong> · profil <strong>documents</strong><br />
+      Versiune companion <strong>v1.1.0 · build 9</strong> · 30 august 2026<br />
+      Continuare Sprint 2 (build 8 → 9) · două commit-uri: OCR scris de mână + fixuri birou
+    </div>
+    <div class="badge-row">
+      <span class="badge">OCR scris de mână</span>
+      <span class="badge">Reluare în fundal</span>
+      <span class="badge">Clopoțel upload șofer</span>
+      <span class="badge">9 bugfix birou</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Livrare de testat pe VM. Tema principală: <strong>avizele scrise de mână și fotografiate de șofer</strong>
+    ajungeau în birou cu toate câmpurile goale. Restul documentului acoperă nouă defecte raportate pe
+    partea de birou (export, filtre, notificări, validare formulare).
+  </p>
+
+  <section class="avoid-break">
+    <h2>Pe scurt</h2>
+    <div class="card">
+      <table>
+        <tr><th style="width:32%">Ce se schimbă</th><th>De ce contează la testare</th></tr>
+        <tr><td><strong>Aviz fotografiat, scris de mână</strong></td><td>Codul TPO și numărul de înmatriculare se citesc acum din poză; înainte rândul rămânea complet gol.</td></tr>
+        <tr><td><strong>Timeout OCR ≠ eșec</strong></td><td>Prima fotografie pe Paddle rece răspunde <code>202</code> și continuă în fundal, în loc de <code>504</code> cu rând gol.</td></tr>
+        <tr><td><strong>Notificare la upload șofer</strong></td><td>Biroul află imediat de o încărcare, chiar și fără cursă atașată; clopoțelul se reîmprospătează la 15s.</td></tr>
+        <tr><td><strong>Export XLSX pe șablonul ales</strong></td><td>Exportul folosea coloanele implicite indiferent de șablon — se vedea abia în fișierul trimis clientului.</td></tr>
+        <tr><td><strong>Filtru „Săptămâna asta”</strong></td><td>Se poate filtra pe data încărcării, nu doar pe data cursei (care lipsește la avizele noi).</td></tr>
+        <tr><td><strong>Validare la salvare</strong></td><td>Client, Șofer, Factură, Produs: câmpurile obligatorii nu mai trec cu spații; verificare și în API.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>OCR — avize scrise de mână</h2>
+
+    <div class="why">
+      <strong>Simptomul:</strong> șoferul fotografia un aviz completat de mână, upload-ul reușea, iar în
+      <code>/avize</code> rândul apărea fără TPO, fără număr auto, fără nimic. Nu era un singur defect, ci
+      <strong>trei cauze independente</strong> pe același drum: textul citit de OCR, alegerea layout-ului de
+      document și randarea imaginii în sidecar. Fiecare dintre ele, singură, era suficientă ca rândul să
+      rămână gol.
+    </div>
+
+    <div class="avoid-break">
+      <h3>1. Normalizarea textului OCR (<code>normalizeOcrText.js</code>)</h3>
+      <ul>
+        <li>OCR-ul pe fotografie injectează <code>&amp;</code>, <code>$</code>, <code>S</code>, <code>B</code>, <code>Q</code> în șirul de cifre. Acele caractere sunt acum curățate în interiorul codurilor TPO / PSL / TRO: <code>TP0-O0&amp;5813</code> → <code>TPO-0025813</code>.</li>
+        <li>Plăcuța scrisă de mână iese cu litere în loc de cifre: <code>B 33o SRS</code> → <code>B 330 SRS</code>, <code>CJ 1l ABC</code> → <code>CJ 11 ABC</code> (<code>O/Q/D → 0</code>, <code>I/L → 1</code>).</li>
+        <li><strong>Rescrierea plăcuței se face doar dacă partea numerică chiar conține o cifră.</strong> Altfel <code>CS OOO SRL</code> — un nume de firmă — ar fi devenit „plăcuță”. Verificat explicit în teste: textul rămâne neatins.</li>
+        <li>Clasa de caractere pentru coduri lărgită la <code>[0-9OIlQq&amp;$SsBb]{4,14}</code>, ca șirul mutilat să fie măcar recunoscut ca fiind un cod înainte de a fi reparat.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>2. Detecția de profil (<code>profiles.js</code>, <code>extract.js</code>)</h3>
+      <ul>
+        <li><strong>Cauza tăcută:</strong> profilul <em>Aviz generic</em> se alegea după cuvântul „aviz”, care pe scris de mână iese mutilat. Scor 0 → niciun profil → niciun câmp extras, deși codul TPO era lizibil în text.</li>
+        <li>Markeri extinși: <code>tpo</code>, <code>expeditor</code>, <code>livrare</code>, <code>comanda de transport</code> — un aviz se recunoaște și după ce conține, nu doar după cum se numește.</li>
+        <li>Reparat marker greșit: <code>/însoțire'/</code> avea un apostrof în plus, deci nu se potrivea niciodată cu nimic.</li>
+        <li>Ponderi rebalansate: <code>numar_tpo</code> de la 1 la <strong>3</strong> (câmpul după care lucrează biroul), <code>gross_weight_kg</code> de la 2 la 1.</li>
+        <li><strong>Plasă de siguranță</strong> în <code>extract.js</code>: dacă documentul e aviz și niciun profil nu punctează, dar textul conține un cod TPO/PSL/TRO, se aplică oricum layoutul generic de aviz.</li>
+        <li><strong>Penalizare de lungime:</strong> codurile sunt completate cu zerouri la 7 cifre. Un deget sau o îndoitură peste ultima cifră produce un cod care <em>arată</em> valid. Lungimea greșită scade încrederea cu 0.35, deci codul ajunge la revizuire în loc să plece pe o factură scurtat.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>3. Sidecar Paddle — randări multiple (<code>tools/paddle-ocr/app.py</code>)</h3>
+      <ul>
+        <li><strong>Orientare aleasă după scor</strong>, pe patru unghiuri. Scorul răsplătește acum și volumul de text: scrisul de mână întors invers poate ieși „încrezător” pe câteva rânduri scurte. Bonus de portret (+1.5 / −1.0): pozele de caiet din cabină sunt aproape mereu portret.</li>
+        <li><strong>Treceri suplimentare de randare</strong>, în ordine, doar cât timp lipsește ceva:
+          <ul>
+            <li><code>upscale</code> — latura scurtă la 2000px (cap 3×, LANCZOS). Măsurat pe poze reale de la șoferi: simpla mărire 2× este ce recuperează plăcuța scrisă de mână.</li>
+            <li><code>shadow</code> — pagina împărțită la propriul blur, ceea ce elimină umbra pe care o aruncă mâna sau telefonul. Lumina neuniformă e cel mai frecvent defect al pozelor din cabină și învinge contrastul global, fiindcă jumătate de foaie e expusă corect.</li>
+            <li><code>clahe</code> — mărire + egalizare locală pe canalul de luminanță.</li>
+          </ul>
+        </li>
+        <li><strong>Un aviz tipărit se oprește după prima trecere</strong> (<code>missing_from_text</code>): dacă are deja și cod, și plăcuță, nu se mai plătește CPU. PDF-urile curate rămân la fel de rapide ca înainte.</li>
+        <li><strong>Trecerile se adună, nu se înlocuiesc.</strong> O fotografie cedează de obicei câte un câmp per randare — mărimea nativă citește codul tipărit, mărirea citește plăcuța scrisă. Extractorul ia prima potrivire per câmp, deci textul cel mai bun rămâne primul.</li>
+        <li>Doar treceri suplimentare pentru <strong>o singură pagină</strong>: pe un dosar de 30 de pagini ar fi triplat costul fiecărei pagini tipărite.</li>
+        <li>Contrast ușor pe fiecare candidat de rotație — <strong>fără binarizare</strong>: OCR-ul de scris de mână pe CPU e fragil la praguri dure.</li>
+        <li>OpenCV rămâne opțional (<code>opencv-python-headless</code> adăugat la <code>requirements.txt</code>): o instalare slabă fără <code>cv2</code> tot citește, doar că degradează la mărire simplă.</li>
+        <li>Comutator <code>PADDLE_OCR_AGGRESSIVE=0</code> pentru a opri trecerile suplimentare; starea apare în <code>/health</code>.</li>
+        <li><code>check_logic.py</code> verifică și că o poză primește trecerile suplimentare, iar un document de 3 pagini nu.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>4. Timeout interactiv → reluare în fundal (<code>/api/avize/extract</code>)</h3>
+      <div class="why">
+        Paddle rece pe VM depășește des bugetul interactiv chiar la prima fotografie. Un <code>504</code>
+        lăsa rândul gol și obliga biroul să apese <strong>Re-extrage</strong> manual — adică exact munca pe
+        care OCR-ul o economisește.
+      </div>
+      <ul>
+        <li>La depășirea bugetului, documentul trece pe pasul de fundal cu buget complet, e marcat <strong>„Se procesează…”</strong>, iar endpoint-ul răspunde <strong>202</strong> cu <code>extraction_pending: true</code> și <code>reason: ocr_timeout_retry</code>.</li>
+        <li><strong>Cifrele citite anterior se păstrează</strong> până când o citire mai bună le înlocuiește — un timeout nu mai șterge un TPO deja extras.</li>
+        <li><strong>Re-extrage</strong> din birou trece rândul înapoi pe <code>uploaded</code>, deci lista arată că lucrează, nu că s-a blocat.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Notificări și feedback vizibil</h2>
+
+    <div class="avoid-break">
+      <h3>Clopoțelul birou la upload-ul șoferului</h3>
+      <ul>
+        <li>Încărcările <strong>fără cursă atașată nu anunțau pe nimeni</strong> — biroul le descoperea doar deschizând <code>/avize</code>. Există acum o notificare <strong>„De pe drum”</strong> la fiecare upload, cu link direct către <code>/avize</code>.</li>
+        <li>Reîmprospătare la <strong>15s</strong> (8s cu lista deschisă) în loc de 2 minute, dar <strong>numai cu tabul vizibil</strong> — telefonul din buzunar nu interoghează serverul.</li>
+        <li>Tipurile <code>driver_upload</code> și <code>data_issue</code> adăugate în constrângerea din migrare.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Ecranul șoferului spune adevărul</h3>
+      <ul>
+        <li>Afișa „OCR gata” și când TPO ieșea gol. Acum arată <strong>codul extras</strong> sau <strong>„OCR gata, fără TPO · biroul completează”</strong>.</li>
+        <li>Starea intermediară e <strong>„Se procesează…”</strong> cu spinner, la fel ca re-extragerea din birou.</li>
+        <li>Previzualizare aviz: sursa <strong>paddle</strong> etichetată explicit, lângă badge-ul <strong>De revizuit</strong>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX — birou (9 defecte raportate)</h2>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-urgent">URGENT</span>#10 · Exportul XLSX ignora șablonul ales</h3>
+      <ul>
+        <li><strong>Cauza:</strong> când șablonul nu avea coloane utilizabile, normalizarea cădea <em>în tăcere</em> pe setul implicit. Exportul părea că a mers; se vedea abia în fișierul ajuns la client.</li>
+        <li><strong>Remediat:</strong> <code>exportColumnsFor()</code> / <code>hasUsableColumns()</code> — un șablon fără coloane utilizabile întoarce <strong>400 cu mesaj</strong>, nu coloane implicite pe tăcute. Aceeași cale și pentru <code>/api/reports/export</code>.</li>
+        <li>Salvarea unui șablon gol e respinsă și în interfață, înainte de a ajunge la server.</li>
+        <li><strong>Tab Șabloane:</strong> șablonul activ e evidențiat, fiecare card arată numărul de coloane, iar celelalte au buton <strong>Folosește la export</strong>.</li>
+        <li>Notificarea de export numește <strong>șablonul și câte coloane</strong> a scris — verificabil fără a deschide fișierul.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-fix">FIX</span>#9 · „Săptămâna asta” returna tabel gol</h3>
+      <ul>
+        <li><strong>Cauza:</strong> filtrarea rula pe <code>data_efectuare_cursa</code>, care e goală la avizele proaspăt încărcate. „Luna asta” părea că merge doar fiindcă prindea rânduri vechi, cu data cursei deja completată.</li>
+        <li><strong>Remediat:</strong> coloana de dată e selectabilă — <code>AVIZ_DATE_FIELDS</code> pe server, comutator <strong>Data cursei / Data încărcării</strong> în bara de filtre; etichetele câmpurilor de dată se schimbă după alegere.</li>
+        <li>Implicit rămâne <strong>Data cursei</strong> (comportamentul de până acum); „Data încărcării” e alegerea explicită pentru avizele care încă nu au cursă.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-fix">FIX</span>#2 · Notificările de expirare erau inconsistente</h3>
+      <ul>
+        <li><strong>Trei probleme pe același ecran:</strong> clopoțelul se uita doar la documentele de <em>șofer</em>, nu și la <em>vehicule</em>; rezultatul era ținut în cache 5 minute fără invalidare; iar pragul era fix 30 de zile, ignorând <code>document_expiry_days</code> din <strong>Setări</strong>.</li>
+        <li><strong>Remediat:</strong> pragul vine din setările companiei, vehiculele intră în calcul, iar cache-ul se invalidează la salvarea unui șofer/vehicul/cursă și la modificarea setărilor.</li>
+        <li><strong>Cheile notificărilor trec de la nume la id.</strong> Redenumirea unui șofer lăsa în urmă o alertă fantomă care nu se mai stingea niciodată.</li>
+        <li>Dashboard, clopoțel și pagina Documente rulează acum <strong>același</strong> <code>collectExpiringDocuments</code>; un test de paritate ține pragul din client identic cu cel din interogarea serverului.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-fix">FIX</span>#7 · Clienți fără ștergere definitivă</h3>
+      <ul>
+        <li>Existau doar <strong>Editează</strong> și <strong>Dezactivează</strong>, deci un client adăugat din greșeală rămânea în listă pentru totdeauna.</li>
+        <li>Adăugat <strong>Șterge</strong> cu dialog de confirmare pentru clienții inactivi, plus <strong>Reactivează</strong> — același tipar ca la celelalte entități.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-fix">FIX</span>#6 · #8 · #3 · #5 — validare la formulare</h3>
+      <p class="muted" style="margin-top:-0.2em">
+        <strong>#6</strong> Client salvabil cu <em>Denumire</em> din spații · <strong>#8</strong> Factură salvabilă cu <em>Client</em> din spații ·
+        <strong>#3</strong> Șofer fără validare de câmpuri · <strong>#5</strong> Produs depozit fără validare.
+      </p>
+      <ul>
+        <li><strong>O singură sursă de reguli, în două locuri:</strong> <code>src/lib/entityValidation.js</code> (browser) oglindit de <code>server/src/lib/validation/entityInput.js</code> (API). Un <strong>test de paritate</strong> pică dacă cele două se desincronizează.</li>
+        <li><strong>Serverul nu mai are încredere în formular:</strong> <code>POST</code>/<code>PUT</code>/<code>bulk</code> pe <code>/api/entities/:entity</code> întorc <strong>400 cu eroare pe câmp</strong>. Un client de API sau o filă lăsată deschisă nu mai pot scrie rânduri invalide.</li>
+        <li><strong>Hook comun <code>useEntityForm</code></strong> pentru cele patru modale: erori sub câmp, banner sus, focus pe primul câmp greșit, <code>trim</code> la salvare, câmpurile goale ajung <code>null</code> în bază (nu șir vid).</li>
+        <li>Reguli acoperite: email, telefon, CUI/TVA, IBAN, date calendaristice, intervale numerice, date de expirare.</li>
+        <li><strong>CUI-ul acceptă și TVA străin</strong> (alfanumeric cu cel puțin o cifră, max 20 caractere) — o regulă strict românească ar fi blocat clienții din UE.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-fix">FIX</span>#4 · „Setări” apărea de două ori</h3>
+      <ul>
+        <li>Același link era și în sidebar, și în meniul de sub avatar. Eliminat din meniul avatarului; sidebar-ul rămâne singurul loc.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare și acoperire</h2>
+    <div class="card">
+      <ul>
+        <li><strong>1533 teste unitare (98 fișiere)</strong> + <strong>201 teste API (12 fișiere)</strong>, 1 skip, lint curat. La build 8 erau 1436 unitare în 94 de fișiere.</li>
+        <li>Teste noi pe OCR: <code>normalizeOcrText.test.js</code> (coduri cu zgomot de scris de mână, plăcuțe cu litere în loc de cifre, „nu inventa o plăcuță dintr-un nume de firmă”), <code>extract.test.js</code> (plasa de siguranță pe layout generic).</li>
+        <li>Teste noi pe fixuri: <code>entityInput.parity.test.js</code> (client vs server), <code>documentExpiry.test.js</code>, <code>officeNotifications.expiry.test.js</code> (prag din setări + paritate), <code>avizQuery.test.js</code> (filtrare pe data încărcării), <code>avizExport.test.js</code> (refuzul șablonului gol), <code>officeNotifications.notifyDriverUpload.test.js</code>.</li>
+        <li><code>driverDocuments.api.test.js</code> actualizat pentru noul contract la timeout: <strong>202 + <code>extraction_pending</code></strong> în loc de 504, cu verificarea că TPO-ul citit anterior se păstrează.</li>
+        <li>Logica sidecar-ului, fără motorul ML: <code>docker compose -f docker-compose.companion.yml exec paddle-ocr python /app/check_logic.py</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>De verificat pe live (VM)</h2>
+    <div class="card">
+      <ol>
+        <li>Versiunea din login/topbar arată <strong>v1.1.0 - build 9</strong> — altfel rulează build-ul vechi.</li>
+        <li><code>curl -s http://127.0.0.1:3002/api/health</code> → <code>capabilities.ocr = paddle</code>.</li>
+        <li><code>docker compose -f docker-compose.companion.yml up -d --build</code> — sidecar-ul are dependență nouă (<code>opencv-python-headless</code>), deci imaginea <strong>trebuie reconstruită</strong>.</li>
+        <li><code>npm run db:migrate</code> — constrângerea de notificări acceptă <code>driver_upload</code> și <code>data_issue</code>; fără migrare, notificarea de upload eșuează la inserare.</li>
+        <li><strong>Proba de aur:</strong> șofer → poză cu un aviz completat de mână, în lumină proastă → biroul primește notificare în ≤15s → rândul din <code>/avize</code> are TPO și număr auto, cu sursa <code>paddle</code>.</li>
+        <li><strong>Paddle rece:</strong> prima fotografie după repornirea sidecar-ului trebuie să dea <code>202</code> și să se completeze singură, nu <code>504</code> cu rând gol.</li>
+        <li><strong>Export:</strong> alege un șablon în tab-ul Șabloane → exportă → notificarea numește șablonul și numărul de coloane, iar fișierul le conține.</li>
+        <li><strong>Filtre:</strong> „Săptămâna asta” pe <strong>Data încărcării</strong> trebuie să arate avizele urcate azi.</li>
+        <li><strong>Expirări:</strong> schimbă <code>document_expiry_days</code> în Setări → clopoțelul reflectă noul prag imediat, fără să aștepți 5 minute.</li>
+        <li><strong>Validare:</strong> salvează un Client cu <em>Denumire</em> din spații → eroare pe câmp, nu rând gol în listă.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Build 9 · 30 august 2026 · Companion v1.1.0 · Branch RAI-spedition-driver-app ·
+    Continuare a Sprint 2 (vezi ChangeLog-RAI-spedition-driver-app-Sprint2 pentru build 5–8)
+  </footer>
+
+</body>
+</html>

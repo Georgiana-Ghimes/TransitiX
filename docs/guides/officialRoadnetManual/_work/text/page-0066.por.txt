@@ -1,0 +1,70 @@
+A primeira etapa da criação de uma pesquisa é adicionar a própria pesquisa.
+Etapa 1: Na área Pesquisa da janela Configuração da pesquisa, clique no ícone
+Adicionar. À janela Adicionar pesquisa é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar pesquisa é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova pesquisa.
+Etapa 2: Insira até três caracteres para o Código exclusivo da pesquisa. Esse campo
+deve ser preenchido.
+Etapa 3: Insira uma Descrição
+Etapa 4: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar a pesquisa.
+Essa pesquisa está
+sendo criada para
+50 em cada parada
+Etapa 5: Após a adição de todas as pesquisas, clique na caixa Fechar para fechar a
+janela Adicionar pesquisa.
+SSA NEGA SA SNE AAA SAA ANA
+(Evespr]) — ícone Salvar ([Ctrl]+[S])
+As pesquisas existentes podem ser editadas ou excluídas, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.
+Guia de operações 159
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+s idflranments
+m—— possível: pora su perpundde
+qniatos da lista de seleção, pressione
+feanemesesse? — — atecla[Enter] entrecada
+ii opção para formar uma
+ista
+2
+Etapa 4: Clique na seta Tipo de resposta e selecione o tipo da pergunta. As opções são
+descritas a seguir.
+Texto — o motorista digita uma resposta para a pergunta no disposítivo sem fio.
+Um exemplo de questão aberta é “O que podemos fazer para atender melhor às
+suas necessidades?”
+Sim/Não — O motorista seleciona Sim ou Não no disposítivo sem fio, como
+resposta à pergunta. Um exemplo de uma pergunta Sim/Não é “Você ficou
+satisfeito com o serviço recebido hoje?”
+Lista de seleção — o motorista seleciona a resposta de uma lista fornecida por
+você. Insira as respostas possíveis no campo Dados da resposta a seguir. Ao
+digitar as respostas, pressione a tecla [Enter] entre as opções; isso criará uma
+lista de respostas. Um exemplo de pergunta de lista de seleção é “Com que
+frequência você faz compras de supermercado?
+TMT AA A A A Foadnet Transporiation Sufe
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com pesquisas
+Mais de uma vez por semana
+Uma vez por semana
+.A cada duas semanas
+Uma vez por mês”
+Numérica — o motorista digita um número no dispositivo sem fio para
+rTesponder à pergunta. Um exemplo de pergunta numérica é “Quantas vezes
+você visitou este cliente esta semana?”
+Etapa 5: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar a pergunta.
+Etapa 6: Após a adição de todas as pesquisas, clique na caixa Fechar para fechar a
+janela Adicionar pergunta da pesquisa.
+Teone Manutenção — Cadastros — Expedir - Configuração da pesquisa >área Perguntas
+disponíveis —sicone Adicionar — ícone Salvar ([Ctri]+[S])
+As perguntas de pesquisas existentes podem ser editadas ou excluídas, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Atribuição das perguntas às pesquisas
+Após criar a pesquisa e as perguntas, é necessário selecionar que perguntas aparecerão na
+pesquisa e a ordem em que aparecerão.
+Etapa 1: Na área Pesquisas da janela Configuração da pesquisa, seleciona a pesquisa à
+qual irá adicionar perguntas.
+[ o T
+o E
+Coãe foreapem Jmmeruanea [nve firquecs temnto | jn toá [togueat (1n 1roo
+EJ

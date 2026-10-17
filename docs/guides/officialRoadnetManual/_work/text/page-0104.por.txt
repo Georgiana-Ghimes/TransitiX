@@ -1,0 +1,82 @@
+— Todososdireitosreservados.
+Importação de extensões de cliente
+importação. Consulte Altemância entre conjuntos de layoutpara obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar no menu suspenso. Consulte Configuração de
+layouts de arquivo de importação para obter mais informações
+Para visualizar um relatório que resuma as informações do layout, incluindo o
+mome e o local do arquivo de importação e as posições iniciais e o tamanho de
+cada campo, clique na seta [Layout do arquivo] e escolha Visualizar no menu
+suspenso. A janela Visualizar relatório é exibida com o relatório. Nessa janela,
+você pode imprimir ou exportar o relatório.
+Se você não recebeu permissão para alterar as opções de importação e
+exportação no módulo Administração, não conseguirá alterar as opções
+selecionadas ao importar extensões de cliente.
+EX
+— c
+[n m FPSSSS TE
+perva —
+fmEr — ——
+PP PT
+imoamncene ) Tun omni
+ficenesme en | | resaõei
+Vasa tma Tn fena ——
+T intmntóninencos *
+— A
+j
+Antes de importar extensões de cliente, clique no botão
+fOutras opções] e escolha os conjuntos de padrões de
+atendimento padrão e as semanas ativas padrão.
+Etapa 3: Se estiver importando clientes, marque a opção Importar cliente na área
+Clientes e escolha as opções desejadas. Consulte Importação de clientes para
+obter mais informações sobre essas opções.
+Etapa 4: Na área Extensões de cliente, selecione as sessões de planejamento para as
+quais deseja importar as extensões de layout. Para selecionar mais de uma
+sessão, mantenha a tecla [Ctrl] pressionada ao clicar nas sessões.
+Badeaperaçães A
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservados.
+Importação de extensões de cliente
+Dica: Se for necessário, dimensione as colunas na lista de sessões de planejamento para
+que você possa ver todas as informações. As larguras das colunas são salvas
+oO) avtomaticamente e, na próxima vez que a janela for aberta, você poderá ver todas
+s informações.
+Etapa 5: Para apenas atualizar as extensões de cliente existentes nas sessões com novas
+informações, marque a opção Somente atualizar. Se houver novas extensões de
+cliente no arquivo de importação, elas serão ignoradas.
+Etapa 6: Clique no botão [Importar]. Se você estiver importando clientes, eles serão
+importados para todas as sessões. As extensões serão importadas para as
+sessões selecionadas e as paradas colocadas nas rotas conforme especificado.
+. Nota: Após a importação, você poderá ver o log de importação ou qualquer erro ocorrido
+durante o processo. Clique no botão [Exibir log] ou [Exibir erros]
+Etapa 7: Após a importação de todas as extensões de cliente, clique na caixa Fechar
+para fechar a janela Importar extensões de cliente.
+Importador > Importar — Manutenção — Extensões de cliente — [Importar]
+FE A AA Roadret Trasporiafion SE
+' Copyright 2006 United Parcel Service f America, lc
+Todos os direitos reservados.
+Importação diária de pedidos
+Importação diária de pedidos
+Utilizado com: Roadnet
+Se você estiver utilizando o Roadnet para criar rotas diárias, terá de importar pedidos
+diariamente. O módulo Importação permite estabelecer como as informações dos pedidos
+serão lidas durante o processo de importação. Você pode especifícar o layout do arquivo
+de importação, invalidar pedidos de clientes específicos para não vê-los no Editor de
+roteirização, enviar pedidos de um cliente para outro, gerar automaticamente relatórios
+sobre os pedidos do dia, entre muitas outras opções.
+. Nota:Ao importar pedidos futuros, você poderá receber um aviso informando que outro
+usuário está trabalhando com um ou mais pedidos futuros. Se isso acontecer, você
+não conseguirá importar os pedidos futuros enquanto o outro usuário não os tíver
+salvado e fechado.
+ZD É Etapa1: Clique no ícone Importação para abrir o módulo Importação
+wl — Nota:Sevocêtiver várias regiões ou cenários, verifique se são exibidos os dados
+apropriados na parte inferior da tela. Para alterar a região ou o cenário, basta clicar
+na seta e selecionar o item apropriado na lista exibida.
+Etapa 2: Clique no menu Importar e selecione Pedidos. A janela Importar pedidos é
+exibida.
+ET
+Clique no botão [Outras [ 5
+pc ee te [ = ) p
+como o Roadnet deve — ) en |
+tratar os pedidos que está — | postus “

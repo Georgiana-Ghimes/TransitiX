@@ -1,0 +1,116 @@
+Introducere în Roadnet Transportation Suite
+Introducere în Roadnet Transportation Suite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Cu toții știm deja eficiența Roadnet Transportation Suite în procesarea dumneavoastră
+nevoile zilnice de rutare, planificare și încărcare. Dar știi cât de ușor este
+Utilizați și mențineți informațiile companiei dvs.? Fiecare secțiune de mai jos conține un set de
+instrucțiuni de bază pentru Roadnet Transportation Suite. Doar urmați hyperlinkurile pentru a obține
+instrucțiuni despre cum să efectuați cele mai obișnuite rutare, planificare strategică și
+încărcarea vehiculului. Este foarte ușor. În cel mai scurt timp veți fi gata să creați rute,
+analizați eficiența acestora și gestionați capacitatea de încărcare.
+Roadnet
+Folosit cu: Roadnet
+Roadnet, parte a Roadnet Transportation Suite de la UPS Logistics Technologies, este software
+sistem cuprinzător de rutare care programează și direcționează echipamentul dvs. De exemplu, poți
+vuse Roadnet pentru a crea rute implicite sau modificări de rută implicite, care pot fi
+adăugat la set și folosit ca bază pentru viitoare scripturi. După crearea de noi
+În general, puteți utiliza diferitele rapoarte și instrumente incluse în Roadnet pentru a analiza și
+schimba rutele noi după cum este necesar.
+Configurarea și întreținerea datelor este primul pas în utilizarea Roadnet. Modulul de întreținere permite
+introduceți toate informațiile esențiale despre client, care sunt apoi folosite pentru a crea dvs
+Totaluri. Există unsprezece pași principali care trebuie parcurși pentru a începe crearea rutelor. Acestea
+pașii sunt: adăugarea regiunilor, adăugarea tipurilor de echipamente, adăugarea echipamentelor, adăugarea
+tipuri de angajați, adăugarea de angajați, adăugarea de șoferi, adăugarea de scenarii, adăugarea
+tipuri de timp de serviciu, adăugare de tipuri de ferestre de servicii, adăugare de tipuri de clienți
+și definirea opțiunilor.
+În continuare, veți dori să vă mențineți clienții și comenzile la zi. Această sarcină poate părea
+dificil, dar Roadnet vă permite să importați rapid clienții și comenzile companiei dvs.
+După importarea clienților și a comenzilor în Roanet, puteți utiliza Editorul de rutare pentru a crea
+rute implicite. După ce faceți acest lucru, puteți crea rute zilnice, puteți adăuga opriri, resecvența
+oprește și atribuie șoferi și echipamentele.
+Acum că rutele au fost create cu succes, puteți utiliza harta în Editorul de rutare
+pentru afișarea și evaluarea rutelor. Apoi, după finalizarea revizuirii sesiunilor de scripting,
+Roadnet oferă opțiunea de a expedia comenzi oriunde pentru depozitare sau utilizare
+suplimentară. În plus, puteți genera și tipări orice număr de rapoarte informative.
+|Roadnet are câteva alte caracteristici nedescrise mai sus; consultați Ghidul de operațiuni pentru
+„Roadnet Transportation Suite sau sistemul complet de ajutor pentru informații despre toate
+caracteristicile avansate ale Roadnet.
+madeaperações Á
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Introducere în Roadnet Transportation Suite
+Planificator de teritoriu
+Folosit cu: Territory Planner
+Territory Planner, parte din Roaánet Transportation Suite a UPS Logistics Technologies, este a
+instrument de planificare strategică care vă permite să creați cu ușurință noi itinerarii, schimbându-se
+unii dintre parametri, fără a pierde rutele existente. De exemplu, puteți utiliza Teritoriu
+Planificator pentru a determina consecințele adăugării sau ștergerii vehiculelor în tranzit sau
+determina efectele unui nou contract mare. După ce ați creat rute noi, puteți utiliza
+s diverse rapoarte și instrumente incluse în Territory Planner pentru a analiza și a schimba noi
+Totaluri după cum este necesar.
+Primul pas pentru utilizarea Territory Planner este configurarea și întreținerea datelor dvs. Modulul
+Întreținerea vă permite să introduceți toate informațiile esențiale despre client, care sunt apoi
+folosit pentru a vă crea rutele. Există paisprezece pași principali care trebuie parcurși
+pentru a începe crearea teritoriilor. Acești pași sunt: adăugarea de regiuni, adăugarea de tipuri de
+echipament, adăugare de echipamente, adăugare de tipuri de angajați, adăugare de angajați,
+adăugarea de drivere, adăugarea de scenarii, adăugarea de tipuri de timp de serviciu, adăugarea de tipuri
+fereastra de servicii, adăugarea de modele de servicii, adăugarea de seturi de modele de servicii
+service, adăugarea de sesiuni de planificare, adăugarea de tipuri de clienți și definirea opțiunilor.
+În continuare, veți dori să vă mențineți clienții și extensiile clienților la zi. Această sarcină poate
+Poate părea dificil, dar Territory Planner vă permite să importați rapid clienți și extensii
+client al companiei dvs.
+După importarea clienților și a extensiilor de clienți în Territory Planner. este posibil să utilizați Editorul
+instrument de planificare pentru a vă crea și edita rutele și pentru a vă crea și edita teritoriile. Apoi
+După ce creați rute și teritorii, puteți transfera date într-o sesiune de planificare
+selectat extensiile client și/sau orice alte informații de asistență pe care le doriți
+transfer.
+Acum că rutele, teritoriile și sesiunile de planificare au fost create cu succes, puteți
+Utilizați harta din Editorul de planificare pentru a vizualiza și evalua teritoriile și rutele.
+Apoi, după finalizarea sesiunilor de revizuire și planificare a teritoriului, Teritoriul
+Planificatorul poate exporta informații de rutare în rețea, mainframe sau alt computer
+€ puteți exporta oricare dintre câmpurile care pot fi importate din fișierul client
+u extensii client. În plus, puteți genera și tipări orice număr de rapoarte
+informații și imprimați hărți direct din Planning Editor.
+Territory Planner are câteva alte caracteristici care nu sunt descrise mai sus; vezi Ghidul
+Operațiuni Roadnet Transportation Suite sau sistemul complet de ajutor pentru a obține
+informații despre aceste resurse.
+FleetLoader
+Folosit cu: FleetLoader
+FleetLoader, parte din Roaánet Transportation Suite a UPS Logistics Technologies, permite
+Încărcați rapid și ușor vehiculele dvs. de băuturi. Cu FleetLoader, puteți alege
+încărcați-vă vehiculele într-un mod mai ușor pentru lucrătorii din depozit (optimizare
+pentru depozit) sau mai ușor de descărcat de către șofer (optimizare descărcare) sau a
+IFITIT AA A L L Foadnet Tranporiation Sufe
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Introducere în Roadnet Transportation Suite
+combinație a ambelor. După încărcarea vehiculelor, puteți utiliza rapoartele și
+instrumente incluse în FleetLoader pentru a le analiza și modifica după cum este necesar.
+.Primul pas în utilizarea FleetLoader este configurarea și întreținerea datelor. Modulul de întreținere
+vă permite să introduceți toate informațiile esențiale despre clienți cu care sunt utilizate apoi
+încărcați-vă vehiculele. Există nouă pași principali care trebuie parcurși pentru a începe
+crea bavuri. Acești pași sunt: adăugarea de regiuni, adăugarea de tipuri de compartimente, adăugarea de tipuri
+de echipamente, adăugarea de echipamente, adăugarea etichetelor SKU, adăugarea tipurilor de produse
+ambalare, adăugarea SKU-urilor, adăugarea restricțiilor de încărcare, definirea regulilor de expediere
+stivuirea produselor și definirea opțiunilor.
+În continuare, veți dori să vă mențineți rutele la zi. Acest lucru se poate face simplu
+Folosind caracteristica de import FleetLoader pentru a importa rute în care vor fi încărcate
+vehiculele lor.
+Înainte de a vă încărca vehiculele, trebuie să setați opțiunile de încărcare a vehiculului. The
+Opțiunile de încărcare a vehiculului vă permit să definiți modul în care funcționează Editorul de încărcare,
+cum ar fi atunci când sunt afișate avertismente pentru încălcarea anumitor reguli de încărcare și cum
+informațiile sunt afișate în ferestre.
+După ce ați introdus toate informațiile necesare în modulul de întreținere și ați stabilit
+preferințe, vă puteți încărca vehiculele în Editorul de încărcare care oferă acces
+Ușor de editat vehicule și de afișat produse în fiecare compartiment.
+Acum că vehiculele dumneavoastră au fost încărcate cu succes, puteți utiliza FleetLoader pentru
+Analizați vehiculul încărcat și mutați SKU-urile după cum este necesar pentru a regla sarcina. Puteți
+Utilizați ferestre diferite pentru a muta produsele între compartimente sau în interiorul unui
+compartiment.
+.Când editați rute și încărcați vehicule, ar trebui să vă salvați periodic munca în Editorul de rute.
+expedierile. Cu toate acestea, atunci când rutele sunt salvate sau blocate, poate fi necesar
+schimbați-vă statutul. Puteți bloca, debloca sau șterge cu ușurință starea unei rute din
+Fereastra rute. În plus, puteți genera și tipări orice număr de rapoarte informative.
+|FleetLoader are câteva alte caracteristici nedescrise mai sus; consultați Ghidul de operațiuni pentru
+„Roadnet Transportation Suite sau sistemul complet de ajutor pentru informații despre acestea
+Tecursos.

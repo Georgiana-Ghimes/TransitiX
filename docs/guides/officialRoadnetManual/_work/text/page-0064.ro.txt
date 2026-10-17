@@ -1,0 +1,74 @@
+Mmadeoperations o D
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu codurile de detalii financiare ale comenzii
+Cum să lucrați cu codurile de detalii financiare ale comenzii
+Folosit cu: MobileCast
+Dacă urmăriți informații financiare despre comenzile dvs., puteți
+configura coduri financiare pe care analistul le poate aplica oricărei comenzi. Analistul
+poate adăuga, edita sau șterge orice detalii financiare asociate cu o comandă,
+inclusiv aceste coduri financiare. Comenzile asociate cu aceste coduri pot fi
+vizualizat și pe un dispozitiv portabil, permițând șoferului să afișeze
+Informații financiare ale clienților referitoare la o anumită livrare.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați coduri Expedit și detalii
+detalii financiare ale comenzii. Fereastra Comanda detalii financiare coduri este
+afișate, listând codurile de detalii financiare existente.
+Notă: Pentru a vedea o listă actualizată de tipuri financiare, faceți clic pe pictograma Actualizare; la
+fereastra va fi actualizată cu toate informațiile modificate din baza de date.
+Pasul 3: În fereastra Comandați coduri de detalii financiare, faceți clic pe pictograma
+AAdăugați sau apăsați tasta [Inserare]. În fereastra Adăugați cod de detalii
+este afișată situația financiară a comenzilor.
+Prin adăugarea unui cod — the
+financiar, este posibil -
+selectați dacă este pentru ——
+credit, debit sau — p articole
+ajustări. -
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Codul de detalii financiare pentru adăugarea comenzii este afișat cu unele
+informații deja completate; modificați informațiile necesare în noul cod
+financiar.
+Pasul 4: Introduceți până la 3 caractere pentru Cod. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+— = ..s.
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu codurile de detalii financiare ale comenzii
+Pasul 6: Dacă doriți ca șoferul să vadă doar un scurt rezumat al detaliilor
+a unei comenzi, selectați Agregat. Dacă această opțiune nu este bifată,
+șoferul va vedea toate detaliile financiare ale comenzii selectate.
+Pasul 7: Selectați tipul financiar:
+Cheltuieli — Elemente pentru care un client este responsabil, de obicei sub formă de
+o plată (adică card de credit, mandat de plată, cec).
+Ajustare — Articole care vor afecta costul comenzii inițiale, de obicei sub formă de
+un cupon sau o reducere.
+Debit — Costul inițial al comenzii, plus orice articole care vor afecta
+costul inițial al comenzii, de obicei sub forma unei taxe sau a unei taxe de gestionare
+transport maritim.
+Pași MG: Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S] pentru a salva informațiile.
+x Pasul 9: După ce ați adăugat toate codurile, faceți clic pe caseta Închidere pentru a închide fereastra
+Adăugați codul detaliilor financiare ale comenzii.
+Teone Manutenção — Înregistrări - Expediere — Comandați coduri de detalii financiare
+—Adăugați pictograma ([Insert]) —Save pictograma ([Ctri]+[S])
+Codurile de detalii financiare existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+madeaperações o
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu codurile de stare a comenzii
+Cum să lucrați cu codurile de stare a comenzii
+Folosit cu: MobileCast
+Dacă utilizați dispozitive portabile și doriți să atribuiți același cod tuturor
+comenzi unice, puteți crea coduri de stare a comenzii astfel încât
+șoferul le poate aplica în diferite situații. De exemplu, puteți configura
+coduri care trebuie aplicate de sofer atunci cand o comanda este deteriorata, prezinta
+imposibilitatea livrării, se refuză, la anularea opririi, la fereastra
+serviciul a fost pierdut, când oprirea necesită o semnătură și așa mai departe.
+Aceste coduri sunt foarte asemănătoare cu codurile motiv, codurile de oprire de anulare,
+imposibilitatea predarii la oprire si semnatura. Singura diferență este că sunt
+aplicat fiecărei cereri unice.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați Codurile de stare Expediere și Comandă. Pentru a
+Apare fereastra Coduri de stare comandă, care afișează codurile de stare a comenzii.
+ordine existentă.

@@ -1,0 +1,117 @@
+sunt în același set de abilități, comenzile nu vor fi agregate.
+Ghid de operațiuni 3
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Pasul 4: în zona Proprietăți implicite de sesiune, faceți clic pe cercurile/casetele corespunzătoare
+pentru a selecta opțiunile de calcul timp/distanță și alte opțiuni din
+sesiune.
+XY este o metodă de rutare care utilizează o linie dreaptă pentru a măsura
+distanța dintre două puncte. Are modele de distanță și timp de călătorie
+traseu pentru curbe și viraj în traseu, precum și viteze variabile. Se
+În comparație cu RouteNet, metoda XY este mai rapid de utilizat, dar mai puțin
+exacte.
+Barierele de utilizare pot fi selectate numai atunci când este metoda XY
+fiind folosit. Această opțiune explică barierele reale dintre două puncte, cum ar fi a
+corp de apă, un munte etc. Barierele trebuie create în mod
+Barieră pe hartă.
+RouteNet este o metodă de calcul care utilizează hărți pentru a reproduce condițiile
+Amenajarea drumurilor, ținând cont de toate, de la semne de oprire și semafoare
+până la limitele de viteză și schimbările de rută. Comparativ cu metoda
+XY, RouteNet durează mai mult, dar este mai precis.
+Notă: Utilizarea RouteNet poate provoca o întârziere semnificativă la intrarea în Editor de rute.
+traseul sau planificarea, în timp ce timpii și distanțele sunt calculate.
+Durata acestei întârzieri se bazează pe mai mulți factori, printre care:
+* numarul de clienti cu comenzi
+* numărul de depozite
+* numărul de străzi din zona geografică
+* puterea de procesare a computerului
+Dacă doriți să evitați această întârziere, utilizați SuperMatrix.
+SuperMatrix este o altă metodă de calcul care utilizează rețeaua de căi către
+reproduce condiții reale de drum, ținând cont de totul, de la indicatoare
+de la opriri și semafoare la limite de viteză și schimbări de rută. Este
+Puteți programa SuperMatrix să ruleze noaptea, astfel încât
+nu este nevoie să așteptați ca timpii de călătorie și distanțele să fie calculate
+intra in editori. Dacă utilizați SuperMatrix, trebuie să specificați
+cum doriți ca Editorul de rutare să trateze clienții care au fost
+adăugat de la ultima rulare SuperMatrix. În zona Actualizare de sub
+timp real, selectați dacă doriți să utilizați metoda XY sau RouteNet pentru a calcula
+s distanțe până la acești clienți.
+Ora de vârf îmbunătățită folosește căi și zone pentru orele de vârf
+determina străzile efective pe care le vor folosi traseele. Dacă utilizați resursele
+de oră de vârf avansată, este încă posibil să se utilizeze zone simple în plus față de
+și rute avansate. Dacă doriți să impuneți restricții de rută sau să modificați
+mâna de pe stradă în timpul orelor de vârf, este necesar să faceți o programare
+grabă avansată. Utilizarea orelor de vârf avansate poate necesita timp
+caracteristică suplimentară la pornirea Editorului de rutare.
+36 „Suită de transport Roadhnet
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Notă: Utilizarea orelor de vârf îmbunătățite poate provoca o întârziere semnificativă la intrare
+în Editorul de rutare sau planificare, în timp ce timpii și distanțele sunt
+calculat. Această întârziere se adaugă celei cauzate de utilizarea RouteNet. Durata
+Această întârziere se bazează pe mai mulți factori, printre care:
+* numărul de perioade de oră de vârf din model
+* dacă au fost create restricții de echipament pentru perioadele respective
+* numărul de zone și căi de oră de vârf din model
+Ora de vârf vă permite să alegeți un șablon de oră de vârf pentru a desemna
+perioadele în care are loc activitatea în orele de vârf. Pentru a selecta un șablon
+pentru orele de vârf, faceți clic pe săgeata Șablon pentru orele de vârf; fereastra Căutare
+- Se afișează șablonul pentru ora de vârf. Faceți clic de două ori pe un model pentru a
+selectați-l sau faceți clic pe model și pe pictograma Proces. Dacă utilizați
+' RouteNet sau SuperMatrix și doriți să utilizați funcții îmbunătățite pentru orele de vârf,
+cum ar fi, de exemplu, restricții asupra căilor sau rutelor, selectați Program Autobuz
+Tush avansat.
+Comenzi agregate cumulează mai multe comenzi pentru un singur client în timpul a
+sesiune, astfel încât acestea să fie plasate pe același traseu. Comenzile vor fi agregate
+numai dacă îndeplinesc criteriile specificate în fereastra Opțiuni agregate
+cereri.
+Monitorizarea DT monitorizează timpul în care fiecare șofer rămâne pe stradă,
+folosind informații reale despre rută, astfel încât specificațiile DT să fie
+cumpridas. Dacă nu sunt disponibile informații reale,
+informatii planificate.
+Salvare istoric rută include traseele create în sesiune când Istoricul rutelor
+ruta rulează pentru a arhiva datele în baza de date. Se ca rotas fora
+completate în MobileCast, aceste informații vor fi stocate. Această opțiune
+este disponibil numai dacă opțiunea Activare Roadnet ca sursă de date
+este selectat pe pagina Istoricul traseului.
+Pasul 5: În zona Route Default Properties, definiți valorile implicite care vor fi utilizate
+când sunt create rute, cum ar fi timpii și cantitatea inițială.
+Cantitatea inițială se referă la cantitatea care este încărcată în echipament la
+início da rota. De exemplu, dacă un vehicul cu combustibil începe traseul cu
+Doar suficient combustibil pentru acea rută, introduceți după cum este necesar. Se
+un vehicul cu combustibil este alimentat în mod normal la ultima oprire,
+insira Cheio. În cele din urmă, dacă un vehicul cu combustibil este în mod normal
+rRealimentat la prima oprire, intrați Gol.
+Ora de pornire se referă la ora de plecare a traseului depozitului.
+Ora preferată se referă la perioada de timp preferată pe drum
+un traseu. Orele de rută preferate sunt utilizate în rutare
+dinamică și în Editor când adăugați opriri la rute. Uma rota pode exceder o
+timp pe ruta preferată.
+E Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Timpul normal se referă la perioada maximă de timp pe care o poate avea șoferul
+lucrează fără a fi plătit pentru ore suplimentare.
+Timpul maxim se referă la durata maximă de timp pe traseu pentru o rută.
+Timpii maximi sunt utilizați în rutarea dinamică și în Editor, când
+adăugați opriri la rute. Rutarea dinamică nu depășește timpul maxim
+em rota ao criar rotas.
+Timpul de pre-rută se referă la perioada de timp necesară între moment
+în care șoferul ajunge la origine și pleacă de la origine. De data asta poate fi
+folosit pentru întâlniri sau pentru verificarea încărcăturii. Soferul este platit
+prin ora de pre-rută, deci aceasta este inclusă atunci când este timpul de pe traseu
+calculat.
+Timpul post-rută se referă la perioada de timp necesară între moment
+cand soferul ajunge la destinatie si in momentul in care inregistreaza finalul
+a călătoriei până în ziua aceea. Acest timp poate fi folosit pentru a completa formulare
+sau descărcați vehiculul. Șoferul este plătit pentru timpul de după traseu,
+prin urmare, aceasta este inclusă atunci când se calculează timpul de drum.
+Timpul de încărcare este timpul necesar pentru a reîncărca vehiculul dacă este
+fiind trimis pe o a doua rută. Pentru a configura, selectați Specificați
+timp sau Utilizați timpul serviciului de reumplere a depozitului. Dacă ai
+selectat Specificați ora, introduceți ora exactă folosind formatul
+HHMM.
+Fm 6 lan către TOKRT sam sabvaras tfbeacões ee crabasr comoutra-sumda:

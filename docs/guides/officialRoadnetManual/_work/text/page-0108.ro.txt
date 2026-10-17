@@ -1,0 +1,91 @@
+[Traducere eșuată pentru acest fragment]
+o EE s -
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Importação de informações de rotas diárias no MobileCast
+Caso não se lembre do caminho e do nome do arquivo, clique no botão [...] para
+abrir a janela Selecionar arquivo. Você encontrará o arquivo em qualquer
+diretório do disco rígido ou do servidor.
+ª' -
+Ajanela Importar
+E atribuições de
+— container permite
+t— importar containers
+pTm o ) dmiamere
+PA
+F
+Etapa 5: Ao importar ítens para um sistema que já os contenha, informe ao MobileCast
+como deseja lidar com as duplicatas. Se já houver itens dessa região no
+MobileCast, selecione uma opção para situações nas quais os itens importados
+tenham a mesma ID dos existentes
+Atualizar — atualiza 2s informações dos campos com as informações contidas
+mo arquivo de importação.
+Substituir — substitui completamente o item existente pelo novo importado.
+Tsso significa que qualquer atteração feita no item original será perdida.
+Erro — ignoraos itens do arquivo de importação que tenham duplicatas e exibe
+mensagens de erro indicando que os itens não foram importados.
+. Nota: Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao
+importar atribuições de container.
+Etapa 6: Clique no botão [Importar] para iniciar o processo de importação. A barra
+indicadora de status e a caixa de mensagens na janela Processo de importação
+mostrarão o status da importação.
+. Nota: Após a importação de atribuições de container, clique no botão [Exibir log] para
+“obter um resumo das rotas importadas.
+ee — Etapa7: Clique na caixa Fechar para fechar as janelas de importação.
+Importador —>Importar — Expedir — Diariamente — Atribuições de container
+IIII A o Roadhe Traporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Importação de rotas estáticas
+Importação de rotas estáticas
+Utilizado com: MobileCast
+Rota estáticas são rotas que não são alteradas a cada operação. Você pode criar rotas
+estáticas no Editor de rota estática e agrupá-las em conjuntos. Para poder trabalhar com
+rotas no Analista, é preciso primeiro importá-las pelo módulo Importação. Para obter mais
+informações, consulte Configuração dos layouts de importação ou Importação de rotas
+diárias para o MobileCast.
+Q Etapa 1: Clique no ícone Importação para abrir o módulo Importação.
+Wer — Nota: Sehouver regiões, verifique se a região apropriada está sendo exibida na parte
+inferior da tela. Para alterar a região, basta clicar na seta e selecionar a região
+apropriada na lista exibida. O cenário mostrado aqui não é usado durante essa
+importação
+Etapa 2: Clique no menu Importar e selecione Estático e Rota ou Conjunto de rotas. À
+caixa de diálogo Conjuntos de rotas ou Importação de rotas é exibida
+[5 sin aa ta
+-O módulo de importação de Rot =
+módulo de importação de Rota — | ecia Afiea Jamana ma Jecna [usne fia
+estática e Conjunto de rotas ESA TP ss a ee T o
+Femie im si maaa — ) :
+configuradas anteriormente no — É)
+módulo Rota estática. = t —
+. Nota: O nome do conjunto de layouts atua! é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+importação. Consutte Altemância entre conjuntos de layout para obter mais
+informações,
+Para exibir ou alterar o layout do arquivo de importação, você precisa abrir o
+conjunto de layouts e usar 2 janela Layouts de importação. Consulte Configuração
+dos layouts de arquivos de importação para obter mais informações.
+Todos as IDs de rota devem estar em letras maiúsculas para fins de importação.
+Etapa 3: Selecione a data da rota para a qual está importando as rotas.
+Etapa 4: Clique na rota ou nos conjuntos de rotas a serem importados. Ao importar
+rotas, verifique se elas estão selecionadas no conjunto correto.
+Etapa 5: Clique no botão [Importar]. O status da importação é mostrado na barra Status
+da importação. Quando terminar, clique na caixa Fechar para fechar a caixa de
+diálogo de importação.
+Importação — Importar > Expedir >Estático — Rota/Conjunto de rotas — [Importar]
+Bmiadoperaçães RE
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Importul unei soluții scriptate
+Importul unei soluții scriptate
+Folosit cu: Roadnet, FleetLoader
+Înainte ca FleetLoader să vă poată încărca vehiculele, trebuie să importați rutele
+creat într-un pachet de rutare. După importarea rutelor, puteți utiliza
+Editor de vehicule pentru a încărca vehiculele, precum și pentru a evalua și edita modul în care au funcționat
+încărcat.
+Pasul 1: Faceți clic pe pictograma Import pentru a deschide modulul Import.
+Notă: Dacă aveți mai multe regiuni sau scenarii, verificați dacă datele sunt afișate
+adecvat în partea de jos a ecranului. Pentru a schimba regiunea sau scenariul, faceți clic pur și simplu
+pe săgeată și selectați elementul corespunzător din lista afișată.
+Pasul 2: Faceți clic pe meniul Import și selectați Soluție scriptată. Fereastra Import

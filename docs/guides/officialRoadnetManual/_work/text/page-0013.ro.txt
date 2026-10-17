@@ -1,0 +1,93 @@
+/6 utilizatorul poate vizualiza sau modifica grupurile de rapoarte, bifați Poate accesa raportul
+grupuri (Poate accesa grupuri de rapoarte). Utilizatori care nu au
+permisiunea de a accesa opțiunile de raportare sau 2 grupuri de rapoarte pot
+utilizați opțiuni/grupuri create de alți utilizatori. Pentru a afișa
+applet de afișare a raportului în RIC, utilizatorul trebuie să primească acest lucru
+privilegiu.
+Poate imprima hărți — utilizatorul poate imprima hărți în modul
+Rapoarte în Editorul de planificare și ghidare a șoferului. Utilizatorul
+De asemenea, trebuie să aveți acces la al 2-lea modul pentru a imprima hărțile incluse în acesta. Dacă el
+Dacă nu aveți acces la hărți tipărite, orice raport care include hărți nu poate fi
+pot fi tipărite.
+Poate edita hărți — utilizatorul poate face modificări străzilor și nodurilor din
+harta. Dacă această opțiune nu este selectată, utilizatorul poate schimba doar
+opțiunile hărții care îi afectează afișarea.
+Poate accesa Editorul de rutare — utilizatorul poate folosi Editorul de rutare
+Toteirizare pentru a crea, afișa și edita rute. Pentru a permite utilizatorului să deschidă
+meniul Opțiuni de simulare de rutare și modificați opțiunile utilizate pentru
+creați rutele, bifați Poate schimba opțiunile de trecere de rutare
+simulare de rutare). Pentru ca utilizatorul să poată trimite rutele din Editor
+scriptul de rutare pentru MobileCast, verificați se poate actualiza
+MobileCast.
+Poate accesa Editorul de planificare — utilizatorul poate folosi Editorul de planificare
+Planifică crearea, afișarea și editarea teritoriilor și rutelor.
+Pentru ca utilizatorul să poată deschide meniul de opțiuni de creare a teritoriului și/sau
+Opțiuni de atribuire a zilei, bifați Poate schimba Faceți teritoriu/Atribuiți zile
+Opțiuni (Puteți modifica opțiunile pentru crearea teritoriilor/alocarea zilelor).
+Astfel încât utilizatorul să poată trimite rute din Editorul de planificare la
+MobileCast, bifați 2 opțiune Puteți actualiza MobileCast.
+Pentru a permite utilizatorului să folosească Depot Planner, selectați opțiunea Can access
+Depot Planner (Puteți accesa Depot Planner).
+Poate accesa Editorul de încărcare — utilizatorul poate folosi Editorul
+de încărcări pentru a încărca, vizualiza și edita vehicule. Pentru a permite
+utilizatorul deschide meniul Opțiuni de încărcare, bifați Poate schimba încărcarea
+Opțiuni (Puteți modifica opțiunile de încărcare).
+Poate vizualiza rutele altor analiști—Utilizatorul poate vizualiza informații de la
+Total de la un alt analist dintr-o regiune. Această permisiune trebuie să fie activată pentru
+Analistul poate accesa alte rute decât ale lor într-o regiune. Se
+Dacă această opțiune nu este selectată, analiștii vor putea vedea doar rutele
+atribuite acestora.
+Poate accesa Analyst - utilizatorul poate folosi modulul Analyst pentru
+monitorizați traseele pe tot parcursul zilei.
+Ghid de operațiuni n”
+€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum să lucrezi cu privilegii
+Pentru a permite utilizatorului să reordoneze rutele sau să le facă alte modificări,
+selectați 2 opțiune Poate face modificări. Pentru ca utilizatorul să poată dezactiva ruta
+Pe dispozitivul wireless, bifați opțiunea Poate dezactiva comunicarea fără fir.
+Pentru a permite utilizatorului să facă modificări la informațiile financiare ale a
+comandă, selectați opțiunea Pot edita detaliile financiare ale comenzii.
+Pentru ca utilizatorul să poată adăuga noi elemente contabile pentru traseu, selectați
+opțiunea Poate introduce articole contabile.
+Pentru ca utilizatorul să lucreze cu încărcături, trebuie selectată opțiunea Utilizatorul este o opțiune.
+utilizator oad (Utilizatorul este un utilizator de încărcare) sau Utilizatorul este 2 1admin (Utilizatorul
+utilizatorul este un administrator de încărcare). Consultați Drepturile utilizatorului la
+(Cum să lucrați cu încărcări pentru mai multe informații despre utilizarea
+aceste opțiuni.
+Poate efectua contabilitate — utilizatorul va putea accesa modulul
+Contabilitatea, precum și tipurile de monitorizare a accesului și pagina de Expediere -
+Contabilitate din meniul Opțiuni de întreținere, dacă aveți acces la modul
+Întreținere. Dacă utilizatorul are acces la Analyst, rutați contabilitatea
+se poate face si acest modul.
+Poate gestiona rute statice — utilizatorul poate accesa modulul Rute
+rute statice, precum și crearea de rute statice în modulul Analyst, dacă aveți acces la
+acest modul,
+Poate accesa RIC (Roadnet Information Center) — utilizatorul poate accesa
+RIC. Selectați aplicațiile specifice RIC pe care utilizatorul le poate
+accesul.
+Poate accesa Day Commander — utilizatorul
+poate accesa modulul Day Commander al eRoadnet pentru a evalua rutele eRoadnet.
+zi. Pentru a permite utilizatorului să facă modificări la Day Commander, bifați
+opțiunea Poate face modificări.
+Poate accesa Cost Analyzer - utilizatorul poate
+accesați modulul eRpadnet Cost Analyzer pentru a analiza costurile asociate
+205 afaceri.
+Note: Este posibil ca nu toate permisiunile să fie disponibile; disponibilitatea depinde de
+a achiziționat părți din Roadnet Transportation Suite.
+Dacă selectați Poate accesa RIC (Roadnet Information Center) ca a
+de permisiuni, poate doriți să setați opțiunile RIC într-un mod bidirecțional
+permite utilizatorului să adauge noi utilizatori RIC. Vezi Definiţia
+Opțiuni pentru modulul de administrare pentru mai multe informații.
+Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S] pentru a salva privilegiul.
+Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga alte privilegii.
+Pasul 8: Când ați terminat de adăugat privilegiile, faceți clic pe caseta Închidere pentru a închide
+JAdaugați fereastra de privilegii.
+„Suită de transport Roadhet
+„Copsright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu privilegii
+Pictograma de administrare — Înregistrări — Privilegii —Adăugați pictograma ([Insert]) >
+Pictograma Salvare ([CtrI]+[S]).
+Privilegiile existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.

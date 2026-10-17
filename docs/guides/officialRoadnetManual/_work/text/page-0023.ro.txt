@@ -1,0 +1,76 @@
+Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+client în meniul Clienți sau chiar importați-i. Consultați Introducerea atributelor
+sau Customer Import pentru mai multe informații.
+!Numele atribuite câmpurilor Definit de utilizator - Rută și Definit de utilizator
+Utilizator - Stop va apărea în Analyst. Puteți introduce informații în acestea
+câmpurile din meniul Analyst Properties sau pot fi importate.
+Consultați Completarea câmpurilor definite de utilizator sau Importarea rutelor
+tarife zilnice pe MobileCast pentru mai multe informații.
+(Numele atribuite câmpurilor Definit de utilizator - Comandă și Definit de utilizator
+Utilizator - Articol de comandă va apărea în Editorul de analiză și rutare. tu
+pot introduce informații în aceste câmpuri în Întreținere (la introducerea unei comenzi
+manual), în meniul Analyst Properties sau chiar importați-le
+informaţii. Pentru mai multe informații, consultați Lucrul cu comenzi
+planificat, Completarea câmpurilor definite de utilizator sau Import
+comenzi zilnice.
+Pasul 3: Dacă utilizați containere cu MobileCast, introduceți numele dorit
+doriți să vă asociați cu containere în câmpul Container. Acest nume va apărea în
+meniuri și alte locuri în care există referiri la recipiente.
+Pasul 4: Dacă doriți să utilizați numere de referință pentru a monitoriza rutele în Data Analyst
+MobileCast, introduceți alias-ul în câmpul Alias referință rută.
+Pasul 5: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+„ „Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Definirea standardelor de referință pentru unități
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Pagina Unit Reference din meniul Opțiuni vă permite să selectați unitatea de măsură,
+cost, serviciu, distanță și timp de descărcare. Acesta este singurul loc unde este posibil
+stabiliți sau modificați acești parametri în Roadnet Transportation Suite
+— =H
+TTA RsA lam REE TEA DOAMNA RE A EEA
+în LMc
+Fila Unit Reference vă permite să determinați care dintre dimensiunile dvs. vor fi
+Pasul 1: Faceți clic pe cercurile corespunzătoare pentru a selecta Unitatea de măsură, Unitatea
+unitate de cost, unitate de serviciu, unitate de încărcare și
+serviciu (vrac) conform descrierii.
+Unitatea de măsură determină ce cantitate este utilizată la calcul
+Capacitate minime de traseu.
+Unitatea de cost determină ce cantitate (dimensiunea 1, 2 sau 3) va fi utilizată
+a0 se calculează costul pe unitate livrată. Este folosit pentru a calcula costul
+sofer, daca soferul este platit cu numarul de unitati livrate. Dincolo
+În plus, costul pe unitate livrată este înmulțit cu rata variabilă și, în
+apoi adăugat la taxa fixă pentru a determina taxa totală pentru un client.
+Unitatea de service determină care! cantitatea (mărimea 1, 2 sau 3) va fi
+utilizat la calcularea timpului de descărcare.
+Unitatea de service (vrac) determină ce cantitate (dimensiunea 1, 2 sau
+3) va fi utilizat la calcularea timpului de descărcare pentru comenzile în vrac.
+Unitatea de încărcare determină ce dimensiune va fi afișată ca
+cantitate în FleetLoader.
+madeaperções sau M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Unitatea de distanță determină dacă milele sau kilometrii vor fi obișnuiți
+calculați și afișați distanțe.
+Pasul 2: Faceți clic pe săgeată pentru a selecta defalcarea timpului de descărcare al dvs
+clienţilor. Este posibil să introduceți timpul de descărcare în zecimi, sutimi,
+miimi, chiar milionmimi de minut.
+Pasul 3: Dacă importați articolele de comandă și nu doriți ca orele să fie utilizate
+Timpul de îndeplinire a SKU pentru comenzile în vrac, verificați Omiteți timpul de livrare
+Onorarea SKU pentru executarea în bloc. Dacă această opțiune nu este
+selectat, timpul de îndeplinire a SKU va fi adăugat la
+descărcare în bloc a comenzii.
+Pasul 4: Faceți clic pe cercul corespunzător pentru a selecta Miles sau Kilometers ca
+Unitate de distanță.
+Pasul 5: În câmpul Precizie dimensiune, introduceți numărul de cifre dorit
+afișare în dreapta celei de-a zecea file! pentru cantități. De exemplu, dacă vrei
+introduceți cantitatea 9,0025, introduceți 4 în câmpul Precizie dimensiune. Este posibil
+introduceți numărul manual sau utilizați săgețile mici pentru a derula la
+număr. Valoarea implicită este 0, dar puteți avea până la 6 cifre după separator
+zecimală.
+Pasul 6: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.

@@ -1,0 +1,60 @@
+[Traducere eșuată pentru acest fragment]
+NTT AA E Roadhe Traporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com padrões de atendimento
+Como trabalhar com padrões de atendimento
+Utilizado com: Territory Planner
+Os padrões de atendimento descrevem o porcentua! de entrega em cada dia da semana,
+bem como o número de semanas entre entregas. Depois de inserir todos os padrões de
+atendimento, eles podem ser agrupados em conjuntos de padrões de atendimento, que são
+vtilizados para definir opções de entrega dos clientes no Territory Planner.
+[N Etapal: Clique no ícone Manutenção para abrir o respectivo móduto
+ms — Etapa 2: Clique no menu Cadastros e selecione Regras de atendimento e Padrões de
+atendimento. A janela Padrões de atendimento é exibida, listando todos os
+” padrões existentes.
+* Nota: Para ver uma lista atualizada de padrões de atendimento, clique no ícone Atualizar;
+-” 1 janela será atualizada com as informações mais recentes do banco de dados.
+— e Etapa 3: Na janela Padrões de atendimento, clique no ícone Adicionar ou pressione
+o [Insert]. A janela Adicionar padrão de atendimento é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar padrão de atendimento é exibida com algumas informações já
+preenchidas; altere as informações necessárias na nova entrada.
+2)
+Pam lT Esse exemplo de um
+o fmA padrão de atendimento
+jenaa firdo aaa aa Semnisndas,
+e [ programação de
+Pm entrega semanal para
+Pm segunda-feira, quarta-
+maa E feira e sexta-feira.
+Um Observe que a entrega
+mee E
+e
+Pmmen [ Bi
+p
+Etapa 4: Insira até 3 caracteres para a ID do padrão e até 30 caracteres para a Descrição
+A ID do padrão deve ser inserida.
+Etapa 5: Insira o porcentual da quantidade total a ser entregue em cada dia da semana. O
+total de cada padrão de atendimento deve equivaler a 100 por cento da entrega
+total
+Etapa 6: Selecione o número de semanas entre as entregas. Selecionar 2 indica que 2
+entrega deve ser feita semana sim, semana não. Se houver diversas entregas na
+mesma semana, insira 1 neste campo.
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com padrões de atendimento
+Etapa 7: Clique no ícone Safvar ou pressione [Ctrl]--[S] para salvar o novo padrão de
+o atendimento.
+Etapa 8: Repita as etapas 4 a 6 para adicionar outros padrões de atendimento.
+m Etapa9: Quando terminar de adicionar padrões de atendimento, clique na caixa Fechar
+para fechar a janela Adicionar padrão de atendimento.
+Ícone Manutenção — Cadastros — Regras de atendimento — Padrões de
+atendimentoícone Adicionar ([Insert]) — ícone Salvar ([Ctrl]+[S])
+Os padrões de atendimento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+TMT AAA E Roadhet Traporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.

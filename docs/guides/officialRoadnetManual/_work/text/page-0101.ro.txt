@@ -1,0 +1,88 @@
+[Traducere eșuată pentru acest fragment]
+22 “Roadhet Transportaton Suite
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+cliente V V
+SEA
+Computador de — | Funcionários Tipos de Motoristas
+bordo embalagem
+Agregar a partir de | Motoristas Marcas de SKU — | Containers
+arquivo
+Equipamento Exportação do Tipos de Diariamente
+usuário equipamento completo
+Funcionários Tipos de Atribuições
+equipamento diárias de
+containers
+== | | s)
+Enviar pedidos Tipos de
+(exportação) equipamento
+Exportar rotas Conjuntos de
+(exportação) habilidades
+SKUs Atividades
+Marcas de SKU Atividades do
+conjunto de
+habilidades
+Bmiadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Roadnet Territory Planner — FleetLoader MobileCast
+Tipos de
+embalagem
+Tipos de
+equipamento
+Conjuntos de
+habilidades
+Atividades
+Atividades do
+conjunto de
+habilidades
+WVocê pode importar dados do cliente para o Roadnet Transportation Suíte, eliminando a
+necessidade de digitá-los. É uma maneira de garantir que os dados dos clientes incluídos
+no computador host da empresa serão os mesmo no PC, criando uma importação diária
+de arquivos que adicionará, alterará ou excluirá clientes no banco de dados do
+Transportation Suíte. Consulte Importação de clientes para obter mais informações.
+Além disso, você pode importar informações diárias dos pedidos que irá roteirizar no
+Roadnet. Juntamente com os pedidos de um cliente, você também pode baixar qualquer
+instrução especial que pertença 2 ele, bem como substituir informações específicas do
+cliente, como tempo de atendimento e janelas de atendimento. Consulte Importação diária
+de pedidos para obter mais informações.
+Se você estiver utilizando o MobileCast para monitorar rotas, mas não estiver utilizando
+o Roadnet ou o Territory Planner para criá-las, poderá importar rotas diariamente ou
+simplesmente as atribuições do seu container. Consulte Importação de informações de
+rotas diárias para obter mais informações.
+WVocê também pode importar dados dos sistemas de computadores de bordo. O Roadnet
+armazena essas informações para utilizar ao gerar uma série de relatórios reais vs.
+projetados e ao calcular tempos de atendimento precisos com base no histórico de
+entregas importado. Consulte Importação de dados do computador de bordo para obter
+mais informações.
+Se você estiver utilizando outro pacote de roteirização, mas desejar utilizar o FleetLoader
+para carregar seus veículos, poderá importar essas rotas. Consulte Importação de uma
+sotução roteirizada para obter mais informações.
+Se você estiver utilizando o Territory Planner para criar rotas estratégicas, poderá
+importar informações de extensão de cliente utilizadas ao criar as rotas. As informações
+de extensão de cliente são específicas de uma sessão de planejamento; portanto, você
+pode ter diferentes informações de roteirização para o mesmo cliente em sessões
+diferentes. Consulte Importação de extensões de cliente para obter mais informações.
+Q —. ssn
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Para não precisar digitar as informações, você pode importar vários itens de manutenção,
+incluindo funcionários, motoristas, SKUs, tipos de embalagem e equipamentos. Consulte
+Importação de itens de manutenção para obter mais informações.
+WVocê pode configurar uma importação em lote para executar importações não atendidas
+de rotas, containers, atribuições de container, motoristas, funcionários e quase todos os
+itens que podem ser importados pelo módulo Importação do Transportation Suíte.
+Consuite Utilização do processo de importação em lote para obter mais informações.
+Além de importar as informações, você pode configurar os layouts das várias funções de
+exportação, como Enviar pedidos, Exportar rotas e Exportação do usuário no módulo
+Importação. A diferença é que você, na verdade, exporta os dados do módulo apropriado
+e não do módulo Importação.
+Para que o Transportation Suíte saiba onde estão as informações no arquivo de
+importação ou onde devem ficar no arquivo de exportação, você deve criar layouts de
+cada tipo de importação/exportação. Os layouts que cria para as várias importações e
+Exporturile sunt grupate în seturi de aspect. Puteți crea seturi de aspect
+separate pentru diferite situații de import și pur și simplu alegeți setul
+dorit la import.
+< É Faceți clic pe pictograma Import pentru a deschide modulul Import. Alegeți clienții de import,
+extensii pentru clienți, date computerizate de bord, o soluție cu scripturi, comenzi,
+" articole de întreținere, rute zilnice sau configurați machete de import.

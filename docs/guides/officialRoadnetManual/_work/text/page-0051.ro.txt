@@ -1,0 +1,85 @@
+F AIEPZÉ)IÓ“”<óÉ $S S o — XoadnetiransporiationSuite
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu șoferii
+Pasul 10: Stabiliți cum va fi plătit șoferul și introduceți rata de plată
+conform tabelului de câmp Driver Cost.
+Are Descriere
+Cost fără asistent — Cost numai pentru șofer (fără ajutor)
+Costul asistentului - Costurile pentru șofer și asistent combinate (c
+șoferul solo câștigă 2 USD, iar asistentul câștigă 1 USD,
+prin urmare, costul asistentului = USS 3)
+Rata Mormală (pe — Cost pe minut, inclusiv timpul de călătorie și
+minut) serviciu (soferul castiga 10 USD/ora, deci tariful
+mormal = 01666 pe minut)
+Taradehoraextra — Costul pe minut de muncă în orele suplimentare, dacă cel
+(sau minute) șoferul primește o rată mai mare, inclusiv timpul de conducere
+traseu si serviciu
+Timp minim Număr minim garantat de ore pentru care șoferul
+fii plătit, indiferent dacă lucrezi sau nu
+Ora suplimentară inițială — Numărul de ore după care se aplică tariful de 2 ore
+extas
+Remunerare per — Sumă plătită șoferului pe oprire
+opri
+Număr minim de — Număr minim garantat de opriri pentru care
+Opririle șoferului sunt plătite indiferent dacă efectuează sau nu acel număr de opriri
+Remunerare pe — Sumă plătită șoferului pe distanță (mile sau
+distanta kilometri)
+Distanță minimă — — Număr minim garantat de mile sau kilometri cu
+pe care conducătorul auto este plătit, chiar dacă nu a călătorit
+aceasta distanta
+Minute extrapor — — Sumă plătită șoferului pe unitate livrată care depășește unu
+„numărul minim specificat de unități
+Număr minim - Număr minim garantat de unități prin care
+unități de șofer este plătită, chiar dacă nu a livrat asta
+numarul de unitati
+Costul minim de | Suma totală plătită șoferului pentru livrarea numărului minim
+unități (de umiditate (dacă șoferului i se garantează plata
+SS 50 pentru livrarea a 100 de unități, introduceți USS 50)
+Cost zilnic (cost fix pe zi pentru un șofer, cum ar fi beneficii etc.
+Pasul 11: Dacă utilizați MobileCast pentru a monitoriza driverele, faceți clic pe
+Fila de expediere. În caz contrar, treceți la pasul 13.
+Pasul 12: Dacă utilizați MobileCast, completați elementele de mai jos din fila Analyst.
+Bmadeoperations sau 7A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu șoferii
+Dacă utilizați versiuni mai noi ale aplicației mobile în care
+driverul se conectează la dispozitiv, nu este nevoie să atribuiți un dispozitiv
+fără fir către șofer.
+Selectați caseta Pre-încărcare indicații pentru șofer dacă doriți să trimiteți
+ghidare automată către dispozitivul mobil al șoferului atunci când
+încărcat.
+Pasul 13: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]:[S] pentru a salva noul driver.
+Pasul 14: Repetați pașii de la 4 la 13 pentru a adăuga drivere suplimentare.
+Pasul 15: Când ați terminat de adăugat driverele, faceți clic pe caseta Închidere pentru a închide
+fereastra Adăugați driver.
+Pictograma întreținere — Înregistrări — Angajați — Șoferi — Adăugați pictograma
+(nsert]) — Pictograma Salvare ([Ctri]+[S])
+Driverele existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+MT A A L Foadnet Transporiation Sulfe
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Monitorizarea productivității
+Monitorizarea productivității
+Folosit cu: FleetLoader
+FleetLoader vă permite să monitorizați productivitatea încărcătoarelor și șoferilor. The
+informațiile de productivitate sunt introduse în modulul de întreținere, dar rapoartele sunt
+generate în modulul Rapoarte sau în Editorul de încărcare.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Introducere date reale și selectați Productivitate driver
+sau Încărcare productivitate. Apare fereastra Productivitate,
+afișând rutele sesiunii curente.
+Pasul 3: Dacă este necesar, schimbați sesiunea cu care! functioneaza. Pentru a schimba
+sesiune, faceți clic pe pictograma Sesiune pentru a deschide o listă de sesiuni. Faceți dublu clic
+Ori într-o sesiune pentru a o selecta.
+Pasul 4: Selectați rutele la care doriți să adăugați informații de productivitate.
+Faceți clic dreapta pe o rută aleasă și selectați Editați
+în meniul afișat. Apare fereastra Productivitate.
+Pasul 5: În fereastra Productivitate, faceți clic pe traseul pentru care doriți să introduceți informații de producție.
+productivitate. Numărul rutei va apărea în bara de titlu a ferestrei.
+Pasul 6: Pentru a introduce informații despre productivitatea șoferului, faceți clic pe săgeata pentru
+deschideți fereastra Căutare - Driver. Faceți dublu clic pe driverul al cărui
+informațiile pe care doriți să le introduceți sau faceți clic pe driver și apoi pe pictogramă
+Proces. Introduceți timpul de service în format HH:MM.

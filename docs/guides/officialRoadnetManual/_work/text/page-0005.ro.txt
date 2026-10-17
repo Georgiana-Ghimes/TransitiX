@@ -1,0 +1,131 @@
+ESPA DS Pal SV Fáéad
+Rezumatul traseului real vs. planificat 782
+Detaliu oprire reală față de 783 planificat
+785 diagramă de încărcare în vrac
+786 diagramă de validare în vrac
+Livrări într-o zi liberă și sub opririle minime consolidate 787
+Zile servite 789
+Detaliu livrare 791
+Distanta dupa zona 793
+Distanta dupa jurisdictie 794
+Schița zilnică 795
+Fișa de verificare a ieșirii șoferului 797
+Programul șoferului 798
+Driver Manifesto 800
+Performanța șoferului 802
+MAdEperations
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cuprins
+Performanța driverului MobileCast 804
+Productivitatea șoferului 805
+Șoferul returnează 806
+807 Statistici șofer
+Sondajul șoferilor 808
+Utilizarea driverului 810
+Utilizarea echipamentului respectiv
+Valori de utilizare a echipamentelor 813
+Cost global 815
+Itinerar global 816
+Manifestul Global 17
+Ora/Distanța globală 819
+Mai puțin de comanda minimă 820
+Mai jos decât opririle minime 82
+Diagrama sarcinii vehiculului E
+Productivitate la încărcare 826
+827 Diagrama de validare a încărcării
+Cost de livrare către client 829
+Clientul returnează 81
+Statistici clienți 832
+Foaie de ridicare a paletelor multiple 833
+Notele 835
+Livrare gratuită cu excepția 836
+Excepție de deschidere/închidere 837
+Rezumatul comenzii 839
+ES Fișă de colectare a paleților
+Fișa de colectare 843
+Factura client pentru comenzi semifabricate s4
+Foaie de ridicare a paleților semi-gata 846
+Fișa de colectare semi-gata 848
+Analiza noului rutare 850
+Rute de resurse pe zi 852
+Funcția 853 Listă de oprire
+Utilizarea resurselor 854
+Ruta 855 Excepții
+Indicatori rutei 857
+Fișa de colectare a paleților Route 858
+Fișa de colectare Route 860
+Statistici rezumate Route 862
+Varianta Darota 864
+Rezumatul selecției 865
+Analiza sesiunii 866
+Rezumatul sesiunii 867
+SKU după tipul de ambalaj 868
+SKU 869 Fișă Rezumat
+Standard Route Driver Survey 870
+— AÇAE NTNT
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cuprins
+Lista opririlor rutei standard E
+Lista stațiilor 872
+Foaia de oprire 874
+Teritoriu 875 de clienți
+Lista opririlor pe teritoriul 877
+Rezumatul teritoriului 879
+Excepție de la fereastra de service 880
+Modificări ale serviciului Windows 882
+Toate încărcările 884
+Rezumatul săptămânii 885
+Șabloane de rapoarte
+Șabloane de rapoarte. 887
+Șablon de raport pentru rezumatul rutei RvP 890
+RvP ES Stop Detaliu raport șablon
+Șablon de raport pentru rezumatul traseului real vs. proiectat 892
+Șablon de raport Real vs. Detaliu oprit proiectat 894
+Diagrama de încărcare în bloc a șablonului de raport 896
+Șablon de raport de diagramă de validare în bloc 897
+Raportați livrările într-o zi liberă și sub opririle minime consolidate 899
+Șablon de raport de 900 de zile servite
+Șablon de raport 901 pentru detalii de livrare
+Șablon de raport distanță după zonă 902
+Șablonul 903 de raport privind distanța în funcție de jurisdicție
+Șablon de raport Daily Outline 904
+Șablon de raportare Fișa de verificare a ieșirii șoferului 905
+Șablon de raport de itinerar șofer 907
+Șablon de raport Manifestul șoferilor 908
+Șablon de raport de performanță a șoferului 909
+Șablon de raport privind productivitatea șoferului 210
+Șablon de raport de returnare a șoferului ou1
+Șablon de raport statistici șofer 2912
+913 șablon de raport pentru sondajul șoferului
+Șablon de raport de utilizare a șoferului Ou4
+Șablon de raport de utilizare a echipamentelor 2915
+Șablon de raport privind valorile de utilizare a echipamentelor 216
+Șablon de raport Global Cost 7
+Șablon de raport Global Itinerary 218
+Șablon de raport Manifestul Global 919
+Șablon de raport global de timp/distanță 920
+Șablon de raport mai puțin de comenzile minime 921
+Șablon de raport Mai puțin de opririle minime 922
+Șablon de raport Diagrama încărcării vehiculului 923
+Se încarcă șablonul de raport de productivitate 924
+Diagrama de validare a încărcării șablonului de raport 925
+Șablon de raport privind costul livrării locației 926
+Operațiuni MAAE
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cuprins
+Șablon de raport privind returnările clienților 927
+Șablon de raport statistici site 928
+Șablon de raport de performanță a șoferului MobileCast 929
+Șablon de raport pentru foi de alegere a paleților multiple 931
+Șablon de raport Note 933
+Șablon de raport Excepție livrare gratuită 934
+Șablon de raport pentru excepția 935 deschis/închis
+Șablon de raport pentru rezumatul comenzii 936
+Șablon de raport Foaie de colectare paleți 937
+Șablon de raport Foaie de colecție 939
+Model de raport Factura client pentru comenzi semifabricate 940
+Șablon de raport Fișă de colectare a paleților semi-gata 942
+Moddis do ceblcoa Ecdiia dé colets sosh in 043

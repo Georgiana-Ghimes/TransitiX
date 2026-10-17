@@ -1,0 +1,114 @@
+L AMianiao S mt oc o -. lc nh en aa in
+colectare de către șoferi.
+Rutele On Track sau neplanificate sunt utilizate în general de echipele de transport.
+vânzări sau comercializare,
+Pasul 2: pentru a selecta o excepție de monitorizat, bifați caseta de lângă
+excepția rutei și, dacă este disponibil, introduceți parametrii definiți.
+. Notă: Toți parametrii trebuie să aibă valori mai mari de 0.
+(Excepțiile sunt explicate mai jos.
+Abatere rută - activată atunci când un șofer a deviat dincolo de
+a traseului planificat pentru traseu. Această excepție va fi disponibilă
+numai pentru rutele de livrare.
+Oprire neplanificată - activată atunci când vehiculul unui șofer a fost parcat
+între opriri mai lungi decât o perioadă definită. Opririle nu
+Programele planificate sunt determinate folosind ora intrărilor GPS. Dacă vehiculul
+să nu se deplaseze pentru o perioadă mai lungă decât cea specificată, cu excepția
+o ENEN o
+„Copyright 2006 United Parcel Service f America lc
+Toată distracția rezervată
+Opțiuni de setare
+oprirea neplanificată va fi declanșată. Această excepție va fi disponibilă numai pentru
+Totaluri de livrare.
+Sosire devreme/plecare întârziată - activat la ora reală de sosire/plecare
+Plecarea unui șofer către o oprire este fizic mult dincolo de oprire
+planificată pentru a fi considerată o sosire valabilă la plecare efectivă. In alta
+cuvinte, șoferul a apăsat Sosire înainte de a ajunge efectiv la oprire sau
+Am pornit de la oprire, am condus puțin, apoi am apăsat Start. Unul
+Sosire devreme Plecarea târzie este calculată folosind intrările GPS pentru
+ultima oprire, clientul actual și distanța maximă admisă de la oprire.
+Această excepție va fi disponibilă numai pentru rutele de livrare.
+Timp de service - activat când diferența de timp între ora de serviciu
+serviciul real și timpul de service planificat este mai lung decât este permis.
+Această excepție va fi disponibilă numai pentru rutele de livrare.
+Interval GPS - activat atunci când distanța dintre două intrări GPS depășește
+la distanta maxima admisa.
+(GPS posterior - activat când diferența dintre captarea GPS și GPS recepționat
+(pe serverul MobileCast) este mai mare decât permisul
+Fără GPS - activat atunci când nu sunt primite intrări GPS între început și sfârșit.
+finalizarea traseului. Această excepție apare numai după finalizarea traseului
+Primire eveniment — se activează atunci când a trecut o perioadă excesivă de timp între
+momentul în care evenimentul a fost trimis de pe server până în momentul în care a fost
+confirmat. În câmpul Generare după, introduceți perioada de timp, în minute, aceea
+poate apărea între momentul în care evenimentul a fost trimis de pe server și până la
+momentul în care a fost comisă, înainte de a ridica o excepție. Apoi faceți clic
+în Confirmarea șoferului sau Dispozitivul procesat pentru a genera excepția
+folosind perioada de timp scursă de când evenimentul a fost trimis de către server până la
+în momentul în care a fost confirmat de către șofer sau dispozitivul wireless.
+Această excepție va fi disponibilă numai pentru rutele de livrare.
+L$ Notă: Dacă excepția Chitanțe eveniment este dezactivată, bifați Generare chitanțe eveniment în
+Expediere - Pagina generală a meniului Opțiuni,
+Planificat gratuit - activat atunci când o rută este întârziată și ora de întoarcere este
+mai târziu decât este permis. Această excepție va fi disponibilă numai pentru rute
+livrare
+Rută în afara secvenței — se activează atunci când un analist sau un șofer efectuează o nouă secvență
+o oprire pe un traseu. Această excepție va fi disponibilă numai pentru rute
+livrare
+Monitorizare AA și D - activată atunci când este programată o ridicare sau o livrare
+exces, lipsă sau deteriorat. Această excepție va fi disponibilă numai pentru rute
+de livrare.
+Fadopeação M s TAA SS
+€ Copyrigit 2006 United Parcel Service of America, nc
+Toată distracția rezervată
+Opțiuni de setare
+Oprire anulare - se activează atunci când un șofer sau un analist anulează a
+oprire de-a lungul traseului. Această excepție va fi disponibilă numai pentru rute
+livrare
+Imposibil de livrat la oprire - activat când este programată o oprire
+precum imposibilitatea livrării. Această excepție va fi disponibilă numai pentru
+rute de livrare.
+Fără contact - activat când a trecut mult timp de la primirea ultimului
+eveniment (citire GPS, notificare de livrare, mesaj text, apel etc.)
+a dispozitivului wireless. Aceasta indică faptul că dispozitivul wireless și driverul au fost
+complet fără contact mai mult decât este permis.
+Încălcarea vitezei - se activează atunci când vehiculul depășește limita de viteză
+introdus. Dacă nu utilizați un computer de bord (OBC), acesta
+viteza va fi colectată folosind pinii GPS introduși. Dacă utilizați
+un OBC, viteza va fi monitorizată folosind viteza reală a vehiculului.
+Pentru a genera o excepție dacă limita de viteză introdusă este depășită,
+selectați Viteză statică și introduceți limita de viteză care, atunci când este depășită,
+Va ridica o excepție. Pentru a ridica o excepție dacă limita reală de viteză și
+toleranțele introduse sunt depășite, selectați Rețea de drumuri și introduceți
+toleranta.
+LS Notă: Toate distanțele sunt exprimate în mile sau kilometri, în funcție de ceea ce a fost
+definite în pagina Unit Reference din meniul Options.
+Start/Finish in Unknown Location — activat atunci când angajatul începe sau
+a finalizat traseul într-o locație nerecunoscută ca client alocat. De la distanta
+folosit pentru a determina dacă angajatul se află într-un cont alocat este definit în
+Câmpul Distanța maximă până la client din pagina Navă - General.
+Pasul 3: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+Pentru mai multe informații despre excepțiile de rută, consultați Lucrul cu
+excepții de rută.
+Configurarea opțiunilor pentru Istoricul rutei
+Folosit cu: Roadnet, MobileCast
+Pagina Istoricul traseului din meniul Opțiuni de întreținere vă permite să specificați date
+care vor fi arhivate în baza de date Istoricul traseului și ora din zi când
+va fi salvat. Istoricul rutei este o bază de date separată în care puteți
+stocați date istorice despre rutele care au fost finalizate. Cum funcționează baza de date
+Istoricul rutelor nu stochează informații asociate rutelor zilnice, este mult mai mic
+< Datele pot fi stocate pentru o perioadă mai lungă de timp. Este, de asemenea, mai mult
+Ușor de scris rapoarte în baza de date Istoricul rutei. Dacă este selectat, va fi
+Trebuie să activați Istoricul rutei pentru fiecare sesiune pe care doriți să o includeți; poti
+Configurați Istoricul rutelor să fie activat ca implicit pentru sesiunile dvs. de rutare.
+ETA , , , E k l káI L T Foadat Tranporiafon Sãe.
+' Copyright 2006 United Parcel Service f Aerica nc
+Toată distracția rezervată
+Opțiuni de setare
+Notă: Trebuie să configurați fișierul tsroutehistoryservice.cfe pentru actualizare
+. functioneaza conform asteptarilor. De obicei, acest lucru se face în timpul
+instalare.
+Pasul 1: Selectați datele pe care doriți să le adăugați la Istoricul rutei
+Pentru ca rutele generate în Roadnet să fie adăugate la Istoricul rutelor,
+Bifați Activați Roaánet ca sursă de date.
+Pentru a adăuga rute finalizate în MobileCast la Istoricul rutelor
+Tota, bifați Activați MobileCast ca sursă de date.
+E TS o o A ES SNE S E E o E NS E S

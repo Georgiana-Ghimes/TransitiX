@@ -1,0 +1,116 @@
+Variație (caseta de date Variație afișează informații despre variația timpului.
+timpul de așteptare și descărcare definit în fereastra Opțiuni grafice.
+(Consultați Definirea criteriilor de actualizare pentru mai multe informații.
+informaţii.
+Pentru a edita varianta, faceți clic dreapta pe caseta Variation
+pentru a deschide fereastra Variation. Introduceți noile variante și faceți clic pe
+butonul [OK] pentru a seta. Limitele de variație de pe grafic se ajustează
+pentru a reflecta editarea.
+Previous | Caseta Previous data afișează timpii de așteptare a serviciului
+și ratele curente de descărcare, pentru un client sau tip de timp de serviciu.
+Tsto este o simplă reflectare a definiției actuale și, prin urmare, nu este editabil.
+Calolado | Caseta Date calculate afișează timpii de service recent
+calculele sugerate de Roadnet pentru a actualiza timpul de călătorie
+serviciul.
+Pentru a edita timpii de service calculati, faceți clic dreapta
+Faceți clic dreapta pe caseta Calculat pentru a deschide fereastra 2 Timings
+serviciu calculat. Introduceți noile ore de service și
+faceți clic pe butonul [OK] pentru a seta. La linia Calculat de pe diagramă
+Se ajustează pentru a reflecta a doua ediție.
+# de livrări |Casuța de date pentru numărul de livrări afișează numărul de livrări acceptate și
+livrări respinse. Acceptat reprezintă toate livrările care au fost
+în intervalul stabilit și, ca urmare, au fost calculate.
+Respins se referă la orice livrare care a depășit variația și,
+prin urmare, nu a fost calculat.
+Cum se lucrează cu graficul
+Pe lângă manipularea casetelor de date de pe a doua parte a diagramei, puteți modifica și
+informații din grafic în sine. Elementele enumerate mai jos explică diferitele moduri
+unde puteți accesa aceste elemente de date.
+Pentru a modifica timpul real de service al unei opriri, faceți clic dreapta pe
+opriți pe care doriți să editați; apare fereastra Actual Stop Entry. Editați ora
+serviciu și cantități după cum este necesar și faceți clic pe butonul [OK] pentru a aplica.
+De asemenea, puteți modifica timpul de service al unei opriri făcând clic și trăgând
+oprirea la un nou punct al graficului.
+A FFF A E Roadhet Trarporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Actualizarea timpilor de service folosind întreținerea timpului de service
+Notă: țineți mouse-ul peste orice oprire pentru a vedea un sfat care afișează informații
+. despre oprire, traseu și dată, precum și ora și cantitatea serviciului.
+Ã) Sfat: Consultați legenda din partea de jos a graficului pentru a identifica diferitele elemente
+a graficului.
+Pentru a modifica variația timpului de service, faceți clic pe unul dintre capetele mesajului
+limitele de variație și trageți-l într-un alt punct al graficului. Informațiile din
+Caseta de date variație va fi actualizată în consecință.
+Pentru a modifica timpul de serviciu calculat, faceți clic pe unul dintre capetele liniei
+Calculat și trageți-l într-un alt punct de pe diagramă. Caseta Date calculate va fi
+actualizate în consecință.
+Butoane de acțiune
+Odată ce sunteți mulțumit de diagrama de întreținere a timpului de service și orice
+modificările pe care le-ați făcut, puteți utiliza butoanele de acțiune din stânga diagramei pentru a
+aplicați modificări și/sau actualizați orele de service. Următoarea listă explică 2
+funcția fiecărui articol.
+Recalculați timpii de service — Dacă ați făcut modificări la variația timpului de service,
+Durata de service nou proiectată va trebui recalculată.
+Pentru a recalcula orele de service, faceți clic pe butonul
+IRecalculați timpii de service]. Noile ore de service vor fi
+generate automat
+Salvați opririle reale — Dacă ați făcut modificări la dvs
+tma sau mai multe opriri și doriți ca aceste modificări să fie aplicate
+permanent pe Roadnet, va trebui să salvați modificările.
+Pentru a salva modificările timpului de oprire a serviciului
+Teal, faceți clic pe butonul [Salvare opriri reale]. În fereastra Întreținere
+care este afișat, faceți clic pe [Da] pentru a salva ajustările.
+Actualizare durate de service — Dacă sunteți mulțumit de duratele de service calculate
+servicii curente și doriți să le aplicați clientului sau tipului de timp de serviciu,
+Sunteți gata să actualizați orele de service.
+Pentru a actualiza orele de service, faceți clic pe butonul
+[Actualizați orele de service] În fereastra de întreținere care va fi afișată,
+Verificați dacă orele de service sunt corecte și faceți clic
+[Da] pentru a finaliza 2 actualizare.
+Dacă datele au ca rezultat un timp de așteptare sau un timp de spălare
+megaactiv, acest timp de serviciu nu va fi actualizat.
+Important: După salvarea opririlor reale sau actualizarea orelor de service,
+serviciile sunt modificate și nu pot fi restabilite.
+Bmadaperações sau A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Întreținerea bazei de date
+Întreținerea bazei de date
+Folosit cu: Roadnet, Territory Planner, FleetLoader
+(Deoarece Roadnet Transportation Suite stochează datele din istoricul rutelor, dvs
+baza de date poate deveni foarte mare. Întreținerea bazei de date ajută la
+controlează dimensiunea bazei de date, arhivând sau chiar ștergând datele
+inutil. Puteți selecta cu ușurință o singură sesiune sau interval de date pentru
+să fie arhivate sau șterse.
+Întreținerea bazei de date îndeplinește și o altă sarcină utilă: compactează baza de date
+pentru a elimina toate înregistrările marcate pentru ștergere. Când ștergeți un articol
+(client, șofer, echipament etc.) din Transportation Suite, înregistrarea este marcată pentru
+ștergere în baza de date. Când rulați Întreținerea bazei de date, programul
+caută în întreaga bază de date și elimină toate înregistrările specificate.
+Înainte de a începe întreținerea bazei de date, determinați care opțiune este cea mai potrivită
+la nevoile tale actuale. Următoarele secțiuni conțin instrucțiuni detaliate de utilizare
+fiecare opțiune. Faceți clic pe o opțiune pentru instrucțiuni detaliate despre utilizarea acesteia.
+Instrumente/Întreținere baze de date/Sesiuni de arhivare
+rutarea captează o „imagine” a bazei de date dintr-o sesiune
+data specificată. Funcția de arhivare este utilizată de obicei dacă dvs
+observați o problemă într-o anumită zi de rutare și trebuie să trimiteți
+aceste informații către UPS Logistics Technologies. Toate informatiile
+necesare pentru a afișa rutarea sesiunii sau datele specificate sunt
+incluse în dosar. Această opțiune este disponibilă numai dacă sunteți
+folosind Microsoft & Access.
+Instrumente/Întreținere baze de date/Ștergere sesiuni
+rutarea elimină din baza de date toate înregistrările care au apărut
+pentru un anumit număr de zile, săptămâni sau luni înainte de sesiune
+ruta curentă sau într-un interval de date specificat.
+Instrumente/Întreținere baze de date/Ștergere conf.
+automat vă permite să specificați dacă ștergerea trebuie să aibă loc
+automat în timpul procesului de import al comenzii și controlați-o
+funcțiile apar automat.
+Instrumente/Baza de date compactă vă permite să reduceți dimensiunea
+baza de date. Când rulați funcția Compact Database, elemente
+marcate pentru ștergere sunt eliminate definitiv din baza de date.
+Arhivarea bazei de date
+Folosit cu: Roadnet, FleetLoader
+Funcția de arhivă de întreținere a bazei de date captează un „instantaneu” al bazei de date.
+aa tu ME sânul Sm dat cenccsficata Foto inósecia confER SS 1E

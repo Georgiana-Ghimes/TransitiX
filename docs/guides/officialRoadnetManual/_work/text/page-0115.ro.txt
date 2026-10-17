@@ -1,0 +1,102 @@
+* fără delimitatori
+O descriere detaliată și dimensiunea maximă a fișierelor de câmp posibile
+Importurile adecvate sunt prezentate în tabelele aflate la sfârșitul acestei secțiuni.
+Consultați aceste tabele pentru mai multe informații.
+Crearea seturilor de aspect de import
+Informații despre clienți, extinderea clienților, comandă, întreținere și computer de bord
+poate fi importat de pe o gazdă sau alt computer în Roaánet Transportation
+Suită. Pentru ca programul să accepte aceste informații și să le plaseze acolo unde poate fi
+accesat și utilizat, trebuie să îl informați unde le găsiți în
+import. Pentru a comunica aceste informații sunt folosite machetele de import
+la Roadnet Transportation Suite. Puteți grupa machete de import pentru a le importa
+Seturi de machete care sunt personalizate pentru diferitele dumneavoastră nevoi de design
+import. Seturile de aspect de importare vă permit să grupați aspecte din
+import. Și din moment ce puteți avea mai multe seturi, puteți crea seturi diferite
+pentru diverse situații de import.
+Înainte de a putea fi creat aspectul fișierului de import, trebuie să aveți cel puțin unul
+set de aspect de import creat.
+E Pasul 1: Faceți clic pe pictograma Import pentru a deschide modulul Import, Numele
+* Setul curent de import este afișat în bara de titlu.
+Pasul 2: Faceți clic pe meniul Import și selectați Configurare. Fereastra Editare set de date
+layouts este afișat și toate layout-urile din setul curent apar în fereastra de layout.
+listare.
+ME AAA A A oc Transporiafon Sule
+' Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Importați machete
+Notă: Dacă nu ați creat seturi de layout, fereastra Layout Sets va apărea
+. afisat. Treceți la pasul 4.
+Pasul 3: Faceți clic pe pictograma Deschidere. Apare fereastra Layout Sets care conține toate
+= s seturile existente.
+Pasul 4: Faceți clic pe butonul [Nou] Introduceți un nume pentru set, apăsați [Enter] și
+faceți clic pe butonul [Da] din caseta afișată pentru a confirma adăugarea unui nou
+set de machete. Fereastra Editare aspect apare din nou, acum
+conţinând setul adăugat.
+. Note: Pentru ca setul de aspect să fie disponibil în toate regiunile, faceți clic pe
+butonul [Take Global] din fereastra Layout Sets. Dacă un set de machete
+este global, cuvântul Global va fi afișat între paranteze după nume în Bara de instrumente.
+stare și un cerc albastru va apărea lângă el în lista de setări de aspect.
+!Numele setului de layout nu poate conține un apostrof, numit și
+ghilimele simple.
+Tmporter — Import — Configurare — Deschide pictograma
+Configurarea aspectului fișierelor de import
+Informații despre clienți, extensie client, comandă, soluție scriptată, întreținere,
+rutarea zilnică și computerul de bord pot fi importate de la o gazdă sau alta
+computer pentru Roadnet Transportation Suite. Pentru ca programul să le accepte
+informații și plasați-o acolo unde pot fi accesate și utilizate, trebuie să informați
+unde să le găsiți în fișierele de import. Sunt utilizate machete de import
+pentru a comunica aceste informații către Roadnet Transportation Suite. Puteți grupa
+importați machete în seturi care pot fi personalizate în funcție de dvs
+nevoile de import.
+„Unele instrucțiuni generale despre cum să creați fișiere de import sunt afișate mai jos.
+O descriere detaliată și dimensiunea maximă a fișierelor de câmp posibile
+Câmpurile de import adecvate sunt afișate în tabelele cu câmpurile disponibile pentru fiecare
+import. Consultați aceste tabele pentru mai multe informații.
+Aspectele de import utilizate pentru a comunica informații despre locația
+datele din fișierele de import funcționează în același mod, dar datele care sunt
+pot conta sunt diferite. O descriere detaliată și dimensiunea maximă a câmpului
+posibilele fișiere de import sunt afișate în tabelele de câmp
+disponibil pentru fiecare import. Consultați aceste tabele pentru mai multe informații.
+L& Notă: Dacă nu vi s-a acordat permisiunea de a configura machete în modulul Administrare,
+nu veți putea accesa această opțiune.
+[Traducere eșuată pentru acest fragment]
+Z É Etapa1: Clique no ícone Importação para abrir o módulo Importação.
+me — Etapa2: Clique no menu Importar e selecione Configurar. A janela Editar layout é
+exibida contendo o conjunto de layouts atual.
+Bmadeoperaçães A
+€ Copyright 2006 United Parcel Service of America, ln
+Todos os direitos reservados.
+Layouts de importação
+Para escolher outro conjunto de layouts, clique no ícone Abrir. A janela Editar
+s layout é exibida contendo todos os conjuntos existentes. Clique óuas vezes no
+— conjunto com o qual deseja trabalhar.
+Etapa 3: Clique áuas vezes no item para o qual deseja criar um layout. A janela Layout
+de importação é exibida.
+Etapa 4: Digite o caminho e o nome do arquivo que contém as informações dessa tabela
+no campo Arquivo de texto.
+ov-
+| (Caso não se lembre do caminho e do nome do arquivo, clique no ícone Procurar
+para abrir a janela Selecionar arquivo. Você encontrará o arquivo em qualquer
+diretório do disco rígido ou da rede.
+Etapa 5: Para especificar um pré-processador ou um pós-processador, digite o
+Tespectivo nome no campo Pré-processador/Pós-processador. Pré-processador
+é um programa que manipula os dados brutos antes de o Roadnet
+Transportation Suíte importá-los (geralmente, um arquivo em lote), enquanto o
+pós-processador manipula os dados após a conclusão da importação/
+exportação.
+TEcA ——
+F 2
+P ) GO =
+Algumas janelas de layout podem conter opções adicionais para forçar os
+“dados a serem alinhados à esquerda ou à direita ou para alinhar ou remover
+Etapa 6: Especifíque a posição e o tamanho de cada campo do arquivo de importação.
+Na parte superior da janela de configuração do layout há uma régua com a linha
+superior do arquivo de importação exibida abaixo. A régua mostra a posição de
+cada caractere no arquivo. Abaixo da exibição do arquivo há uma lista com
+todos os campos possíveis da tabela. Para especifícar a posição e o tamanho de
+cada campo, selecione-o na lista e, na linha exibida, utilize o mouse para realçar
+“ tamanho do campo. O campo é realçado com a mesma cor indicada na lista a
+BEE A o Toadret Transporiafion Sule
+' Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Layouts de importação

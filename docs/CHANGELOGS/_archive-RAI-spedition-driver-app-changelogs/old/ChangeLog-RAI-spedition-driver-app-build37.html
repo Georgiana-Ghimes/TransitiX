@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 37 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid var(--warn);
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--warn);
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 37</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.4.3 · build 37</strong> · închis <strong>15 septembrie 2026</strong><br />
+      De la commit <code>5b5991e</code> (build 36) → <code>f069510</code>
+    </div>
+    <div class="badge-row">
+      <span class="badge">Index străzi București</span>
+      <span class="badge">Fără geocoder la căutare</span>
+      <span class="badge">city hint</span>
+      <span class="badge">geocode cache</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Local în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub. Continuă Harta zonelor din build 34–36.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> fiecare căutare pe hartă trimitea adresa clientului la un geocoder
+    terț. Zonele sunt poligoane fixe; pentru București putem răspunde din index local
+    (stradă → zone), fără rețea. Geocoderul rămâne rezervă pentru străzi necunoscute —
+    cu orașul din tab, ca „Calea Victoriei” să nu aterizeze în alt județ.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Index de străzi pe hartă (București)</h3>
+      <ul>
+        <li>Căutarea încearcă întâi indexul din browser (<code>src/lib/streetZones/</code>) —
+          încărcat la prima căutare, nu cu pagina.</li>
+        <li>Răspunsuri: potrivire exactă, fără tip de stradă, ambiguă (alegi din listă),
+          necunoscută → rezervă geocoder.</li>
+        <li>Stradă care <strong>traversează</strong> granița de zonă: indexul spune asta
+          (nr. decide), nu ghicește un pin pe o parte.</li>
+        <li>Script regenerare: <code>node scripts/build-street-zones.js</code> (Overpass →
+          <code>bucuresti.js</code>).</li>
+        <li>Normalizare nume: <code>streetName.js</code> (diacritice, tip stradă).</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Locate + UX pe Harta zonelor</h3>
+      <ul>
+        <li>API / client: parametru <code>city</code> — strada goală din tab primește orașul
+          (fără dublare dacă e deja în text).</li>
+        <li>Pin pe hartă: arată și conturul <em>desenat</em> care conține punctul
+          (<code>pointInGeometry</code>) — separat de zona de preț din server.</li>
+        <li>Hint MMA: valori tipice în tone (&lt; 100) → „pare în tone — pune … kg?”
+          (nu se aplică singur).</li>
+        <li>Placeholder: doar strada; orașul e tab-ul activ.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Geocoder: outage ≠ adresă greșită</h3>
+      <ul>
+        <li>Eșec de infrastructură (neconfigurat / down) <strong>nu</strong> se mai scrie în
+          <code>geocode_cache</code> — altfel rămânea „negăsit” după ce pui <code>PHOTON_URL</code>.</li>
+        <li>Doar 4xx (provider a refuzat cererea) se cache-uiește ca eroare de adresă.</li>
+        <li><code>POST /zones/locate</code> → <strong>503</strong> + mesaj despre
+          <code>PHOTON_URL</code> când geocoderul lipsește; UI: notă, nu „adresă greșită”.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <ul>
+        <li>Adrese încercate fără Photon configurat nu mai rămân blocate „negăsit” în cache.</li>
+        <li>Căutare stradă goală pe tab București nu mai poate pune pinul pe un omonim din țară.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Companion → <strong>Harta zonelor</strong> → tab București.</li>
+        <li>Caută o stradă cunoscută (ex. Calea Victoriei) <em>fără</em> Photon — răspuns din index.</li>
+        <li>Caută un nume ambiguu (ex. Dacia) — alege din sugestii.</li>
+        <li>Stradă necunoscută + Photon lipsă → mesaj 503 / rezervă, nu „typo”.</li>
+        <li>Cu Photon: strada + city din tab → pin corect; MMA 7,5 → hint tone.</li>
+        <li>Login / topbar: <strong>v1.4.3 - build 37</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="note">
+    Indexul București e date generate (~350&nbsp;KB). Regenerare doar când se schimbă
+    contururile de referință: <code>node scripts/build-street-zones.js bucuresti</code>.
+  </div>
+
+  <footer class="foot">
+    Companion v1.4.3 build 37 · închis 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    docs/ local only
+  </footer>
+
+</body>
+</html>

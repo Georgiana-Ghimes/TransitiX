@@ -1,0 +1,98 @@
+Şi
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum să lucrați cu sesiunile de planificare
+Cum să lucrezi cu sesiunile de planificare
+Folosit cu: Territory Planner
+Sesiunile de planificare sunt o modalitate de a culege informațiile necesare
+rezolvați problemele de rutare în Territory Planner. De asemenea, vă permit să vă schimbați
+parametrii și încercați diferite variabile „posibile” fără a pierde rutele existente. Când
+Intri în Editorul de planificare, trebuie să selectezi o anumită sesiune cu care să faci
+munca. Sesiunile de planificare pot fi adăugate importând extensii din
+clienții sau alegând Session Transfer atunci când sunteți în Planning Editor.
+M Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Mm — Pasul 2: Faceți clic pe meniul Înregistrări și selectați Sesiuni de planificare.
+&W| Notă: Pentru a vedea o listă actualizată de sesiuni de planificare, faceți clic pe pictogramă
+Actualizare; fereastra va fi actualizată cu cele mai recente informații ale bazei de date
+- date.
+2 Pasul 3: În fereastra Sesiuni, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare „Adăugați o sesiune”.
+ã
+S Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+EE
+Şi
+Și -)
+este cx E
+o'
+Săptămânile ciclului indică durata
+[Este| Pasul 4: Faceți clic pe săgeată pentru a deschide fereastra 2 Căutare - Scenariu. Pentru a selecta a
+scenariu, faceți dublu clic pe el sau faceți clic pe scenariu și pictograma
+Proces.
+MT ,,, ,,, , ; EElAEL DL — Roadhet Trarporiation Sute
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu sesiunile de planificare
+2 Pasul 5: Introduceți o descriere pentru sesiunea de planificare. Combinația de
+Î) Descrierea și scenariul trebuie să fie unice pentru fiecare sesiune de planificare.
+Sfat: Folosiți ceva ușor de identificat ca descriere a sesiunii, astfel încât să puteți
+selectați sesiunea corespunzătoare când intrați în Editorul de planificare.
+Pasul 6: Selectați tipul de calcul al timpului/distanței care va fi utilizat pentru 2 sesiuni
+planificare.
+XY este o metodă de rutare care utilizează o linie dreaptă pentru a măsura
+distanța dintre două puncte. Are modele de distanță și timp de călătorie
+traseu pentru curbe și viraj în traseu, precum și viteze variabile. Se
+comparativ cu 20 RouteNet, metoda XY este mai rapid de utilizat, dar mai puțin
+exacte.
+Barierele de utilizare pot fi selectate numai atunci când este metoda XY
+fiind folosit. Această opțiune explică barierele reale dintre două puncte, cum ar fi a
+corp de apă, un munte etc. Barierele trebuie create în mod
+Barieră pe hartă.
+RouteNet este o metodă de calcul care utilizează hărți pentru a reproduce condițiile
+Amenajarea drumurilor, ținând cont de toate, de la semne de oprire și semafoare
+până la limitele de viteză și schimbările de rută. Comparativ cu metoda
+XY, RouteNet durează puțin mai mult pentru procesare, dar este mai mult
+exacte.
+. Notă: Utilizarea RouteNet poate provoca o întârziere semnificativă la intrarea în Editor de rute.
+traseul sau planificarea, în timp ce timpii și distanțele sunt calculate.
+Durata acestei întârzieri se bazează pe mai mulți factori, printre care:
+* numarul de clienti cu comenzi
+* numărul de depozite
+* numărul de străzi din zona geografică
+* puterea de procesare a computerului
+Dacă doriți să evitați această întârziere, utilizați SuperMatrix.
+SuperMatrix este o altă metodă de calcul care utilizează rețeaua de căi pentru a se replica
+condițiile reale ale drumului, ținând cont de toate, de la semne de oprire și
+semafoarele la limitele de viteză și modificările rutei. Este posibil
+programați SuperMatrix să ruleze noaptea, astfel încât să nu fie
+necesar să așteptați calculul timpilor de călătorie și distanțelor 2nd introduceți
+editori. Dacă utilizați SuperMatrix, trebuie să specificați cum
+doresc ca Editorul de planificare să se ocupe de clienții care au fost adăugați de atunci
+2 ultima rulare a SuperMatrix. În zona Actualizare în timp real, selectați
+[Traducere eșuată pentru acest fragment]
+se deseja utilizar XY ou RouteNet para calcular as distâncias até esses clientes,
+-O Horário de rush avançado utiliza caminhos e áreas de horário de rush para
+determinar as ruas reais que as rotas utilizarão. Se estiver utilizando os recursos de
+horário de rush avançado, ainda é possível usar áreas simples, além das áreas e
+trajetos avançados. Se você deseja impor restrições de percurso ou alterar a mão da
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+(Como trabalhar com sessões de planejamento
+Tua durante um período de horário de rush, é necessário marcar Horário de rush
+avançado. O uso de horário de rush avançado pode exigir tempo adicional ao
+iniciar o Editor de planejamento.
+Nota: Utilizar o horário de rush avançado pode causar uma demora significativa 2o entrar
+no Editor de roteirização ou de planejamento, enquanto os tempos e distâncias são
+calculados. Esta demora é adicional à causada pelo uso do RouteNet. A duração
+desse atraso é baseada em diversos fatores, incluindo:
+* o número de períodos de horário de rush no modelo
+* se houve criação de restrições de equipamento para os períodos
+* o número de áreas e caminhos de horário de rush no modeto
+FHorário de rush permite escolher um modelo para horário de rush para designar
+períodos nos quais ocorre atividade em horário de rush. Para selecionar um modelo
+para horário de rush, clique na seta Modelo para horário de rush; a janela Pesquisa
+“ Modelo para horário de rush é exibida. Clique duas vezes em um modelo para
+EE S SE SS NE - SA M e o e

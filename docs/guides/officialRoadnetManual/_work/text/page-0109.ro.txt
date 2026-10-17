@@ -1,0 +1,80 @@
+[Traducere eșuată pentru acest fragment]
+TRSAE SNTA RAA N Em eAnA RENA UAA EN TAA ARATOST A /NTA L DN T f RRR E TU A RRAA AEN NEE ENTUNAIRA D
+título.
+Você pode escolher a data de
+envegae a sessão na qual
+importar a solução
+Toteirizada. Depois de
+importar a solução, é possível
+(axibir as rotas no Editor de
+roteirização ou carregá-las
+o Editor de carregamentos.
+Notas: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+importação. Consutte Attemância entre conjuntos de layouts para obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar no menu suspenso. Consulte Configuração de layouts
+de arquivo de importação para obter mais informações.
+Para visualizar um relatório que resuma as informações do layout, incluindo o
+mome e o local do arquivo de importação e as posições iniciais e o tamanho de cada
+campeo, clique na seta [Layout do arquivo] e escolha Visualizar no menu suspenso.
+AA janela Visualizar relatório é exibida com o relatório. Nessa janela, você pode
+imprimir ou exportar o relatório
+Etapa 3: À seção Sessões para exibirá automaticamente a data da próxima entrega e as
+sessões associadas a essa data. Se você estiver importando rotas de uma data
+MT s — oaderTrazporiaton SÃe
+( Copyright 2006 United Parcel Service f America lc
+Todos os diveitos reservados
+Importação de uma solução roteirizada
+diferente, clique na seta Sessões para e escolha a data de entrega correta no
+calendário exibido. Essa data será usada desde que não haja outra especificada
+mo arquivo de importação.
+Etapa 4: Clique nas sessões para as quais deseja importar as rotas. Para selecionar mais
+de uma sessão, mantenha a tecla [Ctri] pressionada ao clicar nas sessões. As
+Totas serão importadas para todas as sessões selecionadas.
+Nota: Se não houver sessão para a data selecionada ou se desejar criar uma nova sessão,
+clique no botão [Criar nova sessão]. A janela Adicionar sessão de roteirização é
+exibida. Para obter mais informações sobre essa janela, consulte Criação de uma
+mova sessão de roteirização. Depois que a nova sessão estiver criada e salva, ela
+será exibida na lista Sessões para.
+Etapa 5: Para remover rotas existentes da sessão antes de importar os novos pedidos,
+marque Limpar sessões antes de importar.
+Etapa 6: Clique na seta Fuso horário e selecione o fuso a ser usado para o horário de
+início da rota.
+Etapa 7: Para definir outras opções de importação (por exemplo, como lídar com
+informações de SKU ou os relatórios que deseja imprimir após a importação de
+pedidos), clique no botão [Outras opções]. Consulte Configuração da opções
+de solução roteirizada para obter mais informações,
+Nota: Se você não recebeu permissão para alterar as opções de importação e exportação
+mo módulo Administração, não conseguirá alterar as opções selecionadas ao
+importar uma sofução roteirizada.
+Etapa 8: Para executar a manutenção do banco de dados antes de importar pedidos,
+clique no botão [Banco de dados]. Consulte Manutenção do banco de
+dadospara obter mais informações,
+Etapa 9: Clique no botão [Importar] para iniciar o processo de importação. A barra de
+aandamento exibe o status da importação.
+Nota: Depois de importar a solução, você poderá ver o log de importação com qualquer
+emo ocorrido durante o processo. Clique em [Exibir log] ou [Exibir erros]
+Etapa 10: Quando a importação estiver concluída, e depois de ver os relatórios, clique
+Ta caixa Fechar
+Importação — Importar — Solução roteirizada — [Importar]
+. Nota: Se você estiver importando novamente pedidos para uma rota, certifique-se de
+incluir a TD da rota e o número de sequência da parada. Se essas informações não
+estiverem incluídas, suas informações atualizadas poderão ser ienoradas. Se
+Fadopeaçõãeo M TA R
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+importação Fs EE o
+5 te o sam tee Tocunanes [ 2X ]
+Etapa 2: Escolha as configurações desejadas para lidar com opções de pedidos e/ou
+Telatórios. Consute a tabela Opções de importação de soluções roteirizadas
+para obter uma explicação das configurações.
+[Traducere eșuată pentru acest fragment]
+Etapa 3: Para salvar as configurações, clique em [OK] para retomar à janela Importar
+solução roteirizada.
+Para sair da janela Importar opções de solução roteirizada sem salvar as
+configurações, clique na caixa Fechar
+TETF A , ,,, , ;El l Foadat Traporiafon SÃe.
+' Copyright 2006 United Parcel Service f Averica nc
+Todos os diveitos reservados

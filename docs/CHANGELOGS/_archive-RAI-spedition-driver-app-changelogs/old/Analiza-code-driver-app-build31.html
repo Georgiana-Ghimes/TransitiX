@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Analiză code driver-app (build 31)</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --ok: #166534;
+      --soft: #f8fafc;
+      --p0: #991b1b;
+      --p1: #92400e;
+      --p2: #1e40af;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 17pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.1em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 10.5pt; margin-top: 0.7em; color: var(--accent); }
+    p { margin: 0.3em 0 0.5em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 4px; }
+    .hero .meta { opacity: 0.92; font-size: 9pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.25em 0 0.5em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 0.5em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 6px 10px;
+      margin: 0.35em 0 0.5em;
+      font-size: 9.3pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    table { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 0.4em 0 0.65em; }
+    th, td { border: 1px solid var(--line); padding: 4px 7px; text-align: left; vertical-align: top; }
+    th { background: var(--soft); color: var(--brand); font-size: 8.5pt; }
+    .ok { color: var(--ok); font-weight: 700; }
+    .tag {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 5px;
+      vertical-align: 1px;
+    }
+    .tag-p0 { background: #fee2e2; color: var(--p0); }
+    .tag-p1 { background: #fef3c7; color: var(--p1); }
+    .tag-p2 { background: #dbeafe; color: var(--p2); }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .foot {
+      margin-top: 16px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 8pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Analiză code — driver app / companion</h1>
+    <div class="meta">
+      RAI Spedition — Documente · branch <strong>RAI-spedition-driver-app</strong><br />
+      Companion <strong>v1.2.0 · build 31</strong> · commit <code>59790a0</code> · 13 septembrie 2026<br />
+      Doar development pe companion — fără multitenant, fără ops/VM
+    </div>
+    <div class="badge-row">
+      <span class="badge">ClickUp #1–#30 done în cod</span>
+      <span class="badge">Nucleu solid</span>
+      <span class="badge">Urmează: datorie structurală</span>
+    </div>
+  </header>
+
+  <div class="why">
+    <strong>Verdict:</strong> produsul RAI Documente e <strong>completat pe backlog-ul ClickUp #1–#30</strong>.
+    Nucleul (upload șofer → OCR → listă birou → anexă/export) e solid. Ce mai rămâne e
+    <strong>datorie structurală și polish</strong>, nu „încă 20 de buguri din form”.
+  </div>
+
+  <section class="avoid-break">
+    <h2>1. Ce e solid acum</h2>
+    <table>
+      <tr><th style="width:28%">Zonă</th><th>Stare</th></tr>
+      <tr>
+        <td>Office companion</td>
+        <td>Doar <code>/avize</code>, <code>/reports</code>, <code>/settings</code> (+ redirect restul → <code>/avize</code>)</td>
+      </tr>
+      <tr>
+        <td>App șofer</td>
+        <td><code>DriverAppDocuments</code> — upload, offline queue, status OCR, fără curse TMS</td>
+      </tr>
+      <tr>
+        <td>Avize</td>
+        <td>Filtre, confirm, re-extrage cu dialog, duplicate TPO, coloană Încărcare, șabloane, coduri observații, export, zip, email</td>
+      </tr>
+      <tr>
+        <td>OCR</td>
+        <td>Paddle + PDF text; garde plăcuță/cantitate; tip marfă din unitate; nr. curse/TPO; timeout → fundal</td>
+      </tr>
+      <tr>
+        <td>Port / dev</td>
+        <td><code>5174</code> + <code>strictPort</code> + <code>tunnel:companion</code></td>
+      </tr>
+      <tr>
+        <td>ClickUp #1–#30</td>
+        <td class="ok">Done în cod (builds 9 → 18/19 → 31)</td>
+      </tr>
+    </table>
+    <p class="muted">Nu există TODO/FIXME marcate pe path-urile companion relevante.</p>
+  </section>
+
+  <section>
+    <h2>2. Ce mai trebuie făcut — code only</h2>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-p0">P0</span> Impact real pe produs</h3>
+      <table>
+        <tr><th style="width:8%">#</th><th style="width:28%">Item</th><th>Detaliu / unde</th></tr>
+        <tr>
+          <td>1</td>
+          <td><strong>Utilizatori în companion</strong></td>
+          <td>
+            <code>/users</code> există pe TMS full, <strong>nu</strong> e în
+            <code>OfficeRoutes</code> documents / <code>COMPANION_OFFICE_NAV</code>.
+            Adminul nu poate invita/lega șoferi din UI — doar seed/API.<br />
+            → Adaugă <code>/users</code> (sau subset invite-driver) în
+            <code>App.jsx</code> + <code>appProfile.js</code> + nav.
+          </td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>„Ciornă factură” fără destinație</strong></td>
+          <td>
+            Butonul din <code>AvizeReports.jsx</code> creează factură TMS, dar companion
+            <strong>nu are</strong> <code>/finance</code>. Flux mort/înșelător.<br />
+            → Ascunde pe <code>isDocumentsProfile()</code> <strong>sau</strong> listă minimală de ciorne.
+          </td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>OCR pe poze reale</strong></td>
+          <td>
+            Gardele există; pe date din cabină vor apărea edge-case-uri (plăcuță / cantitate / TPO).
+            Muncă de cod în <code>avizOcr.js</code>, <code>ocr/fields.js</code>,
+            <code>normalizeOcrText.js</code> — nu config.
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-p1">P1</span> Datorie / bug-uri de suprafață</h3>
+      <table>
+        <tr><th style="width:8%">#</th><th style="width:28%">Item</th><th>Detaliu / unde</th></tr>
+        <tr>
+          <td>4</td>
+          <td><strong>Mapping paddle → stub</strong></td>
+          <td>
+            <code>mapProviderToSource</code> / <code>normalizeExtractionSource</code> mapează
+            necunoscutul (inclusiv <code>paddle</code>) la <code>'stub'</code>.
+            Coloana DB e corectă la extract; fallback-ul din <code>decorateAviz</code> poate
+            eticheta greșit rânduri vechi/incomplete.<br />
+            → Adaugă <code>paddle</code> / <code>none</code> explicit + teste.
+          </td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>KPI curse pe profil șofer</strong></td>
+          <td>
+            <code>DriverProfile.jsx</code> arată Total/Livrate/Active din <code>trips</code> —
+            pe companion aproape mereu 0.<br />
+            → Ascunde statisticile pe profile documents.
+          </td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>Trip linking opțional</strong></td>
+          <td>
+            Dropdown trip la upload/edit depinde de <code>trips</code>, pe care companionul
+            nu le gestionează → UI goală permanent.<br />
+            → Ascunde sau empty-state clar.
+          </td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><strong>Teste <code>documents.js</code></strong></td>
+          <td>
+            Batch extract / corrections / timeout — nucleu OCR fără suite dedicată
+            (spre deosebire de <code>avize</code> / <code>driverDocuments</code>).
+          </td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><strong>Setări expiry orfane</strong></td>
+          <td>
+            <code>document_expiry_days</code> există; pe companion lipsește UI de documente flotă/șofer
+            (doar clopoțel).<br />
+            → Documentează ca „pentru alerte” sau ascunde câmpul pe companion.
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="avoid-break">
+      <h3><span class="tag tag-p2">P2</span> Polish</h3>
+      <ul>
+        <li>Empty states / copy (OCR down, listă goală, filtre care ascund upload-uri)</li>
+        <li>UX offline: entries parked în listă mai explicite</li>
+        <li>Changelog PDF #22–#30 (docs, nu runtime)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>3. Ce NU e work de driver-app</h2>
+    <div class="card">
+      <ul style="margin-bottom:0">
+        <li>Resend key în <code>.env</code> = <strong>config</strong>, nu feature nou (codul stub e deja corect)</li>
+        <li>Multitenant / GOD / Planning AI / GPS / module TMS full</li>
+        <li>Ops VM / tunnel / deploy</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>4. Următorul sprint (ordine)</h2>
+    <ol>
+      <li>Utilizatori / invite în companion</li>
+      <li>Curăță Ciornă factură + KPI / trip UI orphan</li>
+      <li>Fix mapping <code>paddle</code> ≠ <code>stub</code></li>
+      <li>Teste <code>documents.js</code></li>
+      <li>Iterație OCR pe poze reale</li>
+    </ol>
+  </section>
+
+  <p class="foot">
+    RAI Spedition — Documente · companion v1.2.0 build 31 · branch RAI-spedition-driver-app ·
+    analiză code-wise (doar driver-app) · septembrie 2026
+  </p>
+
+</body>
+</html>

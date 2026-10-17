@@ -1,0 +1,89 @@
+Introducere în MobileCast
+Folosit cu: MobileCast
+!MobileCast, parte din Roadnet Transportation Suite de la UPS Logistics Technologies, este a
+software cuprinzător de rutare care programează, direcționează și monitorizează livrările dumneavoastră. Cu
+MobileCast, puteți efectua cu ușurință cele mai comune sarcini, cum ar fi crearea de rute, pornirea rutelor,
+opriri și trasee concise, controlați eficiența și monitorizați performanța șoferului.
+.Primul pas pentru utilizarea MobileCast este configurarea și întreținerea datelor. Modulul de întreținere
+vă permite să introduceți toate informațiile esențiale despre client, care sunt apoi folosite pentru a crea
+sRutele tale. Există doisprezece pași principali care trebuie parcurși pentru a începe crearea rutelor.
+Acești pași sunt: adăugarea de regiuni, definirea opțiunilor, adăugarea de stări și tipuri, adăugarea
+madeaperações Ê
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Introducere în Roadnet Transportation Suite
+angajați, adăugarea de șoferi, adăugarea de echipamente, adăugarea de clienți, adăugarea de modele
+traseu, adăugarea codurilor motiv, adăugarea codurilor de anulare oprire, adăugarea
+tipuri de containere și adăugarea de containere.
+Dacă utilizați comunicații fără fir, va trebui să știți cum să lucrați cu alerte live.
+driver, opriți codurile nelivrabile, mesajele text, evenimentele wireless,
+| centru de mesaje și cum să trimiteți mesaje șoferilor.
+În continuare, veți dori să vă păstrați informațiile actualizate. Această sarcină poate părea obositoare,
+dar MobileCast vă permite să importați rapid informații despre containere, șoferi,
+angajați, echipamente, rute, rute statice și locale și comenzi ale clienților.
+După importarea clienților și a comenzilor în MobileCast, puteți utiliza Analyst pentru a vă crea rutele
+implicit. După ce ați făcut acest lucru, puteți adăuga opriri, opriri de transfer, alocați șoferi și
+echipament, atribuiți și anulați atribuirea întâlnirilor, creați rute statice și începeți și finalizați
+rutele tale.
+Acum că v-ați creat cu succes rutele și sunteți mai familiarizat cu funcțiile MobileCast,
+Puteți utiliza ferestrele și hărțile Analyst pentru a vă afișa rutele, a monitoriza șoferii,
+monitorizați echipamentul, vizualizați traseul echipamentului și istoricul poziției și examinați
+orice excepții de rută. În plus, este posibil să generați și să imprimați indicații pentru driver și
+orice număr de rapoarte informative.
+|MobileCast are câteva alte caracteristici nedescrise mai sus; consultați Ghidul de operațiuni pentru
+„Roadnet Transportation Suite sau sistemul complet de ajutor pentru informații despre acestea
+Tecursos.
+FITITAFAFAT A E Foadnet Tranporiation Sufe
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Despre acest manual
+Despre acest manual
+(Ghidul de operațiuni explică cum să utilizați Roaánet Transportation Suite pentru a ruta
+€ încărcați-vă echipamentul eficient. Suita de transport este compusă din
+trei programe principale: Roadnet Routing Editor, Roadnet Planning Editor
+Teritory Planner, MobileCast Analyst și MobileCast Load Editor
+FleetLoader. Deși este posibil să utilizați o parte din suita generală, aceasta
+Operations conține instrucțiuni despre cum să utilizați întreaga suită.
+Manvalul este împărțit în mai multe secțiuni:
+* Introducere în Roadnet Transportation Suite — descrie operațiunile de bază pentru roadnet
+program și navigare comune tuturor părților Transportation Suite
+* „Întreținere Roadnet Transportation Suite — O secțiune detaliată cu pași
+pentru a introduce și menține date din toate părțile Transportation Suite
+* — Import în Roadnet Transportation Suite — o secțiune care explică
+procesul de import și descrie criteriile de import din toate părțile
+Suită de transport
+* Crearea rutelor în Editorul de rutare - instrucțiuni detaliate pentru executare
+sarcini critice pentru crearea rutelor zilnice folosind Editorul de rutare
+Roadnet
+* Crearea rutelor în Planning Editor - instrucțiuni detaliate pentru execuție
+a sarcinilor critice pentru crearea rutelor de planificare folosind Editorul de planificare
+Planificarea Teritoriului
+* Încărcare în Editorul de încărcare - instrucțiuni detaliate pentru executare
+sarcini critice pentru încărcarea vehiculelor folosind Editorul de încărcare
+de la FleetLoader
+* — Expediere în MobileCast — instrucțiuni detaliate pentru efectuarea sarcinilor de expediere
+rutare zilnică folosind MobileCast Analyst.
+* — Rapoarte în Roadnet Transportation Suite — descrie toate rapoartele care
+poate fi imprimat din Transportation Suite
+* Istoricul rutei — descrie modul în care este accesată baza de date Istoricul rutei
+si configurat. Baza de date Istoricul rutelor este concepută pentru a permite
+menținerea datelor istorice de rutare pentru mai mult timp și creșterea acestora
+ușor de interogat pentru a extrage date, cum ar fi pentru rapoarte.
+* — Glosar — un glosar care ajută cu termenii nefamiliari utilizați în
+Suită de transport
+În plus, este inclus un index pentru a ajuta la localizarea informațiilor din manual.
+Operațiunile EMIIB
+€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate.
+Convențiile utilizate în acest manual
+* Toate referințele la tastele de la tastatură sunt incluse între acolade, de exemplu:
+Apăsați [Enter] pentru a confirma.
+* Toate referințele la butoanele de pe ecran sunt incluse între acolade, de exemplu:
+Faceți clic pe butonul [OK] când toate informațiile sunt completate.
+* Wordpress se referă la tastele de la tastatură; clic se referă la mouse.
+* — Căile de meniu sunt afișate cu caractere cursive aldine sub sarcina de furnizat
+un memento rapid despre cum să accesați o anumită funcție. De exemplu:
+Înregistrări — Produs — Tipuri de ambalaje
+* — Thermoclick indică utilizarea butonului principal al mouse-ului; clic dreapta
+butonul mouse-ului indică clicul cu butonul secundar al mouse-ului; iar dublu clic indică
+Cfie SEOo a TEA EAA A S ÁR E Dn a da S A SS o

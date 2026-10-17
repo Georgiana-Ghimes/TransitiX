@@ -1,0 +1,60 @@
+campos são obrigatórios. "
+Etapa 7: Para atribuir um tipo de produto à SKU, clique na seta Tipo de produto para
+abrir a janela Pesquisa - Tipo de produto. Clique duas vezes em um item para
+selecioná-lo ou clique no item e no ícone Processar. É necessário atribuir um
+tipo de produto às SKUs somente ao utilizar roteirização de compartimento.
+Etapa 8: Para exibir uma imagem da SKU no FleetLoader, insira o caminho até a
+imagem. Se um caminho não for informado aqui, o ícone associado ao tipo de
+embalagem será exibido no Editor de carregamentos.
+Importante:A imagem deve ser um arquivo .bmp de 28x28 pixels e 256 cores ou menos.
+Etapa 9: Na área Propriedades do armazém, preencha as informações conforme
+desejado para indicar onde o produto está armazenado no armazém. Esta
+informação é opcional.
+Clique na seta Zona de armazém. A janela Pesquisa - Zona de armazém é
+exibida. Clique duas vezes em uma Zona, ou clique na zona e no ícone
+Processar, para selecioná-la. A zona de armazém pode determinar como a SKU
+é carregada em um palete; essas informações são exibidas na Folha de coleta de
+palete e na Lista de seleção,
+FT A E Roadha Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com SKUs
+Tnsira as informações do armazém nos campos Zona principal e Zona
+secundária. Estas informações opcionais serão exibidas na Lista de seleção.
+Antes de adicionar SKU você
+deve adicionar o tipo de
+embalagem e a marca da SKU.
+o
+Etapa 10: Para defínir os tempos de atendimento da SKU, insira os tempos na área
+Propriedades do tempo de descarga. Você pode inserir tempos separados para
+cada alias de tamanho, e o tempo de atendimento será calculado com base na
+quantidade de cada tamanho do item no pedido. Em outras palavras, se
+específicar uma quantidade para cada tamanho no item do pedido, os tempos
+de cada tamanho serão calculados e somados para determinar o tempo de
+atendimento total do item do pedido.
+M Etapall: Clique no icone Salvar ou pressione [Ctrl]+[S] para salvar a nova SKU.
+Etapa 12: Repita 2s etapas 4 a 11 para adicionar qualquer outra SKU.
+% — Etapa13: Quando terminar de adicionar SKUs, clique na caixa Fechar para fechar a
+janela Adicionar SKU.
+Ícone Manutenção — Cadastros > Produto > SKUs — ícone Adicionar (fInsert]) >
+icone Salvar ([CtrI+[S])
+As SKUs existentes podem ser editadas ou excluídas, conforme necessário. Consutte
+Edição de itens e Exclusão de itens para obter mais informações.
+Guiadeoperaçães o R
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com SKUs
+Nota: Para alterar rapidamente o tempo de atendimento ou zona de armazém para um
+grupo de SKUs, utilize o recurso Substituir. Para substituir as informações, basta
+selecionar as SKUs que deseja afterar, clicar com o botão direito em uma SKU
+selecionada e selecionar Substítuir no menu que será exibido. Selecione
+Propriedades do armazém (para alterar as informações de localização do armazém)
+“ou Propriedades do tempo de descarga (para alterar os tempos de atendimento)
+Tnsira as novas informações e clique no botão [OK]. As novas informações
+substituem as informações existentes de todas as SKUs selecionadas. Por exemplo,
+se você deseja alterar o tempo de atendimento de todas as SKUs com um
+determinado tipo de embalagem, selecione todas as SKUs que possuem esse tipo
+de embalagem. Na janela Substituir propriedades da SKU, selecione Propriedades
+do tempo de descarga e insira o novo tempo de atendimento de cada tamanho.
+Para alterar essas propriedades para todas as SKUSs, clique com o botão direito em
+uma SKU e selecione Substituir tudo no menu que será exibido.

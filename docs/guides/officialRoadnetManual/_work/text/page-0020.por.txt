@@ -1,0 +1,117 @@
+estejam no mesmo conjunto de habilidades, os pedidos não serão agregados.
+Guia de operações 3
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Etapa 4: Na área Propriedades padrão da sessão, clique nos circulos/caixas apropriados
+para selecionar as opções de Cálculo de tempo/distância e outras opções da
+sessão.
+XY é um método de roteirização que utiliza uma linha direta para medir a
+distância entre dois pontos. Ele conta com modelos de distância e de tempo de
+percurso para curvas e voltas no percurso, bem como velocidades variáveis. Se
+comparado ao RouteNet, o método XY é mais rápido de usar, porém menos
+preciso.
+Usar barreiras pode ser selecionado somente quando o método XY estiver
+sendo usado. Esta opção explica as barreiras reais entre dois pontos, como um
+corpo de água, uma montanha, etc. As barreiras devem ser criadas no modo
+Barreira no mapa.
+RouteNet é um método de cálculo que utiliza mapas para replicar as condições
+Teais das vias, levando tudo em consideração, desde placas de Pare e semáforos
+até os limites de velocidade e alterações de percurso. Comparado ao método
+XY, o RouteNet demora mais para ser processado, mas é mais preciso.
+Nota: Utilizar o RouteNet pode causar uma demora significativa ao entrar no Editor de
+roteirização ou de planejamento, enquanto os tempos e distâncias são calculados.
+A duração desse atraso é baseada em diversos fatores, incluindo:
+* o número de clientes com pedidos
+* o número de depósitos
+* o número de ruas na área geográfica
+* o poder de processamento do computador
+Se desejar evitar esta demora, utilize o SuperMatrix.
+SuperMatrix é um outro método de cálculo que utiliza a rede de vias para
+replicar as condições reais das vias, levando tudo em consideração, desde placas
+de Pare e semáforos até os limites de velocidade e alterações de percurso. É
+possível programar o SuperMatrix para que seja executado à noite, de forma que
+não seja necessário aguardar o cálculo dos tempos e distâncias de percurso ao
+entrar nos editores. Se estiver utilizando o SuperMatrix, é necessário especificar
+como você deseja que o Editor de roteirização trate os clientes que foram
+adicionados desde a última execução do SuperMatrix. Na área Atualização em
+tempo real, selecione se deseja usar o método XY ou o RouteNet para calcular
+s distâncias até esses clientes.
+O Horário de rush avançado utiliza caminhos e áreas de horário de rush para
+determinar as ruas reais que as rotas utilizarão. Se estiver utilizando os recursos
+de horário de rush avançado, ainda é possível usar áreas simples, além das áreas
+e trajetos avançados. Se você deseja impor restrições de percurso ou alterar a
+mão da rua durante um período de horário de rush, é necessário marcar Horário
+de rush avançado. O uso de horário de rush avançado pode exigir tempo
+adicional ao iniciar o Editor de roteirização.
+36 “Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Nota: Utilizar o horário de rush avançado pode causar uma demora significativa ao entrar
+no Editor de roteirização ou de planejamento, enquanto os tempos e distâncias são
+calculados. Esta demora é adicional à causada pelo uso do RouteNet. À duração
+desse atraso é baseada em diversos fatores, incluindo:
+* o número de períodos de horário de rush no modelo
+* se houve criação de restrições de equipamento para os períodos
+* o número de áreas e caminhos de horário de rush no modelo
+Horário de rush permite escolher um modelo para horário de rush para designar
+períodos nos quais ocorre atividade em horário de rush. Para selecionar um modelo
+para horário de rush, clique na seta Modelo para horário de rush; a janela Pesquisa
+- Modelo para horário de rush é exibida. Clique áuas vezes em um modelo para
+selecioná-lo ou clique no modelo e no ícone Processar. Se você estiver utilizando
+' RouteNet ou SuperMatrix e deseja utilizar recursos de horário de rush avançado,
+como, por exemplo, restrições de caminhos ou de percursos, marque Horário de
+Tush avançado.
+Agregar pedidos agrega diversos pedidos para um único cliente durante uma
+sessão, de forma que sejam colocados na mesma rota. Os pedidos serão agregados
+somente se atenderem aos critérios especificados na janela Opções de Agregar
+pedidos.
+Monitoramento do DT monitora o tempo que cada motorista permanece na rua,
+utilizando informações reais da rota, para que as especificações do DT sejam
+cumpridas. Se não houver informações reais disponíveis, serão usadas as
+informações planejadas.
+Salvar histórico da rota inclui as rotas criadas na sessão quando o Histórico da
+rota é executado para arquivar os dados em seu banco de dados. Se as rotas foram
+concluidas no MobileCast, essas informações serão armazenadas. Esta opção
+estará disponível somente se a opção Ativar o Roadnet como uma origem de dados
+estiver selecionada na página Histórico da rota.
+Etapa 5: Na área Propriedades padrão da rota, defina os padrões que serão utilizados
+quando as rotas forem criadas, como os horários e a quantidade inicial.
+Quantidade inícial se refere à quantidade que é carregada no equipamento no
+início da rota. Por exemplo, se um veículo de combustível iniciar a rota com
+combustível apenas suficiente para essa rota, insira Conforme necessário. Se
+um veículo de combustível for normalmente reabastecido na última parada,
+insira Cheio. Finalmente, se um veículo de combustível for normalmente
+rTeabastecido na primeira parada, insira Vazio.
+Horário de início refere-se ao horário de partida da rota do depósito.
+Horário de preferência refere-se ao período de tempo preferencial em rota de
+uma rota. Os tempos em rota preferenciais são utilizados na roteirização
+dinâmica e no Editor, ao adicionar paradas às rotas. Uma rota pode exceder o
+tempo em rota preferencial.
+Guia de operações E
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Tempo normal refere-se ao período máximo de tempo que o motorista pode
+trabalhar sem ser remunerado por horas extras.
+Tempo máximo refere-se ao período de tempo máximo em rota de uma rota.
+Os tempos máximos são utilizados na roteirização dinâmica e no Editor, ao
+adicionar paradas às rotas. À roteirização dinâmica não excede o tempo máximo
+em rota ao criar rotas.
+Tempo da pré-rota refere-se ao período de tempo necessário entre o momento
+em que o motorista chega na origem e a partida da origem. Este tempo pode ser
+usado para reuniões ou para verificação da carga. O motorista é remunerado
+pelo tempo de pré-rota, portanto este é incluído quando o tempo em rota é
+calcutado.
+Tempo da pós-rota refere-se ao período de tempo necessário entre o momento
+em que o motorista chega no destino darota e o momento em que registra o final
+da jornada para esse dia. Este tempo pode ser usado para preencher formulários
+ou descarregar o veículo. O motorista é remunerado pelo tempo de pós-rota,
+portanto este é incluído quando o tempo em rota é calculado.
+Tempo de recarga é o tempo necessário para recarregar o veículo se ele estiver
+sendo enviado para uma segunda rota. Para configurar, selecione Especificar
+tempo ou Usar tempo de atendimento de recarga do depósito. Se você tiver
+selecionado Especificar tempo, insira o tempo exato utilizando o formato
+HHMM.
+Fm 6 lan to TOKRT sam sabvaras tfbeacões ee crabasr comoutra-sumda:

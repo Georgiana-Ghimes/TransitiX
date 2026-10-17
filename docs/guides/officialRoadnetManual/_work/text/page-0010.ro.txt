@@ -1,0 +1,86 @@
+Cum să porniți Roadnet Transportation Suite
+Cum să porniți Roadnet Transportation Suite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Primul pas în utilizarea Roadnet Transportation Suite este să deschideți programul și să faceți
+autentificare. Odată conectat, va apărea bara de instrumente a aplicației și puteți
+Pur și simplu faceți clic pe un modul pentru a-l deschide.
+Pasul 1: faceți dublu clic pe pictograma Roadnet Transportation Suite. Fereastra de autentificare
+este afisat.
+Pasul 2: Introduceți numele și parola. Amintiți-vă că parola face distincție între majuscule și minuscule.
+minuscule: deci verificați dacă tasta [Caps Lock] este activată sau nu.
+|Câmpul bazei de date poate
+să fie vizibil sau nu în fereastră
+Autentificare în funcție de variabile
+definite pentru mediu.
+Pasul 3: Faceți clic pe butonul [Autentificare]. Bara de instrumente a aplicației este afișată; suficient
+faceți clic pe pictogramă pentru a deschide modulul dorit.
+Schimbarea parolei
+Fiecărui utilizator creat în modulul Administrare i se atribuie o parolă. Te poți schimba
+parola oricând vă conectați la Transportation Suite. Este doar
+Puteți schimba parola utilizatorului de logare.
+Trebuie să vă aflați în fereastra de autentificare pentru a efectua această procedură.
+Pasul 1: În fereastra de autentificare, faceți clic pe butonul [Modificați parola]. Fereastra Schimbare parola este
+afisat.
+Pasul 2: În câmpul Parolă veche, introduceți parola curentă.
+Pasul 3: În câmpul Parolă nouă, introduceți noua parolă. Introduceți noua parolă din nou în
+Confirmați câmpul pentru parola nouă.
+Pasul 4: Faceți clic pe butonul [Modificare și autentificare]. Bara de instrumente a aplicației este
+afisat.
+Ghid de operațiuni 9
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să porniți Roadnet Transportation Suite
+Adăugarea unei conexiuni ODBC
+Conexiunile .ODBC spun Transportation Suite care sunt bazele de date
+vrei sa folosesti. Puteți avea mai multe conexiuni ODBC diferite, fiecare la o bancă
+de date. De exemplu, dacă utilizați baze de date diferite pentru regiuni diferite,
+Puteți crea o conexiune ODBC la baza de date pentru fiecare regiune. Puteți crea
+conexiuni ODBC noi în fereastra Conectare sau adăugați una existentă la lista de opțiuni
+posibil afișat în timpul conectării.
+Trebuie să vă aflați în fereastra de autentificare pentru a efectua această procedură.
+Pasul 1: În fereastra de autentificare, faceți clic pe butonul [Configurare]. În fereastra Configurare
+Este afișată sursa de date.
+Pasul 2: Pentru a adăuga o conexiune ODBC, faceți clic pe butonul [Adăugați]. Fereastra
+Apare Creare nouă sursă de date. Pentru a crea
+noua conexiune ODBC, urmați pașii incluși în această fereastră și în ferestrele ulterioare.
+Pentru a adăuga o conexiune ODBC la lista de opțiuni afișate în timpul conectării
+Transportation Suite, bifați caseta din coloana Includere a conexiunii. O marcă
+caseta de selecție este afișată în coloana Adăugare atunci când este disponibilă o conexiune pentru
+autentificare.
+Pasul 3: Faceți clic pe butonul [OK]. Apare fereastra de conectare cu noua conexiune conectată.
+selectat inclus ca bază de date.
+„Suita de transport Roadhnet
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Module Roadnet Transportation Suite
+Module Roadnet Transportation Suite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Roadnet Transportation Suite a fost organizată în mai multe module; numărul real de
+modulele și disponibilitatea acestora depinde de modulele achiziționate. Urmează un
+rezumatul fiecărui modul. Pentru instrucțiuni detaliate despre cum să utilizați fiecare modul,
+consultați secțiunile corespunzătoare din acest manual.
+Întreținere — folosit pentru a configura, întreține și actualiza toate informațiile despre
+afacerea dvs., cum ar fi clienți, angajați, echipamente etc.
+Import — folosit pentru a importa date despre locație, informații despre comandă zilnică
+și alte informații pentru Roadnet Transportation Suite. Modulul Import de asemenea
+este utilizat pentru a importa date din sistemele computerizate de bord.
+Rutare — folosit pentru a crea rute parametrice și dinamice pe baza parametrilor
+stabilit. Editorul de rutare Roadnet vă permite, de asemenea, să analizați și să modificați
+rute după cum este necesar, precum și întreținerea articolelor și tipărirea rapoartelor.
+Planificare - folosit pentru a crea rute strategice pe baza parametrilor
+stabilit. Editorul de planificare al Territory Planner vă permite, de asemenea, să analizați și
+modificați rutele după cum este necesar, precum și întrețineți articolele, exportați rutele și imprimați
+rapoarte.
+Încărcare — folosită pentru a încărca vehiculele pe baza unor parametri definiți
+când sunt create rute. FleetLoader vă permite, de asemenea, să analizați și să schimbați vehiculele
+încărcat după cum este necesar.
+Expediere — folosit pentru a monitoriza performanța rutei pe parcursul zilei. În modul
+În calitate de analist MobileCast, puteți schimba rutele după cum este necesar, puteți crea rute noi,
+precum și echipamente de monitorizare și șoferi.
+Rapoarte — folosit pentru a seta opțiunile de raport, precum și pentru a vizualiza și imprima
+rapoarte diferite.
+Administrare — folosit pentru a configura parametrii pentru a permite utilizarea
+Transportation Suite creează utilizatori, grupuri de utilizatori, privilegii și regiuni.
+Pe lângă modulele pe care le puteți accesa din bara de instrumente, puteți, de asemenea
+au instalat caracteristica Istoricul traseului. Istoricul rutei stabilește o bază de date cu
+date separate pe care le puteți utiliza pentru a accesa informațiile de rutare

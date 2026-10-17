@@ -1,0 +1,78 @@
+aaa mma osbbodmncostodtro, andioasfosesenis lam ncreadorao ac sinh os a dateetas een oc
+Cliente e editar um cliente existente, clique duas vezes no cliente, na janela Clientes. À
+página Atributos do menu contém todas as informações necessárias, embora você possa
+desejar usar a página Mapa para ver onde o cliente está geocodificado. Se você estiver
+utilizando o Territory Planner para roteirização estratégica, é necessário preencher a guia
+Extensão de cliente também. Se estiver utilizando o MobileCast para monitorar as rotas
+ao longo do dia, pode ser necessário preencher as informações na página Expedir.
+Inserção de atributos do cliente
+A página Atributos do menu Cliente permite inserir ou modificar as informações de
+endereço de um cliente. As informações podem ser utilizadas para geocodificar o cliente.
+Você também deve selecionar um tipo de tempo de atendimento, tipo de janela de
+atendimento, fator de janela de atendimento e segmento de cliente para o cliente.
+Etapa 1: Insira até 30 caracteres na Descrição.
+Etapa 2: Insira as informações de endereço do cliente. Clique no botão Travessa para
+adicionar uma travessa, se necessário. Quanto mais completas e corretas forem
+as informações de endereço fornecidas, mais fácil será geocodifícar o cliente.
+. Nota: Utilize o endereço real. Não utilize números de caixas postais, números de rota,
+mnúmeros RR ou interseções, pois esses formatos podem não ser geocodificados
+automaticamente.
+Etapa 3: Clique nas setas e selecione o tipo de janela de atendimento, tipo de tempo de
+atendimento, fator de janela de atendimento e segmento de cliente nas
+respectivas janelas Pesquisa, se necessário.
+ã) Dica: O Fatorde janela de atendimento máximo, 5, deve ser usado com moderação —
+somente quando for absolutamente essencia! cumprir as janelas de atendimento.
+adeoperaçães o
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+Utilização do menu Cliente
+Etapa 4: Digite o telefone e o fax, se apropriado. Não digite parênteses ou traços; eles
+serão inseridos automaticamente.
+2
+ST 1 ms o umantems s |
+h E o cl fm T Irotiamonts
+P e
+fm a A
+R——
+—— s —
+p [FFRBEAA
+Tm lal e
+p =
+o
+O endereço digitado na página Atributos será utilizado para geocodifícar o cliente.
+Etapa 5: Remova as seleções das caixas Dias de entrega para os dias que o cliente não
+deseja receber entregas. Se o cliente recebe entregas na segunda, quarta e
+sexta-feira, remova as marcas de 3, 5, S e D. Estas informações serão usadas
+para determinar se uma entrega programada é em um dia fora do combinado.
+Etapa 6: Selecione o fuso horário deste cliente. Todos os horários do cliente serão
+exibidos com este fuso horário.
+m| Etapa7: Clique no ícone Salvar ou pressione [Ctri]+[S] para salvar as informações ou
+clique em outra guia para inserir informações adicionais sobre o cliente.
+ET , E : : :O:kOá» hl E -Foadhiat Tranporiaton SE
+( Copyright 2006 United Parcel Service f Aerica nc
+Todos os diveitos reservados
+Utilização do menu Cliente
+Inserção de atributos estendidos
+A página Atributos estendidos do menu Clientes permite inserir ou modificar informações
+adicionais sobre um cliente, como instruções, taxas, zona e detalhes de prioridade, bem
+como outras informações. Todas as informações nesta página são opcionais.
+TT — A
+Antat aa a o imantao Ls
+— aaan ) dun T metnamntas |
+— U U a .———.—
+qc —
+m— —
+T Mi to a taneimás 0D”
+Sm Ti lam Dn pa me
+2lZ e
+eel a me
+pesieoo T s
+É possível digitar informações adicionais sobre o cliente na página Atributos estendidos.
+Para abrir o menu Cliente para um novo cliente, clique no ícone Adicionar na janela
+Clientes. Para abrir o menu Cliente e alterar um cliente existente, clique duas vezes no
+cliente, na janela Clientes.
+Etapa 1: Insira quaisquer Instruções padrão. Estas instruções se aplicam a todas as
+entregas, e aparecerão no manifesto do motorista.
+Etapa 2: Insira quaisquer taxas associadas ao cliente. Uma taxa é uma despesa aplicada
+sempre que o cliente (normalmente um depósito ou terminal) é visitado. A taxa
+fixa é a taxa para atendimento (entrega, recarregamento ou descarga) no

@@ -1,0 +1,63 @@
+problemă, astfel încât un tehnician de service UPS Logistics Technologies să poată
+lucra cu datele. Această caracteristică este disponibilă numai dacă utilizați un
+Baza de date Oracle sau SQL Server; nu poate fi folosit cu o bază de date
+Acces.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Transport de date. Asistentul
+Se afișează serip de transport de date.
+Pasul 3: După ce ați citit declinarea răspunderii, faceți clic pe [Next]
+Pasul 4: Dacă doriți să transportați date Territory Planner, asigurați-vă că includeți opțiunea
+sunt selectate datele de planificare. Selectați sesiunile de planificare
+doriți să includeți în export. Faceți clic pe [Next].
+Note: Dacă nu ați achiziționat Territory Planner, această fereastră nu va apărea.
+Dacă doriți să transportați date RIC pentru asistență la depanare,
+selectați sesiunile de planificare care conțin datele cu care trebuie să lucrați
+amda.
+Pasul 5: Dacă doriți să transportați date din Roadnet și/sau FleetLoader, asigurați-vă opțiunea
+Include datele sesiunii de rutare este selectat. Faceți clic pe Data de
+începeți să deschideți un calendar și selectați data corectă de începere. Faceți clic pe
+Săgeată pentru data de încheiere pentru a deschide un calendar și a selecta data de încheiere
+corect. Sesiunile de rutare cu aceste date apar în listă
+Sesiuni de scripting. Faceți clic cu tasta [ctrl] în fiecare sesiune
+pe care doriți să le includeți și faceți clic pe [Next].
+TIITTTTITITIAIA o oadnei Transporiafion Siule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Transport de date
+Note: Dacă nu ați achiziționat Roadnet sau FleetLoader, această fereastră nu va apărea.
+. Dacă doriți să transportați date RIC pentru asistență la depanare,
+selectați sesiunile de rutare care conțin datele cu care trebuie să lucrați
+ajutor.
+EE
+Este posibil să se selecteze
+- pentru ce sesiuni esti?
+doriți să exportați date din
+Roadnet și
+FleciLoader.
+Pasul 6: Dacă doriți să transportați date MobileCast, asigurați-vă că este selectată opțiunea Include data.
+este selectată opțiunea de livrare. Faceți clic pe săgeata Data de începere și selectați data
+începerea rutelor care urmează să fie incluse în export. Faceți clic pe Data de
+data de încheiere și selectați data de încheiere a rutelor care vor fi incluse în
+export. Faceți clic pe [Next].
+. Note: Dacă nu ați achiziționat MobileCast, această fereastră nu va apărea.
+Dacă doriți să transportați date RIC pentru asistență la depanare,
+Selectați intervalul de date de expediere care conține datele cu
+care au nevoie de ajutor.
+Pasul 7: Apare fereastra Editare. În fereastra Editare, puteți modifica oricare dintre
+opțiunile de export selectate. Pentru a schimba opțiunea de export a
+madeaperções o D
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+exportate.
+Pasul 8: În câmpul dosarului de destinație al scriptului de transport, introduceți locația în care se află
+fișierele de script și de export trebuie să fie stocate. Puteți tasta
+calea directorului sau faceți clic pe butonul [...] și navigați la director
+potrivită. Faceți clic pe [Finish]
+Pasul 9: Mai multe fișiere noi sunt create în directorul specificat. Aceste fișiere
+vă permit să exportați datele selectate din baza de date, într-un astfel de mod
+astfel încât acestea să poată fi transportate la Serviciul Clienți UPS
+Tehnologii logistice. Procedura care trebuie urmată pentru exportul
+datele depind de utilizarea Oracle sau SQL Server. Luați legătura cu
+Serviciul Clienți UPS Logistics Technologies pentru asistență
+cu exportul și transportul de date.
+Instrumente — Transport de date

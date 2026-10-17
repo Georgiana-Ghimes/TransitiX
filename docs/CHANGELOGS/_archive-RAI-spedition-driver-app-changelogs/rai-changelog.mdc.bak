@@ -1,0 +1,45 @@
+---
+description: Changelog RAI Companion — Sprint 5 deschis (builds 63+)
+alwaysApply: true
+---
+
+# Changelog RAI Companion (RAI Spedition — app documente)
+
+Branch **`RAI-spedition-driver-app`**. **Nu** folosi `changelogsSprints/` (Transitix TMS full).
+
+## Fișiere
+
+| Sprint / perioadă | Fișier HTML | PDF |
+|-------------------|-------------|-----|
+| 1–2, build 9–46 | `docs/CHANGELOGS/old/…` | `.pdf` unde există |
+| Sprint 5 închis (47–51) | `docs/CHANGELOGS/old/…-SPRINT-5-changelog-builds-47-51.html` | `.pdf` lângă HTML |
+| Sprint 5 închis (52–62) | `docs/CHANGELOGS/old/…-SPRINT-5-changelog-builds-52-62.html` | `.pdf` lângă HTML |
+| **Sprint 5 deschis acum (builds 63+)** | `docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-63.html` | PDF doar la închidere |
+
+## Nume deschis vs închis
+
+- **Deschis:** `ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-63.html`
+- **La „gata” / perioadă închisă:** redenumește la  
+  `ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-63-<ULTIMUL_BUILD>.html`  
+  (ex. dacă ultimul build e 70 → `…-builds-63-70.html`) + PDF + mutare în `old/` + footer „închis”.
+
+Append în fișierul **deschis** până când utilizatorul zice explicit că e gata. **Tot Sprint 5** (nu schimbăm numărul de sprint).
+
+## Structură canonică (HTML)
+
+- Hero: **Sprint 5 · Changelog builds 63+ (deschis)**, branch, versiune companion, dată deschidere
+- Index versiuni (tabel build → temă)
+- Blocuri per build, **mereu** cu **Changelog** + **Bugfix**
+- Footer italic: `Sprint 5 · deschis … · builds 63+`
+
+## Când append
+
+1. Append sub **Changelog** și/sau **Bugfix** pe build-ul curent (sau deschide build nou după bump).
+2. Actualizează index + footer + hero.
+3. PDF + redenumire `…-63-<ultimulBuild>` doar când utilizatorul spune că e gata.
+
+## Ce nu intră
+
+- Livrări Transitix TMS full.
+- Note tehnice → `docs/changes/`.
+- Tot `docs/` e gitignored — local only.

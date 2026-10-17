@@ -1,0 +1,75 @@
+Bmadeaperaçães o A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com códigos de computador de bordo
+Como trabalhar com códigos de computador de bordo
+Utilizado com: Roadnet
+|O Roadnet permite importar informações reais da rota, coletadas pelo motorista durante
+0 dia em um computador de bordo. Depois de importadas para o sistema do Roadnet, essas
+informações reais podem ser utilizadas ao executar alguns relatórios ou ao utilizar a
+manutenção de tempo de atendimento para atualizar os tempos de atendimento. Alguns
+dos sistemas de computador de bordo permitem que o motorista insira códigos que
+indicam intervalos, esperas ou pernoites. Para que o Roadnet reconheça esses intervalos
+como tal, é necessário informar os códigos que o motorista irá inserir, e se o código indica
+um intervalo, espera ou pernoite pago ou não pago. Os códigos de computador de bordo
+permitem fornecer essas informações 2o Roadnet.
+Durante o processo de importação, se o Roadnet encontrar um desses códigos de
+computador de bordo, ele pesquisa a próxima ocorrência de um intervalo/espera/peroite
+narotae insere as informações reais desse intervalo. Por exemplo, se houver o código de
+computador de bordo PHONE configurado como um intervalo pago. quando o Roadnet
+encontrar uma entrada PHONE durante 2 importação do computador de bordo, ele irá
+associá-lo ao próximo intervalo pago na rota. Se não houver intervalo pago planejado na
+Fota, ele anota o intervalo real no registro de erros de importação, mas não o adiciona à
+rota
+MEN | Etapa 1: Clique no ícone Manvtenção para abrir o respectivo móduto
+» — Etapa2: Clique no menu Cadastros e selecione Códigos de computador de bordo. À
+janela Códigos de computador de bordo é exibida.
+[W)| Nota: Para ver uma lista atualizada de áreas, clique no icone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+4W Etapa3: Najanela Códigos de computador de bordo, clique no ícone Adicionar ou
+— pressione [Insert]. A janela Adicionar código de computador de bordo é
+z exibida.
+“ Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+TIITI A AA E Roadha Tranporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com códigos de computador de bordo
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira o código e a descrição. É necessário um código que corresponda ao
+código inserido pelos motoristas
+| código inserido pelo
+motorista no computador
+de bordo deve
+corresponder ao código
+inserido aqui ou o Roadnet
+não o reconhecerá
+Etapa 5: Na área Tipo de parada, selecione se o código indica um intervalo, espera ou
+pernoite. Se o código indicar um intervalo/espera pernoite pago, selecione a
+caixa Pago.
+M6] Etapa 6: Clique no ícone Salvar ou pressione [Ctri]=[S] para salvar o código de
+= computador de bordo.
+mx — Etapa7: Repitaas etapas 4 a 6 para adicionar qualquer outro código de computador de
+" bordo.
+Etapa 8: Quando terminar, clique n caixa Fechar para fechar a janela Adicionar código
+de computador de bordo.
+Ícone Manutenção — Cadastros — Código de computador de bordo — ícone
+Adicionar ([Insert]) —ícone Salvar ([Ctrll+[S])
+Os códigos de computador de bordo existentes podem ser editados ou excluídos,
+conforme necessário. Consulte Edição de itens e Exclusão de itens para obter mais
+informações.
+(T
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com segmentos de clientes
+Como trabalhar com segmentos de clientes
+Utilizado com: Roadnet, Territory Planner
+Os segmentos de clientes ajudam a agrupar cliente por um traço comum, como redes de
+lanchonete, ou clientes que exigem pagamento contra entrega. Segmentos de clientes
+também são um método de agrupar clientes para fins de relatórios, como a produção de
+"um relatório de Custo de entrega por cliente. Em outras palavras, segmentos de clientes
+são uma ferramenta flexível que pode ser utilizada para quase qualquer fim. Ao adicionar
+um cliente, é necessário atribuir um segmento de cliente.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros e, em seguida, selecione Segmentos de clientes. A

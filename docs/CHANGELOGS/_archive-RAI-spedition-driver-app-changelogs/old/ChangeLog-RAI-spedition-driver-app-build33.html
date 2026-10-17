@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 33</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>RAI Spedition — Documente · build 33</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong> · profil <strong>documents</strong><br />
+      Versiune companion <strong>v1.3.0 · build 33</strong> · 14 septembrie 2026<br />
+      Continuare după build 32 · Setări pe taburi; Utilizatori mutat din meniul lateral
+    </div>
+    <div class="badge-row">
+      <span class="badge">Setări pe taburi</span>
+      <span class="badge">Utilizatori în Setări</span>
+      <span class="badge">Sidebar curat</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Changelog de testare pentru <strong>RAI Spedition — Documente</strong> (nu Transitix TMS complet).
+    Versiune companion: <strong>v1.3.0</strong> · build <strong>33</strong>. Document local — <code>docs/</code> nu e pe GitHub.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> pe companion, Setări era o pagină lungă cu trei carduri, iar Utilizatori
+    ocupau o intrare separată în sidebar. Acum tot ce ține de administrarea firmei e într-un singur
+    ecran, pe taburi — meniul lateral rămâne pe Avize / Rapoarte / Setări.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Setări pe taburi</h3>
+      <ul>
+        <li><strong>Date companie</strong> — denumire, CUI, adresă, contact, TVA, monedă.</li>
+        <li><strong>Notificări expirare</strong> — praguri alerte (30 / 15 / 7 / 1 zile).</li>
+        <li><strong>Sesiuni active</strong> — dispozitive autentificate + „Închide toate”.</li>
+        <li><strong>Utilizatori</strong> — invitații, roluri, legare șofer (doar admin).</li>
+        <li>Tab-ul activ e în URL (<code>/settings?tab=users</code>) — bookmark și refresh păstrează tab-ul.</li>
+        <li>Butonul <strong>Salvează setările</strong> apare doar pe Date companie și Notificări expirare
+          (sesiunile și utilizatorii au acțiunile lor).</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Meniu lateral companion</h3>
+      <ul>
+        <li>Intrarea <strong>Utilizatori</strong> scoasă din sidebar.</li>
+        <li>Nav companion: <strong>Avize / Rapoarte</strong>, <strong>Rapoarte</strong>, <strong>Setări</strong> (admin).</li>
+        <li><code>/users</code> redirecționează la <code>/settings?tab=users</code> — linkurile vechi rămân valide.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <p class="muted" style="margin:0">Nicio remediere separat de reorganizarea de mai sus.</p>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Login admin → sidebar: doar Avize, Rapoarte, Setări (fără Utilizatori).</li>
+        <li>Setări → taburi: Date companie, Notificări expirare, Sesiuni active, Utilizatori.</li>
+        <li>Tab Utilizatori → invite / rol / legare șofer funcționează.</li>
+        <li>Deschide <code>/users</code> → land pe Setări, tab Utilizatori.</li>
+        <li>Login / topbar: <strong>v1.3.0 - build 33</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.3.0 build 33 · 14 septembrie 2026 · branch RAI-spedition-driver-app ·
+    commit aee3313 · docs/ local only
+  </footer>
+
+</body>
+</html>

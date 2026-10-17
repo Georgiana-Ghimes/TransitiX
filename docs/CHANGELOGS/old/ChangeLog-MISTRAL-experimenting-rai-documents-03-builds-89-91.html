@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL · Sprint 7 · Changelog #3 · builds 89-91 (închis)</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog #3 · Sprint 7 · builds 89–91 <em style="opacity:0.85;font-weight:500">(închis)</em></h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong> · <strong>Sprint 7</strong><br />
+      Continuare după Sprint 6 (74–88) · deschis <strong>3 octombrie 2026</strong> ·
+      închis <strong>4 octombrie 2026</strong> pe <strong>v1.22.5 · build 91</strong>.
+    </div>
+    <div class="badge-row">
+      <span class="badge">Changelog #3</span>
+      <span class="badge">Sprint 7</span>
+      <span class="badge">Builds 89–91</span>
+      <span class="badge">MISTRAL</span>
+      <span class="badge">Închis pe build 91</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    <strong>Sprint 7</strong> · Fișier închis: <code>ChangeLog-MISTRAL-experimenting-rai-documents-03-builds-89-91.html</code>.
+    Perioada anterioară: <code>ChangeLog-MISTRAL-experimenting-rai-documents-02-builds-74-88</code>.
+    Continuare Sprint 7: Changelog #4 (builds 92+).
+  </p>
+
+  <div class="note">
+    <strong>Închis · Changelog #3:</strong> builds 89–91. Sprint 7 continuă pe Changelog #4 (builds 92+).
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> Fail-uri Loki (#44–#53, #48/#79); tip marfă ambalaj; șabloane unice; Unește HITL/spam; Viilor/taxă; driver PDF split.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>91</td><td>v1.22.5</td><td>Bugfixes Loki: Unește, persistă, tip marfă, șabloane, Viilor/taxă, driver split</td></tr>
+        <tr><td>90</td><td>v1.22.4</td><td>Bugfix #71: preferRoute nu mai șterge ruta tastată de birou</td></tr>
+        <tr><td>89</td><td>v1.22.3</td><td>CI: API tests (paginare, listă <code>items</code>, PDF split pe TRO)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="toc">
+    <strong>BUGFIX</strong>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Problemă</th><th>Build</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>#70</strong></td>
+          <td>CI <code>test:api</code>: 8 eșecuri (limit=1 → 50, <code>res.body.find</code>, split pe pagină fără TRO)</td>
+          <td>89 · v1.22.3</td>
+          <td>fixat — paginare 1…500; teste pe <code>items</code>; split doar cu TRO distinct</td>
+        </tr>
+        <tr>
+          <td><strong>#71</strong></td>
+          <td>Lista rescria „Ruta de birou” / text Editează cu strada din OCR (single-leg)</td>
+          <td>90 · v1.22.4</td>
+          <td>fixat — <code>preferRoute</code>: single-leg nu șterge valoarea stocată</td>
+        </tr>
+        <tr>
+          <td><strong>#44</strong></td>
+          <td>„Unește în Anexa XLSX”: click repetat pornea exporturi paralele (fără disable / limită)</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — buton busy + lock; API 429 pe același user+selecție / 12 pe minut</td>
+        </tr>
+        <tr>
+          <td><strong>#45</strong></td>
+          <td>Editează aviz: Șos. Viilor 52 (BOL) apărea „nu e oraș cu zone taxate”; pin „în afara zonelor”</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — „sector 5, București” = București; index ZB; pinul urmează zona din index</td>
+        </tr>
+        <tr>
+          <td><strong>#46</strong></td>
+          <td>Editează: Salvează reușește, dar la redeschidere Tip marfă (text liber) / Cantitate revin din OCR</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — repair nu suprascrie valori completate / <code>corrected_fields</code></td>
+        </tr>
+        <tr>
+          <td><strong>#47</strong></td>
+          <td>PDF multi-PSL de la șofer rămânea 1 document; din Admin se împarte corect</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — același <code>materializePdfPageFiles</code> pe <code>driver-documents</code> + toast</td>
+        </tr>
+        <tr>
+          <td><strong>#48</strong></td>
+          <td>Unește / Email / Zip acceptau avize cu „Verificare obligatorie”</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — blocare 409 + mesaj; UI deschide Verifică</td>
+        </tr>
+        <tr>
+          <td><strong>#49</strong></td>
+          <td>Editează: iconița calendar de la Data efectuare cursă nu deschide picker-ul</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — popover deasupra overlay-ului modal (z-index)</td>
+        </tr>
+        <tr>
+          <td><strong>#50</strong></td>
+          <td>Șabloane: poți salva de mai multe ori „Șablon nou”; carduri identice, greu de deosebit</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — nume unic pe firmă (fără majuscule); 409; editorul propune „Șablon nou (2)”</td>
+        </tr>
+        <tr>
+          <td><strong>#51</strong></td>
+          <td>Tip marfă: OCR punea tot rândul de produs (MPI / denumire / kg), nu saci/găleți/bucăți</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — extrage doar unitatea de ambalaj; dump-urile se colapsează la repair/export</td>
+        </tr>
+        <tr>
+          <td><strong>#48/#79</strong> <span class="muted">(matrice Loki)</span></td>
+          <td>Taxă din piciorul de livrare: Viilor fără „București” → „nu e oraș cu zone taxate”, taxe=0</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — fără localitate (sau doar „sector 5”) → București + ZB</td>
+        </tr>
+        <tr>
+          <td><strong>#53</strong> <span class="muted">(matrice Loki)</span></td>
+          <td>Vezi pinul pe Harta zonelor: zoneMapHref slab / pin „în afara zonelor” pe Viilor</td>
+          <td>91 · (la commit)</td>
+          <td>fixat — link cu city=bucuresti; pinul urmează zona din index</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Build sections: Changelog + Bugfix -->
+
+  <div class="build-block">
+    <h3>Build 90 · v1.22.4 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta — doar bugfix)</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#71</strong> — <code>preferRoute</code> nu mai înlocuiește o rută stocată (ex. „Ruta de birou”) cu un re-parse pe un singur picior; parse pe două picioare tot upgradează OCR-ul prost / truncat.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 91 · v1.22.5 · 4 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>„Unește în Anexa XLSX”: pe durata generării butonul e blocat (spinner „Se unește…”); lock sincron împotriva dublu-click.</li>
+      <li>API <code>POST /api/avize/export</code>: 429 dacă același user + șablon + selecție e deja în curs; max 12 exporturi / minut.</li>
+      <li>Taxă zonă: localitatea cu sector („sector 5, București”) e București; harta deschide indexul, nu geocodare „în afara orașului”.</li>
+      <li>Editează aviz: valorile salvate (inclusiv Tip marfă text liber) rămân la redeschidere; lista nu le înlocuiește din OCR.</li>
+      <li>Upload șofer: PDF cu TRO/PSL distincte pe pagini → N documente în același lot (ca Admin); toast „PDF despărțit în N avize”.</li>
+      <li>Unește / Email / Zip: refuză selecția cu „Verificare obligatorie” / <code>needs_review</code> (mesaj + deschide Verifică).</li>
+      <li>Editează: iconița de calendar deschide picker-ul deasupra modalului.</li>
+      <li>Șabloane: numele e unic pe firmă (fără majuscule). „+ Șablon nou” propune „Șablon nou (2)” dacă titlul e luat; salvarea pe un nume existent e refuzată.</li>
+      <li>Tip marfă: OCR scrie doar tipul de ambalaj (saci / găleți / paleți / bucăți), nu întregul rând de produs.</li>
+      <li>Taxă zonă: strada tipărită fără oraș (ex. Șos. Viilor 52) se caută în indexul București; linkul „Vezi pinul” apare.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#44</strong> — click-uri rapide pe Unește porneau mai multe uniri/download-uri pentru aceeași selecție.</li>
+      <li><strong>#45</strong> — PSL-0056102 / Șos. Viilor 52: Editează spunea „nu e oraș cu zone taxate” pentru că localitatea era „sector 5, București”, nu exact „bucuresti”. Indexul PMB pune nr. 52 (par) în <strong>ZB</strong> (4–98), nu ZA. Pinul cu <code>pinOnly</code> afișa „în afara zonelor pe hartă” deși cardul avea zona din index.</li>
+      <li><strong>#46</strong> — GET listă rula <code>repairAvizFromStored</code> fără write: Tip marfă „Beton” devenea din nou saci/găleți din OCR; Cantitatea salvată putea fi înlocuită cu totalul de găleți. Repair umple doar goluri / „bucăți”; câmpurile din <code>corrected_fields</code> rămân.</li>
+      <li><strong>#47</strong> — <code>POST /api/driver-documents</code> crea un singur rând per fișier, fără split. Acum rulează același planner ca Admin; un aviz pe 2 pagini (același PSL) rămâne 1 (#69).</li>
+      <li><strong>#48</strong> — Anexa putea include OCR cu verificare obligatorie. Acum Unește / Email / Zip răspund 409 <code>NEEDS_REVIEW</code> (aceeași poartă ca Confirmă); UI blochează înainte de download.</li>
+      <li><strong>#49</strong> — Calendarul din Editează era portat în <code>body</code> la <code>z-50</code>, sub overlay-ul modalului (<code>z-[100]</code>); click pe iconiță părea mort. Popover-ul e acum <code>z-[200]</code>.</li>
+      <li><strong>#50</strong> — POST/PUT <code>/avize/templates</code> nu verificau unicitatea numelui; <code>newTemplate()</code> punea mereu „Șablon nou”. Acum 409 „Există deja un șablon cu acest nume”, index unic pe firmă, și nume sugerat „Șablon nou (2)”.</li>
+      <li><strong>#51</strong> — <code>goodsField</code> prefera linia MPI / „denumire produs” ca Tip marfă. Acum câștigă unitatea de ambalaj; rândurile OCR lungi se colapsează la listă/export.</li>
+      <li><strong>#48/#79</strong> (matrice Loki) — OCR fără „București” pe picior → <code>outside_city</code>, taxe=0. Lipsa localității (sau doar sector) = București; ZB pe Viilor 52.</li>
+      <li><strong>#53</strong> (matrice Loki) — link hartă / pin pe Viilor fără localitate; acum <code>city=bucuresti</code> și zona din index, nu „în afara zonelor”.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 89 · v1.22.3 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>API listă avize/flotă: <code>limit</code> acceptă orice întreg 1…500 (UI rămâne pe 20/50/100/500).</li>
+      <li>Teste API: răspuns paginat (<code>items</code>); PDF multi-pagină se desparte doar cu TRO/PSL distincte pe pagină.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#70</strong> — CI roșu pe <code>avize.api</code> / <code>fleet.api</code> / <code>tenancy.api</code> după paginare + split pe avize.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    Changelog #3 · Sprint 7 · builds 89–91 · închis pe build 91 (v1.22.5) ·
+    3–4 octombrie 2026 · branch MISTRAL-experimenting-rai-documents · docs/ local only
+  </footer>
+
+</body>
+</html>

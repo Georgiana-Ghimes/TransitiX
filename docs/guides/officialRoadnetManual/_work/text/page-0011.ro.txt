@@ -1,0 +1,48 @@
+SNAA OMIATERDDOS ESGIROS.
+Ghid de operațiuni u
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Module Roadnet Transportation Suite
+n „Suită de transport Roadhnet
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Configurare modul de administrare
+Configurare modul de administrare
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Modulul Administrare vă permite să configurați utilizatorii Roadnet Transportation Suite
+€ cum vor putea folosi suita de aplicații. De exemplu, este posibil să aveți un
+operator capabil să creeze rute în Editorul de rutare, dar care nu poate schimba rutele în
+Modul de analist. Pe de altă parte, analistul dvs. trebuie să poată schimba rutele din modul
+AAnalyst, dar nu creează rute în Editorul de rutare. Sau poate exista un administrator
+care trebuie să funcționeze nu numai cu Editorul de rutare și cu modulul Analyst, dar
+de asemenea, supraveghează mai multe regiuni, în timp ce operatorii și analiștii pot vedea doar
+informații din regiune în sine. Diferitele opțiuni din modulul Administrare permit
+controlați nu numai cine poate folosi sistemul, ci și părțile setului de
+aplicațiile pe care le pot folosi și regiunile afacerii lor pe care le pot vedea.
+Pentru a defini utilizatorii, regiunile și drepturile de acces la regiune, trebuie să creați mai multe elemente,
+inclusiv utilizatorii înșiși, grupurile de utilizatori, regiunile și privilegiile.
+Privilegiile sunt drepturi pe care utilizatorul le are în Transportation Suite; poti crea
+diferite seturi de privilegii care vor fi atribuite utilizatorilor/grupurilor de utilizatori de
+fiecare regiune. Utilizatorii sunt persoanele care vor folosi Roadnet Transportation Suite și tu
+poate organiza utilizatorii care vor folosi setul de aplicații în același mod în
+grupuri de utilizatori. Regiunile sunt ultima piesa a puzzle-ului. Regiunile sunt zone
+geografiile pe care le deserviți; De obicei, o regiune este echivalentă cu un depozit.
+Când creați regiuni, specificați utilizatorii și grupurile care au acces la acestea, precum și
+ca privilegii ale fiecărei persoane din această regiune.
+Ghid de operațiuni B
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Definirea opțiunilor modulului Administrare
+Definirea opțiunilor modulului Administrare
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Dacă aveți utilizatori care vor folosi RIC, vă recomandăm să permiteți noilor utilizatori
+utilizatorii sunt adăugați direct la RIC, în loc să folosească modulul
+Administratie pentru asta. Când adăugați un utilizator, acesta este adăugat la grup
+selectat aici.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Opțiuni. Meniul Administrare
+Apare Opțiuni.
+Dacă Permite adăugarea de
+muta utilizatorul RIC este
+selectate, utilizatorii pot fi
+geantă cu merádir d lopeerdo:

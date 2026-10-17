@@ -1,0 +1,72 @@
+TMT A A Roadhe Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipuri de angajați
+Cum să lucrezi cu tipuri de angajați
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipurile de angajați vă permit să clasificați tipurile de angajați din dvs
+organizare. Șofer, analist, promotor de vânzări sau asistent sunt câteva exemple
+tipuri de angajat. Angajații pot fi asociați cu tipuri atunci când sunt
+adăugat.
+' ª Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+la — Pasul 2: Faceți clic pe meniul Înregistrare, selectați Angajați și Tipuri de angajați. Pentru a
+Apare fereastra Tipuri de angajați, care listează toate tipurile de angajați
+” stabilit.
+Notă: Pentru a vedea o listă actualizată de tipuri de angajați, faceți clic pe pictograma Actualizare; la
+” Jjanela va fi actualizată cu cele mai recente informații din baza de date.
+T și Pasul 3: În fereastra Tipuri de angajați, faceți clic pe pictograma Adăugați sau apăsați
+Õ [Inserare]. Apare fereastra Adăugați tip de angajat.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Este posibil să adăugați unchi de — | 28
+Finționar, cum ar fi -
+șoferi și ajutoare, în acest | P)
+fereastra BE ——
+Pasul 4: Introduceți până la 3 caractere în Tipul de angajat. Acest câmp trebuie să fie
+umplut.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+[) Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noul tip de
+= angajat.
+>x — Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte tipuri de angajați.
+Pasul 8: Când ați terminat de adăugat tipurile de angajați, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați tip de angajat.
+Pictograma Întreținere — Înregistrări > Angajați — Tip de angajat > pictogramă
+Adăugați ([Tnsert]) > Pictograma Salvare ([Ctri]+[S])
+Tipurile de angajați existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu tipuri de angajați
+Important: Ștergerea unui tip de angajat afectează alte elemente de întreținere.
+. „Înainte de a putea șterge un tip de angajat, trebuie să ștergeți angajații
+de acest tip.
+TT AAA E Roadhe Travporiafion Su
+„Copsright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate
+(Cum să lucrezi cu angajații
+Cum să lucrezi cu angajații
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Angajații sunt lucrătorii monitorizați prin Roadnet Transportation
+Suite, cum ar fi șoferi, analiști, agenți de vânzări și ajutoare. Înregistrările de
+angajații stochează informații precum numele și adresa, numerele de telefon și
+Date diferite (data nașterii, data angajării, data ultimei examinări fizice etc.).
+Pentru a fi adăugați angajați, trebuie adăugat tipul de angajat.
+Puteți adăuga angajați individual sau îi puteți importa; vezi Import
+Secțiunea Articole de întreținere pentru mai multe informații despre importarea angajaților.
+De asemenea, puteți atribui clienți angajatului, cum ar fi un agent de vânzări sau un
+promotor.
+Notă: Dacă nu vi s-a acordat permisiunea de a vizualiza informații confidențiale de la
+angajații din modulul Administrare, nu veți putea vizualiza sau introduce
+datele de naștere, de angajare și de încetare sau orice informații despre ADP
+angajații.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrare și selectați Angajați. Fereastra Angajații
+se deschide cu o listă cu toți angajații actuali.
+Note: Pentru a vedea o listă actualizată de angajați, faceți clic pe pictograma Actualizează; fereastra
+vor fi actualizate cu cele mai recente informații din baza de date.
+|Angajații afișați cu roșu sunt împărțiți de altă regiune; este
+Le puteți atribui rutelor și le puteți afișa informațiile, dar nu puteți
+modificați informațiile dvs.

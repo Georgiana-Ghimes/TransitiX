@@ -1,0 +1,72 @@
+J Ghid de operațiuni
+' Cupyrighi 2006 United Parcel Service yf America, lm
+Toate drepturile rezervate.
+Cum să lucrați cu grupuri de utilizatori
+Cum să lucrați cu grupuri de utilizatori
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Un grup de utilizatori este un set de utilizatori care au aceleași privilegii într-un
+u mai multe regiuni. Deși nu este necesar să folosiți grupuri de utilizatori, acestea pot
+facilitarea modificărilor drepturilor de acces ale utilizatorilor. De exemplu, puteți crea
+grupuri de utilizatori pentru manageri care au acces la mai multe regiuni, cum ar fi un Manager
+din nord-est, care poate supraveghea regiunile Rio Grande do Norte, Ceará și Alagoas,
+și un manager sudic, care va supraveghea regiunile Rio Grande do Sul, Santa Catarina
+și Paraná. Apoi, pur și simplu atribuiți utilizatorul corespunzător fiecărui grup. Mai mult, dacă
+Dacă trebuie să schimbați utilizatorul din grup, trebuie doar să schimbați grupul, fără a schimba
+drepturi de acces utilizator pentru fiecare regiune afectată.
+Sfat: Puteți adăuga utilizatori înainte de a crea grupuri și apoi să îi adăugați
+la crearea grupului sau puteți adăuga utilizatorii după crearea grupurilor și
+adăugați utilizatorul la grup atunci când creați utilizatorul.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Înregistrare și selectați Grupuri de utilizatori. Fereastra Grupuri
+utilizatorii este afișat cu toate grupurile de utilizatori existente.
+Pasul 3: În fereastra Grupuri de utilizatori, faceți clic pe pictograma Adăugare sau apăsați [Insert]
+Apare fereastra Adăugare grup de utilizatori.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugați grup de utilizatori este afișat cu unele informații deja completate;
+modificați informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul grupului de utilizatori și Descrierea; ID-ul este obligatoriu.
+Grupurile de utilizatori permit
+colectați utilizatorii care utilizează
+aceleași părți ale transportului
+Suită în aceleași regiuni.
+Pasul 5: Pentru a adăuga utilizatori la grup, faceți clic pe butonul [Adăugați]; fereastra
+Căutare - Se afișează utilizatori.
+n „Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu grupuri de utilizatori
+Pasul 6: Selectați utilizatorii care vor fi incluși în grup și faceți clic pe pictograma Proces.
+Pentru a selecta mai mulți utilizatori, țineți apăsată tasta [Ctrl] în timp ce
+clicuri pe utilizatori. Fereastra Căutare - Utilizatori se închide și utilizatorii sunt
+afișate în lista Membrii grupului.
+Pasul 7: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva grupurile de
+utilizatorii.
+Pasul 8: Repetați pașii de la 4 la 7 pentru a adăuga alte grupuri de utilizatori.
+Pasul 9: După ce ați adăugat toate grupurile de utilizatori, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați grupuri de utilizatori.
+Grupurile de utilizatori existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Tn Adiniaração: - Cobatne — Gragus de nenbdias <> kvar Miinar:
+(insert]) — Pictograma Salvare ([Ctri[+[S]).
+Ghid de operațiuni 2
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu utilizatorii
+Cum să lucrezi cu utilizatorii
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Utilizatorii sunt analiști, operatori și alte persoane din companie care folosesc Roanet
+Suită de transport. Fiecare utilizator poate avea acces la diferite părți ale programului,
+regiuni diferite sau chiar drepturi diferite în regiuni diferite. Cum poate fiecare utilizator
+au drepturi diferite, un ID unic și o parolă trebuie să fie create atunci când utilizatorul
+este stabilit. De fiecare dată când Roadnet Transportation Suite este pornit, trebuie să intrați
+AID și parola. Puteți organiza utilizatorii în grupuri, ușurând schimbarea
+drepturi ale mai multor utilizatori simultan. După crearea utilizatorilor, puteți
+atribuiți-le privilegii pentru fiecare regiune.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Înregistrare și selectați Utilizatori. Apare fereastra Utilizatori
+care conțin utilizatorii existenți.
+Pasul 3: În fereastra Utilizatori, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare Adăugare utilizator.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra

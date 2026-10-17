@@ -1,0 +1,78 @@
+aaa mma osbbodmncostodtro, andioasfosesenis lam ncreação ac sinh os a dateetas een oc
+Client și editați un client existent, faceți dublu clic pe client în fereastra Clienți. Pentru a
+Pagina Atribute de meniu conține toate informațiile necesare, deși puteți
+doriți să utilizați pagina Hartă pentru a vedea unde este geocodat clientul. Daca esti
+folosind Territory Planner pentru rutare strategică, este necesar să completați fila
+Extensia client de asemenea. Dacă utilizați MobileCast pentru a monitoriza rutele
+pe tot parcursul zilei, poate fi necesar să completați informații pe pagina de expediere.
+Inserarea atributelor clientului
+Pagina Atribute din meniul Client vă permite să introduceți sau să modificați informații despre client.
+adresa unui client. Informațiile pot fi folosite pentru a geocoda clientul.
+De asemenea, trebuie să selectați un tip de timp de tratare, un tip de fereastră de apel,
+serviciu, factor de fereastră de servicii și segment de clienți pentru client.
+Pasul 1: Introduceți până la 30 de caractere în Descriere.
+Pasul 2: Introduceți informațiile despre adresa clientului. Faceți clic pe butonul Plater pentru a
+adăugați un platou dacă este necesar. Cu cât sunt mai complete și mai corecte
+informațiile despre adresa furnizate, cu atât va fi mai ușor să geocodați clientul.
+. Notă: Folosiți adresa reală. Nu utilizați numere de căsuță poștală, numere de rută,
+numere mRR sau intersecții, deoarece aceste formate nu pot fi geocodate
+automat.
+Pasul 3: Faceți clic pe săgeți și selectați tipul ferestrei de serviciu, tipul timpului de așteptare
+serviciu, factorul de fereastră de servicii și segmentul de clienți în
+ferestrele de căutare respective, dacă este necesar.
+ã) Sfat: Factorul maxim al ferestrei de service, 5, trebuie utilizat cu moderație —
+doar atunci când este absolut esențial! respectă ferestrele de service.
+adeoperatii sau
+€ Copyrigit 2006 United Parcel Service of America, nc
+Toată distracția rezervată
+Utilizarea meniului Client
+Pasul 4: Introduceți numărul de telefon și numărul de fax, dacă este cazul. Nu tastați paranteze sau liniuțe; ei
+va fi introdus automat.
+2
+ST 1 ms o umantems s |
+h E o cl fm T Irotiamonts
+P și
+fm la A
+R——
+—— s —
+p [FFRBEAA
+Există lal și
+p =
+cel
+Adresa introdusă în pagina Atribute va fi folosită pentru a geocoda clientul.
+Pasul 5: eliminați selecțiile din casetele Zile de livrare pentru zilele în care clientul nu le face
+doresc să primească livrări. Dacă clientul primește livrări luni, miercuri și
+Vineri, eliminați marcajele 3, 5, S și D. Aceste informații vor fi folosite
+pentru a determina dacă o livrare programată are loc într-o zi în afara datei convenite.
+Pasul 6: Selectați fusul orar al acestui client. Toate programele clienților vor fi
+afișat cu acest fus orar.
+m| Pasul 7: Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S] pentru a salva informațiile sau
+faceți clic pe altă filă pentru a introduce informații suplimentare despre client.
+ET , E : : :O:kOá» hl E -Foadhiat Tranporiaton SE
+( Copyright 2006 United Parcel Service f Aerica nc
+Toată distracția rezervată
+Utilizarea meniului Client
+Inserarea atributelor extinse
+Pagina Atribute extinse din meniul Clienți vă permite să introduceți sau să modificați informații
+informații despre un client, cum ar fi instrucțiuni, tarife, detalii despre zonă și prioritate, precum și
+ca și alte informații. Toate informațiile de pe această pagină sunt opționale.
+TT - A
+Antat aa a o magnetao Ls
+— aaan ) dun T metnamntas |
+— U U a .———.—
+qc —
+m——
+T Mi to a taneimás 0D”
+Sm Ti lam Dn pa me
+2lZ și
+călcâi pentru mine
+pesieoo T s
+Puteți introduce informații suplimentare despre client pe pagina Atribute extinse.
+Pentru a deschide meniul Client pentru un client nou, faceți clic pe pictograma Adăugați din fereastră
+Clienții. Pentru a deschide meniul Client și a schimba un client existent, faceți dublu clic pe
+client, în fereastra Clienți.
+Pasul 1: Introduceți orice instrucțiuni standard. Aceste instrucțiuni se aplică tuturor
+livrările, și vor apărea pe manifestul șoferului.
+Pasul 2: introduceți orice taxe asociate clientului. O taxă este o cheltuială aplicată
+ori de câte ori clientul (de obicei un depozit sau un terminal) este vizitat. Rata
+fixă este taxa pentru service (livrare, reîncărcare sau descărcare) la

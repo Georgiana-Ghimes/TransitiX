@@ -1,0 +1,88 @@
+E o Terporiztion S
+Copright 2006 Unied Parcel Service of America bc
+Todos os dveios reservados
+Definição das opções gerais de expedição
+Utilizado com: MobileCast
+A página Expedir - Geral do menu Opções permite configurar diversas opções
+relacionadas ao MobileCast. Nesta página, é possível configurar a calculadora de tempo/
+distância, a integração com dispositivo sem fio e computador de bordo, os códigos de
+motivo, o processamento de eventos e muito mais.
+ee sa Noia m aaa aaçio sM aa la ac e
+e Fc
+mee — DTn D c itanões ' P
+eem tee 77 cinttnios ,
+D e
+A página Bxpdir - Geral fornece um grande variedade d opções de expedição
+A seção Diversos permite estabelecer diversas opções padrão usadas com o MobileCast.
+Etapa 1: Na seção Diversos, marque qualquer uma das opções padrão abaixo:
+Gerar ID da rota automaticamente — informa ao MobileCast que este deve
+preencher automaticamente o campo ID durante a criação da rota. A ID da rota
+pode ser alterada ao adicionar a rota, se desejado.
+Gerar automaticamente números exclusivos de DTR — pode ser ativada ao
+configurar uma região pela primeira vez, para que o MobileCast monitore os
+mnúmeros de DTR (números de rota). Se for ativada, os campos para inserir os
+números de rota ficarão desabilitados (cinza) no módulo Importação.
+As quantidades são uma razão de Tamanho 1 — ativa/desativa se os aliases
+de tamanho serão proporcionais. Se forem proporcionais, o MobileCast
+calculará as quantidades do tamanho 2 e do tamanho 3 com base na quantidade
+do tamanho 1.
+Atribuição de motorista requerida — permite especificar se um motorista
+deve ser atribuído a uma rota antes que esta seja iniciada. Essa é a definição
+padrão; é possível alterá-la para uma rota individual no menu Atribuição de
+Rotas.
+TT eeA LL
+€ Copyright 2006 Unizd Parcel Service ofâmerica, nc
+ds os dretios resemado!
+Definição das opções
+Atribuição de equipamento requerida — permite especificar se um
+equipamento deve ser atribuído a uma rota antes que esta seja iniciada. Essa é a
+definição padrão; é possível alterá-la para uma rota individual no menu
+Atribuição de Rotas.
+Permitir tipos adicionais de parada — permite adicionar um intervalo,
+espera, pernoite ou depósito intermediário da rota a uma rota.
+Calcular tempos de atendimento — marque para que os tempos de
+atendimento das paradas sejam recalculados automaticamente a cada alteração
+de quantidade. Por exemplo, se itens adicionais forem incluídos em um pedido,
+o tempo de atendimento da parada será atualizado.
+Calcular distância por jurisdição — marque para que a distância percorrida
+pela rota em cada estado/provincia/jurisdição seja calculada automaticamente
+quando a rota for concluída. As distâncias são calculadas pela medição da
+distância em linha reta entre os sinais do GPS. Se essa opção estiver
+selecionada, os relatórios poderão ser gerados de no módulo Analista em
+relação às distâncias percorridas.
+Minutos críticos da parada — digite o número de minutos que uma parada
+deve estar atrasada para ser considerada como critica.
+A seção Calculadora de tempo/distância permite selecionar que calculadora será usada
+para calcular, por todo o MobileCast, os tempos e as distâncias percorridos. Ponto a ponto
+utiliza modelos para calcular o tempo de percurso, enquanto PC*Miller e RouteNet
+Sseguem as ruas reais para calcular o tempo de percurso. Após selecionar uma calculadora
+para uma região, ela não deve ser alterada.
+Etapa 2: Na seção Calculadora de tempo/distância, selecione uma calculadora. Esta
+calculadora será utilizada para calcular os tempos de percurso em todo o
+MobileCast.
+A seção Processamento de eventos permite estabelecer diversas opções padrão usadas
+com o MobileCast.
+Etapa 3: Na seção Processamento de eventos, marque qualquer uma das opções padrão
+abaixo:
+Relocar equipamento automaticamente — permite especificar se um
+equipamento deve ser movido automaticamente para o local necessário ao ser
+atribuído a uma rota. Por exemplo, se o equipamento estiver no Depósito 2, mas
+a rota estiver iniciando no Depósito 1, o equipamento será automaticamente
+alternado para o Depósito 1 e atribuído à rota. Se utilizado, este recurso ignora
+o recurso incorporado de monitoramento de equipamento do MobileCast, e
+pode ocultar um monitoramento de equipamentos fraco dentro da empresa.
+Enviar notificações de API — encaminha mensagens recebidas do dispositivo
+móvel ao netTracker ou a outro aplicativo externo.
+Etapa 4: Clique na seta Fuso horário da notificação e selecione o fuso horário utilizado
+para a notificação de falha de serviço.
+E o A o Trarporizton SE
+€ Copright 2006 Unied Parcel Service of dmerica bc
+“Todos os dveios resenvados
+Definição das opções
+A seção Códigos de motivo permite especificar qualquer requisito de código de motivo
+quando uma parada é concluída. Por exemplo, se você selecionar Coleta, o motorista
+deverá inserir um código de motivo caso a quantidade real de coleta seja diferente da
+quantidade planejada.
+Etapa 5: Na seção Códigos de motivo, marque as situações nas quais um código de
+motivo será requerido para qualquer discrepância.
+Entrega — requer um código de motivo para qualquer variação de quantidade

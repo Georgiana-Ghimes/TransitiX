@@ -1,0 +1,90 @@
+treceți la următoarea rută și repetați pașii de la 4 la 10 pentru a introduce datele reale.
+m Pasul 12: Când ați terminat de introdus datele reale, faceți clic pe caseta Închidere pentru a închide
+fereastra Traseu.
+TNE RA SNS A E SAA SAA S NS d;
+Traseu — Pictograma Salvare ([Ctrl]+[S])
+MET AA E Roadhet Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+informații reale pentru traseu. Consultați Introducerea informațiilor reale despre rută pentru informații.
+mai multe informații.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Introducere date reale și selectați Rută/Oprire reală. Fereastra
+Rute reale: Se afișează sesiunea de rutare.
+Pasul 3: În fereastra Rute reale: Sesiune de rutare, faceți dublu clic pe ruta pentru
+pe care doriți să introduceți datele reale. Fereastra Rută pentru ruta selectată va fi
+afisat automat. De asemenea, puteți face clic dreapta și
+Selectați Editare pentru a deschide fereastra Rută.
+sau-
+Faceți clic pe pictograma Sesiuni pentru a afișa o listă de sesiuni de rutare și faceți clic
+de două ori în sesiunea pentru care doriți să introduceți date reale. În sesiune
+selectat va apărea în fereastra Rute reale: Sesiune de rutare. Faceți dublu clic
+ori pentru a deschide fereastra Traseu. De asemenea, puteți face clic dreapta și
+Selectați Editare pentru a deschide fereastra Rută.
+Note: Fereastra Rute reale: Sesiune de rutare se deschide implicit
+cel mai recent scenariu.
+Dacă doriți să introduceți date reale pentru mai multe rute (toate rutele pe a
+sesiune, de exemplu), selectați rutele pe care doriți să le editați, faceți clic pe
+Chiar pe o rută selectată și selectați Editați pentru a deschide fereastra Rută. Pentru
+editați toate rutele, faceți clic dreapta pe o rută și selectați Editați
+toată lumea. Utilizați săgețile din partea de sus a ferestrei Rută pentru a vă deplasa între rute.
+Pasul 4: Confirmați că Stop este selectat în secțiunea Editare date a ferestrei Rută.
+Pasul 5: În lista din partea de jos a ferestrei, faceți clic pentru a selecta oprirea al cărei
+informațiile reale pe care doriți să le introduceți. Prima oprire este deja selectată ca
+implicit.
+Pasul 6: Faceți clic pe săgeata Fus orar pentru afișare/introducere și selectați fusul orar
+din orele în care intri. De exemplu, dacă introduceți programul de lucru
+Maryland, selectați Ora de Est.
+Notă: Orice oră afișată în prezent va fi ajustată pentru a reflecta noul fus orar
+timp. Cu toate acestea, baza de date le stochează folosind fusul orar
+corect.
+Pasul 7: În funcție de faptul că șoferul are sau nu computer de bord, mai multe
+informațiile de oprire pot fi importate. Introduceți informațiile
+valorile necesare care nu sunt deja prezente în Stop, Dist.
+Ghid de operațiuni 229
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Şi
+cmpaomene — omana c PORR |f TE * E
+ss
+msç fm d
+mn și h" o
+mom o mo ta
+[ ee TSS T meem m
+Când introduceți timp, distanță și
+cantitatea de oprire, informațiile despre rută sunt actualizate
+automat.
+Pasul 8: Când ați terminat de introdus informațiile reale pentru oprirea curentă, faceți clic
+butonul [Inserare] din fereastra Rută pentru a trece automat la 2
+următoarea oprire.
+. Notă: Dacă doriți să adăugați încă o oprire, faceți clic pe butonul [Inserați oprire] și intrați
+toate informațiile de oprire, inclusiv ID-ul clientului. Opritoarele introduse
+poate fi șters făcând clic pe butonul [Ștergere oprire]. Opriri care au fost
+importate nu pot fi șterse.
+6) Pasul 9: Când ați terminat de introdus toate informațiile despre oprirea rutei,
+. faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva modificările.
+M — Pasul 10: Faceți clic pe caseta Închidere pentru a închide fereastra Rută.
+Pictogramă de întreținere — Introducerea reală a datelor — Ruta/oprire reală — Pictograma sesiuni —
+„Rută > Pictograma Sabvar ([Ctrl]+[S])
+FIIO AA o Roadha Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+(Cum să lucrați cu distanțe față de zone
+Cum să lucrați cu distanțe de zonă
+Folosit cu: Roadnet
+Distanțele zonelor împreună cu zonele din Roadnet Transportation Suite
+vă permit să monitorizați milele parcurse în fiecare zonă (stat, provincie etc.). Dacă tu
+introduceți distanțele zonelor în mod regulat, puteți genera impresii pentru fiecare zonă
+individual, pentru fiecare echipament, după dată sau pentru toate zonele și
+echipamente împreună. Pentru a introduce distanțele zonelor, este necesar să adăugați zonele
+și echipamente.
+Mám Stepl: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Í Fs Pasul 2: Faceți clic pe meniul Introducere date reale și selectați Distanțe de zonă. Pentru a
+— Se afișează fereastra Distanța zonei.
+EW Notă: Pentru a vedea o listă actualizată a distanțelor de zonă, faceți clic pe pictograma Reîmprospătare; la
+„Jjanela va fi actualizată cu cele mai recente informații din baza de date.
+| Pasul 3: În fereastra Distanța zonei, faceți clic pe pictograma Adăugare sau apăsați [Insert]. A
+- Este afișată fereastra JAdd Area.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+AMN E dh to eec Snfrese Res 2E VepeachaATe, SÍRCE S

@@ -1,0 +1,102 @@
+RouteNet sau SuperMatrix și doriți să utilizați funcții îmbunătățite pentru orele de vârf,
+cum ar fi, de exemplu, restricții asupra căilor sau rutelor, selectați Program Autobuz
+Tush avansat.
+Pasul 7: Introduceți un număr între 1 și 24 pentru a indica numărul de săptămâni din ciclu
+sesiune de planificare. Când se determină numărul de săptămâni din ciclu,
+Asigurați-vă că ciclul este suficient de lung pentru fiecare extensie de client
+primiți cel puțin o livrare.
+Pasul 8: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noua sesiune
+planificare.
+Pasul 9: Repetați pașii de la 4 la 8 pentru a adăuga sesiuni de planificare suplimentare.
+Pasul 10: Când ați terminat de adăugat sesiunile de planificare, faceți clic pe casetă
+Închideți pentru a închide fereastra Adăugare sesiune
+TE MÇ SNS SNS D D SNE Adicaias
+(insert]) — Pictograma Salvare ([Ctrl]+[S])
+Sesiunile de planificare existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Notă: Dacă ștergeți o sesiune de planificare, compactați baza de date la
+Reduceți-i dimensiunea. Pentru a compacta baza de date, selectați Compact Database
+date din meniul Instrumente.
+MT AA o Roadhei Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+(Cum să lucrați cu codurile motiv
+Cum să lucrați cu codurile motiv
+Folosit cu: MobileCast
+|MobileCast vă permite să configurați coduri motiv care oferă informații despre
+motiv pentru care o cantitate efectivă de livrare nu se potrivește cu cantitățile planificate.
+De exemplu, dacă vreunul dintre produse este deteriorat și este refuzat, șoferul poate
+selectați un cod motiv care explică de ce cantitatea de livrare este mai mică decât
+planificat. În meniul Opțiuni, puteți face coduri motiv obligatorii pentru
+orice variație între cantitățile reale și cele planificate. Consutte Definiţia codes
+motiv pentru mai multe informații.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați Codurile de expediere și motiv. Fereastra
+Apare Reason Codes, care enumeră codurile de motiv existente.
+Notă: Pentru a vedea o listă actualizată de coduri motiv, faceți clic pe pictograma Actualizează; la
+Fereastra va fi actualizată cu toate informațiile modificate din baza de date.
+Pasul 3: În fereastra Reason Codes, faceți clic pe pictograma Adăugați sau apăsați pe
+[Inserați]. Apare fereastra Adăugare cod motiv.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea codului motiv este afișat cu unele informații deja completate;
+modificați informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 3 caractere pentru Cod. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+La adăugarea unui
+cod motiv, este
+posibil să se selecteze dacă
+se aplica la
+discrepanțe în
+Livrare, Exces,
+Colecție sau altele.
+Pasul 6: În secțiunea Codul se aplică pentru, faceți clic pentru a selecta situațiile în care se aplică codul.
+codul trebuie aplicat: Livrare, Peste, Sub, Avariat și/sau Colectare.
+[G| Pasul 7: Faceți clic pe pictograma Salvare sau apăsați [Ctr]+[S] pentru a salva informațiile.
+„x PASI: După ce ați adăugat toate codurile motiv, faceți clic pe Aproape de
+închideți fereastra Adăugare cod motiv.
+Teone Maintenance Registrations —sExpedir - Pictograma coduri motiv Adăugați ([Inserați])
+— Pictograma Salvare ([Ctrl]+[S])
+Codurile motiv existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Bmiadaperações A
+€€ Copyright 2006 United Parcel Service of America, lne
+Toate drepturile rezervate
+Cum să lucrați cu codurile de oprire și anulare
+Cum să lucrați cu codurile de oprire și anulare
+Folosit cu: MobileCast
+Pot exista situații în care șoferul trebuie să anuleze o oprire care, din anumite motive,
+motiv, nu poate fi livrat la ora programată. O oprire anulată continuă
+face parte din traseul planificat. Puteți defini coduri folosite pentru a indica motivul
+o oprire este anulată sau ratată; când șoferul sau analistul anulează
+opriți, ei selectează codul corespunzător. Analistul poate verifica motivul pentru a
+oprirea a fost anulată și actualizați codul dacă este necesar. Coduri de anulare
+poate fi folosit și la anularea atribuirii unei opriri pe modul
+analist.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați coduri Expedite și Anulare
+opriți. Apare fereastra Opriți codurile de anulare, care afișează
+codurile existente.
+Notă: Pentru a vedea o listă actualizată a codurilor de anulare oprire, faceți clic pe
+Pictograma de actualizare; fereastra va fi actualizată cu toate informațiile modificate din
+baza de date.
+Pasul 3: În fereastra Opriți codurile de anulare, faceți clic pe pictograma Adăugați sau
+apăsați tasta [Inserare]. În fereastra Adăugați cod de anulare
+este afișat stop.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Faceți clic pe intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea codului de anulare oprire este afișat cu câteva informații
+deja finalizat; modificați informațiile necesare în noul cod de anulare
+opriți.
+Este posibil să configurați coduri de cod
+„Anularea opri că
+șoferul poate folosi pentru a indica
+Pasul 4: Introduceți până la 3 caractere pentru Cod. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+MG | Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctri]=[S] pentru a salva informațiile.
+„mx Pasul 7: După ce ați adăugat toate codurile de anulare oprire, faceți clic pe casetă
+Închideți pentru a închide fereastra Adăugare cod de oprire și anulare.
+TITI A , , ,, ,, FFF E Roadhet Trarporiation Sute
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+AAA A A A AA A AAA

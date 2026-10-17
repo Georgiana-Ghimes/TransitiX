@@ -1,0 +1,63 @@
+„pe baza informațiilor din meniul Opțiuni; totuși, acestea pot fi modificate prin adăugare
+un client nou (consultați Meniul Client pentru mai multe informații).
+Pasul 1: Faceți clic pe săgețile de lângă elementele descrise mai jos pentru a selecta
+informații standard.
+Tipul de timp de serviciu este utilizat pentru a determina timpul de serviciu.
+serviciul unui client nou, cu excepția cazului în care o modificare a
+timp de serviciu.
+Tipul de fereastră de service este utilizat pentru a determina ferestrele de service
+serviciul unui client nou, cu excepția cazului în care o modificare a
+fereastra de service.
+Factorul de fereastră de serviciu este utilizat pentru a determina importanța
+efectuați o livrare către un client în ferestrele de service menționate.
+Zone populează automat zona unui client nou. Zona poate fi
+schimbat la adăugarea unui client.
+Status completează automat starea unui nou client. Statul poate
+fi schimbat la adăugarea unui client.
+Ghid de operațiuni 41
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Tipul de client completează automat tipul unui client nou. Tipul
+poate fi schimbat la adăugarea unui client.
+Puteți alege tipurile de timp de service și fereastra de service
+care vor fi atribuite unui nou client.
+Pasul 2: în secțiunea Bulk Limit, introduceți cantitățile pentru fiecare dintre măsurătorile în vrac.
+cantitatea din comanda dvs. care trebuie să se califice ca o comandă în vrac
+(Mărimea 1, Mărimea 2 și Mărimea 3). Aceste numere pot fi modificate la
+adăugați un nou client.
+Pasul 3: pentru a adăuga sau edita clienți cu același ID, dar cu tipuri diferite
+(de exemplu, ID 12345, tipuri congelate, uscate, fructe și legume) simultan, marcați
+Sincronizați aceleași ID-uri în secțiunea Când se efectuează întreținere. Faceți clic pe
+butonul [Fields to be synchronized] pentru a alege câmpurile care vor fi
+sincronizate. În caseta Preselected, [Ctrl]-clic
+în tipurile care vor fi preselectate la adăugarea unui client; tipurile reale
+poate fi schimbat la adăugarea clientului.
+Pasul 4: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+„Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Definirea alias-urilor implicite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Pagina Alias din meniul Opțiuni vă permite să configurați aliasuri de dimensiune și categorie și
+s câmpuri definite de utilizator pentru clienți. Acesta este singurul loc unde este posibil
+stabiliți sau modificați aceste modele în Roadnet Transportation Suite.
+Aliasurile de dimensiune alese aici vor apărea pe întregul Roadnet
+Transportation Suite ori de câte ori sunt afișate dimensiuni.
+Pasul 1: Introduceți numele fiecărei unități (Mărimea 1, Mărimea ? și Mărimea
+3) și fiecare categorie (Categoria 1, Categoria 2 și Categoria 3). Aceste nume
+va apărea în întreaga suită de transport ca antete de coloană și în
+rapoarte ori de câte ori apar aceste date.
+Notă: categoriile sunt folosite numai pe Roadnet.
+Pasul 2: Dacă este necesar, atribuiți nume sau anteturi unuia sau mai multor câmpuri definite
+de utilizator (Definit de utilizator 1, 2 și 3). Acestea sunt câmpuri definite de
+nume de utilizator care poate fi folosit pentru a introduce informații suplimentare
+client, oprire, comanda sau comanda articol. Câmpurile client definite de
+interfețele de utilizator sunt utilizate în întreaga suită de transport. Câmpurile de comandă și
+articolele de comandă definite de utilizator sunt utilizate cu Roaánet și
+MobileCast; sunt utilizate câmpuri de rută și oprire definite de utilizator
+numai pe MobileCast.
+Note: Numele atribuite în Definit de utilizator - Client vor apărea ca
+anteturi pe pagina Atribute extinse din meniul Client și în toate ferestrele
+de client. Puteți introduce informații despre câmpuri definite de utilizator în

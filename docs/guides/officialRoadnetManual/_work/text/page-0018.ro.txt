@@ -1,0 +1,76 @@
+Pasul 2: Pentru a adăuga un articol, faceți clic pe pictograma Adăugare sau apăsați [Insert]. A
+Apare fereastra Adaugă.
+Pasul 3: introduceți toate informațiile necesare.
+Pasul 4: După ce ați finalizat fereastra, faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S]
+pentru a salva noul articol.
+Pasul 5: Faceți clic pe caseta Închidere după adăugarea tuturor elementelor.
+Clonarea articolului
+Puteți clona elementele de întreținere existente. La clonarea unui articol, majoritatea
+informațiile necesare sunt populate când este afișată fereastra Adăugare, reducând valoarea
+cantitatea de text care trebuie tastată. Puteți modifica oricare dintre informații
+cele existente, după caz.
+Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta pe
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra Adaugă este
+afișat cu unele informații deja completate; modificați informațiile necesare în
+noua intrare.
+Editarea articolelor
+După ce adăugați elemente la modulul de întreținere, le puteți modifica după cum este necesar.
+Și „Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu articolele de întreținere
+Pasul 1: În fereastra articolului (de exemplu, Echipament), faceți dublu clic pe
+intrarea să fie modificată. Apare fereastra Editare.
+sau-
+În fereastra articolului, selectați intrările de editat. Faceți clic pe butonul
+Faceți clic dreapta pe un tip ales și selectați Editați din meniul care apare. Pentru a
+Apare fereastra de editare.
+Pentru a selecta o singură intrare, faceți clic pe intrare.
+Pentru a selecta mai multe intrări, faceți clic pe prima intrare. Apoi
+Țineți apăsat butonul [Ctrl] de pe tastatură și faceți clic pe intrările rămase
+pentru a fi editat.
+Pentru a selecta mai multe intrări la rând, faceți clic pe prima intrare. În
+Apoi, țineți apăsată tasta [Shift] de pe tastatură și faceți clic pe ultima
+intrarea să fie editată. Toate intrările dintre aceste două vor fi selectate.
+Pasul 2: Schimbați informațiile din fereastră după cum este necesar. Faceți clic pe pictograma Salvare
+u apăsați [Ctrl]:[S] pentru a salva modificările.
+. Când editați mai multe intrări, utilizați săgețile din partea de sus a ferestrelor pentru a derula
+intrările selectate și salvați modificările pentru fiecare dintre ele,
+Notă: Câmpurile principale (de obicei câmpul TD sau nume) nu pot fi
+alterat; acestea vor fi dezactivate (gri) în fereastră și nu le veți putea selecta.
+José. Pentru a edita câmpul principal al unei intrări, ștergeți și adăugați intrarea
+din nou, sau clonați intrarea și apoi ștergeți originalul.
+Ștergerea articolelor
+Elementele de întreținere existente pot fi șterse.
+Unele intrări nu ar trebui să fie șterse până când toate elementele conexe care
+vtilizați această intrare pentru a nu fi ștearsă sau modificată. De exemplu, un tip de
+echipamentul nu trebuie șters până când toate echipamentele de acest tip nu sunt
+excluse.
+Pasul 1: În fereastra articolului (de exemplu, Tipuri de echipamente), faceți dublu clic
+despre intrarea care urmează să fie ștearsă.
+Pentru a selecta o singură intrare, faceți clic pe intrare.
+Pentru a selecta mai multe intrări, faceți clic pe prima intrare. Apoi
+Țineți apăsat butonul [Ctrl] de pe tastatură și faceți clic pe intrările rămase
+a fi exclus,
+Pentru a selecta mai multe intrări la rând, faceți clic pe prima intrare. În
+Apoi, țineți apăsată tasta [Shift] de pe tastatură și faceți clic pe ultima
+intrarea să fie ștearsă. Toate intrările dintre aceste două vor fi selectate.
+Pasul 2: Faceți clic pe pictograma Ștergere sau apăsați [Ștergere]. Faceți clic pe butonul [OK] pentru a
+confirma ștergerea.
+E Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu articolele de întreținere
+sau-
+Faceți clic dreapta pe un tip ales și selectați Ștergere
+în meniul afișat. Faceți clic pe butonul [OK] pentru a confirma ștergerea.
+Notă: Dacă ștergeți mai multe elemente, poate fi necesar să compactați baza de date
+pentru a elimina complet articolele și a le reduce dimensiunea. Pentru a comprima
+baza de date, selectați Compact Database din meniul Tools.
+n „Suită de transport Roadhnet
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Opțiuni de setare
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Ac en a Sooos d D a dh a SA aaa n aaan do aa pureias u RS a o SA inaas tu iasr sm aa

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>Ghid deploy · RAI Companion PROD · Contabo VPS</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --ok: #166534;
+      --warn: #92400e;
+      --danger: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      font-size: 10pt;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0 2mm 8mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.25; page-break-after: avoid; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.35em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 1em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    ul, ol { margin: 0.25em 0 0.65em; padding-left: 1.25em; }
+    li { margin: 0.2em 0; }
+    code, kbd {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8pt;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      page-break-inside: avoid;
+      margin: 0.45em 0 0.85em;
+    }
+    pre .c { color: #94a3b8; }
+    table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 0.4em 0 0.8em; }
+    th, td { text-align: left; padding: 5px 7px; border: 1px solid var(--line); vertical-align: top; }
+    th { background: var(--soft); color: var(--brand); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+    .toc ol { margin: 0.3em 0 0; }
+    .box {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+    .box.warn { border-left-color: #d97706; background: #fffbeb; color: var(--warn); }
+    .box.ok { border-left-color: #16a34a; background: #f0fdf4; color: var(--ok); }
+    .box.danger { border-left-color: #dc2626; background: #fef2f2; color: var(--danger); }
+    .box strong { color: inherit; }
+    .check { list-style: none; padding-left: 0; }
+    .check li { padding-left: 1.4em; position: relative; }
+    .check li::before { content: "☐ "; position: absolute; left: 0; }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .arch {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Ghid deploy · RAI Companion · producție client</h1>
+    <div class="meta">
+      Domeniu: <strong>https://rai-transitix.filumforge.ro</strong><br />
+      Branch Git: <strong>TRANSITIX-RAI-PROD</strong> · Environment GitHub: <strong>RAI-PROD</strong> / production<br />
+      VPS Contabo: <strong>Cloud VPS 4</strong> · 4 vCPU · 8 GB RAM · 100 GB · IP <strong>185.137.122.45</strong><br />
+      Document: <strong>12 octombrie 2026</strong> · instalare curată · OCR Mistral cloud
+    </div>
+    <div class="badge-row">
+      <span class="badge">PRODUCȚIE CLIENT</span>
+      <span class="badge">Companion documents</span>
+      <span class="badge">Fără OSRM / GPU</span>
+      <span class="badge">Caddy + systemd + Docker DB</span>
+    </div>
+  </header>
+
+  <div class="box danger">
+    <strong>Nu folosi pe VPS</strong> <code>npm run dev:companion</code> / <code>dev:companion-api</code>.
+    Acelea sunt doar pentru PC-ul tău. Pe server: build o dată + servicii care pornesc la boot.
+  </div>
+
+  <div class="box">
+    <strong>Ce rulează aici:</strong> doar aplicația RAI Documente (profil <code>documents</code>) —
+    UI + API Node + Postgres + uploads + Mistral OCR.
+    Nu TMS full, nu OSRM, nu VROOM.
+  </div>
+
+  <div class="toc">
+    <strong>Cuprins</strong>
+    <ol>
+      <li><a href="#s1">Arhitectură (cum stau piesele)</a></li>
+      <li><a href="#s2">Înainte să începi (checklist)</a></li>
+      <li><a href="#s3">Pregătire VPS (Ubuntu)</a></li>
+      <li><a href="#s4">Postgres în Docker</a></li>
+      <li><a href="#s5">Codul aplicației (clone branch prod)</a></li>
+      <li><a href="#s6">Fișierul <code>.env</code> de producție</a></li>
+      <li><a href="#s7">Primul build + migrare</a></li>
+      <li><a href="#s8">systemd — API mereu pornit</a></li>
+      <li><a href="#s9">Caddy — HTTPS + UI + proxy</a></li>
+      <li><a href="#s10">Utilizator admin (prima oară)</a></li>
+      <li><a href="#s11">Checklist go-live (înainte să dai linkul clientului)</a></li>
+      <li><a href="#s12">Backup (pe VPS + snapshot Contabo)</a></li>
+      <li><a href="#s13">Update la push (GitHub Actions)</a></li>
+      <li><a href="#s14">Operațiuni uzuale &amp; rollback</a></li>
+      <li><a href="#s15">Probleme frecvente</a></li>
+    </ol>
+  </div>
+
+  <!-- ========== 1 ========== -->
+  <h2 id="s1">1. Arhitectură</h2>
+  <div class="arch">Internet (client)
+    │
+    ▼
+https://rai-transitix.filumforge.ro   ← DNS A → 185.137.122.45
+    │
+    ▼
+┌─────────────────────────────────────┐
+│  Caddy (80/443)                     │
+│  • TLS Let's Encrypt                │
+│  • fișiere UI din dist/             │
+│  • /api/*  → 127.0.0.1:3002         │
+│  • /uploads/* → 127.0.0.1:3002      │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  systemd: rai-api.service           │
+│  Node (Express) · COMPANION=1       │
+│  port 3002 (doar localhost)         │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴────────┐
+       ▼                ▼
+ Postgres:5435      uploads-companion/
+ (Docker)           (PDF / poze)
+       │
+       ▼
+  Mistral API (cloud) ← cheie în .env</div>
+
+  <p>Scriptul din repo <code>npm run deploy:companion</code> face, în ordine:
+  <strong>backup → migrate → build companion → restart</strong>. Nu inversa ordinea.</p>
+
+  <!-- ========== 2 ========== -->
+  <h2 id="s2">2. Înainte să începi</h2>
+  <ul class="check">
+    <li>DNS: <code>RAI-Transitix.filumforge.ro</code> → A → <code>185.137.122.45</code> (gata)</li>
+    <li>Acces SSH root (sau user cu sudo) la VPS</li>
+    <li>Repo GitHub: branch <code>TRANSITIX-RAI-PROD</code> există și e la commit-ul dorit</li>
+    <li>Cheie <strong>Mistral</strong> Document AI (cont Mistral)</li>
+    <li>Parolă tare pentru Postgres + <code>JWT_SECRET</code> (generezi pe VPS)</li>
+    <li>Deploy key SSH (read) pe VPS pentru <code>git pull</code>, plus cheie în GitHub Secrets pentru Actions</li>
+    <li>Snapshot Contabo gol / slot liber (plasă după setup)</li>
+  </ul>
+
+  <div class="box warn">
+    <strong>Secrete:</strong> nu pune niciodată <code>MISTRAL_API_KEY</code>, <code>JWT_SECRET</code> sau parola DB în Git.
+    Doar pe VPS în <code>server/.env.companion</code> și în GitHub Environment secrets (pentru deploy SSH).
+  </div>
+
+  <!-- ========== 3 ========== -->
+  <h2 id="s3">3. Pregătire VPS (Ubuntu 22.04 / 24.04)</h2>
+  <p>Conectare (de pe PC):</p>
+<pre>ssh root@185.137.122.45</pre>
+
+  <h3>3.1 Update + pachete de bază</h3>
+<pre>apt update && apt upgrade -y
+apt install -y curl git ca-certificates gnupg ufw fail2ban \
+  build-essential python3</pre>
+
+  <h3>3.2 Firewall</h3>
+<pre>ufw default deny incoming
+ufw default allow outgoing
+ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable
+ufw status</pre>
+  <div class="box warn">
+    <strong>Nu deschide 3002 sau 5435 spre internet.</strong> API și Postgres rămân pe localhost / Docker network.
+  </div>
+
+  <h3>3.3 Docker (doar pentru Postgres)</h3>
+<pre>curl -fsSL https://get.docker.com | sh
+systemctl enable --now docker
+docker --version
+docker compose version</pre>
+
+  <h3>3.4 Node.js 22 (LTS)</h3>
+<pre>curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+node -v   <span class="c"># v22.x</span>
+npm -v</pre>
+
+  <h3>3.5 Caddy</h3>
+<pre>apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+  | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+  | tee /etc/apt/sources.list.d/caddy-stable.list
+apt update && apt install -y caddy
+caddy version</pre>
+
+  <!-- ========== 4 ========== -->
+  <h2 id="s4">4. Postgres în Docker</h2>
+  <p>Creează un director pentru datele companion (separat de home):</p>
+<pre>mkdir -p /opt/rai
+cd /opt/rai</pre>
+
+  <p>După ce ai clonat repo-ul (secțiunea 5), fișierul
+  <code>docker-compose.companion.yml</code> din root pornește doar Postgres pe portul <strong>5435</strong>,
+  baza <code>transitix_rai</code>.</p>
+
+  <p>Generează o parolă DB și pune-o într-un fișier env lângă compose (nu în Git):</p>
+<pre>openssl rand -base64 32
+nano /opt/rai/TransitiX/.env.postgres</pre>
+
+<pre><span class="c"># /opt/rai/TransitiX/.env.postgres</span>
+POSTGRES_DB=transitix_rai
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=AICI_PAROLA_TARE_DIN_OPENSSL</pre>
+
+  <p>Pornește baza (din root-ul repo-ului):</p>
+<pre>cd /opt/rai/TransitiX
+docker compose -f docker-compose.companion.yml --env-file .env.postgres up -d
+docker compose -f docker-compose.companion.yml ps
+docker compose -f docker-compose.companion.yml exec -T db \
+  pg_isready -U postgres -d transitix_rai</pre>
+
+  <div class="box ok">
+    Volumul Docker <code>transitix_rai_pg</code> păstrează datele la restart.
+    Backup-ul aplicației (<code>pg_dump</code>) e separat — vezi §12.
+  </div>
+
+  <!-- ========== 5 ========== -->
+  <h2 id="s5">5. Codul aplicației</h2>
+
+  <h3>5.1 Deploy key (read-only) pe VPS</h3>
+<pre>ssh-keygen -t ed25519 -C "rai-prod-vps" -f /root/.ssh/rai_github -N ""
+cat /root/.ssh/rai_github.pub</pre>
+  <p>În GitHub → repo → <strong>Settings → Deploy keys → Add</strong> → lipește cheia publică (fără write).</p>
+<pre>cat &gt; /root/.ssh/config &lt;&lt;'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile /root/.ssh/rai_github
+  IdentitiesOnly yes
+EOF
+chmod 600 /root/.ssh/config</pre>
+
+  <h3>5.2 Clone branch de producție</h3>
+<pre>cd /opt/rai
+git clone git@github.com:Georgiana-Ghimes/TransitiX.git
+cd TransitiX
+git checkout TRANSITIX-RAI-PROD
+git status
+git log -1 --oneline</pre>
+
+  <div class="box">
+    <strong>Branch-uri:</strong>
+    <code>MISTRAL-experimenting-rai-documents</code> = test pe PC;
+    <code>TRANSITIX-RAI-PROD</code> = ce rulează aici.
+    Pe VPS stai <em>doar</em> pe <code>TRANSITIX-RAI-PROD</code>.
+  </div>
+
+  <h3>5.3 Dependențe npm</h3>
+<pre>cd /opt/rai/TransitiX
+npm ci
+npm ci --prefix server</pre>
+
+  <!-- ========== 6 ========== -->
+  <h2 id="s6">6. Fișierul <code>.env</code> de producție</h2>
+  <p>API-ul companion citește <code>server/.env</code>, apoi (dacă <code>COMPANION=1</code>)
+  suprascrie cu <code>server/.env.companion</code>. Pe VPS folosim ambele: base minimal + companion complet.</p>
+
+<pre>openssl rand -hex 48   <span class="c"># → JWT_SECRET</span></pre>
+
+<pre>nano /opt/rai/TransitiX/server/.env.companion</pre>
+
+<pre><span class="c"># server/.env.companion — PRODUCȚIE RAI (nu comita)</span>
+PORT=3002
+DATABASE_URL=postgresql://postgres:AICI_PAROLA_TARE@127.0.0.1:5435/transitix_rai
+
+JWT_SECRET=AICI_HEX_48_OCTETI
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=7d
+
+UPLOAD_DIR=uploads-companion
+CLIENT_ORIGIN=https://rai-transitix.filumforge.ro
+TRUST_PROXY=1
+
+ALLOW_SIGNUP=false
+GOOGLE_CLIENT_ID=
+
+OCR_PROVIDER=mistral
+MISTRAL_API_KEY=AICI_CHEIA_MISTRAL
+
+PHOTON_URL=https://photon.komoot.io
+
+NODE_ENV=production</pre>
+
+  <p>Asigură-te că parola din <code>DATABASE_URL</code> = cea din <code>.env.postgres</code>.</p>
+
+  <table>
+    <tr><th>Variabilă</th><th>De ce contează</th></tr>
+    <tr><td><code>CLIENT_ORIGIN</code></td><td>CORS + linkuri din email-uri. Exact domeniul HTTPS, fără slash final.</td></tr>
+    <tr><td><code>TRUST_PROXY=1</code></td><td>În spatele Caddy: IP real + HTTPS detectat corect. Fără proxy în față = lasă 0.</td></tr>
+    <tr><td><code>ALLOW_SIGNUP=false</code></td><td>Producție client: conturi doar prin invitație / manual admin.</td></tr>
+    <tr><td><code>OCR_PROVIDER=mistral</code></td><td>Fără cheie → OCR <code>none</code> și avizele nu se citesc.</td></tr>
+    <tr><td><code>UPLOAD_DIR</code></td><td>Folder relativ la <code>server/</code>. Intră în backup împreună cu DB.</td></tr>
+  </table>
+
+  <pre>chmod 600 /opt/rai/TransitiX/server/.env.companion
+mkdir -p /opt/rai/TransitiX/server/uploads-companion</pre>
+
+  <!-- ========== 7 ========== -->
+  <h2 id="s7">7. Primul build + migrare</h2>
+<pre>cd /opt/rai/TransitiX
+export COMPANION=1
+export DATABASE_URL="$(grep ^DATABASE_URL= server/.env.companion | cut -d= -f2-)"
+
+<span class="c"># migrare schemă pe transitix_rai</span>
+npm run db:migrate
+
+<span class="c"># UI companion (profil documents) → dist/</span>
+npm run build:companion
+
+ls -la dist/ | head</pre>
+
+  <div class="box ok">
+    Build-ul Vite cu <code>--mode companion</code> bake-uiește versiunea din
+    <code>package.json → companion</code> (<code>__APP_VERSION__</code> / <code>__APP_BUILD__</code>).
+  </div>
+
+  <!-- ========== 8 ========== -->
+  <h2 id="s8">8. systemd — API mereu pornit</h2>
+<pre>nano /etc/systemd/system/rai-api.service</pre>
+
+<pre>[Unit]
+Description=RAI Transitix companion API
+After=network.target docker.service
+Requires=docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rai/TransitiX/server
+Environment=COMPANION=1
+Environment=NODE_ENV=production
+<span class="c"># loadEnv citește .env apoi .env.companion când COMPANION=1</span>
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+<span class="c"># nu rula migrate aici la fiecare crash-loop — migrate e în deploy</span>
+
+[Install]
+WantedBy=multi-user.target</pre>
+
+  <div class="box warn">
+    <strong>Notă:</strong> <code>npm start</code> din <code>server/</code> rulează migrate la fiecare start.
+    Pentru producție e mai sigur <code>node src/index.js</code> + migrate <em>doar</em> în
+    <code>deploy-companion.js</code> (înainte de restart).
+  </div>
+
+<pre>systemctl daemon-reload
+systemctl enable --now rai-api
+systemctl status rai-api --no-pager
+journalctl -u rai-api -n 40 --no-pager</pre>
+
+  <p>Verificare locală pe VPS:</p>
+<pre>curl -sS http://127.0.0.1:3002/api/health | head -c 400; echo</pre>
+  <p>În răspuns, capacitatea OCR trebuie să arate <code>mistral</code> (nu <code>none</code> / <code>mistral-down</code>).</p>
+
+  <!-- ========== 9 ========== -->
+  <h2 id="s9">9. Caddy — HTTPS + UI + proxy</h2>
+<pre>nano /etc/caddy/Caddyfile</pre>
+
+<pre>rai-transitix.filumforge.ro {
+	encode gzip
+
+	<span class="c"># API + uploads → Node</span>
+	handle /api* {
+		reverse_proxy 127.0.0.1:3002
+	}
+	handle /uploads* {
+		reverse_proxy 127.0.0.1:3002
+	}
+
+	<span class="c"># UI static (build companion)</span>
+	handle {
+		root * /opt/rai/TransitiX/dist
+		try_files {path} /index.html
+		file_server
+	}
+}</pre>
+
+<pre>caddy validate --config /etc/caddy/Caddyfile
+systemctl reload caddy
+systemctl status caddy --no-pager</pre>
+
+  <p>Test din exterior (de pe PC):</p>
+<pre>curl -I https://rai-transitix.filumforge.ro
+curl -sS https://rai-transitix.filumforge.ro/api/health | head -c 400; echo</pre>
+
+  <div class="box">
+    Caddy obține singur certificatul Let's Encrypt dacă porturile 80/443 sunt deschise și DNS-ul pointează corect.
+    Dacă TLS eșuează, verifică <code>journalctl -u caddy -n 50</code>.
+  </div>
+
+  <!-- ========== 10 ========== -->
+  <h2 id="s10">10. Utilizator admin (prima oară)</h2>
+  <p>Cu <code>ALLOW_SIGNUP=false</code>, creezi contul prin seed sau invitație.</p>
+  <p><strong>Varianta A — seed</strong> (dacă scriptul din repo e potrivit pentru companion):</p>
+<pre>cd /opt/rai/TransitiX
+COMPANION=1 npm run db:seed --prefix server</pre>
+  <p>Notează email/parola afișate (sau din documentația seed). Schimbă parola imediat după login.</p>
+  <p><strong>Varianta B — invitație</strong> după ce există deja un admin: din UI Setări / Users.</p>
+  <p>Autentifică-te pe <code>https://rai-transitix.filumforge.ro</code> — trebuie să vezi meniul companion
+  (Avize, Rapoarte, Flotă, Ghid, Tichet suport), nu TMS full.</p>
+
+  <!-- ========== 11 ========== -->
+  <h2 id="s11">11. Checklist go-live</h2>
+  <ul class="check">
+    <li><code>https://rai-transitix.filumforge.ro</code> încarcă login (padlock verde)</li>
+    <li><code>/api/health</code> OK; OCR = mistral</li>
+    <li>Login admin; roluri corecte</li>
+    <li>Upload un PDF test (1–2 pagini) → extracție → greutăți / TPO vizibile</li>
+    <li>Tichet suport deschide formularul ClickUp</li>
+    <li>Versiunea din UI = companion din <code>package.json</code> (build curent)</li>
+    <li><code>systemctl is-enabled rai-api caddy</code> → enabled</li>
+    <li>Reboot de probă: <code>reboot</code> → după 2 min site-ul răspunde singur</li>
+    <li>Backup de probă reușit (§12)</li>
+    <li>Snapshot Contabo după go-live (§12.3)</li>
+  </ul>
+
+  <!-- ========== 12 ========== -->
+  <h2 id="s12">12. Backup</h2>
+
+  <h3>12.1 Backup aplicație (DB + uploads) — pe VPS</h3>
+  <p>Scriptul din repo: <code>npm run db:backup</code> → <code>scripts/backup-companion.js</code>
+  (dump Postgres + arhivă uploads). Folosește <code>pg_dump</code> din container dacă lipsește pe host.</p>
+<pre>cd /opt/rai/TransitiX
+COMPANION=1 DATABASE_URL="postgresql://postgres:…@127.0.0.1:5435/transitix_rai" \
+  npm run db:backup -- --out /var/backups/rai --keep 14</pre>
+
+  <p>Cron zilnic (ex. 02:15 Europe/Bucharest):</p>
+<pre>mkdir -p /var/backups/rai
+crontab -e</pre>
+<pre>15 2 * * * cd /opt/rai/TransitiX && COMPANION=1 /usr/bin/npm run db:backup -- --out /var/backups/rai --keep 14 >> /var/log/rai-backup.log 2>&1</pre>
+
+  <table>
+    <tr><th>Ce</th><th>Unde</th><th>Rol</th></tr>
+    <tr><td>pg_dump + uploads</td><td><code>/var/backups/rai/</code></td><td>Restaurare date / greșeală deploy</td></tr>
+    <tr><td>Backup la fiecare deploy</td><td>automat în <code>deploy-companion.js</code></td><td>Înainte de migrate</td></tr>
+    <tr><td>Snapshot Contabo</td><td>panou Contabo</td><td>VPS / disc întreg</td></tr>
+  </table>
+
+  <h3>12.2 Restaurare rapidă (DB)</h3>
+<pre><span class="c"># oprește API ca să nu scrie în timpul restore</span>
+systemctl stop rai-api
+
+<span class="c"># exemplu: dump SQL din backup</span>
+docker compose -f /opt/rai/TransitiX/docker-compose.companion.yml exec -T db \
+  psql -U postgres -d transitix_rai &lt; /var/backups/rai/….sql
+
+<span class="c"># restoresază și folderul uploads din arhiva backup-ului</span>
+systemctl start rai-api</pre>
+
+  <h3>12.3 Snapshot Contabo</h3>
+  <ul>
+    <li>După go-live reușit: <strong>un snapshot</strong> („rai-prod-golive”).</li>
+    <li>Înainte de upgrade-uri majore de OS / Docker: încă unul.</li>
+    <li>Nu înlocuiește backup-ul zilnic DB+uploads — e plasă pentru mașină moartă.</li>
+  </ul>
+
+  <!-- ========== 13 ========== -->
+  <h2 id="s13">13. Update la push (GitHub Actions)</h2>
+  <p><strong>Flux:</strong> lucrezi pe <code>MISTRAL-…</code> → când e gata pentru client,
+  <strong>merge FF</strong> în <code>TRANSITIX-RAI-PROD</code> (același hash pe ambele) → push →
+  Actions deploy pe environment <strong>RAI-PROD</strong> / production.</p>
+
+  <h3>13.1 Secrets pe environment (GitHub)</h3>
+  <p>Settings → Environments → <strong>RAI-PROD</strong> (sau production) → Environment secrets:</p>
+  <table>
+    <tr><th>Secret</th><th>Valoare</th></tr>
+    <tr><td><code>VPS_HOST</code></td><td><code>185.137.122.45</code></td></tr>
+    <tr><td><code>VPS_USER</code></td><td><code>root</code> (sau userul tău)</td></tr>
+    <tr><td><code>VPS_SSH_KEY</code></td><td>cheia <strong>privată</strong> cu care Actions se conectează (ed25519)</td></tr>
+  </table>
+  <p>Deployment branches: doar <code>TRANSITIX-RAI-PROD</code>.</p>
+
+  <h3>13.2 Cheie SSH pentru Actions</h3>
+  <p>Generează o pereche <em>separată</em> de deploy key-ul de pe VPS (sau folosește aceeași logică):</p>
+<pre><span class="c"># pe PC (o dată)</span>
+ssh-keygen -t ed25519 -C "github-actions-rai-prod" -f rai-actions -N ""
+<span class="c"># publică → /root/.ssh/authorized_keys pe VPS</span>
+<span class="c"># privată → secret VPS_SSH_KEY în environment</span></pre>
+
+  <h3>13.3 Fișier workflow (de adăugat în repo)</h3>
+  <p>Cale: <code>.github/workflows/deploy-rai-prod.yml</code></p>
+<pre>name: Deploy RAI PROD
+
+on:
+  push:
+    branches: [TRANSITIX-RAI-PROD]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-rai-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: RAI-PROD
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/rai/TransitiX
+            npm run deploy:companion:vps
+            echo "deploy ok $(git rev-parse --short HEAD)"</pre>
+
+  <div class="box ok">
+    <code>deploy:companion:vps</code> = git → npm ci → backup → migrate → build → restart → health.
+    Dacă un pas eșuează, Actions e roșu și vezi logul — clientul rămâne pe versiunea veche până repari.
+  </div>
+
+  <h3>13.4 Cum urci o versiune nouă (zi cu zi)</h3>
+  <ol>
+    <li>Pe PC: dezvoltare + test pe <code>MISTRAL-experimenting-rai-documents</code>.</li>
+    <li>Când e gata: checkout <code>TRANSITIX-RAI-PROD</code> →
+      <code>git merge --ff-only MISTRAL-experimenting-rai-documents</code> →
+      <code>git push</code> (același SHA pe ambele).</li>
+    <li>GitHub Actions → job Deploy → environment RAI-PROD → verde.</li>
+    <li>Verifică UI + health; build-ul companion din ecran.</li>
+  </ol>
+
+  <!-- ========== 14 ========== -->
+  <h2 id="s14">14. Operațiuni uzuale &amp; rollback</h2>
+
+  <h3>Status</h3>
+<pre>systemctl status rai-api caddy --no-pager
+docker compose -f /opt/rai/TransitiX/docker-compose.companion.yml ps
+df -h
+journalctl -u rai-api -n 80 --no-pager</pre>
+
+  <h3>Deploy manual (fără Actions)</h3>
+<pre>cd /opt/rai/TransitiX
+npm run deploy:companion:vps</pre>
+  <p>git + npm ci + backup → migrate → build → restart + health.</p>
+
+  <h3>Rollback cod (păstrează DB)</h3>
+<pre>cd /opt/rai/TransitiX
+git log --oneline -10
+git reset --hard &lt;commit-bun&gt;
+npm run deploy:companion:vps -- --skip-git --skip-backup
+<span class="c"># pe GitHub: aliniază TRANSITIX-RAI-PROD la același SHA</span></pre>
+
+  <h3>Rollback date</h3>
+  <p>Restore din <code>/var/backups/rai</code> (§12.2). Snapshot Contabo doar dacă mașina e compromisă.</p>
+
+  <!-- ========== 15 ========== -->
+  <h2 id="s15">15. Probleme frecvente</h2>
+  <table>
+    <tr><th>Simptom</th><th>Verifică</th></tr>
+    <tr>
+      <td>Site nu deschide / timeout</td>
+      <td>UFW 80/443; Caddy activ; DNS A corect; <code>curl -I</code> de pe VPS</td>
+    </tr>
+    <tr>
+      <td>502 Bad Gateway</td>
+      <td><code>systemctl status rai-api</code>; API pe 3002; Caddy reverse_proxy</td>
+    </tr>
+    <tr>
+      <td>Login CORS / cookie</td>
+      <td><code>CLIENT_ORIGIN=https://rai-transitix.filumforge.ro</code> exact</td>
+    </tr>
+    <tr>
+      <td>OCR nu citește</td>
+      <td><code>MISTRAL_API_KEY</code>; health → mistral; loguri API</td>
+    </tr>
+    <tr>
+      <td>Migrate pe baza greșită</td>
+      <td>Mereu <code>--expect-db transitix_rai</code>; nu folosi DB-ul TMS full</td>
+    </tr>
+    <tr>
+      <td>UI vechi după deploy</td>
+      <td><code>npm run build:companion</code> a rulat? hard refresh; Caddy root = <code>dist/</code></td>
+    </tr>
+    <tr>
+      <td>Disk plin</td>
+      <td><code>df -h</code>; prune uploads (<code>npm run uploads:prune</code>); retenție backup <code>--keep</code></td>
+    </tr>
+  </table>
+
+  <div class="box">
+    <strong>Capacitate VPS:</strong> 4 vCPU / 8 GB / 100 GB e confortabil pentru companion + Postgres + OCR cloud.
+    Nu instala OSRM pe această mașină.
+  </div>
+
+  <h2>Anexă — căi importante pe VPS</h2>
+  <table>
+    <tr><th>Cale</th><th>Conținut</th></tr>
+    <tr><td><code>/opt/rai/TransitiX</code></td><td>Repo (branch TRANSITIX-RAI-PROD)</td></tr>
+    <tr><td><code>/opt/rai/TransitiX/dist</code></td><td>UI build (servit de Caddy)</td></tr>
+    <tr><td><code>/opt/rai/TransitiX/server/.env.companion</code></td><td>Secrete producție</td></tr>
+    <tr><td><code>/opt/rai/TransitiX/server/uploads-companion</code></td><td>Fișiere client</td></tr>
+    <tr><td><code>/var/backups/rai</code></td><td>Backup-uri zilnice + la deploy</td></tr>
+    <tr><td><code>/etc/caddy/Caddyfile</code></td><td>HTTPS + proxy</td></tr>
+    <tr><td><code>/etc/systemd/system/rai-api.service</code></td><td>API persistent</td></tr>
+  </table>
+
+  <footer class="foot">
+    Ghid deploy RAI Companion PROD · Contabo VPS 4 · rai-transitix.filumforge.ro ·
+    branch TRANSITIX-RAI-PROD · docs/VPS (local) · 12 octombrie 2026
+  </footer>
+
+</body>
+</html>

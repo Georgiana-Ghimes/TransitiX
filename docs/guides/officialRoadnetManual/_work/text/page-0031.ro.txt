@@ -1,0 +1,73 @@
+EE o sa cn im ccn E a du NEn Fonsape dS tm adore scania çao É
+pentru a închide fereastra Add Bin Type.
+Pictograma întreținere — Înregistrări — Echipament — Tip compartiment — pictogramă
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctri[+[S])
+Tipurile de compartimente existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+5) Important: Ștergerea tipurilor de compartimente afectează alte elemente din modul
+Întreținere. Înainte de a șterge tipurile de compartimente, editați sau ștergeți
+echipamente si tipuri de echipamente care contin acest tip de
+compartiment.
+Și Și
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de compartimente
+Cum să lucrați cu tipurile de compartimente
+Folosit cu: Roadnet
+Dacă intenționați să utilizați rutarea compartimentelor, trebuie să creați tipuri de compartimente
+și specificați ce tipuri de produse pot fi încărcate în fiecare tip de compartiment,
+Veți putea selecta dacă SKU-urile din diferite tipuri de produse pot fi amestecate
+„un tip de compartiment și dacă un tip de compartiment este reglabil sau nu (are
+perete mobil).
+După ce creați tipurile de compartimente, trebuie să adăugați compartimente la
+tipuri de echipamente pentru a indica ce compartiment conține fiecare tip de echipament.
+Adăugând compartimente la tipurile de echipamente, veți putea specifica
+dimensiunea sau gama de marimi posibile (daca compartimentul este reglabil) ale fiecaruia
+— compartiment.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv,
+Múinss — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Tipuri de echipamente și compartimente.
+Apare fereastra Tipuri de compartiment.
+$ Pasul 3: În fereastra Tipuri de coș, faceți clic pe pictograma Adăugare sau apăsați
+- Inserare]. Apare fereastra Add Bin Type.
+Pasul 4: Introduceți până la 15 caractere în Tip.
+COETTETTTTT x
+l
+Tu selectezi dacă Berbec — dum
+tipuri de produse mayou — f
+a nu fi amestecat in 4po:- NNN
+compartiment Dacă > u
+selectați manual Mixable, — pn
+pene SKU: de la unul dintre
+Tipuri de produse EX
+permis va fi pentru tee fc eem
+incarcat in acel tip de ) PT |o SSm froes
+compartiment. .
+Şi
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+Pasul 6: Dacă diferite tipuri de produse pot ocupa simultan tipul de
+compartiment, marca Mixable. Dacă această casetă nu este selectată,
+Va fi permisă doar încărcarea SKU-urilor de același tip de produs
+într-un compartiment.
+. Notă: Dacă aveți compartimente reglabile (cu perete mobil), este posibil
+configurați dimensiunea minimă și reglarea maximă a fiecărui compartiment pentru
+adăugarea de compartimente la un tip de echipament.
+BT AAA E Roadha Tranporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de compartimente
+Pasul 7: pentru a specifica ce tipuri de produse pot fi încărcate în coș,
+Faceți clic pe pictograma Adăugați sau apăsați pe [Inserare] în caseta Tipuri de produse. Pentru a
+Se afișează fereastra Căutare - Tipuri de produse. Faceți dublu clic pe un articol
+ª pentru a-l selecta sau faceți clic pe element și pictograma Proces.
+Pasul 8: Repetați pasul 7 pentru a adăuga orice alte tipuri de produse.
+6) Pasul 9: Faceți clic pe pictograma Satvar sau apăsați [Ctril-[S] pentru a salva noul tip de
+= compartiment.
+eu — Pasul 10: Când ați terminat de adăugat tipuri de coș, faceți clic pe caseta Închidere
+pentru a închide fereastra Add Bin Type.
+Pictograma Întreținere — Înregistrări — Echipament — Tipuri de compartimente > pictogramă
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctrl]+[S])
+Tipurile de compartimente existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate

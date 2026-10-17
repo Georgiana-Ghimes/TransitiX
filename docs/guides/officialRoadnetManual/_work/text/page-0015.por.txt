@@ -1,0 +1,77 @@
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Digite a ID e o nome do usuário.
+A senha diferencia matúsculas de
+minisculas; portanto, verifique se
+«atecla [Caps Lock] está ativada ou
+Etapa 5: Digite a senha. Digite a senha novamente no campo Verificação de senha para
+confirmá-la.
+Nota: À senha diferencia maiúiscnlas de minúiscnlas: portanto, verifique se a tecla [Caps
+Lock] está ativada ou desativada.
+n “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com usuários
+Etapa 6: Clique na seta Fuso horário e selecione o fuso horário que será utilizado para
+exibir data e hora não especificamente designados para utilizar outro fuso
+horário. Normalmente, será o fuso horário no qual o usuário trabalha.
+Etapa 7: Clique na guia Associação para adicionar o usuário aos grupos apropriados.
+ETA NE Ç AN
+grupos de usuários na janela
+“Adicionar usuários ou na janela
+Adicionar grupo de usuários.
+Etapa 8: Na página Associação, clique no botão [Adicionar]. À janela Pesquisa -
+Grupos de usuários é exibida.
+Etapa 9: Selecione os grupos dos quais o usuário faz parte e clique no ícone Processar.
+Para selecionar vários grupos, mantenha a tecla [Ctr]] pressionada enquanto
+clica nos grupos.
+Para remover um usuário de um grupo, clique no grupo e clique no botão
+[Remover]. Clique em [Sim] para confirmar que deseja remover o usuário do
+Bgrupo.
+Nota: Você também pode adicionar usuários aos grupos ao criar os grupos de usuários.
+Etapa 10: Se o usuário for um administrador ou outra pessoa que deva ter acesso a
+todos os módulos de todas as regiões, marque a opção Este usuário é um
+superusuário (acesso total a todas as regiões). Apenas superusuários têm
+acesso ao módulo Administração.
+Etapa 1: Clique no icone Salvar ou pressione [Ctrl]-[S] para salvar as informações do
+novo usvário.
+Etapa 12: Repita as etapas 4 a 10 para adicionar outros usuários,
+Etapa 13: Clique na caixa Fechar para fechar a janela Adicionar usuário.
+Ícone Administração — Cadastros — Usuários — icone Adicionar (insert/) — icone Salvar
+(CiJiS).
+Os usuários existentes podem ser editados ou excluídos, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.
+Guia de operações 2
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com destinatários de notificação
+Como trabalhar com destinatários de notificação
+Utilizado com: MobileCast
+Destinatários de notificação são programas extemos que coletam informações sobre
+eventos que ocorrem no Transportation Suite. À medida que os eventos desse destinatário
+ocorrem, o Transportation Suíte os coleta e, quando o programa pesquisa o Transportation
+Suite, as informações são transferidas para o programa. Por exemplo, talvez você tenha
+um software chamado Atualização que precise das informações de chegada e partida das
+paradas dos motoristas contidas nos dispositivos sem fio deles para atualizar o sistema
+interno da empresa; para que essas informações sejam transferidas, você configura um
+destinatário de notificação para o programa Atualização e seleciona Chegada na parada -
+Dispositivo e Partida da parada - Disposítivo na lista Subscription (Assinatura). Os
+destinatários de notificação devem ser utilizados com o Integration Platform Service.
+Etapa 1: Clique no ícone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Cadastros e selecione Destinatários de notificação. A janela
+Destinatários de notificação é exibida contendo os destinatários de notificação
+existentes.
+Etapa 3: Na janela Destinatários de notificação, clique no ícone Adicionar ou pressione
+[Insert]. A janela Add Notification Recipient (Adicionar destinatário de
+notificação) é exibida.
+Etapa 4: Digite a ID e a descrição do destinatário. Você deve digitar uma ID.
+pA
+'eventos ou assinaturas o
+destinatário recebe informações.
+Etapa 5: Se o destinatário deve receber apenas notificações de rotas carregadas em um
+disposítivo sem fio, marque a opção Somente rotas carregadas. Se essa opção
+n “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com destinatários de notificação
+não estiver selecionada, as notificações serão enviadas para ambas as rotas,

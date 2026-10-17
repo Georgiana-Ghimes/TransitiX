@@ -1,0 +1,60 @@
+adecvat pentru compartiment. Faceți clic pe butonul [OK] când sunt toate
+informatia este corecta.
+Pentru a schimba ID-ul compartimentului sau Descrierea, introduceți noul
+informatii in domeniu.
+ET
+saptezeci -
+STS ——
+ee ENENA anilo comporiêmedo msercormendo in ondodicar
+vezi, specifica numarul, tipul si descrierea fiecarui compartiment si
+Folosiți ecranul Define Bins pentru a împărți bins.
+. Notă: Dacă tipul de echipament este un vehicul în vrac, puteți schimba doar ID-ul
+(sau descrierea poziției paletului.
+Pasul 5: Faceți clic pe butonul [OK] când toate compartimentele sunt definite. A
+Fereastra Definire compartimente se închide.
+[) Pasul 6: Dacă utilizați rutarea compartimentelor și este necesar
+” add compartimente, consuite Adăugarea de compartimente la un tip de
+echipamente. Dacă ați terminat de introdus informații pentru tipul de
+echipament, faceți clic pe pictograma Satvar sau apăsați [Ctri]+[S] pentru a salva tipul
+" a echipamentelor.
+Bmadaperações AA
+€€ Copyright 2006 United Parcel Service of America, lne
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de echipamente
+Pasul 7: Când ați terminat de adăugat tipurile de echipamente, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugare tip de echipament.
+TTA AA sau Roadhat Tranporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Partajarea resurselor
+Partajarea resurselor
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Unele caracteristici ale Roadnet Transportation Suite pot fi partajate între
+rTegiunile. Angajații (șoferii) și echipamentele adăugate într-o regiune pot
+să fie alocate rutelor din alte regiuni dacă sunt create ca resurse partajate
+în modulul de întreținere. Este chiar posibil să se determine în ce regiuni li se va permite
+vutiliza resursele partajate. Această caracteristică vă permite să utilizați un set mai mare de
+opțiuni la alocarea resurselor rutelor.
+Mmm ——
+Tc———
+EU
+s ml
+= — și tç
+„” m———
+- cel -
+MNEN r A F=
+— p ——
+la
+cel A
+„Personalul și echipamentul pot fi împărțite
+între regiunile sale în cadrul Transportation Suite, care
+va crește considerabil resursele disponibile. În partea de jos
+din fereastra Adăugați, alegeți pur și simplu regiunile pe care doriți
+Când vizualizați liste de angajați sau echipamente, resurse care au fost create în altă parte
+rTegiunea și partajată cu regiunea dvs. vor fi afișate în roșu. Puteți afișa
+informații despre resurse, dar nu le actualizează.
+Pentru mai multe informații despre partajarea angajaților și a echipamentelor,
+consultați Lucrul cu angajații sau Lucrul cu echipamente.
+EE AAA -
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate

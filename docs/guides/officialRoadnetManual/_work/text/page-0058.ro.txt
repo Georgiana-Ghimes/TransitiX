@@ -1,0 +1,88 @@
+(TA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de ferestre de service
+Cum să lucrați cu tipurile de ferestre de service
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipurile de ferestre de servicii ajută la gruparea clienților în funcție de o caracteristică
+comun, dar acest lucru este strict limitat la ferestrele de service. Tipuri de ferestre
+service vă permit să specificați că un grup de clienți are aceleași ferestre de service
+serviciu, ca un lanț de fast-food.
+Tipuri de ferestre de servicii adăugate pot fi atribuite clienților. Diverse
+Tipuri de ferestre de servicii sunt, de asemenea, create pentru fiecare scenariu, deci un client
+individul poate avea mai multe ferestre de service, în funcție de numărul de scenarii
+existente. Trebuie create scenarii pentru a putea adăuga tipuri de ferestre.
+serviciul.
+. Notă: UPS Logistics Technologies recomandă ca ferestrele de service să fie
+cel mai larg posibil. Ferestrele de service înguste și inutile restricționează
+— 0 și îngreunează realizarea de economii de costuri pe rutele tale.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul Întreținere.
+Mens= — Pasul 2: Faceți clic pe meniul Înregistrare și selectați Reguli de serviciu și Tipuri de ferestre
+de serviciu. Apare fereastra Tipuri de ferestre de servicii, cu listare
+toate tipurile curente.
+* = Notă: Pentru a vedea o listă actualizată de tipuri de ferestre de servicii, faceți clic pe pictogramă
+„Actualizați; fereastra va fi actualizată cu cele mai recente informații din baza de date.
+m date.
+2 Pasul 3: În fereastra Tipuri de ferestre de servicii, faceți clic pe pictograma Adăugați sau
+3) apăsați [Insert]. Apare fereastra tip de fereastră Adăugare serviciu.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 5 caractere pentru D și până la 30 de caractere pentru nume. ID-ul trebuie să fie
+introdus
+Pasul 5: Faceți clic pe săgeata de lângă culoare pentru a deschide o paletă de culori. Faceți clic pe o culoare
+pentru a-l selecta.
+Pasul 6: Dacă apar mai multe scenarii în fereastra cu listă din partea de jos a
+Adăugați fereastra tip fereastră de serviciu, confirmați că scenariul
+dorit, pentru care doriți să introduceți ferestre de service, este evidențiat.
+Pasul 7: Introduceți orele de deschidere și de închidere și orele de livrare preferate
+tipul ferestrei de serviciu. Pentru a introduce o oră, faceți clic pe caseta pentru
+Selectați câmpul, apoi introduceți ora sau utilizați tastele săgeți pentru a
+BE , ,, , ,, E Roadhet Trareporiation Sute
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de ferestre de service
+selectați ora. Verificați dacă partea corectă a timpului (ore sau minute)
+este selectat la introducerea orei.
+EE
+Şi
+Utilizarea tipurilor de ferestre — f —
+serviciu, puteți avea [ —
+Ferestre de service
+Când alegeți un n |
+scenariu în ç Editor
+îndreptarea sau À d
+ED -
+peernioa,
+ameIRr 2E =
+tm 1E FS
+mama ET
+s h
+Orele de deschidere/închidere sunt cele mai devreme și cele mai recente
+posibile situații în care clientul poate primi o livrare, mai degrabă decât atunci când deschid și
+închideți pentru funcționare. Introduceți o oră de început (deschidere) și de sfârșit
+(închidere).
+Ferestrele de service 1 și 2 sunt momentele în care clientul preferă să primească
+livrarile. Introduceți o pornire (cea mai veche oră) și o oprire (ultima oră) pentru
+fiecare fereastră de service, dacă este necesar.
+Pasul 8: Faceți clic pe butonul [Actualizare] pentru a stoca orele în fereastra de listare
+în partea de jos a ferestrei Adăugați
+Ã) Sfat: Dacă există mai multe scenarii și timpii pentru celelalte scenarii sunt
+scenarii similare, faceți clic pe scenariul actualizat și trageți-l în alte scenarii enumerate.
+Orele vor fi copiate în noile scenarii. Apoi puteți edita
+!timpurile scenariilor ulterioare.
+H| Pasul 9: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]-[S] pentru a salva noua fereastră.
+. serviciu.
+xx — Pasul 10: Repetați pașii de la 4 la 9 pentru a adăuga orice alt tip de fereastră.
+„serviciu
+Pasul 11: Când ați terminat de adăugat tipuri de ferestre de servicii, faceți clic pe casetă
+Închideți pentru a închide fereastra tip de fereastră Adăugați serviciu.
+Pictogramă de întreținere — Înregistrări — Reguli de service — Tipuri de ferestre
+serviciu—Adăugați pictograma ([Insert])—Save pictograma ([Ctrl]+[S])
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de ferestre de service
+Tipurile de ferestre de servicii existente pot fi editate sau șterse, în funcție de
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.

@@ -1,0 +1,97 @@
+Rerao, s uomine maa e aa E oaármo, j een id - esseenoaum: cnscacdeos dorteoa n aan usanis
+fi formatat ca .0001 și 42.1234 poate fi formatat ca 42.1234
+*Grade, minute, secunde, sutimi de secunde — latitudine longitudine
+trebuie formatat astfel încât minutele și secundele întregi să fie parte
+au două cifre fiecare. Domeniul de studii nu are cerințe. De către
+de exemplu, 35 de grade, 2 minute, 3,21 secunde ar trebui importate ca
+35020321, în timp ce 5 grade, 2 minute, 3,01 secunde trebuie importate
+ca 5020301
+*Grade, minute, zece miimi de minut — latitudine/longitudine trebuie
+să fie formatat astfel încât partea întreagă a numărului minut să aibă doi
+cifre. Domeniul de studii nu are cerințe. De exemplu, 35 de grade, 2,1234
+minutele ar trebui importate ca 35021234, în timp ce 5 grade, 2,6789
+minvutos trebuie importat ca 502678
+. Notă: Dacă nu ați primit permisiunea de a modifica opțiunile de import și export
+în modulul Administrare, nu veți putea modifica opțiunile selectate când
+clienții de import.
+Pasul 5: Pentru a importa orele serviciului pentru clienți, faceți clic pe săgeata Format
+timpul de descărcare și alegeți formatul din fișierul original. Timpul de
+descărcarea este timpul pe unitate livrată (pe bucată/cutie etc.). Poți
+importă timpul de descărcare în:
+„*minute (1 = 1 minut)
+*zecimi de minute (1 = 0,1 minut; 10 bucăți = 1 minut)
+* sutimi de minute (1 = 0,01 minut)
+*mii de minute (1 = 0,001 minut)
+*zecimi de miimi de minute (1 = 0,0001 minut)
+* sutimi de miimi de minute (1 = 0,00001 minut)
+*milioane de minute (1 = 0,000001 minut)
+Pasul 6: Pentru ca Roadnet Transportation Suite să nu geocodeze clienții
+importate (dacă importați latitudine și longitudine sau pur și simplu
+actualizarea informațiilor de adresă pentru clienții existenți pe care nu îi doriți
+geocodați-le din nou), bifați caseta NU geocodați
+FE A AA R Roadhat Travporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Import de clienți
+Pasul 7: Faceți clic pe butonul [Import] pentru a începe procesul de import. Barul
+progresul afișează starea importului.
+Notă: După importarea clienților, este posibil să vedeți jurnalul de import sau orice erori
+a avut loc în timpul procesului. Faceți clic pe [Vizualizare jurnal] sau [Vizualizare erori]
+Pasul 8: Când importul este complet și după vizualizarea rapoartelor, faceți clic pe
+Închide caseta.
+Importator >Import >Întreținere — Clienți — [Import]
+. Notă: După importarea clienților, îi puteți edita sau șterge după cum este necesar.
+necesar. Consultați Lucrul cu clienții pentru mai multe informații.
+QÃ) Sfat: Puteți utiliza Importatorul pentru a șterge înregistrările clienților din
+date. O înregistrare în fișierul de import al clientului care conține doar ID-ul clientului
+clientul va șterge orice înregistrare corespunzătoare din baza de date. Poți
+adăugați un câmp de excludere cu un singur caracter în fișierul de import; „S’
+sau „s” din câmpul de ștergere va șterge înregistrările care se potrivesc. Vezi Câmpuri
+disponibil în fișierul de import al clientului pentru mai multe informații.
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+Importarea extensiilor client
+Importarea extensiilor client
+Folosit cu: Territory Planner
+Dacă utilizați Territory Planner pentru a crea rute de planificare strategică,
+va trebui să importați informații despre extensia clientului. Extensiile client conțin
+informații despre clientul specific al unei sesiuni de planificare. ca opțiuni
+livrare (set de standarde de servicii), cantitatea livrată și informații despre
+scripting. Când importați informații din extensiile client, este important să rețineți
+cateva reguli:
+* În cazul în care cantitatea livrărilor importate nu permite împărțirea fiecărei opriri
+în mod egal cu numărul de livrări pe ciclu, cantitatea va fi mărită.
+* Un set de 0 modele de servicii se numește Distribuție a
+incarcare manuala. O extensie client cu un set de
+Prezența nu va fi scriptată când se execută Atribuire zile.
+* Dacă standardul de serviciu introdus intră în conflict cu setul furnizat,
+12 oprire vor fi din nou direcționate conform standardului.
+* Pentru ca extensia client să fie importată în sesiunea de planificare, este necesar
+Trebuie să import cel puțin ID-ul și un alt câmp, cum ar fi un set de
+serviciu, cantitate sau teritoriu.
+Pentru ca extensiile de client să fie importate, clienții trebuie importați.
+Puteți importa clienți în același timp cu 2 extensii sau separat.
+Consuite Client Import pentru mai multe informații. Pentru a vizualiza informațiile
+care pot fi importate cu extensii de client, consultați Câmpuri de aspect client.
+extensii de client.
+) Important: înainte de a importa extensiile client pentru prima dată, definiți săptămânile
+active implicite și setul de îngrijire implicit. Săptămânile active implicite
+sunt utilizate atunci când săptămânile active specificate în fișierul de descărcare
+nu se potrivesc cu săptămânile de ciclu sau dacă specificați încărcături
+zilnic, dar nu săptămânile active. Este utilizat setul de îngrijire implicit
+când nu este specificat niciun set în fișierul de descărcare. Pentru
+specificați valorile implicite, faceți clic pe butonul [Alte opțiuni]. Selectați modelul
+programul de service și marcați săptămânile active implicite. În general, setul
+standardul de îngrijire este distribuția încărcării de 2 manval și
+Săptămânile active implicite sunt în fiecare săptămână.
+<) Pas: Faceți clic pe pictograma Import pentru a deschide modulul Import
+eu — Notă: Dacă aveți mai multe regiuni sau scenarii, asigurați-vă că datele sunt afișate
+adecvat în partea de jos a ecranului. Pentru a schimba regiunea sau scenariul, faceți clic pur și simplu
+pe săgeată și selectați elementul corespunzător din lista afișată.
+Pasul 2: Faceți clic pe meniul Import și selectați Extensii client. Fereastra Import
+este afișată extensiile client.
+. Note: Numele setului de aspect curent este afișat în bara de stare din partea de jos
+din modulul Import. Dacă setul nu este corect, schimbați-l înainte
+FNT,,,,,,E Roadhet Tranporiation Sute
+ES SI ES RAA ENENA

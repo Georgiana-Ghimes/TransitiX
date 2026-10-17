@@ -1,0 +1,94 @@
+Pasul 5: În lista Comanda de alegere, faceți clic pe zona nou adăugată și trageți-o în
+ordine corectă de colectare; Înmuiați-l peste zona pe care doriți să o poziționați.
+De exemplu, dacă doriți ca 2 zone noi să fie a doua care trebuie colectată, aruncați-o
+aproximativ 2 primele zone de pe listă; Dacă doriți ca 2 să fie colectate mai întâi,
+aruncați-l peste antetul coloanei.
+[) Pasul 6: Faceți clic pe pictograma Satvar sau apăsați [Ctril-[S]
+Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte zone de depozit.
+x — Pasul 8: Când ați terminat de adăugat privilegii, faceți clic pe caseta Închidere pentru a închide
+JAdăugare fereastră Zone de depozit.
+Zonele de depozit existente pot fi editate sau șterse după cum este necesar.
+Pentru mai multe informații, combinați editarea articolului și ștergerea articolului.
+Ã) Sfat: Dacă doriți să vizualizați Comanda de ridicare selectată aici când încărcați în
+FleetLoader, este necesar să selectați Zonele Depozit ca Ordine de
+încărcare.
+Pictograma Întreținere — Înregistrări — Produs > Zona depozit — Adăugați pictograma
+(Ansert]) — Pictograma Salvare ([Ctri/=[S])
+RETTA A AA Roadhet Tranporiafion Su
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrați cu mărcile SKU
+Cum să lucrați cu mărcile SKU
+Folosit cu: Roadnet, FleetLoader
+Mărcile SKU sunt numele de marcă ale diferitelor produse livrate, cum ar fi RN Cola
+sau RN Lite. Etichetele SKU vor fi folosite numai dacă ați achiziționat FleetL.oader sau
+dacă doriți să importați detalii la nivel SKU în fișierul comenzii. Pentru a obține mai mult
+informații, consultați Importarea comenzilor. Puteți adăuga etichetele SKU
+individual sau importați-le; consuite Importați articole de întreținere pentru a obține
+Mai multe informații despre importarea etichetelor SKU.
+BĂRBAȚI | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Pasul 2: Faceți clic pe meniul Înregistrare, selectați Mărci de produs și SKU. Fereastra
+Sunt afișate etichetele SKU, care listează toate mărcile SKU consacrate.
+Notă FN: pentru a vedea o listă actualizată a mărcilor SKU, faceți clic pe pictograma Actualizare; fereastra
+vor fi actualizate cu cele mai recente informații din baza de date.
+| Pasul 3: În fereastra Etichete SKU, faceți clic pe pictograma Adăugați sau apăsați [Insert]. Pentru a
+— Apare fereastra Adăugați etichetă SKU.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+ET
+7
+„pentru fiecare marcă SKU. —
+[Ex m—
+s
+Pasul 4: Introduceți până la 15 caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 30 de caractere în Descriere
+G Pasul 6: Faceți clic pe pictograma Satvar sau apăsați [Ctri]+[S] pentru a salva eticheta SKU.
+Pasul 7: repetați pașii 4-6 pentru a adăuga orice alte etichete SKU.
+% — PASI: Când ați terminat de adăugat etichete SKU, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați etichetă SKU.
+Pictograma de întreținere — Înregistrări — Produs * Mărcile SKU > Adăugați pictograma
+(nsert]) — Pictograma Salvare ([Ctri/+[S])
+Etichetele SKU existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Ã) Important; Ștergerea unei etichete SKU afectează alte articole de întreținere. Înainte
+Înainte de a șterge o etichetă SKU, trebuie să ștergeți SKU-urile pentru acea etichetă SKU.
+SKU.
+DOMNUL EÇA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de ambalaje
+Cum să lucrați cu tipurile de ambalaje
+Folosit cu: Roadnet, FleetLoader
+Tipurile de ambalaje definesc diferitele tipuri de ambalaje încărcate în
+echipamente precum cutii de sifon de 350 m! sau sticle de 2 litri. Tipurile de
+ambalajele sunt folosite pentru a defini capacitatea unui palet sau a unui strat
+un palet. După ce au fost introduse tipurile de ambalaj și etichetele SKU 2,
+SKU-urile pot fi adăugate. Dacă ați achiziționat FleetLoader, trebuie să introduceți tipurile
+pentru a determina cum va fi încărcat echipamentul dvs. Tipurile de
+ambalajul va fi folosit numai dacă ați achiziționat FleetLoader sau intenționați să îl importați
+Detaliu la nivel SKU pentru fișierul de comandă. Puteți adăuga tipuri de
+ambalarea individuală sau importul acestora; consuit Import de articole de întreținere
+pentru mai multe informații despre importarea tipurilor de ambalaje.
+Şi! Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+ss — Pasul 2: Faceți clic pe meniul Înregistrare, selectați Tipuri de produse și ambalaje. Fereastra
+Se afișează Tipuri de ambalaje, listând toate tipurile de ambalaje
+stabilit.
+. Note: Pentru a selecta ce informații despre stratul de paleți sunt afișate în fereastră
+Tipuri de ambalare, faceți clic pe săgeata Metodă de stratificare a paleților pentru a afișa
+în partea de jos a ferestrei și selectați o metodă de stratificare. Coloanele
+Cantitatea pe strat și Straturi pe palet vor afișa informațiile despre
+metoda selectată.
+Pentru a vedea o listă actualizată de tipuri de ambalaje, faceți clic pe pictograma Actualizează; la
+Și fereastra va fi actualizată cu cele mai recente informații din baza de date.
+x Pasul 3: Tipul de ambalare Najaneia, faceți clic pe pictograma Adăugați sau apăsați pe [Inserați]
+xl) Apare fereastra Add Packaging Type.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 30 de caractere în Descriere
+Pasul 6: Dacă doriți să asociați o imagine cu tipul de ambalaj în Fleetl.oader, introduceți
+In al cl a hatpeeia ekte Iocafira: nh exmmno Bic Se uelféenmas:

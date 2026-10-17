@@ -1,0 +1,117 @@
+GE O intrare.
+Peste — necesită un cod motiv dacă cantitatea excesivă reală este
+diferit de cantitatea planificată mai sus.
+Deteriorat — necesită un cod motiv pentru orice produs deteriorat.
+(Colectare — necesită un cod motiv pentru orice variație de cantitate de
+o colectie
+Mai jos — necesită un cod motiv dacă cantitatea reală de mai jos este
+diferită de cantitatea planificată mai jos.
+Validați cantitățile - necesită ca MobileCast să verifice că unul dintre
+se vor aplica următoarele circumstanțe dacă cantitatea reală! variază în raport cu
+cantitate planificata:
+* Cantitățile de preluare sunt aceleași cu cantitățile planificate.
+* Suma cantităților livrate, sub și deteriorate este
+la fel ca și cantitățile de livrare planificate.
+.Secțiunea Dispozitiv fără fir vă permite să setați mai multe opțiuni implicite atunci când utilizați
+dispozitive wireless cu MobileCast.
+Pasul 6: în secțiunea Convertiți orele din, faceți clic pe săgeată pentru a specifica ce fus orar
+vor fi utilizate de dispozitivele fără fir sau, dacă dispozitivele fără fir
+utilizați Greenwich Mean Time, bifați Nicio conversie. Această opțiune nu
+va fi valabil dacă utilizați RN Mobile și ar trebui să fie definit doar de
+un consultant pentru UPS Logistics Technologies.
+Pasul 7: Rata de actualizare GPS (minute) afișează timpul dintre fiecare citire GPS.
+GPS de la dispozitivul wireless pentru estimarea orelor de sosire și de plecare
+plecare. Pentru a modifica rata la care informațiile GPS 2s sunt actualizate,
+faceți clic pe butonul [Modificare]. În caseta Event polling/update rate
+GPS este afișat. Introduceți numărul de minute în câmp și faceți clic pe [OK]
+Avertisment: Modificarea ratei de interogare/actualizare a evenimentelor GPS se poate modifica
+utilizați în mod semnificativ planul de date al dispozitivelor sau telefoanelor,
+Calculați modificările de cost asociate înainte de a modifica această valoare.
+Pasul 8: Bifați Desemnați opririle neplanificate ca plătite pentru a le defini pe toate
+pauzele, așteptările și înnoptările plătite atunci când sunt adăugate în timpul
+traseu de către șofer.
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lne
+Toate drepturile rezervate
+Opțiuni de setare
+Pasul 9: Bifați Generați chitanțe de evenimente pentru a urmări toate evenimentele trimise
+între serverul MobileCast și un dispozitiv fără fir. Dacă este bifat, analistul
+poate vedea când evenimentul a fost primit pe dispozitivul wireless, când
+a fost vizualizat de șofer, când șoferul a confirmat-o și, dacă este
+aplicabil, când și de ce evenimentul a fost renunțat.
+Secțiunea Integrare computer de bord vă permite să specificați modul în care
+transfer de date între MobileCast și computerul de bord. Daca esti
+Folosind MobileCast cu computerul de bord Tripmaster, există mai multe moduri de a
+transferul de date între sisteme. Una dintre aceste opțiuni este utilizarea dispozitivului portabil pentru
+transfera date. Când utilizați această opțiune, trebuie să informați MobileCast despre adresa
+1P este portul computerului pe care rulează InfoTrax.
+Pasul 10: În secțiunea Integrare computer de bord, bifați Utilizați computer
+portabil pentru incarcare/descarcare. Apoi introduceți adresa IP și portul 2
+de pe serverul InfoTrax.
+Pasul 11: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă
+Secțiunea Java Phone Options vă permite să setați mai multe opțiuni implicite când utilizați
+Telefoane compatibile cu Java cu MobileCast.
+Pasul 12: Dacă șoferii folosesc telefoane compatibile cu Java pentru a
+comunicați cu analistul și MobileCast, selectați opțiunile de mai jos
+care se aplică configurației dvs. de comunicații.
+Monitorizați modificările fusului orar — vă permite să definiți dacă vor exista
+monitorizarea când un șofer schimbă fusul orar. Telefonul
+activat pentru Java nu schimbă automat fusurile orare, dar dacă acest lucru
+opțiunea este bifată, MobileCast vă poate spune dacă fusul orar local
+a fost modificată de datele de oră trimise de telefon.
+Trimitere după oră — vă permite să specificați cât de des se folosește telefonul
+activat pentru Java trimite date de poziție către server. Introduceți frecvența în
+secunde. Cea mai mică frecvență posibilă este de 60 de secunde.
+Dacă această opțiune și Trimitere după distanță sunt bifate, datele de poziție
+vor fi adunate atunci când oricare dintre condiții este îndeplinită.
+Trimiteți la distanță — vă permite să specificați cât de des se folosește telefonul
+activat pentru Java trimite date de poziție către server. Introduceți frecvența în
+mile. Cea mai joasă frecvență posibilă este de 0,5 mile.
+Dacă această opțiune și Trimitere după oră sunt bifate, datele de poziție
+vor fi adunate atunci când oricare dintre condiții este îndeplinită.
+Modul pasiv — permite MobileCast să adauge opriri
+automat 2 o rută așa cum sunt datele de poziție
+trimis de pe telefon către MobileCast. Modul pasiv va fi utilizat dacă
+Utilizați rutare pasivă sau neplanificată, care! este
+convenabil pentru angajații precum un vânzător care își dorește foarte puțin
+interacțiunea cu telefonul dvs. compatibil cu Java.
+ITITITATATI A , s Roadhe Traporiafion S
+1& Coporight 2006 Unizad Parcal Sareica nf America, lmc
+Toate drepturile rezervate
+Opțiuni de setare
+Introduceti timpul maxim de oprire si 2 distanta pentru client in campurile
+Timpul maxim de oprire și distanța maximă până la client.
+. Notă: Pentru mai multe informații despre modul de rutare pasiv, consultați Cum se face
+lucrați cu rutele Ontrack.
+Trimiteți locații către telefon — verificați dacă doriți informații despre
+conturile angajaților sunt încărcate pe telefon. Dacă un număr mare de
+clienții este atribuit angajatului, este posibil ca telefonul să nu funcționeze
+corect dacă clienții sunt trimiși la telefon. Dacă această opțiune nu
+este selectat, angajatul nu va putea vizualiza clienții la telefon. Pentru a
+UPS Logistics Technologies recomandă să nu bifați această opțiune. Această opțiune va fi
+disponibil numai dacă este selectat modul pasiv.
+Timp maxim de oprire — dacă ați bifat Modul pasiv, introduceți ora, în
+minute, telefonul compatibil Java poate fi inactiv înainte de
+MobileCast ia în considerare actele GPS! ca oprire oficială pe o rută. De către
+De exemplu, dacă ați introdus 10 minute și un agent de vânzări rămâne în biroul de vânzări
+un client timp de 10 minute sau mai mult, telefonul compatibil Java va trimite datele
+de la poziția curentă la MobileCast și va fi o oprire pentru ruta respectivului vânzător
+adăugat automat.
+Distanța maximă până la client — dacă ați bifat Modul pasiv, introduceți
+distanța, în mile/kilometri, pe care o poate afla clientul de la GPS-ul curent al telefonului
+Activat pentru Java. De exemplu, dacă ați introdus 0,1 milă, când un agent de vânzări
+sosește la biroul unui client, MobileCast va folosi datele de poziție
+trimis de pe telefonul compatibil Java pentru a indica toți clienții din a
+01 milă de GPS-ul actual. Dacă este găsit mai mult de un client, clientul cu
+Iatitudinelongitudine 20 GPS-ul curent va fi folosit ca oprire pe traseu
+de la vânzător.
+Afișați detaliile de livrare și ridicare — vă permite să setați dacă să afișați sau nu
+Detalii unice de livrare și ridicare pe telefonul dvs. compatibil Java. Se
+Dacă monitorizați articolele peste, sub și deteriorate, această opțiune ar trebui
+fi marcat.
+Setarea nivelului implicit de detaliu
+Folosit cu: MobileCast
+Pagina Analist - Nivel de detaliu din meniul Opțiuni vă permite să stabiliți nivelul de detaliu
+detalii care vor fi monitorizate pentru rute în MobileCast. Puteți alege
+monitorizați doar opririle, comenzile sau chiar articolele de comandă ale comenzilor de pe rute. Se
+Dacă utilizați containere, puteți stabili și parametrii care

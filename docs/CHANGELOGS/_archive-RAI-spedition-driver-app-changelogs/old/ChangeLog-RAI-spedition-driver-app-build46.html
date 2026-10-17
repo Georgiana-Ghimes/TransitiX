@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition · Documente · Sprint 5 · Changelog (închis)</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3, h4 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 20pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.2em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 1em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    h4 { font-size: 10.5pt; margin-top: 0.85em; color: var(--accent); }
+    p { margin: 0.35em 0 0.6em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 20px 22px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.25em 0 0.65em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.6em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.4em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.7em 0 0.25em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-after: avoid; }
+      h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Sprint 5 · Changelog</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune <strong>v1.6.1 · build 46</strong> · deschis <strong>16 septembrie 2026</strong> ·
+      închis <strong>17 septembrie 2026</strong><br />
+      Consolidat pe build-uri (build 46) · handoff HTML + PDF
+    </div>
+    <div class="badge-row">
+      <span class="badge">Sprint 5 · închis</span>
+      <span class="badge">OCR / șofer</span>
+      <span class="badge">Setări sidebar</span>
+      <span class="badge">Email anexă</span>
+      <span class="badge">UI mobil</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Companion <strong>RAI Spedition · Documente</strong> — <strong>Sprint 5</strong> (închis).
+    Local în <code>docs/CHANGELOGS/</code>
+    (<code>ChangeLog-RAI-spedition-driver-app-build46.html</code> / <code>.pdf</code>).
+    Handoff-ul anterior (build 34–45) rămâne în
+    <code>ChangeLog-RAI-spedition-driver-app-build45.html</code> / <code>.pdf</code>.
+  </p>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> OCR / upload șofer nu mai blochează „Se procesează…”; Setări companie
+    în footer (și pe companion); modal email anexă se închide după fallback; prima poză după pauză
+    nu se mai pierde; branding sidebar vizibil pe mobil.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>46</td><td>v1.6.1</td><td>OCR stuck, Setări, email, foto 1, branding mobil</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ========== 46 ========== -->
+  <section class="build-block">
+    <h3>Build 46 · v1.6.1</h3>
+    <div class="section-label">Changelog</div>
+    <p class="muted">(nimic pe build-ul ăsta — doar remedieri)</p>
+    <div class="section-label">Bugfix</div>
+    <h4>Timeout OCR în fundal nu mai blochează „Se procesează…”</h4>
+    <ul>
+      <li>Extract scurt (~45 s) + retry în fundal: rămâne ca înainte (rândul stă pe uploaded cât rulează retry-ul).</li>
+      <li>Dacă și bugetul din fundal (~300 s) expiră: avizul e marcat eșuat OCR („Fără OCR” / de revizuit),
+        nu mai rămâne spinner la nesfârșit.</li>
+      <li>Caz tipic: prima foto pe VM „rece” (Paddle + rotații); al doilea upload mergea, primul rămânea blocat.</li>
+      <li>Remediere operator: <strong>Re-extrage</strong> pe rândul respectiv (Paddle e deja cald).</li>
+    </ul>
+    <h4>Setări — un singur loc în sidebar (și pe companion)</h4>
+    <ul>
+      <li>Link <strong>Setări companie</strong> jos în meniu, lângă Ghid (iconiță roată) — același contract pe companion și pe TMS full.</li>
+      <li>Înainte pe companion footer-ul era ascuns (<code>!documentsCompanion</code>), deși <code>/settings</code> e setarea de firmă (expirări documente etc.).</li>
+      <li>Doar rol <strong>admin</strong>; dropdown avatar: doar <strong>Deconectare</strong> (fără reintrare Setări).</li>
+      <li>Scos din lista de ecrane companion (nu mai e duplicat în nav + footer).</li>
+    </ul>
+    <h4>Modal „Trimite anexa” se închide după fallback descărcare</h4>
+    <ul>
+      <li>Dacă emailul nu pleacă (ex. Resend neconfigurat) și anexa se descarcă automat, modalul se închide —
+        ca la trimitere reușită.</li>
+      <li>Înainte rămânea deschis cu Trimite activ, fără semnal că fișierul era deja în Downloads.</li>
+      <li>Toast: „Email netrimis — anexa descărcată”, cu instrucțiune scurtă.</li>
+    </ul>
+    <h4>Avize de la șofer nu mai rămân etern pe „Se procesează…”</h4>
+    <ul>
+      <li>La timeout OCR pe calea din fundal (upload șofer), rândul e marcat eșuat („Fără OCR” / de revizuit),
+        nu rămâne pe spinner.</li>
+      <li>Upload-uri blocate &gt; buget OCR + 1 min: la listare (birou / șofer) sau la un extract nou sunt
+        marcate automat eșuate — acoperă și restart de proces / sidecar hung.</li>
+      <li>În listă birou, pe durata procesării coloana TPO arată „Se procesează…”, nu numele fișierului
+        (ex. șir numeric de pe telefon, confuz cu un TPO).</li>
+      <li>În app șofer: status clar „Eșuat OCR · biroul poate Re-extrage” când extracția a eșuat.</li>
+    </ul>
+    <h4>Prima poză după pauză / deschidere nu mai „se pierde”</h4>
+    <ul>
+      <li>După o pauză lungă, aplicația putea crede că e offline: prima poză mergea doar pe telefon
+        (outbox), fără rând nou la „Trimise recent”; a doua (conexiune caldă) mergea pe server.</li>
+      <li>Acum se încearcă mereu rețeaua dacă browserul nu e offline; outbox doar dacă trimiterea pică.</li>
+      <li>La revenirea pe tab se re-sondează API-ul, ca flag-ul online să nu rămână învechit.</li>
+      <li>Verificarea de claritate (blur) are timeout (~2,5 s): primul decode după wake nu mai blochează
+        trimiterea; butonul Foto e ocupat în timpul verificării, ca să nu pornească a doua poză peste prima.</li>
+    </ul>
+    <h4>Branding sidebar vizibil pe mobil / tabletă</h4>
+    <ul>
+      <li>Meniul hamburger: sidebar + overlay stau deasupra header-ului alb (z-index), ca logo-ul și
+        versiunea din capul meniului să nu mai fie tăiate în spatele barei cu ☰ / clopot / avatar.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    Sprint 5 · deschis 16 septembrie 2026 · închis 17 septembrie 2026 ·
+    build 46 (v1.6.1) · branch RAI-spedition-driver-app · docs/ local only
+  </footer>
+
+</body>
+</html>

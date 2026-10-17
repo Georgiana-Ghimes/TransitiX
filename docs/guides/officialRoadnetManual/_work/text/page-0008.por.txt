@@ -1,0 +1,89 @@
+Introdução ao MobileCast
+Utilizado com: MobileCast
+!O MobileCast, parte do Roadnet Transportation Suite da UPS Logistics Technologies, é um
+software abrangente de roteirização que programa, roteiriza e monitora suas entregas. Com o
+MobileCast, você pode executar facilmente as tarefas mais comuns, como criar rotas, iniciar rotas,
+conciuir paradas e rotas, controlar a eficiência e monitorar o desempenho dos motoristas.
+.A primeira etapa para uso do MobileCast é configurar e manter os dados. O módulo Manutenção
+permite inserir todas as informações essenciais do cliente que, em seguida, são utilizadas para criar
+sSuas rotas. Existem doze etapas principais que precisam ser concluídas para começar a criar rotas.
+Essas etapas são: adição de regiões, definição das opções, adição de status e tipos, adição de
+madeaperaçães Ê
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Introdução ao Roadnet Transportation Suite
+funcionários, adição de motoristas, adição de equipamentos, adição de clientes, adição de modelos
+de percurso, adição de códigos de motivo, adição de códigos de cancelamento de parada, adição de
+tipos de container e adição de containers.
+Se estiver utilizando comunicação sem fio, você precisará saber como trabalhar com alertas ao
+motorista, códigos de impossibilidade de entrega na parada, mensagens de texto, eventos sem fio,
+| centro de mensagens e como enviar mensagens aos motoristas.
+Em seguida, você desejará manter suas informações atualizadas. Essa tarefa pode parecer tediosa,
+mas o MobileCast permite importar rapidamente informações sobre containers, motoristas,
+funcionários, equipamentos, rotas, rotas estáticas e locais e pedidos de clientes.
+Após importar clientes e pedidos no MobileCast, é possível utilizar o Analista para criar suas rotas
+padrão. Depois de fazer isso, é possível adicionar paradas, transferir paradas, atribuir motoristas e
+equipamentos, atribuir e cancelar a atribuição deparadas, criar rotas estáticas e iniciar e concluir
+suas rotas.
+Agora que criou suas rotas com êxito e está mais familiarizado com as funções do MobileCast,
+você pode utilizar as janelas e mapas do Analista para exibir suas rotas, monitorar motoristas,
+monitorar equipamentos, exibir o histórico da rota e da posição dos equipamentos e examinar
+quaisquer exceções de rotas. Além disso, é possível gerar e imprimir orientações do motorista e
+qualquer número de relatórios informativos.
+|O MobileCast possui vários outros recursos não descritos acima; consulte o Guia de operações do
+“Roadnet Transportation Suite ou o sistema de ajuda completo para obter informações sobre esses
+Tecursos.
+FITITAFAFAT A E Foadnet Tranporiation Sufe
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Sobre este manual
+Sobre este manual
+(O Guia de operações explica como utilizar o Roaánet Transportation Suíte para roteirizar
+€ carregar seu equipamento de maneira eficiente. O Transportation Suíte é composto de
+três programas principais: o Editor de roteirização do Roadnet, o Editor de planejamento
+do Territory Planner, o Analista do MobileCast e o Editor de carregamentos do
+FleetLoader. Embora você possa estar utilizando uma parte do suíte global, este Guia de
+operações contém instruções sobre como utilizar todo o suite.
+O manval é dividido em várias seções:
+* Introdução ao Roadnet Transportation Suite — descreve operações básicas do
+programa e navegação comum a todas as partes do Transportation Suite
+* “ Manvtenção do Roadnet Transportation Suite — uma seção de etapas detalhadas
+para inserir e manter dados de todas as partes do Transportation Suíte
+* — Importação para o Roadnet Transportation Suite — uma seção que explica o
+processo de importação e descreve critérios de importação de todas as partes do
+Transportation Suíte
+* Criaçãoderotas no Editor de roteirização — instruções detalhadas para execução de
+tarefas críticas para a criação de rotas diárias utilizando o Editor de roteirização do
+Roadnet
+* Criação derotas no Editor de planejamento — instruções detalhadas para execução
+de tarefas criticas para a criação de rotas de planejamento utilizando o Editor de
+planejamento do Territory Planner
+* Carregamento no Editor de carregamentos — instruções detalhadas para execução de
+tarefas críticas para carregamento de veículos utilizando o Editor de carregamentos
+do FleetLoader
+* — Expedição no MobileCast — instruções detalhadas para execução de tarefas de
+roteirização diárias utilizando o Analista do MobileCast.
+* — Relatórios no Roadnet Transportation Suíte — descreve todos os relatórios que
+podem ser impressos no Transportation Suite
+* Histórico darota — descreve como o banco de dados de Histórico da rota é acessado
+e configurado. O banco de dados de Histórico da rota foi desenvolvido para permitir
+a manutenção de dados históricos de roteirização por mais tempo e torná-lo mais
+fácil de consultar para extrair dados, como para relatórios.
+* — Glossário — um glossário que ajuda com termos não familiares utilizados no
+Transportation Suíte
+Além disso, um índice está incluído para ajudar a localizar informações no manual.
+EMIIBOpEraçõe Ê
+€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados.
+Convenções utilizadas neste manual
+* Todasasreferências a teclas do teclado estão entre chaves, por exemplo:
+Pressione [Enter] para confirmar.
+* Todasasreferências a botões na tela estão entre chaves, por exemplo:
+Clique no botão [OK] quando todas as informações estiverem preenchidas.
+* A palavrapressione refere-se a teclas do teclado; clique refere-se ao mouse.
+* — Caminhos de menus são exibidos em negrito e itálico abaixo da tarefa para fornecer
+um lembrete rápido de como acessar uma função específica. Por exemplo:
+Cadastros — Produto — Tipos de embalagem
+* — Otermoclicar indica o uso do botão principal do mouse; clícar com o botão direito
+do mouse indica clicar com o botão secundário do mouse; e clícar duas vezes indica
+Cfie SEoo a TEA EAA A S ÁR E Dn a dA S A SS o

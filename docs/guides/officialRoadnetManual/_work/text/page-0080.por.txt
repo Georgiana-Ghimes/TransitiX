@@ -1,0 +1,67 @@
+TTAA 5 AAAA 2A aeaA S AENA NSVA RAULArANS o
+(Ã) Dica: Os clientes inativos também podem ser adicionados e excluídos na página
+AAtributos estendidos do menu Cliente.
+TT ,, ,,, Roadhet Traporiation SE
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com preferências de carregamento
+Como trabalhar com preferências de carregamento
+Utilizado com: FleetLoader
+As preferências de carregamento permitem restringir a área de um veículo para o
+carregamento de pedidos específicos. Isto é útil se uma área do veículo fica inacessível na
+parada, como no caso da doca ser localizada em uma rua estreita. Essas informações são
+usadas 20 carregar veículos se o método Otimização para descarga ou um dos métodos
+Hibridos for selecionado no FleetLoader. Tambérm é possível adicionar preferências de
+carregamento na página Atributos estendidos do menu Cliente.
+s Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+K Etapa 2: Clique no menu Cadastros, selecione Clientes e, em seguida, Preferências de
+” carregamento. A janela Preferências de carregamento é exibida.
+[W| Nota: Para ver uma lista atualizada de preferências de carregamento, clique no ícone
+" “Atualizar; a janela será atualizada com as informações mais recentes do banco de
+dados.
+8 Etapa3: Najanela Preferências de carregamento, clique no ícone Adicionar ou
+pressione [Insert]. A janela Adicionar preferências de carregamento é exibida.
+Ã) Dica: Paraadicionar uma enrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira a ID do cliente e o Tipo do cliente nos campos corretos. Esses campos
+devem ser preenchidos.
+[5 20 ccón ntesses — EE
+ET
+Ex Se estiver utilizando Otimização
+fEN | Paradescarga ou um dos métodos
+o “híbridos para carregar seus
+F" —— | veículos no Flseiloader você
+[S .poderá especificar onde você
+[er= — — —— ) dessjaqueospedidosdocliente
+Etapa 5: Clique na seta Quadrante e selecione a área do veículo em que deseja carregar
+* produto do cliente. Os pedidos do cliente serão carregados no quadrante
+selecionado.
+[ É Etapa 6: Clique no ícone Satvar ou pressione [Ctril+[S]
+% — Etapa7: Continue adicionando preferências de carregamento conforme necessário.
+Após a adição de todas as preferências de carregamento, clique na caixa Fechar
+para fechar a janela Adicionar preferências de carregamento.
+Ícone Manutenção — Cadastros — Clientes — Preferências de carregamento —
+ícone Adicionar ([Insert]) — ícone Salvar ([Ctrl]*+[S])
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com preferências de carregamento
+AAs preferências de carregamento existentes podem ser editadas ou excluídas, conforme
+mecessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+MET AA o Roadhet Travporiafion Su
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com campos definidos pelo usuário
+Como trabalhar com campos definidos pelo usuário
+Utilizado com: Territory Planner
+Os campos definidos pelo usuário permitem armazenar informações adicionais que não
+são fornecidas pelo Territory Planner sobre as extensões de cliente. Por exemplo, se você
+negocia com redes de lojas e cada loja possuir um número, é possível inserir o número da
+1oja como campo definido pelo usuário. As informações armazenadas nos campos
+definidos pelo usuário não são usadas pelo Territory Planner, mas são exibidas com as
+extensões de cliente e podem ser importadas e exportadas. Os campos definidos pelo
+usuário podem ser alfanuméricos ou somente numéricos. Se um campo for designado
+como numérico, os totais da coluna serão exibidos na janela Extensões de clientes, na lista
+Voradas tu qualeaues un Vantia om qual siccalanas seaat esibndas.

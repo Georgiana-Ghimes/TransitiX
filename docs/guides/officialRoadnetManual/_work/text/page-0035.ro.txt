@@ -1,0 +1,90 @@
+(Cum se lucrează cu echipamentul
+Cum se lucrează cu echipamentul
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Echipamentul se referă în general la vehiculele utilizate pentru livrarea produselor;
+cu toate acestea, un articol de echipament poate fi orice articol utilizat într-o livrare.
+Înainte ca echipamentele să poată fi adăugate, tipurile de echipamente trebuie să fie
+adăugat. Puteți adăuga tipuri de echipamente individual sau le puteți importa
+ei; Consultați Importarea elementelor de întreținere pentru mai multe informații despre cum
+tipuri de echipamente de import.
+[) Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+w — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Echipament și apoi
+Echipamente. Lista curentă a tipurilor de echipamente nu va fi afișată. Asta face
+Sistemul funcționează mai rapid decât dacă ar fi încărcată întreaga listă
+de fiecare dată. Pentru a vizualiza numai lista curentă de tipuri sau tipuri de echipamente
+” echipamente specifice, utilizați funcția de căutare.
+Note: Pentru a vedea o listă actualizată de echipamente, faceți clic pe pictograma Actualizare; fereastra
+va fi actualizat cu cele mai recente informații din baza de date,
+|echipamentul afișat cu roșu este partajat de altă regiune; este
+„Le puteți atribui rutelor și le puteți afișa informațiile, dar nu puteți
+iti modific informatiile.
+2 Pasul 3: În fereastra Echipament, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Pentru a
+Q) Apare fereastra Add Equipment.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Faceți clic pe intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+TTAA AAA Roadrer Traporiafon SÃe
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum se lucrează cu echipamentul
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+t
+Şi
+—— Fh
+ee DM p
+p
+)n
+- 4
+Puteți atribui un șofer preferat acestui vehicul mare
+medie, care poate fi atribuită traseului cu echipamentul în
+Pasul 4: Introduceți până la 20 de caractere pentru ID-ul echipamentului. Acest câmp trebuie să fie
+umplut.
+j Pasul 5: Introduceți până la 255 de caractere în Descriere.
+É) Pasul 6: Faceți clic pe săgeata ID tip echipament pentru a deschide fereastra Căutare - Tip echipament.
+echipamente. Faceți dublu clic pe un element pentru a-l selecta sau faceți clic pe
+element și pictograma Proces. Trebuie să selectați un tip de echipament.
+Pasul 7: Dacă utilizați Roadnet, atribuiți un driver preferat și
+echipamentul asociat, dacă este necesar. Faceți clic pe săgeata corespunzătoare pentru a deschide
+. Fereastra JSearch. Faceți dublu clic pe un element pentru a-l selecta sau faceți clic pe
+element și pictograma Proces. Când selectați echipamentul asociat, utilizați
+Căutați pentru a găsi echipamentul pe care îl căutați. Când echipamentul este
+afișat în listă, faceți dublu clic pentru a-l selecta sau faceți clic pe un element din listă.
+echipament, apoi faceți clic pe pictograma Proces.
+Notă: Când selectați un driver preferat și apoi atribuiți un
+echipamentul către o rută în Editorul de rutare, șoferul preferat poate
+să fie alocate automat rutei (dar aceasta poate fi modificată).
+Pasul 8: Introduceți o stare pentru echipament. Dacă utilizați MobileCast,
+Acest câmp trebuie completat.
+AA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum se lucrează cu echipamentul
+Pasul 9: Introduceți data la care echipamentul urmează să fie inspectat în câmpul Data inspecției.
+inspecție.
+Pasul 10: Dacă echipamentul poate fi utilizat în orice altă regiune, selectați
+regiuni în caseta Partajată de regiuni. Pentru a selecta mai mult de unul
+regiune, selectați prima regiune, apoi apăsați și mențineți apăsat
+ținând apăsată tasta [Ctrl] în timp ce le selectați pe celelalte.
+Pasul 11: Selectați un statut de proprietate pentru echipament. Dacă echipamentul
+aparțin regiunii, selectați Dedicat. Dacă echipamentul este un înlocuitor
+de pe alt dispozitiv, selectați Înlocuire. Dacă echipamentul este deteriorat,
+selectați Închiriere.
+Pasul 12: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva informațiile
+despre echipament.
+Dacă utilizați FleetLoader, consultați Restricțiile echipamentelor
+și FleetLoader.
+Dacă utilizați MobileCast, consultați Echipamente și MobileCast.
+Pasul 13: Repetați pașii de la 4 la 11 pentru a adăuga orice alt echipament.
+mi — Pasul 14: Când ați terminat de adăugat echipament, faceți clic pe caseta Închidere.
+închideți fereastra Adăugare echipament.
+Pictograma întreținere — Înregistrări — Echipament — Echipament-> Pictogramă Adăugați
+(Mnsert]) — Pictograma Salvare ([Ctri/+[S])
+Echipamentele existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Important: Ștergerea echipamentului afectează alte elemente de întreținere. Înainte
+Pentru a șterge un dispozitiv, trebuie să editați sau să ștergeți driverele dispozitivului.
+preferința acestui echipament.
+Constrângeri de echipament și FleetLoader
+Dacă ați achiziționat FleetLoader și doriți să setați restricții pentru echipamente (cum ar fi
+produsul este încărcat în sloturi) pentru un articol de echipament, faceți clic
+TEA TESRACIOS and CrEAoA Eeo taa A Ascar Se ÓBA D RRENSRRAAO A

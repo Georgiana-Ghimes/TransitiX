@@ -1,0 +1,75 @@
+Equipamento — Equipamento associado ao setor.
+IDdarota — | IDdarotadosetor. A 1D também é atribuída à rota no Editor de
+Toteirização, se especificado.
+Horáriode — O horário em que arota sai do depósito.
+Horáriode — | Horáriode preferência (percurso e tempo de atendimento) para a rota.
+preferência
+Tempo máximo | Tempo máximo de preferência (percurso e tempo de atendimento)
+paraarota.
+Arquivo > Mapa — ícone Editar setor — Editar atributos > [OK]
+Exclusão de setores
+Com o tempo, pode haver setores que não são mais usados. Esses setores devem ser
+excluídos para que não sejam considerados ao roteirizar utilizando esse padrão.
+ª Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+la — Etapa2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+1E — Etapa 3: Clique no icone Editar setores. O cursor muda para um setor com sinal de
+. adição 2o lado do ponteiro, para indicar o modo Adicionar setor. O padrão de
+' setores padrão será exibido no mapa.
+Bmadeoperaçõães A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+Como trabalhar com setores
+Nota: Se você deseja adicionar um setor a um padrão de setores que não está sendo
+exibido como padrão, alterne para o padrão de setor apropriado.
+Etapa 4: Clique com o botão direito do mouse no setor que deseja excluir e selecione
+Excluir setor no menu que será exibido.
+Etapa 5: Clique em [Sim] para confirmar 2 exclusão.
+Arquivo> Mapa — ícone Editar setor >Excluir —[Sim]
+MET AA o Roadhei Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+(Como trabalhar com comentários reais vs. planejados
+Como trabalhar com comentários reais vs. planejados
+Utilizado com: Roadnet
+Os comentários reais vs. planejados possibilitam que o Roadnet Transportation Suíte
+relate o motivo das diferenças entre os tempos de atendimento planejado e real, com base
+nos dados do feedback do motorista em um computador de bordo. Os comentários reais
+vs. planejados também permitem determinar se as entregas com um comentário específico
+devem ser usadas para atualizar o histórico de entregas de um cliente. O Roaánet pode
+usar essas informações de histórico para calcular tempos de atendimento mais precisos.
+(Para obter mais informações sobre este recurso, consulte Atualizar tempos de
+atendimento.) Por exemplo, um motorista demora muito mais que o norma! ao fazer uma
+entrega a um cliente porque seu carrinho de mão quebrou. Como esta entrega não
+FTepresenta as condições normais de entrega, não é desejável que ela seja usada no cálculo
+de um tempo de atendimento mais preciso. O motorista pode inserir um código de
+comentário real vs. planejado em seu manifesto ou no computador de bordo, para indicar
+que esta entrega não deve atualizar o histórico de entregas. Quando as informações são
+inseridas, o código de comentário informa que o sistema não deve armazenar este tempo
+no histórico de entregas.
+ª Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Womes — Etapa 2: Clique no menu Entrada de dados reais e, em seguida, Comentários reais vs.
+planejados. A janela Real vs. planejado é exibida.
+W Nota:Paraver uma lista atualizada de comentários reais vs. planejados, clique no ícone
+“Atualizar; a janela será atualizada com as informações mais recentes do banco de
+s dados.
+2 e Etapa 3: Na janela Comentários reais vs. planejados, clique no ícone Adicionar ou
+í pressione [Insert]. A janela Adicionar comentários reais vs. planejados é
+D exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar comentários reais vs. planejados é exibida com algumas informações já
+preenchidas; altere as informações necessárias na nova entrada.
+Etapa 4: Insira os 3 caracteres do Código de comentário. Esse campo deve ser
+preenchido.
+me' JE ME
+BE a entregas comim
+Ec comentário real vs.
+õ Aocmss “plangjado serão
+|PPsê —— ilizadas para atualizar
+o histórico da entrega.
+e
+Etapa 5: Insira até 30 caracteres na Descrição
+Bmadeoperaçõães AA
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+(Como trabalhar com comentários reais vs. planejados

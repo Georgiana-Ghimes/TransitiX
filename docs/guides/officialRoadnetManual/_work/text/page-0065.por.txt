@@ -1,0 +1,65 @@
+ee — Nota: Para vcr uma lista atualizada de códigos de status, clique no íconc Atualizar; a
+janela será atualizada com todas as informações alteradas do banco de dados.
+| Etapa3: Najanela Códigos de status do pedido, clique no ícone Adicionar ou pressione
+— atecla [Insert]. A janela Adicionar códigos de status do pedido é exibida.
+QÃ) Dia: Paraadicionaruma entrada semelhante 2 uira existente, clique com o batão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar códigos de status do pedido é exibida com algumas informações já
+preenchidas; altere as informações necessárias no novo código de status do pedido.
+Etapa 4: Insira até 3 caracteres para Código. Esse campo deve ser preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+[G Etapa6: Clique no ícone Salvar ou pressione [Ctrl][S] para salvar as informações.
+“m Etapa7: Após a adição de todos os códigos de status do pedido, clique na caixa Fechar
+para fechar a janela Adicionar códigos de status do pedido.
+Toio MisGÇÃO P ClilistrõE EEA Ohigo de ts de palado- i Adiiiaar
+(nsert]) —Ícone Salvar ([Ctrl]+[S])
+Os códigos de status do pedido existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+TT AA E Roadhe Travporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+(Como trabalhar com alertas ao motorista
+Como trabalhar com alertas ao motorista
+Utilizado com: MobileCast
+Se você estiver utilizando comunicação sem fio, você pode configurar alertas o motorista
+para lembrar motoristas sobre uma tarefa associada 2 uma parada. Por exemplo, se a
+parada estiver em uma conta de pagamento contra entrega (COD), você poderá configurar
+um alerta de COD 20 motorista e associá-lo à parada. Também é possível configurar
+alertas 2o motorista para itens específicos de um pedido, como bebida alcoólica, onde o
+motorista deve verificar a identidade ao fazer a entrega. Quando o motorista chega à
+parada, o alerta pisca na tela do dispositivo sem fio para que possa ser visto pelo
+motorista. Os alertas 2o motorista são associados à parada no módulo Analista.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Expedir e Alerta ao motorista. A janela
+Alertas ao motorista é exibida, listando os alertas ao motorista existentes.
+Nota: Para ver uma lista atualizada de alertas 2o motorista, clique no ícone Atualizar; a
+janela será atualizada com todas as informações alteradas do banco de dados.
+Etapa 3: Na janela Alerta 2o motorista, clique no ícone Adicionar ou pressione a tecla
+[Insert]. A janela Adicionar alerta ao motorista é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada de motorista existente e selecione Clonar no menu exibido. À
+janela Adicionar alerta ao motorista é exibida com algumas informações já
+Preenchidas; altere as informações necessárias no novo alerta ao motorista.
+Etapa 4: Insira até 15 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Insira até 255 caracteres para a mensagem que o motorista verá. Esse campo
+deve ser preenchido. Tente manter a mensagem o mais concisa possível.
+m| Etapa6: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar o novo alerta ao
+—— motorista.
+” motorista lembraráo
+= motorista para
+coletar pagamento
+do cliente ao fazer
+mm o
+Etapa 7: Após a adição de todos os alertas ao motorista, clique na caixa Fechar para
+fechar a janela Adicionar alerta ao motorista
+Bmadeaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com alertas ao motorista
+GEA NEEA A NEAA
+(Mnsert]) — icone Salvar ([Ctrl]*[S])
+Os alertas ao motorista existentes podem ser editados ou excluídos, conforme necessário,
+Consuite Edição de itens e Exclusão de itens para obter mais informações.
+BETT AA E Roadhet Travporiafion Su
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.

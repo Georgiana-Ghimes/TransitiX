@@ -1,0 +1,100 @@
+— — opțiuni de întreținere în modulul Administrare. Ú
+Roadnet Transportation Suite vă permite să setați opțiuni implicite legate de diverse
+elemente precum sesiunile de rutare, expedierea, clienții și dispozitivele wireless. Poți
+definiți ce nivel de detaliu ar trebui utilizat de către sistem pentru a afișa timpul de livrare
+serviciu, aliasurile de informații despre cantitate, aliasurile de dimensiune utilizate pentru
+măsurați capacitatea, timpul de serviciu, costurile și alți factori. Daca esti
+Folosind MobileCast, puteți defini valori implicite suplimentare, de exemplu pentru
+codurile motiv și computerul de bord.
+Opțiunile selectate în meniul Opțiuni vor fi folosite în sesiuni de rutare, sesiuni
+de planificare, rute, client și transport, cu excepția cazului în care există o alternativă
+specificat. Unele dintre elementele setate în meniul Opțiuni pot fi, de asemenea, setate
+implicit făcând clic dreapta pe aceste elemente în fereastra listă și
+selectând Standardizare din meniul care apare.
+Notă: Aceste opțiuni nu pot fi setate până când alte elemente de întreținere nu sunt
+adăugat.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul Întreținere.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Opțiuni. Apare meniul Opțiuni.
+Instrumente > Opțiuni
+Pentru mai multe informații, consultați pagina Setări implicite generale, pagina Istoricul rutei,
+Pagina Standarde de rutare generale, pagina Planificare - General, pagina Standarde de rutare
+Client, pagina Alias Defaults, Unit Reference Defaults pagina, Pagina Expediere
+- General, pagina de expediere - Nivel de detaliu, pagina de expediere - Excepții de rută, pagina
+Navă - Marfă și pagina Navă - Contabilitate.
+Setarea setărilor implicite generale
+Folosit cu: Roadnet, Territory Planner, MobileCast
+Pagina General a meniului Opțiuni vă permite să selectați țara care va fi pre-inserată
+pe pagina Atribute din meniul Clienți atunci când adăugați un client nou.
+Pentru a selecta țara implicită, faceți clic pe săgeată pentru a deschide o listă de opțiuni și faceți clic
+o țară pentru a o selecta.
+Pentru a putea alege între toate fusurile orare și nu doar fusurile orare americane
+Nord, bifați Afișați fusurile orare internaționale.
+Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+E Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Rutare - Configurare generală a paginii
+Folosit cu: Roadnet, FleetLoader
+Pagina Rutare - General a meniului Opțiuni vă permite să definiți setările implicite utilizate la creare
+sesiuni de rutare și rute către Editorul de rutare. Selectați metoda de
+Calculul de timp/distanță pe care doriți să îl utilizați, dacă doriți să cumulați comenzile și să forțați
+Monitorizarea DT și dacă doriți să utilizați bariere (dacă utilizați metoda XY) sau
+pentru orele de vârf în sesiunile dvs. de scriere de scenarii. Opțiunile selectate vor fi
+valorile implicite pentru orice sesiuni noi de rutare și rute create; cu toate acestea, aceste opțiuni
+poate fi schimbat în Editorul de rutare.
+Pe lângă definirea setărilor implicite pentru sesiunile de rutare, puteți defini și
+modele care vor fi folosite la crearea rutelor. Setați ora de pornire implicită, oricare
+programări înainte și după traseu, pe lângă selectarea șoferului, modelului rutei, depozitului și
+tip de echipament standard.
+Fila Sesiuni de rutare conține elemente standard utilizate pentru sesiunile în
+Pasul 1: În zona Setări implicite, selectați driverul implicit, modelul timpului de conducere,
+0 tip de echipament și depozit; se explică importanţa fiecărui depozit
+mai jos. Pentru a selecta un model, faceți clic pe săgeata corespunzătoare pentru a deschide a
+Fereastra de căutare. Faceți dublu clic pe un articol sau faceți clic pe un articol, apoi faceți clic
+Apoi faceți clic pe pictograma Proces pentru a o selecta.
+Depozitul se referă la depozitul ales automat pentru o rută.
+Editor de rutare dacă nu este alocat un alt depozit.
+u „Suită de transport Roadhnet
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Tipul de echipament se referă la tipul de echipament ales
+automat către o rută Editor dacă alt tip de echipament nu o face
+este atribuit. Tipurile de echipamente determină capacitatea
+echipamentele alocate rutei și sunt utilizate pentru calcularea costurilor când
+sunt create rute.
+Modelul timpului de călătorie se referă la metoda de calcul a timpului de călătorie
+ruta pentru rutele Editor. Modelul de timp de călătorie în țară va fi
+folosit cu excepția cazului în care este selectat un alt model de timp de călătorie în
+Editor de rutare sau dacă nu selectați RouteNet ca
+calculator timp de călătorie.
+Șoferul se referă la șoferul ale cărui costuri vor fi utilizate pentru a calcula
+costurile rutei dacă niciun alt șofer nu este alocat rutei.
+Pasul 2: Marcați zilele lucrătoare ale săptămânii care sunt potrivite pentru afacerea dvs. Zilele lucrătoare ale
+săptămână se referă la zilele cu rute pentru compania dumneavoastră. Această informație este
+folosit la stabilirea zilei pentru care se creează o sesiune.
+Pasul 3: Când cumulați comenzile de la un singur client într-o singură oprire, faceți clic pe butonul
+[Aggregate Orders] pentru a deschide fereastra Aggregate Orders Options, unde puteți
+posibil să se definească liniile directoare care ar trebui utilizate atunci când se determină dacă comenzile
+ar trebui să fie agregate sau nu. Pentru ca două cereri să poată fi agregate, the
+comenzile trebuie să aibă același ID de client și același ID de rută preferată
+u cel puțin unul dintre ei nu trebuie să aibă un ID de rută preferată. Opțiunile
+sunt explicate mai jos.
+Selectoare — Dacă comenzile au selectoare, puteți ignora selectoarele când
+agregați-le (Aggregate all) sau nu agregați ordinele dacă selectorii nu sunt
+potriviri (Separați toate). Sau, creați grupuri de selectoare și
+specificați că comenzile cu acești selectori pot fi agregate (Aggregate
+pe grup). Introduceți selectoarele pentru fiecare grup în câmpurile Grupuri de selecție.
+Preluări și livrări agregate — bifați pentru a activa ridicările și livrările
+sFi agregat. Dacă această opțiune nu este selectată, solicitările de colectare și
+livrările nu vor fi agregate.
+Comenzile agregate cu modificări ale ferestrei de onorare care nu se potrivesc
+— verificați pentru a permite agregarea comenzilor chiar dacă ferestrele
+serviciile nu se potrivesc. Dacă această opțiune este selectată,
+faceți clic pe săgeata de preferință a selecției de modificare a ferestrei de serviciu și
+alegeți fereastra de onorare care trebuie utilizată pentru toate comenzile
+agregate.
+Luați în considerare seturile de abilități - bifați pentru a permite solicitările
+cu activități de ordonare din același set de abilități sunt agregate.
+Dacă această opțiune nu este selectată și comenzile includ activități care nu sunt

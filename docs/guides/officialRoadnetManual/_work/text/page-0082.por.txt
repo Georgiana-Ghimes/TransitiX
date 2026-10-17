@@ -1,0 +1,105 @@
+(Como trabalhar com modelos para horário de rush
+Nota: O MobileCast não utiliza informações de horário de rush ao calcular tempos de
+Criação do modelo para horário de rush
+A primeira etapa para configurar as informações de horário de rush é criar o modelo para
+horário de rush. Para cada modeto para horário de rush, você pode definir até três períodos
+detempo distintos, cada um com variações de velocidade separadas e outros atributos. Por
+exemplo, é possível definir um horário de rush para a manhã e um para a noite, nos quais
+as velocidades são reduzidas, e também um período à meia-noite no qual as velocidades
+aumentam.
+Os modelos para horário de rush podem ser criados somente no móduto Manutenção,
+embora seja possível editar um modelo existente no Editor de planejamento ou Editor de
+roteirização.
+. Nota: Se você não recebeu permissão para editar modelos para horário de rush no módulo
+Administração, não poderá adicionar um modelo para horário de rush.
+M Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+man — Etapa 2: Clique no menu Arquivo e selecione Mapa. O mapa é exibido.
+[2]] - Etapa 3: Clique no ícone Propriedades do mapa e selecione Propriedades no menu. O
+menu Propriedades do mapa é exibido.
+Etapa 4: Clique na página Horário de rush. Para adicionar um novo modeto para horário
+de rush, clique na seta Modelo para horário de rush atual. À janela Modelos
+para horário de rush é exibida.
+ÉG| Etapa5: Clique no icone Adicionar. A janela Adicionar modelo para horário de rush é
+— exibida.
+EX
+M s períodos dsfinidos não
+-= — podem ser alterados para
+iferentes áreas e
+TE caminhos. No entanto, as
+— sm 0 eeimamem | ) variações de velocidade
+e “podem ser diferentes.
+R& —— oshos MTA
+É —— p
+MT A ,, ,, ,,;,; F Roadhet Tranporiation Sute
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+Etapa 6: Insira um nome e uma descrição para o modelo para horário de rush. Você deve
+digitar um nome.
+Etapa 7: Marque a caixa Ativar para Período 1. Digite um nome para o período, como
+AM ou Manhã, e um horário de término para o período de horário de rush.
+Etapa 8: Selecione se a velocidade deve ser aumentada (Mais rápido) ou reduzida (Mais
+devagar). À nova velocidade será utilizada quando o tempo de percurso for
+calculado.
+Se você aumentar a velocidade em 25%, 60 MPH aumentará para 75 MPH.
+Se reduzir a velocidade em 25%, 60 MPH diminuirá para 45 MPH.
+j) Importante: Qualquer variação de velocidade inserida aqui será utilizada em todas as
+Tuas não incluídas em uma área ou caminho de horário de rush.
+Etapa 9: Continue com os períodos restantes, conforme necessário. Ao adicionar um
+modelo para horário de rush, lembre-se:
+* — Ohorário de término de cada período deve ocorrer após o horário de início.
+* — Os períodos não podem ser sobrepostos. No entanto, um novo período pode iniciar
+no horário de término do periodo anterior.
+1G Etapa10: Clique no icone Satvar ([Ctr]-[S]) para satvar o modelo de horário de rush.
+m Etapa11: Repitaas etapas 6 a 10 para adicionar mais modelos para horário de rush.
+Quando todos os modelos para horário de rush necessários forem
+adicionados, clique na caixa Fechar para fechar a janela Adicionar modelo
+para horário de rush.
+Ícone Manutenção — Arquivo — Mapa — ícone Propriedades do mapa ícone
+Adicionar > ícone Salvar
+Os modelos para horário de rush existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Para criar um novo modelo com as mesmas áreas e caminhos, você pode clonar o modelo
+existente. Consulte Clonagem de itens para obter mais informações.
+Após adicionar os modelos para horário de rush, é possível criar áreas de horário de rush
+e caminhos no mapa. Para trabalhar com o modelo para horário de rush no mapa, é
+necessário selecioná-lo como Horário de rush atual do mapa. Para selecionar uma área de
+horário de rush, clique n área na janela Modelos para horário de rush e, em seguida,
+clique no ícone Processar.
+Seleção da exibição do horário de rush no mapa
+Asáreas e caminhos de horário de rush são desenhados no mapa em modo Horário de
+Tush. Para entrar em modo Horário de rush, é necessário selecionar o modelo para horário
+de rush com o qua! deseja trabalhar. Qualquer área e caminho que existam para o modelo
+aparecerão no mapa enquanto você estiver em modo de horário de rush. É possível
+específicar como os caminhos e áreas são exibidos no mapa.
+Bmiadaperaçães AAA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com modelos para horário de rush
+Um modelo para horário de rush atual somente pode ser selecionado no módulo
+Manutenção, mas é possível alterar as opções de exibição no módulo Manutenção, no
+Editor de roteirização ou no Editor de planejamento. Estas etapas supõem que você esteja
+trabalhando no módulo Manutenção.
+N Etapa1: Clique no icone Manvtenção para abrir o respectivo módulo
+MWsansoa — Etapa 2: Clique no menu Arquivo e selecione Mapa. O mapa é exibido.
+(| | Etapa 3: Clique no ícone Propriedades do mapa e selecione Propriedades no menu. O
+menu Propriedades do mapa é exibido.
+Etapa 4: Clique na guia Horário de rush. A página Horário de rush é exibida.
+EE
+FPNE
+mu Rsh | NE | Sete | 4 óreaeos caminhos de
+Cmantaa a horário de rush serão
+Bm — dl EA
+Revtatos você estiver no modo
+E e Horário de rush Para que
+'eles sejam exibidos durante
+man todo o tempo, selecione
+me s Exibir áreas e caminhos do
+horário de rush.
+PNT
+Etapa 5: Clique na seta Modelo para horário de rush atual. A janela Modelos para
+horário de rush é exibida.
+Etapa 6: Clique duas vezes no modelo para horário de rush que deseja exibir no mapa,
+É "
+u clique no modelo e, em seguida, no ícone Processar. Se você não deseja
+utilizar um modelo para horário de rush, selecione a caixa Nenhum.

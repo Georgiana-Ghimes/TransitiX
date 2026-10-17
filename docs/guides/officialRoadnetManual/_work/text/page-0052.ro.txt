@@ -1,0 +1,76 @@
+[Traducere eșuată pentru acest fragment]
+TESSRRNA BSRNAN UNA BD U SAA RS EAA
+motorista entregar produtos. Não inclua o tempo de percurso
+Para inserir informações de produtividade de carregamento clique na seta
+apropriada para abrir uma lista de funcionários, tipos de compartimento ou tipos
+de equipamento. Clique áuas vezes em um item para selecioná-lo ou clique no
+item e no ícone Processar. Insira o tempo de atendimento no formato HH:MM.
+Mmadeoperaçães o MM
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Monitoramento de produtividade
+Clique no botão [Adicionar]. Continue até que todas as informações de
+produtividade de carregamento da rota tenham sido inseridas.
+“Pode haver mais de uma pessoa carregando o veículo para uma rota,
+portanto o FlestLoader permite digitar informações para vários
+Para alterar uma entrada de produtividade de carregamento, clique nela na lista,
+faça as alterações e, em seguida, clique no botão [Atualizar]
+Para excluir uma entrada de produtividade de carregamento, clique nela na lista
+e clique no botão [Remover]
+Etapa 7: Clique no ícone Salvar ou pressione [Ctrl]+[S]. Se foram selecionadas diversas
+rotas, a próxima rota será selecionada automaticamente na lista de rotas.
+= — Etapa$: Continue inserindo as informações de produtividade. Quando todas as
+informações de produtividade tiverem sido inseridas, clique na caixa Fechar
+para fechar a janela Produtividade.
+Ícone Manutenção — Entrada de dados reais —Produtividade do motorista/
+“Produtividade de carregamento sícone Salvar ([Ctrl]+[S])
+Para remover as informações de produtividade de carregamento de um funcionário de
+uma rota enquanto mantém o restante das informações da rota, selecione as informações
+do funcionário e clique no botão [Remover]. Para alterar as informações de produtividade
+de carregamento de um funcionário, selecione as informações do funcionário na lista, faça
+as alterações necessárias e, em seguida, clique no botão [Atualizar].
+LT A AA A E Foadnet Transporiation Sule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com o modelo de distância
+Como trabalhar com o modelo de distância
+Utilizado com: Roadnet, Territory Planner, MobileCast
+Quando o Roaánet Transportation Suíte conhece a localização dos clientes, pode calcular
+a distância entre eles. Um dos métodos de cálculo de distância utilizado é a rede de ruas
+do RouteNet; o outro método é o modelo de distância. O modelo de distância multiplica
+a distância em linha reta entre dois pontos por um fator especificado pelo usuário, para
+levar em consideração as voltas e curvas no percurso. Por exemplo, quanto mais próximos
+dois clientes estiverem entre si, é mais provável que estejam em uma área urbana e,
+portanto, haverá mais voltas entre os dois pontos devido ao maior número de uas, de
+modo que o fator será mais elevado. Em oposição, quanto mais distantes dois clientes
+estiverem entre si, é mais provável que um motorista utilize estradas principais (como
+rodovias) para chegar de um ponto ao outro. Grandes rodovias significam menos voltas,
+portanto o fator seria menor com o aumento da distância.
+O Roadnet Transportation Suite utiliza somente um modelo de distância; não é possível
+adicionar ou excluir o modelo, mas você pode editá-lo.
+Nota: Se você não recebeu permissão para editar tempo de percurso/modelos de distância
+no módulo Administração, não poderá editar o modelo de distância.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Modelos de percurso e, em seguida,
+Modelo de distância. À janela Modelo de distância é exibida.
+Etapa 3: Altere as informações na janela conforme necessário. O modelo indica que a
+Distância (coluna da esquerda) entre os dois clientes será multiplicada pelo
+Fator (coluna da direita).
+A primeira linha no modelo de distância m—
+indica que se dois pontos não etiverema — | 1 3
+mais de 10 milhas de distância, a — e
+distância em linha reta será multiplicada | f PS
+porl37. : P
+Etapa 4: Clique no botão [OK] para salvar as alterações ou em [Cancelar] para abortar.
+Clicar em qualquer um dos botões fecha a janela Modelo de distância.
+FEGGS SSS ES și NSS SSAA MA S
+ok
+. Notă: UPS Logistics Technologies recomandă editarea modelului implicit de distanță
+numai dacă observați o discrepanță semnificativă în raport cu kilometrajul real al
+șofer, așa cum a raportat un kilometraj. Dacă discrepanța este în timp de
+madeaperações o Ê
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum se lucrează cu modelul la distanță
+traseu, editați sau adăugați un șablon de timp de traseu. Vezi Cum
+lucrați cu modele de timp de călătorie pentru a obține mai multe informații.

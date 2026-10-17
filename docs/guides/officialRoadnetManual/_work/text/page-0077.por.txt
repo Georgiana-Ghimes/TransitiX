@@ -1,0 +1,60 @@
+MUA SRA ESA CREESA TA
+clique duas vezes sobre o cliente na janela Clientes e, em seguida, clique na guia
+Extensão de cliente. Insira as informações da extensão de cliente para a nova sessão
+de planejamento.
+MBE AA A A L Foadnet Tranporiation Sufe
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Inserção de informações de expedição
+-A página Expedir do menu Cliente, aberta ao adicionar ou editar um cliente, permite
+inserir informações avançadas sobre o cliente, incluindo informações de contato e falha
+de serviço. Todas as informações nesta página são opcionais.
+Etapa 1: Se o cliente deseja ser notificado sobre um atraso na entrega, marque a caixa
+Notificação de falha de serviço.
+Confirme se a caixa Notificar está selecionada. Clique na seta para selecionar
+um tipo de falha de serviço. As opções são enviar um e-mail ou enviar uma
+mensagem ao analista. Se for enviado um e-mail, insira o endereço de e-mail
+exato da pessoa a ser contatada no campo Contato. Insira o número minimo de
+minutos que a entrega deve atrasar antes de o cliente ser contatado.
+Tnsira a falha de serviço e as informações de contato na página
+“Expedir do menu Cliente.
+madeaperaçães o 7
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Nota: Será enviada uma notificação na primeira vez em que a parada atender a um dos
+seguintes critérios:
+OO horário projetado de chegada ou partida de uma parada está fora de ambas as
+Janelas de atendimento 1 e 2, ou fora do Horário de abertura/fechamento da parada.
+(O tempo de chegada projetado da parada será maior que o permitido em Minutos
+para notificar.
+A parada foi cancelada.
+Etapa 2: Insira os nomes dos contatos principal e alternativo, se necessário.
+Geocodificação do cliente
+A página Mapa do menu Cliente permite geocodificar o cliente. A geocodificação atribui
+uma latitude e uma longitude ao cliente, que são utilizadas ao determinar o tempo de
+percurso de suas rotas. Quando a página é exibida, o cliente é mostrado como um alvo
+vermelho. A geocodificação é baseada nas informações de endereço fornecidas na página
+Atributos.
+O endereço do cliente fornecido é exibido na caixa Endereço. O Roadnet Transportation
+Suite tenta geocodificar automaticamente o cliente com base nesse endereço. À Qualidade
+de geocodificação indica o grau de precisão com o qual o cliente foi geocodificado. Você
+pode alterar o endereço do cliente clicando no botão [Editar]. Depois de alterar o
+endereço, você tem a opção de fazer com que o Roadnet Transportation Suite tente
+geocodifícar o cliente novamente.
+-A caixa Segmento de rua mais próximo exibe o segmento de rua no qual o cliente está
+realmente geocodificado, com base nos dados do mapa do Roadnet Transportation Suite.
+Seo cliente não estiver geocodificado em uma rua, o Segmento de rua mais próximo será
+o segmento de rua mais próximo em que o cliente está geocodificado.
+Se o cliente não for geocodificado automaticamente, você pode pesquisar o banco de
+dados para encontrar uma correspondência mais próxima do cliente, ou ainda mover o
+mapa para encontrar o geocódigo correto para o cliente. Execute as etapas a seguir para
+geocodifícar o cliente manvalmente.
+MET A A A A L Foadnet Transporiation Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Etapa 1: Clique no botão [Exibir candidatos] para pesquisar o banco de dados em relação
+a segmentos de ruas e procurar por possíveis correspondências. Os resultados
+da pesquisa são exibidos na janela.

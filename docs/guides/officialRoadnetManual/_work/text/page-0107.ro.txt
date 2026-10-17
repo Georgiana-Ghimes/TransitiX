@@ -1,0 +1,103 @@
+[Traducere eșuată pentru acest fragment]
+Importação de informações de rotas diárias no MobileCast
+você selecionou a visualização de todos os relatórios, cada lay'out será impresso
+em uma página separada.
+Em—
+Ajanela Importação diária permite
+configurar a data da rota, especificar
+= 1m local para os arquivos do Banco de
+naciça dados, calcular horários e distâncias e
+% auttan te resseqienciar as rotas importadas e
+fl [elttetm | configurar o fuso horário de seu
+.. cliente. Você também importa suas
+7 Dn al cuaça retas nessa janela.
+F
+E resea
+ac cries
+Etapa 3: Faça qualquer alteração necessária em Caminho dos dados, Data da rota,
+Número de ref inicial e Opção de cálculo de rota:
+Data da rota — a data das rotas; por padrão, a data atual. Para alterar a data,
+clique na seta para abrir um calendário e selecione uma data, use 2s setas
+pequenas para rolar pelas datas ou digite a data.
+Número de ref inicial — o primeiro número de referência dos dados da rota
+importados (opcional).
+Caminho dos dados — o caminho completo do diretório no qua! estão os
+arquivos, como C- UPSLT MC importiwed . Para importar um arquivo de
+outro local, marque a caixa Substituir caminhos de dados do layout, clique no
+botão [...] e procure o arquivo correto. Não é possível alterar o nome do arquivo
+que está sendo importado nessa caixa.
+Fuso horário — o fuso horário no qual se encontra o arquivo de importação.
+Opção de cálcuto de rota — refere-se 20 processamento executado pelo
+MobileCast nas rotas quando são importadas.
+Nenhum — a opção padrão. As rotas são importadas com os tempos de percurso
+€ as sequências de parada inseridos quando os dados foram criados fora do
+MobileCast.
+o EE s -
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Importação de informações de rotas diárias no MobileCast
+Tempo e distância — o MobileCast calcula seu próprio tempo de percurso para
+s rotas, em vez de usar os incluídos nos arquivos de importação.
+Sequência — o MobileCast calcula tempos de percurso e a melhor ordem de
+paradas nas rotas,
+. Notas: Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao fazer
+uma importação diária para o MobileCast.
+Se todas as datas forem iguais à data da rota, será necessário apenas fornecer os
+horários.
+Etapa 4: Se você estiver utilizando o PC*MILER ou a calcutadora de ponto a ponto e o
+MobileCast estiver configurado para determinar 2 sequência ou o tempo e a
+distância ao importar, poderá configurar a maneira como o programa calcutará
+» tempo de percurso ao importar as rotas, clicando no botão [Configurar] e
+selecionando o modelo de percurso desejado. Se você estiver utilizando o
+RouteNet, essa configuração não será necessária.
+. Nota: Se você configurou o MobileCast para calcular a rota automaticamente, os campos
+Distância planejada, Chegada planejada e Conclusão planejada não são
+necessários. Se essas informações forem fornecidas, elas serão substituídas pelos
+resultados do cálcuto da rota.
+Etapa 5: Clique no botão [Importar] para iniciar o processo de importação. A barra de
+status e a caixa de mensagens na janela Processo de importação mostrarão o
+status da importação. Qualquer problema durante a importação interromperá o
+processo.
+. Nota: Após a importação de rotas diárias, clique no botão [Exibir log] para obter um
+Tesumo das rotas importadas.
+x — Etapa6: Clique na caixa Fechar para fechar as janelas de importação.
+Tmportador — Importar > Expedir — Diariamente —Completo
+Importação de atribuições diárias de containers
+Se as atribuições de container não foram importadas com a rota durante a importação
+diária, você poderá importá-las separadamente. Essa importação baixará todos os
+containers associados às rotas desse dia. Você deve importar as rotas desse dia antes de
+importar os containers. Para obter mais informações, consutte Configuração dos layouts
+de arquivos de importação ou Importação diária
+ª Etapa 1: Clique no ícone Importação para abrir o módulo Importação.
+mee — — Nota:Sevocê tiver várias regiões, verifique se a região apropriada é exibida na parte
+inferior da tela. Para alterar a região, basta clicar na seta e selecionar a região
+TNT ,, , ,;, , , ,,;FE F Roadhet Trareporiation SE
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Importarea zilnică a informațiilor despre rută în MobileCast
+opțiunea corespunzătoare din lista afișată. Scenariul prezentat aici nu este utilizat în această perioadă
+import.
+Pasul 2: Faceți clic pe meniul Import și selectați Atribuții zilnice și containere.
+Apare fereastra Import Container Assignments.
+. Note: Numele setului de aspect curent este afișat în bara de stare din partea de jos
+din modulul Import. Dacă setul nu este corect, schimbați-l înainte
+import. Consultați Comutarea între seturile de aspect pentru mai multe
+informaţii.
+Pentru a vizualiza sau modifica aspectul fișierului de import, faceți clic pe săgeata [Aspect document].
+fișier] și selectați Editați din meniul derulant. Consultați Configurarea machetelor
+importați fișierul pentru mai multe informații.
+Pentru a vizualiza un raport care rezumă informații despre aspect, inclusiv
+numele și locația fișierului de import și pozițiile de pornire și dimensiunea fiecăruia
+câmp, faceți clic pe săgeata [File Layout] și alegeți Previzualizare din meniul drop-down.
+.Apare fereastra de previzualizare a raportului împreună cu raportul. În această fereastră, puteți
+tipăriți sau exportați raportul.
+Pasul 3: Verificați dacă data corespunzătoare este afișată în câmpul Rută. Pentru a schimba 2 date,
+faceți clic pe săgeată pentru a deschide un calendar. Utilizați tastele săgeți pentru a vizualiza
+luni și faceți clic pe o dată pentru a o selecta
+. Notă: Pentru a utiliza data rutei specificată aici, indicați acest lucru atunci când creați aspectul rutei.
+import. Pentru a utiliza această dată, tastați *sROUTEDATE* în câmpul Text
+constantă și selectați Înlocuire. Specificați o mască de LL-ZZ-AAAA.
+Pasul 4: Introduceți calea și numele fișierului care conține informațiile pentru acest tabel
+în câmpul Calea datelor.
+sau-

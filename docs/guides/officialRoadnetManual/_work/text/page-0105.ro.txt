@@ -1,0 +1,92 @@
+r"'"“ = — ESSRAAORTADERS
+P
+temttao F in siiiitia ts
+. Note: Numele setului de layout acționează! este afișat în bara de stare din partea de jos
+din modulul Import. Dacă setul nu este corect, schimbați-l înainte
+import. Consultați Comutarea între seturile de aspect pentru mai multe
+informaţii.
+Pentru a vizualiza sau modifica aspectul fișierului de import, faceți clic pe săgeata [Aspect document].
+fișier] și selectați Editați din meniul derulant. Consultați Configurare
+Importați fișiere jayouts pentru mai multe informații.
+EE și NNNA -
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Pentru a vizualiza un raport care rezumă informații despre aspect, inclusiv
+numele și locația fișierului de import și pozițiile de pornire și dimensiunea
+fiecare câmp, faceți clic pe săgeata [File Layout] și alegeți View din meniu
+suspendat. Fereastra de previzualizare a raportului apare împreună cu raportul. În această fereastră,
+puteți imprima sau exporta raportul.
+Pasul 3: Secțiunea Sesiuni pentru va afișa automat următoarea dată de livrare și
+sesiuni asociate cu acea dată. Dacă importați comenzi de la o dată
+diferit, faceți clic pe săgeata Sesiuni pentru și alegeți data de livrare corectă în
+calendarul afișat. Această dată va fi folosită atâta timp cât nu este specificată altă dată
+în fișierul de import.
+Pasul 4: Faceți clic pe sesiunile în care doriți să importați comenzi. Pentru a selecta
+mai mult de o sesiune, țineți apăsată tasta [Ctrl] când faceți clic pe sesiuni.
+Comenzile vor fi importate în toate sesiunile selectate.
+Notă: Dacă nu există nicio sesiune pentru data selectată sau dacă doriți să creați o nouă sesiune,
+faceți clic pe butonul [Creare new session]. Fereastra Add Routing Session este
+afisat. Pentru mai multe informații despre această fereastră, consultați Crearea unui
+noua sesiune de scripting. După ce noua sesiune este creată și salvată, aceasta
+va apărea în lista Sesiuni pentru.
+Pasul 5: Pentru a elimina comenzile sau rutele existente din sesiune înainte de a importa altele noi
+cereri, bifați Ștergeți sesiunile înainte de a importa.
+Pasul 6: Pentru a seta alte opțiuni de import (de exemplu, ca comenzi multiple
+de la același client vor fi gestionate, cum ar fi gestionarea comenzilor noi pe rute gata
+u rapoartele pe care doriți să le imprimați după importarea comenzilor), faceți clic
+[Alte opțiuni]. Consultați Configurarea opțiunilor de import pentru comenzi
+pentru mai multe informații
+Notă: Dacă nu ați primit permisiunea de a modifica opțiunile de import și export
+în modulul Administrare, nu veți putea modifica opțiunile selectate când
+comenzi de import.
+Pasul 7: Pentru a efectua întreținerea bazei de date înainte de a importa comenzi,
+faceți clic pe butonul [Bază de date]. Consultați Întreținerea bazei de date
+pentru mai multe informații
+Notă: Dacă nu vi s-a acordat permisiunea de a controla ștergerea sesiunilor de rutare
+în modulul Administrare, nu veți putea seta această opțiune.
+Pasul 8: Faceți clic pe butonul [Import] pentru a începe procesul de import. Barul
+progresul afișează starea importului.
+Notă: După importarea comenzilor, veți putea vizualiza jurnalul de import pentru eventualele erori
+a avut loc în timpul procesului. Faceți clic pe [Vizualizare jurnal] sau [Vizualizare erori).
+Pasul 9: Când importul este finalizat și după vizualizarea rapoartelor, faceți clic pe
+Închide caseta.
+264 „Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Import zilnic de comenzi
+Importator * Import — Comenzi — [Alte opțiuni] >Import
+Configurarea opțiunilor de import de comenzi
+|Roadnet vă permite să configurați modul în care funcționează Importatorul atunci când importați informații din
+cereri. Există mai multe setări disponibile pentru a efectua diferite acțiuni în timpul
+Proces de import:
+* — alegeți să combinați sau să schimbați comenzile de la un client existent într-o rută gata făcută
+(un traseu pe care ați terminat deja de editat).
+* — alegeți să schimbați comenzile care au fost introduse manual.
+* — alegeți să aplicați condensarea clientului la mai mult de o oprire (adică, multiple
+opriri în aceeași locație), astfel încât opririle individuale să fie direcționate împreună.
+* — desemnați litera „P” pentru a indica colecțiile.
+[Traducere eșuată pentru acest fragment]
+* sevocêestiver importando itens do pedido e tiver configurado equivalências, poderá
+tê-las consideradas durante a importação. Escolha o alias de tamanho no qual está a
+quantidade original como a Origem e o alias de tamanho no qual será colocada a
+quantidade de equivalência como Destino.
+* — escolha para bloquear automaticamente os pedidos que estão combinados com
+pedidos bloqueados existentes.
+* sevocê importar detalhes da SKU e se houver mais de uma ocorrência de uma SKU
+em um registro, você poderá optar por ter os campos da SKU totalizados. Se essa
+opção não for selecionada, a última ocorrência da SKU no registro determinará o
+total dessa SKU.
+* — escolha gerar e/ou imprimir automaticamente relatórios de resumo do pedido.
+WVocê pode acessar essas configurações na janela Importar pedidos.
+madeaperaçães o -2
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Importação diária de pedidos
+Etapa 1: Na janela Importar pedidos, clique no botão [Outras opções]. A janela Opções
+de importação de pedidos é exibida.
+R i nsçtameõãs importação de pedidos
+É iiicó sótvto permite determinar como
+7 testitcae Pi 05 pedidos serão
+m e “processados durante a
+; a importação.
+mtaa RRA RE portas:

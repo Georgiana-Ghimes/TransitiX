@@ -1,0 +1,78 @@
+Abaixo encontram-se instruções para a criação dos cabeçalhos de coluna, ou nomes, dos
+campos definidos pelo usuário. As informações do campo definido pelo usuário para cada
+extensão de cliente individual são inseridas na página Extensão de cliente do menu
+Cliente.
+s Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+ló — Etapa2: Clique no menu Cadastros e selecione Campos definidos pelo usuário. A janela
+m Campos definidos peto usuário é exibida, mostrando todos os campos
+definidos pelo usuário.
+EM Nota: Para ver uma lista atualizada de campos definidos pelo usuário, clique no ícone
+“Atualizar; a janela será atualizada com as informações mais recentes do banco de
+dados.
+[) Etapa3: Najanela Campos definidos pelo usuário, clique no ícone Adicionar ou
+= pressione [Insert]. A janela Adicionar campo definido pelo usuário é exibida.
+(Ã) Dica: Paraadicionaruma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+AAdicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira a Descrição do campo definido pelo usuário. A descrição será exibida
+mos cabeçalhos de coluna e no menu Extensões de clientes.
+Etapa 5: Se o campo pode conter apenas valores numéricos, selecione a caixa
+Numérico. Às colunas numéricas serão totalizadas na janela Extensões de
+clientes.
+MG| Etapa6: Clique no ícone Salvar ou pressione [CtrI]+[S].
+X Etapa7: Repitaas etapas 4 a 6 até adicionar todos os campos definidos pelo usuário.
+Clique na caixa Fechar para fechar a janela Adicionar campos definidos pelo
+usuário.
+Ícone Manutenção — Cadastros — Campos definidos pelo usuário —ícone
+Adicionar ([Insert]) — ícone Salvar ([Ctri]+[S])
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com campos definidos pelo usuário
+Os campos definidos peto usuário existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+MTA FFFA E Roadhei Tranporiafion Su
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+Como trabalhar com modelos para horário de rush
+Utilizado com: Roadnet, Territory Planner
+Muitas áreas têm padrões de tráfego que se alteram ao longo do dia, devido ao aumento
+ou redução da quantidade de tráfego nas ruas. Por exemplo, em um trecho de estrada de
+5 km no qual seria norma! dirigir a 80 Km/h, talvez só seja possível dirigir a 40 Km/h
+durante determinados momentos do dia. O Roadnet Transportation Suite permite criar um
+modelo para horário de rush que compensa os padrões de tráfego variáveis durante o dia.
+Você pode até mesmo criar modelos separados para épocas diferentes do ano. Por
+exemplo, se você estiver roteirizando em uma área de veraneio, na qual o tráfego de verão
+E mais intenso que o de inverno, seria possível criar um modelo de verão e um modelo de
+inverno com diferentes variações de velocidades. Ao roteirizar, é possível selecionar o
+modelo para horário de rush apropriado para a sessão com a qual está trabalhando.
+“Os modelos para horário de rush variam do mais básico ao mais complexo. É possível
+criar um modelo para horário de rush que simplesmente aftera a velocidade em todas as
+estradas durante períodos de tempo específicos, ou criar áreas nas quais as velocidades
+são alteradas, ou mesmo alterar 2 velocidade ou a direção em ruas específicas durante o
+horário de rush. Também é possível restringir os tipos de equipamento aos quais é
+permitido percorrer áreas ou ruas específicas durante o horário de rush.
+Cada modelo para horário de rush pode ter até três períodos de tempo, não incluindo o
+período de tempo normal, portanto é possível haver um período de tempo da manhã,
+almoço, e um horário de rush noturno, além do tráfego normal. Para criar áreas ou
+informações de horário de rush para ruas específicas, use o mapa para desenhar as áreas
+e caminhos das ruas, e especifíque seus atributos de horário de rush.
+A configuração de um modelo para horário de rush é um processo de uma única vez. Após
+criar o modelo, é possível atribuí-lo para ser usado por diferentes sessões de roteirização
+e planejamento. O modelo para horário de rush pode ser usado com o XY, o RouteNet ou
+com o SuperMatrix como calcutadora de tempo/distância. Se uma sessão utiliza XY, você
+pode usar um modelo para horário de rush com áreas de horário de rush, onde 2s
+velocidades são alteradas segundo o valor especificado durante os momentos definidos do
+dia. Se 2 sessão utilizar o RouteNet ou o SuperMatrix, é possível usar um modelo que
+específica as informações de horário de rush para áreas ou ruas individuais, incluindo
+mudanças de direção e restrições de tipo de equipamento. Além disso, é possível levar as
+informações de horário de rush em consideração quando os caminhos da rota são criados,
+ou apenas quando os tempos de percurso da rota são calcutados. Consuite Definição das
+opções e Como trabalhar com sessões de planejamento para obter mais informações.
+A primeira etapa para trabalhar com modelos para horário de rush é criar os modelos.
+Após criar o modelo, é possível criar as áreas de horário de rush e caminhos do modelo.
+Bmiadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados

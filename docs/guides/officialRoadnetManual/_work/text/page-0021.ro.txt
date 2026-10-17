@@ -1,0 +1,88 @@
+Stabilirea standardelor sesiunii de planificare
+Folosit cu: Territory Planner
+Pagina Planificare - General a meniului Opțiuni vă permite să stabiliți valorile implicite care vor fi
+utilizat la crearea sesiunilor de planificare pentru Editorul de planificare. Pentru un nou
+sesiune de planificare, selectați metoda pe care doriți să o utilizați pentru a calcula timpii și
+distanțe de traseu, precum și perioada de timp acoperită de sesiunea de antrenament.
+Și „Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+planificare. Aceste elemente pot fi modificate pentru o sesiune de planificare
+individual, la adăugarea sesiunii.
+Fila Sesiuni de planificare conține elemente standard utilizate pentru sesiuni în
+„Editor de planificare.
+Pasul 1: Faceți clic pe cercurile/casetele corespunzătoare pentru a selecta Opțiuni de calcul
+timp/distanta.
+XY este o metodă de rutare care utilizează o linie dreaptă pentru a măsura
+distanța dintre două puncte. Are modele de distanță și timp de călătorie
+traseu pentru curbe și viraj în traseu, precum și viteze variabile. Se
+În comparație cu RouteNet, metoda XY este mai rapid de utilizat, dar mai puțin
+exacte.
+Barierele de utilizare pot fi selectate numai atunci când este metoda XY
+fiind folosit. Această opțiune explică barierele reale dintre două puncte, cum ar fi a
+corp de apă, un munte etc. Barierele trebuie create în mod
+Barieră pe hartă.
+RouteNet este o metodă de calcul care utilizează hărți pentru a reproduce condițiile
+Amenajarea drumurilor, ținând cont de toate, de la semne de oprire și semafoare
+până la limitele de viteză și schimbările de rută. Comparativ cu metoda
+XY, RouteNet durează puțin mai mult pentru procesare, dar este mai mult
+exacte.
+Notă: Utilizarea RouteNet poate provoca o întârziere semnificativă la intrarea în Editor de rute.
+traseul sau planificarea, în timp ce timpii și distanțele sunt calculate.
+Durata acestei întârzieri se bazează pe mai mulți factori, printre care:
+* numarul de clienti cu comenzi
+E Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+* numărul de depozite
+* numărul de străzi din zona geografică
+* puterea de procesare a computerului
+Dacă doriți să evitați această întârziere, utilizați SuperMatrix.
+SuperMatrix este o altă metodă de calcul care utilizează rețeaua de căi către
+Replicați condiții reale de drum, ținând cont de totul, de la indicatoare
+de la opriri și semafoare la limite de viteză și schimbări de rută. Este
+Puteți programa SuperMatrix să ruleze noaptea, astfel încât
+nu este nevoie să așteptați ca timpii de călătorie și distanțele să fie calculate 20
+intra in editori. Dacă utilizați SuperMatrix, trebuie să specificați
+Cum doriți ca editorul de planificare să trateze clienții care au fost
+adăugat de la ultima rulare SuperMatrix. În zona Actualizare de sub
+timp real, selectați dacă doriți să utilizați metoda XY sau RouteNet pentru a calcula
+s distanțe până la acești clienți.
+Ora de vârf îmbunătățită folosește căi și zone pentru orele de vârf
+determina străzile efective pe care le vor folosi traseele. Dacă utilizați resursele
+de oră de vârf avansată, este încă posibil să se utilizeze zone simple în plus față de
+și rute avansate. Dacă doriți să impuneți restricții de rută sau să modificați
+mâna de pe stradă în timpul orelor de vârf, este necesar să faceți o programare
+grabă avansată. Utilizarea orelor de vârf avansate poate necesita timp
+valoare suplimentară la pornirea Editorului de planificare.
+Notă: Utilizarea orelor de vârf îmbunătățite poate provoca o întârziere semnificativă la intrare
+în Editorul de rutare sau planificare, în timp ce timpii și distanțele sunt
+calculat. Această întârziere se adaugă celei cauzate de utilizarea RouteNet. Durata
+Această întârziere se bazează pe mai mulți factori, printre care:
+* numărul de perioade de oră de vârf din model
+* dacă au fost create restricții de echipament pentru perioadele respective
+* numărul de zone și căi de oră de vârf din model
+Ora de vârf vă permite să alegeți un șablon de oră de vârf pentru a desemna
+perioadele în care are loc activitatea în orele de vârf. Pentru a selecta un șablon
+pentru orele de vârf, faceți clic pe săgeata Șablon pentru orele de vârf; fereastra Căutare
+- Se afișează șablonul pentru ora de vârf. Faceți clic de două ori pe un model pentru a
+selectați-l sau faceți clic pe model și pe pictograma Proces. Dacă utilizați
+' RouteNet sau SuperMatrix și doriți să utilizați funcții îmbunătățite pentru orele de vârf,
+cum ar fi, de exemplu, restricții asupra căilor sau rutelor, selectați Program Autobuz
+mushing avansat.
+Pasul 2: Introduceți un număr între 1 și 24 pentru a indica numărul de săptămâni din ciclu
+sesiune de planificare. Când se determină numărul de săptămâni din ciclu,
+Asigurați-vă că ciclul este suficient de lung pentru fiecare extensie de client
+primiți cel puțin o livrare.
+Pasul 3: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+„Suita de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Definirea standardelor clientului
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Pagina Client din meniul Opțiuni vă permite să selectați tipurile de timp implicite
+serviciu, zonă, stat, tip de fereastră de service, factor de fereastră de service
+și limită în vrac pentru clienții noi. Aceste modele sunt inserate automat cu

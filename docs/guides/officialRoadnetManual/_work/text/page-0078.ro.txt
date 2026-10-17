@@ -1,0 +1,80 @@
+* " —— Ta;
+la mex msam EEcA
+— — — n —— —
+Făcând clic pe [Afișare candidați], puteți căuta în baza de date de candidați.
+„segmente de stradă pentru a găsi o potrivire pentru client
+Pasul 2: Examinați candidații segmentului de stradă de pe listă. Pentru a afișa un candidat în
+hartă, faceți clic dreapta pe candidat și selectați Ajustare sau
+Centralizați. Harta este redesenată pentru a arăta candidatul.
+Pasul 3: Pentru a geocoda clientul pentru un candidat pentru segmentul de stradă, faceți clic
+Faceți clic dreapta pe candidat și selectați Geocode. Clientul primește
+același geocod ca și candidatul.
+. Notă: atunci când geocodează un client după segmentul de stradă, clientul va fi geocodat la
+„punctul central al acestui segment de stradă. Acest lucru poate duce la inexactitate ca
++] că este posibil ca clientul să nu fie de fapt în punctul central al segmentului de stradă.
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lne
+Toate drepturile rezervate
+Utilizarea meniului Client
+Puteți utiliza instrumentul indicator de coordonate pentru a modifica manual
+poziția geocodului pe hartă.
+Pasul 4: Faceți clic pe pictograma Salvare sau apăsați [Ctrl][S] pentru a salva informațiile sau
+faceți clic pe altă filă pentru a introduce informații suplimentare despre client.
+Pe lângă utilizarea candidaților, îi puteți geocoda direct pe hartă. Faceți clic pe
+cursorul indicatorului de coordonate în locația în care doriți să geocodați clientul. Poți
+Utilizați pictogramele de zoom și de centru pentru a vă deplasa pe hartă pe măsură ce dvs
+necesar, apoi reveniți la modul de geocodare.
+Note: Dacă selectați Afișați toți clienții, toți clienții existenți
+au fost geocodate vor fi reprezentate pe hartă. Acest lucru ar putea fi util dacă știți
+că clientul pe care încercați să-l geocodați este aproape de un client existent.
+La geocodarea clientului, sunt introduse latitudinea și longitudinea
+automat. Dacă introduceți latitudinea și longitudinea
+Manual, faceți clic pe butonul [Editați] din zona clienților și introduceți-le în zecimi
+de miimi de grade, inclusiv al zecelea separator! și semn negativ, dacă
+7 necesar (de ex. -76,5982).
+S pica: De asemenea, puteți geocoda clienții făcând clic dreapta pe client
+doriți să geocodați pentru a deschide un meniu derulant. Selectați Geocodare
+interactiv pentru a deschide paginile Atribute și Hartă din meniul Client și geocodare
+fiecare client în parte. Selectați Batch Geocoding pentru a geocoda
+automat mai mulți clienți simultan.
+TBET A AA E Roadha Travporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu modificările clientului
+Cum să lucrați cu modificările clientului
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Modificările clienților vă permit să înlocuiți temporar ferestrele de service și
+sau instrucțiuni speciale de la un client. Această caracteristică suprascrie parametrii ferestrei
+service special și instrucțiuni stabilite în meniul Client; totusi va fi
+ignorate atunci când informațiile ferestrei de service și/sau instrucțiunile speciale sunt
+importate cu comenzi. După adăugarea modificărilor clientului, acestea vor fi aplicate
+până când sunt șterse.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări și apoi selectați Clienți și modificări
+client. Se deschide fereastra Modificări ale clientului cu o listă cu toate modificările
+modificări față de clienții actuali,
+Notă: Pentru a vedea o listă actualizată a modificărilor clientului, faceți clic pe pictograma Actualizare; la
+” Jjanela va fi actualizată cu cele mai recente informații din baza de date.
+2 — Pasul 3: În fereastra Modificări ale clientului, faceți clic pe pictograma Adăugați sau apăsați
+z[Inserare]. Apare fereastra Add Client Changes.
+i
+S Este un sfat: pentru a adăuga o intrare similară cu cea pe care o aveți deja, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+” informații solicitate în noua intrare.
+s) Pasul 4: Faceți clic pe săgeata ID pentru a vedea o listă de clienți. Faceți dublu clic pe client
+corect pentru a o introduce în câmpul ID sau faceți clic o dată și apoi faceți clic pe
+Pictograma proces.
+XE R
+2
+La modificarea informațiilor din fereastra Point to
+serviciu pentru clienți, fiecare eeó
+câmpurile trebuie completate, nu în
+'«doar cele care sunt schimbate. een BEE SE
+tmuna 16 9 [ a
+s T
+Pasul 5: Pentru a adăuga acțiuni ulterioare ferestrei de servicii, selectați caseta Modificare
+ferestrele serviciului pentru clienți. Introduceți modificările ferestrei de service
+în secțiunea Ferestre de livrare.
+Badeoperations R
+„The Comyright 2006 Unitad Parcel Sarvica of Amarica, Inc.

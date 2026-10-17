@@ -1,0 +1,78 @@
+e Atualizar; a janela será atualizada com as informações mais recentes do banco de
+-” dados.
+Z e Etapa3: Na janela Métodos de camadas de palete, clique no ícone Adicionar ou
+õ; pressione [Insert]. A janela Adicionar métodos de camadas de palete é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada. Todos os tipos de embalagem serão
+preenchidos automaticamente com a quantidade por camada e as camadas por
+palete do tipo sendo clonado.
+Etapa 4: Insira até 3 caracteres para a ID de método de camadas. Este campo é
+obrigatório.
+Etapa 5: Insira até 30 caracteres na Descrição
+1 Etapa6: Clique no icone Salvar ou pressione [Ctr1]+[S] para satvar o método de
+camadas.
+Etapa 7: Repita as etapas 4 a 6 para continuar adicionando métodos de camadas de
+= palete.
+Etapa 8: Clique na caixa Fechar quando todos os métodos de camadas de palete tiverem
+sido adicionados. A janela Adicionar métodos de camadas de palete é fechada.
+NE A
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com métodos de camadas de paletes
+Cadastros Regras de atendimento > Métodos de camadas de palete — ícone Adicionar
+(Mnsert]) — ícone Salvar (Ctrl/+[S])
+Após a adição dos métodos de camadas de palete, é necessário adicionar as informações
+de montagem para cada tipo de embalagem. Consutte Como trabalhar com tipos de
+embalagem para obter mais informações.
+TMMT F A E Roadhet Traporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com atividades
+Como trabalhar com atividades
+Utilizado com: Roadnet, MobileCast
+Emaalgumas empresas, é necessário considerar as tarefas ou atividades específicas que um
+funcionário pode executar 2o criar as rotas. Por exemplo, se for necessário instalar um
+aparelho de ar condicionado, é necessário assegurar que uma pessoa qualificada para
+instalar aparelhos de ar condicionado seja atribuída a esse pedido. O Roadnet
+Transportation Suíte permite criar atividades que necessitam ser executadas, como
+instalar um ar condicionado, e agrupar atividades semelhantes em grupos denominados
+conjuntos de habilidades. Os conjuntos de habilidades são atribuídos 2 funcionários que
+podem executar tais atividades, e somente esses funcionários serão colocados nas rotas
+contendo pedidos que necessitam dessas atividades.
+Para criar os conjuntos de habilidades, é necessário criar as atividades que serão incluídas
+nos conjuntos de habilidades.
+[M Etapa1: Clique no ícone Manutenção para abrir o respectivo módulo
+la — Etapa 2: Clique no menu Cadastros e selecione Atividades. A janela Atividades é
+exibida, listando todas as atividades estabelecidas.
+EW| Nota:Paraveruma lista atualizada de atividades, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+| Etapa3: Najanela Atividades, clique no ícone Adicionar ou pressione [Insert]. A janeta
+— “Adicionar atividade é exibida.
+Ã) Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 32 caracteres para a ID da atividade. Este campo deve ser
+preenchido.
+a
+o
+“Insira o período de tempo o
+mecessário para concluir a —
+atividade no campo Tempo —
+de atendimento. ,7« —
+fão
+[x —
+Etapa 5: Insira até 255 caracteres na Descrição.
+Etapa 6: Insira o período de tempo necessário para executar esta atividade no campo
+Tempo de atendimento. Digite o horário no formato HH-MM.
+Bmadeoperaçães A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados
+(Como trabalhar com atividades
+Nota: Ao criar os conjuntos de habilidades, você pode associar um fator de tempo de
+atendimento 2o conjunto. Quando as rotas são criadas, a combinação do fator de
+. tempo de atendimento com o tempo de atendimento será usada para determinar
+quanto tempo é necessário a um funcionário para concluir uma tarefa.
+N ma T C SEA SAA ES ROSINTS S SNN SNTVA

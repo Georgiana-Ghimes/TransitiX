@@ -1,0 +1,62 @@
+JETRSAR AA DDA
+Teone Manutenção — Înregistrări > Expediere > Container — Adăugați pictograma ([Inserați]) >
+Teono Salvare ([Ctrl]+[S])
+Containerele existente pot fi editate sau șterse după cum este necesar. Verificați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu dispozitive wireless
+Cum să lucrați cu dispozitive wireless
+Folosit cu: MobileCast
+Dispozitivele wireless permit celui de-al doilea driver să comunice direct cu sistemul
+de MobileCast, fără a trece prin analist. Pentru a utiliza sistemul wireless, intră șoferul
+mesajul de pe dispozitivul wireless și mesajul este transmis automat către
+Server MobileCast. Pe server, mesajul este citit și procesat și MobileCast
+efectuează automat funcția, cum ar fi finalizarea opririi și informațiile actualizate
+poate fi văzut pe ecranul computerului analistului. Dacă MobileCast observă a
+problemă cu funcția fiind finalizată atunci când este trimis de șofer, un mesaj
+mesajul de eroare este listat în evenimentele wireless, astfel încât analistul să poată verifica evenimentul și să-l editeze.
+Primul după cum este necesar, înainte ca MobileCast să actualizeze sistemul. Vezi Cum
+lucrați cu evenimente wireless pentru mai multe informații.
+Dacă șoferii descarcă rute folosind dispozitive RN Mobile sau
+Telefoane compatibile WAP, nu este nevoie să adăugați dispozitive wireless la
+MobileCast. Dacă dispozitivul mobil utilizat este un model anterior de tipul respectiv
+atribuite rutelor, va trebui să adăugați dispozitivele wireless la MobileCast
+așa cum este descris mai jos.
+1RO Pas: Faceți clic pe pictograma iMaintenance pentru a deschide modulul respectiv.
+Wn — Pasul 2: Faceți clic pe meniul Înregistrări și selectați Ship and Wireless. Fereastra
+Dispozitive fără fir se deschide cu o listă cu toate dispozitivele curente.
+| Notă: Pentru a vedea o listă actualizată de dispozitive fără fir, faceți clic pe pictograma Reîmprospătare; la
+Jjanela va fi actualizat cu cele mai recente informații din baza de date.
+EW| Pasul 3: În fereastra Dispozitive fără fir, faceți clic pe pictograma Adăugați sau apăsați pe
+— [Inserare]. Apare fereastra Adăugare dispozitiv wireless.
+j) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugare dispozitiv wireless este afișat cu unele informații deja completate;
+modificați informațiile necesare pe noul dispozitiv wireless.
+IoEccTEN—S 1
+2 m Fereastra Adăugați dispozitiv wireless
+fx — firul PE vă permite să introduceți informații
+p „despre dispozitive.
+EE——
+Pa
+Pasul 4: Introduceți ID-ul dispozitivului fără fir.
+Pasul 5: Faceți clic pe săgeata de lângă câmpul Furnizor și faceți clic pe furnizorul corect.
+Pasul 6: Introduceți o descriere a dispozitivului, dacă doriți.
+Pasul 7: Confirmați că caseta Activat este selectată dacă dispozitivul dvs. este
+de lucru.
+TMT ,, , ,; FF Roadhet Trarporation Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrați cu dispozitive wireless
+Pasul 8: Faceți clic pe pictograma Safvar sau apăsați [Ctril+[S]
+& Pasul 9: Repetați pașii de la 3 la 8 pentru a adăuga mai multe dispozitive fără fir după cum este necesar.
+necesar. După ce toate dispozitivele wireless au fost adăugate, faceți clic pe casetă
+o Închideți pentru a închide fereastra Adăugare dispozitiv wireless.
+mg Notă: După adăugarea unui dispozitiv fără fir, acesta poate fi atribuit unui driver sau
+2 un echipament. De asemenea, poate fi schimbat sau șters dacă este necesar.
+REN RESNAA E SA
+(Tnsert]) — Pictograma Salsar ([Ctrl]+[S])
+Dispozitivele wireless existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.

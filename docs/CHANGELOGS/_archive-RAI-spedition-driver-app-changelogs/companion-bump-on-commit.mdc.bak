@@ -1,0 +1,41 @@
+---
+description: La „commit și push” pe companion — bump automat version + build
+alwaysApply: true
+---
+
+# Companion: bump la commit + push
+
+Pe branch **`RAI-spedition-driver-app`** (companion RAI Documente):
+
+Când utilizatorul cere **commit și push** (sau echivalent: „commit și push”, „commitează și pushuiește”):
+
+1. **Înainte de commit**, bump automat în root `package.json` → `companion`:
+   - **`build`**: +1 (obligatoriu la fiecare astfel de release)
+   - **`version`** (semver companion, nu `version` TMS):
+     - **patch** (`x.y.Z+1`) — bugfix, remedieri, texte, OCR/timeout, fără ecran nou
+     - **minor** (`x.Y+1.0`) — feature vizibil (ecran, flux, regulă nouă pe UI)
+     - **major** (`X+1.0.0`) — doar dacă utilizatorul cere explicit breaking
+2. Actualizează changelog-ul **Sprint 5 deschis**  
+   (`docs/CHANGELOGS/ChangeLog-RAI-spedition-driver-app-SPRINT-5-changelog-builds-63.html`)  
+   cu build-ul/versiunea noi — **mereu** completează și zona **Bugfix** pe build (ce s-a fixat; dacă e doar feature, Bugfix rămâne cu „(nimic pe build-ul ăsta)”).  
+   **Nu** redenumi / nu genera PDF până când utilizatorul nu zice că e gata cu perioada.
+3. Commit cu `[skip version]` în mesaj (hook-ul semver TMS nu trebuie să mai bumpeze `version` root).
+4. Apoi push.
+
+## Închidere (doar la semnalul utilizatorului)
+
+Când zice **gata** / perioadă închisă: PDF + redenumire  
+`…-SPRINT-5-changelog-builds-63.html` → `…-SPRINT-5-changelog-builds-63-<ultimulBuild>.html`  
+(+ mutare în `old/`).
+
+## Nu bump
+
+- Dacă utilizatorul zice explicit „fără bump” / „skip version”.
+- Dacă în același tur a cerut deja bump și `companion.build` e deja crescut pentru acel set de schimbări — nu dubla.
+
+## Exemplu
+
+```json
+"companion": { "version": "1.7.3", "build": 51 }
+```
+→ bugfix + „commit și push” → `"version": "1.7.4", "build": 52`

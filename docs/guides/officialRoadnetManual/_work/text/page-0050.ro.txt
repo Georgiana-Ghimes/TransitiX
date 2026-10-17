@@ -1,0 +1,73 @@
+TMT A E o Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu șoferii
+Cum să lucrezi cu șoferii
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Șoferii sunt angajați monitorizați zilnic prin Roadnet
+Suită de transport. Puteți specifica modul în care este plătit fiecare șofer; acestea
+informațiile de plată vor fi utilizate pentru a ajuta la determinarea costului total al a
+traseu. Când adăugați un șofer, puteți, de asemenea, să le atribuiți echipamentului
+utilizați în mod normal, specificați datele pentru examenele fizice și testele de droguri și introduceți
+informații despre permisul de conducere pentru monitorizarea Transportation Suite.
+Puteți adăuga drivere numai după ce au fost introduse ca.
+angajati. Puteți adăuga drivere individual sau le puteți importa;
+Consultați Importarea elementelor de întreținere pentru mai multe informații despre cum
+importați drivere.
+. Note: Dacă nu vi s-a dat permisiunea de a vizualiza informații confidențiale de la
+drivere din modulul Administrare, nu veți putea vizualiza sau introduce fișierul
+informații de plată, informații despre permisul de conducere, data ultimului examen fizic
+și cel mai recent test antidrog al șoferilor.
+Dacă driverul a fost creat într-o altă regiune, nu veți putea face nimic
+modificarea informațiilor despre șofer
+RO | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Unul — Pasul? 2: Faceți clic pe meniul Înregistrări, selectați Angajați și apoi Soferi.
+.Se deschide fereastra Drivere cu o listă a tuturor driverelor actuale.
+EW Notă: Pentru a vedea o listă actualizată de drivere, faceți clic pe pictograma Actualizare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+FG Pasul 3: În fereastra Drivere, faceți clic pe pictograma Adăugare sau apăsați [Insert]. La fereastră
+— „Adăugați driver este afișat.
+() Sfat: Pentru a adăuga o intrare similară cu una existentă, faceți clic cu butonul din dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+[E| Pasul 4: Faceți clic pe săgeata ID pentru a deschide fereastra Căutare - Angajați. Faceți dublu clic
+ori pe angajatul corect din listă pentru a introduce acel angajat în câmpul D,
+u faceți clic o dată și apoi faceți clic pe pictograma Process. ID-ul trebuie să fie
+introdus; alte informații sunt opționale. Acest echipament poate fi
+Atribuit automat 2 o rută cu șoferul în Editorul șoferului
+s Tomate, dacă se dorește.
+Pasul 5: Faceți clic pe săgeata Echipament pentru a deschide fereastra Căutare - Echipament.
+Utilizați funcția de căutare pentru a localiza echipamentul dorit. Când cel
+echipamentul apare în listă, faceți dublu clic pentru a-l selecta sau faceți clic
+pe un articol de echipament, apoi faceți clic pe pictograma Proces. Echipamentul
+ª poate fi alocată automat rutei șoferului, folosind
+„Atribuire rapidă în Editorul de rutare.
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+(Cum să lucrezi cu șoferii
+Pasul 6: Faceți clic pe săgeata Depunere pentru a deschide fereastra Căutare - Depunere. Faceți dublu clic
+ori pe depunerea corectă pentru a o introduce în câmpurile Depunere sau faceți clic o dată
+timp, apoi faceți clic pe pictograma Proces.
+Pasul 7: Introduceți ID-ul rutei parcurse de obicei de șofer, dacă este cazul. I.D.
+a rutei poate fi alocată automat rutei folosind Assignment
+Alocați rapid un driver în Editorul de rutare.
+Pasul 8: Dacă utilizați MobileCast, faceți clic pe săgeata Tip și selectați tipul
+şofer.
+Pasul 9: Completați permisul de conducere, DT și informațiile medicale conform
+necesar.
+o introduceți informații despre dată, faceți clic pe săgeată pentru a afișa calendarul. Utilizați
+derulați pictogramele din partea de sus a ferestrei calendarului pentru a derula lunile.
+Faceți clic pe o dată pentru a o selecta
+EEA Pa SAe
+plata unui
+conducător de diferite
+moduri, ca pe oră,
+„prin oprire sau prin
+cantitatea livrată.
+Această informație este
+folosit când costul
+a traseului este calculat.
+Mmnsi cos — —
+ecocces în s

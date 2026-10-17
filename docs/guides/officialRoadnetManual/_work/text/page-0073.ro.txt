@@ -1,0 +1,81 @@
+[Traducere eșuată pentru acest fragment]
+Cliente. A taxa variável tem como base um custo por unidade entregue e é
+vtilizada pelo cliente para controlar custos. Por exemplo, se a taxa variável for
+Buadeaperaçães 1T
+€ Copyright 2006 United Parcel Service of America, c
+Todos os direitos reservado.
+Utilização do menu Cliente
+de USS 10, a quantidade medida como a unidade de custo para aquele cliente
+será multiplicada por USS 10 e adicionada à taxa fixa para totalizar a taxa do
+cliente. A taxa total será aplicada ao custo da rota sempre que o cliente for
+visitado.
+Etapa 3: Se necessário, use as setas no campo Prioridade para atribuir um número de 1 a
+9, que indica a importância de fazer a entrega desse cliente primeiro. O número
+padrão é O. A prioridade mais elevada é 9.
+Etapa 4: Clique na seta Zona para abrir as janelas Pesquisa e selecionar uma zona para o
+cliente. Você pode agrupar os clientes por zona ao criar rotas no Editor de
+roteirização.
+Etapa 5: No campo 1D de rota pref , insira a ID da rota na qual o cliente deve ser
+colocado, quando forem criadas rotas no Editor de roteirização. Se você estiver
+utilizando roteirização com ID da rota preferencial, os pedidos deste cliente
+serão colocados nesta rota. Se não estiver usando roteirização com ID da rota
+preferencial, deixe este campo em branco.
+Etapa 6: Insira o número do cliente, se apropriado.
+Etapa 7: Na área Limite de bulk, insira a quantidade que um pedido deve conter para ser
+considerada entrega bulk.
+Etapa 8: Se você estiver utilizando o Fleetl.oader, e desejar que os pedidos do cliente
+sejam carregados em uma área específica do veículo, clique na seta
+Preferências de carregamento e selecione o quadrante do veículo no qual o
+produto deverá ser carregado.
+Etapa 9: Na seção Ao importar pedidos, é possível tomar inativos todos os pedidos
+futuros de um cliente, ou roteirizar pedidos de clientes diferentes juntos,
+tilizando o endereço de um único cliente.
+Para inativar todos os pedidos do cliente atual, selecione a caixa Marcar
+pedidos para este local como inativo.
+Para substituir o cliente atual para receber pedidos originalmente
+atribuídos a um cliente diferente, clique no botão [Adicionar] e insira a ID de
+cliente e Tipo de cliente do cliente que deseja transferir. O cliente aparecerá na
+caixa Substituir este cliente para pedidos originais de. Clique no botão
+[Remover] para cancelar a transferência e remover o cliente da janela.
+Etapa 10: Nos campos Definido pelo usuário 1, 2 e 3, insira qualquer informação
+adicional ou instruções associadas ao cliente.
+. Nota: Os nomes desses campos variam, dependendo da configuração no menu Opções.
+Para obter mais informações, consulte a página Padrões de alias.
+MG Etapa11: Clique no ícone Satvar ou pressione [Ct1]+[S] para salvar as informações ou
+—— clique em outra guia para inserir informações adicionais sobre o cliente.
+TE T AAA o Roadrer Trasporiafon Se
+' Copyright 2006 United Parcel Service of merica, Inc
+Todos os direitos reservados.
+Utilização do menu Cliente
+Atribuição de tipos de equipamento aos clientes
+A página Tipos de equipamento do menu Cliente permite atribuir um ou mais tipos de
+equipamento a um cliente. Quando uma parada é roteirizada para o cliente, ela será
+colocado em uma rota com um dos tipos de equipamento atribuídos. Se nenhum dos tipos
+de equipamento estiver disponível, a parada não será roteirizada e ocorrerá uma exceção
+de parada no Editor de roteirização; se nenhum tipo de equipamento for atribuído ao
+cliente, a parada será colocada em uma rota sem levar em consideração o tipo de
+equipamento. Se a parada fizer parte de uma rota padrão, o tipo de equipamento atribuído
+à rota padrão será usado em vez daquele atribuído ao cliente.
+Etapa 1: Na lista Disponível, selecione os tipos de equipamento a serem atribuídos. Para
+selecionar vários tipos, mantenha a tecla [Ctrl] pressionada enquanto seleciona
+s tipos.
+2)
+SE ENEN ENE
+A A a o a Pa ee a a A
+L sa aaa
+— H Jossa Jeiue u pn sa i
+, F
+[ — ss
+emmes aa ms Ti a Toeisos
+= ma am cm — E E
+i= M jome| com | “x
+MV AA [AA
+o criar rotas no Editor de roteirização, é possível atribuir o cliente apenas a
+Totas que utilizam um dos tipos de equipamento especificados.
+Pasul 2: Trageți tipurile de echipamente selectate în lista Alocate.
+Buadeperações 1A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Pasul 3: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva informațiile sau
+faceți clic pe altă filă pentru a introduce informații suplimentare despre client.

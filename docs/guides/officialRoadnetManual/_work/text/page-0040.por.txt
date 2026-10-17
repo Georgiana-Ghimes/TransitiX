@@ -1,0 +1,56 @@
+o REE
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Ícone Manutenção — Cadastros — Produto — Tipos de produto — ícone Adicionar
+(nsert]) — icone Salvar ([Ctril+[S])
+Os tipos de produto existentes podem ser editados ou excluídos, conforme necessário.
+Consulte Edição de itens e Exclusão de itens para obter mais informações.
+FT TTAA A E oadnei Transporiafion Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com SKUs
+Como trabalhar com SKUs
+Utilizado com: Roadnet, FleetLoader
+As SKUs são a maneira mais específica de defínir os produtos. Uma SKU é composta de
+umamarca de SKU e de um tipo de embalagem, como latas 350 m! de RN Lite ou garrafas
+21de RN Cola. As marcas de SKU e os tipos de embalagem devem sempre ser inseridos
+para que as SKUs possam ser adicionadas. As SKUs serão usadas somente se você
+adquiriu o FleetLoader ou se pretende importar detalhe do nível de SKU para o arquivo
+de pedido. Você pode adicionar as SKUs individualmente ou importá-los; consulte
+Importação de itens de manutenção para obter mais informações sobre como importar
+SKUs,.
+Se seus pedidos contêm itens de pedido, é possível estabelecer tempos de atendimento
+para cada SKU, proporcionando tempos de atendimento mais exatos ao roteirizar. Por
+exemplo, você pode especificar se um barril demora mais para ser entregue do que uma
+caixa de 12 latas, e o tempo de atendimento calculado para o pedido refletirá esta
+diferença, em vez de basear todo o tempo de descarga em apenas um tamanho. Algumas
+questões adicionais devem sr consideradas ao utilizar tempo de atendimento de SKU:
+* — Qualquer tempo de atendimento para a SKU será adicionado ao tempo de
+atendimento estabelecido para a parada.
+* — Sedescjar usar o tempo de atendimento de SKU somente para calcular o tempo de
+descarga, verifique se o tempo de descarga do cliente está configurado como 0.
+* —Otempo de espera será o tempo de espera do cliente.
+* Sevocênão deseja incluir o tempo de atendimento de SKU nos pedidos bulk,
+selecione Ignorar tempo de atendimento da SKU para atendimento bulk na página
+Referência de unidade no menu Opções. Se esta opção não for selecionada, o tempo
+de atendimento de SKU será adicionado ao tempo de descarga bulk.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, sclecione Produto c SKUs. A jancla SKUs é
+exibida, listando todas as SKUs estabelecidas.
+[ Nota: Para ver uma lista atualizada de SKUSs, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+EG Etapa3: Najanela SKUS, clique no ícone Adicionar ou pressione [Insert]. A janela
+— Adicionar SKU é exibida.
+,) Dica: Paraadicionaruma entrada semelhante a outra existente, clique com o botão direito
+S do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 32 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Insira até 128 caracteres na Descrição.
+E Etapa 6: Atribua um tipo de embalagem e ID de marca à SKU. Clique na seta
+apropriada para abrir a janela Pesquisa. Clique duas vezes na ID apropriada ou
+Guadeoperaçães oA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com SKUs
+Ú E yA AAA MEA E AA PA AA A P V EÇ

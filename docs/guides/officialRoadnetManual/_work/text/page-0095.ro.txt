@@ -1,0 +1,114 @@
+atins, ora serviciului clienți nu va fi actualizată. Pentru a
+Setarea implicită este 10 livrări.
+Similar cu numărul minim de livrări acceptate, numărul min. de
+livrările acceptate precizează procentul minim de livrări care trebuie să scadă
+FT A ,, , ,,, , , ,y L LOOO — Roadhet Trareporiation Su
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+Actualizarea timpilor de service folosind întreținerea timpului de service
+în cadrul variaţiei permise a fi incluse în calcul. Dacă procentul
+numărul minim de livrări nu este atins, timpul de service clienți nu va fi
+va fi actualizat. Setarea implicită este 50%.
+j) Sfat: Cu cât este mai mare numărul de livrări utilizate, cu atât calculul va fi mai precis. Dacă
+numărul de livrări este prea mic, orice variație în istoricul timpului
+de serviciu va avea un impact mai mare și poate duce la timpi mai scurti
+exacte.
+Pasul 5: Introduceți datele de început și de încheiere care vor fi luate în considerare în zona Interval de date.
+Când introduceți informații despre dată, puteți introduce data sau puteți face clic pe săgeata pentru
+afișează calendarul. Utilizați săgețile din partea de sus a ferestrei pentru a derula
+luni, apoi faceți clic pe o dată pentru a o selecta.
+Instrumente — Actualizare timpi de service — După client/După tip de timp de service
+serviciul
+După ce stabiliți criteriile de actualizare, puteți tipări un raport de actualizare.
+Menținerea orelor de service sau actualizarea orelor de service. UPS
+Logistics Technologies recomandă tipărirea și verificarea raportului de întreținere logistică
+timpii de service înainte de actualizarea orelor de service.
+Raport de întreținere a timpului de service
+Caracteristica de întreținere a timpului de service de la Roadnet vă permite să actualizați
+timpii de service pentru clienți în funcție de timpul finalizat, dacă sunteți
+utilizând MobileCast sau pe datele reale de rută introduse manual din Roadnet.
+Când rulați raportul de întreținere a timpului de service, puteți vizualiza
+exact modul în care Service Time Maintenance va actualiza orele de service
+serviciu pentru clienți. Raportul detaliază orele clienților care vor fi și nu vor fi
+actualizat, pe baza criteriilor de actualizare selectate. De asemenea, va fi posibil
+Vedeți timpii de service anterioare și nou calculate pentru fiecare client și ce anume
+procentul de schimbare. Rularea raportului nu actualizează orele de service,
+mmas arată pur și simplu ce se va întâmpla când actualizarea este efectuată.
+Avertisment: Nu efectuați o actualizare a timpului de service fără a efectua mai întâi a
+Telatorium. După actualizare, orele de service sunt modificate și nu pot fi
+fi restaurat.
+Meif | Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Este pupa2: faceți clic pe meniul Instrumente și selectați Actualizați orele de service, sub
+— apoi selectați După client sau După tipul de timp al serviciului. Fereastra
+Este afișat timpul de întreținere.
+Pasul 3: Modificați criteriile de actualizare dacă este necesar. Consutte Definiţia
+actualizați criteriile pentru mai multe informații.
+Pasul 4: În fereastra de întreținere a timpului de prezență, faceți clic pe butonul [Raport].
+pentru a genera raportul. Timpii de service sunt calculati - dar nu
+actualizat - iar fereastra Raport de întreținere a timpului de prezență este
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Actualizați orele de service folosind întreținerea timpului de service
+afisat. Informațiile din fereastra de raport detaliază numărul de
+paginile de raport, precum și numărul de intrări (clienți).
+Raportul afișează numele și D ale fiecărui client, orele anterioare de service
+și caleulado (nou), procentul de modificare a timpului de serviciu și
+statistici privind numărul de livrări acceptate și respinse pe baza unor criterii
+actualizat. Date din raportul de întreținere a timpului de masă Consutte 2
+serviciu pentru mai multe informații despre elementele conținute în raport.
+Datele raportului de întreținere a timpului de service
+„Coloana T Dezertare
+Descrierea 1D și numele clientului
+Ajutor tandic dacă a fost folosit un ajutor
+Stare actualizare — Indică dacă timpul de service va fi actualizat
+(ACPT) sau nu (RJCT) pentru acest client
+Waiting Ant Timp de așteptare al clientului anterior
+Timp de descărcare anterior — — Timpul de descărcare anterior al clientului
+Taci. așteptare Timp de așteptare calculat folosind istoricul de service
+intelege
+Timp de descărcare — ) Timpul de descărcare calculat folosind istoric
+livrare
+Pore.changed wait — Diferența procentuală între timpul de așteptare
+anterioară și calculată
+porc. schimbat Diferența procentuală între
+descărcare descărcare anterioară și calculată
+Livrări acceptate Numărul total de livrări care se încadrează în interval
+acceptabil pe baza variațiilor definite
+Livrări respinse — Numărul total de livrări care au căzut în afara intervalului
+acceptabil
+Livrări utilizate — Livrări acceptate + numărul total de livrări
+client
+Pasul 5: Puteți vizualiza raportul pe ecran, îl puteți imprima sau exporta datele în
+alt format (fișier text, Crystal Reports”, Excel*, Lotusº, etc.).
+& Pentru a imprima raportul, faceți clic pe pictograma Print. Fereastra Print este
+afisat. Faceți clic pe [OK] pentru a imprima sau pe [Anulare] pentru a anula.
+a Pentru a exporta datele raportului, faceți clic pe pictograma Export. La fereastră
+Apare Export. Selectați formatul și destinația datelor și faceți clic pe [OK]
+pentru a exporta sau [Anulare] pentru a anula.
+Instrumente — Actualizare timpi de service — După client/După tip de timp de service
+serviciu — [Raport]
+FE F A o Roadhet Travporiafion Su
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Actualizarea timpilor de service folosind întreținerea timpului de service
+Actualizați orele de service
+Instrumentul de întreținere a timpului de service vă permite să actualizați orele de service
+service cu ușurință, pe baza datelor reale. Puteți actualiza ora
+deservirea clienților individuali sau tipuri de timp de serviciu. Înainte
+actualizați orele de service, trebuie să vizualizați datele reale în raportul ouno
+grafic.
+Avertisment: Nu efectuați o actualizare a timpului de service fără a efectua mai întâi a
+Telatorium. După actualizare, orele de service sunt modificate și nu pot fi
+fi restaurat. Dacă după rularea raportului de întreținere a timpului de funcționare,
+serviciul sunteți de acord cu actualizările privind orele de serviciu,
+continuați cu actualizarea timpului de service.
+LUNA! — Etapă: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul?: Faceți clic pe meniul Instrumente și selectați Actualizare oră serviciu de sub
+— apoi selectați După client sau După tipul de timp al serviciului. Fereastra
+Este afișat timpul de întreținere.
+Pasul 3: Schimbați criteriile de actualizare dacă este necesar și rulați un raport către
+afișează datele proiectate. Consultați Definirea criteriilor de actualizare și
+Raport de întreținere a timpului de service pentru mai multe
+informaţii.
+Pasul 4: În fereastra de întreținere a timpului de prezență, faceți clic pe butonul [Actualizare].

@@ -1,0 +1,73 @@
+—— —— —— P w . u aaa A
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com barreiras
+Como trabalhar com barreiras
+Utilizado com: Roadnet, Territory Planner
+Se você estiver utilizando o método XY para calcular tempo e distância de percurso, você
+pode criar barreiras que compensam a presença de rios, lagos e outros corpos de água,
+bem como montanhas ou outras barreiras naturais ao percurso. Quando as rotas são
+criadas, estas barreiras são consideradas e o Roaánet Transportation Suíte roteiriza
+contornando a barreira. Como o Roadnet não cruza uma barreira, é necessário usar
+somente uma única linha para criar uma barreira, em vez de seguir os contomnos da
+barreira natural, como a margem de um lago.
+para que as barreiras sejam exibidas no mapa, clique no ícone Opções do mapa em uma
+janela de mapa. No menu Propriedades do mapa, selecione a guia Barreiras/Setores para
+abrir a página Barreiras/Setores. Marque a caixa Exibir na área Barreiras. Aqui também é
+possível selecionar a cor das barreiras, clicando na seta da caixa de cor.
+WVocê pode criar barreiras em qualquer mapa do Roadnet Transportation Suite. Para o
+Propósito deste guia, será usado o mapa do módulo Manutenção.
+Para obter mais informações, consulte Adição de barreiras, Modificação de barreiras ou
+Exclusão de barreiras.
+Adição de barreiras
+Ao adicionar uma barreira, desenhe uma única linha pela área, em vez de tentar seguir os
+contornos do corpo de água ou outro obstáculo. O Roadnet Transportation Suíte não
+cruzará uma barreira ao criar rotas.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+Etapa 3: No mapa, clique no icone Barreira. O cursor muda para uma barreira com sinal
+de adição ao lado do ponteiro, para indicar o modo Adicionar barreira.
+Etapa 4: Clique onde deseja que a barreira seja iniciada. Um quadrado é exibido,
+marcando o ponto de início da barreira.
+Bmadeaperaçães o M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com barreiras
+Etapa 5: Clique onde deseja que a barreira vire ou termine. Outro quadrado é exibido
+neste ponto, com uma linha conectado os dois pontos. À linha é a barreira; os
+quadrados são nós.
+A linha branca abaixo do centro da água marca uma barreira. O Roadnet
+não cruzará a linha da barreira ao utilizar o método XY para caleular o
+tempo de percurso entre paradas.
+Etapa 6: Continue clicando para adicionar pontos e segmentos à barreira. Quando a
+barreira estiver completa, clique com o botão direito no mapa e selecione
+Concluir barreira atual no menu que será exibido.
+Etapa 7: Para salvar as barreiras e sair do modo de adição, clique com o botão direito e
+selecione Cancelar/Sair do modo de adição. Em seguida, clique novamente e
+selecione Salvar/Sair no menu que será exibido.
+Arquivo — Mapa — ícone Barreira — Concluir barreira atual — Cancelar/Sair do modo de
+adição
+Após adicionar uma barreira, é possível alterá-la ou excluí-la, conforme necessário.
+Modificação de barreiras
+Depois de criar uma barreira, é possível adicionar uma curva ou alterar sua forma de outra
+mg — maneira ou estendê-la, se necessário.
+& rtapa 1: Clique no ícone Manvtenção para abrir o respectivo móduto.
+Tm — Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+TMT A A A o oadnei Transporiafion Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com barreiras
+Etapa 3: Clique no ícone Barreira. O cursor muda para uma barreira com sinal de adição
+10 lado do ponteiro, para indicar o modo Adicionar barreira.
+Etapa 4: Clique com o botão direito no mapa e selecione Cancelar/Sair do modo de
+adição no menu que será exibido.
+Etapa 5: Clique com o botão direito do mouse na barreira e selecione Modificar barreira
+no menu exibido. Clique em qualquer ponto da barreira e arraste para
+modificar. Por exemplo, para estender uma barreira, clique no ponto final e
+arraste-o para o novo ponto final. Se você estiver satisfeito com as alterações,
+clique com o botão direito e selecione Concluir modificação da barreira no
+menu que será exibido. Clique com o botão direito novamente e selecione
+Salvar/Sair no menu que será exibido.
+Etapa 6: Repita as etapas 4 e 5 para continuar editando a barreira, se necessário.
+Arquivo > Mapa — ícone Barreira — Cancelar/Sair do modo de adição — Modificar barreira
+— Concluir modificação da barreira — Salvar/Sair

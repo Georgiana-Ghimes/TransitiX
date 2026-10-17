@@ -1,0 +1,93 @@
+Etapa 3: Para permitir que os novos usuários sejam adicionados ao RIC, marque a
+opção Permitir a adição de novo usuário RIC no logon do lado do cliente.
+Clique na seta Atribuir automaticamente novo usuário ao grupo de usuários e
+selecione o grupo de usuários do qual o novo usuário fará parte.
+Notas: Novos usuários adicionados ao RIC serão adicionados a esse grupo. Após a adição
+do usuário, o grupo só poderá ser alterado no módulo Administração.
+Para obter informações sobre grupos de usuários, consulte Como trabalhar com
+Brupos de usuários.
+Etapa 4: Clique no botão [OK]
+u “Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com privilégios
+Como trabalhar com privilégios
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Privilégios são grupos de direitos que os usuários têm no Transportation Suíte. Você pode
+criar vários privilégios, sendo que cada um deles terá acesso a partes diferentes do
+programa. Por exemplo, você pode criar um privilégio chamado Operador com direitos
+de acesso ao Editor de roteirização, mas não ao Editor de carregamentos, e outro
+privilégio chamado Carregador com direitos de acesso ao Editor de carregamentos, mas
+não ao Editor de roteirização. Após a criação dos privilégios, você pode atribuí-los aos
+usuários ou grupos de cada região.
+Etapa 1: Clique no icone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Cadastros e selecione Privilégios. A janela Privilégios é
+exibida contendo os privilégios existentes.
+Etapa 3: Na janela Privilégios, clique no ícone Adicionar ou pressione [Insert]. A janela
+Add Privilege (Adicionar privilégio) é exibida.
+As permissões estabelecidas para
+“cada privilégio definem quais
+-partes do Roadnet Transportation
+“Suite podem ser utilizadas por um
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela Add
+Privilege (Adicionar privilégio) é exibida com algumas informações já
+preenchidas; altere as informações necessárias na nova entrada.
+Etapa 4: Digite o Nome e a Descrição do privilégio. Você deve digitar um nome.
+Etapa 5: Na área Permissões, selecione as permissões que o privilégio terá. Você pode
+escolher entre as seguintes permissões:
+Tem acesso total à região — o usuário pode utilizar o Roadnet Transportation
+Suite na integra nas regiões selecionadas.
+Pode executar manutenção — o usuário pode acessar o módulo Manutenção
+e pode adicionar, alterar e excluir itens de manutenção no próprio módulo e nos
+Guia de operações s
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com privilégios
+editores de roteirização e planejamento. Qualquer usuário que não tenha esta
+permissão não poderá entrar no módulo Manutenção.
+Para permitir que o usuário altere as Opções de manutenção, marque Pode
+alterar as opções de manutenção.
+Para que o usuário possa configurar os parâmetros para excluir rotas no Roadnet
+eno MobileCast, marque Can control route deletions (Pode controlar exclusões
+de rota). Se essa opção não estiver selecionada, o usuário poderá excluir rotas
+a0 importar pedidos diários se outro usuário definir a opção. No MobileCast,
+esta permissão afeta somente a exclusão de rotas, paradas, pedidos e itens de
+pedido quando uma rota é carregada no dispositivo sem fio.
+Para permitir que os usuários criem modelos para horário de rush e editem os
+existentes, marque a opção Can edit rush hour models (Pode editar modelos
+para horário de rush). Um usuário que não tenha acesso de edição aos modelos
+para horário de rush só poderá ver os modelos e escolher aquele que será
+utilizado.
+Para permitir que os usuários criem, editem e excluam modelos de tempo de
+percurso e editem modelos de distância, marque a opção Can edit travel time/
+distance models (Pode editar modelos de tempo de percurso/distância). Um
+usuário que não tenha acesso de edição aos modelos de tempo de percurso só
+poderá selecionar o modelo que será utilizado nas rotas.
+Pode configurar layouts — o usuário pode criar e alterar layouts de
+importação. Se esta opção não estiver selecionada, o usuário poderá exibir os
+ayouts de importação, porém não poderá alterá-los.
+Pode exibir as informações confidenciais dos funcionários — o usuário pode
+adicionar, alterar e ver informações confidenciais nas janelas Motorista e
+Funcionário. As informações afetadas na janela Motorista são: informações da
+licença, data do último exame físico e teste de árogas e taxas de pagamento. As
+informações afetadas na janela Funcionário são: número do arquivo de ADP,
+data de nascimento, data de admissão e data de demissão. Se esta opção não
+estiver selecionada, o usuário não conseguirá ver essas informações, utilizar o
+Gerenciador de pesquisa nessas colunas nem imprimi-las ou importá-las.
+Pode importar dados — o usuário pode utilizar o módulo Importação para
+importar informações para o Transportation Suíte. Se esta opção não estiver
+selecionada, o usuário não conseguirá importar informações para o
+Transportation Suite.
+Pode alterar opções de importação/exportação — o usuário pode alterar as
+opções selecionadas ao importar e exportar. Se esta opção não estiver
+selecionada, o usuário não conseguirá alterar as opções selecionadas ao
+importar ou exportar.
+Pode fazer relatórios — o usuário pode visualizar e imprimir relatórios do
+Transportation Suite utilizando o módulo Relatórios ou outro editor ao qual
+tenha acesso. Para permitir que o usuário exiba e altere opções de relatório,
+marque Can access report options (Pode acessar opções do relatório). Para que
+16 “Roadhnet Transportation Suíte
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com privilégios

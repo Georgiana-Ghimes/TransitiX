@@ -1,0 +1,109 @@
+SE A A E DN GUENE BSOVOS NERIRDE DAA o A S POE.
+M Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo
+ssm — Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+EN Etapa 3: Clique no icone Editar setores. O cursor muda para um setor com sinal de
+- adição 2o lado do ponteiro, para indicar o modo Adicionar setor. O padrão de
+. setores padrão será exibido no mapa.
+MP AA s Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com setores
+Nota: Se você deseja adicionar um setor a um padrão de setores que não está sendo
+exibido como padrão, altemne para o padrão de setor apropriado.
+Etapa 4: Clique com o botão direito do mouse em qualquer fugar do setor e selecione
+Dividir no menu que será exibido.
+Etapa 5: Clique onde deseja iniciar a divisão do setor. É necessário clicar em um limite
+do setor. Um nó é exibido, marcando o ponto de início da divisão.
+Etapa 6: Clique onde deseja que a divisão vire ou termine. Outro nó é exibido neste
+ponto, com uma linha conectado os dois pontos.
+Etapa 7: Continue clicando até alcançar o limite do setor no qual deseja terminar a
+divisão.
+Nota: Ao dividir um setor, é necessário iniciar e terminar em um limite de setor existente.
+Etapa 8: Clique com o botão direito no mapa e selecione Conctuir divisão do setor no
+menu que será exibido. Em seguida, você pode editar os atributos do setor.
+Consulte Edição de atributos do setor para obter mais informações.
+Arquivo — Mapa — ícone Editar setor — Dividir - Concluir divisão do setor
+Moditicação de setores
+WVocê pode alterar a forma ou o tamanho de um setor existente, movendo o limite do setor.
+Para trabalhar com setores e padrões de setores, é necessário que um mapa esteja aberto.
+ª Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+me — Etapa?2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+[EN | Etapa 3: Clique no ícone Editar setores. O cursor muda para um setor com sinal de
+adição ao lado do ponteiro, para indicar o modo Adicionar setor. O padrão de
+' setores padrão será exibido no mapa.
+Nota: Se você deseja adicionar um setor a um padrão de setores que não está sendo
+exibido como padrão, alterne para o padrão de setor apropriado.
+Etapa 4: Clique com o botão direito do mouse no setor que deseja modificar e selecione
+Modificar setor no menu que será exibido. O cursor muda para uma Zona de
+trabalho.
+Etapa 5: Clique em qualquer lugar do limite do setor e arraste para modificar 2 forma e
+1 tamanho do setor.
+Etapa 6: Quando terminar de modifícar o setor, clique com o botão direito no setor para
+brir o menu suspenso e selecione Concluir modificação do setor. Em seguida,
+clique com o botão direito novamente e selecione Salvar/Sair para salvar suas
+alterações. Se não desejar salvar as alterações, clique com o botão direito no
+setor e selecione Cancelar/Sair do modo de modificação no menu que será
+exibido.
+Arquivo > Mapa — ícone Editar setor Modificar setor —Concluir modificação do setor >
+Salvar/Sair
+Bmadeaperaçães E
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+Como trabalhar com setores
+Edição de atributos do setor
+Se você desejar, é possível associar atributos 2 qualquer setor, de forma que os atributos
+sejam aplicados a quaisquer rotas criadas usando esse setor. Os atributos do setor estão
+descritos a seguir.
+Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+Etapa 3: Clique no ícone Editar setores. O cursor muda para um setor com sinal de
+adição 2o lado do ponteiro, para indicar o modo Adicionar setor. O padrão de
+setores padrão será exibido no mapa.
+Etapa 4: Clique com o botão direito em qualquer fugar do setor para editar seus
+atributos e selecione Editar atributos no menu que será exibido. À janela Editar
+atributos é exibida.
+Nota: Se você divídiu os setores, cada novo setor da divisão terá seus próprios atributos.
+Etapa 5: Insira as informações apropriadas com base na tabela Descrições de atributos
+do setor. Para itens na seção Atributos da rota, clique na seta para abrir a janela
+Pesquisa e clique duas vezes na seleção apropriada.
+ET
+A janela Editar atributos Luc —
+comém z;]armmç;es q PNMA ——
+você pode especificar sobre v mo
+1as rotas criadas dentro do el a D
+setor. EarEReNt S ,
+mE—— , em
+Gaurar Pam E Fs
+F ”
+. Nota: As informações de atributo são opcionais. Entretanto, se você inserir informações
+de atributos, estes serão aplicados a qualquer rota criada nesse setor se a opção Usar
+atríbutos do setor estiver selecionada no menu Opções de simulação de
+Toteirização, a menos que haja um atributo de alteração. Por exemplo, se você
+selecionar um depósito de preferência para o setor mas um pedido desse setor tiver
+um depósito de preferência diferente, o depósito do pedido será usado. Da mesma
+maneira, se o pedido for roteirizado usando o sequenciamento padrão da rota, ele
+usará o depósito padrão da rota.
+Etapa 6: Clique em [OK] para satvar os atributos do setor.
+Descrições de atributos do setor
+Atributo Descrição
+o ee e Roadhei Tranporiator Sute
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+Como trabalhar com setores
+Nome Nome do setor. O nome também é atribuído à rota no Editor de
+Toteirização, se especificado.
+Prioridade — Número deaté3 dígitos usado para determinar que setor usar caso um
+cliente recaia dentro de dois setores sobrepostos. Número mais
+elevado = prioridade mais elevada..
+Motorista |O motorista usado para calcular custos do motorista quando são
+criadas as rotas. Também é atribuido à rota no Editor de roteirização,
+se especifícado.
+Depósito |O depósito usado para calcular distância e custos quando são criadas
+as rotas. Também é atribuído à rota no Editor de roteirização, se
+especificado.
+Modelode — — Omodelo de tempo de percurso usado para calcular o tempo de
+percurso percurso quando 2s rotas são criadas. Também é atribuído à rota no
+Editor de roteirização, se especificado.
+Tipode |O tipo de equipamento usado para clcular a capacidade do veículo e
+equipamento — | custo quando são criadas as rotas. Também é atribuído â rotano Editor
+deroteirização, se especificado.

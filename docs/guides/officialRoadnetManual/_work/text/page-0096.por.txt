@@ -1,0 +1,94 @@
+T NEN UE D L aa SNE NS RADIIO 0 NN 0
+cenário atual são atualizados.
+Etapa 5: Após conciuir a atualização, a janela Relatório de manutenção de tempo de
+atendimento é exibida. Você pode visualizar o relatório na tela, imprimi-lo ou
+exportar os dados em outro formato (arquivo de texto, Crystal Reports”",
+Excel?, Lotus?, etc.).
+a Para imprimir o relatório, clique no icone Imprimir. A janela Imprimir é
+exibida. Clique em [OK] para imprimir ou em [Cancelar] para abortar.
+= Para exportar os dados do relatório, clique no ícone Exportar. À janela
+Exportar é exibida. Selecione o formato e o destino dos dados e clique em [OK]
+para exportar ou [Cancelar] para abortar.
+Etapa 6: Clique na caixa Fechar quando tiver terminado para sair da Manutenção do
+tempo de atendimento.
+Ferramentas — Atualizar tempos de atendimento — Por cliente/Por tipo de tempo de
+atendimento — [Atualizar]
+Utilização do gráfico interativo
+Além de gerar relatórios de Manutenção do tempo de atendimento, o Roadnet
+Transportation Suíte utiliza um gráfico como outra maneira de visualizar e atualizar os
+dados dentro da Manutenção do tempo de atendimento. Ao utilizar as Opções do gráfico
+DN a o ç aa E
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Atualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+interativo, você pode acessar, manipular e atualizar visualmente os dados, em um gráfico
+de fácil leitura.
+Vsar as Opções do gráfico para executar a Manutenção do tempo de atendimento fornece
+outras opções não disponíveis ao atualizar os tempos de atendimento por cliente ou por
+tipo de tempo de atendimento. Por exemplo, você pode selecionar atualizar os clientes e
+tipos de tempo de atendimento de acordo com o tipo de entrega e de quantidade. Você
+também pode alterar o tempo de atendimento rea! de qualquer parada, bem como os
+tempos de atendimento recém-computados. Além desses recursos de manutenção do
+tempo de atendimento, o gráfico também permite exibir todos os tempos de atendimento
+de todos os clientes e tipos de tempo de atendimento simultaneamente.
+J Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo
+e — Etapa?2: Clique no menu Ferramentas e selecione Atualizar tempos de atendimento, em
+seguida Gráfico interativo. A janela Manutenção do tempo de atendimento -
+Opções do gráfico é exibida.
+Ferramentas —Atualizar tempos de atendimento — Gráfico interativo
+Etapa 3: Na seção Gráfico por, selecione se deseja calcular de acordo com um cliente ou
+tipo de tempo de atendimento específico, ou se deseja calcular todos os clientes
+e tipos de tempo de atendimento.
+Para calcular por cliente, clique para selecionar a opção Cliente e use a seta
+para abrir a lista Clientes e selecionar o cliente que deseja calcutar.
+Para calcular por tipo de tempo de atendimento, clique e selecione 2 opção
+Tipo do tempo de atendimento, e use a seta para abrir a lista Tipos do tempo de
+atendimento e selecionar o tipo do tempo de atendimento que deseja calcular.
+Para calcular por todos os clientes e tipos de tempo de atendimento, clique
+para selecionar a opção Todos.
+Etapa 4: Ao inserir informações de data, você pode digitar a data ou clicar na seta para
+exibir o calendário. Use os ícones de rolagem no afto da janela do calendário
+para percorrer os meses. Quando alcançar a data desejada, clique no número
+dessa data para selecioná-la.
+Etapa 5: Insira a variação de tempo permitida para os tempos de espera e de descarga. À
+configuração de variação estabelece uma faixa de tempos aceitáveis acima e
+abaixo dos tempos de atendimento aceitáveis. Somente as paradas dentro da
+faixa aceitável de tempos de espera e descarga serão usadas para o cálculo. À
+configuração padrão é 10 minutos para tempo de espera e meio minuto para
+tempo de descarga.
+Etapa 6: Digite o Número minimo de entregas aceitas e o Porcentual mínimo de
+entregas aceitas para estabelecer o número mínimo de pontos de dados
+necessários para produzis o gráfico.
+Etapa 7: Na seção Tipo de entrega, selecione se deseja que as paradas sem ajudantes
+(Sem ajudante) ou incluindo ajudantes (Ajudante) sejam computadas.
+MT AA o Roadhe Trarporiafion SuT
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+Etapa 8: Na seção Tipo de quantidade, selecione se deseja que as paradas Bulk ou
+Fracionadas sejam computadas.
+Etapa 9: Clique em [OK] para abrir o gráfico ou em [Cancelar] para abortar.
+Para obter mais informações sobre como trabalhar com o gráfico, consute Utilização do
+gráfico.
+Utilização do gráfico
+O recurso Manutenção do tempo de atendimento do módulo Manutenção inctui um
+gráfico que permite visualizar os tempos de atendimento reais dos clientes ou tipos, e
+atualizá-los conforme necessário. Para abrir o gráfico, clique no menu Ferramentas no
+módulo Manutenção e selecione Atualizar tempos de atendimento e, em seguida, Gráfico
+interativo. Depois de selecionar os critérios, o gráfico é aberto mostrando todos os dados
+existentes. Para obter mais informações sobre como usar os recursos do gráfico, consulte
+Caixas de dados, Como trabalhar com o gráfico e Botões de ação.
+O gráfico Manutenção do
+tempo de atendimento fornece
+ma apresentação visual dos
+dados do tempo de
+atendimento real e permite
+«alterar e atualizar seus tempos
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+Caixas de dados
+À esquerda e à direita do gráfico há diversas caixas de dados que podem ser usadas para
+Vvisualizar, alterar e atualizar as informações. À seguir encontram-se descrições de cada
+uma das caixas de dados e como funcionam.

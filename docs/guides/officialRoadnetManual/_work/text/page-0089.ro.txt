@@ -1,0 +1,109 @@
+SE A A E DN GUENE BSOVOS NERIRDE DAA o A S POE.
+M Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+ssm — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+RO Pasul 3: Faceți clic pe pictograma Editare sectoare. Cursorul se schimbă într-un sector cu a
+- adăugarea a doua latură a indicatorului, pentru a indica modul Adăugare sector. Standardul de
+. Sectoarele implicite vor fi afișate pe hartă.
+MP AA s Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrezi cu sectoare
+Notă: Dacă doriți să adăugați un sector la un model de sector care nu este
+afișat implicit, treceți la standardul industrial corespunzător.
+Pasul 4: Faceți clic dreapta pe orice escape de sector și selectați
+Împărțiți în meniul care va fi afișat.
+Pasul 5: Faceți clic unde doriți să începeți diviziunea sectorului. Trebuie să faceți clic pe o limită
+a sectorului. Apare un nod, care marchează punctul de început al divizării.
+Pasul 6: Faceți clic unde doriți să se transforme sau să se termine diviziunea. Un alt nod este afișat în aceasta
+punct, cu o linie care leagă cele două puncte.
+Pasul 7: Continuați să faceți clic până când ajungeți la limita sectorului în care doriți să încheiați
+diviziune.
+Notă: Când împărțiți un sector, trebuie să începeți și să vă terminați la limita unui sector existent.
+Pasul 8: Faceți clic dreapta pe hartă și selectați Complete Sector Split în
+meniul care va fi afișat. Apoi puteți edita atributele industriei.
+Consultați Editarea atributelor industriei pentru mai multe informații.
+Fișier — Hartă — Editați pictograma sectorului — Împărțire - Completați diviziunea sectorului
+Modificarea sectoarelor
+Puteți modifica forma sau dimensiunea unui sector existent mutând limita sectorului.
+Pentru a lucra cu sectoare și modele de sector, o hartă trebuie să fie deschisă.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+eu — Pasul? 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+[RO | Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+adăugare de lângă indicator pentru a indica modul Adăugare sector. Standardul de
+' sectoarele implicite vor fi afișate pe hartă.
+Notă: Dacă doriți să adăugați un sector la un model de sector care nu este
+afișat implicit, treceți la standardul industrial corespunzător.
+Pasul 4: Faceți clic dreapta pe sectorul pe care doriți să îl modificați și selectați
+Modificați sectorul în meniul care va fi afișat. Cursorul se schimbă într-o zonă de
+munca.
+Pasul 5: Faceți clic oriunde pe limita sectorului și trageți pentru a modifica 2 forma și
+1 dimensiune sector.
+Pasul 6: Când ați terminat de modificat sectorul, faceți clic dreapta pe sector pentru
+Deschideți meniul derulant și selectați Finalizare modificare a sectorului. Apoi
+Faceți clic dreapta din nou și selectați Salvare/Ieșire pentru a salva
+schimbari. Dacă nu doriți să salvați modificările, faceți clic dreapta pe
+sector și selectați Anulare/Ieșire din modul modificare din meniul care va fi
+afisat.
+Fișier > Hartă — Editați pictograma sectorului Modificați sectorul — Terminați modificarea sectorului >
+Salvare/Ieșire
+Bmadeoperations
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+Cum să lucrezi cu sectoare
+Editarea atributelor din industrie
+Dacă doriți, puteți asocia atribute cu orice sector, astfel încât atributele
+se aplică oricăror rute create folosind acel sector. Atributele sectorului sunt
+descrise mai jos.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+adăugarea a doua latură a indicatorului, pentru a indica modul Adăugare sector. Standardul de
+Sectoarele implicite vor fi afișate pe hartă.
+Pasul 4: Faceți clic dreapta pe orice evadare de sector pentru a-l edita
+atribute și selectați Editați atribute din meniul care apare. La fereastra Editare
+atributele sunt afișate.
+Notă: Dacă împărțiți sectoarele, fiecare sector nou din divizie va avea propriile sale atribute.
+Pasul 5: Introduceți informațiile adecvate pe baza tabelului Descrieri atribute
+a sectorului. Pentru articolele din secțiunea Atribute traseu, faceți clic pe săgeată pentru a deschide fereastra
+Căutați și faceți dublu clic pe selecția corespunzătoare.
+ET
+Fereastra Editare atribute Luc —
+eat z;]armmç;es q PNMA ——
+puteți specifica despre v mo
+Primele rute create în el a D
+sector. Urechi S,
+mE—— , în
+Gaurar Pam și Fs
+F”
+. Notă: informațiile despre atribute sunt opționale. Cu toate acestea, dacă introduceți informații
+de atribute, acestea vor fi aplicate oricărei rute create în acel sector dacă opțiunea Utilizare
+atributele sectorului este selectată în meniul Opțiuni de simulare a industriei.
+Toteirizarea, cu excepția cazului în care există un atribut de modificare. De exemplu, dacă tu
+selectați un depozit preferat pentru sector, dar o comandă din acel sector are
+un depozit de preferință diferit, depozitul de comandă va fi utilizat. La fel
+în felul acesta, dacă comanda este direcționată folosind secvențierea rutei standard, aceasta
+va folosi depozitul implicit al rutei.
+Pasul 6: Faceți clic pe [OK] pentru a salva atributele sectorului.
+Descrieri de atribute ale industriei
+Descrierea atributului
+ee şi Roadhei Tranporiator Sute
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+Cum să lucrezi cu sectoare
+Nume Numele sectorului. Numele este, de asemenea, atribuit rutei în Editorul de rute.
+Toteirizarea, dacă se specifică.
+Prioritate — Număr de până la 3 cifre utilizat pentru a determina sectorul de utilizat dacă a
+clientul se încadrează în două sectoare care se suprapun. număr mai mult
+mare = cea mai mare prioritate..
+Șofer |Șoferul folosit pentru a calcula costurile șoferului atunci când acestea sunt
+rute create. Este, de asemenea, atribuit rutei în Editorul de rutare,
+dacă este specificat.
+Depozit |Depozitul folosit pentru a calcula distanța și costurile atunci când sunt create
+traseele. De asemenea, este atribuit rutei în Editorul de rutare dacă
+specificat.
+Model de timp de călătorie — — Modelul de timp de călătorie utilizat pentru a calcula timpul de călătorie
+ruta rută când sunt create 2 rute. De asemenea, este atribuit rutei în
+Editor de rutare, dacă este specificat.
+Tip de |Tipul de echipament utilizat pentru a calcula capacitatea vehiculului și
+echipamente — | costul la crearea rutelor. De asemenea, este atribuit editorului Rotano
+derutarea, dacă este specificat.

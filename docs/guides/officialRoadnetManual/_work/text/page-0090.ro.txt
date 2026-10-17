@@ -1,0 +1,75 @@
+Echipamente — Echipamente asociate sectorului.
+IDdarota — | IDdarotadosector. 1D este, de asemenea, atribuit rutei în Editorul de rute.
+Toteirizarea, dacă se specifică.
+Ora de — Ora la care articolul părăsește depozitul.
+Orar — | Programul preferat (rută și timp de serviciu) pentru rută.
+preferinta
+Timp maxim | Timp maxim preferat (rută și timp de serviciu)
+paraarota.
+Fișier > Hartă — Editați pictograma sectorului — Editați atributele > [OK]
+Ștergerea sectoarelor
+În timp, pot exista sectoare care nu mai sunt folosite. Aceste sectoare trebuie să fie
+excluse astfel încât să nu fie luate în considerare la scriptarea folosind acest model.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+la — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+1E — Pasul 3: Faceți clic pe pictograma Editare sectoare. Cursorul se schimbă într-un sector cu a
+. adăugarea a doua latură a indicatorului, pentru a indica modul Adăugare sector. Standardul de
+' sectoarele implicite vor fi afișate pe hartă.
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+Cum să lucrezi cu sectoare
+Notă: Dacă doriți să adăugați un sector la un model de sector care nu este
+afișat implicit, treceți la standardul industrial corespunzător.
+Pasul 4: Faceți clic dreapta pe sectorul pe care doriți să îl ștergeți și selectați
+Ștergeți sectorul din meniul care va fi afișat.
+Pasul 5: Faceți clic pe [Da] pentru a confirma ștergerea 2.
+Fișier > Hartă — Editați pictograma sectorului > Ștergeți — [Da]
+MET AA o Roadhei Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+(Cum să lucrați cu comentarii reale vs. planificate
+Cum să lucrați cu comentarii reale vs. reale planificate
+Folosit cu: Roadnet
+Planurile de comentarii reale vs. reale activează Roadnet Transportation Suite
+raportați motivul diferențelor dintre orele de serviciu planificate și efective, pe baza
+privind datele de feedback ale șoferului într-un computer de bord. Comentariile reale
+vs. Planurile planificate vă permit, de asemenea, să determinați dacă livrările cu un anumit comentariu
+ar trebui utilizat pentru a actualiza istoricul livrărilor unui client. Roaánet poate
+utilizați aceste informații istorice pentru a calcula timpi de service mai precis.
+(Pentru mai multe informații despre această funcție, consultați Actualizarea timpilor de livrare
+service.) De exemplu, un șofer durează mult mai mult decât de obicei! la realizarea unui
+livrare către un client pentru că i s-a stricat roaba. Deoarece această livrare nu
+FRreprezintă condiții normale de livrare, nu este de dorit ca acesta să fie utilizat în calcul
+timpi de service mai precis. Șoferul poate introduce un cod
+Comentariu real vs. real planificat în manifestul dvs. sau computerul de bord, pentru a indica
+că această livrare nu ar trebui să actualizeze istoricul livrărilor. Când informația este
+introdus, codul de comentariu informează că sistemul nu ar trebui să stocheze această dată
+în istoricul livrărilor.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Womes — Pasul 2: Faceți clic pe meniul Introducere date reale, apoi pe Comentarii reale vs.
+planificat. Este afișată fereastra planificată Real vs Real.
+W Notă: pentru a vedea o listă actualizată de recenzii reale vs. reale. planificat, faceți clic pe pictogramă
+„Actualizați; fereastra va fi actualizată cu cele mai recente informații din baza de date.
+datele lui.
+2 și Pasul 3: În fereastra Comentarii reale vs. reale planificată, faceți clic pe pictograma Adăugați sau
+í apăsați [Insert]. Fereastra Adăugați comentarii reale vs. reale planificată este
+D este afișat.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adaugă recenzii reale vs. reale planificate este afișat deja cu unele informații
+finalizat; modificați informațiile necesare în noua intrare.
+Pasul 4: Introduceți cele 3 caractere ale codului de comentariu. Acest câmp trebuie să fie
+umplut.
+eu' JE ME
+BE livrări cu mine
+Ec real vs real comentariu
+õ Aocmss „plangjado va fi
+|PPsê —— folosit pentru a actualiza
+istoricul livrărilor.
+şi
+Pasul 5: Introduceți până la 30 de caractere în Descriere
+AA Bmadeoperations
+€€ Copyright 2006 United Parcel Service of America, lne
+Toate drepturile rezervate
+(Cum să lucrați cu comentarii reale vs. planificate

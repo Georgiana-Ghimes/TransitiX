@@ -1,0 +1,94 @@
+Etapa 5: Na lista Ordem de coleta, clique na zona recêm-adicionada e arraste-a para a
+ordem de coleta correta; softe-a sobre a zona após a qual deseja posicioná-la.
+Por exemplo, se desejar que 2 nova zona seja a segunda a ser coletada, solte-a
+sobre 2 primeira zona da lista; se desejar que seja 2 primeira a ser coletada,
+solte-a sobre o cabeçalho da coluna.
+[) Etapa 6: Clique no ícone Satvar ou pressione [Ctril-[S]
+Etapa 7: Repita as etapas 4 a 6 para adicionar qualquer outra zona de armazém.
+x — Etapa8: Quando terminar de adicionar privilégios, clique na caixa Fechar para fechar a
+Jjanela Adicionar zonas de armazém.
+AAs zonas de armazém existentes podem ser editadas ou excluídas, conforme necessário,
+Consuite Edição de itens e Exclusão de itens para obter mais informações.
+Ã) Dica: Sevocê deseja vtilizar a Ordem de coleta selecionada aqui ao carregar no
+FleetLoader, é necessário selecionar as Zonas de armazém como Ordem de
+carregamento.
+Ícone Manutenção — Cadastros — Produto >Zona de armazém — ícone Adicionar
+(Ansert]) — icone Salvar ([Ctri/=[S])
+RETTA A AA Roadhet Tranporiafion Su
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com marcas de SKU
+Como trabalhar com marcas de SKU
+Utilizado com: Roadnet, FleetLoader
+Marcas de SKUs são os nomes de marca dos vários produtos entregues, como RN Cola
+ou RN Lite. As marcas de SKU serão usadas somente se você adquiriu o FleetL.oader ou
+se pretende importar detalhe do nível de SKU para o arquivo de pedido. Para obter mais
+informações, consulte Importação de pedidos. Você pode adicionar as marcas de SKU
+individualmente ou importá-las; consuíte Importação de itens de manutenção para obter
+mais informações sobre como importar marcas de SKU.
+MEN | Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo
+Etapa 2: Clique no menu Cadastros, selecione Produto e Marcas de SKU. A janela
+Marcas de SKU é exibida, listando todas as marcas de SKU estabelecidas.
+FN Nota: Paraveruma lista atualizada de marcas de SKU, clique no ícone Atualizar; a janela
+será atualizada com as informações mais recentes do banco de dados.
+| Etapa3: Najanela Marcas de SKU, clique no ícone Adicionar ou pressione [Insert]. À
+— janela Adicionar marca de SKU é exibida.
+Ã) Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+ET
+7
+“para cada marca de SKU. —
+[ Ex m—
+s
+Etapa 4: Insira até 15 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Insira até 30 caracteres na Descrição
+G Etapa6: Clique no icone Satvar ou pressione [Ctri]+[S] para salvar a marca de SKU.
+Etapa 7: Repita as etapas 4 a 6 para adicionar qualquer outra marca de SKU.
+% — EtapaS: Quando terminar de adicionar marcas de SKU, clique na caixa Fechar para
+fechar a janela Adicionar marca de SKU.
+Ícone Manutenção — Cadastros — Produto * Marcas de SKU > ícone Adicionar
+(nsert]) — icone Salvar ([Ctri/+[S])
+As marcas de SKU existentes podem ser edrtadas ou excluidas, conforme necessario.
+Consuíte Edição de itens e Exclusão de itens para obter mais informações.
+Ã) Importante;A exclusão de uma marca de SKU afeta outros itens de manvtenção. Antes
+de excluir uma marca de SKU, é necessário excluir as SKUs dessa marca de
+SKU.
+SR EÇA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com tipos de embalagem
+Como trabalhar com tipos de embalagem
+Utilizado com: Roadnet, FleetLoader
+Os tipos de embalagem definem os vários tipos de embalagem carregadas no
+equipamento, como latas de refrigerante de 350 m! ou garrafas de 2 litros. Os tipos de
+embalagem são utilizados para defínir a capacidade de um palete ou de uma camada em
+um palete. Depois que os tipos de embalagem e 2s marcas de SKU forem inseridos, as
+SKUs poderão ser adicionadas. Se você adquiriu o FleetLoader, você deve inserir os tipos
+de embalagem para determinar como seu equipamento será carregado. Os tipos de
+embalagem serão usados somente se você adquiriu o FleetLoader ou se pretende importar
+detalhe do nível de SKU para o arquivo de pedido. Você pode adicionar os tipos de
+embalagem individualmente ou importá-los; consuíte Importação de itens de manutenção
+para obter mais informações sobre como importar tipos de embalagem.
+E ! Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+ss — Etapa 2: Clique no menu Cadastros, selecione Produto e Tipos de embalagem. A janela
+Tipos de embalagem é exibida, listando todos os tipos de embalagem
+estabelecidos.
+. Notas: Para selecionar que informações de camadas de paletes serão exibidas na janela
+Tipos de embalagem, clique na seta Método de camadas de paletes para exibição
+na parte inferior da janela e selecione um método de camadas. As colunas
+Quantidade por camada e Camadas por palete mostrarão as informações do
+o método selecionado.
+Para ver uma lista atualizada de tipos de embalagem, clique no ícone Atualizar; a
+E janela será atualizada com as informações mais recentes do banco de dados.
+x Etapa3: Najaneia Tipo de embalagem, clique no ícone Adicionar ou pressione [Insert]
+xl) A janela Adicionar tipo de embalagem é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Insira até 30 caracteres na Descrição
+Etapa 6: Se desejar associar uma imagem ao tipo de embalagem no Fleetl.oader, insira o
+Em al cl a hatpeeia ekte Iocafira: nh exmmno Bic Se uelféenmas:

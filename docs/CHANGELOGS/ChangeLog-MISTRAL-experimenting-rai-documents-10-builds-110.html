@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL · Sprint 9 (deschis) · Changelog #10 · builds 110+ (deschis)</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog #10 · Sprint 9 <em style="opacity:0.85;font-weight:500">(deschis)</em> · builds 110+</h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong> · <strong>Sprint 9 (deschis)</strong><br />
+      Continuare după Changelog #9 (107–109) · Sprint 8 închis · deschis <strong>13 octombrie 2026</strong><br />
+      Companion la deschidere: <strong>v1.26.3 · build 109</strong> ·
+      append până la închidere · la gata: PDF + redenumire
+      <code>…-10-builds-110-&lt;ultimulBuild&gt;</code>
+    </div>
+    <div class="badge-row">
+      <span class="badge">Changelog #10</span>
+      <span class="badge">Sprint 9 (deschis)</span>
+      <span class="badge">Builds 110+</span>
+      <span class="badge">MISTRAL</span>
+      <span class="badge">WIP — se actualizează</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    <strong>Sprint 9 (deschis)</strong> · Fișier: <code>ChangeLog-MISTRAL-experimenting-rai-documents-10-builds-110.html</code>.
+    Perioada anterioară (închisă): <code>ChangeLog-MISTRAL-experimenting-rai-documents-09-builds-107-109</code>
+    (+ PDF în <code>old/</code>).
+  </p>
+
+  <div class="note">
+    <strong>Deschis · Sprint 9 (deschis) · Changelog #10:</strong> append aici la fiecare build nou (de la 110).
+    PDF + redenumire doar când zici explicit că e gata perioada. Sprintul rămâne deschis până la semnal explicit.
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> Sprint 9 abia deschis — primul append la următorul commit + push (build 110+).
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="3" class="muted">— încă niciun build pe Sprint 9 —</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Bugfix (index)</h3>
+  <div class="toc">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Problemă</th><th>Build</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="4" class="muted">— încă nimic pe Sprint 9 —</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="foot">
+    Changelog #10 · Sprint 9 (deschis) · deschis 13 octombrie 2026 · builds 110+ ·
+    companion v1.26.3 · build 109 (baseline) · branch MISTRAL-experimenting-rai-documents · docs/ local only · fără PDF încă
+  </footer>
+
+</body>
+</html>

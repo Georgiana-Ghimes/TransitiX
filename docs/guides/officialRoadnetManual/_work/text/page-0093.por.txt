@@ -1,0 +1,74 @@
+informações necessárias nanova entrada.
+Etapa 4: Escolha a Data de entrega. Para digitar as datas, selecione a caixa e digite a
+data ou clique na seta para abrir um calendário. Use as setas na parte superior
+da janela para rolar pelos meses e, em seguida, clique em uma data para
+selecioná-la Verifique se a parte correta da data (meses ou dias) está
+selecionada ao inserir a data.
+Exm
+E
+EE É possível inserir a distância que um
+É equipanento individual percorreu em
+tma área em uma data específica.
+mTEAA — )
+EE—
+[ | Etapa 5: Clique naseta ID para abrir a janela Pesquisa - Área. Clique duas vezes naárea
+correta para selecioná-la, ou clique nela e clique no ícone Processar.
+[ Etapa 6: Clique na seta Equipamento para abrir a janela Pesquisa - Equipamento
+Utilize o recurso Pesquisar para localizar o equipamento desejado. Quando o
+equipamento for exibido na lista, clique duas vezes para selecioná-lo ou clique
+em um item de equipamento e, em seguida, no ícone Processar.
+Badeaperaçães A
+€ Copsright 2006 United Parcel Service of America, nc
+Todos os direitos reservado.
+(Como trabalhar com distâncias das áreas
+Etapa 7: Insira a distância percorrida por esse item de equipamento na área (em milhas
+" ) ou quilômetros).
+Etapa 8: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar a nova entrada de
+distância da área.
+Etapa 9: Repita as etapas 2 a 8 para adicionar qualquer outra distância da área.
+x — Etapa 10: Quando terminar, clique na caixa Fechar para fechar a janela Adicionar
+distância da área.
+Ícone Manutenção — Entrada de dados reais — Distâncias das áreas — ícone
+Adicionar ([Insert]) — ícone Salvar ([Ctrl]+[S])
+AAs distâncias das áreas existentes podem ser editadas ou excluídas, conforme necessário,
+Consulte Edição de itens e Exclusão de itens para obter mais informações.
+EIOIOO A AAA o Roadret Tranporiafon SE
+' Copyright 2006 United Parcel Service f America, Inc
+Todos os direitos reservados.
+(Como agregar sessões de roteirização
+Como agregar sessões de roteirização
+Utilizado com: Roadnet
+Sehouver mais de um roteirizador criando rotas para a mesma região, pode ser necessário
+agregar todas essas rotas em uma única sessão para poder avaliar o quadro do dia
+completo, além de imprimir relatórios. Ao agregar sessões, a rotas da sessão de origem
+selecionada são adicionadas à sessão de destino existente. À sessão de destino deve estar
+no banco de dados com o qual você está trabalhando. À sessão de origem pode vir de duas
+Iocalizações diferentes: ela pode ser outra sessão no banco de dados atual, ou se você
+estiver utilizando o banco de dados Access, pode ser um banco de dados do arquivo que
+você tenha criado.
+Para que as sessões sejam agregadas, as seguintes condições devem existir
+* aregião para a qual você está importando rotas deve existir no banco de dados no
+qual elas estão sendo importadas;
+* todosos itens de manutenção (clientes, motoristas, equipamentos, etc.) utilizados nas
+rotas devem existir no banco de dados para o qual estão sendo importados;
+* se você selecionar Importar arquivo, o arquivo deverá ter sido criado na mesma
+versão do Roadnet para a qual está sendo importado.
+Você pode agregar as rotas em uma única sessão, no módulo Manutenção ou no Editor de
+roteirização.
+E | Etapa 1: Clique no ícone Manvtenção para abrir o respectivo módulo
+Wm — Nota: Se houver regiões, verifque se a região apropriada está sendo exibida na parte
+inferior datela. Para alterar a região, basta clicar na seta e escolher uma opção no
+menu suspenso exibido.
+Etapa 2: Clique no menu Ferramentas e selecione Agregar sessões de roteirização. À
+janela Agregar sessões de roteirização é exibida.
+Etapa 3: Na área Origem, selecione o banco de dados no qual a sessão de origem está.
+Se selecionou Importar arquivo, clique no ícone [...] e navegue até o banco de
+dados contendo a sessão de origem.
+. Nota: Se você não estiver utilizando um banco de dados Access, o banco de dados Atual
+é a única opção disponível.
+Badeaperaçães A
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservados.
+(Como agregar sessões de roteirização
+Etapa 4: Na lista Sessões de origem, selecione a sessão que contém as rotas que deseja
+adicionar à sessão de destino.

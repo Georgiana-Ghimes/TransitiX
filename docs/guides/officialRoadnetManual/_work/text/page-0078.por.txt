@@ -1,0 +1,80 @@
+* " —— Ta;
+la mex msam EEcA
+— — — n —— —
+o clicar em [Exibir candidatos], é possível pesquisar o banco de dados de
+'segmentos de rua para localizar uma correspondência para o cliente
+Etapa 2: Reveja ao candidatos de segmentos de rua na lista. Para exibir um candidato no
+mapa, clique com o botão direito no candidato e selecione Ajustar ou
+Centralizar. O mapa é redesenhado para mostrar o candidato.
+Etapa 3: Para geocodifícar o cliente para um candidato de segmento de rua, clique com
+0 botão direito no candidato e selecione Geocodifícar. O cliente recebe o
+mesmo geocódigo do candidato.
+. Nota: Ao geocodificar um cliente pelo segmento de rua, o cliente será geocodificado para
+“ ponto central desse segmento de rua. Isso pode resultar em imprecisão, uma vez
++] que o cliente pode não estar, na realidade, no ponto central do segmento de rua.
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+Utilização do menu Cliente
+Você pode usar a ferramenta ponteiro de coordenadas para alterar manualmente a
+posição do geocódigo no mapa.
+Etapa 4: Clique no ícone Salvar ou pressione [Ctrl][S] para salvar as informações ou
+clique em outra guia para inserir informações adicionais sobre o cliente.
+Além de usar os candidatos, você pode geocodifícar diretamente no mapa. Clique no
+cursor de ponteiro de coordenadas no local onde deseja geocodificar o cliente. Você pode
+tilizar os ícones de zoom e de centralização para mover-se pelo mapa conforme
+necessário e, em seguida, reverter para o modo de geocodificação.
+Notas: Se você selecionar Mostrar todos os clientes, todos os clientes existentes que
+foram geocodificados serão plotados no mapa. Tsso poderá ser útil, se você souber
+que o cliente que está tentando geocodifícar está próximo a um cliente existente.
+Ao geocodifícar o cliente, a latitude e a longitude são inseridas
+automaticamente. Se você estiver inserindo a latitude e a longitude
+manvalmente, clique no botão [Editar] na área do cliente e as digite em décimos
+de milésimos de graus, incluindo o separador decima! e sinal negativo, se
+7 necessário (por exemplo, -76,5982).
+S pica: Vocêtambém pode geocodificar clientes clicando com o botão direito no cliente
+que deseja geocodificar para abrir um menu suspenso. Selecione Geocodificação
+interativa para abrir as páginas Atributos e Mapa do menu Cliente, e geocodifique
+cada cliente individualmente. Selecione Geocodificação em lote para geocodificar
+automaticamente diversos clientes de uma só vez.
+TBET A AA E Roadha Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com alterações de cliente
+Como trabalhar com alterações de cliente
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+As alteração de cliente permitem substituir temporariamente as janelas de atendimento e
+ou instruções especiais de um cliente. Este recurso anula os parâmetros de janela de
+atendimento e instruções especiais estabelecidos no menu Cliente; entretanto, ele será
+ignorado quando as informações de janela de atendimento e/ou instruções especiais forem
+importadas com os pedidos. Após adicionar as alterações de cliente, elas serão aplicadas
+até que sejam excluídas.
+Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros e, em seguida, selecione Clientes e Alterações de
+cliente. A janela Alterações de cliente se abre com uma lista de todas as
+alterações de clientes atuais,
+Norta: Para ver uma lista atualizada de alterações de clientes, clique no ícone Atualizar; a
+” Jjanela será atualizada com as informações mais recentes do banco de dados.
+2 — Etapa 3: Na janela Alterações de cliente, clique no ícone Adicionar ou pressione
+z [Insert]. A janela Adicionar alterações de cliente é exibida.
+i
+S É pica: Paraadicionar uma entrada semelhame a outra existemte, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+” informações necessárias na nova entrada.
+s) Etapa 4: Clique na seta ID para ver uma lista de clientes. Clique duas vezes no cliente
+correto para inserí-lo no campo ID, ou clique uma vez e, em seguida, clique no
+icone Processar.
+XE R
+2
+Ao alterar informações da janela de Poin to
+atendimento de um cliente, todos os eeó
+campos precisam ser preenchidos, não Em o
+'«qpenas os que estão sendo alterados. een BEE SE
+tmuna 16 9 [ a
+s T
+Etapa 5: para adicionar afterações de janela de atendimento, selecione a caixa Alterar
+janelas de atendimento de cliente. Insira as alterações de janela de atendimento
+na seção Janelas de entrega.
+Badeoperaçães R
+'O Comyright 2006 Unitad Parcel Sarvica of Amarica, Inc.

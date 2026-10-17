@@ -1,0 +1,73 @@
+—— —— —— P w . tu aaa A
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu bariere
+Cum să lucrezi cu bariere
+Folosit cu: Roadnet, Territory Planner
+Dacă utilizați metoda XY pentru a calcula timpul de călătorie și distanța, dvs
+poate crea bariere care compensează prezența râurilor, lacurilor și a altor corpuri de apă,
+precum și munți sau alte bariere naturale în calea traseului. Când rutele sunt
+create, aceste bariere sunt luate în considerare și scripturile Roaánet Transportation Suite
+ocolind bariera. Deoarece Roadnet nu traversează o barieră, este necesar să se utilizeze
+doar o singură linie pentru a crea o barieră, mai degrabă decât să urmeze contururile
+barieră naturală, cum ar fi malul unui lac.
+Pentru ca barierele să fie afișate pe hartă, faceți clic pe pictograma Opțiuni hartă în a
+fereastra hărții. Din meniul Proprietăți hărți, selectați fila Bariere/Sectoare pentru
+deschide pagina Bariere/Sectoare. Bifați caseta Afișare din zona Bariere. Aici este și el
+Puteți selecta culoarea barierelor făcând clic pe săgeata din caseta de culoare.
+Puteți crea bariere pe orice hartă în Roadnet Transportation Suite. Pentru
+În scopul acestui ghid, va fi utilizată harta modulului de întreținere.
+Pentru mai multe informații, consultați Adăugarea de bariere, Modificarea barierelor sau
+Excluderea barierelor.
+Adăugarea de bariere
+Când adăugați o barieră, trageți o singură linie peste zonă, în loc să încercați să urmați
+contururile corpului de apă sau alt obstacol. Roadnet Transportation Suite nu
+va trece o barieră la crearea rutelor.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+Pasul 3: Pe hartă, faceți clic pe pictograma Barieră. Cursorul se transformă într-o barieră de semnal
+butonul plus de lângă indicator pentru a indica modul Adăugare barieră.
+Pasul 4: Faceți clic unde doriți să înceapă bariera. Se afișează un pătrat,
+marcând punctul de plecare al barierei.
+Bmadeaperações sau M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu bariere
+Pasul 5: Faceți clic unde doriți să se întoarcă sau să se termine bariera. Apare un alt pătrat
+În acest moment, cu o linie care leagă cele două puncte. Linia este bariera; cel
+pătratele suntem noi.
+Linia albă de sub centrul apei marchează o barieră. The Roadnet
+nu va traversa linia barierei atunci când utilizați metoda XY pentru a calcula
+timpul de călătorie între opriri.
+Pasul 6: Continuați să faceți clic pentru a adăuga puncte și segmente la barieră. Când cel
+bariera este completă, faceți clic dreapta pe hartă și selectați
+Completați bariera curentă în meniul care va fi afișat.
+Pasul 7: Pentru a salva barierele și a ieși din modul de adăugare, faceți clic dreapta și
+selectați Anulare/Ieși din modul adăugare. Apoi faceți clic din nou și
+Selectați Salvare/Ieșire din meniul care apare.
+Fișier — Hartă — Pictogramă barieră — Completați bariera curentă — Anulare/Ieșire din modul
+adaos
+După ce adăugați o barieră, o puteți modifica sau șterge după cum este necesar.
+Modificarea barierelor
+După ce creați o barieră, puteți adăuga o curbă sau îi puteți modifica forma într-un alt mod.
+mg — mod sau extinde-l dacă este necesar.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Tm — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+TMT A A A oadnei Transporiafion Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu bariere
+Pasul 3: Faceți clic pe pictograma Barieră. Cursorul se transformă într-o barieră cu semnul plus
+10 a indicatorului, pentru a indica modul Adăugare barieră.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Anulare/Ieșire din modul Hartă.
+adăugare în meniul care va fi afișat.
+Pasul 5: Faceți clic dreapta pe barieră și selectați Modificați bariera
+în meniul afișat. Faceți clic oriunde pe barieră și trageți spre
+modifica. De exemplu, pentru a extinde o barieră, faceți clic pe punctul final și
+trageți-l la noul punct final. Dacă sunteți mulțumit de modificări,
+Faceți clic dreapta și selectați Terminați modificarea barierei în
+meniul care va fi afișat. Faceți clic dreapta din nou și selectați
+Salvare/Ieșire din meniul care va fi afișat.
+Pasul 6: Repetați pașii 4 și 5 pentru a continua editarea barierei dacă este necesar.
+Fișier > Hartă — Pictogramă barieră — Anulare/Ieși din modul adăugare — Modificare barieră
+— Modificare completă a barierei — Salvare/Ieșire

@@ -1,0 +1,79 @@
+[Traducere eșuată pentru acest fragment]
+Ú A A M A É R A PA AAA
+Adicionar ([Insert]) —ícone Salvar ([Ctrl]+[S])
+Os códigos de cancelamento de parada existentes podem ser editados ou excluídos,
+conforme necessário. Consulte Edição de itens e Exclusão de itens para obter mais
+informações.
+madeaperaçães o DD
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com códigos de impossibilidade de entrega na parada
+Como trabalhar com códigos de impossibilidade de entrega na parada
+Utilizado com: MobileCast
+Se você estiver utilizando comunicação sem fio, você pode configurar os códigos de
+impossibilidade de entrega na parada para o motorista aplicar em situações nas quais uma
+parada não possa ser entregue. Por exemplo, se um pedido for recusado, estiver danificado
+ou incorreto, o motorista poderá selecionar o código apropriado para enviar ao analista.
+O analista pode verificar o motivo de impossibilidade de entrega na parada e atualizar o
+código, se necessário.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Expedir e Códigos de impossibilidade de
+entrega na parada. À janela Códigos de impossibilidade de entrega na parada é
+exibida, listando os códigos existentes.
+Nota: Para ver uma lista atualizada de códigos de impossibilidade de entrega na parada,
+clique no icone Atualizar; a janela será atualizada com todas as informações
+alteradas do banco de dados.
+Etapa 3: Na janela Códigos de impossibilidade de entrega na parada, clique no ícone
+AAdicionar ou pressione a tecla [Insert]. À janela Adicionar códigos de
+impossibilidade de entrega na parada é exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar códigos de impossibilidade de entrega na parada é exibida com algumas
+informações já preenchidas; altere as informações necessárias no novo código de
+impossibilidade de entrega na parada.
+Etapa 4: Insira até 3 caracteres para Código. Esse campo deve ser preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+Etapa 6: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar as informações.
+Etapa 7: Após a adição de todos os códigos de impossibilidade de entrega na parada,
+clique na caixa Fechar para fechar a janela Adicionar código de
+impossibilidade de entrega na parada.
+RNA SNAA MNA SNNA A S
+parada —icone Adicionar ([Insert]) —ícone Salvar ([Ctrl]+[S])
+Os códigos de impossibilidade de entrega na parada existentes podem ser editados ou
+excluídos, conforme necessário. Consulte Edição de itens e Exclusão de itens para obter
+mais informações.
+——A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com códigos de assinatura de parada
+Como trabalhar com códigos de assinatura de parada
+Utilizado com: MobileCast
+Se você estiver utilizando comunicação sem fio, você pode configurar os códigos de
+assinatura de parada para o motorista aplicar em situações nas quais é necessária uma
+assinatura ou recibo de entrega. Esses códigos podem ser usados em substituição ou em
+adição a uma assinatura. Depois de aplicado à entrega o código e a assinatura são enviados
+ao módulo Analista, onde são armazenados como recibo de entrega.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Expedir e Códigos de assinatura de
+parada. A janela Códigos de assinatura de parada é exibida, listando os códigos
+existentes.
+Nota: Para ver uma lista atualizada de códigos de assinatura de parada, clique no ícone
+Atualizar; a janela será atualizada com todas as informações alteradas do banco de
+dados.
+Etapa 3: Na janela Códigos de assinatura de parada, clique no ícone Adicionar ou
+pressione a tecla [Insert]. À janela Adicionar códigos de assinatura de parada é
+exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar códigos de assinatura de parada é exibida com algumas informações já
+finalizat; modificați informațiile necesare în noul cod de semnare a e-mailului
+opriți.
+Pasul 4: Introduceți până la 3 caractere pentru Cod. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]:[S] pentru a salva informațiile.
+— Ftapa7: După ce ați adăugat toate codurile de oprire a abonamentului, faceți clic pe casetă
+Închideți pentru a închide fereastra Adăugați codul de oprire a semnării.
+SSAA - SA - SEA ANA U ANA AAA NA
+Adăugați ([Inserați]) — Pictograma Satvar ([Ctrl]+[S])
+Codurile de abonament de oprire existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.

@@ -1,0 +1,121 @@
+Bin stae en on aa tu maa SN DRSIca a EA Va SE SA Drnior aa a conAo À caiacis critatas ccn aaac
+D MobileCast va fi salvat în loc de ruta generată în Roadnet.
+Pasul 2: Introduceți ora la care vor fi salvate datele în baza de date Istoric
+a traseului. Când introduceți ora, utilizați un ceas de 24 de ore, deci 13:00
+ar trebui introdus la ora 13:00.
+Sfat: UPS Logistics Technologies recomandă ca datele să fie salvate în timpul
+În seara asta sau altă dată când puțini oameni îl folosesc
+Suită de transport
+Pasul 3: Faceți clic pe butonul [OK] pentru a salva opțiunile sau continuați cu o altă filă.
+Definirea opțiunilor SuperMatrix
+Folosit cu: Roadnet, Territory Planner
+Pagina SuperMatrix Update din meniul Opțiuni de întreținere vă permite
+Programați ora la care SuperMatrix va fi actualizat. Când SuperMatrix este
+actualizat, orice client adăugat sau re-geocodat va fi adăugat la
+SuperMatrix. Deoarece actualizarea poate dura mult timp, vă recomandăm
+că îl programați să ruleze atunci când nu se întâmplă nimic.
+scripting. Trebuie să actualizați SuperMatrix doar dacă este selectat pentru
+calculați timpii și distanțele în Editorul de rutare sau planificare.
+. Notă: Trebuie să configurați fișierul superserver.cfe pentru ca actualizarea să funcționeze
+asa cum era de asteptat. De obicei, acest lucru se face în timpul procesului de instalare
+Pasul 1: Pentru a programa SuperMatrix să se actualizeze zilnic, bifați caseta
+„Activați actualizarea SuperMatrix.
+Pasul 2: În câmpul Actualizare SuperMatrix în fiecare zi la, introduceți ora când
+doresc să ruleze SuperMatrix. Acest câmp folosește un ceas de 24 de ore
+ore, prin urmare 1:00 PM trebuie introdus ca 1:00 PM
+Ã) Sfat: UPS Logistics Technologies recomandă efectuarea a 2 actualizări în timpul
+noaptea târziu sau la un alt moment când puțini oameni folosesc
+Suită de transport
+Pasul 3: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+Fadopeação M FFAA S
+€ Copyrigit 2006 United Parcel Service of America, nc
+Toată distracția rezervată
+(Cum să lucrați cu stări și tipuri
+Cum să lucrați cu stări și tipuri
+Folosit cu: Roadnet, Temitory Planner, FleetLoader și MobileCast
+(Modulul de întreținere conține mai multe tipuri și stări diferite care pot fi utilizate
+pentru a urmări și clasifica informații despre rutele monitorizate. Aceste tipuri
+și starea definesc opțiunile posibile la introducerea informațiilor despre angajați,
+echipamente, clienți, opriri și rute. Toate stările și tipurile create sunt disponibile
+pentru a fi utilizat cu toate regiunile. Pentru mai multe informații despre cum
+adăugați aceste cratime, consultați Adăugarea de stări și tipuri.
+Notă: Nu toate opțiunile vor fi disponibile pentru toți utilizatorii; opțiunile
+disponibil depinde de ce părți din Transportation Suite au fost instalate
+precum și permisiunile utilizatorului. Trebuie să aveți permisiuni contabile
+pentru a lucra cu șoferi și tipuri de monitorizare.
+Segmente de clienți
+Segmentele de clienți ajută la gruparea clienților după un fir comun, cum ar fi rețelele de clienți.
+Diner sau clienți care solicită plata la livrare Segmente de clienți
+sunt, de asemenea, o metodă de grupare a clienților în scopuri de raportare, cum ar fi producția
+„un raport Costul de livrare după client. Cu alte cuvinte, segmente de clienți
+Sunt un instrument flexibil care poate fi folosit în aproape orice scop. sau adaugă
+„un client, trebuie să atribuiți un segment de clienți. Consultați Lucrul cu
+segmente de clienți pentru mai multe informații.
+Întreținere — Înregistrări — Segmente de clienți
+Tipuri de compartimente
+Tipurile de compartimente sunt folosite în industria băuturilor pentru a defini tipurile de
+compartimente disponibile în echipament. FleetL.oader folosește informații de tip
+de compartiment atunci când se determină cantitatea de produs care poate încadra într-un anumit
+compartiment. Deoarece tipurile de compartimente sunt folosite doar pentru
+determinarea cantității unui tip de ambalaj care poate fi transportată în el, este
+Este necesar să se creeze tipuri numai pentru compartimente cu capacități diferite, deși
+Mai multe compartimente de un singur tip pot avea dimensiuni ușor diferite. Tipurile
+sloturile trebuie adăugate înainte ca tipurile de echipamente să poată fi
+adăugat. Această opțiune este disponibilă numai dacă FlectLoader este încărcat.
+Consultați Lucrul cu tipuri de compartimente pentru mai multe informații.
+Întreținere — Înregistrări * Echipamente — Tipuri de compartimente
+Tipuri de compartimente
+Tipurile de compartimente sunt folosite pentru a defini tipurile de compartimente din a
+Yeiculus. Tipurile de compartimente pot fi, de exemplu, congelator sau frigider.
+Puteți specifica ce tipuri de produse pot fi încărcate în fiecare tip de
+compartiment și câte tipuri de compartiment sunt prezente în fiecare tip de
+echipamente. Dacă compartimentele sunt reglabile (au un perete mobil),
+puteți permite Roaánet Transportation Suite să ajusteze compartimentele la
+„o utilizare ideală a spațiului pentru cap. Trebuie create compartimente
+TTA ,,, , ;; ,l T Foadat Traporiafon SãEe.
+' Copyright 2006 United Parcel Service f Aerica nc
+Toată distracția rezervată
+(Cum să lucrați cu stări și tipuri
+numai dacă intenționați să utilizați rutarea cu compartimente la generare
+trasee
+Întreținere — Înregistrări > Echipament — Tipuri de compartimente
+Tipul de întârziere
+.Opțiunea Tipuri de întârziere explică de ce nu este timpul pentru o oprire planificată
+fost îndeplinită. Probleme de trafic, mecanice sau situații legate de clienți sunt
+câteva exemple de tipuri de întârzieri. Puteți atribui tipuri de întârziere în Analyst
+începe o rută, când o rută ajunge la o oprire, pleacă dintr-o oprire sau când
+arota este finalizată. Orice tip de întârziere creat este disponibil pentru toate regiunile. The
+Tipurile de întârziere, utilizate numai în scopuri de raportare, sunt disponibile numai
+dacă MobileCast este încărcat.
+Întreținere — Înregistrări > Expediere — Tipuri de întârziere
+Statutul de angajat
+Statutele de angajat vă permit să clasificați angajații în funcție de criteriile care
+defini tu. Puteți folosi statutul pentru a determina care sunt angajații
+disponibil pentru a fi atribuit unei rute în Analyst. Antrenament sau boală/
+dizabilitate sunt unele tipuri de statut de angajat. Fiecare angajat are statutul dvs
+creează este disponibil pentru toate regiunile sale. Suita de transport este prevăzută cu
+două stări de angajat auto-populate: RDY (Gata) și USE (În uz).
+Întreținere — Înregistrări — Angajații — Statutul de angajat
+Tipul de angajat
+Tipurile de angajați vă permit să clasificați tipurile de angajați din dvs
+organizare. Șofer, analist, promotor de vânzări sau asistent sunt câteva exemple
+tipuri de angajat. Consultați Lucrul cu tipuri de angajați pentru mai multe
+informaţii. Angajații pot fi asociați cu tipuri atunci când sunt adăugați.
+Întreținere — Înregistrări —>Angajați — Tipuri de angajați
+Starea echipamentului
+Stările echipamentelor vă permit să specificați starea articolelor de echipament și
+caută-le sau selectează echipamente pentru a le vizualiza. Câteva exemple de statut
+echipamentele sunt inactive sau gata. Toate stările echipamentelor create sunt
+disponibil pentru toate regiunile. Suita de transport vine cu două stări
+echipament completat automat: RDY (Ready) și USE (În uz).
+Întreținere — Înregistrări — Echipament — Starea echipamentului
+Tipuri de echipamente
+Tipurile de echipamente definesc tipurile de echipamente utilizate, cum ar fi
+„numai vehicule sau remorci de dimensiuni medii, precum și numărul și poziția compartimentelor
+sau paleți de un anumit tip de vehicul. Puteți defini dimensiunile unui tip
+de echipament, inclusiv greutatea, și specificați capacitatea acestuia. În plus, este posibil
+asociați tipurile de echipamente cu clienții, astfel încât tipul să fie utilizat atunci când acesta
+clientul este scriptat. În sectorul băuturilor, tipurile de compartimente trebuie să fie
+Gumadeoperations 5N
+€ Copyrigi 2006 United Parcel Service of America, nc
+p ds

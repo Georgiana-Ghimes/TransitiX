@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 36</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 36</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.4.2 · build 36</strong> · închis <strong>15 septembrie 2026</strong><br />
+      De la commit <code>7d73420</code> (build 35) → <code>5b5991e</code>
+    </div>
+    <div class="badge-row">
+      <span class="badge">Cutout zone imbricate</span>
+      <span class="badge">Doar afișare</span>
+      <span class="badge">ringsWithCutouts</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Local în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub. Continuă Harta zonelor din build 34–35.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> perimetrul Zonei B îl include pe cel al Zonei A. Dacă ambele se
+    umplu pe hartă, culoarea din interior se amestecă și zona cea mai strictă e cea mai greu
+    de citit. Decupajul e <em>doar pe ecran</em> — conturul salvat rămâne cel oficial, iar
+    <code>resolveZone</code> tot alege pe prioritate.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Harta — Zone imbricate fără dublă umplere</h3>
+      <ul>
+        <li>La desen, zona exterioară „scoate” (hole Leaflet) zonele vizibile aflate în interior
+          (ex. B nu mai pictează peste A).</li>
+        <li>Ordine: întâi zonele cu prioritate mai mică (exterioare), apoi interioarele — bordul
+          zonei stricte rămâne vizibil pe gaura lăsată de vecină.</li>
+        <li>Conturul din DB / referință <strong>nu</strong> se modifică; TPO / locate neschimbate.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Librării + teste</h3>
+      <ul>
+        <li><code>boundsContain</code> — extent-ul unei geometrii e complet în al alteia.</li>
+        <li><code>ringsWithCutouts(geometry, cutouts)</code> — inel exterior + găuri din cutouts
+          conținute (doar primul ring al cutout-ului).</li>
+        <li>Teste: nested / overlap / null / self-cutout / hole-in-cutout ignorat.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <ul>
+        <li>Pe hartă, Zona A (înăuntrul B) nu mai arată culoare amestecată din umplerea Zonei B.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Companion → <strong>Harta zonelor</strong>: ZA și ZB vizibile împreună.</li>
+        <li>Interiorul A are culoarea A (nu amestec cu B); bordura A e clară.</li>
+        <li>Ascunde A → B se umple complet pe perimetrul ei.</li>
+        <li>Locate adresă + MMA → același rezultat ca înainte (fără schimbare de calcul).</li>
+        <li>Login / topbar: <strong>v1.4.2 - build 36</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.4.2 build 36 · 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    docs/ local only · urmează build 37
+  </footer>
+
+</body>
+</html>

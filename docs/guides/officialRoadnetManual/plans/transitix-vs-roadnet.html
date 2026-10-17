@@ -1,0 +1,579 @@
+<title>Ruta Transitix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --ground:#F3F6F9;
+    --surface:#FFFFFF;
+    --surface-2:#E9EFF5;
+    --line:#D6E0EA;
+    --line-soft:#E6EDF4;
+    --text:#16283C;
+    --muted:#5B6E85;
+    --ink:#0A2B4E;
+    --ink-2:#1D4E89;
+    --amber:#B8770F;
+    --amber-bg:#FBF0DC;
+    --green:#1B7A45;
+    --green-bg:#DFF1E7;
+    --red:#A83526;
+    --red-bg:#FBE5E1;
+    --shadow:0 1px 2px rgba(10,43,78,.06), 0 8px 24px -16px rgba(10,43,78,.28);
+    --radius:6px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0A1521;
+      --surface:#0F1F2D;
+      --surface-2:#16293A;
+      --line:#22394E;
+      --line-soft:#1A2E40;
+      --text:#DBE6F1;
+      --muted:#8CA2BA;
+      --ink:#8FC0F0;
+      --ink-2:#6FA8DE;
+      --amber:#EDB251;
+      --amber-bg:#2C2312;
+      --green:#5CC48B;
+      --green-bg:#13301F;
+      --red:#EE8477;
+      --red-bg:#331A16;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A1521;
+    --surface:#0F1F2D;
+    --surface-2:#16293A;
+    --line:#22394E;
+    --line-soft:#1A2E40;
+    --text:#DBE6F1;
+    --muted:#8CA2BA;
+    --ink:#8FC0F0;
+    --ink-2:#6FA8DE;
+    --amber:#EDB251;
+    --amber-bg:#2C2312;
+    --green:#5CC48B;
+    --green-bg:#13301F;
+    --red:#EE8477;
+    --red-bg:#331A16;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.9);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+  .col{max-width:760px}
+  .wide{max-width:1132px}
+
+  header.mast{
+    padding:64px 0 40px;
+    border-bottom:2px solid var(--ink-2);
+    margin-bottom:8px;
+  }
+  .kicker{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:11.5px; font-weight:500;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:var(--muted);
+  }
+  h1{
+    font-family:"Archivo", ui-sans-serif, sans-serif;
+    font-weight:700; font-size:clamp(34px,5.2vw,54px);
+    line-height:1.04; letter-spacing:-.022em;
+    color:var(--ink); margin:14px 0 0; text-wrap:balance;
+  }
+  .lede{font-size:18px; color:var(--muted); margin:18px 0 0; max-width:60ch}
+  .mast-meta{
+    display:flex; flex-wrap:wrap; gap:8px 28px; margin-top:26px;
+    font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted);
+  }
+  .mast-meta b{color:var(--text); font-weight:600}
+
+  section{padding:52px 0 0}
+  section > .kicker{display:block; margin-bottom:10px}
+  h2{
+    font-family:"Archivo", sans-serif; font-weight:600;
+    font-size:clamp(24px,3vw,31px); line-height:1.15; letter-spacing:-.016em;
+    color:var(--ink); margin:0 0 16px; text-wrap:balance;
+  }
+  h3{
+    font-family:"Archivo", sans-serif; font-weight:600;
+    font-size:19px; letter-spacing:-.01em; color:var(--text);
+    margin:34px 0 10px;
+  }
+  h4{
+    font-family:"IBM Plex Mono", monospace; font-weight:600;
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin:22px 0 8px;
+  }
+  p{margin:0 0 16px}
+  a{color:var(--ink-2)}
+  strong{font-weight:600; color:var(--text)}
+  ul,ol{margin:0 0 16px; padding-left:20px}
+  li{margin:0 0 7px}
+  li::marker{color:var(--muted)}
+  hr.rule{border:0; border-top:1px solid var(--line); margin:52px 0 0}
+
+  code{
+    font-family:"IBM Plex Mono", monospace; font-size:.875em;
+    background:var(--surface-2); border-radius:3px; padding:1px 5px;
+    color:var(--text);
+  }
+  pre{
+    font-family:"IBM Plex Mono", monospace; font-size:12.5px; line-height:1.62;
+    background:var(--surface); border:1px solid var(--line);
+    border-left:3px solid var(--ink-2);
+    border-radius:var(--radius); padding:18px 20px; margin:0 0 20px;
+    overflow-x:auto; color:var(--text);
+  }
+  pre code{background:none; padding:0; font-size:inherit}
+  .cmt{color:var(--muted)}
+  .kw{color:var(--ink-2); font-weight:600}
+
+  .tablewrap{overflow-x:auto; margin:0 0 22px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; min-width:660px; font-size:14.5px}
+  th{
+    font-family:"IBM Plex Mono", monospace; font-weight:600;
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    text-align:left; color:var(--muted);
+    padding:12px 16px; background:var(--surface-2);
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  td{padding:13px 16px; border-bottom:1px solid var(--line-soft); vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  td.num{font-family:"IBM Plex Mono", monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+  td.mod{font-weight:600}
+
+  .chip{
+    display:inline-block; font-family:"IBM Plex Mono", monospace;
+    font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+    padding:3px 8px; border-radius:3px; white-space:nowrap;
+  }
+  .chip.gap{background:var(--red-bg); color:var(--red)}
+  .chip.part{background:var(--amber-bg); color:var(--amber)}
+  .chip.win{background:var(--green-bg); color:var(--green)}
+
+  .note{
+    background:var(--surface); border:1px solid var(--line);
+    border-left:3px solid var(--amber);
+    border-radius:var(--radius); padding:18px 20px; margin:0 0 22px;
+    font-size:15px;
+  }
+  .note p:last-child{margin-bottom:0}
+  .note .kicker{display:block; margin-bottom:6px; color:var(--amber)}
+
+  .phase{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:26px 28px; margin:0 0 20px;
+  }
+  .phase-head{
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 16px;
+    padding-bottom:14px; margin-bottom:18px; border-bottom:1px solid var(--line-soft);
+  }
+  .phase-id{
+    font-family:"IBM Plex Mono", monospace; font-weight:600; font-size:13px;
+    letter-spacing:.08em; color:var(--surface);
+    background:var(--ink-2); padding:3px 9px; border-radius:3px;
+  }
+  .phase-title{
+    font-family:"Archivo", sans-serif; font-weight:600; font-size:21px;
+    letter-spacing:-.012em; color:var(--ink); margin:0; flex:1 1 auto;
+  }
+  .phase-cost{
+    font-family:"IBM Plex Mono", monospace; font-size:12px;
+    color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .phase p{font-size:15.5px}
+  .phase ul{font-size:15.5px}
+  .accept{
+    margin-top:18px; padding:14px 16px; background:var(--surface-2);
+    border-radius:var(--radius); font-size:14.5px;
+  }
+  .accept .kicker{display:block; margin-bottom:5px}
+  .accept p{margin:0; font-size:14.5px}
+
+  footer{
+    margin-top:64px; padding-top:24px; border-top:1px solid var(--line);
+    font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--muted);
+  }
+  :focus-visible{outline:2px solid var(--ink-2); outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important; transition:none !important}}
+  @media (max-width:640px){
+    .page{padding:0 18px 72px}
+    header.mast{padding:40px 0 30px}
+    .phase{padding:20px 18px}
+  }
+</style>
+
+<div class="page">
+
+<header class="mast">
+  <span class="kicker">Analiză competitivă &amp; plan de implementare</span>
+  <h1>Ruta Transitix</h1>
+  <p class="lede">Ce vinde Roadnet Transportation Suite, ce are Transitix azi, și drumul concret — schemă, servicii, ecrane — până la un TMS care le trece înainte pe terenul lor și le rămâne inaccesibil pe al nostru.</p>
+  <div class="mast-meta">
+    <span>Bază de cod: <b>Transitix v1.9.0</b></span>
+    <span>Branch: <b>RAI-spedition</b></span>
+    <span>Orizont: <b>6 faze / ~5–7 luni</b></span>
+    <span>Data: <b>25 aug. 2026</b></span>
+  </div>
+</header>
+
+<section class="col">
+  <span class="kicker">Punctul de plecare</span>
+  <h2>Ce se poate lua de fapt dintr-un TMS</h2>
+  <p>Roadnet nu are cod de furat — e un stack Win32 de 30 de ani, închis. Ce se poate lua e <strong>modelul de date și setul de constrângeri</strong>, iar acelea sunt publice: descrise în broșura lor și vizibile în capturile de ecran. Planul de mai jos reconstruiește acel model din specificație, cu componente open-source pentru părțile grele (motor de rutare, solver VRP), și adaugă stratul pe care Roadnet nu-l va avea niciodată în România: ANAF, e-Transport, CMR, tahograf.</p>
+  <p>Concluzia scurtă a analizei: <strong>Transitix nu are azi conceptul de „oprire”.</strong> O cursă e un document CMR punct-la-punct — un expeditor, un destinatar, o dată de încărcare. Roadnet trăiește într-un model comandă → oprire → rută → scenariu. Fără acel model, nimic din Routing, Territory Planner sau FleetLoader nu are unde să se agațe. Faza 1 este, de aceea, cotitura arhitecturală a întregului plan.</p>
+</section>
+
+<hr class="rule">
+
+<section class="wide">
+  <span class="kicker">Inventar onest</span>
+  <h2>Unde e Transitix azi</h2>
+  <p class="col">Citit direct din <code>server/src/migrate.js</code>, <code>server/src/entities.js</code> și <code>src/pages/</code>. Fundația e sănătoasă: multi-tenant curat pe <code>company_id</code>, patru roluri, Express + Postgres + React, 30+ teste Vitest, pipeline de avize care e realmente bun. Golurile sunt concentrate în operațional.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Modul</th><th>Stare</th><th>Ce există concret</th></tr></thead>
+      <tbody>
+        <tr><td class="mod">Avize → Anexă factură</td><td><span class="chip win">Solid</span></td><td>OCR (Google Vision + fallback text-layer PDF), tabel de revizuire, coduri de observație, export XLSX, ZIP, email, draft factură, log de export. Cel mai matur modul din aplicație.</td></tr>
+        <tr><td class="mod">Curse / CMR</td><td><span class="chip part">Funcțional, plat</span></td><td><code>trips</code> cu expeditor/destinatar, 7 stări, documente CMR cu OCR, link de confirmare client (ePOD embrionar), <code>uit_code</code> există ca simplă coloană.</td></tr>
+        <tr><td class="mod">Flotă, șoferi, clienți</td><td><span class="chip part">Funcțional</span></td><td>Date de bază bune: ITP, RCA, rovinietă, CASCO, permis, aviz medical, card tahograf, cu alerte de expirare configurabile.</td></tr>
+        <tr><td class="mod">Financiar</td><td><span class="chip part">Parțial</span></td><td>Facturi cu serie și contor atomic, TVA, stări. <strong>e-Factura ANAF e simulată</strong> — doar o coloană de status.</td></tr>
+        <tr><td class="mod">Depozit</td><td><span class="chip part">Doar stoc</span></td><td><code>warehouse_products</code> — SKU, cantitate, min/max, locație. Fără dimensiuni, fără paletizare, fără legătură cu marfa din curse.</td></tr>
+        <tr><td class="mod">Tracking GPS</td><td><span class="chip gap">Simulare</span></td><td><code>gps_logs</code> + buton „Simulează mișcare” care scrie coordonate random în jurul Bucureștiului. Zero telematică reală.</td></tr>
+        <tr><td class="mod">Planning AI</td><td><span class="chip gap">Stub</span></td><td><code>/api/integrations/llm</code> returnează două sugestii hardcodate. Fără hartă, fără distanțe, fără optimizare.</td></tr>
+        <tr><td class="mod">Rutare, opriri, ferestre de timp</td><td><span class="chip gap">Inexistent</span></td><td>Nicio tabelă de locații, nicio coordonată pe client, niciun apel către un motor de rutare. <code>distance_km</code> se introduce manual.</td></tr>
+        <tr><td class="mod">Plan de încărcare</td><td><span class="chip gap">Inexistent</span></td><td>—</td></tr>
+        <tr><td class="mod">Teritorii</td><td><span class="chip gap">Inexistent</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section class="wide">
+  <span class="kicker">Ținta</span>
+  <h2>Matricea de decalaj față de Roadnet</h2>
+  <p class="col">Cele patru module Roadnet din broșură — Routing, Territory Planner, FleetLoader, Dispatcher — descompuse în capabilități verificabile, cu verdictul pentru Transitix și faza în care se închide fiecare.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Capabilitate Roadnet</th><th>Transitix azi</th><th>Închis în</th></tr></thead>
+      <tbody>
+        <tr><td class="mod">Rute multi-oprire cu secvențiere</td><td><span class="chip gap">Lipsă</span></td><td class="num">P1</td></tr>
+        <tr><td class="mod">Optimizare VRP: ferestre de timp, capacitate, timp de servire</td><td><span class="chip gap">Lipsă</span></td><td class="num">P2</td></tr>
+        <tr><td class="mod">Scenarii multiple, comparate pe KPI</td><td><span class="chip gap">Lipsă</span></td><td class="num">P2</td></tr>
+        <tr><td class="mod">Distanțe și ETA pe rețea rutieră reală</td><td><span class="chip gap">Introdus manual</span></td><td class="num">P0</td></tr>
+        <tr><td class="mod">Restricții camion (înălțime, tonaj, ADR)</td><td><span class="chip gap">Lipsă</span></td><td class="num">P0 → P2</td></tr>
+        <tr><td class="mod">Territory Planner: zone echilibrate, poligoane</td><td><span class="chip gap">Lipsă</span></td><td class="num">P4</td></tr>
+        <tr><td class="mod">FleetLoader: cubaj, greutate, echilibrare pe axe</td><td><span class="chip gap">Lipsă</span></td><td class="num">P4</td></tr>
+        <tr><td class="mod">Strategii de încărcare „warehouse/driver-friendly”</td><td><span class="chip gap">Lipsă</span></td><td class="num">P4</td></tr>
+        <tr><td class="mod">Plan vs. realizat, în timp real</td><td><span class="chip gap">Simulare</span></td><td class="num">P3</td></tr>
+        <tr><td class="mod">Management de excepții (întârziere, abatere, staționare)</td><td><span class="chip gap">Lipsă</span></td><td class="num">P3</td></tr>
+        <tr><td class="mod">Performance dashboards (cost/km, cost/oprire, punctualitate)</td><td><span class="chip part">4 KPI-uri de bază</span></td><td class="num">P5</td></tr>
+        <tr><td class="mod">Aplicație șofer + ePOD</td><td><span class="chip part">Există, fără navigație</span></td><td class="num">P3</td></tr>
+        <tr><td class="mod">SaaS / cloud</td><td><span class="chip win">Deja nativ</span></td><td class="num">—</td></tr>
+        <tr><td class="mod">UI modern, responsive, mobil</td><td><span class="chip win">Peste Roadnet</span></td><td class="num">—</td></tr>
+        <tr><td class="mod">CMR digital + OCR</td><td><span class="chip win">Peste Roadnet</span></td><td class="num">—</td></tr>
+        <tr><td class="mod">e-Transport ANAF (cod UIT)</td><td><span class="chip part">Coloană pregătită</span></td><td class="num">P5</td></tr>
+        <tr><td class="mod">e-Factura ANAF (SPV)</td><td><span class="chip part">Simulat</span></td><td class="num">P5</td></tr>
+        <tr><td class="mod">Timp de conducere AETR / Reg. 561/2006</td><td><span class="chip gap">Lipsă</span></td><td class="num">P2 → P5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note col">
+    <span class="kicker">Unde se câștigă de fapt</span>
+    <p>Paritatea pe rutare te aduce la egalitate; nu îți câștigă o licitație. Diferențiatorul e ultima treime a tabelului: <strong>e-Transport, e-Factura, CMR digital, 561/2006 modelat nativ în optimizator.</strong> Roadnet e un produs american care în România se vinde prin integrator; conformitatea ANAF nu e și nu va fi în roadmap-ul lor. Un optimizator care planifică pauza de 45 de minute și repausul zilnic <em>în rută</em>, nu ca raport ulterior, e ceva ce Roadnet Routing nu face.</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section class="col">
+  <span class="kicker">Cotitura</span>
+  <h2>Modelul nou: comandă → oprire → rută</h2>
+  <p><code>trips</code> rămâne exact ce e — <strong>documentul de transport CMR</strong>, potrivit pentru FTL cap-coadă, care e majoritatea traficului intern românesc. Peste el se așază un strat de distribuție, strict aditiv, care nu strică nimic din ce merge azi. O rută poate genera unul sau mai multe CMR-uri; o cursă existentă rămâne validă fără rută.</p>
+
+<pre><code><span class="cmt">-- locatii geocodate, master data partajata (clienti, depozite, puncte de lucru)</span>
+<span class="kw">CREATE TABLE</span> locations (
+  id UUID PK, company_id UUID NOT NULL, client_id UUID NULL,
+  name, address, city, county, postcode, country <span class="kw">DEFAULT</span> 'RO',
+  lat NUMERIC(10,7), lon NUMERIC(10,7),
+  geocode_source TEXT, geocode_confidence NUMERIC(3,2), geocode_verified BOOL,
+  default_service_time_min INT <span class="kw">DEFAULT</span> 15,
+  window_start TIME, window_end TIME,
+  max_vehicle_length_m NUMERIC, access_notes TEXT,
+  territory_id UUID NULL
+);
+
+<span class="cmt">-- comanda: unitatea care trebuie mutata</span>
+<span class="kw">CREATE TABLE</span> orders (
+  id, company_id, client_id, location_id,
+  order_number TEXT, type TEXT,        <span class="cmt">-- livrare | ridicare | schimb</span>
+  requested_date DATE, window_start TIME, window_end TIME,
+  service_time_min INT, weight_kg, volume_mc, pallets INT,
+  requires TEXT[],                     <span class="cmt">-- ADR, frigo, lift-hidraulic, ...</span>
+  status TEXT, route_stop_id UUID NULL
+);
+
+<span class="cmt">-- ruta: o zi de lucru pentru un vehicul + sofer</span>
+<span class="kw">CREATE TABLE</span> routes (
+  id, company_id, route_date DATE, code TEXT,
+  vehicle_id, driver_id, depot_location_id, scenario_id NULL,
+  planned_distance_km, planned_duration_min, planned_cost,
+  actual_distance_km, actual_duration_min, actual_cost,
+  status TEXT   <span class="cmt">-- draft | planificata | lansata | in_executie | finalizata</span>
+);
+
+<span class="kw">CREATE TABLE</span> route_stops (
+  id, company_id, route_id, seq INT,
+  location_id, order_id NULL,
+  kind TEXT,    <span class="cmt">-- depot_start | livrare | ridicare | pauza | repaus | depot_end</span>
+  planned_arrival TIMESTAMPTZ, planned_departure TIMESTAMPTZ,
+  actual_arrival TIMESTAMPTZ,  actual_departure TIMESTAMPTZ,
+  leg_distance_km, leg_duration_min, status TEXT,
+  <span class="kw">UNIQUE</span> (route_id, seq)
+);
+
+<span class="kw">CREATE TABLE</span> route_scenarios      (id, company_id, route_date, name, params JSONB, kpis JSONB, is_committed BOOL);
+<span class="kw">CREATE TABLE</span> route_exceptions     (id, company_id, route_id, route_stop_id, type, severity, detected_at, acknowledged_at, acknowledged_by, payload JSONB);
+<span class="kw">CREATE TABLE</span> territories          (id, company_id, name, color, polygon JSONB <span class="cmt">/* GeoJSON */</span>, metrics JSONB);
+<span class="kw">CREATE TABLE</span> telematics_positions (id, company_id, vehicle_id, route_id, lat, lon, speed, heading, ignition, recorded_at, source);
+<span class="kw">CREATE TABLE</span> load_plans           (id, company_id, route_id, strategy, metrics JSONB);
+<span class="kw">CREATE TABLE</span> load_items           (id, load_plan_id, order_id, sku, x, y, z, l, w, h, bay, axle_group, load_seq);
+</code></pre>
+
+  <p><strong>Regulă neîncălcabilă</strong> (deja în <code>AGENTS.md</code>): fiecare tabelă nouă primește <code>company_id NOT NULL REFERENCES companies(id) ON DELETE CASCADE</code> plus index compus pornind de la <code>company_id</code>, și fiecare intră în <code>ENTITY_MAP</code> din <code>server/src/entities.js</code> cu lista ei de câmpuri scriibile. <code>gps_logs</code> nu se șterge — devine proiecția „ultima poziție cunoscută” peste <code>telematics_positions</code>, ca să nu se rupă pagina GPS existentă.</p>
+</section>
+
+<hr class="rule">
+
+<section class="wide">
+  <span class="kicker">Componente</span>
+  <h2>Construit vs. luat de-a gata</h2>
+  <p class="col">Roadnet și-a scris totul în casă acum 30 de ani. Azi, jumătate din suita lor e disponibilă open-source, la calitate egală sau mai bună. Asta e pârghia reală a planului.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Nevoie</th><th>Recomandare</th><th>De ce</th></tr></thead>
+      <tbody>
+        <tr><td class="mod">Rețea rutieră, distanțe, ETA</td><td><strong>OSRM</strong>, self-host Docker, extract OSM România + UE</td><td>Matrice de 200×200 în sub o secundă, cost zero pe apel. Alternativa plătită (Google Routes) devine scumpă exact la volumul unde optimizarea contează.</td></tr>
+        <tr><td class="mod">Restricții camion (tonaj, gabarit, ADR)</td><td><strong>Valhalla</strong>, profil <code>truck</code></td><td>OSRM nu modelează restricții de vehicul. Valhalla da, cu același extract OSM. Se rulează ca al doilea sidecar, doar pentru rutele care au nevoie.</td></tr>
+        <tr><td class="mod">Solver VRP</td><td><strong>VROOM</strong> (Apache-2.0), peste matricea OSRM</td><td>Acoperă din prima ferestre de timp, capacități multi-dimensionale, skill-uri, multi-depozit, pickup &amp; delivery, ture de șofer. Aici se câștigă paritatea cu Roadnet Routing în zile, nu în luni.</td></tr>
+        <tr><td class="mod">Geocodare adrese</td><td><strong>Photon</strong> self-host + fallback plătit sub prag de încredere</td><td>Adresele rurale românești sunt problema reală. Scor de încredere, ecran de corecție prin pin pe hartă, cache permanent.</td></tr>
+        <tr><td class="mod">Hărți</td><td><strong>MapLibre GL</strong> pentru board-ul de dispecerat; Leaflet rămâne unde e</td><td>Mii de opriri și trasee redate pe GPU. Leaflet cedează vizibil peste câteva sute de markere.</td></tr>
+        <tr><td class="mod">Teritorii</td><td><strong>În casă</strong>: k-means capacitat + <strong>Turf.js</strong> pentru poligoane</td><td>Territory Planner e, ca algoritm, clustering echilibrat pe volum, opriri și timp de condus. ~400 de linii, nu un produs.</td></tr>
+        <tr><td class="mod">Plan de încărcare</td><td><strong>În casă</strong>: packer 3D extreme-point + calcul sarcină pe axe</td><td>FleetLoader e bin-packing 3D cu reguli de stivuire. Euristica extreme-point ajunge la 85–92% umplere, suficient în practică.</td></tr>
+        <tr><td class="mod">Telematică</td><td>Aplicația proprie de șofer + webhook generic + adaptoare Webfleet / Frotcom / Teltonika</td><td>Nu construi un GPS. Construiește ingestia și lasă flota să vină cu ce are montat deja.</td></tr>
+        <tr><td class="mod">Timp real în UI</td><td><strong>SSE</strong> (<code>text/event-stream</code>), nu WebSocket</td><td>Se așază peste Express-ul existent fără server nou, trece prin proxy-ul Vite și e unidirecțional — exact ce cere un board de dispecerat.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section class="wide">
+  <span class="kicker">Execuție</span>
+  <h2>Planul, în șase faze</h2>
+  <p class="col">Fiecare fază livrează ceva utilizabil în producție. Estimările sunt săptămâni-om pentru un dezvoltator familiar cu baza de cod; P0–P2 sunt strict secvențiale, P3 și P4 pot merge în paralel.</p>
+
+  <div class="col">
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P0</span>
+      <h3 class="phase-title">Fundația geospațială</h3>
+      <span class="phase-cost">2–3 săpt.</span>
+    </div>
+    <p>Nimic din restul planului nu funcționează fără coordonate și distanțe reale. Faza asta nu adaugă ecrane noi — face ca cele existente să spună adevărul.</p>
+    <h4>Livrabile</h4>
+    <ul>
+      <li>Tabela <code>locations</code> + backfill din <code>clients.address</code> și din adresele de expeditor/destinatar deja existente în <code>trips</code>.</li>
+      <li>Serviciu de geocodare <code>server/src/lib/geo/geocode.js</code> — Photon self-host, scor de încredere, cache pe adresă normalizată.</li>
+      <li>Ecran de verificare a geocodării: locațiile sub prag, cu pin mutabil pe hartă și marcaj <code>geocode_verified</code>.</li>
+      <li>Sidecar OSRM în <code>docker-compose.yml</code> + <code>server/src/lib/geo/osrm.js</code> cu <code>route()</code>, <code>table()</code> (matrice), <code>nearest()</code>.</li>
+      <li>Cache de matrice în Postgres, cheie pe perechea de noduri snapped, cu TTL — altfel P2 recalculează inutil aceleași distanțe în fiecare zi.</li>
+      <li><code>trips.distance_km</code> se calculează automat la salvare, cu suprascriere manuală păstrată.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>Peste 95% din clienții activi au coordonate cu încredere ≥ 0,8. <code>POST /api/geo/matrix</code> cu 100 de locații răspunde sub 2 secunde. Distanța unei curse București–Cluj cade la ±3% față de Google Maps.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P1</span>
+      <h3 class="phase-title">Comenzi, rute, opriri — și board-ul de dispecerat</h3>
+      <span class="phase-cost">3–4 săpt.</span>
+    </div>
+    <p>Cotitura arhitecturală. După faza asta, planificarea se face manual dar corect; optimizatorul din P2 devine un buton peste un model care deja funcționează.</p>
+    <h4>Livrabile</h4>
+    <ul>
+      <li>Schema <code>orders</code>, <code>routes</code>, <code>route_stops</code> + intrările corespunzătoare în <code>ENTITY_MAP</code>.</li>
+      <li>Import comenzi din XLSX/CSV — <code>exceljs</code> e deja în <code>server/package.json</code>; se refolosește tiparul de mapare a coloanelor din modulul de avize.</li>
+      <li>Ecran nou <code>/dispatch</code>: coloană stângă cu comenzi neplanificate, coloană dreaptă cu rutele zilei, hartă în centru. Drag-and-drop comandă → rută, reordonare opriri, recalcul instant al km și ETA prin OSRM.</li>
+      <li>Generare CMR: o rută produce automat câte un <code>trip</code> per destinatar, cu numerotare din contorul existent.</li>
+      <li>Foaie de parcurs printabilă per rută (PDF prin <code>jspdf</code>, deja instalat).</li>
+      <li>Aplicația de șofer afișează ruta ca listă ordonată de opriri, nu ca o singură cursă.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>Un dispecer planifică manual 40 de comenzi pe 5 vehicule în sub 15 minute, tipărește foile de parcurs, iar șoferii văd opririle în ordine în aplicație.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P2</span>
+      <h3 class="phase-title">Optimizatorul — paritate cu Roadnet Routing, plus 561/2006</h3>
+      <span class="phase-cost">4–5 săpt.</span>
+    </div>
+    <p>Aici moare stub-ul din <code>src/pages/PlanningAI.jsx</code> și pagina devine ce pretinde că e. <code>optimization_suggestions</code> supraviețuiește, dar alimentată din diferența dintre planul curent și cel optimizat — adică sugestii cu cifre reale în spate.</p>
+    <h4>Livrabile</h4>
+    <ul>
+      <li>Sidecar VROOM + <code>server/src/lib/planning/solver.js</code> care traduce comenzi și vehicule în job-uri și vehicule VROOM.</li>
+      <li>Constrângeri: ferestre de timp pe oprire, capacitate pe trei dimensiuni (kg, mc, paleți), skill-uri (ADR, frigo, lift), depozite multiple, tura șoferului.</li>
+      <li><strong>Post-procesor Reg. 561/2006</strong>: inserează pauza de 45 min după 4h30 de condus și repausul zilnic ca opriri reale în <code>route_stops</code>, apoi re-verifică ferestrele. Asta e capabilitatea care trece înaintea Roadnet, nu doar la egalitate.</li>
+      <li>Scenarii: același set de comenzi rulat cu parametri diferiți (cost/km, penalizare depășire fereastră, număr maxim de vehicule), salvat în <code>route_scenarios</code>, comparat pe KPI într-un tabel, cu promovarea unuia singur în plan.</li>
+      <li>Rulare mărginită în timp (30–60 s), cu sămânță din planul zilei precedente pentru convergență rapidă.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>200 de comenzi pe 15 vehicule, optimizate sub 30 de secunde. Comparație A/B între două scenarii, cu diferența pe km, ore, cost și număr de vehicule. Zero încălcări de timp de conducere în planul generat.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P3</span>
+      <h3 class="phase-title">Execuție live — paritate cu Roadnet Dispatcher</h3>
+      <span class="phase-cost">3–4 săpt.</span>
+    </div>
+    <p>Se elimină simularea GPS. Planul din P2 capătă un contra-plan: realizatul.</p>
+    <h4>Livrabile</h4>
+    <ul>
+      <li><code>telematics_positions</code> + ingest: aplicația de șofer trimite poziții (Geolocation API, buffer offline), plus <code>POST /api/telematics/ingest</code> cu cheie per companie și adaptoare pentru Webfleet, Frotcom, Teltonika.</li>
+      <li>Motor de excepții: întârziere la oprire, sosire prea devreme, abatere de traseu, oprire neplanificată, staționare prelungită, viteză excesivă. Fiecare scrie în <code>route_exceptions</code> cu severitate și cere confirmare de la dispecer.</li>
+      <li>Recalcul ETA în cascadă: o întârziere la oprirea 4 împinge automat 5…12 și declanșează notificare către clienții afectați (se refolosesc <code>client_confirmations</code> și <code>lib/email.js</code>).</li>
+      <li>Board live prin SSE: hartă cu vehicule, culoare după starea de excepție, bară plan vs. realizat per rută.</li>
+      <li>Reluare istorică: traseul realizat suprapus peste cel planificat, pentru o zi aleasă.</li>
+      <li>ePOD complet în aplicația de șofer: semnătură, poze, motiv de refuz — legat de <code>route_stops</code>.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>O rută reală urmărită de la lansare la finalizare, cu ETA-uri care se ajustează la fiecare poziție primită și cu excepțiile ridicate în sub 60 de secunde de la producere.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P4</span>
+      <h3 class="phase-title">Plan de încărcare și teritorii</h3>
+      <span class="phase-cost">4–5 săpt.</span>
+    </div>
+    <p>FleetLoader și Territory Planner. Se pot construi în paralel cu P3 — nu depind de telematică.</p>
+    <h4>Livrabile — încărcare</h4>
+    <ul>
+      <li><code>warehouse_products</code> se extinde cu lungime/lățime/înălțime, greutate unitară, stivuibil da/nu, clasă ADR, tip palet.</li>
+      <li>Packer 3D extreme-point în <code>server/src/lib/loading/packer.js</code>, cu două strategii: <em>driver-friendly</em> (LIFO — ultima oprire se încarcă prima) și <em>warehouse-friendly</em> (grupat pe SKU și zonă de picking).</li>
+      <li>Calcul sarcină pe axe cu avertisment la depășire — chestiune de amendă în control rutier, nu doar de optimizare.</li>
+      <li>Ecran de vizualizare a încărcăturii: profil lateral al remorcii cu procent de umplere per compartiment, în linia capturii FleetLoader, dar în browser.</li>
+    </ul>
+    <h4>Livrabile — teritorii</h4>
+    <ul>
+      <li>Clustering capacitat peste locațiile geocodate, ponderat pe volum, număr de opriri și timp de condus.</li>
+      <li>Poligoane GeoJSON prin Turf.js, editabile manual pe hartă.</li>
+      <li>Tabel de echilibru: opriri, kg, mc, ore estimate per teritoriu, cu abaterea față de medie.</li>
+      <li>Atribuire automată <code>locations.territory_id</code> → filtrare implicită în planificarea zilnică.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>Umplere ≥ 85% pe un set real de comenzi, cu ordinea de încărcare respectând secvența inversă a opririlor. Cinci teritorii generate automat, cu abatere de sarcină sub 15%.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-head">
+      <span class="phase-id">P5</span>
+      <h3 class="phase-title">Dashboards și șanțul românesc</h3>
+      <span class="phase-cost">3–4 săpt.</span>
+    </div>
+    <p>Faza care transformă paritatea în avantaj comercial. Nimic de aici nu există în Roadnet și nimic nu va exista.</p>
+    <h4>Livrabile — dashboards</h4>
+    <ul>
+      <li>Model de cost per vehicul: motorină, salariu șofer, taxe de drum, amortizare, întreținere — din care rezultă cost real per km, per oprire, per kg livrat.</li>
+      <li>Vederi materializate pentru KPI, reîmprospătate nocturn: punctualitate, km goi, grad de umplere (greutate și volum), plan vs. realizat pe km și ore, cost per comandă.</li>
+      <li>Cockpit peste <code>recharts</code>, cu detaliere până la rută și oprire. Export XLSX prin tiparul <code>report_templates</code> deja existent.</li>
+    </ul>
+    <h4>Livrabile — conformitate RO</h4>
+    <ul>
+      <li><strong>e-Transport</strong>: obținere automată a codului UIT la lansarea rutei, cu popularea <code>trips.uit_code</code>, reîncercări și stare de sincronizare vizibilă.</li>
+      <li><strong>e-Factura</strong>: SPV real, XML UBL, semnătură, urmărirea statusului — înlocuiește simularea din <code>invoices.efactura_status</code>.</li>
+      <li><strong>Tahograf</strong>: import fișiere <code>.ddd</code> de card și de vehicul, raport de infracțiuni, alertă la apropierea limitelor săptămânale — cuplat înapoi în optimizatorul din P2, care astfel știe cât mai poate conduce fiecare șofer <em>mâine</em>.</li>
+    </ul>
+    <div class="accept">
+      <span class="kicker">Criteriu de acceptare</span>
+      <p>O factură emisă și acceptată în SPV fără intervenție manuală. Un cod UIT obținut automat la lansarea unei rute. Optimizatorul refuză să aloce un șofer care ar depăși limita săptămânală de conducere.</p>
+    </div>
+  </div>
+
+  </div>
+</section>
+
+<hr class="rule">
+
+<section class="col">
+  <span class="kicker">Ce poate merge prost</span>
+  <h2>Riscuri și cum se dezamorsează</h2>
+
+  <h3>Calitatea geocodării pe adrese rurale</h3>
+  <p>Cel mai probabil punct de eșec al întregului plan. „Sat Cornu, com. Brebu, jud. Prahova” nu se rezolvă curat în OSM. Dezamorsare: scor de încredere obligatoriu, ecran de corecție prin pin, cache permanent per companie — o adresă corectată o dată rămâne corectă. Bugetează două săptămâni de curățare de date la prima implementare reală.</p>
+
+  <h3>Optimizatorul dă rezultate pe care dispecerul le refuză</h3>
+  <p>Un plan matematic optim care contrazice cunoașterea locală se abandonează în prima săptămână. Dezamorsare: planul optimizat intră ca <em>propunere</em>, nu ca decizie; dispecerul mută orice oprire, iar sistemul recalculează și îi arată costul modificării. Cu timpul, refuzurile repetate devin constrângeri explicite în model.</p>
+
+  <h3>Erodarea a ceea ce funcționează deja</h3>
+  <p>Modulul de avize și fluxul CMR sunt partea matură a produsului. Straturile noi sunt strict aditive: <code>trips</code> nu-și schimbă schema în P1, <code>gps_logs</code> rămâne ca proiecție în P3. Fiecare fază păstrează suita Vitest verde înainte de merge.</p>
+
+  <h3>Costul de infrastructură</h3>
+  <p>OSRM, Valhalla, Photon și VROOM înseamnă patru containere în plus și un extract OSM al Europei — undeva la 8–16 GB RAM pe un VPS. E de aproximativ zece ori mai ieftin decât licențierea unui motor comercial de rutare, dar nu e gratis, și trebuie prins în modelul de preț per client de la început.</p>
+
+  <h3>Izolarea multi-tenant sub presiune</h3>
+  <p>Zece tabele noi înseamnă zece ocazii de a uita <code>company_id</code> într-un <code>WHERE</code>. Dezamorsare: un test care enumeră toate tabelele company-scoped și verifică prezența coloanei și a indexului, plus revizuire dedicată pe fiecare interogare nouă din <code>server/src/routes/</code>.</p>
+</section>
+
+<hr class="rule">
+
+<section class="col">
+  <span class="kicker">De unde se începe</span>
+  <h2>Primii trei pași</h2>
+  <ol>
+    <li><strong>Ridică OSRM local.</strong> Un container, extractul OSM al României, și un test care cere distanța București–Cluj. Dacă răspunde în sub 100 ms, întreaga fază P0 e validată tehnic într-o după-amiază.</li>
+    <li><strong>Adaugă <code>locations</code> și geocodează clienții existenți.</strong> Rezultatul îți spune imediat cât de mare e problema de curățare a datelor — și, implicit, dacă estimarea de 2–3 săptămâni pentru P0 ține.</li>
+    <li><strong>Scoate <code>DemoBanner</code> de pe pagina GPS abia la finalul lui P3.</strong> Până atunci, onestitatea etichetei „demo” valorează mai mult decât aparența unei funcționalități care nu există — e și motivul pentru care baza de cod actuală e ușor de extins.</li>
+  </ol>
+</section>
+
+<footer>
+  Transitix v1.9.0 · analiză pe branch RAI-spedition · 25 august 2026
+</footer>
+
+</div>

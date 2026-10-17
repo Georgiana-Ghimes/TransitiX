@@ -1,0 +1,92 @@
+Bmiadeoperaçães A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados
+Importação de clientes
+Importação de clientes
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Manter as informações dos clientes atualizadas é uma das tarefas mais importantes no
+Roadnet Transportation Suíte. Se as informações do cliente, como tempo de atendimento,
+geocodificação e janela de atendimento, não estiverem corretas, poderão afetar a
+roteirização. Por exemplo, se o Roadnet receber um pedido de um cliente que não existe,
+o pedido não será roteirizado e será tratado como “não georreferenciado”. O programa
+não sabe onde o pedido deve ser entregue e, portanto, não pode entregá-lo. O Roadnet não
+pode calcutar custos precisos ou tempo em rota para clientes que não existem nem pode
+incluir esse pedido na rota dinamicamente. Se o cliente não existe no Territory Planner,
+não é possível adicionar nem importar sua extensão,
+Monitorar todos os clientes pode parecer difícil, especialmente se a empresa costuma
+adicionar um número significativo de novos clientes regularmente. Mas o Roadnet
+Transportation Suite permite importar um arquivo de novos clientes a qualquer momento,
+além de permitir a digitação de cada um deles. Você também pode utilizar esse arquivo
+para atualizar ou excluir informações de cliente existentes,
+.Ac importar clientes, você pode configurar o Transportation Suitepara geocodificá-los ou
+pode incluir as informações de latitude e longitude no arquivo. Para que os clientes sejam
+geocodificados (o que ocorre normatmente, a menos que você indique NÃO
+geocodifcar), o processo iniciará imediatamente após a importação deles. A barra de
+Status da importação indicará que a geocodificação está em andamento.
+Após a importação dos clientes, você poderá exibi-los nós módulos Manutenção, Editor
+de roteirização, Analista ou Editor de planejamento para determinar o método de
+geocodificação deles. Se não estiver satisfeito com a geocodificação de um cliente, você
+poderá editá-lo e geocodificá-lo manualmente. Consulte Geocodificação do cliente para
+obter mais informações.
+. Nota: Quando você importar novos clientes, será atribuído a eles o fuso horário
+selecionado na página Clientes do menu Opções do módulo Manutenção. Se você
+estiver atualizando um cliente existente, o fuso horário dele não será alterado.
+.ª Etapa 1: Clique no icone Importação para abrir o módulo Importação.
+me — — Nota: Se você tiver várias regiões ou cenários, verifique se são exibidos os dados
+apropriados na parte inferior da tela. Para alterar a região ou o cenário, basta clicar
+ma seta e selecionar o item apropriado na lista exibida.
+Etapa 2: Clique no menu Importar e selecione Clientes. A janela Importar clientes é
+exibida.
+. Notas: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+—— . / , . o sm
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Importação de clientes
+importação. Consutte Altemância entre conjuntos de layout para obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar no menu suspenso. Consulte Configuração de
+layouts de arquivo de importação para obter mais informações.
+Para visualizar um relatório que resuma as informações do layout, incluindo o
+nome e o local do arquivo de importação e as posições iniciais e o tamanho de
+cada campo, clique na seta [Layout do arquivo] e escolha Visualizar no menu
+suspenso. A janela Visualizar relatório é exibida com o relatório. Nessa janela,
+você pode imprimir ou exportar o relatório.
+Nota: Se você tiver campos no layout de importação ou exportação que se sobreponham,
+. eles serão indicados no relatório para que você possa corrigi-los, se necessário. À
+sobreposição de campos ao importar/exportar dados pode levar a resultados
+inesperados.
+Etapa 3: Para atualizar informações somente de clientes existentes, clique na caixa
+Atualizar somente clientes existentes.
+W o lam do processo de
+importação. Antes de importar
+—m clientes, você pode especificar o
+E formato das informações de
+—— Tatitude e longitude é o formato
+EE e | dostempos de atendmenio.
+Quando a importação for
+concluída, você pode exibir um
+Lantstirgu oosnas aa logde importação ou um relatório
+tee 35 — E | ds todos os erros encontrados
+EE ) drovea importação
+Etapa 4: Para importar latitudes e longitudes para seus clientes, clique na seta Formato
+da coordenada de latitude/longitude e selecione o formato das coordenadas no
+arquivo original. Você pode importar latitudes e longitudes em:
+*Gravus, minutos, segundos — a latitude longitude deve ser formatada de
+maneira que os campos de minutos e de segundos tenham dois dígitos cada um.
+|O campo de graus não tem requisitos. Por exemplo, 35 graus, 2 minutos, 3
+segundos deve ser importado como 350203, enquanto 5 graus, 2 minutos, 3
+segundos deve ser importado como 50203,
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+Importação de clientes
+*Graus decimais x 10000 — a latitude/longitude deve ter pelo menos cinco
+digitos. Por exemplo, uma latitude de 0.0345 deve ser importada como 00345,
+enquanto uma latitude de 51.1234 deve ser importada como 511234.
+*Graus decimais x 1000000 — a latitude longitude deve ter pelo menos sete
+digitos. Por exemplo, uma latitude de 0.032245 deve ser importada como
+(0032245, enquanto uma latitude de 51.122234 deve ser importada como
+51122234
+“Graus decimais — não existem requisitos para formatação de latitude/

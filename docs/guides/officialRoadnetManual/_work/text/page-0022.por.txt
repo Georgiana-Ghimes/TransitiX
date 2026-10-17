@@ -1,0 +1,63 @@
+“base nas informações do menu Opções; entretanto, eles podem ser alterados ao adicionar
+um novo cliente (consulte Menu Cliente para obter mais informações).
+Etapa 1: Clique nas setas próximas aos itens descritos abaixo para selecionar as
+informações padrão.
+Tipo de tempo de atendimento é utilizado para determinar os tempos de
+atendimento de um novo cliente, a menos que seja inserida uma alteração do
+tempo de atendimento.
+Tipo de janela de atendimento é utilizado para determinar as janelas de
+atendimento de um novo cliente, a menos que seja inserida uma alteração da
+janela de atendimento.
+Fator da janela de atendimento é utilizado para determinar a importância de
+fazer uma entrega a um cliente dentro das janelas de atendimento informadas.
+Zona preenche automaticamente a zona de um novo cliente. À zona pode ser
+alterada ao adicionar um cliente.
+Estado preenche automaticamente o estado de um novo cliente. O estado pode
+ser alterado ao adicionar um cliente.
+Guia de operações 41
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Tipo de cliente preenche automaticamente o tipo de um novo cliente. O tipo
+pode ser alterado ao adicionar um cliente.
+Você pode escolher os tipos de tempo de atendimento e de janela de atendimento
+que serão atríbuídos a um novo cliente.
+Etapa 2: Na seção Limite de bulk, insira as quantidades de cada uma das medidas de
+quantidade do seu pedido que devem ser qualificadas como pedido bulk
+(Tamanho 1, Tamanho 2 e Tamanho 3). Esses números podem ser alterados ao
+adicionar um novo cliente.
+Etapa 3: Para adicionar ou editar clientes com a mesma ID, porém de tipos diferentes
+(por ex., ID 12345, tipos congelado, seco, hortifruti) simultaneamente, marque
+Sincronizar as mesmas IDs na seção Ao executar a manutenção. Clique no
+botão [Campos a serem sincronizados] para escolher os campos que serão
+sincronizados. Na caixa Pré-selecionados, clique com a tecla [Ctrl] pressionada
+nos tipos que serão pré-selecionados ao adicionar um cliente; os tipos reais
+podem ser alterados ao adicionar o cliente.
+Etapa 4: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+” “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Definição dos aliases padrão
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+A página Alias do menu Opções permite configurar os aliases de tamanho e categoria e
+s campos definidos pelo usuário para os clientes. Este é o único local no qual é possível
+estabelecer ou alterar esses paórões no Roadnet Transportation Suite.
+s aliases de tamanho escolhidos aqui aparecerão em todo o Roadnet
+Transportation Suíte sempre que tamanhos forem exibidos.
+Etapa 1: Insira os nomes de cada uma das unidades (Tamanho 1, Tamanho ? e Tamanho
+3) e de cada categoria (Categoria 1, Categoria 2 e Categoria 3). Estes nomes
+aparecerão em todo o Transportation Suíte como cabeçalhos de coluna e em
+relatórios, sempre que esses dados aparecerem.
+Nota: As categorias são utilizadas apenas no Roadnet.
+Etapa 2: Se necessário, atribua nomes ou cabeçalhos a um ou mais campos definidos
+pelo usuário (Definido pelo usuário 1, 2 e 3). Esses são campos definidos pelo
+usuário que podem ser utilizados para inserir informações adicionais de
+cliente, parada, pedido ou item do pedido. Os campos de cliente definidos pelo
+usuário são utilizados por todo o Transportation Suíte. Os campos de pedido e
+item do pedido definidos pelo usuário são utilizados com o Roaánet e o
+MobileCast; os campos de rota e parada definidos pelo usuário são utilizados
+somente no MobileCast.
+Notas: Os nomes atribuídos em Definido pelo usuário - Cliente aparecerão como
+cabeçalhos na página Atributos estendidos do menu Cliente e em todas as janelas
+de cliente. Você pode inserir informações de campo definido pelo usuário para o

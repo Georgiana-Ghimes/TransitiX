@@ -1,0 +1,85 @@
+F AIEPZÉ)IÓ“”<óÉ $S S o — XoadnetiransporiationSuite
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com motoristas
+Etapa 10: Determine como o motorista será pago, e insira a taxa de pagamento de
+acordo com a tabela de campos de Custo do motorista.
+Tem Descrição
+Custosem ajudante — Custo somente pelo motorista (sem ajudante)
+Custo com ajudante — Custos pelo motorista e pelo ajudante combinados (c
+motorista sozinho ganha USS 2 e o ajudante ganha USS 1,
+portanto o custo com ajudante = USS 3)
+Taxamormal(por — Custo por minuto, incluindo tempo de percurso e
+minuto) atendimento (o motorista ganha USS 10/hora, então a taxa
+mormal = 01666 por minuto)
+Taradehoraextra — Custopor minuto do trabalho em horas extras, caso o
+(or minuto) motorista receba uma taxa maior, incluindo tempo de
+percurso e atendimento
+Tempo mínimo Número minimo garantido de horas pelas quais o motorista
+é pago, trabalhando ounão
+Horas extras iniciais — Número de horas após as quais se aplica 2 taxa de horas
+extas
+Remuneraçãopor — Valorpagoao motorista por parada
+parada
+Número mínimo de — Número mínimo garantido de paradas pelas quais o
+paradas motorista é pago, concluindo esse número de paradas ounão
+Remuneraçãopor — Valor pago o motorista por distância (milhas ou
+distância quilômetros)
+Distância mínima — — Número minimo garantido de milhas ou quilêmetros pelos
+quais o motorista é pago, mesmo que não tenha percorrido
+essa distância
+Minutoextrapor — — Valorpagoaomotoristapor unidade entregue excedendo um
+'nidade múmero minimo especificado de unidades
+Contagem mínima de - Número mínimo garantido de unidades pelas quais o
+unidades motorista é pago, mesmo que não tenha entregue esse
+múmero de unidades
+Custo do minimo de | Valor total pago ao motorista por entregar o número mínimo
+unidades (de umidades (se for garantido o motorista o pagamento de
+SS 50 pela entrega de 100 unidades, insira USS 50)
+Custo fizo diário (Custo fixo por dia para um motorista, como benefícios, et.
+Etapa 11: Se você estiver usando o MobileCast para monitorar os motoristas, clique na
+guia Expedir. Caso contrário, vá para a etapa 13.
+Etapa 12: Se estiver utilizando o MobileCast, preencha os itens abaixo na guia Analista.
+Bmadeaperaçães o 7A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com motoristas
+Se você estiver utilizando versões mais novas do aplicativo móvel nas quais o
+motorista faz logon no dispositivo, não é necessário atribuir um disposítivo
+sem fio ao motorista.
+Selecione a caixa Pré-carregar orientações para o motorista se desejar o envio
+automático de orientações ao dispositivo móvel do motorista quando arota for
+carregada.
+Etapa 13: Clique no icone Salvar ou pressione [Ctrl]:[S] para salvar o novo motorista.
+Etapa 14: Repita as etapas 4 a 13 para adicionar outros motoristas.
+Etapa 15: Quando terminar de adicionar motoristas, clique na caixa Fechar para fechar
+a janela Adicionar motorista.
+Ícone Manutenção — Cadastros — Funcionários — Motoristas — ícone Adicionar
+(nsert]) — icone Salvar ([Ctri]+[S])
+Os motoristas existentes podem ser editados ou excluídos, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.
+MT A A L Foadnet Transporiation Sulfe
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Monitoramento de produtividade
+Monitoramento de produtividade
+Utilizado com: FleetLoader
+O FleetLoader permite monitorar a produtividade dos carregadores e dos motoristas. As
+informações de produtividade são inseridas no módulo Manutenção, mas os relatórios são
+gerados no módulo Relatórios ou no Editor de carregamentos.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Entrada de dados reais e selecione Produtividade do motorista
+ou Produtividade de carregamento. A janela Produtividade é exibida,
+mostrando as rotas da sessão atual.
+Etapa 3: Se necessário, altere a sessão com a qua! está trabalhando. Para alterar a
+sessão, clique no ícone Sessão para abrir uma lista de sessões. Clique duas
+Vezes em uma sessão para selecioná-la.
+Etapa 4: Selecione as rotas às quais deseja adicionar informações de produtividade.
+Clique com o botão direito do mouse em uma rota escolhida e selecione Editar
+no menu exibido. A janela Produtividade é exibida.
+Etapa 5: Na janela Produtividade, clique na rota na qual deseja inserir as informações de
+produtividade. O número da rota aparecerá na barra de título da janela.
+Etapa 6: Para inserir informações de produtividade do motorista, clique na seta para
+abrir a janela Pesquisa - Motorista. Clique duas vezes no motorista cujas
+informações deseja inserir, ou clique no motorista e, em seguida, no ícone
+Processar. Insira o tempo de atendimento no formato HH:MM.

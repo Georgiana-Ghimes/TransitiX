@@ -1,0 +1,78 @@
+Etapa 8: Repita as etapas 4 2 7 para continuar adicionando atividades.
+x — Etapa9: Quando todas as atividades tiverem sido adicionadas, clique na caixa Fechar. A
+Jjanela Adicionar atividade é fechada.
+As atividades existentes podem ser editadas ou excluidas, conforme necessário. Consulte
+Edição de itens e Exclusão de ítens para obter mais informações.
+Após a adição de todas as atividades, é possível agrupá-las como conjuntos de
+habilidades. Consulte Como trabalhar com conjuntos de habilidades para obter mais
+informações.
+Cadastros — Atividades — ícone Adicionar ([Insert]) — ícone Salvar ([Ctrl]+[S])
+M AA A Roadher Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com conjuntos de habilidades
+Como trabalhar com conjuntos de habilidades
+Utilizado com: Roadnet, MobileCast
+Os conjuntos de habilidades são um grupo de atividades que um funcionário é capaz de
+realizar. Por exemplo, um encanador pode ser capaz de executar as seguintes atividades;
+instalar uma máquina de lavar, instalar uma máquina de lavar louças e instalar um
+triturador de lixo. Em seguida, quando as rotas forem criadas, será possível especificar
+que apenas os funcionários com o conjunto de habilidades necessário para atender a um
+pedido possa ser atribuído à rota.
+Antes de criar os conjuntos de habilidades, é necessário adicionar as atividades. Depois
+de criar os conjuntos de habilidades, é possível atribuir um conjunto de habilidades a um
+— foncionário.
+) Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+lmn — Etapa 2: Clique no menu Cadastros, selecione Funcionários e Conjuntos de habilidades.
+.A janela Conjuntos de habilidades é exibida, listando todos os conjuntos de
+- habilidades estabelecidos.
+Nota: Para ver uma lista atualizada de conjuntos de habilidades, clique no ícone
+; Atualizar; a janela será atualizada com as informações mais recentes do banco de
+E
+m dados.
+Etapa 3: Na janela Conjuntos de habilidades, clique no ícone Adicionar ou pressione
+[Insert]. A janela Adicionar conjuntos de habilidades é exibida.
+E
+Quando rotas são criadas, funcionários
+não são atribuídos a rotas que incluem —
+atividades que não estão incluídas na sul
+Tista de Atividades atribuídas do sum
+conjunto de habilidades. o
+ªm t
+o =
+[ pps——
+Bmadeaperaçõães AA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados
+(Como trabalhar com conjuntos de habilidades
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+. do mouse n entrada existente e selecione Clonar no menu exibido. A janela
+D Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para a ID de conjunto de habilidades. Este campo deve
+ser preenchido.
+Etapa 5: Insira até 60 caracteres na Descrição
+Etapa 6: Insira o Fator do tempo de atendimento do conjunto de habilidades. O fator do
+tempo de atendimento será multiplicado por todas as atividades necessárias a
+um pedido específico, quando as rotas forem criadas.
+ãv Dica: O fator do tempo de atendimento pode ser usado para compensar funcionários com
+diferentes níveis de habilidade. Por exemplo, um encanador iniciante pode
+necessitar de mais tempo para executar as atividades que um encanador experiente;
+basta dar ao encanador iniciante um fator de tempo de atendimento mais elevado
+, quando as rotas forem criadas, será fornecido mais tempo para a conclusão da
+tarefa.
+Etapa 7: Na lista Atividades disponíveis, selecione as atividades que possam ser
+executadas por funcionários com esse conjunto de habilidades. Arraste as
+atividades da lista Atividades disponíveis para a lista Atividades atribuídas. Os
+funcionários com este conjunto de habilidades não serão atribuídos a rotas que
+necessitam de uma atividade não incluída em sua lista de Atividades
+atribuídas.
+F EtapaS: Clique no ícone Satvar ou pressione [Ctr1]+[S] para salvar o conjunto de
+” habilidades,
+x — Etapa9: Repitaas etapas 4 a 8 para continuar adicionando conjuntos de habilidades.
+* Etapa 10: Quando todas as atividades tiverem sido adicionadas, clique na caixa Fechar.
+AA janela Adicionar conjunto de habilidades é fechada.
+Os conjuntos de habilidades existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Cadastros — Funcionários > Conjuntos de habilidades —icone Adicionar ([Insert]) — ícone
+Salvar (Ctrl/+[S])

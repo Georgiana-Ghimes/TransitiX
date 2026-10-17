@@ -1,0 +1,91 @@
+FT AAA E Roadhe Tranporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com pedidos planejados
+Como trabalhar com pedidos planejados
+Utilizado com: Roadnet, FleetLoader
+|O Roadnet Transportation Suíte oferece a opção de inserir manualmente os pedidos a
+qualquer momento, e de modificar pedidos inseridos anteriormente. Além disso, é
+possível inserir alterações de janela e tempo de atendimento, bem como instruções
+especiais para qualquer pedido.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Produto e Pedidos planejados. A janela
+Pedidos é exibida, listando todos os pedidos da sessão mais recente. À barra de
+título da janela Pedidos lista a sessão de roteirização sendo exibida e com a
+qual você trabalhará.
+Para exibir os pedidos de uma sessão de roteirização diferente, clique no
+ícone Alterar sessão exibida. A janela Pesquisa - Sessões de roteirização será
+exibida. Clique duas vezes na sessão com a qual deseja trabalhar ou clique nela
+e, em seguida, no ícone Processar.
+Para adicionar uma nova sessão de roteirização à qual adicionar pedidos,
+clique no icone Criar uma nova sessão. A janela Adicionar sessão de
+Toteirização é exibida. Preencha as informações da nova sessão de roteirização.
+Consulte Criação de uma nova sessão de roteirização para obter mais
+informações.
+Para adicionar um pedido futuro, clique no icone Alterar sessão exibida. À
+janela Pesquisa - Sessões de roteirização será exibida. Clique duas vezes na
+” sessão Futuro ou clique na sessão Futuro e no ícone Processar; a sessão Futuro
+passa 2 ser a primeira da lista.
+Notas: Para ver uma lista atualizada de pedidos, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+.Ao abrir um pedido futuro, você pode receber um aviso informando que outro
+usuário está trabalhando com esse pedido futuro. Se isto ocorrer, será possível
+abrir o pedido futuro somente para exibição. Você não poderá alterá-lo até o outro
+usuário ter salvado e fechado o pedido futuro. Depois que isto ocorrer, você poderá
+alterá-lo após atualizar a janela (clique no ícone Atualizar ou feche e reabra 2
+janela).
+Bmadaperaçães AA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com pedidos planejados
+Etapa 3: Na janela pedidos, clique no ícone Adicionar ou pressione [Insert]. A janela
+Adicionar pedido é exibida.
+Pedidos inseridos na
+janela Adicionar
+pedido para sessão
+'serão adicionados à
+sessão de roteirização
+exibida na parte
+superior da janela.
+Etapa 4: Insira o número do pedido. Esse campo deve ser preenchido.
+Etapa 5: Clique na seta Tipo do pedido e selecione se o pedido é uma entrega ou coleta
+Etapa 6: Insira a ID do cliente e Tipo de cliente. Os campos ID do cliente e Tipo de
+cliente devem ser preenchidos. Ao inserir informações nesses campos, o nome.
+e endereço do cliente são exibidos na caixa de exibição abaixo.
+. Nota: Se você inserir uma ID e tipo de cliente não existentes, será exibida uma mensagem
+perguntando se você deseja adicionar o cliente. Clique em [Sim] para adicionar o
+cliente. O menu Cliente é exibido. Consulte Como trabalhar com clientes para
+obter mais informações. Se você não geocodificar o cliente, ele será exibido na lista
+Não georreferenciado da sessão no Editor de roteirização, na qual poderá ser
+reoteirizado.
+Etapa 7: Se apropriado, insira um seletor de pedido no campo Seletor. Utilize os
+seletores para filtrar pedidos ao criar rotas no Editor de roteirização
+Etapa 8: Para que um pedido seja originado em um depósito específico, clique na seta
+Depósito de preferência e selecione o depósito na lista. A não ser que o pedido
+seja roteirizado com Sequência da rota padrão, ele será colocado em um rota
+Ooriginária desse depósito. Se não houver rotas originadas desse depósito, o
+pedido não será atendido.
+Etapa 9: Clique na seta Recebido por e selecione o funcionário que recebeu o pedido na
+lista que será exibida.
+FBT AA E Roadha Traporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com pedidos planejados
+Etapa 10: Insira s quantidades apropriadas na caixa Tamanhos.
+Nota: Se você estiver exibindo um pedido existente que foi roteirizado, as quantidades
+mostradas são as quantidades se o pedido for entregue na Data mostrada.
+Etapa 11: Insira um valor entre 1 e 100 para 2 Urgência do pedido. A urgência indica a
+importância da entrega do pedido, com 100 indicando que o pedido deve ser
+entregue. Ao considerar a urgência ao criar rotas no Editor de roteirização, os
+pedidos com maior urgência serão roteirizados primeiro.
+Se você estiver utilizando Roteirização semanal, digite o Aumento da urgência
+diária na área Roteirização semanal.
+Etapa 12: Se você estiver executando roteirização semanal, preencha 2s informações na
+área Roteirização semanal.
+Aumento diário — insira a quantidade de cada tamanho aumentada 2 cada dia
+que o pedido não é entregue.
+Aumento da urgência diária — insira o valor de aumento da urgência a cada
+dia até a Data de término. Um valor de urgência 100 indica que o pedido deve
+ser roteirizado nessa data.
+Nota: Se você estiver exibindo um pedido existente que foi 1oteirizado, a uigência 1efete
+s aurgência da data de entrega. Alterar esta urgência irá alterar a urgência da data de

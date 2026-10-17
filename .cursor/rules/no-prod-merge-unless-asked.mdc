@@ -1,0 +1,31 @@
+---
+description: Interzis merge/push pe TRANSITIX-RAI-PROD fără cerere explicită în turul curent
+alwaysApply: true
+---
+
+# PROD: niciun merge / push fără „merge” explicit
+
+## Regulă hard
+
+**Nu** face `checkout` pe `TRANSITIX-RAI-PROD`, **nu** `git merge` în PROD, **nu** `git push origin TRANSITIX-RAI-PROD` (și nici force) **decât** dacă utilizatorul cere **explicit în mesajul din turul curent** una dintre:
+
+- „merge” / „merge pe PROD” / „merge în PROD”
+- „pe ambele” / „ambele branch-uri” / „și pe PROD”
+- „commit + push + merge” (toate trei, nu doar commit/push)
+
+## Ce NU e autorizație
+
+- „commit și push” / „commit + push” / „nu uita de changelog” → **doar** MISTRAL (sau branch-ul de lucru), **fără** merge PROD
+- Faptul că în tururi anterioare a zis „commit + push + merge”
+- Faptul că regula dual-branch descrie *cum* se face merge când e cerut
+- „deploy pe VPS” / „pentru client” fără cuvântul merge pe PROD
+
+## După commit + push pe MISTRAL (fără merge cerut)
+
+1. Oprește-te.
+2. Spune SHA-ul pe MISTRAL.
+3. Menționează pe scurt că PROD e în urmă până când cere merge — **nu** propune să rulezi merge-ul singur în același tur.
+
+## Când merge e cerut explicit
+
+Respectă `rai-dual-branch-same-hash.mdc` (FF merge, același SHA, fără cherry-pick twins).

@@ -1,0 +1,61 @@
+FTA EA L Foadnet Transporiation Sulfe
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Navigarea în Roadnet Transportation Suite
+Navigarea în Roadnet Transportation Suite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Roadnet Transportation Suite are o interfață grafică intuitivă care face programul
+ușor de învățat și utilizat. Se bazează pe meniuri, pictograme și ferestre care sunt
+alese și gestionate cu mouse-ul. Pentru mai multe informații despre cum să navigați
+program, consultați Gestionarea ferestrelor și Tipurile de ferestre.
+Tipuri de ferestre
+În Roadnet Transportation Suite sunt utilizate diferite tipuri de ferestre pentru a afișa și
+gestionați informațiile de rutare. Tipurile folosite sunt:
+Fereastra de legătură — folosită pentru a afișa informații precum rute, opriri,
+comenzi etc. Puteți modifica modul în care datele sunt afișate în fereastră, dar nu puteți
+poate modifica datele.
+Fereastra de întreținere — folosită pentru a afișa și edita informații. Poți
+modificați datele, precum și prezentarea acestora în fereastră.
+Hărți — utilizate în Editorul de rutare,
+planificare și întreținere pentru afișarea și actualizarea rutelor și a geocodării locațiilor.
+(Hărțile pot fi actualizate și editate.
+Hărțile Transportation Suite au funcții specifice software-ului sau modulelor
+vtilizat. De exemplu, puteți adăuga bariere sau sectoare pe hartă în module
+Mentenanta, Editor de rutare si Editor de planificare; vezi Cum să lucrezi
+cu bariere și Cum să lucrați cu sectoare în secțiunea Întreținere a acestui manual! pentru
+obține mai multe informații. În Editorul de rutare, puteți vizualiza rutele pe hartă și
+editați-le acolo; Consultați Utilizarea hărții în Editorul de rutare pentru mai multe
+informaţii. În Editorul de planificare, puteți utiliza harta pentru a evalua și edita
+teritorii și rute; Consultați Utilizarea hărții în Editorul de planificare pentru mai multe
+informaţii. În modulul Analyst, puteți vizualiza și edita rute pe hartă; consultați
+Utilizarea hărții din modulul Analyst pentru a obține mai multe informații.
+Gestionarea ferestrelor
+Pentru a selecta un anumit element de meniu sau pictogramă, indicați spre el și faceți clic pe butonul
+al mouse-ului. În ferestrele care afișează coloane de date editabile, faceți dublu clic pe
+începe procesul de editare pentru o anumită linie de date.
+Windows va rămâne deschis până când le închideți, făcând una dintre următoarele:
+* — Faceți clic pe caseta Închidere („X”) din colțul din dreapta sus al ferestrei.
+* — Faceți clic pe caseta de control din colțul din stânga sus al ferestrei și selectați Închideți
+meniu.
+* — Faceți dublu clic pe caseta de control.
+* — Faceți clic pe meniul Fișier și faceți clic pe Ieșire (numai module).
+* — Apăsați [CtI]-[F4],
+madeaperações Ê
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Navigarea în Roadnet Transportation Suite
+* Selectați Fereastra—> Închideți tot.
+În cadrul Roadnet Transportation Suite, în special în editorii de rutare și
+planificare și atunci când lucrați cu hărți, există mai multe taste rapide pe care le puteți utiliza
+pentru a efectua anumite acțiuni. Acolo unde este cazul, combinația de taste rapide este
+indicat în meniu, lângă opțiune.
+În fiecare modul, cum ar fi modulul Întreținere, nu este necesar să închideți o fereastră
+lucra la altul. Puteți avea mai multe ferestre deschise în același timp. A face
+activați fereastra dorită, faceți clic pe bara de titlu. Cu toate acestea, trebuie să închideți
+fiecare modul înainte de a intra în următorul.
+EE ——A la
+Puteți avea mai multe ferestre deschise simultan în orice modul. A
+Fereastra cu cea mai strălucitoare bară de culoare, de obicei albastră, este fereastra activă.
+8 „Suită de transport Roadhnet
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.

@@ -1,0 +1,65 @@
+ee — Notă: Pentru o listă actualizată de coduri de stare, faceți clic pe pictograma Actualizare; la
+fereastra va fi actualizată cu toate informațiile modificate din baza de date.
+| Pasul 3: În fereastra Coduri de stare comandă, faceți clic pe pictograma Adăugați sau apăsați
+— Tasta [Inserare]. Apare fereastra Adăugați coduri de stare comandă.
+QÃ) Dia: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea codurilor de stare a comenzii este deja afișată cu unele informații
+finalizat; modificați informațiile necesare în noul cod de stare a comenzii.
+Pasul 4: Introduceți până la 3 caractere pentru Cod. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+[G Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl][S] pentru a salva informațiile.
+„m Pasul 7: După adăugarea tuturor codurilor de stare a comenzii, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugați coduri de stare comandă.
+Toio MisGTION P ClilistrõE EEA Ohigo de ts de palado- i Adiiiaar
+(insert]) — Pictograma Salvare ([Ctrl]+[S])
+Codurile de stare a comenzii existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+TT AA E Roadhe Travporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+(Cum să lucrați cu alertele șoferului
+Cum să lucrați cu alertele șoferului
+Folosit cu: MobileCast
+Dacă utilizați comunicația fără fir, puteți configura alerte pentru șofer
+pentru a reaminti șoferilor despre o sarcină asociată cu o oprire. De exemplu, dacă
+stop este pe un cont de ramburs la livrare (COD), îl puteți configura
+o alertă de șofer COD 20 și asociați-o cu oprirea. De asemenea, se poate configura
+Al doilea șofer alertează pentru anumite articole dintr-o comandă, cum ar fi alcoolul, unde
+Șoferul trebuie să verifice identitatea atunci când face livrarea. Când șoferul ajunge la
+oprit, alerta clipește pe ecranul dispozitivului fără fir, astfel încât să poată fi văzută de către
+şofer. Al doilea șofer alerte sunt asociate cu oprirea în modulul Analyst.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrare, selectați Dispatch and Driver Alert. Fereastra
+Se afișează Alertele șoferului, listând alertele șoferilor existente.
+Notă: Pentru a vedea o listă actualizată a alertelor pentru al doilea șofer, faceți clic pe pictograma Actualizează; la
+fereastra va fi actualizată cu toate informațiile modificate din baza de date.
+Pasul 3: în a doua fereastră de alertă pentru șofer, faceți clic pe pictograma Adăugați sau apăsați pe
+[Inserați]. Apare fereastra Add Driver Alert.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Faceți clic pe intrarea de driver existentă și selectați Clonează din meniul care apare. Pentru a
+Fereastra Adăugați alertă șofer este afișată deja cu câteva informații
+Finalizat; modificați informațiile necesare în alerta noului șofer.
+Pasul 4: Introduceți până la 15 caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere pentru mesajul pe care îl va vedea șoferul. Acest câmp
+trebuie completat. Încercați să păstrați mesajul cât mai concis posibil.
+m| Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noua alertă
+——sofer.
+” va reaminti șoferul
+= șofer să
+colecta plata
+a clientului la realizarea
+mm o
+Pasul 7: După ce au fost adăugate toate alertele pentru șofer, faceți clic pe caseta Închidere.
+închideți fereastra Adăugați alertă șofer
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu alertele șoferului
+GEA NEEA A NEAA
+(Mnsert]) — Pictograma Salvare ([Ctrl]*[S])
+Alertele de șofer existente pot fi editate sau șterse după cum este necesar.
+Pentru mai multe informații, combinați editarea articolului și ștergerea articolului.
+BETT AA E Roadhet Travporiafion Su
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.

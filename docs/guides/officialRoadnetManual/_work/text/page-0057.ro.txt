@@ -1,0 +1,71 @@
+(Cum să lucrați cu tipurile de timp de serviciu
+Cum să lucrați cu tipuri de timp de service
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipurile de timp de serviciu vă ajută, de asemenea, să grupați clienții după a
+caracteristică comună, care este strict timpul de serviciu. Tipurile de timp
+service vă permit să specificați că un grup de clienți are aceleași timpi de service
+descărcarea și așteptarea pentru că mediul de livrare este același, ca un lanț de
+Tanchonetes sau un grup de supermarketuri care permit livrarea cu paleti la a
+docul de descărcare. Tipurile de timp de serviciu pot fi, dar nu trebuie
+corelat direct cu segmentele de clienți.
+Tipurile de timp de serviciu adăugate pot fi atribuite clienților,
+Pentru fiecare scenariu sunt create și diferite tipuri de timpi de service, așadar
+„un client individual poate avea timpi de service diferiți, în funcție de număr
+a scenariilor existente. Trebuie create scenarii pentru a putea adăuga tipuri de timp
+de serviciu.
+y Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+t Pas?: Faceți clic pe meniul Înregistrare și selectați Reguli de serviciu și Tipuri de timp
+Nr. de serviciu. Apare fereastra Service Time Types, cu listare
+- toate tipurile curente.
+Notă: Pentru a vedea o listă actualizată a tipurilor de timp de manipulare, faceți clic pe pictogramă
+„ „Actualizați; fereastra va fi actualizată cu cele mai recente informații ale bazei de date.
+) date.
+7 Pasul 3: În fereastra Service Time Types, faceți clic pe pictograma Adăugare sau
+ãÁ apăsați [Insert]. Apare fereastra Adăugați tipuri de timp de manevrare.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. La fereastră
+„Adăugați tipul de timp de serviciu este afișat deja cu unele informații
+finalizat; modificați informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 5 caractere pentru ID și până la 30 de caractere pentru nume. ID-ul trebuie să fie
+introdus.
+Pasul 5: Faceți clic pe săgeata de culoare pentru a deschide o paletă de culori. Faceți clic pe o culoare pentru a
+selectează-l
+Pasul 6: Dacă apar mai multe scenarii în fereastra cu listă din partea de jos a
+fereastra, confirmați că scenariul
+pentru care doriți să introduceți orele de service, este evidențiat.
+Tadeaperação :Ok:kk DTA
+* Copyright 2006 United Parcel Service of America, lnc.
+Toate drepturile rezervate.
+.pentru toate scenariile. Este posibil
+specificați orele de service
+mormal și vrac; cu ajutor este
+Fără ajutor, pentru fiecare scenariu
+Timpii de îndeplinire sunt timpul total necesar pentru livrarea produselor către a
+client
+Timpul de livrare în vrac este timpul de livrare pentru produse pe paleți
+u cantități care îndeplinesc limita de vrac pentru acest client sau comenzi
+forțat să folosească timpul de serviciu în vrac.
+Timpul de așteptare este perioada de timp, indiferent de cantitatea de
+produsul livrat, care trebuie să servească un client. Timpul de așteptare include
+parcarea camionului, completarea formularelor, obtinerea
+plata comenzilor cu ramburs (COD) etc.
+Timpul de descărcare este timpul pentru descărcarea unei unități de produs în
+Există un client. Acest timp variază în funcție de cantitatea de produs din
+cereri. Dimensiunea selectată ca unitate de service sau unitate de service
+Serviciul în bloc (în ordine în bloc) din meniul Opțiuni este utilizat pentru a calcula timpul
+de descărcare.
+Pasul $: Faceți clic pe butonul [Actualizare] pentru a stoca orele de service în
+fereastra de listare din partea de jos a ferestrei Adăugare timp serviciu.
+Sfat: Dacă există mai multe scenarii și timpii pentru celelalte scenarii sunt
+similar, faceți clic pe scenariul actualizat și trageți-l în alte scenarii enumerate,
+(Timpurile vor fi copiate în noul scenariu când vor putea fi editate.
+Pasul 9: Faceți clic pe pictograma Satvar sau apăsați [Ctr1]+[S] pentru a salva noul tip de
+timp de serviciu.
+Pasul 10: Repetați pașii de la 4 la 9 pentru a adăuga orice alt tip de timp de așteptare.
+serviciul.
+16 „Roacnet Transportation Suite
+|€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+pictograma Adăugare serviciu ([Tnsert]) > pictograma Satvar ([Ctri]+[S])
+Tipurile de timp de serviciu existente pot fi editate sau șterse, în funcție de
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>Deploy VM · MISTRAL companion · ghid testare</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --ok: #166534;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      font-size: 9.5pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.25; }
+    h1 { font-size: 17pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12pt;
+      margin-top: 1.1em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+      break-after: avoid;
+    }
+    h3 {
+      font-size: 10.5pt;
+      margin-top: 0.85em;
+      color: var(--accent);
+      break-after: avoid;
+    }
+    p { margin: 0.3em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .hero h1 { color: #fff; }
+    .hero .meta { opacity: 0.92; font-size: 9pt; margin-top: 6px; }
+    .badge-row { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 7.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul, ol { margin: 0.25em 0 0.6em; padding-left: 1.2em; }
+    li { margin: 0.2em 0; }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8pt;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    pre {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.4em 0 0.8em;
+      font-size: 8.5pt;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 5px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--soft); color: var(--brand); }
+    .why, .note, .ok, .step {
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin: 0.45em 0 0.7em;
+    }
+    .why { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .note { background: #fffbeb; border: 1px solid #fcd34d; color: var(--warn); }
+    .ok { background: #ecfdf5; border: 1px solid #86efac; color: var(--ok); }
+    .step { border: 1px solid var(--line); background: #fff; }
+    .foot {
+      margin-top: 1.4em;
+      padding-top: 0.6em;
+      border-top: 1px solid var(--line);
+      font-size: 8pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-inside: avoid; }
+      pre, table, .step { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Ghid deploy VM · companion MISTRAL (test)</h1>
+    <div class="meta">
+      Branch <code style="background:rgba(255,255,255,.2);color:#fff">MISTRAL-experimenting-rai-documents</code>
+      · companion <strong>v1.13.1 / build 73</strong><br />
+      Folder nou pe VM · Docker DB · Cloudflare tunnel · Vercel (opțional) ·
+      1 octombrie 2026
+    </div>
+    <div class="badge-row">
+      <span class="badge">VM acasă</span>
+      <span class="badge">Docker DB</span>
+      <span class="badge">Cloudflare</span>
+      <span class="badge">Vercel</span>
+      <span class="badge">Mistral OCR</span>
+    </div>
+  </header>
+
+  <div class="why">
+    <strong>Ce obții:</strong> o instanță izolată (folder + DB + porturi) a companionului RAI
+    Documente, pe branch-ul MISTRAL, gata de login, upload aviz și OCR cloud — fără să strici
+    Transitix-ul / companion-ul deja rulat pe aceeași mașină.
+  </div>
+
+  <div class="note">
+    <strong>Important:</strong> pe același VM poți avea deja Postgres pe <code>:5435</code> și API pe
+    <code>:3002</code>. Ghidul folosește porturi <strong>paralele</strong>
+    (<code>:5436</code> / <code>:3003</code>) și un volume Docker separat. Dacă porturile sunt libere,
+    poți lăsa 5435 / 3002 — schimbă doar consistent peste tot.
+  </div>
+
+  <!-- ========== 0 ========== -->
+  <h2>0. Ce ai nevoie pe VM</h2>
+  <div class="step">
+    <ul>
+      <li>Linux (Ubuntu 22.04+ e ok) cu acces SSH</li>
+      <li><strong>Docker</strong> + plugin <code>compose</code> (<code>docker compose version</code>)</li>
+      <li><strong>Node.js 22</strong> + npm (<code>node -v</code>)</li>
+      <li><strong>Git</strong></li>
+      <li>Cheie <strong>Mistral</strong> (<code>MISTRAL_API_KEY</code>) pentru OCR pe poze/scanuri</li>
+      <li><strong>cloudflared</strong> (deja instalat pe VM-ul tău) — pentru HTTPS pe domeniu</li>
+      <li>Opțional: cont <strong>Vercel</strong> dacă vrei UI pe Vercel + API pe tunnel</li>
+    </ul>
+    <pre>sudo apt update
+# Node 22 (exemplu NodeSource) + Docker conform documentației Docker pentru distro-ul tău
+node -v && npm -v && docker compose version && git --version
+cloudflared --version</pre>
+  </div>
+
+  <!-- ========== 1 ========== -->
+  <h2>1. Folder nou + clone pe branch</h2>
+  <div class="step">
+    <p>Alege un path care <em>nu</em> e folderul Transitix deja în producție / demo:</p>
+    <pre>mkdir -p ~/apps
+cd ~/apps
+git clone https://github.com/Georgiana-Ghimes/TransitiX.git transitix-mistral
+cd transitix-mistral
+git fetch origin
+git checkout MISTRAL-experimenting-rai-documents
+git pull origin MISTRAL-experimenting-rai-documents
+git log -1 --oneline
+# aștepți ceva de genul: · v1.13.1 / build 73 ·</pre>
+    <div class="ok">
+      Repo privat? Folosește SSH (<code>git@github.com:…</code>) sau un personal access token la HTTPS.
+    </div>
+  </div>
+
+  <!-- ========== 2 ========== -->
+  <h2>2. Postgres izolat în Docker</h2>
+  <div class="step">
+    <div class="why">
+      Fișierul <code>docker-compose.mistral-test.yml</code> e <strong>deja în repo</strong>
+      (rădăcină). Nu îl creezi pe mână — după <code>git pull</code> doar îl pornești.
+      Nu refolosi volumul companion-ului vechi.
+    </div>
+    <pre>cd ~/…/MISTRAL-experimenting-rai-documents   # folderul clone-ului
+git pull origin MISTRAL-experimenting-rai-documents
+ls -la docker-compose.mistral-test.yml
+
+# Opțional: schimbă parola în YAML înainte de primul up
+# (trebuie să coincidă cu DATABASE_URL din server/.env)
+nano docker-compose.mistral-test.yml
+
+docker compose -f docker-compose.mistral-test.yml up -d
+docker compose -f docker-compose.mistral-test.yml ps
+# health: healthy · port host 5436</pre>
+    <p class="muted">
+      Default în fișier: DB <code>transitix_rai_mistral</code>, user <code>postgres</code>,
+      parolă <code>MistralDb</code> — aliniază <code>DATABASE_URL</code> la fel.
+    </p>
+  </div>
+
+  <!-- ========== 3 ========== -->
+  <h2>3. Fișiere env — ce schimbi</h2>
+  <div class="step">
+    <p>
+      Pe un folder dedicat e cel mai simplu: totul în <code>server/.env</code>
+      (fără dansul <code>COMPANION=1</code> / <code>.env.companion</code>).
+      UI-ul companion se bake-uiește la <code>npm run build:companion</code> din modul Vite, nu din acest env.
+    </p>
+    <pre>cp server/companion.env.example server/.env
+nano server/.env   # sau vim / code</pre>
+
+    <h3>3.1 Valori obligatorii în <code>server/.env</code></h3>
+    <table>
+      <thead>
+        <tr><th>Cheie</th><th>Valoare pentru test pe VM</th><th>De ce</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PORT</code></td>
+          <td><code>3003</code></td>
+          <td>API + UI pe un singur origin; evită conflict cu :3002</td>
+        </tr>
+        <tr>
+          <td><code>DATABASE_URL</code></td>
+          <td><code>postgresql://postgres:MistralDb@127.0.0.1:5436/transitix_rai_mistral</code></td>
+          <td>Același user/parolă/DB/port ca în compose</td>
+        </tr>
+        <tr>
+          <td><code>JWT_SECRET</code></td>
+          <td>string lung aleator (<em>diferit</em> de celelalte instanțe)</td>
+          <td>Tokenii nu trebuie să fie valabili pe alt companion</td>
+        </tr>
+        <tr>
+          <td><code>JWT_EXPIRES_IN</code></td>
+          <td><code>24h</code></td>
+          <td>Ok pentru test</td>
+        </tr>
+        <tr>
+          <td><code>JWT_REFRESH_EXPIRES_IN</code></td>
+          <td><code>7d</code></td>
+          <td>Ok pentru test</td>
+        </tr>
+        <tr>
+          <td><code>UPLOAD_DIR</code></td>
+          <td><code>uploads</code></td>
+          <td>Relativ la <code>server/</code>; rămâne pe disc pe VM</td>
+        </tr>
+        <tr>
+          <td><code>CLIENT_ORIGIN</code></td>
+          <td>vezi mai jos</td>
+          <td>CORS + link-uri din email; trebuie să fie URL-ul cu care deschizi app-ul</td>
+        </tr>
+        <tr>
+          <td><code>OCR_PROVIDER</code></td>
+          <td><code>mistral</code></td>
+          <td>Forțează cloud OCR</td>
+        </tr>
+        <tr>
+          <td><code>MISTRAL_API_KEY</code></td>
+          <td>cheia ta reală</td>
+          <td>Fără ea: health <code>none</code> / pozele nu se citesc</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 <code>CLIENT_ORIGIN</code> — alege una</h3>
+    <table>
+      <thead>
+        <tr><th>Cum testezi</th><th>Exemplu <code>CLIENT_ORIGIN</code></th><th>TRUST_PROXY</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Din LAN, pe IP:port</td>
+          <td><code>http://192.168.x.x:3003</code></td>
+          <td>nu seta (sau <code>0</code>)</td>
+        </tr>
+        <tr>
+          <td>Doar pe VM (localhost)</td>
+          <td><code>http://127.0.0.1:3003</code></td>
+          <td>nu seta</td>
+        </tr>
+        <tr>
+          <td>HTTPS prin Cloudflare tunnel</td>
+          <td><code>https://documente-mistral.domeniul-tau.ro</code></td>
+          <td><code>TRUST_PROXY=1</code></td>
+        </tr>
+        <tr>
+          <td>UI pe Vercel + API pe tunnel</td>
+          <td><code>https://….vercel.app</code> (+ opțional și hostname-ul tunnel)</td>
+          <td><code>TRUST_PROXY=1</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">
+      Dacă deschizi app-ul pe un host/port pe care <code>CLIENT_ORIGIN</code> nu îl listează,
+      login / cookie / reset pot eșua. Poți pune mai multe origini separate prin virgulă
+      dacă codul din proiect le acceptă pe listă — pentru test, ține <em>una</em>, aceeași pe care o tastezi în browser.
+    </div>
+
+    <h3>3.3 Opționale (utile la test)</h3>
+    <pre># Email (fără cheie = stub: link-ul de reset apare în log / răspuns API)
+RESEND_API_KEY=
+EMAIL_FROM=RAI Test &lt;onboarding@resend.dev&gt;
+
+# Conturi noi din UI
+ALLOW_SIGNUP=true
+
+# Google login (opțional). Dacă e gol, butonul e ascuns / 503 pe /auth/google
+GOOGLE_CLIENT_ID=
+
+# OCR tuning (default-urile din exemplu sunt ok)
+# MISTRAL_OCR_MODEL=mistral-ocr-latest
+# OCR_TIMEOUT_MS=300000
+# OCR_INTERACTIVE_TIMEOUT_MS=120000
+# OCR_INTERACTIVE_MAX_PAGES=3
+# OCR_CONCURRENCY=2
+
+# Companion pe VM nu are nevoie de OSRM / VROOM / Photon pentru fluxul avize
+OSRM_URL=
+VROOM_URL=
+PHOTON_URL=</pre>
+
+    <h3>3.4 Exemplu minimal complet</h3>
+    <pre>PORT=3003
+DATABASE_URL=postgresql://postgres:MistralDb@127.0.0.1:5436/transitix_rai_mistral
+JWT_SECRET=inlocuieste-cu-un-secret-lung-aleator-doar-pentru-mistral
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=7d
+UPLOAD_DIR=uploads
+CLIENT_ORIGIN=http://192.168.1.50:3003
+OCR_PROVIDER=mistral
+MISTRAL_API_KEY=sk-...cheia-ta...
+ALLOW_SIGNUP=true
+RESEND_API_KEY=
+EMAIL_FROM=
+GOOGLE_CLIENT_ID=
+ETRANSPORT_MODE=stub</pre>
+  </div>
+
+  <!-- ========== 4 ========== -->
+  <h2>4. Instalare dependențe + migrare + seed</h2>
+  <div class="step">
+    <pre>cd ~/apps/transitix-mistral
+npm ci
+npm ci --prefix server
+
+# Schema pe DB-ul nou
+npm run db:migrate
+
+# Conturi demo (doar pe mediu de test; pe production cere SEED_ALLOW_PRODUCTION=1)
+NODE_ENV=development npm run db:seed
+# (sau: NODE_ENV=development npm run seed --prefix server)</pre>
+    <div class="ok">
+      Conturi după seed:<br />
+      · Admin: <code>admin@transitix.ro</code> / <code>admin123</code><br />
+      · Șofer: <code>sofer@transitix.ro</code> / <code>sofer123</code><br />
+      Schimbă parolele dacă expui instanța în afara LAN-ului.
+    </div>
+  </div>
+
+  <!-- ========== 5 ========== -->
+  <h2>5. Build UI companion + pornire</h2>
+  <div class="step">
+    <p>
+      <code>build:companion</code> bake-uiește profilul <code>documents</code>, titlul RAI și
+      <strong>v1.13.1 / build 73</strong> din <code>package.json → companion</code>.
+      API-ul servește apoi <code>dist/</code> pe același <code>PORT</code>.
+    </p>
+    <pre># Build frontend companion (o dată, sau după fiecare git pull cu schimbări UI)
+npm run build:companion
+
+# Pornire API (rulează și migrate la start)
+npm start --prefix server
+
+# Log așteptat:
+# Transitix API listening on http://localhost:3003</pre>
+    <p>Verificări rapide:</p>
+    <pre>curl -s http://127.0.0.1:3003/api/health | jq .
+# ocr: "mistral"  (sau "mistral-down" dacă cheia e greșită / rețeaua blochează)
+# Nu vrei "none" dacă testezi OCR pe poze.
+
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3003/
+# 200 = SPA companion</pre>
+    <div class="note">
+      Din LAN: deschide <code>http://IP_VM:3003</code> (același host ca în <code>CLIENT_ORIGIN</code>).
+      Firewall: <code>sudo ufw allow 3003/tcp</code> doar dacă testezi din rețea; pe tunnel Cloudflare
+      <em>nu</em> e nevoie de port inbound.
+    </div>
+  </div>
+
+  <!-- ========== 6 ========== -->
+  <h2>6. Pornire persistentă (systemd)</h2>
+  <div class="step">
+    <pre>sudo tee /etc/systemd/system/transitix-mistral.service &gt; /dev/null &lt;&lt;'EOF'
+[Unit]
+Description=Transitix companion MISTRAL (test)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=YOUR_USER
+WorkingDirectory=/home/YOUR_USER/apps/transitix-mistral/server
+Environment=NODE_ENV=production
+# .env e citit de loadEnv din WorkingDirectory
+ExecStart=/usr/bin/node src/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Înlocuiește YOUR_USER, apoi:
+sudo systemctl daemon-reload
+sudo systemctl enable --now transitix-mistral
+sudo systemctl status transitix-mistral --no-pager</pre>
+    <p class="muted">
+      După <code>git pull</code> + schimbări UI: rulezi din nou <code>npm run build:companion</code>
+      din root-ul proiectului, apoi <code>sudo systemctl restart transitix-mistral</code>.
+    </p>
+  </div>
+
+  <!-- ========== 7 ========== -->
+  <h2>7. Cloudflare Tunnel (HTTPS) — ai deja cloudflared pe VM</h2>
+  <div class="step">
+    <div class="why">
+      <strong>Recomandat pentru test:</strong> un hostname nou pe <em>același</em> tunnel pe care îl
+      folosești deja pentru companion-ul vechi. Cloudflare dă certificatul; pe VM rămâne
+      <code>http://127.0.0.1:3003</code>. Nu deschizi port inbound.
+    </div>
+
+    <h3>7.1 Vezi ce rulează acum</h3>
+    <pre>sudo systemctl status cloudflared --no-pager
+# sau, dacă e rulat din user:
+systemctl --user status cloudflared --no-pager
+
+# Config tipic:
+ls -la ~/.cloudflared/ /etc/cloudflared/ 2>/dev/null
+sudo cat /etc/cloudflared/config.yml
+# sau: cat ~/.cloudflared/config.yml
+
+cloudflared tunnel list</pre>
+    <p class="muted">
+      Notează <code>tunnel:</code> (nume sau UUID) și hostname-ul existent (ex.
+      <code>documente.domeniul-tau.ro</code> → <code>http://127.0.0.1:3002</code>).
+    </p>
+
+    <h3>7.2 Adaugă DNS pentru instanța MISTRAL</h3>
+    <p>Pe același tunnel (înlocuiește numele tunnelului și domeniul):</p>
+    <pre># Exemplu: tunnelul existent se numește transitix-rai
+cloudflared tunnel route dns transitix-rai documente-mistral.domeniul-tau.ro
+
+# Verifică în Cloudflare Dashboard → DNS: CNAME documente-mistral → &lt;tunnel-id&gt;.cfargotunnel.com</pre>
+
+    <h3>7.3 Extinde <code>config.yml</code> cu al doilea ingress</h3>
+    <p>Păstrează ruta veche; adaugă una nouă <em>deasupra</em> catch-all-ului <code>http_status:404</code>:</p>
+    <pre>tunnel: transitix-rai
+credentials-file: /root/.cloudflared/&lt;TUNNEL-UUID&gt;.json
+
+ingress:
+  # Instanța VECHE (neschimbată)
+  - hostname: documente.domeniul-tau.ro
+    service: http://127.0.0.1:3002
+    originRequest:
+      disableChunkedEncoding: false
+      connectTimeout: 30s
+
+  # Instanța NOUĂ MISTRAL (test)
+  - hostname: documente-mistral.domeniul-tau.ro
+    service: http://127.0.0.1:3003
+    originRequest:
+      disableChunkedEncoding: false
+      connectTimeout: 30s
+
+  - service: http_status:404</pre>
+    <div class="note">
+      Ordinea contează: hostname-urile specifice înainte de <code>http_status:404</code>.
+      Path-ul credentials-file rămâne al tunnelului tău existent (nu inventa alt UUID).
+    </div>
+
+    <h3>7.4 Actualizează <code>server/.env</code> pe instanța MISTRAL</h3>
+    <pre>CLIENT_ORIGIN=https://documente-mistral.domeniul-tau.ro
+TRUST_PROXY=1</pre>
+    <p>Apoi:</p>
+    <pre>sudo systemctl restart transitix-mistral
+sudo systemctl restart cloudflared
+# sau: sudo cloudflared service restart
+
+curl -sI https://documente-mistral.domeniul-tau.ro/api/health
+curl -s https://documente-mistral.domeniul-tau.ro/api/health
+# aștepți ocr: mistral</pre>
+
+    <h3>7.5 (Alternativă) Tunnel separat doar pentru MISTRAL</h3>
+    <pre>cloudflared tunnel create transitix-mistral-test
+cloudflared tunnel route dns transitix-mistral-test documente-mistral.domeniul-tau.ro
+# config nou + systemd unit separat, service: http://127.0.0.1:3003</pre>
+    <p class="muted">Are sens doar dacă vrei izolare totală de config-ul vechi. Altfel, 7.2–7.4 e suficient.</p>
+
+    <h3>7.6 Ce NU folosi pentru link-uri pe care le dai oamenilor</h3>
+    <pre># Quick tunnel — hostname nou la fiecare restart, nu e pentru bookmark / Vercel
+cloudflared tunnel --url http://127.0.0.1:3003</pre>
+  </div>
+
+  <!-- ========== 8 ========== -->
+  <h2>8. Vercel pe link-ul Cloudflare (frontend pe Vercel, API pe VM)</h2>
+  <div class="step">
+    <div class="why">
+      <strong>Context:</strong> clientul apelează <code>/api/…</code> și <code>/uploads/…</code> pe
+      <em>același origin</em> (URL relative). Pe Vercel trebuie rewrite către hostname-ul Cloudflare
+      al API-ului de pe VM. Alternativa mai simplă: <strong>fără Vercel</strong> — deschizi direct
+      <code>https://documente-mistral…</code> (API-ul servește deja <code>dist/</code>).
+    </div>
+    <div class="note">
+      Dacă tot ce vrei e „un link HTTPS de test”, oprește-te după §7. Vercel are rost când vrei
+      preview-uri / deploy UI separat de API.
+    </div>
+
+    <h3>8.1 Pregătire pe VM (API rămâne sursa de adevăr)</h3>
+    <ul>
+      <li>Tunnel Cloudflare (§7) trebuie să răspundă pe
+        <code>https://documente-mistral.domeniul-tau.ro/api/health</code>.</li>
+      <li>În <code>server/.env</code>, <code>CLIENT_ORIGIN</code> trebuie să includă URL-ul Vercel:</li>
+    </ul>
+    <pre># După ce știi domeniul Vercel (ex. transitix-mistral.vercel.app):
+CLIENT_ORIGIN=https://transitix-mistral.vercel.app,https://documente-mistral.domeniul-tau.ro
+TRUST_PROXY=1
+
+sudo systemctl restart transitix-mistral</pre>
+    <p class="muted">
+      Dacă autentificarea acceptă o singură origină, folosește <em>doar</em> URL-ul Vercel în
+      <code>CLIENT_ORIGIN</code> când testezi prin Vercel.
+    </p>
+
+    <h3>8.2 Fișier <code>vercel.json</code> în rădăcina repo</h3>
+    <pre>cat &gt; vercel.json &lt;&lt;'EOF'
+{
+  "buildCommand": "npm run build:companion",
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://documente-mistral.domeniul-tau.ro/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://documente-mistral.domeniul-tau.ro/uploads/:path*"
+    },
+    { "source": "/((?!api/|uploads/).*)", "destination": "/index.html" }
+  ]
+}
+EOF</pre>
+    <div class="note">
+      Înlocuiește hostname-ul cu domeniul tău real din §7.
+      Fără rewrite-uri, login-ul pe Vercel lovește 404 pe <code>/api</code>.
+    </div>
+
+    <h3>8.3 Creează proiectul în Vercel (UI)</h3>
+    <ol>
+      <li>Intră pe <strong>vercel.com</strong> → <strong>Add New → Project</strong></li>
+      <li><strong>Import</strong> repo-ul <code>Georgiana-Ghimes/TransitiX</code></li>
+      <li><strong>Root Directory:</strong> rădăcina repo (nu <code>server/</code>)</li>
+      <li><strong>Framework Preset:</strong> Other (build-ul e din <code>vercel.json</code>)</li>
+      <li><strong>Branch de producție:</strong> <code>MISTRAL-experimenting-rai-documents</code></li>
+      <li>Nu pune pe Vercel <code>MISTRAL_API_KEY</code> / <code>DATABASE_URL</code> — OCR și DB rămân pe VM</li>
+      <li><strong>Deploy</strong></li>
+    </ol>
+
+    <h3>8.4 CLI (alternativă)</h3>
+    <pre>npm i -g vercel
+cd ~/apps/transitix-mistral
+# vercel.json prezent (commit sau local)
+vercel link
+vercel --prod</pre>
+
+    <h3>8.5 După deploy — aliniază env pe VM</h3>
+    <pre># URL dat de Vercel, ex. https://transitix-mistral-xxxx.vercel.app
+
+CLIENT_ORIGIN=https://transitix-mistral-xxxx.vercel.app
+TRUST_PROXY=1
+sudo systemctl restart transitix-mistral
+
+# Test: deschizi URL-ul Vercel → login → Network: /api/... = 200
+# (proxied Vercel → Cloudflare → VM:3003)</pre>
+
+    <h3>8.6 Domeniu custom pe Vercel (opțional)</h3>
+    <ol>
+      <li>Vercel → Project → Settings → Domains → <code>app-mistral.domeniul-tau.ro</code></li>
+      <li>DNS (în Cloudflare DNS): CNAME spre ce îți spune Vercel (de obicei <code>cname.vercel-dns.com</code>)</li>
+      <li>Actualizează <code>CLIENT_ORIGIN</code> pe VM</li>
+    </ol>
+
+    <h3>8.7 Limitări</h3>
+    <ul>
+      <li>Upload / OCR foarte lung: timeout proxy Vercel poate tăia; pentru dosare grele folosește direct hostname-ul Cloudflare (§7).</li>
+      <li>Push pe branch → Vercel rebuild UI; pe VM: <code>git pull</code> + migrate + restart API.</li>
+      <li>Variantă curată: pe VM doar API; pe Vercel doar UI; tunnel Cloudflare expune <code>:3003</code>.</li>
+    </ul>
+  </div>
+
+  <!-- ========== 9 ========== -->
+  <h2>9. Checklist „ready for testing”</h2>
+  <div class="step">
+    <ol>
+      <li>Docker DB healthy pe <code>:5436</code></li>
+      <li><code>GET /api/health</code> (local sau via Cloudflare) → <code>ocr: "mistral"</code></li>
+      <li>HTTPS: <code>https://documente-mistral…/api/health</code> OK</li>
+      <li>(Dacă Vercel) login pe URL-ul Vercel; Network arată <code>/api</code> proxiat</li>
+      <li>Login admin → UI companion (Avize / Rapoarte / Setări)</li>
+      <li>Versiune UI: <strong>v1.13.1 · build 73</strong></li>
+      <li>Upload PDF/poză → OCR → verificare câmpuri</li>
+      <li>Login șofer → Documente → poză / foaie 1–14</li>
+      <li>Fișiere pe VM în <code>server/uploads/</code></li>
+    </ol>
+  </div>
+
+  <!-- ========== 10 ========== -->
+  <h2>10. Update după modificări pe branch</h2>
+  <div class="step">
+    <pre>cd ~/apps/transitix-mistral
+git pull origin MISTRAL-experimenting-rai-documents
+npm ci
+npm ci --prefix server
+npm run db:migrate
+
+# Dacă UI e servit de pe VM:
+npm run build:companion
+sudo systemctl restart transitix-mistral
+
+# Dacă UI e pe Vercel: push pe branch pentru frontend;
+# pe VM restartezi doar API-ul după migrate.</pre>
+  </div>
+
+  <!-- ========== 11 ========== -->
+  <h2>11. Ce să nu faci</h2>
+  <div class="step">
+    <ul>
+      <li>Nu folosi același <code>JWT_SECRET</code> / aceeași DB ca instanța veche.</li>
+      <li>Nu rula <code>seed</code> pe o bază cu date reale de client.</li>
+      <li>Nu deschide <code>:5436</code> / <code>:3003</code> spre internet dacă ai tunnel — lasă-le pe localhost.</li>
+      <li>Nu pune <code>TRUST_PROXY=1</code> fără Cloudflare (sau alt proxy) în față.</li>
+      <li>Nu da oamenilor un link de quick tunnel (<code>*.trycloudflare.com</code> efemer).</li>
+      <li>Nu uita să actualizezi <code>CLIENT_ORIGIN</code> când schimbi între Cloudflare-only și Vercel.</li>
+    </ul>
+  </div>
+
+  <!-- ========== Ports summary ========== -->
+  <h2>Rezumat porturi &amp; URL-uri</h2>
+  <table>
+    <thead>
+      <tr><th>Ce</th><th>Unde</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Postgres</td><td>Docker host <code>5436</code></td></tr>
+      <tr><td>API (+ UI dacă build pe VM)</td><td>Node <code>127.0.0.1:3003</code></td></tr>
+      <tr><td>HTTPS public (tunnel)</td><td><code>https://documente-mistral.domeniul-tau.ro</code> → :3003</td></tr>
+      <tr><td>UI pe Vercel (opțional)</td><td><code>https://….vercel.app</code> → rewrite <code>/api</code> &amp; <code>/uploads</code> spre tunnel</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="foot">
+    Ghid deploy VM · branch MISTRAL-experimenting-rai-documents · companion v1.13.1 / build 73 ·
+    Cloudflare tunnel + Vercel · 1 octombrie 2026 · docs/ local only
+  </footer>
+
+</body>
+</html>

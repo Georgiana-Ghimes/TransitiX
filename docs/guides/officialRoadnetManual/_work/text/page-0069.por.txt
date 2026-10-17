@@ -1,0 +1,62 @@
+JEETRSAR AA DDA
+Teone Manutenção — Cadastros > Expedir > Container — ícone Adicionar ([Insert]) >
+Teono Salvar ([Ctrl]+[S])
+Os containers existentes podem ser editados ou excluídos, conforme necessário. Consutte
+Edição de itens e Exclusão de ítens para obter mais informações.
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com dispositivos sem fio
+Como trabalhar com dispositivos sem fio
+Utilizado com: MobileCast
+Os dispositivos sem fio permitem 2o motorista comunicar-se diretamente com o sistema
+do MobileCast, sem passar pelo analista. Para utilizar o sistema sem fio, o motorista digita
+a mensagem no disposítivo sem fio e a mensagem é transmitida automaticamente ao
+servidor do MobileCast. No servidor, a mensagem é lida e processada, e o MobileCast
+executa automaticamente a função, como concluir a parada, e as informações atualizadas
+podem ser vistas na tela do computador do analista. Se o MobileCast percebe um
+problema com a função sendo concíuída ao ser enviada pelo motorista, uma mensagem
+de erro é listada nos eventos sem fio para que o analista possa verificar o evento e editá-
+1o conforme necessário, antes do MobileCast atualizar o sistema. Consulte Como
+trabalhar com eventos sem fio para obter mais informações.
+Se os motoristas fizerem download de rotas utilizando dispositivos RN Mobile ou
+telefones ativados para WAP, não é necessário adicionar disposítivos sem fio ao
+MobileCast. Se o disposítivo móvel sendo usado for um modelo anterior do tipo que é
+atribuído às rotas, será necessário adicionar os disposítivos sem fio ao MobileCast
+conforme descrito abaixo.
+1EN Etapal:Cliquenoiícone Manutenção para abrir o respectivo módulo.
+Wn — Etapa 2: Clique no menu Cadastros e selecione Expedir e Sem fio. A janela
+Disposítivos sem fio se abre com uma lista de todos os disposítivos atuais.
+| É Nota:Para veruma lista atualizada de dispositivos sem fio, clique no ícone Atualizar; a
+Jjanela será atualizada com as informações mais recentes do banco de dados.
+ÉW| Etapa3: Najanela Dispositivos sem fio, clique no icone Adicionar ou pressione a tecla
+— [Insert]. A janela Adicionar disposítivo sem fio é exibida.
+j) Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar dispositivo sem fio é exibida com algumas informações já preenchidas;
+altere as informações necessárias no novo dispositivo sem fio.
+IoEccTEN—S 1
+2 m A janela Adicionar dispositivo sem
+fx — PE fio permite inserir informações
+p “sobre os disposítivos.
+EE——
+Pa
+Etapa 4: Insira a ID do disposítivo sem fio.
+Etapa 5: Clique na seta próxima 2o campo Provedor e clique no provedor correto.
+Etapa 6: Digite uma descrição do disposítivo, se desejar.
+Etapa 7: Confirme se a caixa Ativado está selecionada, caso o disposítivo esteja
+funcionando.
+TMT ,, , ,; FF Roadhet Trarporiation Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com disposítivos sem fio
+Etapa 8: Clique no icone Safvar ou pressione [Ctril+[S]
+& Etapa9: Repitaas etapas 3 a 8 para adicionar mais disposítivos sem fio, conforme
+necessário. Após a adição de todos os dispositivos sem fio, clique na caixa
+o Fechar para fechar a janela Adicionar dispositivo sem fio.
+mg Nota: Apósaadiçãode um dispositivo sem fio, este pode ser atribuído a um motorista ou
+2 um item de equipamento. Também pode ser alterado ou excluído, se necessário.
+REN RESNAA E SA
+(Tnsert]) — ícone Salsar ([Ctrl]+[S])
+Os disposítivos sem fio existentes podem ser editados ou excluídos, conforme necessário.
+Consuíte Edição de itens e Exclusão de itens para obter mais informações.

@@ -1,0 +1,91 @@
+Excluderea barierelor
+Dacă a fost creată o barieră care nu mai este necesară, aceasta poate fi ștearsă. Sau, dacă
+bariera este prea lungă, o puteți scurta.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+Fișier > Hartă
+Pasul 3: Faceți clic pe pictograma Barieră. Cursorul se transformă într-o barieră cu semnul plus
+120 partea indicatorului, pentru a indica modul Adăugare barieră.
+Pasul 4: Faceți clic dreapta pe o hartă, selectați Anulare/Ieșire
+modul de adăugare.
+Pasul 5: Faceți clic dreapta pe barieră și selectați Ștergeți bariera
+în meniul afișat. Faceți clic pe [Da] pentru a confirma ștergerea.
+exclus. De exemplu, dacă ați creat o barieră cu mai multe segmente și este
+Prea mult Jonga, scurtează-l făcând clic pe nodul final pentru a-l șterge doar pe ultimul
+segment,
+Fișier — Hartă — Pictogramă barieră — Anulare/Ieși din modul adăugare — Ștergere barieră
+— [Da]
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum să lucrezi cu sectoare
+Cum să lucrezi cu sectoare
+Folosit cu: Roadnet
+Sectoarele lucrează cu rutare dinamică pentru a ajuta la împărțirea zonei de livrare
+în segmente mai mici. Dacă utilizați sectoarele pe care le-ați creat în rutarea dinamică,
+Roadnet va crea rute în cadrul sectoarelor, dar nu va depăși granițele sectorului. Aceasta
+Înseamnă că puteți folosi sectoare pentru a menține opririle de pe rutele dvs. grupate în
+o zonă geografică mai compactă. În plus, este posibil să se asocieze atributele sectorului
+arota
+Un set de sectoare se numește model de sector. Pentru a desena sectoare pe hartă,
+Este necesar să se creeze standarde industriale. Puteți specifica că un standard industrial
+Grupați sectoarele în funcție de modul în care doriți să vă creați rutele. De exemplu, este
+Puteți crea un standard sectorial pentru fiecare zi a săptămânii. Al doilea standard industrial
+Un târg poate avea sectoare proiectate într-un oraș vizitat doar luni. O
+Modelul industriei de marți se poate concentra pe opriri grupate într-o zonă
+oraș aglomerat.
+Cu alte cuvinte, puteți crea modele industriale pentru a rezolva anumite
+probleme de scripting. Dacă aveți nevoie de cinci rute create într-un oraș, puteți
+creați un model sectorial pentru acest oraș cu cinci sectoare individuale. Apoi, în
+rutare dinamică, este posibil să se utilizeze orice standarde din industrie pentru simulări ale
+rutare individuală.
+Pentru sectoarele care urmează să fie afișate pe hartă, faceți clic pe pictograma Opțiuni hartă și selectați
+Proprietăți într-o fereastră de hartă. În meniul Proprietăți hărți, selectați fila
+Bariere/Sectoare pentru a deschide pagina Bariere/Sectoare. Bifați caseta Afișare în zonă
+Sectoare. De asemenea, este posibil să selectați culoarea sectoarelor făcând clic pe săgeata din caseta de culoare.
+Pentru a selecta un model de sector implicit, intră modelul de sector care va apărea al doilea
+pe hartă, faceți clic pe pictograma Opțiuni și selectați Proprietăți, apoi Bariere/
+Seturi. Faceți clic pe șaua Sector Padion pentru a deschide fereastra Altcia: Sector Padion
+faceți clic pe modelul pe care doriți să îl setați ca implicit și faceți clic pe pictograma Proces pentru a salva
+standardul industrial standard. Dacă nu este selectat niciun standard industrial standard, fereastra 2
+Standardul industriei va fi deschis pentru a putea fi efectuată orice lucrare în sectoare.
+WPuteți crea sectoare pe orice hartă în Roadnet Transportation Suite. Pentru
+În scopul acestui ghid, va fi utilizată harta modulului de întreținere.
+Adăugarea standardelor din industrie
+Un set de sectoare se numește model de sector. Puteți crea un model
+Sectoare pentru a grupa sectoare în funcție de modul în care doriți să fie create rutele dvs. De către
+De exemplu, puteți crea un standard industrial pentru fiecare zi a săptămânii sau pentru diferite
+părți ale unui oraș. Pentru a desena sectoare pe hartă, trebuie să creați un model
+sectoare. Modelul sectorului este selectat pentru simularea a 2 rute dinamice.
+| JM Stage: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+hnm — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Apare fereastra Hartă.
+TE T ,, , ,,A — E Roadhet Trarporiatior Sute
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrezi cu sectoare
+Pasul 3: Faceți clic pe pictograma Editați sectoarele. Cursorul se schimbă într-un sector cu a
+adăugare de lângă indicator pentru a indica modul Adăugare sector.
+Notă: Dacă nu ați creat încă modele de sector, fereastra Adăugați model industrial
+va fi afișat automat când faceți clic pe pictograma Sector. Treceți la pasul 4 dacă
+acest lucru se întâmplă.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Anulare/Ieșire din modul Hartă.
+adăugare în meniul care va fi afișat, pentru a ieși din modul Adăugare sector (the
+implicit)
+Pasul 5: Faceți clic dreapta și selectați Standarde industriale din meniul care va apărea
+afisat. Apare fereastra Standard industrial.
+Pasul 6: Faceți clic pe pictograma Adăugare sau apăsați [Insert] pentru a adăuga un model nou
+de sector. Apare fereastra Add Industry Standard.
+* S — a
+mber F.D
+el PE —
+Adăugați modele la sectoarele de grup
+„În funcție de cum vrei tu
+Pasul 7: Introduceți un titlu pentru model și o descriere, după caz. tu
+Trebuie să introduceți un nume pentru model.
+M6 Pasi: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva noua versiune implicită
+sectorul x.
+Pasul 9: Când ați terminat de adăugat standardele din industrie, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați standard industrial.
+Şi
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate

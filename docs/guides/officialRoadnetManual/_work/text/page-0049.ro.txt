@@ -1,0 +1,85 @@
+[Traducere eșuată pentru acest fragment]
+Bmiadaperaçães o AA
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+(Como trabalhar com funcionários
+Etapa 3: Na janela Funcionários, clique no ícone Adicionar ou pressione [Insert]. A
+janela Adicionar funcionário é exibida.
+ccN—— . .
+2
+em en
+A ID do funcionário precisa
+ser exclusiva, como o
+número de um documento.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres como ID (por exemplo, o documento de identidade)
+Esse campo deve ser preenchido.
+Etapa 5: Se você estiver usando o MobileCast, clique na seta da caixa Status e selecione
+0 status do funcionário. Se o funcionário estiver disponível para trabalhar,
+selecione Ativo.
+Etapa 6: Clique na seta Tipo para abrir a janela Pesquisa - Tipo de funcionário. Clique
+duas vezes no tipo de funcionário apropriado ou clique uma vez e, em seguida,
+no icone Processar para seecioná-to.
+Etapa 7: Clique na seta de Conjunto de habilidades para abrir a janela Pesquisa -
+Conjunto de habilidades. Clique duas vezes em um conjunto de habilidades ou
+clique no conjunto de habilidades e, em seguida, no ícone Processar para
+selecioná-lo. Os conjuntos de habilidades são usados somente com o Roadnet e
+com o MobileCast.
+Etapa 8: Insira até 35 caracteres em cada um dos campos Sobrenome, Nome e Segundo
+mome.
+TMT A E o Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com funcionários
+Etapa 9: Insira o endereço e telefone do funcionário. Também é possível inserir as datas
+de contratação, nascimento e rescisão.
+Ao inserir informações de data, você pode digitar a data ou clicar na seta para
+exibir o calendário. Você pode usar os ícones de rolagem no alto da janela do
+calendário para percorrer os meses (setas simples) ou anos (setas duplas).
+Quando alcançar a data desejada, clique no número dessa data para selecioná-la.
+Etapa 10: Digite a senha do funcionário. É possível utilizar letras, números ou sinais de
+pontuação. Este campo não necessita ser preenchido, 2 menos que o
+funcionário esteja utilizando comunicação sem fio.
+Etapa 11: Se você planeja exportar dados de folha de pagamento do MobileCast para a
+ADP, é necessário preencher o Número do arquivo ADP com um código de
+funcionário válido. Para encontrar esses códigos, verifique seu software ADP.
+u entre em contato com a ADP.
+Etapa 12: Se o funcionário puder ser utilizado por qualquer outra região, selecione as
+regiões na caixa Compartilhado por regiões. Para selecionar mais de uma
+Fegião, selecione a primeira região e, em seguida, mantenha pressionada a
+tecla [Ctrl] enquanto seleciona as outras.
+Etapa 13: Se desejar atribuir um cliente a este funcionário, clique na guia Clientes.
+Pesquise os clientes, inserindo o tipo de cliente, ID ou descrição e, em
+seguida, clicando no botão [Consuitar]. Os clientes aparecem na lista Clientes
+disponíveis. Clique no cliente e, em seguida, arraste e solte-o na lista Clientes
+atendidos. Esse cliente está agora atribuído ao funcionário.
+Dica: Se você estiver utilizando o recurso OnTrack do MobileCast ou se desejar atribuir
+um vendedor a um cliente, será necessário atribuir clientes aos funcionários,
+. Notas: Para ver uma lista completa de seus clientes, deixe todos os campos vazios e, em
+seguida, clique no botão [Consultar].
+Se você não souber a ID, digite o máximo que souber seguido por um asterisco (*), como,
+por exemplo, 72*.
+Para selecionar mais de um cliente na lista Clientes disponíveis, pressione [Ctrl] e, em
+seguida, clique nos clientes. Você pode arrastar todos os clientes selecionados para a lista
+Clientes atendidos.
+Pararemover 2 atribuição de um cliente desse funcionário, clique no cliente na lista
+Clientes atendidos e, em seguida, arraste e solte-o na lista Clientes disponíveis.
+MG Etapa14: Clique no icone Salvar ou pressione [Ctri]+[S] para salvar o novo
+funcionário.
+Etapa 15: Repita 2s etapas 4 a 11 para adicionar outros funcionários,
+% — Pasul 16: Când ați terminat de adăugat angajați, faceți clic pe caseta Aproape de.
+închideți fereastra Adăugați angajat.
+Pictograma întreținere — Înregistrări — Angajați — Angajați — Adăugați pictograma
+(Mnsert]) — Pictograma Salvare ([Ctri/+[S])
+După adăugarea angajaților, puteți adăuga șoferi.
+TS nebunie
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+(Cum să lucrezi cu angajații
+Angajații existenți pot fi editați sau șterși după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații. Dacă există o
+șoferul cu 2 aceleași ID ca și un angajat care este șters, șoferul va fi șters
+de asemenea.

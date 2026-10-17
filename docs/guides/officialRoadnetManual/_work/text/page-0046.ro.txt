@@ -1,0 +1,78 @@
+și Actualizare; fereastra va fi actualizată cu cele mai recente informații ale bazei de date
+-” date.
+Z și Pasul 3: În fereastra Metode de strat de paleți, faceți clic pe pictograma Adăugați sau
+o; apăsați [Insert]. Apare fereastra Add Pallet Layer Methods.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare. Toate tipurile de ambalaje vor fi
+populat automat cu cantitatea per strat și straturi per
+palet de tipul care se clonează.
+Pasul 4: Introduceți până la 3 caractere pentru ID-ul metodei de stratificare. Acest câmp este
+obligatoriu.
+Pasul 5: Introduceți până la 30 de caractere în Descriere
+1 Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva metoda de salvare.
+straturi.
+Pasul 7: Repetați pașii de la 4 la 6 pentru a continua să adăugați metode de stratificare.
+= palet.
+Pasul 8: Faceți clic pe caseta Închidere când toate metodele de stratificare a paleților au
+fost adăugată. Fereastra Adăugați metode de strat de paleți se închide.
+NE A
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum să lucrați cu metodele de stratificare a paleților
+Înregistrări Reguli de îndeplinire > Metode de stratificare a paleților — Adăugați pictograma
+(Mnsert]) — Pictograma Salvare (Ctrl/+[S])
+După adăugarea metodelor de stratificare a paleților, trebuie să adăugați informațiile
+asamblare pentru fiecare tip de ambalaj. Consultați Cum să lucrați cu tipuri de
+ambalaj pentru mai multe informații.
+TMMT F A E Roadhet Traporiafion Sl
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu activități
+Cum să lucrezi cu activități
+Folosit cu: Roadnet, MobileCast
+În unele companii, este necesar să se ia în considerare sarcinile sau activitățile specifice pe care a
+angajatul poate efectua a doua creare a rutelor. De exemplu, dacă este necesar să instalați un
+unitate de aer condiționat, este necesar să se asigure că o persoană calificată
+instalarea unităților de aer condiționat este atribuită acestei comenzi. The Roadnet
+Transportation Suite vă permite să creați activități care trebuie efectuate, cum ar fi
+instalați un aparat de aer condiționat și grupați activități similare în grupuri numite
+seturi de aptitudini. Seturile de abilități sunt atribuite a 2 angajați care
+pot desfășura astfel de activități, iar pe trasee vor fi plasați doar acești angajați
+care conțin cereri care necesită aceste activități.
+Pentru a crea seturile de abilități, trebuie să creați activitățile care vor fi incluse
+în seturile de aptitudini.
+[M Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+la — Pasul 2: Faceți clic pe meniul Înregistrări și selectați Activități. Fereastra Activități este
+afișate, listând toate activitățile stabilite.
+EW| Notă: Pentru a vedea o listă actualizată de activități, faceți clic pe pictograma Actualizare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+| Pasul 3: În fereastra Activități, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+— „Se afișează Adăugare activitate.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 32 de caractere pentru ID-ul activității. Acest câmp trebuie să fie
+umplut.
+la
+cel
+„Introduceți perioada de timp
+necesar pentru a finaliza —
+activitate în câmpul Timp -
+de serviciu. .7« —
+ventilator
+[x —
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+Pasul 6: Introduceți pe teren timpul necesar pentru a efectua această activitate
+Timp de service. Introduceți ora în format HH-MM.
+Bmadeoperations A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate
+(Cum să lucrezi cu activități
+Notă: Când creați seturi de abilități, puteți asocia un factor de durată
+Serviciu al doilea set. Când sunt create rute, combinația dintre
+. timpul de service cu timpul de service va fi folosit pentru a determina
+cât timp îi ia unui angajat pentru a îndeplini o sarcină.
+N ma T C SEA SAA ES ROSINTS S SNN SNTVA

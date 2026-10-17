@@ -1,0 +1,90 @@
+Pasul 6: Dacă doriți livrări cu acest cod de comentariu pentru a actualiza istoricul
+de livrări, confirmați că este selectată caseta Istoricul actualizărilor (caseta este
+selectat ca implicit; Faceți clic pe casetă pentru a dezactiva opțiunea Actualizare
+istorie)
+Pasul 7: Faceți clic pe pictograma Satvar sau apăsați [Ctrl]+[S] pentru a salva noul comentariu
+real vs. planificat.
+Pasul 8: Repetați pașii de la 2 la 7 pentru a adăuga orice alte comentarii.
+Pasul 9: Când ați terminat de adăugat comentarii, faceți clic pe caseta Închidere pentru a închide
+1 fereastră Adăugați comentarii reale vs. reale planificate
+Tcone de întreținere — Introducerea datelor reale — Comentarii reale vs. reale planificate —
+Adăugați pictograma ([Insert]) — Pictograma Salvare ([Ctri[S])
+Comentariile reale vs. reale Planurile existente pot fi editate sau șterse,
+după cum este necesar. Utilizați Editarea articolului și Ștergerea articolului pentru mai multe
+informatii,
+MET aaah South Tranporation
+|€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+Introducerea informațiilor reale de oprire a rotației
+Introducerea informațiilor reale despre rută/oprire
+Folosit cu: Roadnet
+O responsabilitate foarte importantă a șoferului este să colecteze informații reale despre rută
+€ oprire pe tot parcursul zilei. Caracteristica Roadnet Transportation Suite Real Stop Route
+vă permite să introduceți și să stocați aceste informații pentru a putea fi accesate ulterior
+€ calculat când se efectuează întreținerea timpului de service. Informația reală
+opririle rutelor sunt cruciale atunci când actualizați orele de serviciu și sunt o modalitate
+modalitate eficientă de a monitoriza și rafina costurile, precum și orele DT.
+Puteți introduce datele reale de rută/oprire în funcție de traseu sau oprire. La intrare
+informații pentru fiecare oprire, informațiile despre rută sunt actualizate
+automat.
+Introducerea informațiilor reale despre rută
+Când introduceți informații despre rută reală, puteți include informații generale rezumate
+despre timpul de serviciu și traseu, cantitatea de produse livrate, precum și
+orice comentarii considerate importante.
+Dacă sunt disponibile informații specifice opririi, introduceți informațiile despre oprire reală în
+În loc de informații reale despre rută. Consultați Introducerea informațiilor de oprire efectivă pentru
+o obțineți mai multe informații
+IN Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Wwess — Pasul 2: Faceți clic pe meniul Introducere date reale și selectați Rută/Oprire reală. La fereastră
+Rute reale: se afișează sesiunea.
+Pasul 3: În fereastra Rute reale: Sesiune, faceți dublu clic pe traseul dorit
+introduceți datele reale. Va fi afișată fereastra Rută pentru ruta selectată
+din punct de vedere anatomic. De asemenea, puteți să faceți clic dreapta și să selectați
+Editați pentru a deschide fereastra Rută
+ov-
+Faceți clic pe pictograma Sesiuni pentru a afișa o listă de sesiuni de rutare și faceți clic
+El de două ori în sesiunea pentru care doriți să introduceți datele reale. În sesiune
+selectat va apărea în fereastra Rute reale: Sesiune. Faceți dublu clic pentru a deschide
+Fereastra traseu. De asemenea, puteți face clic dreapta și selecta Editare
+pentru a deschide fereastra Traseu.
+Fereastra Rute reale: Sesiune se deschide în mod implicit la cea mai recentă sesiune de rutare.
+Dacă doriți să introduceți date reale pentru mai multe rute (toate rutele pe a
+sesiune, de exemplu), selectați rutele pe care doriți să le editați și faceți clic pe
+dreapta și selectați Editare pentru a deschide fereastra Rută. Pentru a edita toate rutele, faceți clic
+Faceți clic dreapta pe o rută și selectați Editați tot. Folosiți săgețile din partea de sus a
+Fereastra de rută pentru a vă deplasa între rute.
+Tadapeaçãe s : ;»Oâ»,»DTL» —AA
+* Copyright 2006 United Parcel Service of America, lnc.
+Toate drepturile rezervate.
+Introducerea informațiilor despre rută[actual stop
+Pasul 4: Faceți clic pe săgeata Fus orar pentru afișare/introducere și selectați fusul orar
+din orele în care intri. De exemplu, dacă introduceți programul de lucru
+Maryland, selectați Ora de Est.
+Notă: Orice oră afișată în prezent se va modifica pentru a reflecta noul fus orar
+timp. Cu toate acestea, baza de date le stochează folosind fusul orar
+mă angajez
+Pasul 5: Introduceți datele și orele corespunzătoare în câmpurile Începutul călătoriei, Sfârșitul călătoriei.
+călătorie, Intrare în depozit și Ieșire din depozit.
+Pasul 6: Introduceți informațiile corespunzătoare privind kilometrajul în contorul de parcurs de acasă și
+Sfârșitul contorului de parcurs.
+Ajaneta Rotaiparadares — — |8L E
+vă permite să introduceți informații reale || E mmm — fm ) în 5a cm 5 E
+informații importante despre trasee și p
+(opriri asociate. Inserarea — J uzda —n in Tm mee
+Această informație este crucială — ||[Einm pesilauan el |ss (c | ==
+„anualizați timpii de service |FRnA a d -
+și monitorizează orele DT. PE T L U i
+PA
+T s e ee
+F F
+B) Notă: Pentru a monitoriza distanța de la ultima oprire până la depozit, este necesar
+Completați câmpurile Odometru inițial și Odometru final.
+Pasul 7: Introduceți orice comentarii necesare în câmpul Comentarii. Dacă şoferul
+Dacă aveți un ajutor, selectați caseta Ajutor.
+Pasul $: Selectați Rută în secțiunea Editare date a ferestrei. Fereastra se schimbă în
+permiteți ca câmpurile Rezumat rută să fie disponibile.
+Pasul 9: completați coloanele Timp, Cantități și Totaluri, după cum este necesar.
+Rețineți că acestea sunt duratele și cantitățile totale ale rutei.
+M6 Pasul 10: După ce ați terminat de introdus informațiile despre traseu real, faceți clic pe Salvare
+" pentru a salva modificările
+Pasul 11: Dacă ați selectat mai multe rute de editat, utilizați săgețile din partea de sus a ferestrei pentru a

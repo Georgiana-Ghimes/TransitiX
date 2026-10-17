@@ -1,0 +1,43 @@
+M T A AA A o Roadiei Transporiafion Se
+|€ Copyright 2006 United Parcel Service f America, lc
+Toate drepturile rezervate.
+actualizat cu cele mai recente informații din baza de date. —
+și Pasul 3: În fereastra Șabloane de timp de conducere, faceți clic pe pictograma Adăugați sau
+Sau apăsați [Insert]. Apare fereastra Adăugați șablon de timp de conducere.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+AAdd este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 30 de caractere în Descriere.
+Bmadooperații A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+(Cum să lucrați cu modelele de timp de conducere
+Pasul 6: Introduceți orice oră fixă (HE:MM) care ar trebui adăugată la
+ruta reală pentru sarcini înainte și post-livrare, cum ar fi pornirea vehiculului,
+intrarea sau ieșirea din parcare etc.
+„Citește Viteza și
+Distanţa după cum urmează: dacă doi
+.starile sunt la 20 mile de
+distanță, șoferul va parcurge distanța.
+primele 2 mile la 21 mph ca
+„următoarele 3 mile (în total 5) la 30 mph,
+„următoarele 7 mile (în total 10 km) până la
+37 mph în ultimele 10 mile (total
+Pasul 7: În primul spațiu de sub coloanele Distanță și Viteză, introduceți primul
+nivelul de mile sau kilometri și MPH sau Km/h
+Pasul 8: Repetați pentru nivelurile de Distanță și Viteză rămase.
+Pasul 9: Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S] pentru a salva noul șablon.
+timpul de călătorie.
+mx — Pasul 10: Repetați pașii 4 2 9 pentru a adăuga orice alte șabloane de timp
+traseu.
+Pasul 11: Când ați terminat de adăugat șabloane de timp de conducere, faceți clic pe casetă
+Închideți pentru a închide fereastra Adăugare șablon.
+Pictogramă de întreținere — Înregistrări — Modele de traseu — Model de timp de conducere
+Stroke—Adăugați pictograma ([Insert])—Save icon ([Ctri]+[S])
+|Șabloanele de timp de conducere existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații,
+TE AAA A A A A Roadrer Trasporiafon SE
+' Copyright 2006 United Parcel Service of America, lc
+su și uineiár:

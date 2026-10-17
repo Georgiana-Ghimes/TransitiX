@@ -1,0 +1,36 @@
+T a făcut apariții
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Notă: Pentru ca orele să fie acceptate în sistem, trebuie să introduceți ora
+complet, inclusiv minute.
+„Introduceți modificările ferestrei de service pentru anumite zile pe pagină
+Modificări la fereastra de servicii de meniu pentru clienți.
+Pasul 2: Faceți clic pe casetele Zile pentru a selecta zilele pentru care se schimbă ora
+se aplică cerințele de serviciu. Dacă modificările orelor de service sunt
+aplicați luni, miercuri și vineri, faceți clic pe casetele de sub 2, 4 și 6.
+Notă: Dacă nu selectați zile, toate zilele vor fi selectate implicit.
+Pasul 3: Faceți clic pe săgeata Scenariu pentru a vedea o listă de scenarii și selectați scenariul din
+care orele de service vor fi utilizate.
+Pasul 4: Faceți clic pe butonul [Adăugați] pentru a accepta modificarea orei de serviciu.
+Pentru a modifica orele unei schimbări de timp de serviciu
+existente, evidențiați această linie în listă și modificați informațiile după cum este necesar.
+Apoi faceți clic pe butonul [Actualizare]. Informațiile vor fi modificate în
+lista.
+1 „Suită de transport Roadhnet
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Pentru a șterge o linie dintr-o modificare a orei mânerului
+existent, selectați linia din listă și faceți clic pe butonul [Eliminare]. Linia va fi
+excluse din listă.
+Pasul 5: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva informațiile sau
+faceți clic pe altă filă pentru a introduce informații suplimentare despre client.
+Introducerea informațiilor despre extensia clientului
+Pagina Customer Extension din meniul Client vă permite să introduceți informațiile utilizate
+de Teritory Planner pentru a crea rute strategice. Informații despre extinderea
+client sunt specifice sesiunii de planificare în Territory Planner, deci tu
+poate introduce informații diferite despre extensiile client pentru diferite sesiuni
+existente. Pentru fiecare extensie de client, alegeți un teritoriu, un set de standarde
+service, o sesiune si o cantitate pentru marimea 1. Informatiile ramase
+sunt optionale.

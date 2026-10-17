@@ -1,0 +1,94 @@
+madeaperações sau TÊ
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Pasul 1: Din meniul Client, faceți clic pe fila Extensie client.
+Pa ssc E sic = Eac0e sua uvue e aa o vane ee sscraato
+o adăugați informații despre extensia clienților, puteți selecta sesiunile de extensie
+„Planuri la care doriți să îl adăugați.
+Pasul 2: debifați caseta Nu utilizați extensia cu acest client.
+. Notă: Când editați informațiile despre extensia client, asigurați-vă că sesiunea curentă este sesiunea curentă
+vrei sa te schimbi. Dacă nu, schimbați sesiunea curentă cu cea dorită
+schimbare.
+Pasul 3: Selectați setul de standarde de teritoriu și servicii care să fie
+atribuit extensiei client. Pentru a deschide o listă de teritorii/seturi de
+standarde de îngrijire, faceți clic pe săgeata corespunzătoare, apoi faceți clic
+o intrare pentru a o selecta. Dacă teritoriul căruia doriți să îi atribuiți extensia
+nu există, introduceți numele în câmp.
+Pasul 4: Introduceți cantitatea totală de ciclu în câmpurile de dimensiune corespunzătoare. The
+Numele câmpurilor de dimensiune reflectă aliasuri introduse în meniul Opțiuni.
+ME T A A A A E Foadet Transporiation Sufe
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Sunt necesare informații despre mărimea 1, dimensiunile rămase sunt
+opțional.
+Pasul 5: Alegeți sesiunile de planificare de la care doriți informații
+sunt adăugate extensii. Acestea vor fi adăugate automat la Sesiune
+afisat. Pentru a le adăuga la alte sesiuni, faceți clic pe ele în zona Sesiuni către.
+fi modificat.
+Pasul 6: Pentru a atribui extensia clientului unui teritoriu în sesiunile de planificare
+selectat. Faceți clic pe săgeata Teritoriu și selectați teritoriul dorit
+atribuiți extensia. Dacă teritoriul nu este listat, introduceți-l în câmp; el
+vor fi adăugate automat.
+Pasul 7: dacă extensia ar trebui să folosească un alt tip de timp de tratare între sesiuni
+opțiuni de planificare, faceți clic pe săgeata Tip timp de răspuns. pentru
+deschideți fereastra Căutare - Tip de timp serviciu. Faceți dublu clic pe
+tastați pe care doriți ca extensia să o folosească în sesiunea de planificare. Dacă niciunul
+este selectat tipul de timp de service, timpul de service
+asociat cu clientul va fi utilizat în sesiunea de planificare.
+Pasul 8: Introduceți orice informații anterioare care ar trebui incluse cu extensia.
+Pasul 9: Introduceți numărul de zile în care extensia ar trebui să fie mutată când Rewind
+se execută o zi, în zona Treci înapoi o zi.
+Notă: Întoarceți o zi este un instrument de planificare a teritoriului care vă permite să reveniți
+Urmăriți cu ușurință zilele de livrare pentru un grup de extensii de clienți pentru o perioadă
+timp specificat. Acest lucru poate fi foarte util pentru a atrage șoferii
+traseu, treceți prin opriri după finishers.
+Pasul 10: pentru a preveni trecerea zilelor de livrare a extensiilor pentru clienți
+„un anumit număr de zile, bifați Selectați intervalul de zile. În
+caseta, introduceți numărul maxim de zile din Zilele anterioare în care
+extensia clientului își poate primi livrările atunci când există o nouă rută
+creat. De exemplu, dacă ziua anterioară a unei extensii de client este miercuri,
+corect și introduceți 1, extensia client poate fi programată la
+rPrimiți livrarea dumneavoastră marți, miercuri sau joi, când este noua rută
+creat (atâta timp cât aceste zile sunt permise de setul de
+serviciu). Dacă introduceți 0, extensia client trebuie programată
+pentru livrare miercuri. Pentru a permite implicarea zilelor care nu sunt
+sunt pentru livrare în intervalul de zile de livrare permis, bifați Permite
+. ambalaj.
+Notă: Dacă este selectată Orice zi, nu va fi utilizată ancorarea zilei.
+zile. Acest lucru va permite extensiei client să aibă livrări programate
+în orice zi permisă de setul dumneavoastră de standarde de îngrijire, când
+apare un nou itinerariu.
+Pasul 11: pentru a preveni trecerea săptămânilor de livrare a extensiilor pentru clienți
+pentru un anumit număr de săptămâni, bifați Selectare interval
+săptămâni. În casetă, introduceți numărul maxim de săptămâni din Săptămâni
+Ghid de operațiuni 78
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+in care extensia de client isi poate primi livrarile cand
+este creat un nou traseu. De exemplu, dacă săptămâna anterioară a prelungirii
+clientul este săptămâna 7 dintr-un ciclu de livrare $săptămână și introduceți 1,
+extensia client poate fi programată pentru a vă primi livrarea la
+săptămâna 6, 7 sau 8 când este creată o rută nouă (atât timp cât aceste săptămâni
+sunt permise de setul de standarde de serviciu). Dacă tastezi
+0, extensia pentru client ar trebui programată pentru livrare în săptămâna 7.
+Pentru a permite intervalul de săptămâni de livrare permisă să continue de la
+prima până la ultima săptămână a ciclului, bifați Permite împachetare.
+Notă: Dacă este selectată Orice săptămână, nu va fi folosită nicio ancorare
+de săptămâni. Acest lucru va permite extensiei client să aibă livrări programate
+în orice săptămână permisă de setul dvs. de standarde de îngrijire,
+când apare o nouă rutare.
+Pasul 12: Pentru ca extensia client să fie scriptată atunci când funcția Atribuire zile
+este efectuat, selectați Luați în considerare pentru a atribui zile. Dacă această opțiune nu este
+selectată, extensia nu va fi scriptată automat. Va fi
+trebuie să-l scrieți manual.
+Pasul 13: Introduceți informațiile de câmp definite de utilizator pentru extensie. Pentru
+introduceți informațiile, faceți clic pe câmpul din listă; antetul câmpului
+definit de utilizator apare deasupra câmpului de introducere din dreapta. Introduceți
+text câmp definit de utilizator și faceți clic pe butonul [Setare valoare].
+L Notă: anteturile câmpurilor definite de utilizator stabilite în fereastra Câmpuri
+Setările definite de utilizator vor fi reflectate aici.
+M Pasul 14: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]-[S] pentru a salva clientul sau faceți clic pe
+într-o altă filă pentru a introduce informații suplimentare despre client.

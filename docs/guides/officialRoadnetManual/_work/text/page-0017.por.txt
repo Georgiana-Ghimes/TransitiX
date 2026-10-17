@@ -1,0 +1,87 @@
+Tfrequência do que outras. Você pode especifícar uma região como padrão. Sempre que
+entrar em um novo módulo, como o Editor de roteirização, verá automaticamente as
+informações da região padrão. É possível alterar a região exibida em cada módulo,
+conforme necessário.
+Guia de operações E
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+Como trabalhar com regiões.
+Nota: A região selecionada como padrão é exibida como tal para o usuário conectado ao
+móduto.
+É possível selecionar uma região padrão em qualquer módulo, com exceção do módulo
+Administração.
+Para selecionar uma região padrão, clique com o botão direito do mouse no nome da
+região, na parte inferior direita da janela do módulo, e selecione 2 opção Padronizar.
+Alternância de regiões
+Às vezes, pode ser necessário alternar de uma região para outra. O Roadnet
+Transportation Suíte permite alternar facilmente entre regiões na maioria das áreas do
+programa. Como você trabalha com as informações de uma região com mais frequência
+do que outras, pode tornar padrão uma região.
+Nota: Somente as regiões às quais você tenha acesso no módulo serão exibidas na lista.
+Etapa 1: Abra o módulo apropriado.
+Etapa 2: No lado inferior direito da barra de status da janela há um campo com o nome
+da região atual. Clique na seta e uma lista de regiões será exibida.
+Etapa 3: Clique na região com a qual deseja trabalhar. A lista de regiões fecha e uma
+janela de confirmação é exibida.
+Etapa 4: Clique em [Sim] para alterar para os dados da nova região ou em [Não] para
+continvar trabalhando com a região atual.
+s “Roadhet Transportaton Suite
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Manutenção do Roadnet Transportation Suite
+Manutenção do Roadnet Transportation Suite
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Nota: Você não poderá abrir este módulo se não recebeu permissão de manutenção no
+módulo Administração.
+O módulo Manutenção compreende todas as informações sobre seu negócio — clientes
+(depósitos, clientes ou clientes de entrega, etc.), funcionários, equipamentos (cavalos
+mecânicos, reboques, veículos de médio porte, etc.) — e como tais informações serão
+usadas 2o planejar, criar, carregare, finalmente, monitorar suas rotas. O módulo
+Manutenção é usado inicialmente para configurar essas informações e depois,
+Tegularmente, para manter atualizadas as informações do seu sistema. Por exemplo, se
+você adquirir um novo tipo de equipamento de entrega e usá-lo para entregar um produto,
+E necessário inserir informações sobre o novo item de equipamento para que o sistema de
+computadores contenha dados precisos.
+/O módulo Manutenção do Roadnet Transportation Suite permite configurar e manter os
+dados do sistema. É possível utilizar o módulo Manutenção para:
+* Tnserire manter informações sobre os clientes, entregas, motoristas, equipamentos e
+Outras áreas de sua operação.
+* — Ajustaro tempo de percurso de acordo com o tipo e tamanho do equipamento.
+* Configuraras opções que definem o funcionamento do Transportation Suite.
+* Registraro tempo real gasto realizando entregas para ajudar o Roadnet a produzir
+tempos de atendimento e soluções de roteirização mais precisos.
+* — Atualizaros tempos de atendimento dos clientes com informações reais para criar
+rotas mais precisas.
+* Criarmodelos de horário de rush que reflitam os padrões de tráfego que mudam
+durante o dia.
+* Realizar manutenção do banco de dados para manter o Roaánct Transportation Suite
+funcionando da melhor maneira possível.
+* Transportar dados para a UPS Logistics Technologies, para obter assistência com
+sotução de problemas.
+Importante: A precisão do Roadnet Transportation Suíte depende da precisão das
+informações inseridas. Procure inserir novos dados e alterações nos dados
+existentes imediatamente.
+Nota: Também é possível acessar e atualizar muitos itens de recursos de manutenção no
+Editor de roteirização e no Editor de planejamento.
+Guia de operações »
+€€ Copyright 2006 United Parcel Service of America, lmc
+Todos os direitos reservados.
+(Como trabalhar com os itens de manutenção
+Como trabalhar com os itens de manutenção
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Todos os itens do Roadnet Transportation Suite utilizam janetas de manutenção para a
+adição, edição e exclusão de itens. Isso significa que o mesmo processo básico pode ser
+vtilizado para a manutenção de todos os itens.
+Clique no ícone Manutenção para abrir o respectivo módulo. Em seguida, escolha
+adicionar ou atualizar as informações no sistema.
+Adição de itens
+Cada item de manutenção no Roadnet Transportation Suíte, como equipamentos,
+funcionários ou clientes, contém instruções passo a passo específicas sobre como
+adicionar informações, uma vez que os dados necessários para cada item são diferentes.
+Por exemplo, 2o procurar instruções sobre como adicionar equipamentos, você verá a
+seção principal Equipamento, que descreve os conceitos associados aos equipamentos,
+seguida das instruções passo a passo para a adição de equipamentos.
+Se você estiver adicionando um item semelhante 2 um item existente, é possível clonar o
+item existente, reduzindo a quantidade de texto que necessita ser inserido.
+Etapa 1: Clique no menu Cadastros e selecione a opção de menu do item que deseja
+to ss

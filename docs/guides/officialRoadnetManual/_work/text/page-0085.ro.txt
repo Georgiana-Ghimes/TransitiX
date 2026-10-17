@@ -1,0 +1,67 @@
+(Cum să lucrezi cu modele pentru orele de vârf
+este afișat noul punct final. Dacă faceți o greșeală, faceți clic pe butonul [Anulați].
+(ISBif]+[U]) pentru a elimina ultimul segment desenat.
+Dacă utilizați modul Select Street, faceți clic pe segmentele de stradă
+Al tău să fie inclus în cale. Faceți clic pe un segment de stradă; segmentul
+este evidențiat și o casetă cu litera À apare la un capăt al segmentului,
+iar la capătul opus al segmentului apare o casetă cu litera B. Faceți clic
+în următorul segment pe care doriți să îl includeți; caseta „A” sau „B” se mută la
+sfârşitul noului segment. Continuați să faceți clic până când le selectați pe toate
+segmentele dorite.
+. Note: Toate segmentele de stradă ale căii trebuie să fie conectate. Nu va fi
+permis să selecteze un segment deconectat.
+În modul Oră de vârf, puteți utiliza opțiunile Zoom și Center pentru
+deplasați-vă pe hartă după cum este necesar.
+Pasul 6: Când terminați calea, faceți clic pe butonul [Finish]. Fereastra Editare
+sunt afișate atributele căii orelor de vârf.
+salut lm alalels| 2) al lzlalo] el vl al
+Exm P
+FD mSST
+Când desenați o cale de oră de vârf, toate segmentele trebuie
+Pasul 7: Introduceți un nume de cale și o descriere. Trebuie să introduceți un nume.
+Pasul 8: Selectați caseta și introduceți modificarea procentuală pentru fiecare perioadă din
+orice variație de viteză doriți. Selectați dacă viteza ar trebui să fie
+crescut (mai rapid) sau redus (mai lent). La noua viteză va fi
+utilizat când se calculează timpul de călătorie.
+MM — — — NoadrerTramporifon SE
+' Copyright 2006 United Parcel Service of America, lc
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+Dacă creșteți viteza cu 25%, 60 MPH va crește la 75 MPH.
+Dacă reduceți viteza cu 25%, 60 MPH va scădea la 45 MPH.
+Pasul 9: Pentru a crea o constrângere unică de rută pentru cale, selectați
+Casetă restricționată pentru perioada de timp corectă. Dacă apare un semn pe
+cutie, echipamentul este restricționat în perioada. Dacă semnul este gri
+u dezactivat și calea este într-o zonă de oră de vârf, restricție
+specificat pentru zonă este utilizat. Dacă nu există marcă, nu există nicio restricție
+echipament pentru traseu.
+o stabiliți atributele unei căi de program de lucru
+Tush puteți specifica direcția de circulație dacă este
+„diferit în timpul normal al zilei.
+Pasul 10: Pentru fiecare perioadă, selectați direcția străzii dacă este diferită în timpul
+orele normale.
+Pasul 11: Faceți clic pe butonul [OK] când atributele sunt definite.
+Pasul 12: pentru a adăuga o altă cale de oră de vârf, repetați pașii de la 4 la 11
+Întreținere >Fișier >Hartă —pictogramă Șablon pentru ora de vârf —Adăugați
+cale oră de vârf — [Finish] — [OK]
+Schimbarea unei căi de oră de vârf
+După ce creați o cale de oră de vârf, o puteți modifica după cum este necesar. Ao
+schimbați o cale de oră de vârf, puteți selecta numai segmente
+străzile individuale și orice segment adăugat căii trebuie să fie conectat la
+calea.
+Pentru a modifica intervalul de viteză, restricțiile de rută sau alte atribute ale
+cale, faceți clic dreapta pe cale și selectați Editați atributele căii
+în meniul care va fi afișat. În fereastra Editați atributele căii orelor de vârf, faceți
+modificările necesare și faceți clic pe butonul [OK].
+Badeaperações M
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+Pentru a scurta sau a prelungi calea, faceți clic dreapta pe cale și
+Selectați Editați calea din meniul care apare. Pentru a adăuga la cale, faceți clic pe
+segment aproape de capătul căii curente. Pentru a elimina segmente din cale, faceți clic
+mo segment la capătul căii. Caseta „A” sau „B” se deplasează pentru a indica noul punct
+capătul căii.
+Pentru a șterge o cale de oră de vârf, faceți clic dreapta pe cale și
+Selectați Delete Path din meniul care apare. Faceți clic pe [OK] pentru a confirma
+excluderea.

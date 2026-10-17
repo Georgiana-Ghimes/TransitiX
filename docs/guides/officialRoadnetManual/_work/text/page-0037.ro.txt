@@ -1,0 +1,72 @@
+A RRA LA AEo o aA to AAAA AA peefer FA DS SAn REAA E IVTELA YA SE RA SSNA RENA SD ERNESE EM TVSA META RSA IAS
+- [Inserare]. Apare fereastra Add Equipment Change.
+Ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul rutei. Acest câmp trebuie completat.
+EX
+2) Puteți oferi un nou
+o : descrierea traseului către
+fn — faesime )) introduce o alocare de
+ein echipament.
+Pasul 5: Faceți clic pe săgeata Tip de echipament-Echipament:Descriere pentru a selecta
+echipamentul pe care doriți să îl utilizați pentru ID-ul rutei introdus. Fereastra de căutare -
+Echipamentul este afișat. Utilizați funcția de căutare pentru a găsi
+echipamentul dorit. Când echipamentul apare în listă, faceți dublu clic
+ori pentru a-l selecta sau faceți clic pe un element de echipament și apoi
+pe pictograma Proces.
+Pasul 6: Dacă doriți, introduceți o nouă descriere pentru traseu în câmpul Descriere rută.
+[G Pasul 7: Faceți clic pe pictograma Salvare sau apăsați [Ctri]=[S] pentru a salva modificarea
+echipamente.
+Pasul 8: După ce ați adăugat toate modificările, faceți clic pe caseta Închidere pentru a închide
+Adăugați fereastra Schimbare echipament.
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+(Cum să lucrați cu modificările echipamentelor.
+SI N EA ANA
+Adăugați pictograma ([Insert]) — Pictograma Salvare ([Ctrl*[S])
+Modificările existente ale echipamentelor pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+ET AA the Roadhat Trarporiafion Su
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu zonele de depozit
+Cum să lucrați cu zonele de depozit
+Folosit cu: FleetLoader
+Zonele de depozit vă permit să organizați SKU-urile în diferite zone din depozit și apoi
+Apoi specificați ordinea în care zonele trebuie încărcate pe paleți. De către
+De exemplu, puteți crea o zonă de depozit A, pentru cutii de cutii de 350 m! de la RN
+Cola și o altă zonă B, care conține sticle individuale cu articole mai puțin populare. Apoi
+Puteți specifica că articolele din zona A sunt încărcate pe palet înainte ca articolele din zona A să fie încărcate pe palet înainte de
+zona B. Odată ce zonele de depozit au fost stabilite, puteți
+—— specificați în ce zonă se află fiecare SKU.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Mensa — Pasul 2: Faceți clic pe meniul Înregistrări, selectați zonele Produs și Depozit. Fereastra
+Se afișează Zonele de depozit, cu o listă a tuturor zonelor de depozit
+stabilit.
+RO É Notă: Pentru a vedea o listă actualizată a zonelor de depozit, faceți clic pe pictograma Actualizare; la
+Jjanela va fi actualizat cu cele mai recente informații din baza de date.
+| Pasul 3: în fereastra Zone de depozit, faceți clic pe pictograma Adăugați sau apăsați pe [Inserare]
+”” Apare fereastra Add Warehouse Zone.
+În partea de jos a ferestrei Adăugați o zonă de depozit este o comandă de ridicare,
+enumerarea tuturor zonelor de depozit existente. Noua zonă este afișată în ultima
+poziție din listă, cu un ID de <Zonă nouă>
+Şi
+Pa Este posibilă rearanjarea ordinii de
+— colectare din toate zonele
+[S —— dragoste în orice moment
+Doar o singură fereastră.
+[aves reae s [ )
+y n
+ES
+j) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul și Descrierea zonei de depozit; ID-ul este obligatoriu.
+EE
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu spațiile de depozitare

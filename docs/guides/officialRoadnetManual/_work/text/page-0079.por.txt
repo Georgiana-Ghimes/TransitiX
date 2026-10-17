@@ -1,0 +1,63 @@
+A 0S ENEA OOSTA:
+Importante: Apos 201cionar as ameraçoes ae cuiente, ejas serao apiicagas
+indefinidamente. Se você estiver inserindo alterações para um período de
+tempo pré-determinado (um dia, uma semana, etc.), lembre-se de editar ou
+excluir as alterações conforme apropriado.
+As atterações de clientes existentes podem ser editadas ou excluídas, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+1 “Roadhet Transportation Suite
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+E En s i o ss sm ss s v om sc
+Mn — Etapa?2: Clique no menu Cadastros, selecione Clientes e, em seguida, selecione
+Condensação de clientes. À janela Condensação de clientes é exibida.
+[6] Nota: Paraveruma lista atualizada de condensação de clientes, clique no ícone Atualizar;
+1 janela será atualizada com as informações mais recentes do banco de dados.
+W Etapa3: Najanela Condensação de clientes, clique no ícone Adicionar ou pressione
+= [Insert]. A janela Adicionar condensação de clientes é exibida.
+Ã) Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira a ID do cliente original e o Tipo do cliente original para o cliente que
+deseja alterar.
+Etapa 5: Insira a ID do novo cliente e o Tipo do novo cliente do endereço do cliente que
+deverá substituir o endereço do cliente original.
+8 Etapa6:Cliqueno ícone Salvar ou pressione [Ctrl]+[S] para salvar a condensação de
+á clientes.
+Etapa 7: Quando terminar de adicionar as condensações de clientes, clique na caixa
+Fechar para fechar a janela Adicionar condensação de clientes.
+Ê S AA RAA o
+Adicionar ([Insert]) — ícone Salvar ([Ctril+[S])
+As condensações de clientes existentes podem ser editadas ou excluídas, conforme
+mecessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Badeoperaçõães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com clientes inativos
+Como trabalhar com clientes inativos
+Utilizado com: Roadnet
+Os clientes inativos impedem que um cliente específico receba pedidos, porém sem
+Temovê-lo do banco de dados. Você pode usar esta opção quando um cliente não pagou
+uma fatura ou se o cliente não deseja mais ser atendido, mas você deseja manter o cliente
+para finalidades de relatório. Os clientes inativos também podem ser inseridos utilizando
+o menu Cliente.
+u Ftapa 1: Clique no icone Manntenção para abrir o respectivo módulo
+huunss — Etapa 2: Clique no menu Cadastros, selecione Clientes e, em seguida, selecione
+” Clientes inativos.
+Nota: Para ver uma lista atualizada de clientes inativos, clique no ícone Atualizar; a
+Jjanela será atualizada com as informações mais recentes do banco de dados.
+E Fin hada Clcage fanlivos, Diyaeno-oa: Ádm su pesdnoe lhaer À
+" janela Adicionar clientes inativos é exibida.
+ã
+Ã) É pica: Paraadicionar uma entrada semelhante a outra existente, cique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+e informações necessárias na nova entrada.
+Etapa 4: Insira a ID do cliente e Tipo do cliente e clique no ícone Salvar ou pressione
+x [CtI]+[S] para salvar o cliente inativo.
+Etapa 5: Quando terminar de adicionar clientes inativos, clique na caixa Fechar para
+fechar a janela Adicionar cliente inativo.
+Ícone Manutenção — Cadastros — Clientes — Clientes inativos > ícone Adicionar
+(Mnsert]) — icone Salvar ([Ctri]+[S])
+Os clientes inativos existentes podem ser excluídos, se necessário. Consulte Exclusão de

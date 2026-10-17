@@ -1,0 +1,88 @@
+Etapa 4: Na lista Itens não usados nesta regra, selecione os itens que não devem ser
+misturados ao item de destino. Para selecionar vários itens, mantenha a tecla
+1m “Roadhet Transportation Suite
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Estabelecimento de regras de produto
+[Ct] pressionada enquanto seleciona os itens. Clique no botão [<] para mover
+Os itens para a lista Não deve ser misturado com.
+Para mover todos os itens da lista Itens não usados nesta regra, clique no botão
+Etapa 5: Repita as etapas 3 e 4 até criar todas as regras de produto necessárias.
+Etapa 6: Clique no ícone Satvar ou pressione [Ctrl]+[S] para salvar as regras de
+produto.
+Etapa 7: Clique na caixa Fechar para fechar a janela Regras de produto.
+Cadastros — Regras de carregamento — Regras de produto de palete/Regras de
+produto de camada — Por zona de armazêm/Por tipo de embalagem/Por marca de
+SKU-sícone Salvar ([Ctil+[S])
+Para excluir ou alterar uma regra de produto existente, mova o tipo de embalagem /marca
+de SKU/zona de armazém da lista Não deve ser misturado com para Itens não usados
+meste regra, conforme necessário.
+S a AA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+Estabelecimento de regras de empilhamento
+Estabelecimento de regras de empilhamento
+Utilizado com: FleetLoader
+As regras de empilhamento proibem que um tipo de embalagem específico seja
+empilhado sobre outro tipo de embalagem, quando o equipamento é carregado com o
+FleetLoader. Por exemplo, pode-se estabelecer uma regra proibindo o empilhamento de
+latas sobre garrafas. Diferente das regras de produto, as regras de empilhamento não são
+inversíveis; uma regra de empilhamento evitando que latas sejam empilhadas sobre
+garrafas não impede que garrafas sejam empilhadas sobre latas.
+. Nota: Não utilize regras de empilhamento para evitar o carregamento de SKUs juntas no
+mesmo compartimento/na mesma camada; use as regras de produto para impedir
+esta mistura.
+) Etapa1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Nemas — Etapa2: Clique no menu Cadastros, selecione Regras de carregamento e Regras de
+empilhamento. A janela Regras de empilhamento é exibida.
+Etapa 3: Na primeira coluna, encontre o tipo de embalagem que não pode ser empilhada
+na segunda; em seguida, percorra a linha para encontrar o tipo de embalagem
+sobre 2 qual ela não poderá ser empilhada. Clique na caixa para selecioná-la.
+TNEN o
+|—— m —— |x
++lare |
+foremees A REE
+ln = . T” E & 8 &
+e | E R R e e R É
+eem | o R n R c o
+[xc | DM N aaa aaa o c o
+facemeore M N & m & & &
+[c | DM a aa RS a o
+Ex DA
+Ec D E E
+ET mo s m o s x É
+ss e e e e e R E j»
+FGNS R S SNDN PS al iG
+'embalagem seja carregado sobre outro, como não empilhar barris
+sobre garrafas.
+Etapa 4: Continue até que todas as regras de empilhamento tenham sido criadas.
+1G Etapa5: Clique no icone Salvar ou pressione [Ctrl]+[S] para salvar as regras de
+"” empilhamento.
+Etapa 6: Clique na caixa Fechar para fechar 2 janela Regras de empilhamento.
+Cadastros — Regras de carregamento — Regras de empilhamento — ícone Salvar
+(Crir[S)
+M= FF AA Roadaet Transportaton Sule
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com métodos de camadas de paletes
+Como trabalhar com métodos de camadas de paletes
+Utilizado com: FleetLoader
+OOs métodos de camadas de paletes permitem criar diversas maneiras nas quais os tipos de
+embalagem podem ser montados em um palete. Por exemplo, você pode montar paletes
+de mancira diferente para fins-de-semana de feriado, para colocar mais produtos em cada
+palete. Para permitir estas situações, crie um método separado para feriados, que será
+usado somente nessas circunstâncias especiais. Quando os veículos são carregados com o
+Editor de carregamentos, um método de camadas de palete deve ser especificado; caso
+não seja especificado, o método de camadas padrão será utilizado.
+Após adicionar os métodos de camadas, é possível definir a quantidade do tipo da
+embalagem que pode ser ajustada em uma camada e o número de camadas que podem ser
+ajustadas em um palete. Consuíte Como trabalhar com tipos de embalagem para obter
+mais informações.
+O Transportation Suite é fornecido com um método de camadas de palete padrão,
+denominado Padrão (STD). Este método não pode ser excluído, mas pode ser alterado.
+WVocê pode adicionar quantos métodos de camadas de palete forem necessários.
+F ! Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+Ls — Etapa?: Clique no menu Cadastros e selecione Regras de atendimento e Métodos de
+camadas de palete. A janela Métodos de camadas de palete é exibida, listando
+todos os métodos de camadas de palete estabelecidos.
+NN q Pac ver ic i n lirada de Msblódos de cuntad d tee id focine:

@@ -1,0 +1,129 @@
+Tabela de conteudos
+Configuração para carregamento dos veículos bulk sm
+Após o carregamento dos veículos, talvez seja conveniente imprimir relatórios para o ar-
+mazém informando como os veículos serão carregados. Os relatórios mais utilizados são
+o Diagrama de carregamento bulk e o Diagrama de validação bulk, mas há vários outros
+disponíveis. Carregamento de veículos no Editor de carregamentos 575
+(Como usar o menu Opções de carregamento de veículos 57
+Preparação para editar veículos no Editor de carregamentos 587
+Utilização das janelas do Editor de carregamentos 592
+Edição de veículos 599
+Análise do veículo carregado 599
+Movimentação de SKUs no veículo carregado 601
+Como salvar seu trabalho no Editor de carregamentos 604
+Exclusão de soluções de carregamento semiprontas 605
+Impressão de relatórios no Editor de carregamentos 606
+Como sair do Editor de carregamentos 607
+MobileCast - Analista
+Expedição no MobileCast 609
+Utilização das janelas no módulo Analista 610
+Como iniciar uma rota 17
+Como iniciar rotas, Etapa 1: Exibir a rota 617
+(Como iniciar rotas, Etapa 2: Atribuir recursos 618
+(Como iniciar rotas, Etapa 3: Pedir para o MobileCast iniciar a rota 624
+Conclusão de paradas em uma rota 627
+Conclusão de uma rota 630
+Exclusão de uma rota 632
+Localização de uma rota 633
+Monitoramento de motoristas 635
+Monitoramento de equipamentos com o Mapa do equipamento 637
+Acompanhamento do histórico da posição de equipamento e rota 639
+Utilização do mapa Histórico da posição 639
+Acompanhamento do equipamento 644
+Acompanhamento de uma rota 645
+Como trabalhar com exceções de rotas 647
+Exibição de exceções de rotas 648
+Utilização do Vigilante da rota 649
+Exibição de informações de diagnóstico 652
+Verificação das atribuições de rota 656
+Como trabalhar com o menu Propriedades da rota 658
+Criação de uma rota 659
+Adição, alteração, exclusão ou remoção de atribuição de paradas em uma rota . ... 661
+Adição de uma parada 661
+Alteração de uma parada 663
+Exclusão de uma parada 665
+Remoção da atribuição de uma parada 665
+Inserção de informações do pedido ou do item do pedido 667
+MBE Operaçõe TÊ
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Adição de um novo pedido ou item do pedido 667
+Alteração ou exclusão de um pedido ou item do pedido 671
+Processamento de um pedido ou item do pedido 672
+Adição de intervalos, esperas ou pernoites a uma rota 6B
+Inserção de um depósito intermediário da rota 676
+Como trabalhar com paradas não atendidas 678
+Atribuição de paradas não atendidas a uma rota 678
+Determinação da melhor rota pelo MobileCast 680
+Combinação de paradas não atendidas com paradas existentes no MobileCast 681
+Localização de paradas não atendidas em um mapa 682
+Adição e edição de paradas não atendidas 683
+Exclusão de paradas não atendidas 686
+AAlteração da ordem das paradas de uma rota 687
+Transferência de paradas entre rotas 689
+Cancelamento de uma parada 691
+Criação de uma rota estática 692
+Criação de notas da rota e do usuário 693
+Notas da rota 693
+Notas do usuário 694
+Preenchimento de campos definidos pelo usuário 697
+Comunicação sem fio com o MobileCast 699
+(Como trabalhar com eventos sem fio 699
+Exibição de recibos de eventos 702
+(Como trabalhar com o Centro de mensagens 703
+Desativação da comunicação sem fio 704
+Envio de mensagens ao motorista 706
+Impressão de orientações do motorista 707
+Verificação de espaço em um equipamento 709
+Troca de equipamentos em uma parada 7m
+Atribuição do equipamento a ser trocado mm
+Processamento da troca na parada me
+Exibição de listas de itens 7M
+Como exibir somente minhas rotas 7ns
+Exibição da rede de dados sem fio da Motientr 716
+Exibição de distância por jurisdição nm
+Como trabalhar com rotas OnTrack 720
+Geração de paradas e
+Contabilidade de uma rota m
+Atualização de janelas no Analista TM
+Utilização do MobileCast para gerenciar carregamentos. 75
+Principais conceitos do carregamento ns
+Configuração para carregamentos 17
+Configuração dos padrões de carregamento 78
+Direitos do usuário 730
+Adição ou alteração de direitos de carregamento 730
+Como trabalhar com clientes de carregamento EE
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Tabela de conteudos
+Como trabalhar com endereços de carregamento 733
+Como trabalhar com mercadorias do cliente, códigos STCC, classes de frete, transporta-
+dores comuns e tipos de carregamento 75
+Gerenciamento de carregamentos 736
+Criação do carregamento 738
+Adição de paradas de carregamento 742
+Reclamação de um carregamento 744
+Atribuição do carregamento 745
+Atribuição do carregamento a uma rota existente 745
+Atribuição do carregamento a uma nova rota 746
+AAtribuição do carregamento a um transportador comum 748
+Conclusão de uma parada de carregamento 750
+Agrupamento do carregamento com outra rota 752
+Transferência do carregamento para um transportador comum 754
+Transferência do carregamento para outra região 756
+Edição de um carregamento 758
+Pesquisa de carregamentos 760
+Pesquisa de carregamentos concluídos 760
+Pesquisa de carregamentos nas rotas 760
+Cancelamento de um carregamento 762
+Como retomar um carregamento à lista Disponível 763
+Como trabalhar com relatórios 765
+Relatórios
+Impressão de relatórios 767
+Visualização de relatórios 769
+Adição de relatórios m
+Agrupamento de relatórios Tn
+Impressão de grupos de relatórios TI5
+Janelas de visualização de relatórios TI6
+Resumo de rota RvP 780

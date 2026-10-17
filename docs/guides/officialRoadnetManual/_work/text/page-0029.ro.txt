@@ -1,0 +1,103 @@
+(Cum să lucrați cu stări și tipuri
+introduse înainte de tipurile de echipamente dacă utilizați FleetLoader. După
+0 completând tipurile de echipamente, articolele de echipament individuale pot fi
+fi introdus. Consultați Lucrul cu tipuri de echipamente pentru mai multe
+informaţii.
+Întreținere — Înregistrări — Echipamente — Tipuri de echipamente
+Tipuri de clienți
+Tipuri de clienți permite specificarea tipurilor de clienți existente. În mod normal,
+tipul de client este pur și simplu un ID și o descriere și le puteți aloca
+clienții săi să distingă depozitele clienților și furnizorilor, separat
+departamente într-un supermarket — nenumărate utilizări. Dacă utilizați
+tipuri de clienți pentru a diferenția diferitele departamente ale unui singur magazin, cum ar fi a
+supermarket, puteți sincroniza Roadnet Transportation Suite
+selectați automat câmpuri pentru fiecare tip atunci când adăugați sau editați un client;
+consultați pagina Clienti de configurare standard pentru mai multe informații. Se
+Dacă utilizați partea de contabilitate a MobileCast, puteți atribui un
+monitorizarea 2 unui tip de client, pentru a diferenția costul de livrare în diferite
+tipuri de clienți. Roadnet Transportation Suite este livrat cu două tipuri de clienți
+implicit: depozite (DPT) și fabrici (SIT), dar puteți adăuga câte
+mecesari.
+Întreținere — Înregistrări — Clienți — Tipuri de clienți
+Tipuri de ambalaje
+Tipurile de ambalaje definesc diferitele tipuri de ambalaje încărcate în
+echipamente precum cutii de sifon de 350 m! sau sticle de 2 litri. Tipurile de
+ambalajele sunt folosite pentru a defini capacitatea unui palet/codă sau
+un strat pe un palet. După tipurile de ambalaje și etichetele SKU sunt
+introduse, SKU-urile pot fi adăugate. Dacă ați achiziționat FleetLoader, trebuie
+Introduceți tipurile de ambalaje pentru a determina cum va fi încărcat echipamentul dvs. The
+tipurile de ambalare vor fi folosite numai dacă ați achiziționat Fleetl.oader sau intenționați să o faceți
+importați detaliile la nivel SKU în fișierul comenzii. Consuite Cum să lucrezi cu
+tipuri de ambalaje pentru mai multe informații.
+Întreținere — Înregistrări > Produs — Tipuri de ambalaje
+Tipuri de produse
+Tipurile de produse sunt atribuite SKU-urilor și clasifică SKU-urile în funcție de tipul de
+compartiment în care pot fi transportate. Câteva exemple de tipuri de
+produsele sunt congelate sau refrigerate. Tipurile de produse vor fi utilizate numai dacă
+se utilizează rutarea compartimentelor.
+Întreținere — Înregistrări — Produs — Tipuri de produse
+Tipul de traseu
+Tipurile de traseu oferă o modalitate de a clasifica diferite tipuri de încărcături
+transportat cu vehicule. Câteva exemple de tipuri de rute sunt inflamabile sau
+T AA R Roadha Trarporiafion ST
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu stări și tipuri
+refrigerat. Orice tip de traseu creat este disponibil pentru toate regiunile. Aceasta
+opțiunea este disponibilă numai dacă MobileCast este încărcat.
+Întreținere — Înregistrări — Rute — Tipuri de rută
+Starea rutei
+Stările rutei pot fi folosite pentru a clasifica rutele în funcție de urgență,
+stadiu de finalizare sau cu alte criterii. Câteva exemple de stare a rutei
+poate include starea întârziată sau fără stare. Stările rutelor sunt atribuite rutelor în Analyst.
+Toate stările rutelor create sunt disponibile pentru toate regiunile. Această opțiune este
+disponibil numai dacă MobileCast este încărcat.
+Întreținere — Înregistrări — Rute — Starea rutei
+Tip șofer
+Tipurile de drivere vă permit să clasificați driverele și să monitorizați ratele driverului.
+plata prin aceste categorii. De exemplu, puteți utiliza un tip de driver
+pentru șoferii experimentați și altul pentru șoferii noi și atribuiți o rată de
+plata pentru fiecare tip. Tipurile de drivere sunt menținute în modulul Întreținere, dar
+Deoarece implică informații despre salarizare, este necesar să aveți permisiuni
+contabilitate pentru a lucra cu tipuri de drivere.
+Întreținere —Înregistrări —Angajați —Tipuri de șofer
+Tip de monitorizare
+Tipurile de monitorizare sunt utilizate pentru a controla informațiile contabile și
+date operaționale, care pot fi combinate cu date specifice de rută pentru a produce
+rapoarte contabile detaliate. Tipurile de monitorizare sunt menținute în
+Modul de întreținere, dar întrucât implică informații financiare, este necesar să aveți
+permisiuni contabile pentru a lucra cu tipuri de monitorizare. Consultați
+Cum să lucrați cu tipurile de monitorizare pentru mai multe informații. Această opțiune
+este disponibil numai dacă MobileCast este încărcat și aveți permisiuni
+contabilitate.
+Întreținere > Înregistrări * Expediere > Tipuri de monitorizare
+Adăugarea unui statut sau tip
+Mai jos sunt instrucțiuni de bază pentru adăugarea unui statut sau tip; unele statusuri şi
+tipurile au câmpuri suplimentare care trebuie completate. Consultați instrucțiunile pentru
+Lucrați cu tipul individual pentru a obține mai multe informații.
+[ Etapa EMN: Faceți clic pe pictograma Întreținere pentru a deschide modulul Configurare.
+ee — Pasul 2: Faceți clic pe meniul Înregistrări, selectați tipul/starea dorită. Tipul/ fereastra
+: se deschide starea, listând tipurile/starea curentă.
+Bmadeaperções sau A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu stări și tipuri
+Notă: Pentru a vedea o listă actualizată de tipuri/stare, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+actualizat cu toate informațiile modificate din baza de date.
+Pasul 3: Pentru a adăuga o stare sau un tip, faceți clic pe pictograma Adăugați sau apăsați pe
+[Inserați]. Apare fereastra Adaugă.
+Pasul 4: completați câmpurile după cum este necesar. Câmpul Tip sau Stare este
+Necesar; Descrierea este opțională.
+Fereastra Adăugare tip
+tip bi
+) driverul este o fereastră tipică
+maaA folosit pentru a adăuga status
+B f sau tipuri. Doar introduceți un tip
+E € o descriere și faceți clic pe
+Pasul 5: Dacă starea/tipul are o culoare folosită pentru a-l identifica, faceți clic pe săgeată pentru a deschide
+o paletă de culori și selectați culoarea dorită.
+1W Pasul 6: Faceți clic pe pictograma Satvar sau apăsați [Ctril+[S] pentru a salva tipul sau starea.
+mi — Pasul 7: Faceți clic pe caseta Închidere pentru a închide fereastra.
+Înregistrări de întreținere — Stare/Tip — Adăugați ([Inserați]) — Pictograma Salvare ([Ctrl]+[S])
+Stările și tipurile existente pot fi editate sau șterse după cum este necesar.
+Pentru mai multe informații, combinați editarea articolului și ștergerea articolului.

@@ -1,0 +1,89 @@
+Și Terporizarea S
+Copright 2006 United Parcel Service of America bc
+Toate datoriile rezervate
+Definirea opțiunilor generale de expediere
+Folosit cu: MobileCast
+Pagina Expediere - General a meniului Opțiuni vă permite să configurați mai multe opțiuni
+legate de MobileCast. Pe această pagină, puteți configura ora/
+distanță, integrare cu dispozitivul wireless și computerul de bord,
+motiv, procesare evenimente și multe altele.
+ee sa Noia m aaa aaçio sM aa la ac e
+și FC
+mee — DTn D c itanões ' P
+eem tee 77 de cenți,
+D și
+Pagina Bxpdir - General oferă o mare varietate de opțiuni de expediere
+Secțiunea Diverse vă permite să stabiliți mai multe opțiuni implicite utilizate cu MobileCast.
+Pasul 1: În secțiunea Diverse, verificați oricare dintre opțiunile implicite de mai jos:
+Generați automat ID-ul rutei — îi spune MobileCast că ar trebui
+Completați automat câmpul ID în timpul creării rutei. ID-ul rutei
+poate fi schimbat la adăugarea traseului, dacă se dorește.
+Generați automat numere DTR unice — poate fi activat când
+configurați o regiune pentru prima dată, astfel încât MobileCast să monitorizeze
+numere mDTR (numere de rută). Dacă este activat, câmpurile pentru introducere
+numerele de rută vor fi dezactivate (gri) în modulul Import.
+Cantitățile sunt un raport de dimensiunea 1 - activează/dezactivează dacă aliasuri
+dimensiunea va fi proporțională. Dacă sunt proporționale, MobileCast
+va calcula cantitățile de mărimea 2 și mărimea 3 în funcție de cantitate
+de dimensiunea 1.
+Alocarea șoferului necesară — vă permite să specificați dacă un șofer
+trebuie alocată unei rute înainte de a putea fi pornită. Aceasta este definiția
+model; Îl puteți schimba pentru un traseu individual în meniul Atribuire rută.
+Trasee.
+TT eeA LL
+€ Copyright 2006 Unizd Parcel Service of America, NC
+dă dreptulos resemado!
+Opțiuni de setare
+Alocarea echipamentului necesar — vă permite să specificați dacă a
+Echipamentul trebuie să fie atribuit unei rute înainte de a putea fi pornit. Acesta este
+definiție standard; îl puteți schimba la un traseu individual în meniu
+Atribuirea traseului.
+Permite tipuri de oprire suplimentare — vă permite să adăugați un interval,
+așteptare, peste noapte sau depozit intermediar al traseului către o rută.
+Calculați timpii de service — marcați astfel încât timpul de service
+opririle de serviciu sunt recalculate automat cu fiecare modificare
+de cantitate. De exemplu, dacă într-o comandă sunt incluse articole suplimentare,
+Ora opririi serviciului va fi actualizată.
+Calculați distanța în funcție de jurisdicție — marcați astfel încât distanța parcursă
+pe traseu în fiecare stat/provincie/jurisdicție se calculează automat
+când traseul este finalizat. Distanțele sunt calculate prin măsurarea
+distanța în linie dreaptă dintre semnalele GPS. Dacă această opțiune este
+selectate, rapoartele pot fi generate din modulul Analyst în
+în raport cu distanţele parcurse.
+Oprire minute critice — introduceți numărul de minute de oprire
+trebuie să întârzie pentru a fi considerat critic.
+Secțiunea Calculator timp/distanță vă permite să selectați ce calculator va fi utilizat
+pentru a calcula, pe tot parcursul MobileCast, timpii și distanțele parcurse. Punct la punct
+folosește modele pentru a calcula timpul de călătorie, în timp ce PC*Miller și RouteNet
+Urmați străzile reale pentru a calcula timpul de călătorie. După selectarea unui calculator
+pentru o regiune, aceasta nu trebuie schimbată.
+Pasul 2: în secțiunea Calculator timp/distanță, selectați un calculator. Aceasta
+calculatorul va fi folosit pentru a calcula timpul de călătorie pe tot parcursul
+MobileCast.
+Secțiunea Procesare evenimente vă permite să stabiliți mai multe opțiuni implicite utilizate
+cu MobileCast.
+Pasul 3: În secțiunea Procesare evenimente, verificați oricare dintre opțiunile implicite
+mai jos:
+Relocați automat echipamentul — vă permite să specificați dacă a
+echipamentul ar trebui mutat automat în locația necesară atunci când este
+atribuit unei rute. De exemplu, dacă echipamentul este în Warehouse 2, dar
+ruta începe de la Depoul 1, echipamentul va fi automat
+a trecut la Depoul 1 și a fost atribuit rutei. Dacă este utilizată, această caracteristică ignoră
+[Traducere eșuată pentru acest fragment]
+o recurso incorporado de monitoramento de equipamento do MobileCast, e
+pode ocultar um monitoramento de equipamentos fraco dentro da empresa.
+Enviar notificações de API — encaminha mensagens recebidas do dispositivo
+móvel ao netTracker ou a outro aplicativo externo.
+Etapa 4: Clique na seta Fuso horário da notificação e selecione o fuso horário utilizado
+para a notificação de falha de serviço.
+E o A o Trarporizton SE
+€ Copright 2006 Unied Parcel Service of dmerica bc
+“Todos os dveios resenvados
+Definição das opções
+A seção Códigos de motivo permite especificar qualquer requisito de código de motivo
+quando uma parada é concluída. Por exemplo, se você selecionar Coleta, o motorista
+deverá inserir um código de motivo caso a quantidade real de coleta seja diferente da
+quantidade planejada.
+Etapa 5: Na seção Códigos de motivo, marque as situações nas quais um código de
+motivo será requerido para qualquer discrepância.
+Entrega — requer um código de motivo para qualquer variação de quantidade

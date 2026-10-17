@@ -1,0 +1,79 @@
+ssaeemii ul tss =
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+va folosi pe această pagină. Nivelul de detaliu trebuie definit atunci când o regiune este
+configurat inițial și nu trebuie schimbat.
+— m—— . .R. >
+Iar T aaa te aam A RE MR eca T aa atihoo Rm aótica
+Pagina Expediere - Nivel de detaliu este utilizată dacă monitorizați
+Pasul 1: în secțiunea Suport pentru nivel de detaliu, faceți clic pe cercul corespunzător
+Selectați un nivel de detaliu. Nivelul de detaliu selectat aici determină
+|nivelul care va fi monitorizat pe tot parcursul MobileCast.
+Pasul 2: Dacă utilizați containere, bifați Utilizați containere. Dacă această opțiune este
+bifat, veți putea asocia containere cu comenzi în modulul Analyst.
+. Notă: Dacă monitorizați rute la nivel de oprire, nu puteți monitoriza
+s, iar opțiunile Utilizați containere vor fi dezactivate.
+Pasul 3: În secțiunea Opțiuni container, faceți clic pe casetele corespunzătoare pentru a le selecta
+Opțiunile pentru containere.
+Utilizați ID-ul containerului ca cod de bare - bifați pentru a utiliza ID-ul containerului
+container ca număr de cod de bare.
+Necesită verificarea containerelor înainte de plecarea rutei - verificați pentru
+cere șoferilor să urmărească și să verifice containerele înainte de expediere
+călătoria poate fi începută pe dispozitivul wireless.
+Solicitați verificări ale containerelor la fiecare oprire - verificați pentru a solicita containerele respective
+șoferii urmăresc și verifică containerele la fiecare oprire înainte de a putea
+de la oprirea dispozitivului wireless.
+Necesită verificarea containerului înainte de finalizarea rutei - verificați la
+cere șoferilor să urmărească și să verifice containerele înainte de plecare
+poate fi completat pe dispozitivul wireless.
+FT A L L L Foadnet Transporiation Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+Descărcare în grup — verificați dacă șoferul poate livra
+mai multe opriri în același timp. Acest lucru se poate întâmpla dacă opririle sunt
+situat într-o clădire de birouri sau locație similară în care
+şoferul parcează mai multe opriri. Dacă această opțiune este selectată,
+Șoferul va putea alege opririle care vor fi livrate împreună. Introduceți
+distanța maximă dintre opriri în câmpul de grupare Toleranță
+candidaţilor.
+Gruparea de toleranță a candidaților — Dacă opțiunea de descărcare a candidatului
+Brupo este bifat, introduceți distanța maximă dintre opriri, în mile sau
+kilometri, astfel încât acestea să poată fi livrate în același timp. De exemplu, dacă
+intrați pe 0,10 și Stop 3 este la 0,10 mile distanță de Stop 4,
+atunci șoferul va fi anunțat că aceste opriri pot fi
+descărcat și livrat simultan.
+Pasul 4: Dacă urmăriți orice cantitate (container, articol de comandă,
+etc), bifați Verificare prin excepție în zona Opțiuni de cantitate. Dacă aceasta
+opțiunea este selectată și șoferul nu urmărește cantitățile de livrare,
+0 câmpurile efective vor fi completate cu valorile planificate. Dacă această opțiune
+nu este selectat, șoferul va trebui să urmărească toate cantitățile
+livrat.
+Pasul 5: Faceți clic pe butonul [OK] pentru a salva informațiile sau continuați cu o altă filă.
+Configurarea excepțiilor rutei
+Folosit cu: MobileCast
+Pagina Expediere - Excepție rută a meniului Opțiuni vă permite să stabiliți care sunt excepțiile rutei
+rutele pe care doriți să le monitorizați în MobileCast, precum și să setați parametrii care
+madeaperações o
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Opțiuni de setare
+face exceptii. Când o rută depășește parametrii definiți aici, o excepție
+va fi adăugat la traseu, permițându-vă să vedeți când și unde traseul și-a depășit limitele.
+T—M G
+aA ENE EA ETA tA ES |
+oc a eec RDA aa
+PE și i
+deEAERA și c (S
+Și dmmna 1Ex Á
+P e eommtmmta TE mm
+l la EEn m
+san si TE 5 ee
+5m
+Utilizați pagina Dispatch - Route Exceptions pentru a configura excepțiile
+folosit cu MobileCast.
+Pasul 1: Pentru a defini parametrii de activare a excepției rutei pentru rute predefinite
+Planificat, faceți clic pe butonul [Livrare].
+Pentru a seta parametrii de activare a excepției rutei pentru rutele fără rută
+planificat, faceți clic pe butonul [Pe drum].

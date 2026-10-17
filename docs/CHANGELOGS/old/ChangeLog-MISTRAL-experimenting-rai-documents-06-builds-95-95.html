@@ -1,0 +1,395 @@
+﻿<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL · Sprint 8 (deschis) · Changelog #6 · builds 95–95 (închis)</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog #6 · Sprint 8 <em style="opacity:0.85;font-weight:500">(deschis)</em> · builds 95–95 <em style="opacity:0.85;font-weight:500">(închis)</em></h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong> · <strong>Sprint 8 (deschis)</strong><br />
+      Continuare după Changelog #5 (94–94) · deschis <strong>6 octombrie 2026</strong> · închis <strong>8 octombrie 2026</strong> pe <strong>v1.22.9 · build 95</strong>. Sprintul rămâne deschis — următorul append e Changelog #7 (builds 96+).
+    </div>
+    <div class="badge-row">
+      <span class="badge">Changelog #6 · închis</span>
+      <span class="badge">Sprint 8 (deschis)</span>
+      <span class="badge">Builds 95–95</span>
+      <span class="badge">MISTRAL</span>
+      <span class="badge">v1.22.9 · build 95</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    <strong>Sprint 8 (deschis)</strong> · Fișier: <code>ChangeLog-MISTRAL-experimenting-rai-documents-06-builds-95-95.html</code>. Perioada anterioară: <code>ChangeLog-MISTRAL-experimenting-rai-documents-05-builds-94-94</code>.
+  </p>
+
+  <div class="note">
+    <strong>Închis · Changelog #6:</strong> builds 95–95 (v1.22.9).
+    <strong>Sprint 8 (deschis)</strong> — nu se mai append aici; următorul e Changelog #7 (builds 96+).
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> #58–#82 — OCR (an, plăcuță, rută, dată, găleți≠paleți) + taxă.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>95</td><td>v1.22.9</td><td>#58–#82 OCR avize (TPO → găleți / HITL dată)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Bugfix</h3>
+  <div class="toc">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Problemă</th><th>Build</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>58</strong></td>
+          <td>Număr TPO preia „0000/2000” din subsol (Nr. Reg. Com.) când TPO-ul e greu de citit</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>59</strong></td>
+          <td>Două avize în aceeași poză → un singur rând cu valori amestecate, fără alarmă puternică</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>60</strong></td>
+          <td>Plăcuța străină a tractorului ignorată; rămâne doar remorca RO, fără avertisment</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>61</strong></td>
+          <td>Aviz cu două adrese de livrare → rută doar expeditor; taxă zonă „nu e oraș taxat” deși livrarea 2 e București</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>62</strong></td>
+          <td>Aviz cu saci + găleți → Tip marfă/Cantitate iau doar sacii; gălețile dispar din raport</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>63</strong></td>
+          <td>Marfă în m³ (BCA) citită ca paleți din linia „Palet Euro returnabil”</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>64</strong></td>
+          <td>Retur doar paleți (`15.00 pce`) → Tip paleți corect, Cantitate goală</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>65</strong></td>
+          <td>Valori tăiate cu pixul + corectură de mână preluate fără avertisment</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>66</strong></td>
+          <td>CMR completat de mână pe /avize → rută/tip/cantitate/greutate/nr. document greșite; 12 kg din căsuța 12 ca greutate brută</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>67</strong></td>
+          <td>„Legendă acțiuni” expandată by default la primul access (ocupă ~⅓ din viewport înainte de listă)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>68</strong></td>
+          <td>Carnet numerotat: dacă șoferul sare / mapează greșit indicii, câmpurile se umplu greșit (valoare←plăcuță, rută←tip, greutate←PSL…)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>69</strong></td>
+          <td>Carnet ghid 1–14: cantitatea din slotul 7 (`18.5 m3`) rămâne goală — eșuează pe unitatea cu cifră</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>70</strong></td>
+          <td>Rută transport include headerul tabelului Produs/Cantitate + denumirea produsului (ex. FinoGrande)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>71</strong></td>
+          <td>Rută cu origine + →/->/-: taxa de zonă pierde adresa de livrare („strada nu e în index”); cu / funcționează</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>72</strong></td>
+          <td>Completare manuală șofer: Data efectuare cursă afișată mm/dd/yyyy (OS en-US) în loc de dd/mm ca pe avize</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>73</strong></td>
+          <td>Pată pe Greutate brută → valoare inventată (ex. 1704.82) sub neta, fără avertisment</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>74</strong></td>
+          <td>Pată cafea translucidă pe Greutate brută (6994.45 citibil) → câmp gol; neta OK; mesaj taxă zonă</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>75</strong></td>
+          <td>Număr document marfă (TRO-0010601) gol pe aviz luminos cu reflexie; fără etichetă de verificare</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>76</strong></td>
+          <td>Tip marfă + Cantitate goale pe foto de noapte (saci 350 vizibili); fără etichetă de verificare</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>77</strong></td>
+          <td>Data efectuare cursă citită cu anul 2020 în loc de 2026 (ambele avize din 02.10.2026)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>78</strong></td>
+          <td>Număr auto B-23-NKL în loc de B-29-NKL (noapte); remorca B-81-NKL OK</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>79</strong></td>
+          <td>Rută: MIMARFA / Bolintin-Dina în loc de MMARFA / Bolintin-Deal (foto noapte)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>80</strong></td>
+          <td>Rută doar cu adresa de livrare, fără expeditor (Str. Industriei… / Rebreanu)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>81</strong></td>
+          <td>Data efectuare cursă goală (colț îndoit) fără etichetă de verificare în Editează</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>82</strong></td>
+          <td>Tip marfă „paleți” în loc de „găleți” (Numărul de găleți 192 + Palet Euro / Paleți la locul livrării)</td>
+          <td>95 · v1.22.9</td>
+          <td>fixat</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 95 · v1.22.9 · 8 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>#58 — Număr TPO acceptă doar forma <code>TPO-…</code>; fallback-ul <code>NNNN/YYYY</code> (care prindea Registrul Comerțului) e scos. Dacă TPO-ul nu se citește, câmpul rămâne gol + review.</li>
+      <li>#59 — dacă OCR-ul vede ≥2 PSL/TRO sau ≥2 TPO pe aceeași poză, rândul e <strong>Verificare obligatorie</strong> cu mesaj „Mai multe avize în aceeași poză” (separarea automată a JPEG-ului nu e încă disponibilă).</li>
+      <li>#60 — plăcuțe UE cu 4 cifre (ex. BG <code>CA 4471 KX</code>) sunt recunoscute; tractorul rămâne primul: <code>CA-4471-KX / B-63-RTX</code>.</li>
+      <li>#61 — „Adrese de livrare” + Livrare 1 / Livrare 2 → rută <code>origine / stop1 / stop2</code>; taxa de zonă preferă oprirea din București (nu ultima bară oarbă și nu doar expeditorul).</li>
+      <li>#62 — pe avize mixte, Tip marfă <code>saci/galeti</code> și Cantitate = suma liniilor sac + buc (găleți), fără paleți euro (<code>pce</code>).</li>
+      <li>#63 — BCA / volum: Tip <code>m³</code>, Cantitate zecimală (ex. 28,80); paleții euro <code>pce</code> nu mai fură tipul. Câmpul Cantitate acceptă deja zecimale (<code>step=0.001</code>).</li>
+      <li>#64 — retur doar paleți: Cantitate din <code>N pce</code> când nu există altă marfă pe foaie (în rest <code>pce</code> rămâne exclus).</li>
+      <li>#65 — „corectat la încărcare” / corectură de mână: verificare obligatorie pe Cantitate și Greutate brută; dacă OCR vede și cifra de mână, o preferă (încredere joasă).</li>
+      <li>#66 — profil <code>aviz_cmr</code> pentru scrisori de trăsură încărcate pe /avize: căsuța 11 = greutate brută, 7 = cantitate, serial CMR = nr. document marfă; greutate &lt; 100 kg respinsă (și HITL <code>weight_implausible_low</code>).</li>
+      <li>#67 — „Legendă acțiuni” / șabloane: collapsed by default când lipsește preferința din <code>localStorage</code>; Ascunde/Arată salvate rămân respectate.</li>
+      <li>#68 — carnet scurt / indici săriți: mapare pe conținut (plăcuță, rută, tip, m³, greutate, PSL, curse), nu pe indexul din ghidul 1–14; ghidul corect rămâne preferat când se potrivește.</li>
+      <li>#69 — slot 7 <code>18.5 m3</code> / <code>m³</code> / <code>mc</code> → Cantitate 18.5, unitate m³ (parserul carnet nu mai taie unitatea la litera <code>m</code>).</li>
+      <li>#70 — Rută se oprește înainte de tabelul Produs/Cantitate/UM; fără SKU pe câmpul de rută.</li>
+      <li>#71 — taxa de zonă folosește piciorul de după <code>→</code> / <code>-&gt;</code> / <code> - </code> / <code> / </code> la fel; separatorul nu mai schimbă rezultatul.</li>
+      <li>#72 — „Data efectuare cursă” pe aviz manual șofer: <code>RoDateField</code> (ZZ.LL.AAAA), ca pe Editează aviz — nu <code>input type=date</code> (locale OS).</li>
+      <li>#73 — brută OCR sub netă: încearcă reparare ×10 (încredere joasă → verificare); altfel gol + HITL <code>gross_below_net</code>.</li>
+      <li>#74 — pată cafea pe greutate brută: normalizează cifre lipite/spațiate (<code>6.99445</code>, <code>6 994 45</code>), repară cifră lipsă față de netă (ex. 699.45→6994.5), sau HITL <code>gross_missing_near_net</code> dacă eticheta există dar cifra lipsește.</li>
+      <li>#75 — glare pe „Aviz de expediție” / „Comanda de transfer”: TRO citit ca TPO (cifre ≠ TPO-ul din rezumat) → <code>TRO-…</code>; IRO/TRQ reparate; dacă eticheta există dar numărul lipsește → HITL <code>doc_no_missing</code>.</li>
+      <li>#76 — tip/cantitate pe foto de noapte: perechi <code>210.00</code> + <code>sac</code> pe linii consecutive; fallback net÷40 kg → 350 saci (încredere joasă); HITL <code>goods_missing</code> dacă tabelul există dar ambele câmpuri rămân goale.</li>
+      <li>#77 — an OCR 2020 din 2026 (cifra 6→0): reparare 0↔6 în fereastra de ±~1 an (încredere joasă); <code>date_too_old</code> e eroare (nu doar warning).</li>
+      <li>#78 — tractor OCR cu o cifră greșită: dacă pe Autoturisme există exact un vehicul cu același județ+serie și o singură cifră diferită, se folosește plăcuța din flotă (încredere joasă); nu se mai creează fantomă.</li>
+      <li>#79 — rută noapte: <code>MIMARFA</code>→<code>MMARFA</code>, <code>Bolintin-Dina</code>→<code>Bolintin-Deal</code>, <code>Industriului</code>→<code>Industriei</code> (fără a atinge <code>MBMARFA</code>).</li>
+      <li>#80 — rută PSL: mereu Expeditor + livrare (<code>Str. Industriei… / Str. Liviu Rebreanu…</code>); profil PSL/TRO preferat; fallback dacă lipsește cuvântul „Expeditor” din OCR.</li>
+      <li>#81 — dată cursă goală (colț îndoit): HITL <code>date_missing</code> cere completare manuală; etichetă sub câmp + bandă „Verificare necesară” în Editează aviz; fără „Scor OCR 0%” pe câmp gol.</li>
+      <li>#82 — tip găleți când footerul OCR zice paleți dar liniile sunt <code>buc</code> (sumă = total) + euro <code>pce</code>; returul doar paleți rămâne paleți.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#58</strong> — pe foto cu ștampilă peste „Comandă de transport” sau poză rotită, parserul lua <code>0000/2000</code> din <code>Nr. Reg. Com.: J00/0000/2000</code>. Cauză: pattern gol <code>\d{4,}/\d{2,4}</code> + păstrarea valorii brute când lipsea prefixul TPO. Repair golește rândurile vechi cu același gunoi.</li>
+      <li><strong>#59</strong> — șoferii fotografiază două hârtii odată; extracția amesteca plăcuțe/cantități. Nu tăiem încă JPEG-ul în două rânduri; detectăm cheile distincte pe text și forțăm HITL ca să nu ajungă amestecul curat în anexă.</li>
+      <li><strong>#60</strong> — tiparul accepta doar RO (2–3 cifre); tractorul bulgar cădea, remorca <code>B-63-RTX</code> devenea primă → MTMA/zonă pe remorcă. Acum se păstrează ambele, tractorul primul.</li>
+      <li><strong>#61</strong> — PSL cu două puncte (Ploiești + București): OCR citea doar „Adresa de livrare” (singular), deci destinațiile lipseau din rută și taxa citea Bolintin → „nu e oraș taxat”. Acum se taie pe Livrare N, se unesc toate opririle, iar <code>deliveryLegFromRuta</code> / <code>delivery_address</code> preferă București.</li>
+      <li><strong>#62</strong> — suma de ambalaje lua doar unitatea cu rank maxim (saci); liniile <code>buc</code> (găleți) erau ignorate, deși pe foaie erau 401 sac + 197 găleți. Acum se adună ambele → 598, tip <code>saci/galeti</code>.</li>
+      <li><strong>#63</strong> — <code>28.80 m3</code> + rândul următor <code>Palet…</code>: regex-ul cu <code>\s</code> lipea cifra din <code>m3</code> de <code>Palet</code> → „3 paleți”. Plus <code>m³</code> nu era unitate de marfă. Acum gap doar pe același rând; volum <code>m³</code> bate paleții returnabili.</li>
+      <li><strong>#64</strong> — <code>pce</code> e exclus din numărătoare (corect lângă sac/m³), dar pe retur „Retur paleți goi” cu o singură linie rămânea Cantitate goală. Dacă pagina n-are altă marfă, <code>15.00 pce</code> → Cantitate 15, Tip paleți.</li>
+      <li><strong>#65</strong> — tiparul tăiat (432 sac / 10 993 kg) era luat curat; nota „corectat la încărcare” e semnalul. Rutare HITL + mesaj pe Cantitate/Greutate; dacă OCR citește și 400 / 10 193,83, le folosim cu scor mic (tot verificare).</li>
+      <li><strong>#66</strong> — CMR de mână pe /avize era tratat ca aviz/carnet: căsuța 12 (volum) → 12 kg, Fabricii/paleți/18, nr. document gol, taxă zonă pe fragment greșit. Acum <code>looksLikeCmrDocument</code> + <code>aviz_cmr</code>: rută încărcare/descărcare, tip saci, cantitate din căsuța 7 (nu 720+8), greutate 14 844 din 11, serial <code>0247315</code>; net gol. Sub 100 kg nu mai trece ca greutate de încărcare.</li>
+      <li><strong>#67</strong> — <code>AvizLegend</code> folosea <code>readCollapsed(id, false)</code>, deci fără cheie panoul pornea deschis. Fallback-ul e acum collapsed; se deschide doar pe „Arată”.</li>
+      <li><strong>#68</strong> — fără „3. Valoare TPO”, OCR punea plăcuța pe Valoare, tipul pe Rută, PSL-ul pe Greutate. Acum <code>classifyCarnetLine</code> + assignment pe tipul valorii; Valoare TPO rămâne goală dacă lipsește de pe foaie.</li>
+      <li><strong>#69</strong> — pe ghidul corect, <code>7. 18.5 m3</code> rămânea fără Cantitate: regex-ul de pe linia numerotată excludea cifrele din unitate, deci oprea la <code>m</code>. Acum trece prin <code>extractQuantity</code> (ca #63) + pattern explicit <code>m3</code>/<code>m³</code>/<code>mc</code>.</li>
+      <li><strong>#70</strong> — pe PDF-uri cu puține linii OCR, „Adresa de livrare / Ruta” e imediat deasupra tabelului de marfă; captura continua în <code>Produs Cantitate FinoGrande nr. 20</code>. Stop-uri pe headerul de tabel + clip pe stringul de rută.</li>
+      <li><strong>#71</strong> — <code>deliveryLegFromRuta</code> tăia doar pe <code> / </code>; cu <code>→</code>/<code>-&gt;</code>/<code> - </code> tot stringul (origine+destinație) devenea „strada” → index fail. Acum aceleași separatoare; <code>Bolintin-Deal</code> (fără spații) rămâne un singur picior.</li>
+      <li><strong>#72</strong> — pe telefon cu OS en-US, <code>type=&quot;date&quot;</code> arăta mm/dd/yyyy pe Completare aviz manual, deși biroul și actele sunt dd/mm. Același <code>RoDateField</code> ca pe /avize.</li>
+      <li><strong>#73</strong> — pată pe sutele din <code>17.004,82</code> → OCR <code>1.704,82</code> scris curat ca brută, deși neta e 16.700. Brută &lt; netă → reparare ×10 cu scor mic sau gol + verificare (taxa de zonă nu mai pleacă pe 1704).</li>
+      <li><strong>#74</strong> — IMG-20261003-WA0047 (TPO-0033539): pată translucidă pe <code>6,994.45</code>; neta 6 640,15 OK. OCR putea lipi/spația/tăia cifra → câmp gol + mesaj taxă. Acum recuperare din formele tipice de OCR + verificare dacă tot lipsește.</li>
+      <li><strong>#75</strong> — IMG-20261001-WA0043 (TPO-0033508 / TRO-0010601): reflexie pe rândul de aviz; OCR lăsa nr. document gol (TRO→TPO era ignorat ca TPO de comandă). Acum recuperare lângă etichete + verificare obligatorie dacă tot lipsește.</li>
+      <li><strong>#76</strong> — IMG-20261002-WA0044 (PSL-0062309): lumină galbenă; greutăți OK, tip+cantitate goale (210+140 sac). OCR desparte cifra de unitate pe linii; fără HITL pe câmpuri non-critice. Acum perechi cross-line + net/bag + <code>goods_missing</code>.</li>
+      <li><strong>#77</strong> — IMG-20261002-WA0045/0046: antet <code>02.10.2026</code> citit <code>02.10.2020</code> (lumină rece / 6≈0). Data greșită ajungea în rapoarte. Acum reparare pe fereastra curentă + verificare dacă tot e prea veche.</li>
+      <li><strong>#78</strong> — IMG-20261002-WA0045 (TPO-0033523): noapte, <code>B 29 NKL</code> → OCR <code>B-23-NKL</code>; remorca OK. Potrivire pe Autoturisme (serie NKL, o cifră) → <code>B-29-NKL / B-81-NKL</code>.</li>
+      <li><strong>#79</strong> — același aviz: depozit <code>MMARFA</code> și localitate <code>Bolintin-Deal</code> citite greșit din grain. Vocabular OCR pe normalize; <code>MBMARFA</code> (site livrare) rămâne.</li>
+      <li><strong>#80</strong> — IMG-20261002-WA0046 (PSL-0062317): fără „Baumit” în OCR, profilul generic ignora parse-ul Expeditor→livrare. Acum același format ca restul avizelor.</li>
+      <li><strong>#81</strong> — IMG-20261005-WA0051 (PSL-0062341): colț îndoit peste data avizului → câmp gol corect, dar Editează nu arăta findings. Acum mesaj de completare manuală + etichete în formular; listă/HITL pe <code>date_missing</code>.</li>
+      <li><strong>#82</strong> — IMG-20261006-WA0056 (TPO-0033610): <code>Numărul de găleți 192</code> + Palet Euro / „Paleți la locul livrării”; OCR pe footer → paleți, cantitate 192 OK. Acum tip/unitate găleți când <code>buc</code> bate totalul.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    Changelog #6 · închis 8 octombrie 2026 · builds 95–95 · v1.22.9 · build 95 ·
+    Sprint 8 (deschis) · branch MISTRAL-experimenting-rai-documents · docs/ local only
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+(Cum să lucrezi cu modele pentru orele de vârf
+Notă: MobileCast nu utilizează informații despre orele de vârf atunci când calculează orele autobuzului.
+Crearea modelului pentru ora de vârf
+Primul pas pentru configurarea informațiilor despre orele de vârf este crearea șablonului pentru
+oră de vârf. Pentru fiecare mod oră de vârf, puteți defini până la trei perioade
+timpi distincti, fiecare cu variații separate de viteză și alte atribute. De către
+De exemplu, puteți defini o oră de vârf dimineață și o oră de vârf de seară, în care
+vitezele sunt reduse și, de asemenea, o perioadă la miezul nopții în care vitezele
+creste.
+Șabloanele pentru orele de vârf pot fi create numai în modulul Întreținere,
+deși puteți edita un șablon existent în Editorul de planificare sau
+scripting.
+. Notă: Dacă nu vi s-a acordat permisiunea de a edita șabloane de oră de vârf în modul
+Administrare, nu veți putea adăuga un model pentru ora de vârf.
+M Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+man — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Este afișată harta.
+[2]] - Pasul 3: Faceți clic pe pictograma Map Properties și selectați Properties din meniu. O
+Apare meniul Proprietăți hartă.
+Pasul 4: Faceți clic pe pagina Oră de vârf. Pentru a adăuga un nou orar
+oră de vârf, faceți clic pe săgeata Șablon pentru ora de vârf curentă. La fereastra Modele
+pentru ora de vârf este afișată.
+EG| Pasul 5: Faceți clic pe pictograma Adăugați. Fereastra Adăugați șablon pentru ora de vârf este
+— afișat.
+EX
+M s perioadele definite nu
+-= — poate fi schimbat în
+zone diferite şi
+căi TE. Cu toate acestea, cel
+— sm 0 eeimamem | ) variaţii de viteză
+și „pot fi diferiți.
+R& —— oshos MTA
+Este —— p
+MT A ,, ,, ,,;,; F Roadhet Tranporation Suite
+„Copsright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+Pasul 6: Introduceți un nume și o descriere pentru șablonul oră de vârf. Trebuie
+introduceți un nume.
+Pasul 7: bifați caseta Activare pentru perioada 1. Introduceți un nume pentru perioada, cum ar fi
+AM sau Dimineața și o oră de încheiere pentru perioada orelor de vârf.
+Pasul 8: selectați dacă viteza trebuie mărită (mai rapidă) sau redusă (mai mult
+încet). Noua viteză va fi utilizată când timpul de călătorie este
+calculat.
+Dacă creșteți viteza cu 25%, 60 MPH va crește la 75 MPH.
+Dacă reduceți viteza cu 25%, 60 MPH va scădea la 45 MPH.
+j) Important: Orice variație de viteză introdusă aici va fi folosită în totalitate
+Nu sunteți inclus într-o zonă sau cale de oră de vârf.
+Pasul 9: Continuați cu perioadele rămase după cum este necesar. La adăugarea unui
+model pentru ora de vârf, amintiți-vă:
+* — Ora de încheiere a fiecărei perioade trebuie să apară după ora de începere.
+* — Perioadele nu pot fi suprapuse. Cu toate acestea, poate începe o nouă perioadă
+la sfârșitul perioadei precedente.
+1G Pasul 10: Faceți clic pe pictograma Satvar ([Ctr]-[S]) pentru a testa modelul orelor de vârf.
+m Pasul 11: Repetați pașii de la 6 la 10 pentru a adăuga mai multe șabloane de oră de vârf.
+Când toate șabloanele necesare pentru orele de vârf sunt
+adăugat, faceți clic pe caseta Închidere pentru a închide fereastra Adăugare șablon
+pentru orele de vârf.
+Pictogramă Întreținere — Fișier — Hartă — pictogramă Pictogramă Proprietăți hărți
+Pictograma Adăugare > Salvare
+Șabloanele de oră de vârf existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Pentru a crea un model nou cu aceleași zone și căi, puteți clona modelul
+existente. Consultați Clonarea articolelor pentru mai multe informații.
+După ce adăugați șabloanele pentru orele de vârf, puteți crea zone pentru orele de vârf
+și căi de pe hartă. Pentru a lucra cu modelul orelor de vârf de pe hartă, trebuie
+Trebuie să-l selectați ca oră de vârf curentă pe hartă. Pentru a selecta o zonă de
+oră de vârf, faceți clic pe zona din fereastra Șabloane oră de vârf, apoi
+faceți clic pe pictograma Proces.
+Selectarea afișării orelor de vârf pe hartă
+Zonele și căile de oră de vârf sunt desenate pe hartă în modul Oră de vârf.
+Tush. Pentru a intra în modul Oră de vârf, trebuie să selectați modelul oră de vârf.
+de grabă cu ce! doresc să lucreze. Orice zonă și cale care există pentru model
+va apărea pe hartă în timp ce vă aflați în modul oră de vârf. Este posibil
+specificați modul în care sunt afișate căile și zonele pe hartă.
+Bmiadaperações AAA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrezi cu modele pentru orele de vârf
+Un șablon pentru ora de vârf actuală poate fi selectat numai în modul
+Întreținere, dar puteți modifica opțiunile de afișare în modulul Întreținere din
+Editor de rutare sau Editor de planificare. Acești pași presupun că ești
+lucrează la modulul de întreținere.
+N Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+MWsansoa — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Este afișată harta.
+(| | Pasul 3: Faceți clic pe pictograma Proprietăți hărți și selectați Proprietăți din meniu.
+Apare meniul Proprietăți hartă.
+Pasul 4: Faceți clic pe fila Oră de vârf. Apare pagina Oră de vârf.
+EE
+FPNE
+mu Rsh | NE | Şapte | 4 căi de aur
+Cmantaa la ora de varf va fi
+Bm — dl EA
+Revtatos sunteți în modul
+E și ora de vârf Deci
+'sunt afișate în timpul
+om tot timpul, selectează
+me s Afișează zone și căi ale
+oră de vârf.
+PNT
+Pasul 5: Faceți clic pe săgeata Model pentru ora de vârf curentă. Fereastra Șabloane pentru
+este afișată ora de vârf.
+Pasul 6: faceți dublu clic pe șablonul oră de vârf pe care doriți să îl afișați pe hartă,
+este "
+u faceți clic pe model și apoi pe pictograma Process. Daca nu vrei
+Pentru a utiliza un șablon de oră de vârf, selectați caseta Nici unul.

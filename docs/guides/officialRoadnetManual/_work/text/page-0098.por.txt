@@ -1,0 +1,100 @@
+informações necessárias para visualizar as rotas criadas na sessão, como clientes,
+EE AA A A Roadrer Tranporiafon SE
+( Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados.
+Manutenção do banco de dados
+motoristas, etc. Esta opção está disponível somente se você estiver utilizando Microsoft
+Aceess.
+Se você deseja excluir informações do banco de dados, consulte Exclusão de informações
+históricas do banco de dados ou Configuração da manutenção automática do banco de
+dados.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Ferramentas e selecione Manutenção do banco de dados; em
+seguida, selecione Arquivar sessão de roteirização. A janela Manutenção do
+banco de dados - Arquivar sessões de roteirização é exibida.
+Etapa 3: Na janela Manutenção do banco de dados - Arquivar sessões de roteirização,
+determine se deseja arquivar por data ou para uma sessão individual.
+Ajanela Manutenção do banco de
+dados - Arquivar permite
+arquivar dados históricos por
+intervalo de datas ou de una
+fínica sessão de roteirização. O
+«arquivo nch todos os dados
+necessários para exibir as rotas
+do período arquivado.
+Arquivar por faixa de data armazena todos os dados necessários para
+visualizar a roteirização de todas as sessões ocorridas entre as datas de início e
+término.
+Arquivar por sessão armazena todos os dados necessários para visualizar a
+Toteirização de uma única sessão.
+Etapa 4: Clique em [OK] para iniciar o arquivamento. Uma janela Salvar como é
+exibida, para permitir que o arquivamento seja salvo em um arquivo. Você
+pode aceitar o nome e localização padrão do arquivo ou especifícar um novo
+mome e/ou localização.
+Para aceitar o nome e localização padrão do arquivo — no formato
+Roadnet ArchiveOnMonthDDYYYY (como
+“RoadnetArchiveOnJune121999”) no diretório onde o banco de dados do
+Roadnet está armazenado — clique no botão [Salvar].
+Para alterar o nome do arquivo, digite o novo nome do arquivo na caixa
+Nome do arquivo: . Em seguida, clique no botão [Salvar]
+Badeaperaçães A
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservados.
+Manutenção do banco de dados
+Para alterar a localização de armazenamento do arquivo, clique na seta na
+caixa Salvar em: e navegue até a nova localização. Em seguida, clique no botão
+[Saivar)
+Nota: Após a criação de um arquivo, é possível importar esse arquivo para outra sessão
+de roteirização, para agregar as sessões. Consulte Agregar a partir de arquivo ou
+AAgregar sessões de roteirização no módulo Manutenção para obter mais
+informações.
+Ferramentas — Manutenção do banco de dados > Arquivar sessão de roteirização —
+1[OKJ
+—[Satvar]
+Exclusão de informações do histórico do banco de dados
+Utilizado com: Roadnet, FleetLoader, MobileCast
+Nota: Você não poderá abrir este módulo se não recebeu permissão para controlar a
+exclusão de sessões de roteirização no módulo Administração.
+O banco de dados do Roadnet Transportation Suíte contém muitas informações e pode
+tomar-se muito grande, consumindo muito espaço em disco. Para ajudar a controlar seu
+tamanho, é possível excluir informações do histórico do banco de dados. Entretanto,
+certifique-se de que os dados não têm mais valor antes de excluí-los; uma vez excluídos,
+os dados não serão considerados ao executar relatórios ou manutenção de tempo de
+atendimento.
+A Manvtenção do banco de dados executa outra tarefa útil: ela compacta o banco de
+dados, para remover todos os registros marcados para exclusão. Ao excluir um item
+(cliente, motorista, equipamento, etc.) do Roadnet Transportation Suite, o registro é
+marcado para exclusão no banco de dados. Ao executar a Manutenção do banco de dados,
+0 programa pesquisa o banco de dados infeiro e remove todos os registros especificados.
+Se você deseja armazenar uma parte do diretório em um arquivo separado, como uma
+nica sessão, é possível arquivar essas informações. Se desejar que as informações antigas
+sejam excluídas do banco de dados regularmente, você pode configurar o Roadnet para
+excluir os dados automaticamente quando os pedidos são importados. Consulte
+Configuração da manutenção automática do banco de dados para obter mais informações,
+) Etapal: Clique no ícone Manutenção para abrir o respectivo móduto
+Nunss — Etapa2: Clique no menu Ferramentas e selecione Manutenção do banco de dados; em
+seguida, selecione Excluir rotas. A janela Manutenção do banco de dados -
+Excluir sessões de roteirização é exibida.
+Etapa 3: Na janela Manutenção do banco de dados - Excluir sessões de roteirização,
+determine se você deseja excluir os dados antes de um número especificado de
+dias, semanas ou meses, em um intervalo especificado de datas ou para uma
+Única sessão.
+ME FA R Roadrer Trasporiafion SE
+' Copyright 2006 United Parcel Service of America, lc
+Todos os direitos reservados.
+Manutenção do banco de dados
+Nota: As opções Excluir dados anteriores a e Excluir dados por faixa de data podem ser
+vsadas para limpar os dados de ambos o Roadnet e o MobileCast. A opção Excluir
+por sessão limpa os dados somente do Roadnet.
+Etapa 4: Determine que dados deseja excluir e se deseja compactar o banco de dados.
+A exclusão de dados pode
+qudar a evitar que o banco de
+dados fique muito grande, mas
+verifique se os dados não são
+mais necessários antes de
+exclui-los. Qualquer dado
+excluído não estará disponível
+para relatórios, manuaenção de
+tempo de atendimento ou outras
+Informações planejadas exclui dados de pedido, rota e parada de todas as
+sessões que ocorreram durante o período de tempo especificado,

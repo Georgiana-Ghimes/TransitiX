@@ -1,0 +1,83 @@
+Janela Definir restrições do equipamento é exibida.
+Etapa 1: Clique duas vezes no compartimento para especificar a restrições desse
+compartimento. A janela Manutenção das restrições de compartimento é
+exibida. A janela Manutenção das restrições de compartimento contém uma
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com equipamentos
+lista de Tipos de embalagem disponíveis e uma lista Tipos de embalagem
+preferenciais do compartimento.
+Para tornar um tipo de embalagem preferencial, clique no tipo e arraste-o
+para a lista Tipos de embalagem preferenciais. Arraste os tipos para a lista até
+que estejam na ordem apropriada.
+Os tipos de embalagem 06c — R BE
+02 são os tipos preferenciais — [X mm
+para esse compartimento e o — ) El =
+FleetLoader os carregará E e
+nesse compartimento antes EM ferea
+Pa s) s)
+. Nota: Os tipos de embalagem recebem a atribuição de preferência de acordo com 2 ordem
+na janela Tipos de embalagem preferenciais. O tipo de embalagem exibido no topo
+da lista será carregado primeiro. Para alterar a ordem dos tipos de embalagem.
+clique e arraste o tipo de embalagem que deseja mover e solte-o sobre o tipo de
+embalagem após o qual deseja posicioná-lo. Se desejar que o tipo de embalagem
+seja o primeiro da lista, solte-o no cabeçalho da coluna intitulada ID do tipo de
+embalagem.
+Para impedir o carregamento de um produto no compartimento, como por
+exemplo ao reservar um compartimento para coletas, clique na caixa Desativar
+compartimento.
+Para carregar somente SKUs com pequenas quantidades no compartimento,
+clique na caixa SKU com baixo volume.
+Etapa 2: Clique no botão [OK] quando as restrições do compartimento estiverem
+definidas.
+Etapa 3: Continue a definição das restrições de cada compartimento. Quanto todas as
+- restrições de compartimento estiverem definidas, clique no botão [OK] para
+fechar a janela Definir restrições de compartimento.
+Etapa 4: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar as informações
+sobre o equipamento.
+8 rrapa 5: Quando terminar de adicionar equipamentos, clique na caixa Fechar para
+fechar a janela Adicionar equipamento.
+EE AAAA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com equipamentos
+Equipamentos e o MobileCast
+Se você estiver utilizando o MobileCast para monitorar as rotas durante o dia, é necessário
+preencher informações adicionais sobre o equipamento, como disposítivos sem fio,
+telefones WAP ou computadores de bordo associados ao equipamento.
+Etapa 1: Se você estiver utilizando o MobileCast, clique na guia Expedir na janela
+Equipamento.
+Etapa 2: Se estiver utilizando um telefone ativado para WAP, insira a ID da unidade
+GPS. O MobileCast utiliza esta ID para associar o item de equipamento a uma
+rota específica.
+Etapa 3: Se um disposítivo sem fio for atribuído ao equipamento, selecione o provedor e
+aD.
+. Nota: Se você estiver utilizando versões mais novas do aplicativo móvel, nas quais o
+motorista faz logon no dispositivo, não é necessário atribuir um disposítivo sem fio
+20 equipamento.
+Etapa 4: Se o equipamento possui um computador de bordo, selecione 2 caixa
+Computador de bordo.
+Etapa 5: Insira o focal de início das rotas do equipamento, como o depósito. Clique na
+seta próxima 20 campo Tipo para selecionar um tipo e insira a ID ou pesquise o
+cliente. Para adiciona rum novo cliente, clique no botão [Novo]. Esse campo
+deve ser preenchido.
+Etapa 6: Para reposicionar o equipamento manualmente em um local de entrega, insira a
+data e hora de entrega nos campos Recebido.
+DTA A Roadhat Trarporiafion Suãte
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com alterações de equipamentos
+Como trabalhar com alterações de equipamentos
+Utilizado com: FleetLoader
+Os equipamentos normatmente são atribuídos à rota antes do veículo ser carregado, mas
+pode haver situações nas quais é necessário fazer uma alteração de última hora no
+equipamento atribuido. Se isso ocorrer, você pode criar uma atteração de equipamento
+para a rota desse veículo. A alteração de equipamento será usada em todas as ocorrências
+da rota no FleetLoader até ser excluida.
+'ª Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+www — Etapa 2: Clique no menu Cadastros, selecione Equipamento e Alterações de
+equipamento. A janela Alterações de equipamento é exibida, listando qualquer
+alteração existente.
+[N É Nota: Para ver uma lista atualizada de alterações de equipamentos, clique no ícone
+: “Atualizar; a janela será atualizada com as informações mais recentes do banco de
+dados.

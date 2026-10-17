@@ -1,0 +1,79 @@
+w — L[nser] Ajanela Adicionartipode containeréexibida |U
+— Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+O) do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+AAdicionar tipo de container é exibida com algumas informações já preenchidas:
+altere as informações necessárias no novo tipo de container.
+2 F
+— É possível crir
+á tipos de container
+—— para organizar o
+EE ——— S
+EE o a
+Em EEm E
+Etapa 4: Insira até 3 caracteres para a ID do tipo. Este campo deve ser preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+Etapa 6: Para associar uma cor 2o tipo de container, clique na seta Cor e clique em uma
+cor para selecioná-la.
+Etapa 7: Insira o custo, o peso e a capacidade do tipo de container.
+Etapa 8: Na seção Dimensões, insira o comprimento, a altura e a largura do tipo de
+container.
+TT ,, , ,,, ; , ,;a A Roadhet Tranporiation Sute
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com tipos de container
+Etapa 9: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar as informações.
+Etapa 10: Após 2 adição de todos os tipos de container, clique na caixa Fechar para
+fechar a janela Adicionar tipo de container.
+om antonção -> Cadastros — Expedir - Ties do conhliear sim Alitimar
+(Mnsert]) — ícone Salvar ([Ctrl]*[S])
+Os conjuntos de padrões de atendimento existentes podem ser editados ou excluídos,
+conforme necessário. Consulte Edição de itens e Exclusão de itens para obter mais
+informações
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com containers
+Como trabalhar com containers
+Utilizado com: MobileCast
+|O MobileCast oferece a capacidade de usar containers para monitorar os pedidos das
+rotas. Os containers podem ser qualquer item usado para embalar os pedidos, como
+transportadores, paletes, sacolas, etc. Para ajudá-lo a organizar os containers, utilize os
+tipos de container. Ou você pode simplesmente adicionar os containers sem usar tipos.
+Você pode monitorar os containcrs reutilizáveis desde a cntrega até a coleta, c também
+vtilizar o módulo Importação para importar containers descartáveis diariamente. Você
+pode adicionar containers individualmente ou importá-los; consuíte Importação de itens
+de manutenção para obter mais informações sobre como importar containers,
+ME Etpa 1: Clique no ícone Manvtenção para abrir o respectivo módulo
+À Etapa 2: Clique no menu Cadastros e selecione Expedir e Containers. A janela
+” Containers é exibida. A lista atual de containers não é exibida; para ver a lista
+atual de containers ou containers selecionados, utilize o recurso Pesquisar na
+parte inferior da janela.
+. Notas: O menu refletirá o alias de container inserido na página Aliases do menu Opções.
+Portanto, o menu poderá exibir algo diferente de “container”.
+Para ver uma lista atualizada de containers, clique no ícone Atualizar; a janela será
+” atualizada com todas as informações alteradas do banco de dados,
+Etapa 3: Na janela Containers, clique no ícone Adicionar ou pressione a tecla [Insert]. A
+o janela Adicionar container é exibida.
+“ Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+o) do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar container é exibida com algumas informações já preenchidas; altere as
+informações necessárias no novo container.
+Etapa 4: Insira até 32 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Clique na seta próxima o campo Tipo e clique no tipo de container correto. Se
+não desejar associar um tipo 2o contaíner, selecione Nenhum.
+E Fpn
+EE aisociar um container
+— e e ) comqualquer cliente.
+EE P 2
+M A
+Etapa 6: Clique na seta próxima 2o campo Tipo de cliente e selecione o tipo de cliente
+associado 2o container. Esse campo deve ser preenchido.
+Etapa 7: No campo ID do cliente, insira a D de onde o container está localizado. Se não
+souber a ID, clique no botão [Consultar] para pesquisar a localização correta.
+Este campo deve ser preenchido.
+ET AA E Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com containers
+Etapa 8: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar as informações.
+Etapa 9: Após a adição de todos os containers, clique na caixa Fechar para fechar a

@@ -1,0 +1,66 @@
+CLEAR CURRENT SESSION=TRUE
+TIME ZONE=S
+Nome do arquivo: batchImpStaticRoute.cfe
+REGION ID-DLOYD
+IMPORT TYPE=STATIC
+ROUTE ID=UPS001
+ROUTE SET ID=UPS078
+Guia de operações 287
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+* HETODAYE — para importar sempre as rotas de hoje, insira a data
+nesse formato, com todas as letras maiúsculas e sem espaços.
+* HENEXTDAY - para importar sempre as rotas do dia seguinte, insira
+1 data nesse formato, com todas as letras maiúsculas e sem espaços.
+Os números inteiros do fuso horário norte-americano aceitáveis são:
+* CostaLeste=8
+* Centro=10
+* Montanhas=14
+* Pacifico=15
+* Alaska=16
+Para que o importador use um conjunto de layouts global, em vez de um conjunto
+específico da região, LAYOUT SET 1S GLOBAL deve ser definido como TRUE no
+arquivo.
+Para que o importador utilize o último conjunto de layouts utilizado, a linha do conjunto
+de layouts deve conter “LAYOUT SET=*=DEFAULT”. Se você simplesmente digitar
+DEFAULT, ele usará o conjunto de layouts padrão.
+Depois que a configuração tiver sido concluída, utilize os parâmetros a seguir para
+executar o processo de importação em lote em uma linha de comando, utilizando o
+executável tsimpApp.exe. Todos os itens são necessários. Por exemplo, no prompt de
+comandos, você pode digitar:
+c>tsimpapp /b /c batchimpáriver.cfe
+/d — ) Opções de banco de dados. Insira as seguintes d admin/admin(ts v30
+informações: Transportation Suite nome de usuário
+senha(Qbanco de dados
+b — Configurao modo em lote.
+c — ) Procuraoarquivo de configuração deimportação em | /c batchimpáriver.cfz
+tote.
+M aa Tanporiaton Tu
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do processo de importação em lote
+Importante:Se as variáveis de ambiente da Etapa 1 tiverem sido configuradas
+corretamente para o seu nome de usuário e senha, você não precisará utilizar
+o parâmetro /d.
+Para obter mais informações sobre como importar, consulte Importação para o Roadnet
+Transportation Suite.
+madeaperaçães oA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Layouts de importação
+Layouts de importação
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Informações de cliente, extensão de cliente, pedido, manutenção e computador de bordo
+podem ser importadas de um host ou de outro computador para o Roadnet Transportation
+Suite. Para que o programa aceite essas informações e as coloque onde possam ser
+acessadas e utilizadas, você deve informá-lo onde encontrá-las nos arquivos de
+importação. Os layouts de importação são utilizados para comunicar essas informações
+a0 Roadnet Transportation Suíte. Você pode agrupar layouts de importação em conjuntos
+que podem ser personalizados conforme suas necessidades de importação.
+Ao preparar arquivos de importação, você deve seguir as diretrizes abaixo (os programas
+de computador de bordo geram esses arquivos em formatos próprios; o Roadnet
+Transportation Suíte está equipado para ler os arquivos da maioria dos sistemas de
+computador de bordo):
+* — Arquivo detexto ASCII
+* umregistro por linha
+AA o o N A o AN

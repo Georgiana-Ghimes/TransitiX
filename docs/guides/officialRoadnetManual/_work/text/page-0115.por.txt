@@ -1,0 +1,101 @@
+* sem delimitadores
+Uma descrição detalhada e o tamanho máximo dos campos possíveis dos arquivos de
+importação apropriados são mostrados nas tabelas encontradas no final desta seção.
+Consulte essas tabelas para obter mais informações.
+Criação de conjuntos de layouts de importação
+Informações de cliente, extensão de cliente, pedido, manutenção e computador de bordo
+podem ser importadas de um host ou de outro computador para o Roaánet Transportation
+Suite. Para que o programa aceite essas informações e as coloque onde possam ser
+acessadas e utilizadas, você deve informá-lo onde encontrá-las nos arquivos de
+importação. Os layouts de importação são utilizados para comunicar essas informações
+ao Roadnet Transportation Suíte. É possível agrupar layouts de importação para importar
+conjuntos de layouts que são personalizados para suas diferentes necessidades de
+importação. Os conjuntos de layouts de importação permitem agrupar layouts de
+importação. E, como é possível ter vários conjuntos, você pode criar conjuntos diferentes
+para várias situações de importação.
+Para que o layout de arquivo de importação possa ser criado, é preciso ter pelo menos um
+conjunto de layouts de importação criado.
+E Etapa 1: Clique no ícone Importação para abrir o módulo Importação, O nome do
+* conjunto de importação atual é exibido na barra de título.
+Etapa 2: Clique no menu Importar e selecione Configurar. A janela Editar conjunto de
+layouts é exibida e todos os layouts do conjunto atual aparecem na janela de
+listagem.
+ME AAA A A oc Transporiafon Sule
+' Copyright 2006 United Parcel Service of merica, Inc.
+Todos os direitos reservados.
+Layouts de importação
+Nota: Se você não tiver criado conjuntos de layouts, a janela Conjunto de layouts será
+. exibida. Vá para a etapa 4.
+Etapa 3: Clique no ícone Abrir. A janela Conjuntos de layouts é exibida contendo todos
+= s conjuntos existentes.
+Ftapa 4: Clique no hotão [Novo] Digite nm nome para o conjunto, pressione [Enter] e
+clique no botão [Sim] da caixa exibida para confirmar a adição de um novo
+conjunto de layouts. A janela Editar layout é exibida novamente, agora
+contendo o conjunto adicionado.
+. Notas: Para que o conjunto de layouts esteja disponível em todas as regiões, clique no
+botão [Tomar global] da janela Conjuntos de layouts. Se um conjunto de layouts
+for global, a palavra Global será exibida entre parênteses após o nome na Barra de
+status e um circulo azul será exibido ao lado dele na lista de conjuntos de layouts.
+!O nome do conjunto de layouts não pode conter apóstrofo, também chamado de
+aspas simples.
+Tmportador — Importar — Configurar — ícone Abrir
+Configuração de layouts de arquivo de importação
+Informações de cliente, extensão de cliente, pedido, solução roteirizada, manutenção,
+roteirização diária e computador de bordo podem ser importadas de um host ou de outro
+computador para o Roadnet Transportation Suíte. Para que o programa aceite essas
+informações e as coloque onde possam ser acessadas e utilizadas, você deve informá-lo
+onde encontrá-las nos arquivos de importação. Os layouts de importação são utilizados
+para comunicar essas informações ao Roadnet Transportation Suíte. Você pode agrupar
+layouts de importação em conjuntos que podem ser personalizados conforme suas
+mecessidades de importação.
+“Algumas instruções gerais de como criar arquivos de importação são mostradas a seguir.
+Uma descrição detalhada e o tamanho máximo dos campos possíveis dos arquivos de
+importação apropriados são mostrados nas tabelas de campos disponíveis de cada
+importação. Consulte essas tabelas para obter mais informações.
+Os layouts de importação utilizados para comunicar informações sobre a localização dos
+dados nos arquivos de importação funcionam da mesma maneira, ma os dados que se
+pode importar são diferentes. Uma descrição detalhada e o tamanho máximo dos campos
+possíveis dos arquivos de importação apropriados são mostrados nas tabelas de campos
+disponíveis de cada importação. Consulte essas tabelas para obter mais informações.
+L& Nota: Sevocênão recebeu permissão para configurar layouts no módulo Administração,
+não conseguirá acessar essa opção.
+Z É Etapa1: Clique no ícone Importação para abrir o módulo Importação.
+me — Etapa2: Clique no menu Importar e selecione Configurar. A janela Editar layout é
+exibida contendo o conjunto de layouts atual.
+Bmadeoperaçães A
+€ Copyright 2006 United Parcel Service of America, ln
+Todos os direitos reservados.
+Layouts de importação
+Para escolher outro conjunto de layouts, clique no ícone Abrir. A janela Editar
+s layout é exibida contendo todos os conjuntos existentes. Clique óuas vezes no
+— conjunto com o qual deseja trabalhar.
+Etapa 3: Clique áuas vezes no item para o qual deseja criar um layout. A janela Layout
+de importação é exibida.
+Etapa 4: Digite o caminho e o nome do arquivo que contém as informações dessa tabela
+no campo Arquivo de texto.
+ov-
+| (Caso não se lembre do caminho e do nome do arquivo, clique no ícone Procurar
+para abrir a janela Selecionar arquivo. Você encontrará o arquivo em qualquer
+diretório do disco rígido ou da rede.
+Etapa 5: Para especificar um pré-processador ou um pós-processador, digite o
+Tespectivo nome no campo Pré-processador/Pós-processador. Pré-processador
+é um programa que manipula os dados brutos antes de o Roadnet
+Transportation Suíte importá-los (geralmente, um arquivo em lote), enquanto o
+pós-processador manipula os dados após a conclusão da importação/
+exportação.
+TEcA ——
+F 2
+P ) GO =
+Algumas janelas de layout podem conter opções adicionais para forçar os
+“dados a serem alinhados à esquerda ou à direita ou para alinhar ou remover
+Etapa 6: Especifíque a posição e o tamanho de cada campo do arquivo de importação.
+Na parte superior da janela de configuração do layout há uma régua com a linha
+superior do arquivo de importação exibida abaixo. A régua mostra a posição de
+cada caractere no arquivo. Abaixo da exibição do arquivo há uma lista com
+todos os campos possíveis da tabela. Para especifícar a posição e o tamanho de
+cada campo, selecione-o na lista e, na linha exibida, utilize o mouse para realçar
+“ tamanho do campo. O campo é realçado com a mesma cor indicada na lista a
+BEE A o Toadret Transporiafion Sule
+' Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Layouts de importação

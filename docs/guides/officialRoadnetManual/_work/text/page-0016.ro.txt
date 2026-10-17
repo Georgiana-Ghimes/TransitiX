@@ -1,0 +1,94 @@
+Umplut și lansat.
+Pasul 6: În lista Abonamente, verificați evenimentele despre care
+destinatarul trebuie să primească notificări. Opțiunile sunt explicate mai jos.
+Pornire rută — apare când începe ruta.
+Plecarea rutei — are loc când șoferul pleacă.
+Sosirea rutei — apare atunci când șoferul se întoarce la plecare după livrări
+dar se oprește.
+Route Complete — Apare când traseul este terminat.
+Schimbare rută — Apare atunci când a fost făcută o modificare a traseului.
+GPS — Apare când se primește un ping GPS de la dispozitivul fără fir.
+Secvență de oprire — apare atunci când ordinea opririlor de pe traseu este schimbată.
+Stop sosire — apare atunci când șoferul ajunge la oprire.
+Plecare de la oprire — are loc atunci când șoferul părăsește oprirea.
+Anularea opririi — apare atunci când șoferul anulează oprirea. O
+anularea unei opriri înseamnă că șoferul nu se va mai întoarce la ea.
+Detalii de livrare — apare atunci când cantitățile reale de livrare/ridicare sunt
+dactilografiat.
+Excepții de rută — apare atunci când una dintre excepțiile de rută monitorizate este
+activat. Selectați excepțiile specifice pe care doriți să le monitorizați din listă.
+Sesiune de rutare — are loc atunci când comenzile sunt exportate din Editorul de rutare
+rutare către sistemul dumneavoastră gazdă utilizând caracteristica de trimitere a cererii.
+Amintiți-vă că trebuie să selectați și metoda care va genera
+evenimentele pe care doriți să le primiți. Opțiunile sunt:
+Dispozitiv — evenimentul a fost creat pe un dispozitiv, fie de către șofer, fie de către un
+ping GPS,
+Software client Transportation Suite — evenimentul a fost creat în Transportation
+Suite, de obicei de către un analist.
+Hostexterno — evenimentul a fost creat de un program extern și transmis către
+o Transportation Suite folosind API-ul SOAP.
+Pasul 7: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]:[S] pentru a salva destinatarul
+notificare.
+Pasul 8: Repetați pașii de la 3 la 7 pentru a adăuga mai mulți destinatari de notificări.
+Pasul 9: După ce toți destinatarii au fost adăugați, faceți clic pe caseta Închidere pentru a închide
+Fereastra Adăugați un destinatar de notificare.
+Ghid de operațiuni 25
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu regiunile
+Cum să lucrezi cu regiunile
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Fiecare zonă sau organizație pentru care creați rute se numește regiune. Este posibil
+Configurați regiuni separate pentru fiecare depozit. Regiunile au resurse disponibile,
+precum șoferii și echipamentele. Când configurați regiuni, trebuie să specificați
+Privilegiile pe care fiecare utilizator sau grup de utilizatori le are în regiune. Poți acorda
+utilizatorilor privilegii diferite în diferite regiuni,
+Adăugarea unei regiuni
+Înainte de a începe să utilizați Roadnet Transportation Suite, adăugați cel puțin unul
+rTegião.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Înregistrări și selectați Regiuni. Apare fereastra Regiuni
+conţinând toate regiunile existente.
+Pasul 3: În fereastra Regiuni, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare Adăugați regiuni.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea regiunilor este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți ID-ul și numele regiunii. ID-ul trebuie completat.
+Pasul 5: Introduceți numărul de telefon și de fax pentru regiune.
+Pasul 6: În secțiunea Adresă, introduceți informațiile respective în câmpurile corespunzătoare.
+Pasul 7: Dacă utilizați MobileCast și monitorizați salarizarea pentru
+ADP, introduceți Codul companiei și Dep. temp. a regiunii. Consultați
+Software-ul ADP pentru mai multe informații.
+Pasul 8: Faceți clic pe fila Securitate pentru a defini utilizatorii și grupurile, precum și
+privilegiile respective în regiune.
+Pasul 9: În pagina Securitate, faceți clic pe [Adăugați utilizator] sau [Adăugați grup
+utilizatori] pentru a deschide fereastra de căutare corespunzătoare. Faceți clic pe utilizator/grup
+de utilizatori care vor avea acces la regiune și dați clic pe pictograma Process. La
+Suită de transport Roadhnet de 26 inchi
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu regiunile
+selectați mai mulți utilizatori/grupuri, țineți apăsată tasta [Ctrl].
+enquanto clica neles.
+É possível fornecer
+diferite privilegii
+dentro da região a
+utilizatorii individuali și
+Egrupos de usuários.
+Pentru a elimina un utilizator/grup, selectați-l și faceți clic pe butonul [Eliminare],
+Faceți clic pe [Da] pentru a confirma că doriți să eliminați utilizatorul/grupul din regiune.
+Pasul 10: Marcați privilegiile pe care fiecare utilizator/grup le va avea în regiune.
+Pasul 11: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]:[S] pentru a salva informațiile.
+Pasul 12: Repetați pașii de la 4 la 11 pentru fiecare regiune care urmează să fie adăugată.
+Pasul 13: După ce au fost adăugate toate regiunile, faceți clic pe caseta Închidere pentru a închide fereastra
+Adăugați regiões.
+Teone Administração — Înregistrări — Regiuni — Adăugați pictograma ([Insert]) — Salvare pictogramă
+(CriH1S).
+Regiunile existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Dacă aveți mai multe regiuni, puteți alege o regiune ca implicită sau puteți schimba regiunea.
+rTegiune afișată într-un modul.
+Selectarea unei regiuni implicite
+Dacă aveți mai multe regiuni, unele regiuni pot fi utilizate mai frecvent.

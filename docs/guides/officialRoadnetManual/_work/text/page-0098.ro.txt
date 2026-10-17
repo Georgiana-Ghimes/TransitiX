@@ -1,0 +1,100 @@
+informații necesare pentru a vizualiza rutele create în sesiune, cum ar fi clienții,
+EE AA A A Roadrer Tranporiafon SE
+(Drepturi de autor 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate.
+Întreținerea bazei de date
+drivere, etc. Această opțiune este disponibilă numai dacă utilizați Microsoft
+Aceess.
+Dacă doriți să ștergeți informații din baza de date, consultați Ștergerea informațiilor
+istoriile bazei de date sau Configurarea întreținerii automate a bazei de date
+date.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Întreținere baze de date; in
+Apoi selectați Arhivare sesiune de rutare. Fereastra de întreținere
+Baza de date - Arhivare sesiuni de rutare este afișată.
+Pasul 3: În fereastra Întreținere baze de date - Arhivare sesiuni de rutare,
+Stabiliți dacă doriți să arhivați după dată sau pentru o sesiune individuală.
+Fereastra Întreținere baze de date
+date - Arhiva permite
+arhivarea datelor istorice de către
+interval de date sau a
+sesiune bună de scripting. O
+„nch fișier toate datele
+necesare pentru afișarea rutelor
+a perioadei arhivate.
+Arhivarea după interval de date stochează toate datele necesare
+vizualizați itinerarul tuturor sesiunilor care au avut loc între datele de început și de sfârșit
+rezilierea.
+Arhivarea după sesiune stochează toate datele necesare pentru a vizualiza
+Tomatizare într-o singură sesiune.
+Pasul 4: Faceți clic pe [OK] pentru a începe arhivarea. O fereastră Salvare așa cum este
+afișat, pentru a permite salvarea arhivei într-un fișier. tu
+poate accepta numele și locația implicite de fișier sau poate specifica unul nou
+mome și/sau locație.
+Pentru a accepta numele și locația implicită a fișierului — în format
+Roadnet ArchiveOnMonthDDYYYY (cum ar fi
+„RoadnetArchiveOnJune121999”) în directorul în care
+Roadnet este stocat - faceți clic pe butonul [Salvare].
+Pentru a schimba numele fișierului, introduceți noul nume de fișier în casetă
+Nume fișier: . Apoi faceți clic pe butonul [Salvare].
+Operații proaste A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+Întreținerea bazei de date
+Pentru a schimba locația de stocare a fișierelor, faceți clic pe săgeata de pe
+Salvați în: casetă și navigați la noua locație. Apoi faceți clic pe butonul
+[Saivar]
+Notă: După crearea unui fișier, puteți importa acel fișier într-o altă sesiune
+de scripting, pentru a agrega sesiunile. Consultați Agregare din fișier sau
+Adăugați sesiuni de rutare la modulul de întreținere pentru mai multe
+informaţii.
+Instrumente — Întreținerea bazei de date > Arhivare sesiune de rutare —
+1[OKJ
+—[Satvar]
+Ștergerea informațiilor din istoricul bazei de date
+Folosit cu: Roadnet, FleetLoader, MobileCast
+Notă: Nu veți putea deschide acest modul dacă nu vi s-a dat permisiunea de a controla
+ștergerea sesiunilor de rutare din modulul Administrare.
+Baza de date Roadnet Transportation Suite conține o mulțime de informații și poate
+devin foarte mari, consumând mult spațiu pe disc. Pentru a vă ajuta să vă controlați
+dimensiune, puteți șterge informațiile istorice din baza de date. Cu toate acestea,
+asigurați-vă că datele nu mai sunt valoroase înainte de a le șterge; odată șters,
+datele nu vor fi luate în considerare la rularea rapoartelor sau la întreținerea timpului de funcționare.
+serviciul.
+Întreținerea bazei de date îndeplinește o altă sarcină utilă: compactează baza de date
+date, pentru a elimina toate înregistrările marcate pentru ștergere. Când ștergeți un articol
+(client, șofer, echipament etc.) al Roadnet Transportation Suite, înregistrarea este
+marcate pentru ștergere în baza de date. Când efectuați întreținerea bazei de date,
+Programul caută în întreaga bază de date și elimină toate înregistrările specificate.
+Dacă doriți să stocați o parte a directorului într-un fișier separat, cum ar fi a
+Într-o singură sesiune, puteți arhiva aceste informații. Dacă vrei informațiile vechi
+sunt șterse din baza de date în mod regulat, puteți configura Roadnet la
+Ștergeți automat datele atunci când comenzile sunt importate. Consultați
+Configurarea întreținerii automate a bazei de date pentru mai multe informații,
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Nunss — Pasul 2: Faceți clic pe meniul Instrumente și selectați Întreținere baze de date; in
+apoi selectați Ștergere rute. Fereastra de întreținere a bazei de date -
+Apare Ștergeți sesiunile de rutare.
+Pasul 3: În fereastra Întreținere baze de date - Ștergeți sesiunile de rutare,
+determinați dacă doriți să ștergeți datele înainte de un anumit număr de
+zile, săptămâni sau luni, într-un interval specificat de date sau pentru a
+O singură sesiune.
+ME FA R Roadrer Trasporiafion SE
+' Copyright 2006 United Parcel Service of America, lc
+Toate drepturile rezervate.
+Întreținerea bazei de date
+Notă: Opțiunile Ștergere date înainte și Ștergere date după interval de date pot fi
+folosit pentru a șterge datele atât din Roadnet, cât și din MobileCast. Opțiunea Ștergere
+pe sesiune șterge datele numai din Roadnet.
+Pasul 4: Stabiliți ce date doriți să ștergeți și dacă doriți să compactați baza de date.
+Ștergerea datelor poate
+pentru a preveni banca să
+datele devin foarte mari, dar
+verificați dacă datele nu sunt
+cel mai necesar înainte
+exclude-i. Orice date
+șterse nu vor fi disponibile
+pentru rapoarte, întreținere de
+timp de service sau altele
+Informațiile despre plan exclud datele despre comandă, traseu și oprire de la toate
+sesiuni care au avut loc în perioada specificată,

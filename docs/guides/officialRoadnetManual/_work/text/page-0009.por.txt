@@ -1,0 +1,61 @@
+FTA EA L Foadnet Transporiation Sulfe
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Navegação pelo Roadnet Transportation Suite
+Navegação pelo Roadnet Transportation Suite
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O Roadnet Transportation Suite tem uma interface gráfica intuítiva que torna o programa
+fácil de aprender e de utilizar. Ela é baseada em menus, ícones e janelas que são
+escolhidos e gerenciados com o mouse. Para obter mais informações sobre como navegar
+pelo programa, consulte Gerenciamento de janelas e Tipos de janela.
+Tipos de janela
+Vários tipos de janela são utilizados no Roadnet Transportation Suite para exibir e
+gerenciar informações de roteirização. Os tipos utilizados são:
+janela Relacionar — utilizada para exibir informações, como rotas, paradas,
+pedidos etc. Você pode alterar como os dados são exibidos na janela, mas não
+pode alterar os dados.
+Janela Manutenção — utilizada para exibir e editar informações. Você pode
+alterar os dados, bem como a apresentação deles na janela.
+Mapas — utilizados nos módulos Editor de roteirização, Editor de
+planejamento e Manutenção para exibir e atualizar rotas e geocodificar locais.
+(Os mapas podem ser atualizados e editados.
+Os mapas do Transportation Suíte têm funções específicas do software ou do módulo
+vtilizado. Por exemplo, você pode adicionar barreiras ou setores ao mapa nos módulos
+Manutenção, Editor de roteirização e Editor de planejamento; consulte Como trabalhar
+com barreiras e Como trabalhar com setores na seção Manutenção deste manua! para
+obter mais informações. No Editor de roteirização, você pode exibir as rotas no mapa e
+editá-las lá; consulte Utilização do mapa no Editor de roteirização para obter mais
+informações. No Editor de planejamento, você pode utilizar o mapa para avaliar e editar
+territórios e rotas; consulte Utilização do mapano Editor de planejamento para obter mais
+informações. No módulo Analista, você pode exibir e editar as rotas no mapa; consulte
+Utilização do mapa no módulo Analista para obter mais informações.
+Gerenciamento de janelas
+Para selecionar um item de menu ou ícone específico, aponte para ele e clique com o botão
+do mouse. Nas janelas que exibem colunas de dados editáveis, clique duas vezes para
+iniciar o processo de edição de uma linha de dados específica.
+As janelas continuarão abertas até você fechá-las executando uma destas ações:
+* — Cliquenacaixa Fechar (o “X”) no canto superior direito da janela.
+* — Cliquenacaixa Controle no canto superior esquerdo da janela e selecione Fechar no
+menu.
+* — Cliqueduas vezes na caixa Controle.
+* — Cliqueno menu Arquivo e clique em Sair (somente módulos).
+* — Pressione [CtI]-[F4],
+madeaperaçães Ê
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Navegação pelo Roadnet Transportation Suite
+* Selecione Janela—> Fechar tudo.
+Em todo o Roadnet Transportation Suíte, especialmente nos Editores de roteirização e
+planejamento, e ao trabalhar com mapas, há várias teclas de acesso que você pode utilizar
+para executar determinadas ações. Onde apropriado, a combinação de teclas de acesso é
+indicada no menu, ao lado da opção.
+Em cada módulo, como no módulo Manutenção, não é necessário fechar uma janela para
+trabalhar em outra. Você pode ter várias janelas abertas ao mesmo tempo. Para tornar
+ativa a janela desejada, clique na respectiva barra de título. No entanto, você deve fechar
+cada módulo antes de entrar no próximo.
+EE ——A a
+Você pode ter várias janelas abertas simultaneamente em qualquer módulo. A
+Ljanela com a barra colorida mais brilhante, normalmente azul, é a janela ativa.
+8 “Roadhnet Transportation Suíte
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.

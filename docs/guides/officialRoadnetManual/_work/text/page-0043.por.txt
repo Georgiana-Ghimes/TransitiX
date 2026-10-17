@@ -1,0 +1,92 @@
+Data de início — insira 2 primeira data em que o pedido pode ser entregue. Ao
+inserir informações de data, você pode digitar a data ou clicar na seta para exibir
+um calendário. Ao digitar manualmente, selecione a caixa antes de digitar 2 data.
+Se estiver utilizando o calendário, para alterar o mês utilize as setas na parte
+superior do calendário para rolar pelos meses ou clique no mês e selecione no menu
+suspenso. Para afterar o ano, clique no ano e utilize as setas pequenas para rolar
+para o ano correto. Clique em uma data para selecioná-la.
+Data de término — insira a data até a qual o pedido deve ser entregue. É possível
+digitar a data manualmente ou clicar na seta para abrir um calendário. Ao digitar
+manvalmente, selecione a caixa antes de digitar a data. Se estiver utilizando o
+calendário, para alterar o mês utilize as setas na parte superior do calendário para
+rolar pelos meses ou clique no mês e selecione no menu suspenso. Para alterar o
+ano, clique no ano e utilize as setas pequenas para rolar para o ano correto. Clique
+em uma data para selecioná-la.
+Etapa 13: Se desejar inserir um pedido inativo, selecione a caixa Marcar como pedido
+inativo na parte inferior da janela
+Etapa 14: Se você deseja que o pedido utilize tempos de atendimento bulk, mesmo se 2
+quantidade não atender ao Limite de bulk estabelecido, selecione Forçar
+tempo de atendimento bulk.
+Etapa 15: Insira as informações de campo definido pelo usuário do pedido nos campos
+apropriados. Os nomes dos campos definidos pelo usuário são estabelecidos
+ma página Alias do menu Opções,
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com pedidos planejados
+Etapa 16: Se você deseja inserir alterações de janela de atendimento, de tempo de
+atendimento ou instruções especiais, consute Pedidos e alterações.
+Se deseja inserir itens ou atividades de pedido para o pedido, consulte Inserção
+de itens de pedido e atividades de pedido.
+MG Etapa17: Após inserir todas as informações apropriadas, clique no ícone Salvar ou
+"” pressione [Ctrl]+[S] para inserir o novo pedido,
+. Nota: Se os pedidos estão sendo combinados na sessão de roteirização e todos os outros
+pedidos do cliente estão em rotas prontas, será exibida uma mensagem
+perguntando se você deseja adicionar o novo pedido 2 uma rota pronta ou mantê-
+o não atendido. Clique na opção apropriada.
+TE RENA STS S PlA S PEA AADS S R Ac
+(Mnsert]) — icone Salvar ([Ctri]+[S])
+Para adicionar informações de janela de atendimento, tempo de atendimento ou instruções
+para o pedido, utilize a guia Alteração no menu Pedidos.
+Para adicionar itens de pedido ou atividades ao pedido, use a guia Ttem de pedido
+atividades no menu Pedidos.
+Os pedidos existentes podem ser editados ou excluídos, conforme necessário. Consulte
+Edição de itens e Exclusão de ítens para obter mais informações.
+Adição de alterações aos pedidos planejados
+O menu Pedidos permite adicionar e editar os pedidos planejados que serão roteirizados
+no Editor de roteirização. Embora o menu contenha três páginas, todas as informações
+obrigatórias estão localizadas na primeira página. Você pode criar alterações de pedido
+na segunda página e inserir itens de pedido/atividades de pedido por meio da terceira
+página.
+A segunda página do menu Pedidos é a página Alteração. Nela, é possível inserir
+alterações de janela de atendimento, tempo de atendimento adiciona! e instruções
+especiais a um novo pedido ou pedido existente. Para iniciar este procedimento, é
+necessário estar na janela Adicionar pedidos ou Editar pedidos.
+É8 Etapa 1: Najanela Pedidos, clique no ícone Adicionar para adicionar um novo pedido,
+— (ou Clique duas vezes em um pedido que deseja editar.
+Etapa 2: Quando as informações na página Pedido estiverem exatas, clique na guia
+Alteração do menu Pedidos.
+Etapa 3: Se você deseja alterar as janelas de atendimento de um cliente para o pedido
+atual, selecione a caixa Alterar janelas de atendimento de cliente. À caixa
+FT A AAA E Roadha Traporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com pedidos planejados
+Janelas de entrega é exibida. Insira as informações de alteração da janela de
+atendimento e de abertura fechamento nos campos apropriados,
+EE ——
+Utilize a página Alteração para adicionar tempo de
+atendimento para um pedide, como quando o pedido precisar
+Etapa 4: Insira todas as alterações aplicáveis de tempo de atendimento, ID de rota
+preferencial ou instruções especiais nos campos apropriados. Se uma ID de
+Tota preferencial ou instruções especiais forem informadas, elas serão
+utilizadas em vez das informações fornecidas para o cliente quando as rotas
+foram criadas no Editor de roteirização. Se um tempo de atendimento adicional
+for informado, ele será adicionado 2o tempo de atendimento do cliente para a
+parada no Editor de roteirização.
+8) Etapa5: Clique no ícone Satvar ou pressione [Ctrl]+[S] para salvar todas 2s
+. informações de alteração
+Para adicionar itens de pedido ou atividades ao pedido, use a guia Ttem de pedido
+atividades no menu Pedidos.
+Inserção de itens de pedido e atividades de pedido para pedidos planejados
+AA terceira página do menu Pedidos permite adicionar itens de produto e atividades de
+pedido aos pedidos planejados. Antes de adicionar itens ou atividades do pedido, é
+necessário adicionar as SKUSs ou atividades. Para iniciar este procedimento, é necessário
+estar na janela Adicionar pedidos ou Editar pedidos.
+Bmadeaperaçães AA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com pedidos planejados
+Etapa 1: Na janela Pedidos, clique no ícone Adicionar para adicionar um novo pedido,
+u Clique duas vezes em um pedido que deseja editar.
+E R o A R E A A o

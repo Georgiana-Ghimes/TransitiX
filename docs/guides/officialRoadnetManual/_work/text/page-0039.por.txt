@@ -1,0 +1,95 @@
+imagem for especificada aqui, a imagem padrão será utilizada no editor.
+LS Nota: À imagem deve ser um arquivo .omp de 28x28 pixels e 256 cores ou menos.
+Etapa 7: Na área Propriedades do tipo de embalagem, insira 2 altura, largura e
+profundidade do tipo. Insira o peso do tipo em libras ou quilogramas.
+Etapa 8: Se você estiver utilizando equivalências para relacionar diferentes tipos de
+embalagem entre si, insira o fator de equivalência correspondente no campo
+Equivalência.
+BT A , , ,, ,,;,; FFF Roadhet Traporiation Suh
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de embalagem
+Dica: Você pode utilizar equivalências para nivelar o campo entre diferentes tipos de
+embalagem o calcular tempo de atendimento, capacidade ou custo. Por exemplo,
+se um palete ocupa seis vezes mais espaço do que uma caixa no veículo, insira a
+equivalência 1 para a caixa e 6 para o palete. Assim, quando o Editor de
+roteirização estiver determinando quanto produto pode ser carregado no veículo,
+ele irá considerar as diferenças de tamanho.
+Para inserir Detalhes das
+“camadas, clique duas vezes no
+método de camadas. Insira as
+informações na janela Editar
+detalhes das camadas que é
+exibida As informações não são
+savas até que o tipo de
+embalagem seja salvo.
+Importante:As dimensões devem ser inseridas com 2 mesma unidade de medida das
+dimensões do tipo de compartimento. Por exemplo, ambos os tipos devem
+vsar polegadas ou pês ou centimetros. Quando o equipamento for carregado,
+estas dimensões serão usadas para calcular o volume de cada SKU.
+Etapa 9: Na área Detalhes das camadas, insira a Quantidade por camada e as Camadas
+por palete para cada método de camadas de palete. Para inserir essas
+informações, clique áuas vezes no método de camadas e digite as informações
+ma janela Editar detalhes de camadas que será exibida. Clique no botão [OK]
+para salvar as informações de camadas do método. Essas informações são
+necessárias somente ao utilizar o FleetLoader e carregar veículos bulk; neste
+caso, os campos são obrigatórios.
+Quantidade por camada — a quantidade do tipo necessária para criar uma
+camada de palete completa.
+Camadas por palete — o número de camadas deste tipo que podem ser
+empilhadas em um palete.
+o EE :
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com tipos de embalagem
+Nota: É necessário criar os métodos de camadas de palete para preencher estas
+informações.
+Etapa 10: Para defínir a quantidade de cada tipo de embalagem que cabem no tipo de
+compartimento, clique no botão [Capacidades]. À janela Manutenção da
+capacidade do tipo de compartimento é exibida.
+Nota: Os tipos de compartimento devem ser adicionados para poder inserir as
+capacidades de tipo de compartimento.
+Para que as capacidades sejam calculadas automaticamente, digite a
+porcentagem do compartimento a ser preenchida e clique no botão [Calcular]
+Clique no botão [OK] para aceitar as capacidades calcutadas.
+Nessa janela você pode
+específicar quantos tipos
+de uma embalagem
+específica caberão nos
+compartimentos do
+veículo. Pode também
+pedir ao sistema para
+caleular a capacidade
+paravocê, mas deve
+inserir as dimensões de
+seus fipos de
+compartimento e de
+Para inserir as capacidades manualmente, clique na ID do tipo de
+compartimento para selecioná-la e insira o número máximo desse tipo de
+embalagem que cabe no tipo de compartimento. Clique no botão [Atualizar]
+Continue até terminar de inserir todas as capacidades. Clique no botão [OK],
+Estas informações serão usadas somente se você estiver utilizando o FleetLoader
+para carregar os veículos de compartimento.
+AVISO: Clicar no botão [Calcular] faz com que qualquer capacidade existente seja
+substituída pela capacidade calcutada.
+Zx, Dica: Para evitar que um tipo de embalagem específico seja carregado em um tipo de
+o compartimento, altere sua capacidade para 0. Os compartimentos desse tipo serão
+ignorados ao carregar o tipo de embalagem.
+Etapa 11: Clique no botão [OK]. Em seguida, clique no ícone Salvar ou pressione
+x [Cti]+[S] para satvar o novo tipo de embalagem.
+E , ,, ,,, ,,;, A Roadhet Traporiation Suh
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de embalagem
+Etapa 12: Repita 2s etapas 4 a 11 para adicionar qualquer outro tipo de embalagem.
+Etapa 13: Quando terminar de adicionar tipos de embalagem, clique na caixa Fechar
+para fechar a janela Adicionar tipo de embalagem.
+Ícone Manutenção — Cadastros — Produto — Tipo de embalagem-> icone Adicionar
+(Mnsert]) — icone Salvar ([Ctri/+[S])
+Os tipos de embalagem existentes podem ser editados ou excluídos, conforme necessário.
+Consuite Edição de itens e Exclusão de itens para obter mais informações.
+Importante: A exclusão de um tipo de embalagem afeta outros itens de manutenção.
+Antes de excluir um tipo de embalagem, é necessário:
+* excluiras SKUs com esse tipo de embalagem.
+* verificara exatidão das capacidades dos tipos de compartimento.
+* verificara exatidão das restrições de equipamento.

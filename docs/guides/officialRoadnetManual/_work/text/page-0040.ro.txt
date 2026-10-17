@@ -1,0 +1,56 @@
+REE
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Pictograma de întreținere — Înregistrări — Produs — Tipuri de produse — Adăugați pictograma
+(nsert]) — Pictograma Salvare ([Ctril+[S])
+Tipurile de produse existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+FT TTAA A E oadnei Transporiafion Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu SKU-uri
+Cum să lucrați cu SKU-uri
+Folosit cu: Roadnet, FleetLoader
+SKU-urile sunt cel mai specific mod de a defini produsele. Un SKU este format din
+o marcă SKU și un tip de ambalaj, cum ar fi cutii de 350 m! de RN Lite sau sticle
+21de RN Cola. Etichetele SKU și tipurile de ambalaje trebuie introduse întotdeauna
+astfel încât SKU-uri să poată fi adăugate. SKU-urile vor fi folosite numai dacă dvs
+a achiziționat FleetLoader sau doriți să importați detalii la nivel SKU în fișier
+de ordine. Puteți adăuga SKU-urile individual sau le puteți importa; consultați
+Importarea articolelor de întreținere pentru mai multe informații despre import
+SKU-uri,.
+Dacă comenzile dvs. conțin articole de comandă, puteți stabili timpi de onorare
+pentru fiecare SKU, oferind timpi de îndeplinire mai precisi la rutare. De către
+De exemplu, puteți specifica dacă un butoi durează mai mult pentru a fi livrat decât un
+cutie de 12 cutii, iar timpul de onorare calculat pentru comanda va reflecta acest lucru
+diferență, în loc să se bazeze tot timpul de descărcare pe o singură dimensiune. Unii
+Probleme suplimentare ar trebui luate în considerare atunci când utilizați timpul de livrare SKU:
+* — Orice timp de îndeplinire pentru SKU va fi adăugat la timpul de livrare
+serviciu stabilit pentru oprire.
+* — Vă rugăm să utilizați timpul de îndeplinire SKU numai pentru a calcula timpul de îndeplinire.
+descărcați, verificați dacă timpul de descărcare al clientului este setat la 0.
+* —Timpul de așteptare va fi timpul de așteptare al clientului.
+* Dacă nu doriți să includeți timpul de onorare SKU în comenzile în vrac,
+selectați Ignorați timpul de realizare a SKU pentru efectuarea în bloc de pe pagină
+Referința unității în meniul Opțiuni. Dacă această opțiune nu este selectată, ora
+Timpul de îndeplinire a SKU va fi adăugat la timpul de descărcare în bloc.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrare, selectați Produs și SKU-uri. Fereastra SKU-urilor este
+afișate, listând toate SKU-urile stabilite.
+[ Notă: Pentru a vedea o listă actualizată de SKUS, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+De exemplu, Pasul 3: În fereastra SKUS, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+— Se afișează Adăugare SKU.
+,) Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 32 de caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 128 de caractere în Descriere.
+Și Pasul 6: Atribuiți un tip de ambalaj și un ID de marcă SKU. Faceți clic pe săgeată
+potrivit pentru a deschide fereastra de căutare. Faceți dublu clic pe ID-ul corespunzător sau
+Guadeoperations oA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrați cu SKU-uri
+Ú E yA AAA MEA E AA PA AA A P V EÇ

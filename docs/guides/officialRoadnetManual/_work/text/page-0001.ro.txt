@@ -1,0 +1,53 @@
+Manual Roadnet - Ghid SD B matero
+Gi —
+ªSuită de sportº
+Ghid de operațiuni
+şi
+Roadnet, RouteNet, Territory Planner, FleetL.oader și MobileCast sunt mărci comerciale înregistrate ale
+United Parcel Service of America, Inc.
+United Parcel Service of America, Inc. nu este responsabil pentru nicio situație reală sau
+daune indirecte legate de utilizarea sau utilizarea greșită a software-ului Roadnet Transportation Suite sau
+a documentației dumneavoastră.
+& Copyright 2006 de către United Parcel Service of America, Inc. UPS Logistics Technologies, Inc.
+849 Fairmount Avenue, Suite 400, Baltimore, MD 21286, SUA. Toate drepturile rezervate.
+Cod program de calculator și ecrane de afișare și Copyright 1988, 2001 United Parcel
+Service of America, Inc. Toate drepturile rezervate. Lucrări nepublicate conform legilor din
+Drepturi de autor din SUA. Conținutul acestui material este confidențial și aparține United Parcel
+Service of America, Inc. Utilizarea, dezvăluirea sau reproducerea neautorizate este strictă
+interzisă. Drepturile de utilizare sunt reglementate și limitate de acordul de licență.
+Acest manual! este proprietatea United Parcel Service of America, Inc. Este posibil să nu fie
+reprodus prin orice metodă, integral sau parțial, fără permisiunea scrisă a editorului său.
+Microsoft& Access este o marcă comercială înregistrată sau mărci comerciale ale Microsoft Corporation în Statele Unite.
+Statele Unite și/sau alte țări.
+Crystal ReportsM este o marcă comercială înregistrată a Seagate Software Company.
+EGeographic Data Technology, Inc.
+Acest produs conține informații confidențiale aparținând Geographic Data Technology, Inc.
+Utilizare neautorizată, inclusiv copiere pentru alte proceduri decât testare și
+backup-ul acestui produs este în mod expres interzis.
+Cuprins
+Cuprins
+Introducere
+Introducere în Roadnet Transportation Suite 1
+Despre acest manual. Pentru a
+Convenții utilizate în acest manual 6
+Navigarea Roadnet Transportation Suite 7
+Tipuri de ferestre 7
+Administrare Windows 7
+Cum să porniți Roadnet Transportation Suite 9
+Schimbarea parolei 9
+Adăugarea unei conexiuni ODBC 10
+Module Roadnet Transportation Suite: ES
+Administrare
+Configurarea modulului Administrare 3
+Definirea opțiunilor modulului Administrare
+Cum să lucrezi cu privilegii 15
+Cum să lucrați cu grupuri de utilizatori 20
+Cum să lucrezi cu utilizatorii 2
+Cum să lucrați cu destinatarii notificărilor 2a
+Cum să lucrați cu regiunile 26
+Întreținere
+Roadnet Transportation Suite 29 Întreținere
+Cum să lucrați cu articolele de întreținere 30
+Opțiuni de setare 33
+Cum să lucrați cu stările și tipurile Ex
+Adăugarea unui statut pe tino 61

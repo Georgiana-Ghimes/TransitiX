@@ -1,0 +1,71 @@
+(Como trabalhar com tipos de tempo de atendimento
+Como trabalhar com tipos de tempo de atendimento
+Utiizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os tipos do tempo de atendimento também ajudam a agrupar os clientes por uma
+característica comum, que é estritamente o tempo de atendimento. Os tipos de tempo de
+atendimento permitem especifícar que um grupo de clientes têm os mesmos tempos de
+descarga e de espera pois o ambiente de entrega é o mesmo, como uma cadeia de
+Tanchonetes ou um grupo de supermercados que permite uma entrega de palete em uma
+doca de descarga. Os tipos de tempo de atendimento podem, mas não precisam, ser
+correlacionados diretamente aos segmentos de clientes.
+Os tipos de tempo de atendimento adicionados podem ser atribuídos aos clientes,
+Diversos tipos de tempo de atendimento também são criados para cada cenário, portanto
+"um cliente individual pode ter diversos tempos de atendimento, dependendo do número
+de cenários existentes. Os cenários devem ser criados para poder adicionar tipos de tempo
+de atendimento.
+y Etapa 1: Clique no ícone Manutenção para abrir o respectivo móduto
+t Etapa?: Cliqueno menu Cadastros e selecione Regras de atendimento e Tipos de tempo
+N de atendimento. À janela Tipos de tempo de atendimento é exibida, listando
+- todos os tipos atuais.
+Nota: Para ver uma lista atualizada de tipos de tempo de atendimento, clique no ícone
+' “Atualizar; a janela será atualizada com as informações mais recentes do banco de
+) dados.
+7 Etapa3: Najanela Tipos de tempo de atendimento, clique no ícone Adicionar ou
+ãÁ pressione [Insert]. A janela Adicionar tipos de tempo de atendimento é exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. À janela
+“Adicionar tipo de tempo de atendimento é exibida com algumas informações já
+preenchidas; altere as informações necessárias na nova entrada.
+Etapa 4: Insira até 5 caracteres para a ID e até 30 caracteres para o nome. À ID deve ser
+inserida.
+Etapa 5: Clique na seta de cor para abrir uma paleta de cores. Clique em uma cor para
+selecioná-la
+Etapa 6: Se mais de um cenário aparecer na janela de listagem na parte inferior da
+janela Adicionar tipo de tempo de atendimento, confirme se o cenário
+desejado, para o qual você deseja inserir tempos de atendimento, está realçado.
+Tadeaperaçãe o :Ok:kk DTA
+* Copyright 2006 United Parcel Service of America, lnc.
+Todos os direios reservados.
+.para todos os cenários. É possível
+especificar tempos de atendimento
+mormais e bulk; com ajudante é
+Sem ajudarte, para cada cenário
+Tempos de atendimento são o tempo total gasto para entregar produtos em um
+cliente
+Tempos de atendimento bulk são o tempo de entrega de produtos em paletes
+u quantidades que atendam o limite de bulk para esse cliente, ou pedidos
+forçados a usar o tempo de atendimento bulk.
+Tempo de espera é o período de tempo, independentemente da quantidade de
+produto entregue, que leva para atender um cliente. O tempo de espera inclui o
+estacionamento do caminhão, o preenchimento de formulários, obtenção de
+pagamento para pedidos com pagamento contra entrega (COD), etc.
+Tempo de descarga é o tempo para descarga de uma unidade do produto em
+Tum cliente. Este tempo é variável, de acordo com a quantidade do produto nos
+pedidos. O tamanho selecionado como Unidade de serviço ou Unidade de
+serviço Bulk (em ordem de bulk) no menu Opções é usado para calcular o tempo
+de descarga.
+Etapa $: Clique no botão [Atualizar] para armazenar os tempos de atendimento na
+janela de listagem na parte inferior da janela Adicionar tempo de atendimento.
+Dica: Se houver mais de um cenário e os tempos para os outros cenários forem
+semelhantes, clique no cenário atualizado e arraste-o para outros cenários listados,
+(Os tempos serão copiados no novo cenário, quando puderem ser editados.
+Etapa 9: Clique no icone Satvar ou pressione [Ctr1]+[S] para salvar o novo tipo de
+têmpo de atendimento.
+Etapa 10: Repita as etapas 4 a 9 para adicionar qualquer outro tipo de tempo de
+atendimento.
+16 “Roacnet Transportation Suite
+|€ Copyright 2006 United Parcel Service of âmerica, lnc
+Todos os direitos reservados.
+atendimento ícone Adicionar ([Tnsert]) > icone Satvar ([Ctri]+[S])
+Os tipos de tempo de atendimento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações

@@ -1,0 +1,91 @@
+Exclusão de barreiras
+Se foi criada uma barreira que não é mais necessária, ela poderá ser excluída. Ou, se a
+barreira estiver muito longa, você poderá encurtá-la.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+Arquivo >Mapa
+Etapa 3: Clique no ícone Barreira. O cursor muda para uma barreira com sinal de adição
+120 lado do ponteiro, para indicar o modo Adicionar barreira.
+Etapa 4: Clique com o botão direito do mouse em um mapa, selecione Cancelar/Sair do
+modo de adição.
+Etapa 5: Clique com o botão direito do mouse na barreira e selecione Excluir barreira
+no menu exibido. Clique em [Sim] para confirmar a exclusão.
+excluído. Por exemplo, se criou uma barreira com diversos segmentos e ela for
+Jonga demais, encurte-a clicando no nó final para excluir somente o último
+segmento,
+Arquivo — Mapa — icone Barreira — Cancelar/Sair do modo de adição — Excluir barreira
+— [Sim]
+Bmadeoperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com setores
+Como trabalhar com setores
+Utilizado com: Roadnet
+Os setores trabalham com a roteirização dinâmica para ajudar a dividir a área de entrega
+em segmentos menores. Se você utilizar os setores que criou na roteirização dinâmica, o
+Roadnet criará rotas dentro dos setores, mas não ultrapassará os limites dos setores. Isto
+Significa que você pode usar os setores para manter as paradas de suas rotas agrupadas em
+uma área geográfica mais compacta. Além disso, é possível associar os atributos do setor
+àrota
+Um conjunto de setores é denominado padrão de setores. Para desenhar setores no mapa,
+E necessário criar padrões de setores. Você pode especificar que um padrão de setores
+agrupe setores com base em como deseja que suas rotas sejam criadas. Por exemplo, é
+possível criar um padrão de setor para cada dia da semana. O padrão de setor da segunda-
+feira pode ter setores desenhados em uma cidade visitada somente às segundas-feiras. O
+padrão de setor da terça-feira pode se concentrar em paradas reunidas em uma área
+congestionada da cidade.
+Em outras palavras, você pode criar padrões de setores para resolver determinados
+problemas de roteirização. Se precisar de cinco rotas criadas em uma cidade, você pode
+criar um padrão de setores para esta cidade com cinco setores individuais. Em seguida, na
+roteirização dinâmica, é possível usar quaisquer padrões de setores para a simulações de
+roteirização individuais.
+Para que os setores sejam exibidos no mapa, clique no ícone Opções do mapa e selecione
+Propriedades em uma janela de mapa. No menu Propriedades do mapa, selecione a guia
+Barreiras/Setores para abrir a página Barreiras/Setores. Marque a caixa Exibir na área
+Setores. Também é possível selecionar a cor dos setores, clicando na seta da caixa de cor.
+Para selecionar um padrão de setores padrão, o padrão de setores que aparecerá 2o entrar
+no mapa, clique no icone Opções e selecione Propriedades, em seguida, a guia Barreiras/
+Setures. Clique na sela Padião de setor padião para abrir a janela Altcia: padião do setor
+clique no padrão que deseja defínir como padrão e clique no ícone Processar para salvar
+o padrão de setor padrão. Se nenhum padrão de setor padrão estiver selecionado, 2 janela
+Padrão do setor será aberto que qualquer trabalho nos setores possa ser realizado.
+WVocê pode criar setores em qualquer mapa do Roadnet Transportation Suíte. Para o
+propósito deste guia, será usado o mapa do módulo Manutenção.
+Adição de padrões de setores
+Um conjunto de setores é denominado padrão de setores. Você pode criar um padrão de
+setores para agrupar setores com base em como deseja que suas rotas sejam criadas. Por
+exemplo, é possível criar um padrão de setor para cada dia da semana ou para diferentes
+partes de uma cidade. Para desenhar setores no mapa, é necessário criar um padrão de
+setores. O padrão de setores é selecionado para 2 simulação de roteirização dinâmica.
+| JM Etapal: Clique no icone Manutenção para abrir o respectivo módulo.
+hnm — Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+TE T ,, , ,,A — E Roadhet Trarporiatior Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com setores
+Etapa 3: Clique no ícone Editar setores. O cursor muda para um setor com sinal de
+adição ao lado do ponteiro, para indicar o modo Adicionar setor.
+Nota: Se você ainda não criou padrões de setores, a janela Adicionar padrão de setores
+será exibida automaticamente ao clicar no icone Setor. Prossiga para a etapa 4 se
+isso ocorrer.
+Etapa 4: Clique com o botão direito no mapa e selecione Cancelar/Sair do modo de
+adição no menu que será exibido, para sair do modo Adicionar setor (o
+padrão)
+Etapa 5: Clique com o botão direito e selecione Padrões de setores no menu que será
+exibido. A janela Padrão do setor é exibida.
+Etapa 6: Clique no ícone Adicionar ou pressione [Insert] para adicionar um novo padrão
+de setor. A janela Adicionar padrão de setor é exibida.
+* S — a
+mber F. D
+el PE —
+Adicione padrões para agrupar setores
+'com Base em como você deseja que as
+Etapa 7: Insira um título para o padrão e uma descrição, conforme apropriado. Você
+deve digitar um nome para o padrão.
+M6 EtapaS: Clique no ícone Salvar ou pressione [Ctr1]+[S] para satvar o novo padrão de
+x setor.
+Etapa 9: Quando terminar de adicionar padrões do setor, clique na caixa Fechar para
+fechar a janela Adicionar padrão de setor.
+E
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados

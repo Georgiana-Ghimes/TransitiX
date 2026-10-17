@@ -1,0 +1,94 @@
+[Traducere eșuată pentru acest fragment]
+Etapa 5: Clique no botão [Importar] para abrir a janela Processo de importação.
+. Nota: Após a importação de rotas diárias, clique no botão [Exibir log] para obter um
+Tesumo dos itens importados.
+x — Etapa6: Clique na caixa Fechar para fechar as janelas de importação.
+Importação — Importar >Manutenção — Motoristas/Funcionários/Equipamentos/SKUs/
+Tipos de embalagem/Conjuntos de habilidades/Atividades dos conjuntos de habilidades/
+Containers — [Importar]
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Importação de dados do computador de bordo
+Importação de dados do computador de bordo
+Utilizado com: Roadnet
+O Roadnet Transportation Suíte permite importar informações reais de entrega obtidas
+nos computadores de bordo, como Cadec, Tripmaster, XATA, etc. Esses sistemas de
+computador de bordo monitoram informações como horários de chegada e partida, tempo
+gasto na entrega de um cliente, tempo de percurso entre paradas e vários outros itens.
+No Roadnet, você pode usar essas informações reais de entrega para várias finalidades:
+* Gerarrelatório real versus projetado (dados reais de entrega vs. horário de entrega
+estimado do Roadnet) para garantir a precisão dos dados do Roadnet em relação ao
+tempo de atendimento e de percurso.
+* Usaros dados do histórico dos horários reais de entrega para ajudar o Roadnet a
+determinar tempos de atendimento mais precisos (consulte Atualização de tempos de
+atendimento para obter mais informações).
+* Exibiros relatórios de dados reais versus projetados para monitorar problemas de
+produtividade do motorista.
+O módulo Importação também permite configurar como o Transportation Suite 1ê as
+informações do computador de bordo durante o processo de importação. Você pode
+especificar o nome e o local do arquivo de importação, bem como o layout do arquivo.
+Etapa 1: Clique no ícone Importação para abrir o módulo Importação.
+Nota: Se você tiver várias regiões ou cenários, verifique se são exibidos os dados
+apropriados na parte inferior da tela. Para alterar a região ou o cenário, basta clicar
+na seta e selecionar o item apropriado na lista exibida.
+Etapa 2: Clique no menu Importar e selecione Computador de bordo. A janela
+Importação de dados do computador de bordo é exibida.
+. Notas: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+importação. Consulte Altemância entre conjuntos de layouts para obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar no menu suspenso. Consuite Configuração de layouts
+de arquivo de importação para obter mais informações.
+Para visualizar um relatório que resuma as informações do layout, incluindo o
+nome e o local do arquivo de importação e as posições iniciais e o tamanho de cada
+campo, clique na seta [Layout do arquivo] e escolha Visualizar no menu suspenso.
+AA janela Visualizar relatório é exibida com o relatório. Nessa janela, você pode
+imprimir ou exportar o relatório.
+Etapa 3: Se você tiver criado mais de uma sessão para pedidos de um dia específico, use
+1 barra de rolagem se necessário e escolha 2 sessão a ser importada.
+Etapa 4: Clique na seta Fuso horário e escolha o fuso horário no qua estão a rota e as
+paradas.
+TMT ,, , ,, , ,, ,;,;FEEE N Roadhet Trarporiation Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Importação de dados do computador de bordo
+Etapa 5: Para atualizar informações do cliente com 2 latitude e a longitude reunidas pelo
+computador de bordo, marque Atualizar tabela de clientes. Clique na seta
+Formato da coordenada de latitude longitude e selecione o formato das
+latitudes e longitudes do arquivo de importação.
+Nota: Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao
+importar dados do computador de bordo.
+|O Roadnet permite importar
+informações de rota real que
+5 motoristas inserem em
+computadores de bordo ao
+fzeraroia
+Pasul 6: Faceți clic pe butonul [Importare date computer la bord] pentru a porni
+proces de import. Bara de progres afișează starea importului.
+Notă: După importarea informațiilor de pe computerul de bord, veți putea vizualiza jurnalul
+„sau a apărut vreo eroare în timpul procesului. Faceți clic pe [Vizualizare jurnal] sau [Vizualizare
+pustie].
+Pasul 7: Când importul este complet și după vizualizarea rapoartelor, faceți clic pe
+Închide caseta.
+Import — Import — Computer de bord [Importați date de pe computerul de bord
+bord]
+Ghid de operațiuni 281
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Agregați din fișier
+Agregați din fișier
+Folosit cu: Roadnet
+Caracteristica Agregare din fișier a modulului Import vă permite să agregați mai multe
+rutarea sesiunilor într-o singură sesiune Roadnet. De exemplu, dacă doi
+calculatoarele sunt utilizate în timpul procesului de rutare pentru un anumit
+zi, puteți arhiva o sesiune de computer și o puteți adăuga la sesiunea de computer
+principal.
+Pentru ca rutele să fie agregate, trebuie să existe următoarele condiții:
+* — regiunea pentru care importați rutele trebuie să existe în baza de date în
+care sunt importate;
+* toate articolele de întreținere (clienți, șoferi, echipamente etc.) utilizate în
+rutele trebuie să existe în baza de date în care sunt importate;
+* fișierul trebuie să fi fost creat în aceeași versiune de Roadnet pentru care este

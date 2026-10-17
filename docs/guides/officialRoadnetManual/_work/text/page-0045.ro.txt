@@ -1,0 +1,88 @@
+Pasul 4: În lista Elemente neutilizate în această regulă, selectați elementele care nu ar trebui să fie
+amestecat cu elementul țintă. Pentru a selecta mai multe elemente, țineți apăsat
+1m „Roadhet Transportation Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Stabilirea regulilor de produs
+[Ct] apăsat în timp ce selectați elemente. Faceți clic pe butonul [<] pentru a muta
+Elementele din lista Nu trebuie amestecate cu.
+Pentru a muta toate elementele din Elementele neutilizate în această listă de reguli, faceți clic pe
+Pasul 5: Repetați pașii 3 și 4 până când ați creat toate regulile necesare pentru produs.
+Pasul 6: Faceți clic pe pictograma Satvar sau apăsați [Ctrl]+[S] pentru a salva regulile Satvar
+produs.
+Pasul 7: Faceți clic pe caseta Închidere pentru a închide fereastra Reguli de produs.
+Înregistrări — Reguli de încărcare — Reguli de produse paleți/Reguli de gestionare
+produs strat — După suprafața depozitului/După tip de ambalaj/După marcă
+Pictograma SKU Salvare ([Ctilde+[S])
+Pentru a șterge sau modifica o regulă de produs existentă, mutați tipul de ambalaj/marca
+din listă SKU/zonă de depozit A nu se amesteca cu articole neutilizate
+regulă principală după cum este necesar.
+S la AA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+Stabilirea regulilor de stivuire
+Stabilirea regulilor de stivuire
+Folosit cu: FleetLoader
+Regulile de stivuire interzic un anumit tip de ambalaj
+stivuite deasupra unui alt tip de ambalaj, atunci când echipamentul este încărcat cu
+FleetLoader. De exemplu, puteți stabili o regulă care interzice stivuirea
+conserve peste sticle. Spre deosebire de regulile de produs, regulile de stivuire nu sunt
+inversabil; o regulă de stivuire care împiedică stivuirea conservelor deasupra
+sticlele nu împiedică sticlele să fie stivuite deasupra conservelor.
+. Notă: Nu utilizați reguli de stivuire pentru a evita încărcarea SKU-urilor împreună în
+același compartiment/pe același strat; utilizați regulile produsului pentru a preveni
+acest amestec.
+) Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Nemas — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Reguli de încărcare și Reguli de încărcare
+stivuire. Apare fereastra Reguli de stivuire.
+Pasul 3: În prima coloană, găsiți tipul de ambalaj care nu poate fi stivuit
+în al doilea; apoi derulați în jos pe linie pentru a găsi tipul de ambalare
+peste 2 care nu poate fi stivuit. Faceți clic pe casetă pentru a o selecta.
+TNEN o
+|—— m —— |x
++lare |
+Forees A REE
+ln = . T” E & 8 &
+și | E R R e e R IS
+eem | o R n R c o
+[xc | DM N aaa aaa o c o
+facemeore M N & m & & &
+[c | DM la aa RS la o
+Fostul DA
+Ec D E E
+ET mo s m o s x É
+ss e e e e e R E j»
+FGNS R S SNDN PS al iG
+„ambalajul este încărcat deasupra altuia, cum ar fi butoaiele care nu sunt stivuite
+pe sticle.
+Pasul 4: Continuați până când toate regulile de stivuire au fost create.
+1G Pasul 5: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva regulile
+„” stivuire.
+Pasul 6: Faceți clic pe caseta Închidere pentru a închide fereastra 2 Reguli de stivuire.
+Înregistrări — Reguli de încărcare — Reguli de stivuire — Pictograma Salvare
+(Crir[S)
+M= FF AA Roadaet Transportaton Sule
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu metodele de stratificare a paleților
+Cum să lucrați cu metodele de stratificare a paleților
+Folosit cu: FleetLoader
+Metodele de stratificare a paleților vă permit să creați mai multe moduri în care tipuri de paleți
+ambalajul poate fi montat pe un palet. De exemplu, puteți asambla paleți
+diferit pentru weekendurile de vacanta, pentru a pune mai multe produse in fiecare
+palet. Pentru a permite aceste situații, creați o metodă separată pentru vacanțe, care va fi
+folosit numai în aceste circumstanțe speciale. Când vehiculele sunt încărcate cu
+Editor de încărcări, trebuie specificată o metodă de stratificare a paleților; caz
+nu este specificat, se va folosi metoda implicită de stratificare.
+După adăugarea metodelor de stratificare, puteți defini cantitatea tipului de strat.
+ambalaj care poate fi ajustat într-un singur strat și numărul de straturi care poate fi
+montat pe un palet. Consuite Cum să lucrați cu tipurile de ambalaje pentru a obține
+mai multe informații.
+Suita de transport vine cu o metodă standard de stratificare a paleților,
+numit Standard (STD). Această metodă nu poate fi ștearsă, dar poate fi schimbată.
+Puteți adăuga oricâte metode de stratificare a paleților aveți nevoie.
+F! Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Ls — Pas?: Faceți clic pe meniul Înregistrări și selectați Reguli de service și Metode de livrare
+straturi de paleți. Apare fereastra Pallet Layer Methods, cu listare
+toate metodele consacrate de stratificare a paleților.
+NN q Pac ver ic i n lirada de Msblódos de cuntad d tee id focine:

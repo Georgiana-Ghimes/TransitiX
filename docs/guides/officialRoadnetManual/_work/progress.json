@@ -1,0 +1,694 @@
+{
+  "done": {
+    "1": {
+      "image": "page-0001.jpg",
+      "chars_por": 2573,
+      "chars_ro": 2619,
+      "seconds": 41.25
+    },
+    "2": {
+      "image": "page-0002.jpg",
+      "chars_por": 5542,
+      "chars_ro": 5349,
+      "seconds": 44.79
+    },
+    "3": {
+      "image": "page-0003.jpg",
+      "chars_por": 6161,
+      "chars_ro": 5939,
+      "seconds": 44.95
+    },
+    "4": {
+      "image": "page-0004.jpg",
+      "chars_por": 5433,
+      "chars_ro": 5263,
+      "seconds": 45.96
+    },
+    "5": {
+      "image": "page-0005.jpg",
+      "chars_por": 4830,
+      "chars_ro": 4695,
+      "seconds": 42.83
+    },
+    "6": {
+      "image": "page-0006.jpg",
+      "chars_por": 3236,
+      "chars_ro": 3138,
+      "seconds": 38.62
+    },
+    "7": {
+      "image": "page-0007.jpg",
+      "chars_por": 9030,
+      "chars_ro": 9009,
+      "seconds": 48.47
+    },
+    "8": {
+      "image": "page-0008.jpg",
+      "chars_por": 6023,
+      "chars_ro": 5994,
+      "seconds": 45.3
+    },
+    "9": {
+      "image": "page-0009.jpg",
+      "chars_por": 3790,
+      "chars_ro": 3874,
+      "seconds": 39.58
+    },
+    "10": {
+      "image": "page-0010.jpg",
+      "chars_por": 5367,
+      "chars_ro": 5681,
+      "seconds": 43.22
+    },
+    "11": {
+      "image": "page-0011.jpg",
+      "chars_por": 2963,
+      "chars_ro": 2979,
+      "seconds": 39.14
+    },
+    "12": {
+      "image": "page-0012.jpg",
+      "chars_por": 5844,
+      "chars_ro": 5827,
+      "seconds": 44.34
+    },
+    "13": {
+      "image": "page-0013.jpg",
+      "chars_por": 5830,
+      "chars_ro": 6105,
+      "seconds": 43.7
+    },
+    "14": {
+      "image": "page-0014.jpg",
+      "chars_por": 4518,
+      "chars_ro": 4799,
+      "seconds": 42.57
+    },
+    "15": {
+      "image": "page-0015.jpg",
+      "chars_por": 4394,
+      "chars_ro": 4647,
+      "seconds": 42.91
+    },
+    "16": {
+      "image": "page-0016.jpg",
+      "chars_por": 5478,
+      "chars_ro": 5776,
+      "seconds": 43.85
+    },
+    "17": {
+      "image": "page-0017.jpg",
+      "chars_por": 5337,
+      "chars_ro": 5342,
+      "seconds": 43.17
+    },
+    "18": {
+      "image": "page-0018.jpg",
+      "chars_por": 4382,
+      "chars_ro": 4508,
+      "seconds": 43.07
+    },
+    "19": {
+      "image": "page-0019.jpg",
+      "chars_por": 6700,
+      "chars_ro": 6929,
+      "seconds": 44.7
+    },
+    "20": {
+      "image": "page-0020.jpg",
+      "chars_por": 7389,
+      "chars_ro": 7395,
+      "seconds": 44.75
+    },
+    "21": {
+      "image": "page-0021.jpg",
+      "chars_por": 5435,
+      "chars_ro": 5529,
+      "seconds": 42.17
+    },
+    "22": {
+      "image": "page-0022.jpg",
+      "chars_por": 3913,
+      "chars_ro": 3932,
+      "seconds": 40.07
+    },
+    "23": {
+      "image": "page-0023.jpg",
+      "chars_por": 4553,
+      "chars_ro": 4602,
+      "seconds": 60.77
+    },
+    "24": {
+      "image": "page-0024.jpg",
+      "chars_por": 5138,
+      "chars_ro": 5196,
+      "seconds": 35494.37
+    },
+    "25": {
+      "image": "page-0025.jpg",
+      "chars_por": 7636,
+      "chars_ro": 7699,
+      "seconds": 43.16
+    },
+    "26": {
+      "image": "page-0026.jpg",
+      "chars_por": 4243,
+      "chars_ro": 4260,
+      "seconds": 34.58
+    },
+    "27": {
+      "image": "page-0027.jpg",
+      "chars_por": 7240,
+      "chars_ro": 7274,
+      "seconds": 33.07
+    },
+    "28": {
+      "image": "page-0028.jpg",
+      "chars_por": 8248,
+      "chars_ro": 8014,
+      "seconds": 31.08
+    },
+    "29": {
+      "image": "page-0029.jpg",
+      "chars_por": 6572,
+      "chars_ro": 6554,
+      "seconds": 29.07
+    },
+    "30": {
+      "image": "page-0030.jpg",
+      "chars_por": 4688,
+      "chars_ro": 4827,
+      "seconds": 27.6
+    },
+    "31": {
+      "image": "page-0031.jpg",
+      "chars_por": 3921,
+      "chars_ro": 3996,
+      "seconds": 24.24
+    },
+    "32": {
+      "image": "page-0032.jpg",
+      "chars_por": 6866,
+      "chars_ro": 7158,
+      "seconds": 28.53
+    },
+    "33": {
+      "image": "page-0033.jpg",
+      "chars_por": 5638,
+      "chars_ro": 5700,
+      "seconds": 28.38
+    },
+    "34": {
+      "image": "page-0034.jpg",
+      "chars_por": 2754,
+      "chars_ro": 2697,
+      "seconds": 35.09
+    },
+    "35": {
+      "image": "page-0035.jpg",
+      "chars_por": 5274,
+      "chars_ro": 5405,
+      "seconds": 27.55
+    },
+    "36": {
+      "image": "page-0036.jpg",
+      "chars_por": 4641,
+      "chars_ro": 4689,
+      "seconds": 28.17
+    },
+    "37": {
+      "image": "page-0037.jpg",
+      "chars_por": 3867,
+      "chars_ro": 4026,
+      "seconds": 25.55
+    },
+    "38": {
+      "image": "page-0038.jpg",
+      "chars_por": 5869,
+      "chars_ro": 6141,
+      "seconds": 30.98
+    },
+    "39": {
+      "image": "page-0039.jpg",
+      "chars_por": 5083,
+      "chars_ro": 5275,
+      "seconds": 29.76
+    },
+    "40": {
+      "image": "page-0040.jpg",
+      "chars_por": 3464,
+      "chars_ro": 3678,
+      "seconds": 26.42
+    },
+    "41": {
+      "image": "page-0041.jpg",
+      "chars_por": 3673,
+      "chars_ro": 3860,
+      "seconds": 27.72
+    },
+    "42": {
+      "image": "page-0042.jpg",
+      "chars_por": 5411,
+      "chars_ro": 5681,
+      "seconds": 28.78
+    },
+    "43": {
+      "image": "page-0043.jpg",
+      "chars_por": 5800,
+      "chars_ro": 6150,
+      "seconds": 28.13
+    },
+    "44": {
+      "image": "page-0044.jpg",
+      "chars_por": 2642,
+      "chars_ro": 2825,
+      "seconds": 24.7
+    },
+    "45": {
+      "image": "page-0045.jpg",
+      "chars_por": 4800,
+      "chars_ro": 4937,
+      "seconds": 29.3
+    },
+    "46": {
+      "image": "page-0046.jpg",
+      "chars_por": 4325,
+      "chars_ro": 4447,
+      "seconds": 32.76
+    },
+    "47": {
+      "image": "page-0047.jpg",
+      "chars_por": 4506,
+      "chars_ro": 4431,
+      "seconds": 30.22
+    },
+    "48": {
+      "image": "page-0048.jpg",
+      "chars_por": 4282,
+      "chars_ro": 4279,
+      "seconds": 29.84
+    },
+    "49": {
+      "image": "page-0049.jpg",
+      "chars_por": 4893,
+      "chars_ro": 4918,
+      "seconds": 49.83
+    },
+    "50": {
+      "image": "page-0050.jpg",
+      "chars_por": 4193,
+      "chars_ro": 4249,
+      "seconds": 25.89
+    },
+    "51": {
+      "image": "page-0051.jpg",
+      "chars_por": 4830,
+      "chars_ro": 4886,
+      "seconds": 29.01
+    },
+    "52": {
+      "image": "page-0052.jpg",
+      "chars_por": 4740,
+      "chars_ro": 4774,
+      "seconds": 45.13
+    },
+    "53": {
+      "image": "page-0053.jpg",
+      "chars_por": 2331,
+      "chars_ro": 2364,
+      "seconds": 25.16
+    },
+    "54": {
+      "image": "page-0054.jpg",
+      "chars_por": 4685,
+      "chars_ro": 4799,
+      "seconds": 30.13
+    },
+    "55": {
+      "image": "page-0055.jpg",
+      "chars_por": 4409,
+      "chars_ro": 4473,
+      "seconds": 32.0
+    },
+    "56": {
+      "image": "page-0056.jpg",
+      "chars_por": 4877,
+      "chars_ro": 5093,
+      "seconds": 60.54
+    },
+    "57": {
+      "image": "page-0057.jpg",
+      "chars_por": 4457,
+      "chars_ro": 4453,
+      "seconds": 28.63
+    },
+    "58": {
+      "image": "page-0058.jpg",
+      "chars_por": 4930,
+      "chars_ro": 5017,
+      "seconds": 28.07
+    },
+    "59": {
+      "image": "page-0059.jpg",
+      "chars_por": 3036,
+      "chars_ro": 3077,
+      "seconds": 39.35
+    },
+    "60": {
+      "image": "page-0060.jpg",
+      "chars_por": 5253,
+      "chars_ro": 5291,
+      "seconds": 41.22
+    },
+    "61": {
+      "image": "page-0061.jpg",
+      "chars_por": 5767,
+      "chars_ro": 5878,
+      "seconds": 42.19
+    },
+    "62": {
+      "image": "page-0062.jpg",
+      "chars_por": 6057,
+      "chars_ro": 6148,
+      "seconds": 29.45
+    },
+    "63": {
+      "image": "page-0063.jpg",
+      "chars_por": 4848,
+      "chars_ro": 4949,
+      "seconds": 42.02
+    },
+    "64": {
+      "image": "page-0064.jpg",
+      "chars_por": 4531,
+      "chars_ro": 4604,
+      "seconds": 27.43
+    },
+    "65": {
+      "image": "page-0065.jpg",
+      "chars_por": 4073,
+      "chars_ro": 4207,
+      "seconds": 25.17
+    },
+    "66": {
+      "image": "page-0066.jpg",
+      "chars_por": 3470,
+      "chars_ro": 3572,
+      "seconds": 30.71
+    },
+    "67": {
+      "image": "page-0067.jpg",
+      "chars_por": 4578,
+      "chars_ro": 4629,
+      "seconds": 26.63
+    },
+    "68": {
+      "image": "page-0068.jpg",
+      "chars_por": 4411,
+      "chars_ro": 4709,
+      "seconds": 35.02
+    },
+    "69": {
+      "image": "page-0069.jpg",
+      "chars_por": 3744,
+      "chars_ro": 3907,
+      "seconds": 24.83
+    },
+    "70": {
+      "image": "page-0070.jpg",
+      "chars_por": 5211,
+      "chars_ro": 5285,
+      "seconds": 30.3
+    },
+    "71": {
+      "image": "page-0071.jpg",
+      "chars_por": 5446,
+      "chars_ro": 5501,
+      "seconds": 27.93
+    },
+    "72": {
+      "image": "page-0072.jpg",
+      "chars_por": 4086,
+      "chars_ro": 4258,
+      "seconds": 31.24
+    },
+    "73": {
+      "image": "page-0073.jpg",
+      "chars_por": 4514,
+      "chars_ro": 4564,
+      "seconds": 47.64
+    },
+    "74": {
+      "image": "page-0074.jpg",
+      "chars_por": 3989,
+      "chars_ro": 4056,
+      "seconds": 24.78
+    },
+    "75": {
+      "image": "page-0075.jpg",
+      "chars_por": 2204,
+      "chars_ro": 2206,
+      "seconds": 24.14
+    },
+    "76": {
+      "image": "page-0076.jpg",
+      "chars_por": 6133,
+      "chars_ro": 6127,
+      "seconds": 35.68
+    },
+    "77": {
+      "image": "page-0077.jpg",
+      "chars_por": 3621,
+      "chars_ro": 3662,
+      "seconds": 39.43
+    },
+    "78": {
+      "image": "page-0078.jpg",
+      "chars_por": 4759,
+      "chars_ro": 4838,
+      "seconds": 28.3
+    },
+    "79": {
+      "image": "page-0079.jpg",
+      "chars_por": 3814,
+      "chars_ro": 3923,
+      "seconds": 32.15
+    },
+    "80": {
+      "image": "page-0080.jpg",
+      "chars_por": 3989,
+      "chars_ro": 4030,
+      "seconds": 38.76
+    },
+    "81": {
+      "image": "page-0081.jpg",
+      "chars_por": 5440,
+      "chars_ro": 5423,
+      "seconds": 29.74
+    },
+    "82": {
+      "image": "page-0082.jpg",
+      "chars_por": 5883,
+      "chars_ro": 5826,
+      "seconds": 29.34
+    },
+    "83": {
+      "image": "page-0083.jpg",
+      "chars_por": 5115,
+      "chars_ro": 5123,
+      "seconds": 27.98
+    },
+    "84": {
+      "image": "page-0084.jpg",
+      "chars_por": 6652,
+      "chars_ro": 6561,
+      "seconds": 44.34
+    },
+    "85": {
+      "image": "page-0085.jpg",
+      "chars_por": 4054,
+      "chars_ro": 3925,
+      "seconds": 24.78
+    },
+    "86": {
+      "image": "page-0086.jpg",
+      "chars_por": 4527,
+      "chars_ro": 4607,
+      "seconds": 27.03
+    },
+    "87": {
+      "image": "page-0087.jpg",
+      "chars_por": 5596,
+      "chars_ro": 5793,
+      "seconds": 28.72
+    },
+    "88": {
+      "image": "page-0088.jpg",
+      "chars_por": 5271,
+      "chars_ro": 5758,
+      "seconds": 40.62
+    },
+    "89": {
+      "image": "page-0089.jpg",
+      "chars_por": 6272,
+      "chars_ro": 6705,
+      "seconds": 29.08
+    },
+    "90": {
+      "image": "page-0090.jpg",
+      "chars_por": 4249,
+      "chars_ro": 4493,
+      "seconds": 36.39
+    },
+    "91": {
+      "image": "page-0091.jpg",
+      "chars_por": 5399,
+      "chars_ro": 5797,
+      "seconds": 28.85
+    },
+    "92": {
+      "image": "page-0092.jpg",
+      "chars_por": 5170,
+      "chars_ro": 5363,
+      "seconds": 27.44
+    },
+    "93": {
+      "image": "page-0093.jpg",
+      "chars_por": 4203,
+      "chars_ro": 4290,
+      "seconds": 27.24
+    },
+    "94": {
+      "image": "page-0094.jpg",
+      "chars_por": 5739,
+      "chars_ro": 5681,
+      "seconds": 28.09
+    },
+    "95": {
+      "image": "page-0095.jpg",
+      "chars_por": 7192,
+      "chars_ro": 7214,
+      "seconds": 28.11
+    },
+    "96": {
+      "image": "page-0096.jpg",
+      "chars_por": 5801,
+      "chars_ro": 5977,
+      "seconds": 28.89
+    },
+    "97": {
+      "image": "page-0097.jpg",
+      "chars_por": 7407,
+      "chars_ro": 7375,
+      "seconds": 32.94
+    },
+    "98": {
+      "image": "page-0098.jpg",
+      "chars_por": 5552,
+      "chars_ro": 5546,
+      "seconds": 33.09
+    },
+    "99": {
+      "image": "page-0099.jpg",
+      "chars_por": 5577,
+      "chars_ro": 5413,
+      "seconds": 29.39
+    },
+    "100": {
+      "image": "page-0100.jpg",
+      "chars_por": 3692,
+      "chars_ro": 3708,
+      "seconds": 29.14
+    },
+    "101": {
+      "image": "page-0101.jpg",
+      "chars_por": 4605,
+      "chars_ro": 4629,
+      "seconds": 47.18
+    },
+    "102": {
+      "image": "page-0102.jpg",
+      "chars_por": 5652,
+      "chars_ro": 5657,
+      "seconds": 29.83
+    },
+    "103": {
+      "image": "page-0103.jpg",
+      "chars_por": 6225,
+      "chars_ro": 6111,
+      "seconds": 29.31
+    },
+    "104": {
+      "image": "page-0104.jpg",
+      "chars_por": 4302,
+      "chars_ro": 4337,
+      "seconds": 36.42
+    },
+    "105": {
+      "image": "page-0105.jpg",
+      "chars_por": 5369,
+      "chars_ro": 5566,
+      "seconds": 43.56
+    },
+    "106": {
+      "image": "page-0106.jpg",
+      "chars_por": 6462,
+      "chars_ro": 6460,
+      "seconds": 46.53
+    },
+    "107": {
+      "image": "page-0107.jpg",
+      "chars_por": 6001,
+      "chars_ro": 6156,
+      "seconds": 44.67
+    },
+    "108": {
+      "image": "page-0108.jpg",
+      "chars_por": 4995,
+      "chars_ro": 5070,
+      "seconds": 47.69
+    },
+    "109": {
+      "image": "page-0109.jpg",
+      "chars_por": 4504,
+      "chars_ro": 4586,
+      "seconds": 55.66
+    },
+    "110": {
+      "image": "page-0110.jpg",
+      "chars_por": 5792,
+      "chars_ro": 5900,
+      "seconds": 43.75
+    },
+    "111": {
+      "image": "page-0111.jpg",
+      "chars_por": 5630,
+      "chars_ro": 5612,
+      "seconds": 52.29
+    },
+    "112": {
+      "image": "page-0112.jpg",
+      "chars_por": 4992,
+      "chars_ro": 5030,
+      "seconds": 52.56
+    },
+    "113": {
+      "image": "page-0113.jpg",
+      "chars_por": 2472,
+      "chars_ro": 2429,
+      "seconds": 38.81
+    },
+    "114": {
+      "image": "page-0114.jpg",
+      "chars_por": 3153,
+      "chars_ro": 3062,
+      "seconds": 26.12
+    },
+    "115": {
+      "image": "page-0115.jpg",
+      "chars_por": 6320,
+      "chars_ro": 6253,
+      "seconds": 48.35
+    }
+  }
+}

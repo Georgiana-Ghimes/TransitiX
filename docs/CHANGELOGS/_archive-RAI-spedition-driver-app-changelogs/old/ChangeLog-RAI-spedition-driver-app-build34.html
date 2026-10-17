@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 34 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid var(--warn);
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--warn);
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 34 <em style="opacity:0.85;font-weight:500">(deschis)</em></h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.4.0 · build 34</strong> · deschis <strong>14 septembrie 2026</strong><br />
+      De la commit <code>aee3313</code> (build 33) — append până la semnalul de închidere
+    </div>
+    <div class="badge-row">
+      <span class="badge">Harta zonelor</span>
+      <span class="badge">tax_zones.polygon</span>
+      <span class="badge">Locate = același ca TPO</span>
+      <span class="badge">WIP — se actualizează</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Îl actualizăm pe măsură ce apar modificări noi, până la
+    semnalul de închidere. Local în <code>docs/CHANGELOGS/</code> — folderul <code>docs/</code> nu e pe GitHub.
+  </p>
+
+  <div class="note">
+    <strong>Companion:</strong> <strong>Harta zonelor</strong> e și în profilul documents
+    (<code>VITE_APP_PROFILE=documents</code>) — rută <code>/zone-map</code>, item în meniul
+    lateral lângă Rapoarte. Același ecran există și pe Transitix full.
+  </div>
+
+  <div class="why">
+    <strong>De ce:</strong> <code>tax_zones.polygon</code> decide deja taxa de zonă la TPO, dar
+    nimeni nu putea vedea sau verifica conturul pe hartă. Operatorul avea nevoie să deseneze /
+    importe outline-ul și să verifice o adresă cu <em>aceleași</em> funcții ca factura — nu cu
+    o logică separată pe hartă.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Harta zonelor (<code>/zone-map</code>)</h3>
+      <ul>
+        <li>Pagină nouă <strong>Harta zonelor</strong> — în companion (documents) și pe TMS full.</li>
+        <li>Desenează pe OpenStreetMap contururile din <code>tax_zones.polygon</code> (ce citește calculul TPO).</li>
+        <li><strong>Import</strong> contur din GeoJSON sau KML (WGS84) → salvare pe zonă.</li>
+        <li><strong>Trasare</strong> pe hartă (click → noduri → Salvează conturul / Anulează / Undo).</li>
+        <li>Arată / ascunde zone; culori distincte pentru zone care se suprapun.</li>
+        <li>Referință perimetrală București Zona A / Zona B (liste de arterii PMB) — ghid la trasare,
+          <strong>nu</strong> intră în calcul.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Verificare adresă pe zonă (= TPO)</h3>
+      <ul>
+        <li>Căutare adresă + MMA opțional → punct pe hartă, zona găsită, tarif aplicabil.</li>
+        <li>API <code>POST /api/commercial/zones/locate</code>: geocode pe calea comună, apoi
+          <code>resolveZone</code> + <code>findZoneRate</code> (aceleași ca la TPO).</li>
+        <li>Răspuns: <code>matched_by</code> = <code>polygon</code> sau <code>text</code> (matcher pe text adresă).</li>
+        <li>Geocode din cache: city/county/postcode din candidat + parse adresă — ca zona să nu
+          „dispară” la a doua căutare pe aceeași stradă.</li>
+        <li>Client: <code>api.commercial.locateZone({ address, mmaKg, date })</code>.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Librării + teste</h3>
+      <ul>
+        <li><code>src/lib/zoneGeometry.js</code> — GeoJSON ↔ Leaflet (lon/lat), import, validări outline
+          (<code>toFiniteNumber</code>, nu <code>Number(null)</code>).</li>
+        <li><code>src/lib/bucharestZones.js</code> — referință ZA / ZB (perimetru stradal oficial).</li>
+        <li>Teste unitare: <code>zoneGeometry.test.js</code>, <code>bucharestZones.test.js</code>.</li>
+        <li>Teste API: <code>zoneLocate.api.test.js</code> (punct înăuntru / afară, fără geocode live).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <p class="muted" style="margin:0">
+        (gol deocamdată — append aici pe măsură ce apar remedieri în același increment)
+      </p>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Companion (sau full) → meniu <strong>Harta zonelor</strong> → <code>/zone-map</code>.</li>
+        <li>Zone active cu / fără polygon — se văd pe hartă; toggle Ascunde.</li>
+        <li>Import GeoJSON / KML pe o zonă → conturul se salvează și se reîncarcă.</li>
+        <li>Trasează un poligon nou → Salvează → refresh: același outline.</li>
+        <li>Caută o adresă (cu geocoder configurat) + MMA → zonă + tarif; verifică
+          <code>matched_by</code>.</li>
+        <li>Login / topbar: <strong>v1.4.0 - build 34</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.4.0 build 34 · deschis 14 septembrie 2026 · branch RAI-spedition-driver-app ·
+    append până la închidere · docs/ local only
+  </footer>
+
+</body>
+</html>

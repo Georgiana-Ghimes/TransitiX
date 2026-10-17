@@ -1,0 +1,87 @@
+frecvență decât altele. Puteți specifica o regiune ca implicită. Oricând
+introducând un nou modul, cum ar fi Editorul de rutare, veți vedea automat
+informații despre regiune implicită. Puteți schimba regiunea afișată în fiecare modul,
+după cum este necesar.
+E Ghid de operațiuni
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+Cum să lucrezi cu regiunile.
+Notă: Regiunea selectată implicit este afișată ca atare pentru utilizatorul conectat la
+modul.
+Puteți selecta o regiune implicită în orice modul, cu excepția modulului
+Administrare.
+Pentru a selecta o regiune implicită, faceți clic dreapta pe numele regiunii.
+regiune, în partea dreaptă jos a ferestrei modulului și selectați 2 opțiunea Standardizare.
+Schimbarea regiunilor
+Uneori poate fi necesar să treceți de la o regiune la alta. The Roadnet
+Transportation Suite vă permite să comutați cu ușurință între regiuni în majoritatea zonelor
+program. Cum lucrezi mai des cu informațiile unei regiuni?
+decât altele, poate implicit o regiune.
+Notă: în listă vor apărea numai regiunile la care aveți acces în modul.
+Pasul 1: Deschideți modulul corespunzător.
+Pasul 2: În partea dreaptă jos a barei de stare a ferestrei este un câmp cu numele
+a regiunii actuale. Faceți clic pe săgeată și va apărea o listă de regiuni.
+Pasul 3: Faceți clic pe regiunea cu care doriți să lucrați. Lista regiunilor se închide și a
+apare fereastra de confirmare.
+Pasul 4: Faceți clic pe [Da] pentru a trece la noile date de regiune sau pe [Nu] la
+continuați să lucrați cu regiunea actuală.
+s „Roadhet Transportaton Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Întreținere Roadnet Transportation Suite
+Întreținere Roadnet Transportation Suite
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Notă: Nu veți putea deschide acest modul dacă nu vi s-a acordat permisiunea de întreținere pe
+Modul de administrare.
+Modulul de întreținere cuprinde toate informațiile despre afacerea dvs. - clienți
+(depozite, clienți sau clienți de livrare etc.), angajați, echipamente (cai
+mecanici, remorci, vehicule de dimensiuni medii etc.) — și cum vor fi astfel de informații
+Folosit al doilea pentru a planifica, crea, încărca și, în sfârșit, monitoriza rutele. Modulul
+Întreținerea este utilizată inițial pentru a configura aceste informații și apoi,
+În mod regulat, pentru a vă menține actualizate informațiile despre sistem. De exemplu, dacă
+achiziționați un nou tip de echipament de livrare și îl utilizați pentru a livra un produs,
+Trebuie să introduceți informații despre noul echipament, astfel încât
+calculatoarele conțin date exacte.
+/Modulul de întreținere Roadnet Transportation Suite vă permite să configurați și să întrețineți
+date de sistem. Puteți utiliza modulul de întreținere pentru a:
+* Tnserire păstrează informații despre clienți, livrări, șoferi, echipamente și
+Alte domenii ale operațiunii dvs.
+* — Reglați timpul de călătorie în funcție de tipul și dimensiunea echipamentului.
+* Configurați opțiunile care definesc funcționarea Transportation Suite.
+* Înregistrați timpul efectiv petrecut pentru a face livrări pentru a ajuta Roadnet să producă
+timpi de service și soluții de rutare mai precise.
+* — Actualizați orele serviciului clienți cu informații reale de creat
+trasee mai precise.
+* Creați modele de oră de vârf care reflectă modelele de trafic în schimbare
+în timpul zilei.
+* Efectuați întreținerea bazei de date pentru a menține Roaánct Transportation Suite
+functionand in cel mai bun mod posibil.
+* Transportați datele către UPS Logistics Technologies pentru asistență
+rezolvarea problemelor.
+Important: acuratețea Roadnet Transportation Suite depinde de acuratețea
+informatiile introduse. Încercați să introduceți date noi și modificări ale datelor
+existente imediat.
+Notă: De asemenea, puteți accesa și actualiza multe elemente de resurse de întreținere din
+Editor de rutare și Editor de planificare.
+Ghid de operațiuni »
+€€ Copyright 2006 United Parcel Service of America, lmc
+Toate drepturile rezervate.
+(Cum să lucrați cu articolele de întreținere
+Cum să lucrați cu articolele de întreținere
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Toate articolele Roadnet Transportation Suite utilizează ferestre de întreținere pentru
+adăugarea, editarea și ștergerea articolelor. Aceasta înseamnă că același proces de bază poate fi
+vtilizat pentru întreținerea tuturor articolelor.
+Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv. Apoi alege
+adăugați sau actualizați informații în sistem.
+Adăugarea de articole
+Fiecare element de întreținere din Roadnet Transportation Suite, cum ar fi echipamente,
+angajaților sau clienților, conține instrucțiuni specifice pas cu pas despre cum să se facă
+adăugați informații, deoarece datele necesare pentru fiecare articol sunt diferite.
+De exemplu, a doua căutare pentru instrucțiuni despre cum să adăugați echipamente, veți vedea
+secțiunea principală Echipament, care descrie conceptele asociate cu echipament,
+urmată de instrucțiuni pas cu pas pentru adăugarea echipamentelor.
+Dacă adăugați un articol similar unui element existent, îl puteți clona
+element existent, reducând cantitatea de text care trebuie introdus.
+Pasul 1: Faceți clic pe meniul Înregistrări și selectați opțiunea de meniu pentru elementul dorit
+sunt ss

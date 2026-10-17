@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL · Sprint 6 · Changelog #2 · builds 74–88 (închis)</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog #2 · Sprint 6 · builds 74–88</h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong> · <strong>Sprint 6</strong><br />
+      Continuare după perioada 67–72 · deschis <strong>2 octombrie 2026</strong> ·
+      închis <strong>3 octombrie 2026</strong> pe <strong>v1.22.2 · build 88</strong>.<br />
+      Companion <strong>RAI Spedition · Documente</strong>.
+    </div>
+    <div class="badge-row">
+      <span class="badge">Changelog #2</span>
+      <span class="badge">Sprint 6</span>
+      <span class="badge">Builds 74–88</span>
+      <span class="badge">MISTRAL</span>
+      <span class="badge">Închis pe build 88</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    <strong>Sprint 6</strong> · Fișier: <code>ChangeLog-MISTRAL-experimenting-rai-documents-02-builds-74-88.html</code>
+    (+ PDF). Perioada anterioară: <code>ChangeLog-MISTRAL-experimenting-rai-documents-builds-67-72</code>.
+  </p>
+
+  <div class="note">
+    <strong>Închis · Sprint 6:</strong> builds 74–88. Următorul sprint pornește un changelog nou deschis.
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> #68–#69 poze handwritten + PDF split pe TRO/PSL;
+    #67 Depozite; #64–#66 rută OCR + învățare; #59–#63 PDF/MTMA/TPO; #55–#58 clopoțel / date / remorcă.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>88</td><td>v1.22.2</td><td>Bugfix #68–#69: poze handwritten intacte; PDF split doar pe TRO/PSL distincte</td></tr>
+        <tr><td>87</td><td>v1.22.1</td><td>Bugfix #67: etichetă Depozite (plural) → origine MIL-NEAMTIU</td></tr>
+        <tr><td>86</td><td>v1.22.0</td><td>Rută MIL-NEAMTIU + livrare completă; învățare rută din Editează (regex pe companie)</td></tr>
+        <tr><td>85</td><td>v1.21.0</td><td>PDF bulk→avize pe pagină; MTMA; OCR TPO cerneală + Cantitate găleți; Editează curățat</td></tr>
+        <tr><td>84</td><td>v1.20.0</td><td>Clopoțel companion; date ZZ.LL.AAAA; OCR tractor+remorcă; Confirmat fără „De revizuit”</td></tr>
+        <tr><td>83</td><td>v1.19.0</td><td>OCR hibrid: TPO manuscris (TPO / #####) pe aviz tipărit</td></tr>
+        <tr><td>82</td><td>v1.18.0</td><td>Editează → pin pe Harta zonelor; geocode Photon/OSM din browser</td></tr>
+        <tr><td>81</td><td>v1.17.1</td><td>Hartă: un singur rezultat + pin cu adresa (fără card geocode dublu)</td></tr>
+        <tr><td>80</td><td>v1.17.0</td><td>Paginare/bulk avize+flotă; rută OCR tab Baumit; hartă Bvd. + pin</td></tr>
+        <tr><td>79</td><td>v1.16.0</td><td>Taxă zonă MTMA din rută (după /) + umplere Taxe suplimentare</td></tr>
+        <tr><td>78</td><td>v1.15.0</td><td>Rută: Expeditor + Adresa de livrare (stânga), fără LLM / fără Client</td></tr>
+        <tr><td>77</td><td>v1.14.2</td><td>Bugfix #46: Mistral OCR respectă timeoutMs scurt (fără floor 5s)</td></tr>
+        <tr><td>76</td><td>v1.14.1</td><td>Bugfix #44–#45: CI ghid em dash + companion version distinctă</td></tr>
+        <tr><td>75</td><td>v1.14.0</td><td>Bugfix #39–#43: date RO, foaie colapsabilă, incertitudine, cantitate total, CI</td></tr>
+        <tr><td>74</td><td>v1.13.2</td><td>Anexa RAI: cantitate din greutate brută; OCR total găleți/saci</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="toc">
+    <strong>BUGFIX</strong>
+    <p class="muted" style="margin:0.35em 0 0.55em">
+      Evidența bugurilor fixate în Sprint 6, cu <strong>numărul original</strong> din backlog.
+      La fiecare fix nou: o linie aici + detaliu în blocul build-ului (secțiunea Bugfix).
+    </p>
+    <table>
+      <thead>
+        <tr><th>Nr.</th><th>Titlu</th><th>Build</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>#39</strong></td>
+          <td>Data apare în format american MM/DD/YYYY în editare aviz</td>
+          <td>75 · v1.14.0</td>
+          <td>fixat — UI RO DD.MM.YYYY (independent de locale OS); salvare ISO neschimbată</td>
+        </tr>
+        <tr>
+          <td><strong>#40</strong></td>
+          <td>UX — listă „Scrie pe foaie” prea lungă pe Documente (șofer)</td>
+          <td>75 · v1.14.0</td>
+          <td>fixat — accordion colapsat default; tap pe titlu expandă/închide 1–14</td>
+        </tr>
+        <tr>
+          <td><strong>#41</strong></td>
+          <td>Valori extrase greșit afișate fără eticheta de incertitudine</td>
+          <td>75 · v1.14.0</td>
+          <td>fixat — rută incompletă / cantitate ≠ total pe OCR → „verifică (parser nesigur)” + De revizuit</td>
+        </tr>
+        <tr>
+          <td><strong>#42</strong></td>
+          <td>Cantitate = prima linie de produs, nu totalul „Numărul de găleți”</td>
+          <td>75 · v1.14.0</td>
+          <td>fixat — footer tolerant la OCR pe poză; altfel suma liniilor; niciodată prima linie când există eticheta de total</td>
+        </tr>
+        <tr>
+          <td><strong>#43</strong></td>
+          <td>CI/CD — pipeline GitHub (3 teste eșuate)</td>
+          <td>75 · v1.14.0</td>
+          <td>fixat — feedback.test (km OCR egalitate numerică); parity telefon en-dash 7–15 pe client</td>
+        </tr>
+        <tr>
+          <td><strong>#44</strong></td>
+          <td>CI — ghid birou: em dash (—) blochează testul „nu e scris de o mașină”</td>
+          <td>76 · v1.14.1</td>
+          <td>fixat — text despre „verifică (parser nesigur)” fără em/en dash; virgulă în loc</td>
+        </tr>
+        <tr>
+          <td><strong>#45</strong></td>
+          <td>CI — companion.version identic cu product version (1.14.0)</td>
+          <td>76 · v1.14.1</td>
+          <td>fixat — companion pe linie separată v1.14.1 (product rămâne 1.14.0)</td>
+        </tr>
+        <tr>
+          <td><strong>#46</strong></td>
+          <td>CI API — re-extract lent: status rămâne uploaded (floor 5s pe Mistral timeout)</td>
+          <td>77 · v1.14.2</td>
+          <td>fixat — runMistralOcr respectă timeoutMs scurt; markExtractFailed ajunge la timp</td>
+        </tr>
+        <tr>
+          <td><strong>#47</strong></td>
+          <td>Rută transport greșită: Client (dreapta) în loc de Adresa de livrare; format lipicios</td>
+          <td>78 · v1.15.0</td>
+          <td>fixat — doar Expeditor + coloana stângă Adresa de livrare; <code>Str. X nr. N, Localitate / …</code>; fără LLM pe rută</td>
+        </tr>
+        <tr>
+          <td><strong>#48</strong></td>
+          <td>Taxă zonă / MTMA: nu folosea adresa de livrare din rută; Taxe suplimentare rămânea goală/default</td>
+          <td>79 · v1.16.0</td>
+          <td>fixat — piciorul după <code> / </code> → index străzi; taxa &gt; 0 se scrie în Taxe suplimentare</td>
+        </tr>
+        <tr>
+          <td><strong>#49</strong></td>
+          <td>Rută OCR: doar „Șosea” / doar număr / doar „București” pe originale Baumit cu tab-uri</td>
+          <td>80 · v1.17.0</td>
+          <td>fixat — regex tip+nume+nr.; <code>Viilor\t52</code> + <code>Șosea\tnr.</code>; fără vocabular de străzi</td>
+        </tr>
+        <tr>
+          <td><strong>#50</strong></td>
+          <td>Hartă / geocode: <code>Bvd.</code> nu era tratat ca bulevard (față de <code>Bd.</code>)</td>
+          <td>80 · v1.17.0</td>
+          <td>fixat — alias <code>bvd</code>/<code>bld</code> în address + streetName; query geocode expandat</td>
+        </tr>
+        <tr>
+          <td><strong>#51</strong></td>
+          <td>Hartă zone: adresa din aviz găsită în index dar fără pin; oraș după virgulă bloca lookup</td>
+          <td>80 · v1.17.0</td>
+          <td>fixat — pin după hit index; strip localitate; <code>PHOTON_URL</code> local pentru coordonate</td>
+        </tr>
+        <tr>
+          <td><strong>#52</strong></td>
+          <td>Hartă: două carduri (index + geocode greșit pe Universitate); pin fără adresă clară</td>
+          <td>81 · v1.17.1</td>
+          <td>fixat — un card din index; geocode doar pin; etichetă adresă pe Leaflet; fără FitBounds pe pin</td>
+        </tr>
+        <tr>
+          <td><strong>#53</strong></td>
+          <td>Editează: verificare vizuală pin pe hartă; adrese în afara Bucureștiului „negăsite”</td>
+          <td>82 · v1.18.0</td>
+          <td>fixat — deep-link cu localitate; pin via Photon public (fallback scurtări), nu <code>/zones/locate</code></td>
+        </tr>
+        <tr>
+          <td><strong>#54</strong></td>
+          <td>TPO scris de mână cu roșu pe aviz tipărit (câmp „comandă de transport” gol)</td>
+          <td>83 · v1.19.0</td>
+          <td>fixat — separator <code>/</code>; extracție hibridă lângă eticheta de transport; prefill + review la coduri scurte</td>
+        </tr>
+        <tr>
+          <td><strong>#55</strong></td>
+          <td>Clopoțel companion: notificări de curse / CMR / live</td>
+          <td>84 · v1.20.0</td>
+          <td>fixat — filtru tipuri + linkuri; doar upload / flotă / alerte pe ecrane companion</td>
+        </tr>
+        <tr>
+          <td><strong>#56</strong></td>
+          <td>Lista avize: Data în format ISO englezesc</td>
+          <td>84 · v1.20.0</td>
+          <td>fixat — ZZ.LL.AAAA ca în Editează (și data încărcării)</td>
+        </tr>
+        <tr>
+          <td><strong>#57</strong></td>
+          <td>OCR: pe aviz cu tractor + remorcă rămânea doar tractorul</td>
+          <td>84 · v1.20.0</td>
+          <td>fixat — <code>extractPlate</code> păstrează ambele; MTMA/taxă tot pe prima</td>
+        </tr>
+        <tr>
+          <td><strong>#58</strong></td>
+          <td>Badge „De revizuit” pe documente deja Confirmate</td>
+          <td>84 · v1.20.0</td>
+          <td>fixat — ascuns pe status Confirmat (și butonul Verifică)</td>
+        </tr>
+        <tr>
+          <td><strong>#59</strong></td>
+          <td>PDF cu mai multe avize (câte unul pe pagină) rămânea un singur document</td>
+          <td>85 · v1.21.0</td>
+          <td>fixat — split automat pe pagini (max 40); N rânduri în același lot</td>
+        </tr>
+        <tr>
+          <td><strong>#60</strong></td>
+          <td>TPO scris cu pix color pe aviz tipărit: text layer sărea OCR-ul pe imagine</td>
+          <td>85 · v1.21.0</td>
+          <td>fixat — OCR când TRO/PSL fără TPO; poze: ink→negru + alb-negru</td>
+        </tr>
+        <tr>
+          <td><strong>#61</strong></td>
+          <td>Cantitate = greutate / goală / dublată (1551, gol, 144 în loc de 72)</td>
+          <td>85 · v1.21.0</td>
+          <td>fixat — tabel markdown, fără sumă pe echo, fără greutate ca cantitate; cache OCR v4</td>
+        </tr>
+        <tr>
+          <td><strong>#62</strong></td>
+          <td>Etichetă „verifică (parser nesigur)” pe câmpuri în Editează</td>
+          <td>85 · v1.21.0</td>
+          <td>fixat — scoasă; rămâne doar chenarul galben</td>
+        </tr>
+        <tr>
+          <td><strong>#63</strong></td>
+          <td>Editează: zone Rută birou și Cursă nefolosite pe companion</td>
+          <td>85 · v1.21.0</td>
+          <td>fixat — eliminate din modal</td>
+        </tr>
+        <tr>
+          <td><strong>#64</strong></td>
+          <td>Rută: Site/Depozit ca origine + livrare doar „Str. Republicii” (fără nr./localitate)</td>
+          <td>86 · v1.22.0</td>
+          <td>fixat — <code>MIL-NEAMTIU / Str. … nr. …, Localitate</code>; tab OCR + Referința client</td>
+        </tr>
+        <tr>
+          <td><strong>#65</strong></td>
+          <td>Re-extrage nu actualiza ruta pe ecran (race 202 + busyId bloca poll-ul)</td>
+          <td>86 · v1.22.0</td>
+          <td>fixat — așteaptă status ≠ uploaded, apoi refresh listă/formular</td>
+        </tr>
+        <tr>
+          <td><strong>#66</strong></td>
+          <td>Rute repetate: corecția din Editează nu se folosea pe avizele următoare</td>
+          <td>86 · v1.22.0</td>
+          <td>fixat — reguli <code>aviz_route_rules</code> pe companie (tokeni OCR)</td>
+        </tr>
+        <tr>
+          <td><strong>#67</strong></td>
+          <td>Origine doar <code>MIL</code> când formularul are <code>Depozite: NEAMTIU</code> (plural)</td>
+          <td>87 · v1.22.1</td>
+          <td>fixat — parser acceptă Depozit / Depozite</td>
+        </tr>
+        <tr>
+          <td><strong>#68</strong></td>
+          <td>Poze handwritten (carnet) ies negre la upload; OCR gol</td>
+          <td>88 · v1.22.2</td>
+          <td>fixat — oprit pass-ul ink→negru la upload</td>
+        </tr>
+        <tr>
+          <td><strong>#69</strong></td>
+          <td>Aviz pe 2 pagini → 2 rânduri (tăiat pe pagină)</td>
+          <td>88 · v1.22.2</td>
+          <td>fixat — despărțire doar la TRO/PSL distincte</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Build sections: Changelog + Bugfix -->
+
+  <div class="build-block">
+    <h3>Build 88 · v1.22.2 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>PDF bulk:</strong> despărțire doar când apar numere TRO/PSL diferite; un aviz pe N pagini rămâne un document.</li>
+      <li>Upload foto: fără aplatizare cerneală→negru (Mistral citește color).</li>
+      <li>Ghid încărcare actualizat (split + poze).</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#68</strong> — carnet / handwriting: poza devenea neagră și nu se extrăgea nimic.</li>
+      <li><strong>#69</strong> — PDF cu un singur aviz pe 2 pagini era tăiat în 2 avize.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 87 · v1.22.1 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>(nimic pe build-ul ăsta — doar bugfix)</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#67</strong> — Baumit cu eticheta <code>Depozite:</code> (plural) lăsa originea la <code>MIL</code>; acum <code>MIL-NEAMTIU / …</code>.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 86 · v1.22.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Rută OCR:</strong> când Expeditorul n-are stradă → origine <code>Site-Depozit</code> (ex. <code>MIL-NEAMTIU</code>) + livrare cu nr. și localitate.</li>
+      <li>Parser: nu mai taie livrarea la „Referința client”; păstrează celula tab cu <code>IF</code> + localitate.</li>
+      <li><strong>Învățare rută:</strong> la Salvează în Editează, corecția de rută → regulă pe companie; la extract/listă se aplică pe OCR similar (hint „Completat din regulă învățată”).</li>
+      <li>Re-extrage: așteaptă OCR-ul din fundal înainte de a reîmprospăta rândul / formularul.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#64</strong> — origine Site/Depozit lipsă sau greșită; livrare truncată la „Str. Republicii”.</li>
+      <li><strong>#65</strong> — după Re-extrage ecranul rămânea pe valorile vechi.</li>
+      <li><strong>#66</strong> — aceeași adresă pe aviz nou nu moștenea corecția manuală.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 85 · v1.21.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>PDF bulk:</strong> un aviz pe pagină → N documente la upload (<code>pdf-lib</code>); toast „PDF despărțit în N avize”.</li>
+      <li><strong>Autoturisme / Comercial / hartă:</strong> etichetă <strong>MTMA</strong> (nu „Greutate” / MMA pe UI).</li>
+      <li><strong>OCR hibrid:</strong> TPO pe cerneală (OCR când lipsește din text layer); poze aplatizate alb-negru.</li>
+      <li><strong>Cantitate:</strong> preferă <code>72.00 buc</code>; refuză greutatea ca cantitate; nu mai dublează liniile OCR.</li>
+      <li><strong>Editează aviz:</strong> fără „verifică (parser nesigur)”, fără Rută birou și Cursă.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#59</strong> — PDF cu 6 avize rămânea un singur rând amestecat.</li>
+      <li><strong>#60</strong> — TPO roșu pe Baumit tipărit nu era citit (layer-ul TRO sărea OCR-ul).</li>
+      <li><strong>#61</strong> — Cantitate greșită: greutate / goală / 144 (=72+72 din cache/echo).</li>
+      <li><strong>#62</strong> — textul „parser nesigur” pe etichete, fără nevoie.</li>
+      <li><strong>#63</strong> — Rută birou + Cursă în modal pe companion.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 84 · v1.20.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Clopoțel companion:</strong> fără statusuri de curse / CMR pe trip / live; păstrează upload șofer, expirări Autoturisme, alerte MTMA pe <code>/fleet</code>.</li>
+      <li>Lista avize: <strong>Data</strong> (și încărcarea) în <strong>ZZ.LL.AAAA</strong>.</li>
+      <li>OCR <strong>Număr auto</strong>: tractor + remorcă (<code>B-911-VFM / B-138-VRT</code>).</li>
+      <li>Document <strong>Confirmat</strong>: nu mai arată „De revizuit” / Verifică în tabel.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#55</strong> — clopoțelul pe companion arăta alerte de curse fără ecran Curse.</li>
+      <li><strong>#56</strong> — Data în listă ca <code>2026-09-12</code> în loc de <code>12.09.2026</code>.</li>
+      <li><strong>#57</strong> — remorca din OCR se pierdea; rămânea doar tractorul.</li>
+      <li><strong>#58</strong> — „De revizuit” rămânea vizibil după Confirmă.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 83 · v1.19.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>OCR hibrid print + manuscris:</strong> TPO citit și când e scris de mână lângă „Num de comanda de transport” (ex. <code>TPO / 31027</code>).</li>
+      <li>Normalizare / profile: separator <code>/</code> (și <code>:</code>) pe TPO; TRO/PSL tipărit rămâne numărul documentului.</li>
+      <li>Codurile cu mai puțin de 7 cifre se prefill-uiesc, dar rămân de verificat.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#54</strong> — pe avize Baumit cu câmpul de comandă gol, TPO-ul scris cu roșu nu ajungea în <strong>Număr TPO</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 82 · v1.18.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Panoul <strong>Taxă zonă</strong> din Editează: link <em>Vezi pinul pe Harta zonelor</em> (și când e 0 lei / în afara zonelor).</li>
+      <li>Deep-link <code>/zone-map?q=…&amp;city=…&amp;locality=…&amp;plate=…</code> — căutare automată + pin.</li>
+      <li>În afara Bucureștiului: query cu <strong>stradă + localitate</strong>; geocode pe localitate, nu pe tab-ul București.</li>
+      <li>Pin pe hartă prin <strong>Photon public (OSM)</strong> din browser, cu fallback progresiv (fără nr. → doar localitate).</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#53</strong> — „Adresa nu a putut fi localizată” la livrări în afara zonelor / dependență de <code>PHOTON_URL</code> pe server pentru pinul de verificare.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 81 · v1.17.1 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Căutare pe harta de zone: <strong>un singur card</strong> când indexul răspunde; geocode-ul pune doar pinul.</li>
+      <li>Pin Leaflet cu <strong>adresa exactă</strong> (tooltip + popup); fly la pin fără refit pe tot orașul.</li>
+      <li>Geocode după index folosește eticheta canonică a străzii (<code>Bulevardul Iuliu Maniu 600A</code>), nu textul scurt tastat.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#52</strong> — „iuliu maniu 600A” arăta index corect + al doilea card Universitatea / ZA din geocode incert.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 80 · v1.17.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Avize:</strong> paginare 20/50/100/500 + ștergere bulk (selectare pe pagină).</li>
+      <li><strong>Autoturisme / flotă:</strong> paginare, multiselect, „Selectează toate” pe toate paginile, ștergere bulk; etichetă Greutate / MTMA.</li>
+      <li><strong>Rută OCR</strong> pe layout Baumit cu tab-uri: tip + nume + nr. (inclusiv nume/nr. deasupra tipului), fără hardcod de străzi.</li>
+      <li><strong>Hartă zone:</strong> <code>Bvd.</code> = <code>Bd.</code>; după răspuns din index se plasează și pinul (geocode).</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#49</strong> — rută doar tip / doar număr / doar localitate pe OCR client cu celule tab.</li>
+      <li><strong>#50</strong> — <code>Bvd. Iuliu Maniu</code> nu intra ca tip de stradă → geocode pe oraș.</li>
+      <li><strong>#51</strong> — index găsea strada dar harta rămânea fără pin; <code>…, Bucuresti</code> bloca split-ul numărului.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 79 · v1.16.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Taxă zonă București: adresa de căutare = <strong>piciorul de livrare</strong> din Rută transport (după <code> / </code>), nu Client / OCR contaminat.</li>
+      <li>Când taxa de zonă (MTMA) e &gt; 0, se completează automat câmpul <strong>Taxe suplimentare</strong>; se actualizează la recalcul dacă operatorul nu a scris altceva.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#48</strong> — taxa nu se lega de livrarea din rută; caseta Taxe suplimentare rămânea pe 0 / default când exista taxă de zonă.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 78 · v1.15.0 · 3 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Rută transport</strong> doar din etichete: <em>Expeditor</em> + <em>Adresa de livrare</em> (coloana stângă pe layout Baumit cu tab-uri). Blocul <em>Client</em> nu mai intră în rută.</li>
+      <li>Format: <code>Str. X nr. N, Localitate / Str. Y nr. M, Localitate</code> (fără liste de orașe/străzi hardcodate).</li>
+      <li>Fără overlay LLM pe adresă (<code>semanticAddresses</code> off pe calea de extract).</li>
+      <li>Repair din OCR salvat completează rutele incomplete / contaminate (exceptând câmpuri din <code>corrected_fields</code>).</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#47</strong> — rută tip Locotenent Moga / Fundeni (Client) în loc de Cireșului / Dobroești (livrare); lipsea și numărul stradal.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 77 · v1.14.2 · 2 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>runMistralOcr</code>: bugetul transmis (inclusiv <code>OCR_TIMEOUT_MS</code> scurt în teste) nu mai e ridicat la 5s.</li>
+      <li>Test unitar: abort sub 1,5s pentru <code>timeoutMs: 80</code>.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#46</strong> — driverDocuments.api.test: re-extract pe OCR lent rămânea <code>uploaded</code> după 400ms fiindcă AbortSignal aștepta 5s.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 76 · v1.14.1 · 2 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>Ghid birou: fraza despre marginea galbenă / „verifică (parser nesigur)” fără em dash (test CI).</li>
+      <li>Companion <strong>v1.14.1</strong> pe linie de versiune separată față de product <code>1.14.0</code>.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#44</strong> — guide.test: text ghid fără U+2014/U+2013 (eșecul tipărea tot ghidul pe CI).</li>
+      <li><strong>#45</strong> — resolve-app-build: companion.version ≠ product.version.</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 75 · v1.14.0 · 2 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><code>RoDateField</code>: afișare fixă <strong>DD.MM.YYYY</strong>, stocare <strong>YYYY-MM-DD</strong>, picker calendar (fără <code>input type=&quot;date&quot;</code> nativ) — Editează aviz, filtre, HITL.</li>
+      <li>Documente șofer: box „Scrie pe foaie…” ca accordion (colapsat la acces).</li>
+      <li>Etichetă UI <strong>verifică (parser nesigur)</strong>; heuristici rută incompletă + cantitate ≠ total OCR; low nu e acoperit de stored „ok”.</li>
+      <li>OCR cantitate pe poze Baumit: footer „Numărul de găleți” tolerant la split OCR; altfel suma liniilor; nu prima linie când există eticheta de total.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#39</strong> — Data MM/DD/YYYY în editare aviz → DD.MM.YYYY independent de locale OS; save ISO neschimbat.</li>
+      <li><strong>#40</strong> — Listă „Scrie pe foaie” colapsată default; tap expandă/închide; „Fă o poză” aproape de fold.</li>
+      <li><strong>#41</strong> — Rută tip <code>Republicii17</code> / cantitate greșită fără etichetă → „verifică (parser nesigur)” + De revizuit.</li>
+      <li><strong>#42</strong> — Cantitate din poză = prima linie (48) în loc de total găleți (576) → footer / sumă / gol+review.</li>
+      <li><strong>#43</strong> — CI: feedback.test km OCR + parity telefon client/server (7–15 en-dash).</li>
+    </ul>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 74 · v1.13.2 · 2 octombrie 2026</h3>
+    <p class="muted">
+      Branch <code>MISTRAL-experimenting-rai-documents</code> ·
+      autor remote: <strong>Lucan Florin</strong> ·
+      commit <code>320391b</code>
+    </p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li><strong>Anexa Factura RAI:</strong> coloanele rămân cele 14 blocate din șablon — nu se mai injectează „Greutate netă (kg)” în export.</li>
+      <li><strong>Cantitate marfă (tone)</strong> pe anexă se calculează <em>exclusiv</em> din greutate brută (kg → tone). Fără brută → cantitate goală; netă nu mai influențează coloana.</li>
+      <li>Scoase bifăle <strong>Include în XLSX</strong> din Editează aviz (și câmpurile
+        <code>include_gross_weight_xlsx</code> / <code>include_net_weight_xlsx</code> din API / entity map).</li>
+      <li><strong>OCR cantitate</strong> (Baumit / foi multi-linie): preferă footerul tip
+        „Numărul de găleți …” / „Numărul de saci …”, sau suma liniilor de ambalaj (saci / găleți / paleți),
+        în loc de prima linie de produs.</li>
+      <li>Ghid birou + migrare / reporting aliniate la regula „doar brută pe anexă”.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li>(fără nr. backlog) Anexa nu mai poate arăta greutate netă sau o cantitate derivată din netă din cauza bifelor „Include în XLSX”.</li>
+      <li>(fără nr. backlog) OCR nu mai ia greșit cantitatea de pe prima linie de produs când pe pagină există un total de găleți/saci.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    Changelog #2 · Sprint 6 · builds 74–88 · închis pe build 88 (v1.22.2) ·
+    2–3 octombrie 2026 · branch MISTRAL-experimenting-rai-documents · docs/ local only
+  </footer>
+
+</body>
+</html>

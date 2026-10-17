@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition · Documente · Changelog build 34–45</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+    }
+    h1, h2, h3, h4 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 20pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.2em;
+      padding-bottom: 0.2em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 {
+      font-size: 11pt;
+      margin-top: 1em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    h4 { font-size: 10.5pt; margin-top: 0.85em; color: var(--accent); }
+    p { margin: 0.35em 0 0.6em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 20px 22px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.25em 0 0.65em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.6em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.4em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.7em 0 0.25em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.8em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    @media print {
+      .hero { break-after: avoid; }
+      h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog consolidat · build 34–45</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune curentă <strong>v1.6.0 · build 45</strong> · perioadă <strong>14–15 septembrie 2026</strong><br />
+      Un singur document pentru colegi — toate livrările de la build 34 inclusiv
+    </div>
+    <div class="badge-row">
+      <span class="badge">Harta zonelor</span>
+      <span class="badge">Autoturisme / MTMA</span>
+      <span class="badge">Tip marfă &amp; Anexă</span>
+      <span class="badge">Ghid · Taxă zonă pe aviz</span>
+      <span class="badge">Aviz duplicat</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Companion <strong>RAI Spedition · Documente</strong>. Document de handoff (HTML + PDF).
+    Local în <code>docs/CHANGELOGS/</code>.
+  </p>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> hartă zone București (contururi, index străzi, locate = TPO),
+    flotă Autoturisme cu MTMA, tip marfă corect pe anexă, ghid în app, taxă zonă în Editează aviz,
+    și „Aviz duplicat” în loc de false alarme pe TPO.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>34</td><td>v1.4.0</td><td>Harta zonelor + locate</td></tr>
+        <tr><td>35</td><td>v1.4.1</td><td>Referință ZA/ZB + Intră în calcul</td></tr>
+        <tr><td>36</td><td>v1.4.2</td><td>Zone imbricate pe hartă</td></tr>
+        <tr><td>37</td><td>v1.4.3</td><td>Index străzi București</td></tr>
+        <tr><td>38</td><td>v1.4.4</td><td>Zonă după număr stradal</td></tr>
+        <tr><td>39</td><td>v1.5.0</td><td>Autoturisme + headere Anexă</td></tr>
+        <tr><td>40</td><td>v1.5.1</td><td>MTMA din flotă pe hartă</td></tr>
+        <tr><td>41</td><td>v1.5.2</td><td>Tip marfă = ambalaj (găleți…)</td></tr>
+        <tr><td>42</td><td>v1.5.3</td><td>XLS Tip marfă din ecran</td></tr>
+        <tr><td>43</td><td>v1.5.4</td><td>Repair Tip marfă din OCR</td></tr>
+        <tr><td>44</td><td>v1.5.5</td><td>Rută din Site · Cantitate tone</td></tr>
+        <tr><td>45</td><td>v1.6.0</td><td>Ghid · Taxă pe aviz · Aviz duplicat</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ========== 34 ========== -->
+  <section class="build-block">
+    <h3>Build 34 · v1.4.0</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Harta zonelor (<code>/zone-map</code>)</h4>
+    <ul>
+      <li>Pagină nouă — în companion (documents) și pe TMS full.</li>
+      <li>Desenează pe OpenStreetMap contururile din <code>tax_zones.polygon</code> (ce citește calculul TPO).</li>
+      <li>Import contur din GeoJSON sau KML (WGS84) → salvare pe zonă.</li>
+      <li>Trasare pe hartă (click → noduri → Salvează / Anulează / Undo).</li>
+      <li>Arată / ascunde zone; culori distincte pentru zone care se suprapun.</li>
+      <li>Referință perimetrală București Zona A / Zona B (liste arterii PMB) — ghid la trasare, <strong>nu</strong> intră în calcul.</li>
+    </ul>
+    <h4>Verificare adresă pe zonă (= TPO)</h4>
+    <ul>
+      <li>Căutare adresă + MMA opțional → punct pe hartă, zona găsită, tarif aplicabil.</li>
+      <li>API <code>POST /api/commercial/zones/locate</code>: aceleași <code>resolveZone</code> + <code>findZoneRate</code> ca la TPO.</li>
+      <li>Răspuns: <code>matched_by</code> = <code>polygon</code> sau <code>text</code>.</li>
+      <li>Geocode din cache: city/county/postcode din candidat + parse — zona nu „dispare” la a doua căutare.</li>
+      <li>Client: <code>api.commercial.locateZone({ address, mmaKg, date })</code>.</li>
+    </ul>
+    <h4>Librării + teste</h4>
+    <ul>
+      <li><code>zoneGeometry.js</code>, <code>bucharestZones.js</code> + teste unitare / API locate.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 35 ========== -->
+  <section class="build-block">
+    <h3>Build 35 · v1.4.1</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Harta zonelor — referință oficială + legare la calcul</h4>
+    <ul>
+      <li>Contururile Zona A / Zona B vin din app (<code>zoneReference.js</code>, după harta PMB / HCGMB) — se văd fără setup.</li>
+      <li>Tab pe oraș (<code>ZONE_CITIES</code>) — pregătit pentru alte orașe.</li>
+      <li>Buton <strong>Intră în calcul</strong>: pune conturul oficial pe <code>tax_zones</code>; dacă nu există, și tranșele MMA (taxă pe zi). Tranșele deja configurate nu se rescriu.</li>
+      <li>Card pe zonă: legată / neligată, tarife, import GeoJSON/KML ca înlocuire de contur.</li>
+      <li>Trasarea manuală pe hartă a fost scoasă — outline-ul de bază e referința; importul rămâne pentru corecturi.</li>
+      <li>Listele de arterii din <code>bucharestZones.js</code> înlocuite de poligoanele din <code>zoneReference.js</code>.</li>
+    </ul>
+    <h4>API ușor pentru hartă</h4>
+    <ul>
+      <li><code>GET /api/commercial/zones</code> — doar zones + zone_rates (nu tot overview-ul).</li>
+      <li>Client: <code>api.commercial.zones()</code>. Locate-ul din build 34 rămâne.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 36 ========== -->
+  <section class="build-block">
+    <h3>Build 36 · v1.4.2</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Harta — Zone imbricate fără dublă umplere</h4>
+    <ul>
+      <li>Zona exterioară „scoate” (hole) zonele vizibile din interior — B nu mai pictează peste A.</li>
+      <li>Ordine: prioritate mică (exterioare) apoi interioare — bordul zonei stricte rămâne vizibil.</li>
+      <li>Conturul din DB / referință și TPO / locate neschimbate.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <ul>
+      <li>Pe hartă, Zona A (înăuntrul B) nu mai arată culoare amestecată din umplerea Zonei B.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 37 ========== -->
+  <section class="build-block">
+    <h3>Build 37 · v1.4.3</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Index de străzi pe hartă (București)</h4>
+    <ul>
+      <li>Căutarea încearcă întâi indexul din browser (<code>streetZones/</code>) — la prima căutare, nu cu pagina.</li>
+      <li>Potrivire exactă, fără tip de stradă, ambiguă (alegi din listă), necunoscută → rezervă geocoder.</li>
+      <li>Stradă pe granița de zonă: indexul spune asta (nr. decide), nu ghicește un pin pe o parte.</li>
+      <li>Script regenerare: <code>node scripts/build-street-zones.js</code>. Normalizare: <code>streetName.js</code>.</li>
+    </ul>
+    <h4>Locate + UX pe Harta zonelor</h4>
+    <ul>
+      <li>Parametru <code>city</code> — strada goală din tab primește orașul.</li>
+      <li>Pin: arată și conturul desenat care conține punctul — separat de zona de preț din server.</li>
+      <li>Hint MMA: valori tipice în tone (&lt; 100) → „pare în tone — pune … kg?”.</li>
+      <li>Placeholder: doar strada; orașul e tab-ul activ.</li>
+    </ul>
+    <h4>Geocoder: outage ≠ adresă greșită</h4>
+    <ul>
+      <li>Eșec de infrastructură nu se mai scrie în <code>geocode_cache</code> ca „negăsit”.</li>
+      <li>Doar 4xx se cache-uiește ca eroare de adresă.</li>
+      <li><code>POST /zones/locate</code> → 503 + mesaj despre <code>PHOTON_URL</code> când geocoderul lipsește.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <ul>
+      <li>Adrese fără Photon configurat nu mai rămân blocate „negăsit” în cache.</li>
+      <li>Căutare stradă goală pe tab București nu mai pune pinul pe un omonim din țară.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 38 ========== -->
+  <section class="build-block">
+    <h3>Build 38 · v1.4.4</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Zonă după numărul stradal (index București)</h4>
+    <ul>
+      <li>Index cu <code>STREET_NUMBERS</code>: intervale impar/par pe străzile unde granița taie strada.</li>
+      <li>„Bd. 1 Decembrie 1918” nu pierde anul din nume (<code>splitStreetAndNumber</code>).</li>
+      <li>Răspuns după număr; între două intervale cu zone diferite — ecranul spune intervalul, nu ghicește.</li>
+      <li>Stradă integral într-o zonă: numărul nu e obligatoriu.</li>
+    </ul>
+    <h4>Harta zonelor — UX pe adresă</h4>
+    <ul>
+      <li>Placeholder: „Strada și numărul, ex. Calea 13 Septembrie 102”.</li>
+      <li>Avertismente: lipsește numărul pe stradă de graniță / număr necunoscut / între două zone.</li>
+    </ul>
+    <h4>Avize — legendă care rămâne pliată</h4>
+    <ul>
+      <li>Dacă o închizi, rămâne închisă la refresh (<code>localStorage</code>). Storage blocat: ecranul nu crapă.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <ul>
+      <li>Sugestia fuzzy nu mai „înghite” numărul din query (ex. „Bd. Dacia 5”).</li>
+    </ul>
+  </section>
+
+  <!-- ========== 39 ========== -->
+  <section class="build-block">
+    <h3>Build 39 · v1.5.0</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Autoturisme (<code>/fleet</code>)</h4>
+    <ul>
+      <li>Pagină nouă: listă plăcuțe, căutare, adăugare manuală.</li>
+      <li>Editare MTMA (kg) pe rând; salvare = confirmare (scoate marcajul OCR).</li>
+      <li>Vehicule din OCR: badge „din OCR”.</li>
+      <li>Alertă <code>vehicle_no_mma</code> → link la Autoturisme.</li>
+    </ul>
+    <h4>OCR → flotă + Harta zonelor</h4>
+    <ul>
+      <li>La extracție, plăcuța primară (tractor, nu remorca) deschide <code>vehicles</code> cu <code>added_by_ocr</code>.</li>
+      <li>Formă unică: <code>B-112-VFM</code> (<code>canonicalPlate</code>) — OCR + backfill.</li>
+      <li><code>brand</code> / <code>model</code> nu mai sunt obligatorii.</li>
+      <li>Hartă: câmp Nr. auto; MTMA gol → din flotă. Cifră tastată rămâne prioritară.</li>
+    </ul>
+    <h4>Anexa Factura RAI — headere din cod</h4>
+    <ul>
+      <li>Șablonul locked folosește mereu <code>DEFAULT_RAI_COLUMNS</code> (headere aliniate foii clientului).</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <ul>
+      <li>Greutate brută Baumit: etichetă cu unitatea înainte de cifră — înainte rămânea goală și anexa cădea pe numărul de găleți.</li>
+      <li>Ruta pe listă vs export: <code>decorateAviz</code> aplică <code>repairAvizFromStored</code> ca la export.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 40 ========== -->
+  <section class="build-block">
+    <h3>Build 40 · v1.5.1</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Harta zonelor — MTMA din Autoturisme, mesaje clare</h4>
+    <ul>
+      <li>La încărcare, harta ia și flota; rezolvare locală a plăcuței (inclusiv pe indexul de străzi).</li>
+      <li>Cinci stări: fără număr / invalid / necunoscut / fără MTMA / găsit — mesaje cu link la Autoturisme.</li>
+      <li>Cifră tastată prioritară față de flotă; dacă vine din flotă, se arată și plăcuța lângă tarif.</li>
+    </ul>
+    <h4>API locate — mașină cunoscută vs incompletă</h4>
+    <ul>
+      <li>Răspuns: <code>vehicle: { plate, known, has_mma }</code> (nu doar greutatea sau tăcere).</li>
+    </ul>
+    <h4>Autoturisme — MTMA blocat după salvare</h4>
+    <ul>
+      <li>Fără MTMA: câmp deschis. Cu MTMA: read-only + creion; Escape/X renunță; Enter salvează.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 41 ========== -->
+  <section class="build-block">
+    <h3>Build 41 · v1.5.2</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Tip marfă — ambalajul pe care documentul îl numește</h4>
+    <ul>
+      <li>Extractor <code>extractGoodsUnit</code>: preferă „Numărul de găleți / saci / paleți”.</li>
+      <li>Mai multe unități pe pagină → cea mai specifică (găleți &gt; saci &gt; paleți &gt; bucăți).</li>
+      <li>„buc / bucăți / pcs” rămân doar numărare — nu se scriu automat pe anexă.</li>
+    </ul>
+    <h4>Mapare coloane — fără „bucăți” pe Tip marfă</h4>
+    <ul>
+      <li>Fallback <code>quantity_unit</code> → <code>tip_marfa</code> sare peste unitățile generice de numărare.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <h4>Anexa nu mai primește „bucăți” ca tip de marfă</h4>
+    <ul>
+      <li>Caz: <code>Cantitate 768 buc</code> + <code>Numarul de galeti 768</code> → Tip marfă = găleți.</li>
+      <li>Greutăți (kg / t) nu mai sunt citite ca tip de marfă.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 42 ========== -->
+  <section class="build-block">
+    <h3>Build 42 · v1.5.3</h3>
+    <div class="section-label">Bugfix</div>
+    <h4>XLS Anexă — Tip marfă din ecran, nu din „buc” vechi</h4>
+    <ul>
+      <li>Dacă Tip marfă e ambalaj real (găleți / saci / paleți), acela merge pe foaie.</li>
+      <li><code>quantity_unit</code> doar când e ambalaj (nu „buc / bucăți / pcs”).</li>
+      <li>Caz: tip = găleți, unitate = bucăți → XLS = galeti.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 43 ========== -->
+  <section class="build-block">
+    <h3>Build 43 · v1.5.4</h3>
+    <div class="section-label">Bugfix</div>
+    <h4>Tip marfă „bucăți” se înlocuiește retroactiv din OCR stocat</h4>
+    <ul>
+      <li><code>repairAvizFromStored</code> tratează „buc / bucăți” ca zgomot OCR, nu ca editare de birou.</li>
+      <li>Listă + export: dacă textul stocat are „Numărul de găleți” (sau saci / paleți), Tip marfă = ambalajul real — fără re-scan.</li>
+      <li>Editarea manuală pe un ambalaj real rămâne neschimbată.</li>
+      <li><code>POST /avize/repair</code> poate scrie valorile în DB.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 44 ========== -->
+  <section class="build-block">
+    <h3>Build 44 · v1.5.5</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Avertisment: Cantitate (tone) goală</h4>
+    <ul>
+      <li>La export / Rapoarte: fără greutate brută → avertisment <code>missing_quantity_weight</code>.</li>
+      <li>Text clar: numărul de saci <strong>nu</strong> înlocuiește tonele sub același antet.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <h4>Ruta transport începe de la Expeditor / Site</h4>
+    <ul>
+      <li>OCR: dacă avizul are site (ex. BOL), ruta e <code>Bol-…livrare</code>, nu Client → livrare.</li>
+      <li>Înainte, pe PSL, Client putea fi un al doilea sediu al cumpărătorului — cursă falsă pe anexă.</li>
+      <li>Aliniat cu anexa clientului („Bol-…”, „Buc/I.Maniu…-…”).</li>
+    </ul>
+    <h4>Cantitate marfă (tone) nu mai e numărul de ambalaje</h4>
+    <ul>
+      <li>Fără greutate brută → celula rămâne <strong>goală</strong> (nu 768 găleți sub „tone”).</li>
+    </ul>
+    <h4>Clopotul de notificări pe Harta zonelor</h4>
+    <ul>
+      <li>Hartă Leaflet: <code>z-index</code> scăzut; clopotul / panoul de notificări rămân clickabile deasupra.</li>
+    </ul>
+  </section>
+
+  <!-- ========== 45 ========== -->
+  <section class="build-block">
+    <h3>Build 45 · v1.6.0 (curent)</h3>
+    <div class="section-label">Changelog</div>
+    <h4>Ghid în aplicație (birou)</h4>
+    <ul>
+      <li>Meniu lateral: <strong>Ghid</strong> → <code>/ghid</code> (manual cu căutare, secțiuni pliante).</li>
+      <li>Turul ghidat nu mai pornește din sidebar; se reia din Ghid.</li>
+    </ul>
+    <h4>Ghid șofer</h4>
+    <ul>
+      <li>Companion: tab <strong>Ghid</strong> în bara de jos (Încărcă / Ghid / Profil).</li>
+      <li>App șofer full: buton ajutor în header.</li>
+    </ul>
+    <h4>Taxă zonă București în Editează aviz</h4>
+    <ul>
+      <li>Panou: taxă din adresa de livrare (index local), MTMA din Autoturisme și greutatea brută.</li>
+      <li>Completează <strong>Taxe suplimentare</strong> doar dacă e gol / 0; altfel „Pune / Înlocuiește”.</li>
+      <li>Mesaje când lipsește greutate, adresă, mașină sau MTMA; link spre Autoturisme.</li>
+    </ul>
+    <h4>OCR pe adresa de livrare</h4>
+    <ul>
+      <li>Păstrează tipul străzii (Șosea / Stradă / …), numele și numărul — deosebește omonime (ex. Viilor).</li>
+    </ul>
+    <h4>„Aviz duplicat” în loc de „TPO duplicat”</h4>
+    <ul>
+      <li>Același <strong>transport</strong> (același număr aviz PSL/TRO sub același TPO), nu orice TPO repetat.</li>
+      <li>Un TPO cu mai multe curse rămâne rânduri separate, fără etichetă falsă.</li>
+    </ul>
+    <h4>Titlu companion + texte mici</h4>
+    <ul>
+      <li>Titlu: <code>RAI Spedition · Documente</code>. MTMA lipsă: „necompletat”; fără plăcuță: „fără auto”.</li>
+    </ul>
+    <div class="section-label">Bugfix</div>
+    <h4>False „TPO duplicat” pe curse legitime</h4>
+    <ul>
+      <li>Același TPO cu avize diferite nu mai e marcat duplicat la salvare, confirmare, export, clopot / verificări.</li>
+      <li>Duplicatul real = același număr de aviz încărcat de două ori (fără număr: zi + auto + rută).</li>
+    </ul>
+    <h4>Potrivire tip stradă „șosea”</h4>
+    <ul>
+      <li>Sinonimul e recunoscut și la rezolvarea adresei (zone / geocode), nu doar la OCR.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    RAI Spedition · Documente · consolidat build 34–45 (v1.4.0 → v1.6.0) ·
+    14–15 septembrie 2026 · branch RAI-spedition-driver-app · docs/ local only
+  </footer>
+
+</body>
+</html>

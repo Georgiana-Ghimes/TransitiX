@@ -1,0 +1,107 @@
+[Traducere eșuată pentru acest fragment]
+Quando você abre a janela Atributos da área do horário
+de rush, as variações de velocidade estão preenchidas
+previamente com as variações do modelo. É possível
+Etapa 9: Se você estiver utilizando o modo Simples, insira as informações de
+velocidade que dizem respeito a todas as vias da área na página Variação de
+velocidade. Qualquer variação de velocidade inserida aqui será usada em vez
+das variações de velocidade inseridas para o modelo.
+Selecione a caixa e insira a alteração de porcentagem para cada período cuja
+velocidade você desejar ajustar para todas as vias da área. Selecione se a
+velocidade será ajustada para mais rápida ou mais devagar. A nova velocidade
+será utilizada quando o tempo de percurso for calcutado.
+Se você aumentar a velocidade em 25%, 60 MPH aumentará para 75 MPH.
+Se reduzir a velocidade em 25%, 60 MPH diminuirá para 45 MPH.
+Qualquer período no qual a caixa Variação de velocidade não esteja selecionada
+vsará a variação de velocidade do modelo.
+Vá para a etapa 12.
+Etapa 10: Se você estiver utilizando o modo Avançado, clique na página Variação de
+velocidade avançada. Selecione a caixa e insira a variação de velocidade
+apropriada para cada tipo de via e período de tempo cuja variação de
+velocidade deseja especificar. A nova velocidade será utilizada quando o
+tempo de percurso for calculado.
+Se você aumentar a velocidade em 25%, 60 MPH aumentará para 75 MPH.
+Se reduzir a velocidade em 25%, 60 MPH diminuirá para 45 MPH.
+Bmiadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com modelos para horário de rush
+Qualquer período no qual a caixa Variação de velocidade não esteja
+selecionada usará a variação de velocidade do modelo.
+om m—— )
+spl An Spradiator [te tt |
+mac ESA Eta, o
+— saçã a TE
+mm Aasção Tasços MTiaço
+um RE LS GLEDZ08 Gch
+e o TBE T9
+e )
+As páginas Variação de velocidade avançada e Restrição de
+percurso, que são utilizadas apenas se a sessão utilzar
+“Horário de rush avançado, permitem específicar diferentes
+Etapa 11: Clique na guia Restrição de percurso. Selecione 2 caixa Restrito para cada
+tipo de via e período de tempo em que desejar restringir equipamentos. Para
+restringir todos os tipos de via para um período, clique no botão [Todos]
+. Nota: Se todos os tipos de via de uma área forem restritos e houver uma parada localizada
+na área restrita, ela não será colocada em uma rota com tipo de equipamento
+restrito. Se alguns tipos de via não estiverem restritos, a parada pode ser
+Toteirizada, mas um caminho da rota não será desenhado no mapa.
+Etapa 12: Clique no botão [OK]. Os atríbutos da área de horário de rush são salvos.
+Manutenção — Arquivo —Mapa — ícone Modelo para horário de rush — Adicionar
+área de horário de rush — [Concluir/fechar área] > [OK]
+Alteração de uma área do horário de rush
+Apóscriaras áreas de horário de rush, você pode alterar os atributos ou o formato da área.
+Para alterar o formato da área de horário de rush, clique com o botão direito dentro
+da área e selecione Editar forma da área no menu que será exibido. No contorno, clique
+onde você deseja alterar o formato e arraste para criar a nova forma. Continue alterando
+a forma da área de horário de rush, conforme necessário. Quando terminar, clique no
+botão [Concluir].
+Para alterar a velocidade, restrições de equipamento ou outros atributos da área,
+clique com o botão direito dentro da área e selecione Editar atributos da área no menu que
+MTA FFFA A Roadhe Travporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+será exibido. A janela Editar atributos da área de horário de rush é exibida. Faça as
+alterações necessárias e clique no botão [OK].
+Para excluir uma área de horário de rush, clique com o botão direito dentro da área e
+selecione Excluir área no menu que será exibido. Clique em [Sim] para confirmar a
+exclusão da área.
+Adição de caminho do horário de rush
+Se você estiver utilizando o RouteNet ou o SuperMatrix para calcular tempos e distâncias
+de percurso, você pode defínir os atributos de horário de rush para ruas individuais.
+De obicei, 2o definesc atributele orelor de vârf la nivelul străzii
+atributele unei întregi căi, cum ar fi o porțiune dreaptă de autostradă interstatală, mai degrabă decât
+a fiecărui segment individual de stradă. Suita de transport vă permite să selectați segmente
+străzi individuale sau selectați o cale care va avea aceleași atribute. Dacă a
+calea oră de vârf călătorește printr-o zonă de oră de vârf, atributele căii
+vor fi folosite pe aceste străzi; dacă nu este specificat un atribut pentru o cale, acestea vor fi
+se folosesc atributele zonei. De exemplu, puteți crea o cale de oră de vârf
+într-o zonă care are restricții de rută diferite, dar doriți să utilizați
+variații de viteză în zonă. În acest caz, pur și simplu activați restricțiile de rută
+al traseului, dar lăsați dezactivate variațiile de viteză. Dacă creezi
+trasee, modelul oră de vârf ar trebui utilizat cu a
+rutare sau planificare și RouteNet sau SuperMatrix ca timp/
+distanță și, de asemenea, să utilizați Ora de vârf îmbunătățită. Pentru a crea calea
+oră de vârf, trebuie să creați modelul pentru ora de vârf.
+WPuteți adăuga căi pentru orele de vârf în modulul Întreținere sau în Editor
+rutare sau planificare. Aceste instrucțiuni presupun că lucrați
+în modulul de întreținere.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Wn — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Este afișată harta.
+M Pasul 3: Faceți clic pe pictograma Șablon oră de vârf. Cursorul se transformă într-un ceas și
+numele modelului este afișat în bara de titlu a hărții.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Adăugare cale de timp
+grăbiți-vă în meniul care va fi afișat. Fereastra Add Time Path
+Tush este afișat.
+Pasul 5: Selectați dacă doriți să utilizați modul Select Street sau Multiple mode
+drumuri mai scurte.
+Dacă utilizați modul Multiple Cele mai scurte căi, faceți clic
+la începutul drumului. Apare o casetă cu litera À. Faceți clic pe primul
+punctul final al traseului. Va apărea o casetă cu litera B și calea cea mai scurtă
+scurt va fi tras între cele două puncte. Pentru a extinde calea, continuați
+făcând clic unde doriți să se întoarcă calea; caseta cu litera B se mută la
+cel mai recent punct final și cea mai scurtă cale dintre punctul final anterior și
+(T
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate

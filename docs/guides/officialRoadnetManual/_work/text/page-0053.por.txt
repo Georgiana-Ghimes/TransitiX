@@ -1,0 +1,43 @@
+M T A AA A o Roadiei Transporiafion Se
+|€ Copyright 2006 United Parcel Service f America, lc
+Todos os direitos reservados.
+a atualizada com as informações mais recentes do banco de dados. —
+e Etapa 3: Na janela Modelos de tempo de percurso, clique no icone Adicionar ou
+O pressione [Insert]. A janela Adicionar modelo de tempo de percurso é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+AAdicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para a ID. Este campo deve ser preenchido.
+Etapa 5: Insira até 30 caracteres na Descrição.
+Bmadoperaçães A
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservados.
+(Como trabalhar com modelos de tempo de percurso
+Etapa 6: Insira qualquer tempo fixo (HE:MM) que deva ser adicionado o tempo de
+percurso real para tarefas pré e pós-entrega, como dar a partida no veículo,
+entrar ou sair do estacionamento, etc.
+“Leiaas colunas de Velocidade e
+Distância da seguinte forma: se duas
+.paradas estiverem a 20 milhas de
+distância, o motorista percorrerá as.
+primeiras 2 milhas a 21 mph as
+“próximas 3 milhas (total de 5) a 30 mph,
+'as próximos 7 milhas (total de 10 km) a
+37 mpheas 10 milhas finais (total de
+Etapa 7: No primeiro espaço sob as colunas Distância e Velocidade, insira o primeiro
+nível de milhas ou quilômetros e MPH ou Km/h
+Etapa 8: Repita para os níveis restantes de Distância e Velocidade.
+Etapa 9: Clique no ícone Salvar ou pressione [Ctri]+[S] para salvar o novo modelo de
+tempo de percurso.
+mx — Etapa10: Repitaas etapas 4 2 9 para adicionar qualquer outro modelo de tempo de
+percurso.
+Etapa 11: Quando terminar de adicionar modelos de tempo de percurso, clique na caixa
+Fechar para fechar a janela Adicionar modelo.
+Ícone Manutenção — Cadastros — Modelos de percurso — Modelo de tempo de
+Dercurso— ícone Adicionar ([Insert]) — ícone Salvar ([Ctri]+[S])
+|Os modelos de tempo de percurso existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações,
+TE AAA A A A A Roadrer Trasporiafon SE
+' Copyright 2006 United Parcel Service of America, lc
+su e uineiár :

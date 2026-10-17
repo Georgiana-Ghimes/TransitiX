@@ -1,0 +1,60 @@
+apropriado para o compartimento. Clique no botão [OK] quando todas as
+informações estiverem corretas.
+Para alterar a ID ou a Descrição do compartimento, digite as novas
+informações no campo.
+ET
+setnto -
+STS ——
+ee ENENA anilo comporiêmedo msercormendo in ondodicar
+vêses nele, especificar o número, o tipo e a descrição de cada compartimento e
+utilizar a tela Definir compartimentos para dividir compartimentos.
+. Nota: Se o tipo de equipamento for um veículo bulk, será possível alterar somente a ID
+(ou descrição da posição do palete.
+Etapa 5: Clique no botão [OK] quando todos os compartimentos estiverem definidos. A
+janela Definir compartimentos é fechada.
+[) Etapa6: Se você estiver utilizando roteirização de compartimento e for necessário
+” adicionar compartimentos, consuíte Adição de compartimentos a um tipo de
+equipamento. Se tiver terminado de inserir informações para o tipo de
+equipamento, clique no ícone Satvar ou pressione [Ctri]+[S] para salvar o tipo
+" de equipamento.
+Bmadaperaçães AA
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+(Como trabalhar com tipos de equipamento
+Etapa 7: Quando terminar de adicionar tipos de equipamento, clique na caixa Fechar
+para fechar a janela Adicionar tipo de equipamento.
+TTA AA o Roadhat Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Compartilhamento de recursos
+Compartilhamento de recursos
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Alguns recursos do Roadnet Transportation Suite podem ser compartilhados entre as
+rTegiões. Os funcionários (motoristas) e equipamentos adicionados para uma região podem
+ser atribuídos a rotas em outras regiões, se forem criados como recursos compartilhados
+no módulo Manutenção. É possível até mesmo determinar que regiões terão permissão de
+vtilizar os recursos compartilhados. Este recurso permite utilizar um conjunto maior de
+opções ao atribuir recursos às rotas.
+Mm ——
+Tc—— —
+ME
+s mll
+= — e tç
+"” m—— —
+— o -
+MNEN r A F=
+— p ——
+a
+o A
+“Funcionários e equipamentos podem ser compartilhados
+entre suas regiões dentro do Transportation Suíte, o que
+aumentará muito seus recursos disponíveis. Na parte inferior
+da janela Adicionar, basta escolher as regiões com as quais
+Ao exibir listas de funcionários ou equipamentos, os recursos que foram criados em outra
+rTegião e compartilhados com sua região serão exibidos em vermelho. Você pode exibir as
+informações do recurso, mas não atualizá-lo.
+Para obter mais informações sobre como compartilhar funcionários e equipamentos,
+consulte Como trabalhar com funcionários ou Como trabalhar com equipamentos.
+EE AAA -
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 38 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid var(--warn);
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--warn);
+    }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 38</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.4.4 · build 38</strong> · deschis <strong>15 septembrie 2026</strong> ·
+      închis odată cu build 39<br />
+      De la commit <code>f069510</code> (build 37) → <code>b824bb1</code>
+    </div>
+    <div class="badge-row">
+      <span class="badge">Număr stradal</span>
+      <span class="badge">STREET_NUMBERS</span>
+      <span class="badge">Legendă pliată</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document local (doar HTML) în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub. Continuă Harta zonelor din build 34–37.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> pe străzile care traversează limita de zonă, doar numărul decide
+    (impar / par, intervale OSM). Fără număr, indexul din build 37 spunea „verifică pe hartă”
+    fără să poată răspunde exact. Acum poți scrie „Calea 13 Septembrie 102” și afli zona din
+    index, tot fără geocoder.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Zonă după numărul stradal (index București)</h3>
+      <ul>
+        <li>Indexul include <code>STREET_NUMBERS</code>: intervale impar/par pe străzile unde
+          granița taie strada.</li>
+        <li><code>lookupAddress</code> — încearcă numele întreg ca stradă; doar dacă nu există,
+          desparte numărul final (<code>splitStreetAndNumber</code>). Astfel „Bd. 1 Decembrie
+          1918” nu pierde anul din nume.</li>
+        <li><code>zoneForNumber</code> / <code>resolveAddress</code> — răspuns după număr;
+          dacă numărul cade între două intervale cu zone diferite, ecranul spune intervalul,
+          nu ghicește.</li>
+        <li>Stradă aflată integral într-o zonă: numărul nu e obligatoriu (fără „busywork”).</li>
+        <li>Script: <code>node scripts/build-street-zones.js</code> trage și adrese OSM
+          (<code>--no-addresses</code> = doar străzi).</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Harta zonelor — UX pe adresă</h3>
+      <ul>
+        <li>Placeholder: „Strada și numărul, ex. Calea 13 Septembrie 102”.</li>
+        <li>Rezultat: afișează numărul; „după numărul stradal” când e decisiv.</li>
+        <li>Avertismente clare: lipsește numărul pe stradă de graniță / număr necunoscut în
+          index / între două zone — fără sumă inventată la Calcul.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Avize — legendă care rămâne pliată</h3>
+      <ul>
+        <li>Legendă acțiuni: dacă o închizi, rămâne închisă la refresh
+          (<code>collapsePreference</code> în <code>localStorage</code>).</li>
+        <li>Fereastră privată / storage blocat: preferința se ignoră, ecranul nu crapă.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <ul>
+        <li>Sugestia fuzzy nu mai „înghite” numărul din query (ex. „Bd. Dacia 5” → Dacia fără 5).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Companion → <strong>Harta zonelor</strong> → București.</li>
+        <li>Stradă integral în zonă (fără nr.) → zonă certă.</li>
+        <li>Stradă de graniță <em>fără</em> nr. → avertisment „adaugă numărul”.</li>
+        <li>Aceeași stradă <em>cu</em> nr. din index → zonă „după numărul stradal”.</li>
+        <li>Avize → închide legenda acțiuni → refresh → rămâne închisă.</li>
+        <li>Login / topbar: <strong>v1.4.4 - build 38</strong> (după restart Vite).</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="note">
+    Regenerare index (cu numere): <code>node scripts/build-street-zones.js bucuresti</code>.
+    Fișierul generat e mare; nu edita manual intervalele.
+  </div>
+
+  <footer class="foot">
+    Companion v1.4.4 build 38 · 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    închis · docs/ local only
+  </footer>
+
+</body>
+</html>

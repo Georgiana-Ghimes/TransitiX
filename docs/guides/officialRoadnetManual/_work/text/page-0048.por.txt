@@ -1,0 +1,72 @@
+TMT A A Roadhe Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de funcionários
+Como trabalhar com tipos de funcionários
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os tipos de funcionários permitem classificar os tipos de funcionários em sua
+organização. Motorista, analista, promotor de vendas ou ajudante são alguns exemplos de
+tipos de funcionário. Os funcionários podem ser associados aos tipos quando forem
+adicionados.
+' ª Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+la — Etapa 2: Clique no menu Cadastros, selecione Funcionários e Tipos de funcionários. À
+janela Tipos de funcionários é exibida, listando todos os tipos de funcionários
+” estabelecidos.
+Nota: Para ver uma lista atualizada de tipos de funcionários, clique no icone Atualizar; a
+” Jjanela será atualizada com as informações mais recentes do banco de dados.
+T e Etapa3: Na janela Tipos de funcionários, clique no ícone Adicionar ou pressione
+Õ [Insert]. A janela Adicionar tipo de funcionário é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+É possivel adicionar tios de — | 28
+Ffincionário, como —
+motoristas e ajudantes, nesta | P )
+janela BE ——
+Etapa 4: Insira até 3 caracteres no Tipo de funcionário. Esse campo deve ser
+preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+[) Etapa6: Clique no ícone Salvar ou pressione [Ctrl]+[S] para satvar o novo tipo de
+= funcionário.
+>x — Etapa7: Repitaas etapas 4 a 6 para adicionar qualquer outro tipo de funcionário.
+Etapa 8: Quando terminar de adicionar tipos de funcionário, clique na caixa Fechar para
+fechar a janela Adicionar tipo de funcionário.
+TÍcone Manutenção — Cadastros > Funcionários — Tipo de funcionário > ícone
+Adicionar ([Tnsert]) >icone Salvar ([Ctri]+[S])
+Os tipos de funcionários existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Bmadeoperaçõães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com tipos de funcionários
+Importante: A exclusão de um tipo de funcionário afeta outros itens de manutenção.
+. “Antes de excluir um tipo de funcionário, é necessário excluir os funcionários
+desse tipo.
+TT AAA E Roadhe Travporiafion Su
+' Copsright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com funcionários
+Como trabalhar com funcionários
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os funcionários são os trabalhadores monitorados por meio do Roadnet Transportation
+Suite, como os motoristas, analistas, vendedores e ajudantes. Os registros dos
+funcionários armazenam informações como nome e endereço, números de telefone e
+TYárias datas (data de nascimento, data da contratação, data do último exame físico, etc.).
+Para que os funcionários sejam adicionados, o tipo de funcionário deverá ser adicionado.
+Você pode adicionar funcionários individualmente ou importá-los; consulte Importação
+de itens de manutenção para obter mais informações sobre como importar funcionários.
+Também é possível atribuir clientes ao funcionário, como a um vendedor ou a um
+promotor.
+Nota: Se você não tiver recebido permissão para exibir informações confidenciais de
+funcionários no módulo Administração, você não poderá visualizar ou inserir as
+datas de nascimento, contratação e rescisão ou qualquer informação da ADP sobre
+s funcionários.
+Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros e selecione Funcionários. A janela Funcionários se
+abre com uma lista de todos os funcionários atuais.
+Notas: Para ver uma lista atualizada de funcionários, clique no ícone Atualizar; a janela
+será atualizada com as informações mais recentes do banco de dados.
+|Os funcionários exibidos em vermelho são compartilhados por outra região; é
+possível atribuí-los às rotas e exibir suas informações, mas você não pode
+modificar suas informações.

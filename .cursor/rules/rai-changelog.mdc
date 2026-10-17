@@ -1,0 +1,58 @@
+---
+description: Changelog RAI Companion — #10 deschis (builds 110+), Sprint 9 (deschis), branch MISTRAL
+alwaysApply: true
+---
+
+# Changelog RAI Companion
+
+**Nu** folosi `changelogsSprints/` (Transitix TMS full).
+
+La fiecare bump companion (vezi `companion-bump-on-commit.mdc`), append în changelog-ul **deschis** al branch-ului.
+
+**Bugfix:** imediat ce repari un bug (nu abia la commit) — vezi `changelog-on-bugfix.mdc`.
+
+Mirror 1:1 din `RAI-spedition-driver-app` la companion **v1.8.3 / build 62**. Versionarea continuă de aici.
+
+## Fișiere
+
+| Sprint / perioadă | Fișier HTML | PDF |
+|-------------------|-------------|-----|
+| Arhivă RAI (istoric înainte de demo) | `docs/CHANGELOGS/_archive-RAI-spedition-driver-app-changelogs/` | acolo, local |
+| Sprint 6 MISTRAL (închis 74–88) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-02-builds-74-88.html` | `.pdf` lângă |
+| Changelog #3 (închis 89–91) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-03-builds-89-91.html` | `.pdf` lângă |
+| Changelog #4 + Sprint 7 (închis 92–93) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-04-builds-92-93.html` | `.pdf` lângă |
+| Changelog #5 (închis 94–94) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-05-builds-94-94.html` | `.pdf` lângă |
+| Changelog #6 (închis 95–95) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-06-builds-95-95.html` | `.pdf` lângă |
+| Changelog #7 (închis 96–99) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-07-builds-96-99.html` | `.pdf` lângă |
+| Changelog #8 (închis 100–106) · Sprint 8 | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-08-builds-100-106.html` | `.pdf` lângă |
+| Changelog #9 (închis 107–109) · Sprint 8 (închis) | `docs/CHANGELOGS/old/ChangeLog-MISTRAL-…-09-builds-107-109.html` | `.pdf` lângă |
+| **Changelog #10 deschis acum (builds 110+), Sprint 9 (deschis)** | `docs/CHANGELOGS/ChangeLog-MISTRAL-experimenting-rai-documents-10-builds-110.html` | PDF doar la închidere |
+
+## Nume deschis vs închis
+
+- **Deschis:** `ChangeLog-MISTRAL-experimenting-rai-documents-10-builds-110.html`
+- **La „gata” / perioadă închisă:** redenumește la  
+  `ChangeLog-MISTRAL-experimenting-rai-documents-10-builds-110-<ULTIMUL_BUILD>.html`  
+  (ex. dacă ultimul build e 115 → `…-builds-110-115.html`) + PDF + mutare în `old/` + footer „închis”.
+
+Append în fișierul **deschis** până când utilizatorul zice explicit că e gata.  
+**Sprint 9 rămâne deschis** — se închid doar perioadele de changelog, până când utilizatorul zice explicit că închide sprintul.
+
+## Structură canonică (HTML)
+
+- Hero: **Changelog #10 · Sprint 9 (deschis) · builds 110+**, branch, versiune companion, dată deschidere
+- Index versiuni (tabel build → temă)
+- Blocuri per build, **mereu** cu **Changelog** + **Bugfix**
+- Footer italic: `Changelog #10 · Sprint 9 (deschis) · deschis … · builds 110+`
+
+## Când append
+
+1. Append sub **Changelog** și/sau **Bugfix** pe build-ul curent (sau deschide build nou după bump).
+2. Actualizează index + footer + hero.
+3. PDF + redenumire `…-10-builds-110-<ultimulBuild>` doar când utilizatorul spune că e gata.
+
+## Ce nu intră
+
+- Livrări Transitix TMS full.
+- Note tehnice → `docs/changes/`.
+- Tot `docs/` e gitignored — local only.

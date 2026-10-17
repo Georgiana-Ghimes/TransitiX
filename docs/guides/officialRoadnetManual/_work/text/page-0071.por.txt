@@ -1,0 +1,92 @@
+tipo do cliente com o qual se está trabalhando no momento. O lado direito da
+janela é um menu com diversas páginas:
+Atributos contém informações de nome, endereço e telefone do cliente. Todas
+s informações necessárias encontram-se nesta página.
+Atributos estendidos contém informações adicionais sobre o cliente, como
+instruções, taxa, zona e detalhes de prioridade, bem como outras informações.
+Tipos de equipamento permite atribuir tipos de equipamento específicos ao
+cliente. Quando o cliente for roteirizado, ele será colocado em uma rota com
+este tipo de equipamento, a menos que seja parte de uma rota padrão.
+Alterações da janela de atendimento contém informações sobre as janelas de
+atendimento do cliente em dias específicos.
+AAlterações de tempo de atendimento contém informações sobre os tempos de
+atendimento do cliente em dias específicos.
+Expedir contém informações específicas ao MobileCast
+Extensões de cliente contém informações usadas pelo Territory Planner 2o
+criar rotas estratégicas.
+Mapa pode ser usado para geocodifícar o cliente ou simplesmente visualizar
+Oonde ele está geocodificado,
+TMT , ,, ,,, , ;E EE E Roadnet Tranporiation Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com clientes
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+O) do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira a ID do cliente. Esse campo deve ser preenchido.
+2
+amisio f mo D tmnbando 1 s |
+É EE T amtantas Í Egeta T Tretiniõets
+E mm
+SE
+BEE a fm al
+m|— S
+mz
+Apenas a primeira página do menu Cliente precisa ser preenchido, as
+“páginas restantes contêm informações opcionais.
+Etapa 5: Clique na seta Tipo atual para abrir uma lista de tipos de clientes. Clique em
+um tipo de cliente para selecioná-lo. Esse campo deve ser preenchido.
+. Nota: Se a opção Sincronizar itens de manutenção estiver selecionada na página Clientes
+do menu Opções, diversos tipos de clientes podem ser selecionados na lista Tipos
+de cliente; estes são os tipos selecionados no menu Opções para serem
+sincronizados. Ao inserir informações para o tipo atual, qualquer campo
+sincronizado será preenchido para todos os tipos selecionados.
+Bmadeaperaçães R
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Como trabalhar com clientes
+Etapa 6: Insira as informações do cliente no menu. ConsulteUtilização do menu Cliente
+para obter mais informações. A página Atributos deve ser preenchida, mas
+todas as outras informações são opcionais.
+Se você estiver sincronizando itens de manutenção para adicionar tipos
+diferentes à mesma ID, simultaneamente:
+Ao terminar com o primeiro tipo de cliente, clique na seta Tipo atual e selecione
+0 próximo tipo de cliente com o qua! deseja trabalhar. Todas as informações dos
+campeos selecionados para sincronização já estarão preenchidas, sendo
+necessário somente inserir as informações dos campos não sincronizados.
+1) Etapa 7: Clique no ícone Satvar ou pressione [Ctrl]+[S] para salvar as informações.
+e — EtapaS: Após inserir todos os clientes, clique na caixa Fechar para fechar a janela
+Adicionar cliente.
+Ícone Manutenção — Cadastros — Clientes — Clientes — ícone Adicionar ([Tnsert])
+—ícone Salvar ([CtrI+[S])
+. Notas:Se você desejar substituir uma informação específica para diversos clientes,
+como afterar o tipo de tempo de atendimento, selecione os clientes na janela
+Clientes. Clique com o botão direito do mouse em um cliente escolhido e selecione
+Substituir no menu exibido. Selecione o item a ser substituído (Tipo de tempo de
+atendimento), insira as novas informações e clique no botão [OK]; em seguida,
+clique em [Sim] para confirmar que deseja fazer a alteração. As novas informações
+são inserídas para todos os clientes selecionados.
+Se desejar excluir as alterações de tempo de atendimento ou de janela de
+atendimento de diversos clientes, selecione os clientes na janela Clientes. Clique
+com o botão direito do mouse em um cliente escolhido e selecione Excluir
+alterações no menu exibido. Confirme se a caixa apropriada do tipo de alteração
+que deseja excluir está selecionada (Tempo de atendimento e/ou Janela de
+atendimento), e selecione os cenários dos quais deseja excluir as alterações. Clique
+no botão [Excluir]. É exibida uma mensagem informando quantas alterações serão
+excluídas; clique em [OK] para prosseguir.
+Se você estiver editando clientes com tipos sincronizados e não desejar que os
+outros tipos sejam atualizados com as novas informações, verifique se a opção
+Sincronizar IDs iguais não está marcada.
+Os clientes existentes podem ser editados ou excluídos, conforme necessário.
+Consutte Edição de itense Exclusão de itens para obter mais informações. Ao
+excluir um cliente, ele será removido de qualquer rota padrão da qual faça parte;
+além disso, a extensão de cliente correspondente também será excluída.
+TT AA E Roadhe Traporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Utilização do menu Cliente
+Utilização do menu Cliente
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O menu Cliente permite inserir informações sobre os locais de entrega. Você pode abrir
+o menu Cliente para adicionar um novo cliente ou editar um cliente existente. Para

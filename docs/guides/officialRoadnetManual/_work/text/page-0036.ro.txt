@@ -1,0 +1,83 @@
+Apare fereastra Set Equipment Restrictions.
+Pasul 1: Faceți dublu clic pe compartiment pentru a specifica restricțiile pentru acel compartiment.
+compartiment. Fereastra Întreținerea constrângerilor de compartiment este
+afisat. Fereastra Întreținerea constrângerilor bin conține a
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum se lucrează cu echipamentul
+lista de tipuri de ambalaje disponibile și o listă de tipuri de ambalaje
+preferințele de compartiment.
+Pentru a prefera un tip de ambalare, faceți clic pe tip și trageți-l
+la lista Tipuri de ambalare preferate. Trageți tipurile în listă până când
+care sunt în ordinea corespunzătoare.
+Tipuri de ambalaje 06c — R BE
+02 sunt tipurile preferate — [X mm
+pentru acel compartiment și — ) El =
+FleetLoader le va încărca E și
+in acel compartiment inaintea EM ferea
+Pa s) s)
+. Notă: Tipurilor de ambalaj li se atribuie preferințe în funcție de 2 comenzi
+în fereastra Tipuri de ambalare preferate. Tipul de ambalaj afișat în partea de sus
+din listă va fi încărcat primul. Pentru a schimba ordinea tipurilor de ambalaje.
+faceți clic și trageți tipul de ambalaj pe care doriți să-l mutați și plasați-l pe tipul de
+ambalaj după care doriți să îl poziționați. Daca vrei tipul de ambalaj
+este primul din listă, plasați-l în antetul coloanei intitulată Type ID
+ambalaj.
+Pentru a preveni încărcarea unui produs în compartiment, cum ar fi
+De exemplu, când rezervați un coș pentru colecții, faceți clic pe caseta Dezactivare
+compartiment.
+Pentru a încărca în coș numai SKU-uri cu cantități mici,
+Faceți clic pe caseta SKU cu volum redus.
+Pasul 2: Faceți clic pe butonul [OK] când sunt constrângerile bin
+definit.
+Pasul 3: Continuați să definiți constrângerile pentru fiecare compartiment. Ca toate
+- restricțiile de compartiment sunt definite, faceți clic pe butonul [OK] pentru
+închideți fereastra Define Compartment Constraints.
+Pasul 4: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva informațiile
+despre echipament.
+8 pasul 5: Când ați terminat de adăugat echipament, faceți clic pe caseta Închidere.
+închideți fereastra Adăugare echipament.
+EE AAAA
+€€ Copyright 2006 United Parcel Service of America, lhc
+Toate drepturile rezervate
+(Cum se lucrează cu echipamentul
+Echipamente și MobileCast
+Dacă utilizați MobileCast pentru a monitoriza rutele pe parcursul zilei, trebuie
+completați informații suplimentare despre echipament, cum ar fi dispozitive fără fir,
+Telefoane WAP sau computere de bord asociate echipamentului.
+Pasul 1: Dacă utilizați MobileCast, faceți clic pe fila Dispatch din
+Echipamente.
+Pasul 2: Dacă utilizați un telefon compatibil WAP, introduceți ID-ul unității
+GPS. MobileCast folosește acest ID pentru a asocia echipamentul cu a
+traseu specific.
+Pasul 3: Dacă un dispozitiv wireless este atribuit aparatului, selectați furnizorul și
+AD.
+. Notă: dacă utilizați versiuni mai noi ale aplicației mobile în care
+driverul se conectează la dispozitiv, nu este nevoie să atribuiți un dispozitiv fără fir
+20 echipamente.
+Pasul 4: Dacă echipamentul are un computer de bord, selectați 2 casete
+Computer de bord.
+Pasul 5: Introduceți punctul focal de pornire pentru rutele echipamentelor, cum ar fi depozitul. Faceți clic pe
+săgeata următoare 20 Câmp de introducere pentru a selecta un tip și a introduce ID-ul sau a căuta
+client. Pentru a adăuga un client nou, faceți clic pe butonul [Nou]. Acest câmp
+trebuie completat.
+Pasul 6: Pentru a repoziționa manual echipamentul într-o locație de livrare, introduceți
+data și ora livrării în câmpurile Primite.
+DTA A Roadhat Trarporiafion Suãte
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu modificările echipamentelor
+Cum să lucrați cu modificările echipamentelor
+Folosit cu: FleetLoader
+Echipamentul este în mod normal atribuit rutei înainte ca vehiculul să fie încărcat, dar
+Pot exista situații în care este necesar să se facă o modificare de ultimă oră la
+echipamentul atribuit. Dacă se întâmplă acest lucru, puteți crea o întrerupere a echipamentului
+pentru traseul vehiculului respectiv. Schimbarea echipamentului va fi folosită în toate evenimentele
+a rutei în FleetLoader până când este șters.
+'ª Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+www — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Echipamente și modificări
+echipamente. Apare fereastra Schimbări de echipamente, care afișează orice
+modificarea existentă.
+[N É Notă: Pentru a vedea o listă actualizată a modificărilor echipamentului, faceți clic pe pictograma
+: „Actualizează; fereastra va fi actualizată cu cele mai recente informații din baza de date.
+date.

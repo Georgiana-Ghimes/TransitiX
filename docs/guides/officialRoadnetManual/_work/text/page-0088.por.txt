@@ -1,0 +1,87 @@
+NN ctapa s; Cuque no 1cone saivar du pressione [uifTL >) para saivar às aneraçoes.
+Arquivo > Mapa ícone Editar setor Cancelar/Sair do modo de adição — Padrões de setor
+— Editar —icone Salvar ((Ctr/*+[S])
+Alternância de padrões de setor
+É possível estabelecer um padrão de setor como o padrão que é aberto automaticamente
+quando você entra em Modo Setor no mapa. No entanto, se desejar trabalhar com um
+padrão de setor diferente, você precisará alterar esse paárão.
+! Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+WWm — Etapa ?2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+EM | Etapa3: Clique no icone Editar setores. O cursor muda para um setor com sinal de
+” adição ao lado do ponteiro, para indicar o modo Adicionar setor.
+Etapa 4: Clique com o botão direito no mapa e selecione Cancelar/Sair do modo de
+adição no menu que será exibido, para sair do modo Adicionar setor (o
+padrão)
+TT AA o Roadhet Travporiafion Sudte
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Como trabalhar com setores
+Etapa 5: Clique com o botão direito no mapa e selecione Padrões de setor no menu que
+será exibido. A janela Padrão do setor é exibida.
+Clique com o botão direito do
+mouse no padrão de setor
+parao qual você deseja
+desenhar um setor é escolha
+Alterar padrão de setor.
+Etapa 6: Para altemar para um padrão de setor diferente do que está sendo exibido,
+clique com o botão direito no padrão e selecione Alterar padrão de setor no
+menu que será exibido. O padrão de setor selecionado será exibido no mapa.
+Arquivo >Mapa — ícone Editar setor > Cancelar/Sair do modo de adição —Padrões dos
+setores — Alterar padrão do setor
+Exclusão de padrões de setor
+Se houver um padrão de setor que você não usa mais, poderá exclui-lo. Antes de excluir
+o padrão de setor, verifique se você não precisa dos setores contidos no padrão.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+É) — Etapa 3: Clique no ícone Editar setores. O cursor muda para um setor com sinal de
+- adição ao lado do ponteiro, para indicar o modo Adicionar setor.
+Etapa 4: Clique com o botão direito no mapa e selecione Cancelar/Sair do modo de
+adição no menu que será exibido, para sair do modo Adicionar setor (o
+padrão)
+Etapa 5: Clique com o botão direito no mapa e selecione Padrões de setor no menu que
+será exibido. A janela Padrão do setor é exibida.
+Etapa 6: Na janela Padrão do setor, clique com o botão direito no padrão de setor que
+deseja excluir.
+EW| Etapa7: Selecione Excluir no menu que será exibido. Você também pode excluir
+' padrões de setores, selecionando o padrão de setor que deseja excluir e
+clicando no icone Excluir.
+Etapa 8: Clique em [OK] para confirmar a exctusão.
+Arquivo >Mapa — ícone Editar setor >Cancelar/Sair do modo de adição —Padrões dos
+setores — Excluir ([Delete]) >[OK]
+Adição de setores
+Após adicionar um padrão de setor, você pode definir qualquer quantidade de setores
+individuais para esse padrão. Também é possível adicionar mais setores a padrões
+E
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+Como trabalhar com setores
+existentes. Os setores podem se adaptar a qualquer área geográfica desejada, seguir
+estradas, limites de corpos de água, CEP/códigos postais, etc.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Arquivo e selecione Mapa. A janela Mapa é exibida.
+Etapa 3: Clique no ícone Editar setores. O cursor muda para um setor com sinal de
+adição ao lado do ponteiro, para indicar o modo Adicionar setor. O padrão de
+setores padrão será exibido no mapa.
+Nota: Se você deseja adicionar um setor a um padrão de setores que não está sendo
+exibido como padrão, alterne para o padrão de setor apropriado.
+Etapa 4: Clique onde deseja que o setor seja iniciado. Um nó é exibido, marcando o
+ponto de início do setor.
+Etapa 5: Clique onde deseja que o setor vire. Outro nó é exibido neste ponto, com uma
+linha conectando os dois pontos. Esta linha é o timite do setor. Continue
+clicando até estar pronto para fechar o setor.
+Nota: Não é necessário fechar o setor ao criá-lo. Ao selecionar Concluir setor atual no
+menu suspenso, o Roadnet fechará o setor automaticamente para você.
+Etapa 6: Clique com o botão direito no mapa e selecione Salvar setor atual no menu que
+será exibido. A janela Atributos do setor é exibida. Insira as informações
+necessárias e clique em [ K. Consulte Edição dos atributos do setor para
+obter mais informações.
+(ã) Dica: Sevocêdescja que dois setores próximos compartilhem um limite comurm, desenhe
+um setor maior abrangendo a área inteira dos dois setores e, em seguida, divida o
+setor. Para obter mais informações, consute Divisão de setores,
+Etapa 7: Para salvar os setores e sair do modo de adição, clique com o botão direito no
+mapa e selecione Cancelar/Sair do modo de adição. Em seguida, clique
+novamente e selecione Salvar/Sair no menu que será exibido,
+Arquivo > Mapa — icone Editar setor — Concluir setor atual — Salvar setor atual
+Cancelar/Sair do modo de adição — Salvar/Sair
+Divisão de setores
+Os setores existentes podem ser divididos para criar dois ou mais novos setores. Ao

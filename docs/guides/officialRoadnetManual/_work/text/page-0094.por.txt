@@ -1,0 +1,93 @@
+L i A mt — )
+r gn )
+Seasessão de origem e a sessão de destino existirem no mesmo
+Banco de dados, você não poderá selecionar a mesma sessão
+para a Origem e Destino.
+Etapa 5: Na lista Sessões de destino, selecione a sessão à qual as rotas devem ser
+adicionadas.
+Etapa 6: Para que os pedidos ainda não existentes na sessão não sejam adicionados à
+sessão de destino, verifique se a opção Agregar pedidos da origem que não
+existem no destino não está marcada.
+Etapa 7: Clique em [Iniciar] para começar o processo de importação.
+me — Etapa8: Quando a importação estiver concluída, clique na caixa Fechar
+Ícone Manutenção — Ferramentas — Agregar sessões de roteirização — [Iniciar]
+FE F AAA E Roadhe Travporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+Atualização de tempos de atendimento utilizando a manutenção de
+tempo de atendimento
+Utilizado com: Roadnet
+O tempo de atendimento é o período gasto por um motorista em um cliente, e é parte
+integral da roteirização e da programação no Roadnet Transportation Suite. Tempos de
+atendimento exatos são essenciais. Se os tempos de atendimento de seus clientes forem
+incorretos, os tempos em rota também serão incorretos. Os custos da rota também são
+afetados pelos tempos de atendimento. Se o Roadnet acredítar que 2 entrega em uma conta
+demorará 3 horas quando na verdade demora somente 45 minutos, o sistema pagará o
+motorista por 3 horas. E se utilizar roteirização dinâmica, um cliente com tempos de
+atendimento incorretos pode ser roteirizado de maneira incorreta, pois o sistema acha que
+a entrega desse cliente demorará 3 horas, o que pode exceder o tempo em rota preferencial
+para a rota.
+O Roadnet Transportation Suite inclui o programa Manutenção do tempo de atendimento,
+“uma ferramenta poderosa que facilita a atualização dos tempos de atendimento de seus
+clientes. A Manutenção do tempo de atendimento utiliza tempos reais do histórico de
+entregas para computar tempos de atendimento mais precisos. Se você estiver utilizando
+o MobileCast, os tempos de atendimento serão baseados no tempo concluído; caso
+contrário, o tempo de atendimento será baseado nos tempos reais inseridos no Roadnet.
+Com a Manutenção do tempo de atendimento, é possível:
+* inserirtempos de atendimento reais das paradas diárias de maneira rápida e fácil.
+* — calcular novos tempos de atendimento com base no histórico de entregas real.
+* produzir um relatório para visualizar que atualizações serão processadas antes de
+ocorrerem.
+* — atualizar tempos de atendimento por cliente ou tipo de tempo de atendimento.
+Para usar a Manutenção do tempo de atendimento, é necessário determinar se você deseja
+atualizar os tempos de atendimento para um cliente ou para um tipo de tempo de
+atendimento.
+Por cliente atualiza somente cada cliente para o qual existam dados, usando
+somente as entregas para esse cliente. O tempo de atendimento de cada cliente
+é atualizado individualmente.
+Por tipo de tempo de atendimento agrupa os clientes por tipo de tempo de
+atendimento, e usa todas as entregas de todos os clientes com esse tipo de tempo
+de atendimento para calcular um novo tempo de atendimento (por exemplo,
+todas as lojas de conveniência, todos os restaurantes, etc). O novo tempo de
+atendimento se aplica a todos os clientes com esse tipo de tempo de
+atendimento.
+Definição dos critérios de atualização
+O recurso de Manutenção do tempo de atendimento do Roadnet permite atualizar os
+tempos de atendimento dos clientes com base no tempo concluído, se você estiver
+Bmadeaperaçães ES
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+Atualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+utilizando o MobileCast, ou em dados reais da rota inseridos manvualmente do Roadnet.
+A caixa Critérios de atualização na janela Manutenção do tempo de atendimento contém
+as definições que determinam que dados serão usados para calcular os novos tempos de
+atendimento. Você pode especificar até onde os tempos de atendimento reais podem
+diferir dos planejados a serem considerados, bem como quantas entradas reais devem
+existir para atualizar os tempos de atendimento,
+8N rtapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+em — Erapa 2: Clique no menu Ferramentas e selecione Atualizar tempos de atendimento, em
+seguida selecione Por cliente ou Por tipo de tempo de atendimento. A janela
+Manutenção do tempo de atendimento é exibida.
+Etapa 3: Insira a variação de tempo permitida para os tempos de espera e de descarga. À
+configuração de variação estabelece uma faixa de tempos aceitáveis acima e
+abaixo dos tempos de atendimento aceitáveis. Somente as paradas que
+recairem dentro da faixa aceitável de tempo de atendimento de descarga e de
+espera serão usadas no cálculo, a menos que 2 opção Atualizar se a variação
+estiver fora dos limites seja selecionada, para considerar entregas que recaiam
+fora da variação estabelecida. A configuração padrão é 10 minutos para tempo.
+de espera e meio minuto para tempo de descarga.
+" - A janela Manutenção do
+= têmpo de atendimento
+permite personalizar as
+acA configurações para
+E atualizar tempos de
+55 [m atendimento. Tempos de
+F tnins sam atendimento precisos são
+SSAA essenciais no Roadnet para
+) tempo em rota, custo é
+Etapa 4: Insira o Número minimo de entregas aceitas e a Porcentagem min. de entregas
+aceitas. O Número minimo de entregas aceitas trabalha com a configuração
+permitida de variação de tempo na etapa 1. O Roadnet deve ter o número de
+entregas especificado, e essas entregas devem recair dentro da faixa aceitável
+fn omó NS u an A mn aa aaa an am aaanh

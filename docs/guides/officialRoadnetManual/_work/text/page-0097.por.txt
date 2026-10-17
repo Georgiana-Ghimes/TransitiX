@@ -1,0 +1,116 @@
+Variação (A caixade dados Variação exibe as informações de variação de tempo.
+de espera e de descarga definidas na janela Opções do gráfico.
+(Consulte Definição dos critérios de dtualização para obter mais
+informações.
+Para editar a variação, clique com o botão direito na caixa Variação
+para abrir a janela Variação. Insira as novas variações e clique no
+botão [OK] para definir. Os limites da Variação no gráfico ajustam-se
+para refletir a edição.
+Anterior |A caixa de dados Anterior exibe os tempos de atendimento de espera
+e de descarga atuis, para um cliente ou ipo de tempo de atendimento.
+Tstoé um reflexo simples da definição atual e, portanto, não é editável.
+Caloulado |A caixa de dados Calculado exibe os tempos de atendimento recém-
+calculados sugeridos pelo Roadnet para atualizar os tempos de
+atendimento.
+Para editar os tempos de atendimento calculados, clique com o
+botão direito na caixa Calculados para abrir 2 janela Tempos de
+atendimento calculados. Insira os novos tempos de atendimento e
+clique no botão [OK] para definir. À linha Calculado no gráfico
+ajusta-se para refletir 2 edição.
+Nº entregas |A caixa de dados Nº entregas exibe o número de entregas aceitas e
+entregas rejeitadas. Aceitas representa todas as entregas que estavam
+dentro da variação estabelecida e, como resultado, foram calculadas.
+Rejeitadas refere-se a qualquer entrega que excedeu a variação e,
+portanto, não foi calculada.
+Como trabalhar com o gráfico
+Além de manipular as caixas de dados 2o lado do gráfico, você também pode alterar as
+informações do próprio gráfico. Os itens listados a seguir explicam as diversas maneiras
+em que se pode acessar esses elementos de dados.
+Para atterar o tempo de atendimento real de uma parada, clique com o botão direito na
+parada que deseja editar; a janela Entrada real de parada é exibida. Edite o tempo de
+atendimento e as quantidades conforme necessário, e clique no botão [OK] para aplicar.
+Você também pode alterar o tempo de atendimento de uma parada, clicando e arrastando
+a parada para um novo ponto no gráfico.
+A FFF A E Roadhet Trarporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+AAtualização de tempos de atendimento utilizando a manutenção de tempo de atendimento
+Nota: Mantenha o mouse sobre qualquer parada para ver uma dica exibindo informações
+. sobre a parada, a rota e a data, bem como tempo de atendimento e quantidade.
+Ã) Dica: Vejaalegenda na parte inferior do gráfico para identifícar os diversos elementos
+do gráfico.
+Para atterar a variação do tempo de atendimento, clique em uma das extremidades dos
+limites de variação e arraste-a para um ponto diferente no gráfico. As informações na
+caixa de dados Variação serão atualizadas de acordo.
+Para alterar o tempo de atendimento calcutado, clique em uma das extremidades da tinha
+Calculado e arraste-a para um ponto diferente no gráfico. A caixa de dados Calculado será
+atualizada de acordo.
+Botões de ação
+Quando estiver satisfeito com o gráfico Manutenção do tempo de atendimento e quaisquer
+mudanças que tenha feito, é possível utilizar os botões de ação à esquerda do gráfico para
+aplicar alterações e/ou atualizar os tempos de atendimento. A lista a seguir explica 2
+função de cada item.
+Recalculartempos de — Sevocêtiver feito alterações na variação de tempo de atendimento,
+atend seutempo de atendimento recém-projetado precisará ser recalculado.
+Para recaleular os tempos de atendimento, clique no botão
+IRecalcular tempos de atend.]. Os novos tempos de atendimento serão
+gerados avtomaticamente
+Salvar paradas reais — Sevocêtiver feito alguma alteração nos tempos de atendimento de
+tma ou mais paradas e desejar que essas alterações sejam aplicadas
+permanentemente no Roadnet, será necessário salvar as alterações.
+Para salvar as alterações de tempo de atendimento de parada
+Teal, clique no botão [Salvar paradas reais]. Na janela Manutenção
+que é exibida, clique em [Sim] para salvar as alierações.
+Atualizar tempos de — Sevocê estiver satisíeito com os tempos de atendimento calculados
+atend atuis e desejar aplicá-los ao cliente ou tipo de tempo de atendimento,
+Yocê está pronto para atualizar os tempos de atendimento.
+Para atualizar os tempos de atendimento, clique no botão
+[Atualizar tempos de atend.] Najanela Manutenção que será exibida,
+Tverifique se os tempos de atendimento estão corretos e clique em
+[Sim] para concluir 2 atualização.
+Seos dados resultarem em um tempo de espera ou tempo de descarga
+megativo, esse tempo de atendimento não será atualizado.
+Importante: Após salvar as paradas reais ou atualizar os tempos de atendimento, os tempos de
+atendimento são alterados e não podem ser restaurados.
+Bmadaperaçães o A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Manutenção do banco de dados
+Manutenção do banco de dados
+Utilizado com: Roadnet, Territory Planner, FleetLoader
+(Como o Roadnet Transportation Suíte armazena dados do histórico de roteirização, seu
+banco de dados pode ficar muito grande. À Manutenção do banco de dados ajuda a
+controlar o tamanho do banco de dados, arquivando ou até mesmo eliminando dados
+desnecessários. Você pode selecionar facilmente uma única sessão ou faixa de datas a
+serem arquivadas ou excluídas.
+.A Manutenção do banco de dados também executa outra tarefa útil: ela compacta o banco
+de dados, para remover todos os registros marcados para exclusão. Ao excluir um item
+(cliente, motorista, equipamento, etc.) do Transportation Suíte, o registro é marcado para
+exclusão no banco de dados. Ao executar a Manutenção do banco de dados, o programa
+pesquisa o banco de dados inteiro e remove todos os registros especificados.
+Antes de iniciar a manutenção do banco de dados, determine que opção é mais adequada
+às suas necessidades atuais. As seções a seguir contêm instruções detalhadas para utilizar
+cada opção. Clique em uma opção para obter instruções detalhadas sobre seu uso.
+Ferramentas/Manutenção do banco de dados/Arquivar sessões de
+roteirização captura uma “imagem” do banco de dados a partir de uma sessão
+u data especificada. A função de arquivamento normalmente é usada se você
+observar um problema em um dia de roteirização específico e necessitar enviar
+essas informações à UPS Logistics Technologies. Todas as informações
+necessárias para exibir a roteirização da sessão ou datas especificadas são
+incluídas no arquivo. Essa opção estará disponível somente se você estiver
+utilizando o Microsoft& Access.
+Ferramentas/Manutenção do banco de dados/Excluir sessões de
+roteirização remove do banco de dados todos os registros que ocorreram
+durante um número especificado de dias, semanas ou meses antes da sessão de
+roteirização atual, ou dentro de um intervalo de datas especificado.
+Ferramentas/Manutenção do banco de dados/Excluir conf.
+automaticamente permite especifícar se a exclusão deve ocorrer
+automaticamente durante o processo de importação de pedido, e controlar que
+funções ocorrem automaticamente.
+Ferramentas/Compactar banco de dados permite reduzir o tamanho do
+banco de dados. Ao executar a função Compactar banco de dados, os itens
+marcados para exclusão são permanentemente removidos do banco de dados.
+Arquivamento do banco de dados
+Utilizado com: Roadnet, FleetLoader
+A função arquivar da Manutenção do banco de dados captura uma “imagem” do banco de
+aa ti ME s seiio Sm dado cenccsficata Fot inósecia confER SS 1E

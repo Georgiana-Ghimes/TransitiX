@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>MISTRAL · Sprint 8 (deschis) · Changelog #5 · builds 94–94 (închis)</title>
+  <style>
+    @page { size: A4; margin: 14mm 12mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10pt;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0 2mm;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.35em; line-height: 1.2; }
+    h1 { font-size: 18pt; letter-spacing: -0.02em; }
+    h3 {
+      font-size: 11pt;
+      margin-top: 0.85em;
+      color: #fff;
+      background: var(--brand);
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.92; font-size: 9.5pt; }
+    .badge-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.2em 0 0.55em; padding-left: 1.15em; }
+    li { margin: 0.18em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .toc {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 0.5em 0 1em;
+      background: var(--soft);
+      font-size: 9.5pt;
+    }
+    .toc table { width: 100%; border-collapse: collapse; }
+    .toc th, .toc td {
+      text-align: left;
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toc th { color: var(--brand); font-size: 9pt; }
+    .build-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 0.35em;
+    }
+    .section-label {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.65em 0 0.2em;
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .note {
+      border-left: 3px solid #92400e;
+      background: #fffbeb;
+      padding: 8px 12px;
+      margin: 0.45em 0 0.75em;
+      font-size: 9.5pt;
+      color: #92400e;
+    }
+    .foot {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog #5 · Sprint 8 <em style="opacity:0.85;font-weight:500">(deschis)</em> · builds 94–94 <em style="opacity:0.85;font-weight:500">(închis)</em></h1>
+    <div class="meta">
+      Branch <strong>MISTRAL-experimenting-rai-documents</strong> · <strong>Sprint 8 (deschis)</strong><br />
+      Continuare după Sprint 7 / Changelog #4 (92–93) · deschis <strong>6 octombrie 2026</strong> ·
+      închis <strong>6 octombrie 2026</strong> pe <strong>v1.22.8 · build 94</strong>.
+      Sprintul rămâne deschis — următorul append e Changelog #6 (builds 95+).
+    </div>
+    <div class="badge-row">
+      <span class="badge">Changelog #5 · închis</span>
+      <span class="badge">Sprint 8 (deschis)</span>
+      <span class="badge">Builds 94–94</span>
+      <span class="badge">MISTRAL</span>
+      <span class="badge">v1.22.8 · build 94</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    <strong>Sprint 8 (deschis)</strong> · Fișier:
+    <code>ChangeLog-MISTRAL-experimenting-rai-documents-05-builds-94-94.html</code>.
+    Perioada anterioară: <code>ChangeLog-MISTRAL-experimenting-rai-documents-04-builds-92-93</code>.
+  </p>
+
+  <div class="note">
+    <strong>Închis · Changelog #5:</strong> builds 94–94 (v1.22.8).
+    <strong>Sprint 8 (deschis)</strong> — nu se mai append aici; următorul e Changelog #6 (builds 95+).
+  </div>
+
+  <div class="why">
+    <strong>Pe scurt:</strong> #51–#57 OCR avize — greutăți, placă, rută, nr. document, TPO pad,
+    HITL pe foto slabă, tip marfă TRO fără footer „Numărul de găleți”.
+  </div>
+
+  <div class="toc">
+    <strong>Index versiuni</strong>
+    <table>
+      <thead>
+        <tr><th>Build</th><th>Versiune</th><th>Temă principală</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>94</td><td>v1.22.8</td><td>#51–#57 OCR avize (greutăți → tip marfă TRO)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Bugfix</h3>
+  <div class="toc">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Problemă</th><th>Build</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>51</strong></td>
+          <td>Greutate brută/netă își pierd zecimalele (×100); ex. 20,950.00 → 2095000</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>52</strong></td>
+          <td>Nr. auto: „TM 40 kg” din produs → a doua placă TM-40-KG (plăcuțe identice pe aviz)</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>53</strong></td>
+          <td>Rută: fragment din numele clientului („Ibutie Srl”, „Uct Srl”) înaintea străzii de livrare</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>54</strong></td>
+          <td>Nr. document marfă: „220” din adresă în loc de TRO-0010203 (aviz rezumat)</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>55</strong></td>
+          <td>TPO scris de mână „TPO/32755” rămâne fără zerouri (TPO-32755, portocaliu)</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>56</strong></td>
+          <td>TPO greșit pe foto întunecată fără marcaj portocaliu / HITL (încredere structurală 0.90+)</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+        <tr>
+          <td><strong>57</strong></td>
+          <td>Tip marfă gol pe TRO fără „Numărul de găleți”; lista arată „72 bucati” în loc de găleți</td>
+          <td>94 · v1.22.8</td>
+          <td>fixat</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="build-block">
+    <h3>Build 94 · v1.22.8 · 6 octombrie 2026</h3>
+    <p class="muted">Branch <code>MISTRAL-experimenting-rai-documents</code></p>
+
+    <p class="section-label">Changelog</p>
+    <ul>
+      <li>#51 — parsare greutăți când OCR transformă separatorul de mii într-un al doilea punct (<code>21,326.48</code> → <code>21.326.48</code>).</li>
+      <li>#52 — serie de litere pe plăcuță: respinge unități de produs (<code>KG</code>, <code>SAC</code>, …), deci „Tencuiala TM 40 kg” nu mai intră în Nr. auto.</li>
+      <li>#53 — tip stradă: <code>str</code> nu se mai potrivește în interiorul <code>DISTRIBUTIE</code> / <code>CONSTRUCT</code>.</li>
+      <li>#54 — nr. document: preferă TRO/PSL; respinge numere goale de casă (<code>nr. 220</code>); valoare fără format → avertisment de revizuire.</li>
+      <li>#55 — TPO scurt (4–5 cifre, scris de mână) e zero-padded la 7 cifre (<code>TPO/32755</code> → <code>TPO-0032755</code>).</li>
+      <li>#56 — încrederea pe câmpuri critice (TPO/placă/dată) se amestecă cu scorul blocului OCR; pagină slabă → sub pragul HITL auto (0.90); UI portocaliu pe <code>confidence &lt; 0.90</code> chiar dacă statusul e <code>ok</code>.</li>
+      <li>#57 — pe avize TRO fără linia <code>Numărul de găleți</code>, <code>buc</code> din tabel (UniBaza, SilikoTop, Glet…) e tratat ca găleți, nu ca bucăți goale.</li>
+    </ul>
+
+    <p class="section-label">Bugfix</p>
+    <ul>
+      <li><strong>#51</strong> — greutățile ajungeau ×100 (2095000 în loc de 20950.00). Cauză: <code>parseNumber</code> trata orice <code>.NNN</code> ca mii și ștergea toate punctele, inclusiv zecimalele. Statusul rândului (De revizuit vs Verificare obligatorie) vine din benzile HITL pe câmpuri, nu din avertismentul de greutate implauzibilă.</li>
+      <li><strong>#52</strong> — TM e județ real (Timiș); tiparul placă + „TM 40 kg” din tabel → <code>TM-40-KG</code> ca a doua placă când tractor/remorcă sunt identice. Bloclist pe seria de litere (<code>KG</code>, …) în <code>canonicalPlate</code> / <code>extractPlates</code>.</li>
+      <li><strong>#53</strong> — <code>STREET_TYPE_RE</code> potrivea <code>str</code> în DI<strong>STR</strong>IBUTIE / CON<strong>STR</strong>UCT → „Str. Ibutie Srl …” / „Str. Uct Srl …”. Lookaround pe tipul de stradă; avertismentul de index e consecință a fragmentului greșit.</li>
+      <li><strong>#54</strong> — profilul generic potrivea <code>nr. 220</code> din adresă înaintea <code>TRO-…</code>. <code>canonicalDocNo</code> + ordine TRO/PSL; regula <code>doc_no_invalid</code> marchează valorile fără prefix.</li>
+      <li><strong>#55</strong> — <code>normalizeTpo</code> pad-uiește 4–5 cifre la 7; înainte doar scădea încrederea (portocaliu) fără a normaliza. 6 cifre rămân scurte + review (OCR truncat).</li>
+      <li><strong>#56</strong> — extracția regex dădea TPO „sigur” (layout) pe foto întunecată unde glifele erau greșite. <code>refineFieldsWithBlocks</code> plafonează cu confidența blocului (sau media paginii ≤0.80); <code>criticalReview</code> ține documentul în review sub 0.90; <code>fieldConfidenceForUi</code> citește numărul înaintea <code>status === 'ok'</code>.</li>
+      <li><strong>#57</strong> — fără footer, Tip marfă rămânea gol (nu scriem „bucati” pe anexă) iar lista lua <code>quantity_unit=bucati</code>. Pe tabelul tipărit, <code>buc</code> e găleata (sacii sunt <code>sac</code>); inferăm <code>galeti</code> din <code>(24/pal)</code> / Palet Euro / SKU pastă / articol TRO.</li>
+    </ul>
+  </div>
+
+  <footer class="foot">
+    Changelog #5 · închis 6 octombrie 2026 · builds 94–94 · v1.22.8 · build 94 ·
+    Sprint 8 (deschis) · branch MISTRAL-experimenting-rai-documents · docs/ local only
+  </footer>
+
+</body>
+</html>

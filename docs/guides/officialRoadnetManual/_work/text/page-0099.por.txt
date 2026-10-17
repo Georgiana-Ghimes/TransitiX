@@ -1,0 +1,99 @@
+Informações reais exclui os dados reais de parada importados do computador
+de bordo ou inseridos manualmente para todas as sessões que ocorreram durante
+1 período de tempo especificado.
+Tnformações de expedição exclui as rotas concluídas no MobileCast que
+ocorreram dentro do período de tempo especificado. Essa opção só poderá ser
+utilizada com as opções Excluir dados anteriores a: e Excluir dados por faixa de
+data
+Compactar banco de dados pesquisa o banco de dados e remove os registros
+que foram marcados para exclusão (recomendado). Essa opção estará
+disponível somente se você estiver utilizando o Microsoft Access.
+AAvisos: Os dados excluídos não podem ser recuperados após a compactação do banco de
+dados.
+Se você excluir informações reais, não será possível usar esses dados para
+calcutar tempos de atendimento mais precisos com o programa Manutenção do
+tempo de atendimento.
+Etapa 5: Clique no botão [OK] para excluir os dados. Exclua as rotas selecionadas uma
+de cada vez do editor de roteirização, usando o botão [X]. Este botão fica
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+Manutenção do banco de dados
+desativado (cinza) se os privilégios necessários para a exclusão não foram
+concedidos.
+Ferramentas — Manutenção do banco de dados — Excluir rotas — [OK]
+Configuração da manutenção automática do banco de dados
+Utilizado com: Roadnet, FleetLoader
+Nota: Você não poderá abrir este módulo se não recebeu permissão para controlar a
+exclusão de sessões de roteirização no módulo Administração.
+Ao excluir informações do histórico, você pode ajudar a controlar o tamanho do banco de
+dados. Ao executar a exclusão, você pode optar por compactar o banco de dados, o que
+Temove todos os itens marcados para exclusão, ou remover informações de roteirização
+reais. É possível excluir dados manualmente ou configurar o Roadnet Transportation
+Suite para excluir dados quando os pedidos forem importados. Esta seção fornece
+instruções para configuração do Roadnet Transportation Suite para excluir dados antigos
+20 importar pedidos.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Ferramentas e selecione Manutenção do banco de dados; em
+seguida, selecione Excluir conf automaticamente. A janela Manutenção do
+banco de dados - Excluir conf. automaticamente é exibida.
+AAvisos: Utilizar a função de exclusão automática fará o Roadnet excluir os dados
+selecionados automaticamente durante o processo de importação de pedidos,
+Os dados excluídos não podem ser recuperados após a compactação do banco de
+dados.
+Se você excluir informações reais, não será possível usar esses dados para
+calcutar tempos de atendimento mais precisos com o programa Manutenção do
+tempo de atendimento.
+Etapa 3: Na janela Manutenção do banco de dados - Excluir conf. automaticamente,
+determine se o Roadnet Transportation Suite deve excluir os dados mais
+antigos que o período de tempo especificado antes da sessão de roteirização
+MT A o Roadhet Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Manutenção do banco de dados
+atual (ou o número de dias, semanas ou meses de dados que deseja manter no
+banco de dados) na caixa Excluir dados.
+A janela Manutenção
+do banco de dados -
+Excluir conf
+“automaticamente
+permite especificar se
+determinados dados que
+serão excluídos
+automaticamente
+durante o processo de
+Etapa 4: Determine que opções de exclusão você deseja que ocorram automaticamente
+durante o processo de importação de pedidos.
+Informações de roteirização exclui dados anteriores de pedido, rota e parada
+de todas as sessões que ocorreram durante o período de tempo especificado.
+Informações reais exclui os dados reais de parada importados do computador
+de bordo ou inseridos manualmente para todas as sessões que ocorreram durante
+1 período de tempo especificado.
+Compactar banco de dados pesquisa o banco de dados e remove os registros
+que foram marcados para exclnsão (recomendado) Fssa opção estará
+disponível somente se você estiver utilizando o Microsoft Access.
+Etapa 5: Clique no botão [Salvar] para salvar as opções de exclusão automática, ou
+clique em [Cancelar] para abortar.
+Ferramentas - Manutenção do banco de dados — Excluir conf. automaticamente
+Compactação do banco de dados
+Utilizado com: Roadnet, Territory Planner, FleetLoader
+Para assegurar que o Roadnet Transportation Suite tenha desempenho máximo, é
+necessário compactar o banco de dados periodicamente, removendo dados desnecessários
+e reduzindo o tamanho geral do banco de dados. Ao executar a função Compactar banco
+de dados, todos os registros excluídos são removidos permanentemente do banco de
+dados.
+) Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+Meinsa — Etapa 2: Clique no menu Ferramentas e selecione Manutenção do banco de dados; em
+seguida, selecione Compactar banco de dados. O banco de dados é
+compactado.
+Ferramentas — Manutenção do banco de dados — Compactar banco de dados
+Bmadeoperaçães A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados
+Transporte de dados
+Transporte de dados
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O Roadnet Transportation Suíte contém uma ferramenta que facilita transportar grandes
+quantidades de dados para o Atendimento 2o cliente da UPS Logistics Technologies para
+assistência com sofução de problemas. A ferramenta Transporte de dados permite criar
+angivos deeeooliar sh de didós colendo-somente-os dadóS apcessSóos saravesolveram:

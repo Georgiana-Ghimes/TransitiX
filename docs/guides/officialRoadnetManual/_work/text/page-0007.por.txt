@@ -1,0 +1,116 @@
+Introdução ao Roadnet Transportation Suite
+Introdução ao Roadnet Transportation Suite
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Nós todos já conhecemos a eficiência do Roadnet Transportation Suite no processamento de suas
+necessidades diárias de roteirização, planejamento e carregamento. Mas você sabe como é fácil
+vtilizar e manter as informações de sua empresa? Cada seção abaixo contém um conjunto de
+instruções básicas sobre o Roadnet Transportation Suite. Basta seguir os hiperlinks para obter
+instruções de como executar as tarefas mais comuns de roteirização, planejamento estratégico e
+carregamento de veículos. É muito fácil. Em pouco tempo você estará pronto para criar rotas,
+analisar a eficiência delas e gerenciar sua capacidade de carregamento.
+Roadnet
+Utilizado com: Roadnet
+O Roadnet, parte do Roadnet Transportation Suite da UPS Logistics Technologies, é um software
+abrangente de roteirização que programa e roteiriza seu equipamento. Por exemplo, você pode
+vutilizar o Roadnet para criar rotas padrão ou alterações de rota padrão, as quais podem ser
+adicionadas ao conjunto e utilizadas como base para roteirização futura. Depois de criar novas
+Totas, você pode utilizar os vários relatórios e ferramentas incluídos no Roadnet para analisar e
+alterar as novas rotas, conforme necessário.
+Configurar e manter os dados é a primeira etapa de uso do Roadnet. O módulo Manutenção permite
+inserir todas as informações essenciais do cliente que, em seguida, são utilizadas para criar suas
+Totas. Existem onze etapas principais que precisam ser concluídas para começar a criar rotas. Essas
+etapas são: adição de regiões, adição de tipos de equipamento, adição de equipamentos, adição de
+tipos de funcionário, adição de funcionários, adição de motoristas, adição de cenários, adição de
+tipos de tempo de atendimento, adição de tipos de janela de atendimento, adição de tipos de cliente
+e definição das opções.
+Em seguida, você desejará manter seus clientes e pedidos atualizados. Essa tarefa pode parecer
+difícil, mas o Roadnet permite importar rapidamente os clientes e pedidos de sua empresa.
+Após importar clientes e pedidos no Roanet, é possível utilizar o Editor de roteirização para criar
+rotas padrão. Após fazer isso, você pode criar rotas diárias, adicionar paradas, ressequenciar
+paradas e atribuir motoristas e equipamentos.
+Agora que as rotas foram criadas com êxito, você pode utilizar o mapa no Editor de roteirização
+para exibir e avaliar as rotas. Em seguida, depois de concluir a revisão das sessões de roteirização,
+o Roadnet fornece a opção de enviar os pedidos para qualquer lugar para armazenamento ou uso
+adicional. Além disso, você pode gerar e imprimir qualquer número de relatórios informativos.
+|O Roadnet possuí vários outros recursos não descritos acima; consulte o Guia de operações do
+“Roadnet Transportation Suíte ou o sistema de ajuda completos para obter informações sobre todos
+s recursos avançados do Roadnet.
+madeaperaçães Á
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Introdução ao Roadnet Transportation Suite
+Territory Planner
+Utilizado com: Territory Planner
+O Territory Planner, parte do Roaánet Transportation Suíte da UPS Logistics Technologies, é uma
+ferramenta de planejamento estratégico que permite criar facilmente novas roteirizações, alterando
+alguns dos parâmetros, sem perder as rotas existentes. Por exemplo, você pode utilizar o Territory
+Planner para determinar as consequências da adição ou da exclusão de veículos em trânsito ou
+determinar os efeitos de um novo e grande contrato. Depois de criar novas rotas, você pode utilizar
+s vários relatórios e ferramentas incluídos no Territory Planner para analisar e alterar as novas
+Totas, conforme necessário.
+A primeira etapa para usar o Territory Planner é configurar e manter os dados. O módulo
+Manutenção permite inserir todas as informações essenciais do cliente que, em seguida, são
+vtilizadas para criar suas rotas. Existem quatorze etapas principais que precisam ser concluídas
+para começar a criar territórios. Essas etapas são: adição de regiões, adição de tipos de
+equipamento, adição de equipamentos, adição de tipos de funcionário, adição de funcionários,
+adição de motoristas, adição de cenários, adição de tipos de tempo de atendimento, adição de tipos
+de janela de atendimento, adição de padrões de atendimento, adição de conjuntos de padrões de
+atendimento, adição de sessões de planejamento, adição de tipos de cliente e definição das opções.
+Em seguida, você desejará manter seus clientes e extensões de cliente atualizados. Essa tarefa pode
+parecer difícil, mas o Territory Planner permite importar rapidamente os clientes e extensões de
+cliente de sua empresa.
+Depois de importar clientes e extensões de cliente no Territory Planner. é possível utilizar o Editor
+de planejamento para criar e editar suas rotas e para criar e editar seus territórios. Em seguida,
+depois de criar rotas e territórios, você pode transferir dados para uma sessão de planejamento
+selecionado as extensões de cliente e/ou qualquer outras informações de suporte que desejar
+transferir.
+Agora que as rotas, territórios e sessões de planejamento foram criadas com êxito, você pode
+vtilizar o mapa no Editor de planejamento para exibir e avaliar os territórios e rotas.
+Em seguida, depois de concluir a revisão dos territórios e sessões de planejamento, o Territory
+Planner pode exportar informações de roteirização para sua rede, mainframe ou outro computador
+€ você pode exportar qualquer um dos campos que podem ser importados do arquivo de clientes
+u extensões de cliente. Além disso, você pode gerar e imprimir qualquer número de relatórios
+informativos e imprimir mapas diretamente do Editor de planejamento.
+O Territory Planner possui vários outros recursos não descritos acima; consulte o Guia de
+operações do Roadnet Transportation Suite ou o sistema de ajuda completos para obter
+informações sobre esses recursos.
+FleetLoader
+Utilizado com: FleetLoader
+FleetLoader, parte do Roaánet Transportation Suite da UPS Logistics Technologies, permite
+carregar rápida e facilmente os seus veículos de bebidas. Com o FleetLoader, você pode optar por
+carregar seus veículos de uma maneira mais fácil para os trabalhadores do armazém (otimização
+para armazém) ou mais fácil para o motorista descarregar (otimização para descarga) ou uma
+IFITIT AA A L L Foadnet Tranporiation Sufe
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Introdução ao Roadnet Transportation Suite
+combinação de ambas. Depois de carregar seus veículos, você pode utilizar os relatórios e as
+ferramentas incluídos no FleetLoader para analisá-los e alterá-los, conforme necessário.
+.A primeira etapa para uso do FleetLoader é configurar e manter os dados. O módulo Manutenção
+permite inserir todas as informações essenciais do cliente que, em seguida, são utilizadas para
+carregar seus veículos. Existem nove etapas principais que precisam ser concluídas para começar
+acriarrotas. Essas etapas são: adição de regiões, adição de tipos de compartimento, adição de tipos
+de equipamento, adição de equipamentos, adição de marcas de SKU, adição de tipos de
+embalagem, adição de SKUs, adição de restrições de carregamento, definição das regras de
+empilhamentoe de produto e definição de opções.
+Em seguida, você desejará manter suas rotas atualizadas. Isso pode ser feito simplesmente
+vtilizando o recurso de importação do FleetLoader para importar as rotas que serão carregadas em
+seus veículos.
+AAntes de carregar seus veículos, você precisa definir as opções de carregamento de veículos. As
+Opções de carregamento de veículos permitem definir como o Editor de carregamentos funciona,
+como quando avisos são exibidos para violações de determinadas regras de carregamento e como
+informações são exibidas nas janelas.
+Depois de inserir todas as informações necessárias no módulo Manutenção e estabelecer suas
+preferências, você poderá carregar seus veículos no Editor de carregamentos que fomece acesso
+fácil para editar os veículos e exibir os produtos em cada compartimento.
+Agora que seus veículos foram carregados com êxito, é possível utilizar o FleetLoader para
+analisar o veículo carregado e mover SKUs conforme necessário para ajustar a carga. Você pode
+vtilizar janelas diferentes para mover os produtos entre compartimentos ou dentro de um
+compartimento.
+.Ao editar rotas e carregar veiculos, você deve salvar seu trabalho periodicamente no Editor de
+carregamentos. No entanto, quando as rotas estiverem salvas ou bloqueadas, você pode precisar
+alterar seu status. É possível bloquear, desbloquear ou limpar o status de uma rota facilmente na
+janela Rotas. Além disso, você pode gerar e imprimir qualquer número de relatórios informativos.
+|O FleetLoader possui vários outros recursos não descritos acima; consulte o Guia de operações do
+“Roadnet Transportation Suite ou o sistema de ajuda completos para obter informações sobre esses
+Tecursos.

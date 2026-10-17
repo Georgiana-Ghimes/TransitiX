@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 42 (deschis)</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Changelog · build 42 <em style="opacity:0.85;font-weight:500">(deschis)</em></h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong><br />
+      Versiune companion <strong>v1.5.3 · build 42</strong> · deschis <strong>15 septembrie 2026</strong><br />
+      De la commit <code>de2dab5</code> (build 41) — append până la semnalul de închidere
+    </div>
+    <div class="badge-row">
+      <span class="badge">Export XLS Tip marfă</span>
+      <span class="badge">galeti &gt; bucati</span>
+      <span class="badge">WIP — se actualizează</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Document de lucru (doar HTML). Local în <code>docs/CHANGELOGS/</code> — folderul
+    <code>docs/</code> nu e pe GitHub.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> pe ecran Tip marfă arăta „găleți” după editare / re-scan, dar
+    XLS-ul Anexei scria tot „bucăți”. Exportul citea întâi <code>quantity_unit</code>
+    (încă pe „buc” din OCR) și ignora tipul corectat.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+    <p class="muted" style="margin:0">(gol — livrarea acestui build e remedierea de mai jos)</p>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+    <div class="avoid-break">
+      <h3>XLS Anexă — Tip marfă din ecran, nu din „buc” vechi</h3>
+      <ul>
+        <li><code>annexTipMarfa</code>: dacă Tip marfă e un ambalaj real (găleți / saci /
+          paleți), acela merge pe foaie.</li>
+        <li><code>quantity_unit</code> se folosește doar când e ambalaj (nu „buc / bucăți /
+          pcs”).</li>
+        <li>„bucăți” singur nu mai ajunge pe anexa clientului.</li>
+        <li>Caz: tip = găleți, unitate cantitate = bucăți → XLS = <strong>galeti</strong>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Aviz cu Tip marfă = găleți pe ecran, dar OCR vechi pe „buc” → Generează XLS
+          Anexă → coloana Tip marfa = galeti.</li>
+        <li>Aviz doar cu „buc” și tip gol → Tip marfa gol pe XLS (nu bucati).</li>
+        <li>Produs + unitate saci → Tip marfa = saci (neschimbat).</li>
+        <li>Login / topbar: <strong>v1.5.3 - build 42</strong>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.5.3 build 42 · deschis 15 septembrie 2026 · branch RAI-spedition-driver-app ·
+    append până la închidere · docs/ local only
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+Pasul 7: pentru a schimba culoarea folosită pentru afișarea zonelor sau căilor de oră de vârf,
+faceți clic pe săgeata de culoare corespunzătoare pentru a deschide o paletă de culori. Faceți clic pe unul
+culoare pentru a o selecta. Pentru a modifica lățimea zonelor sau a căilor, introduceți
+lățime nouă în pixeli, în câmpul Lățimea corespunzător.
+Pasul 8: Pentru a afișa zonele și căile de oră de vârf pe hartă, chiar și atunci când
+nu este în modul Oră de vârf, selectați Afișați zonele și traseele orașului
+oră de vârf. Zonele și căile vor fi afișate atunci când vă aflați
+Modul oră de vârf chiar dacă această casetă nu este selectată.
+Pasul 9: Faceți clic pe butonul [Salvare] pentru a salva opțiunile.
+Întreținere — Fișier — Hartă — Pictogramă Proprietăți hărți — [OK]
+M T , ,, , ,, — —Roadhet Tranporiation Sute
+„Copsright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+Adăugarea unei zone de oră de vârf
+După ce creați un șablon de oră de vârf, puteți crea zone de oră de vârf,
+setați variații de viteză și restricții de traseu unice pentru această zonă. Zonele de
+orele de vârf sunt doar regiuni geografice pe care le creați și cu care vă asociați
+atribute specifice. Este posibil să existe atâtea zone de oră de vârf câte există
+necesar pentru fiecare model; zonele se pot suprapune chiar. Dacă doriți să setați
+variații de viteză, schimbări de direcție sau restricții de traseu pe străzi
+trasee individuale, este necesar să se creeze căi de oră de vârf.
+Când creați zone de oră de vârf, trebuie să alegeți dacă zonele care sunt create sunt
+Simplu sau Avansat. Zonele avansate vă permit să specificați variații de viteză
+și restricții de traseu în funcție de tipul de drum; zonele simple vă permit să definiți o variație
+viteza pe toate drumurile din zonă. Dacă se foloseşte modelul oră de vârf cu
+„o sesiune de scripting sau planificare care folosește XY ca calculator de timp/
+distanță sau utilizați funcțiile RouteNet/SuperMatrix, dar nu Rush Hour
+avansat, creați doar zone simple. Dacă sesiunea de rutare sau planificare utilizează
+RouteNet cu caracteristici avansate de oră de vârf, puteți crea zone simple
+sau Avansat.
+Zonele de oră de vârf sunt adăugate la a doua hartă în modulul Întreținere sau în Editor
+rutare sau planificare. Acești pași presupun că lucrați la
+-Modul de întreținere.
+IN Stage: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Wn — Pasul 2: Faceți clic pe meniul Fișier și selectați Hartă. Este afișată harta.
+) Pasul 3: Faceți clic pe pictograma Șablon oră de vârf. Harta intră în modul Orar
+.. de grabă și cursorul se schimbă într-un ceas. Titlul hărții afișează modelul pentru
+ora de vârf actuală.
+. Notă: Pentru a intra în modul Oră de vârf, trebuie să selectați un șablon pentru
+ora de vârf curentă în meniul Opțiuni hărți.
+Pasul 4: Faceți clic dreapta pe hartă și selectați Adăugați zonă pentru programul de lucru
+Apăsați pe meniul care va fi afișat. Fereastra Add Rush Hour Area este
+afisat.
+Pasul 5: Pe hartă, faceți clic unde doriți să înceapă zona orelor de vârf. Unul
+pătratul este afișat pe hartă. Continuați să faceți clic pentru a crea conturul zonei
+oră de vârf; se vor trasa liniile care leagă pătratele
+automat, deci trebuie doar să faceți clic în locul în care se află conturul
+va face o întoarcere sau o întoarcere. După ce ați completat zona, faceți clic pe butonul
+Ghid de operații o o c ==-=--25
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrezi cu modele pentru orele de vârf
+[Zona completă/închisă]; nu este necesar să se deseneze ultimul segment. Fereastra
+Este afișat Editarea atributelor zonei orelor de vârf.
+o creați o zonă de oră de vârf, nu trebuie să desenați
+ultimul segment. Doar faceți clic pe butonul [Finalizare (zona de închidere) și pe butonul
+va fi extras ultimul segment.
+Notă: În modul Oră de vârf, puteți utiliza opțiunile Zoom și Centru pentru a vă deplasa
+utilizați harta după cum este necesar.
+Pasul 6: Introduceți un nume și o descriere pentru zona orelor de vârf. Trebuie
+introduceți un nume.
+Pasul 7: Selectați dacă doriți să introduceți informații despre zonă simplă sau zonă avansată.
+Dacă utilizați Avansat, mergeți la pasul 11
+Sfat: Pentru a defini variațiile de viteză în funcție de tipul de drum sau pentru a impune restricții de viteză
+traseu peste tipuri de echipamente restricționate, selectați Avansat. Zonele
+Avansat poate fi utilizat numai cu sesiunile de rutare și planificare
+care folosesc RouteNet și au opțiunea Advanced Rush Hour
+selectat.
+Pasul 8: Dacă 2 zone se suprapun cu o altă zonă de oră de vârf, introduceți prioritatea
+a acestei zone. Dacă zonele se suprapun, vor fi utilizate atributele zonei
+206 „Roadhet Transportaton Suite
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu modele pentru orele de vârf
+oră de vârf cu cea mai mare prioritate. Prioritatea poate varia de la unul
+minim de O până la maxim de 99.
+n — =
+E si C pc ti mcm ec atao)
+fembiniio |aa inmetvaio] Twsitancio|
+In o ma TS
+mm SENȚIUNI Masçio PBE

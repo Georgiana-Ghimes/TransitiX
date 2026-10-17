@@ -1,0 +1,79 @@
+w — L[nser] Se afișează fereastra Add Container Type |U
+— Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+O) Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugați tipul de container este afișat cu unele informații deja completate:
+modificați informațiile necesare în noul tip de container.
+2F
+— Este posibil să crezi
+tipuri de containere
+—— pentru a organiza
+EE ——— S
+EE o a
+În EIn E
+Pasul 4: Introduceți până la 3 caractere pentru ID-ul tipului. Acest câmp trebuie completat.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+Pasul 6: Pentru a asocia o culoare cu al doilea tip de container, faceți clic pe săgeata Culoare și faceți clic pe a
+culoare pentru a o selecta.
+Pasul 7: Introduceți costul, greutatea și capacitatea tipului de container.
+Pasul 8: În secțiunea Dimensiuni, introduceți lungimea, înălțimea și lățimea tipului de
+recipient.
+TT ,, , ,,, ; , ,;a A Roadhet Tranporation Suite
+' Copright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Cum să lucrați cu tipuri de containere
+Pasul 9: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva informațiile.
+Pasul 10: După ce ați adăugat toate tipurile de containere, faceți clic pe caseta Închidere.
+închideți fereastra Adăugați tip de container.
+om antonção -> Înregistrări — Expedit - Ties do conhliear sim Alitimar
+(Mnsert]) — Pictograma Salvare ([Ctrl]*[S])
+Seturile de modele de îngrijire existente pot fi editate sau șterse,
+după cum este necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe
+informații
+Bmadeoperations A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum se lucrează cu containerele
+Cum se lucrează cu containerele
+Folosit cu: MobileCast
+|MobileCast oferă posibilitatea de a utiliza containere pentru a monitoriza solicitările de la
+trasee. Containerele pot fi orice articol folosit pentru ambalarea comenzilor, cum ar fi
+transportoare, paleți, saci etc. Pentru a vă ajuta să organizați containerele, utilizați
+tipuri de containere. Sau puteți adăuga pur și simplu containerele fără a utiliza tipuri.
+Puteți monitoriza containerele reutilizabile de la livrare până la colectare, precum și
+Utilizați modulul Import pentru a importa zilnic containere de unică folosință. tu
+puteți adăuga containere individual sau le puteți importa; consuit Import de articol
+secțiunea de întreținere pentru mai multe informații despre importul containerelor,
+ME Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Până la Pasul 2: Faceți clic pe meniul Înregistrare și selectați Navă și Containere. Fereastra
+” Se afișează Containers. Lista curentă de containere nu este afișată; pentru a vedea lista
+starea curentă a containerelor sau a containerelor selectate, utilizați Căutare în
+partea de jos a ferestrei.
+. Note: meniul va reflecta aliasul containerului introdus pe pagina Aliasuri din meniul Opțiuni.
+Prin urmare, meniul poate afișa altceva decât „container”.
+Pentru a vedea o listă actualizată de containere, faceți clic pe pictograma Actualizează; fereastra va fi
+” actualizat cu toate informațiile modificate din baza de date,
+Pasul 3: În fereastra Containers, faceți clic pe pictograma Adăugare sau apăsați tasta [Inserare]. A
+Apare fereastra Adăugare container.
+„ Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+o) Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugați container este afișat cu unele informații deja completate; schimba
+informațiile necesare în noul container.
+Pasul 4: Introduceți până la 32 de caractere pentru ID. Acest câmp trebuie completat.
+Pasul 5: Faceți clic pe săgeata de lângă câmpul Tip și faceți clic pe tipul de container corect. Se
+Dacă nu doriți să asociați un al doilea tip de container, selectați Nici unul.
+Și Fpn
+EE atașați un container
+— și e ) cu orice client.
+EE P 2
+M A
+Pasul 6: Faceți clic pe săgeata de lângă câmpul al doilea tip de client și selectați tipul de client
+al 2-lea container asociat. Acest câmp trebuie completat.
+Pasul 7: În câmpul ID client, introduceți D-ul unde se află containerul. Dacă nu
+Dacă cunoașteți ID-ul, faceți clic pe butonul [Căutare] pentru a căuta locația corectă.
+Acest câmp trebuie completat.
+ET AA E Roadhet Travporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum se lucrează cu containerele
+Pasul 8: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva informațiile.
+Pasul 9: După ce ați adăugat toate containerele, faceți clic pe caseta Închidere pentru a închide

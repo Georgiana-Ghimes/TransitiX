@@ -1,0 +1,112 @@
+(Cum să lucrați cu tipurile de echipamente
+Cum se lucrează cu tipurile de echipamente
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipuri de echipamente definește tipurile de echipamente utilizate, cum ar fi
+utilizarea vehiculelor sau remorcilor de dimensiuni medii, precum și numărul și poziția compartimentelor
+a unui anumit tip de vehicul. Puteți defini dimensiunile unui tip de
+echipament, inclusiv greutatea, și specificați capacitatea acestuia. În plus, este posibil
+asociați tipurile de echipamente cu clienții, astfel încât tipul să fie utilizat atunci când acesta
+clientul este scriptat. Când utilizați rutarea compartimentelor, specificați câte dintre
+fiecare tip de compartiment este prezent în fiecare tip de echipament. Fără Teritoriu
+Planificator, există opțiunea de a crea teritorii proporționale cu tipul de echipament care va fi
+folosit. În sectorul băuturilor, tipurile de compartimente trebuie introduse înainte de tipuri
+de echipament dacă utilizați FleetLoader. După completarea
+tipuri de echipamente, pot fi introduse articole individuale de echipament.
+Puteți adăuga tipuri de echipamente individual sau le puteți importa; consultați
+Importarea articolelor de întreținere pentru mai multe informații despre import
+tipuri de echipamente.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+man — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Echipamente și tipuri de echipamente. Pentru a
+Apare fereastra Tipuri de echipamente. La lista curentă de tipuri de echipamente
+nu va fi afișat. Acest lucru face ca sistemul să funcționeze mai rapid decât dacă lista
+fișierul complet a fost încărcat de fiecare dată. Pentru a vedea lista curentă de tipuri
+echipamente sau numai anumite tipuri de echipamente, utilizați
+- Caută.
+Notă: Pentru a vedea o listă actualizată de tipuri de echipamente, faceți clic pe pictograma Reîmprospătare; la
+Jjanela va fi actualizat cu cele mai recente informații din baza de date.
+T și Pasul 3: În fereastra Tipuri de echipamente, faceți clic pe pictograma Adăugați sau apăsați
+í [Inserare]. Apare fereastra Adăugare tip de echipament.
+S p p aucon nl dl Ssiehaáes ciná existent, faceți clic dreapta
+Faceți clic pe intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere pentru 2D de tip de echipament. Acest câmp trebuie să fie
+umplut.
+Pasul 5: Introduceți până la 255 de caractere în Descriere.
+Pasul 6: Introduceți informații generale dacă doriți (greutatea și înălțimea tipului de echipament).
+Pasul 7: Dacă tipul de echipament este o remorcă sau o altă unitate de încărcare, introduceți
+Capacitatea totală a vehiculului ca dimensiune 1, dimensiune 2 sau dimensiune 3 in
+Câmpuri de dimensiune.
+Dacă utilizați Roadnet, puteți introduce și capacitatea de
+categorii pentru fiecare dimensiune.
+FT A o Roadhat Tranporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de echipamente
+Dacă utilizați MobileCast, verificați Transportează o expediere către
+indicați că capacitatea echipamentului trebuie monitorizată în funcție de traseu
+este acoperit.
+Pasul 8: Introduceți informații despre cost dacă doriți (fix, variabil). Aceste informații
+sunt necesare pentru a calcula cu exactitate costurile rutei.
+TTNA sau
+cel
+Smenomenes| remmat |
+Acest exemplu arată un m——.
+T75 = vehicul de dimensiuni medii,
+metri adăugați ca PR——
+echipament de tip 1. A = A
+capacitatea vehiculului pentru L mo mc e
+trei măsurători de dimensiune este F in
+adăugat la caseta de oprire — Q DS teneltaten ta
+N——
+Şi
+(Costurile fixe sunt cele care sunt suportate indiferent de distanță
+călătorit, cum ar fi prețul de închiriere sau de cumpărare, asigurare, amortizare, taxe
+licențiere și taxe de trecere.
+Costurile variabile sunt afectate de distanța parcursă, cum ar fi combustibilul,
+6ulei, anvelope și camere, reparații și piese de schimb.
+Pasul 9: Dacă utilizați MobileCast și acest tip de echipament conține a
+motor (de exemplu, un cal mecanic), verificați Unitatea de putere. Dacă
+echipamentul trebuie să fie atribuit unei rute pentru ca acesta să poată fi pornit, asta înseamnă
+că un tip desemnat ca unitate de putere trebuie să fie atribuit rutei.
+Pasul 10: Pentru a împiedica acest tip de echipament să circule pe drumuri selectate
+în anumite momente ale zilei (de exemplu, în timpul orelor de vârf),
+selectați Interzise din zonele și căile restricționate în orele de vârf
+Dacă această opțiune este selectată, echipamentele de acest tip nu vor fi direcționate
+prin orice zonă de oră de vârf sau stradă care conține restricții de circulație.
+echipament în perioada specificată a zilei.
+Pasul 1: Dacă acest tip de echipament poate merge mai repede sau mai lent decât
+normal, verificați Ajustați timpul de călătorie tip echipament după:
+Indicați dacă acest tip de echipament va călători mai repede sau mai lent și
+introduceți 2 diferență procentuală. De exemplu, vehicule mai mici adesea
+BmiadOperations AAA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate
+(Cum să lucrați cu tipurile de echipamente
+au o manevrabilitate mai bună și mai puține restricții decât cele mai mari,
+prin urmare, selectați Cel mai rapid dacă utilizați acest tip de echipament.
+Pasul 12: Dacă utilizați rutarea compartimentelor, utilizați Adăugare
+de la compartimente la un tip de echipament.
+Dacă ați achiziționat FleetLoader, consultați Tipuri de echipamente și FleetLoader.
+) Dacă ați terminat de introdus informații pentru tipul de echipament,
+faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva tipul
+echipamente.
+Pasul 13: Repetați pașii de la 4 la 12 pentru a adăuga orice alte tipuri de echipamente.
+m Pasul 14: Când ați terminat de adăugat tipurile de echipamente, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugare tip de echipament.
+Pictograma întreținere — Înregistrări — Echipament — Tip echipament — pictogramă
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctril+[S])
+Tipurile de echipamente existente pot fi editate sau șterse, în funcție de
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+() Important: excluderea tipurilor de echipamente afectează alte nevoi de întreținere,
+Înainte de a șterge tipurile de echipamente, trebuie să ștergeți echipamentul
+cu acel tip de echipament.
+Adăugarea de compartimente la un tip de echipament
+.Pagina Compartimente vă permite să specificați informații despre compartimente
+prezente în tipul de echipament. Trebuie să utilizați această pagină numai dacă dvs
+intenționați să utilizați rutarea compartimentelor la crearea rutelor.
+Faceți clic pe fila Compartimente pentru a începe introducerea informațiilor despre compartiment. Este
+Este necesar să se creeze tipuri de compartimente și să se introducă tipul de echipament pentru a putea
+începe această procedură.
+HW| Pas: În pagina Compartimente, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Pentru a
+Si ts Adirinnte Coarctateatos FexRada

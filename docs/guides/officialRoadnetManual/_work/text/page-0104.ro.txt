@@ -1,0 +1,82 @@
+— Toate drepturile rezervate.
+Importarea extensiilor client
+import. Consultați Comutarea între seturile de aspect pentru mai multe
+informaţii.
+Pentru a vizualiza sau modifica aspectul fișierului de import, faceți clic pe săgeata [Aspect document].
+fișier] și selectați Editați din meniul derulant. Consultați Configurare
+importați machete de fișiere pentru mai multe informații
+Pentru a vizualiza un raport care rezumă informații despre aspect, inclusiv
+mome și locația fișierului de import și pozițiile de pornire și dimensiunea
+fiecare câmp, faceți clic pe săgeata [File Layout] și alegeți View din meniu
+suspendat. Fereastra de previzualizare a raportului apare împreună cu raportul. În această fereastră,
+puteți imprima sau exporta raportul.
+Dacă nu vi s-a dat permisiunea de a modifica opțiunile de import și
+export în modulul Administrare, nu veți putea modifica opțiunile
+selectat la importarea extensiilor client.
+EX
+-c
+[n m FPSSSS TE
+perva -
+fmEr — ——
+PPPT
+imoamncene ) Tun omni
+ficenesme en | | am răspuns
+Vasa tma Tn fena ——
+T intmntóninencos *
+— A
+j
+Înainte de a importa extensiile client, faceți clic pe
+fAlte opțiuni] și alegeți seturile de modele
+îngrijire standard și săptămâni active standard.
+Pasul 3: Dacă importați clienți, bifați opțiunea Import client din
+Clienți și alegeți opțiunile dorite. Consultați Importarea clienților pentru
+obțineți mai multe informații despre aceste opțiuni.
+Pasul 4: În zona Client Extensions, selectați sesiunile de planificare pentru
+pe care doriți să le importați extensiile de aspect. Pentru a selecta mai mult de unul
+sesiune, țineți apăsată tasta [Ctrl] când faceți clic pe sesiuni.
+Operații proaste A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+Importarea extensiilor client
+Sfat: Dacă este necesar, dimensionați coloanele din lista de sesiuni de planificare la
+astfel încât să puteți vedea toate informațiile. Lățimile coloanelor sunt salvate
+oO) automat și data viitoare când se deschide fereastra veți putea să le vedeți pe toate
+informația s.
+Pasul 5: pentru a actualiza doar extensiile client existente în sesiuni cu altele noi
+informații, selectați opțiunea Numai Actualizare. Dacă există noi extensii ale
+client în fișierul de import, acestea vor fi ignorate.
+Pasul 6: Faceți clic pe butonul [Import]. Dacă importați clienți, aceștia vor fi
+importate în toate sesiunile. Extensiile vor fi importate în
+sesiunile și opririle selectate plasate pe traseele specificate.
+. Notă: După importare, veți putea vedea jurnalul de import sau orice erori care au apărut
+în timpul procesului. Faceți clic pe butonul [Vizualizare jurnal] sau [Vizualizare erori].
+Pasul 7: După importarea tuturor extensiilor client, faceți clic pe caseta Închidere
+pentru a închide fereastra Import Client Extensions.
+Importator > Import — Întreținere — Extensii client — [Import]
+FE A AA Roadret Trasporiafion SE
+„Copyright 2006 United Parcel Service f America, lc
+Toate drepturile rezervate.
+Import zilnic de comenzi
+Import zilnic de comenzi
+Folosit cu: Roadnet
+Dacă utilizați Roadnet pentru a crea rute zilnice, va trebui să importați comenzi
+zilnic. Modulul Import vă permite să stabiliți cum informațiile despre comandă
+va fi citit în timpul procesului de import. Puteți specifica aspectul fișierului
+proces de import, invalidați anumite comenzi ale clienților, astfel încât să nu le vedeți în
+rutare, trimite comenzi de la un client la altul, generează automat rapoarte
+despre ordinele zilei, printre multe alte opțiuni.
+. Notă: Când importați comenzi viitoare, este posibil să primiți un avertisment că altul
+utilizatorul lucrează la una sau mai multe comenzi viitoare. Dacă se întâmplă asta, tu
+nu veți putea importa comenzi viitoare până când celălalt utilizator nu le are
+salvat și închis.
+ZD É Pasul 1: Faceți clic pe pictograma Import pentru a deschide modulul Import
+wl — Notă: Dacă aveți mai multe regiuni sau scenarii, asigurați-vă că datele sunt afișate
+adecvat în partea de jos a ecranului. Pentru a schimba regiunea sau scenariul, faceți clic pur și simplu
+pe săgeată și selectați elementul corespunzător din lista afișată.
+Pasul 2: Faceți clic pe meniul Import și selectați Comenzi. Fereastra de import comenzi este
+afisat.
+ET
+Faceți clic pe [Altele [ 5
+pc ee te [ = ) p
+cum ar trebui Roadnet — ) ro |
+gestionează cererile care sunt — | postează „

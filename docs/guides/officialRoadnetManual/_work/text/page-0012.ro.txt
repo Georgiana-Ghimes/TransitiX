@@ -1,0 +1,93 @@
+Pasul 3: Pentru a permite adăugarea de noi utilizatori la RIC, bifați
+opțiunea Permite adăugarea unui nou utilizator RIC la autentificarea pe partea clientului.
+Faceți clic pe săgeata Atribuiți automat un nou utilizator grupului de utilizatori și
+Selectați grupul de utilizatori din care va face parte noul utilizator.
+Note: Utilizatorii noi adăugați la RIC vor fi adăugați la acest grup. După adăugare
+utilizator, grupul poate fi schimbat doar în modulul Administrare.
+Pentru informații despre grupurile de utilizatori, consultați Lucrul cu
+Grupuri de utilizatori.
+Pasul 4: Faceți clic pe butonul [OK].
+u „Suită de transport Roadhnet
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu privilegii
+Cum să lucrezi cu privilegii
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Privilegiile sunt grupuri de drepturi pe care utilizatorii le au în Transportation Suite. Poți
+creați mai multe privilegii, fiecare dintre ele va avea acces la diferite părți ale
+program. De exemplu, puteți crea un privilegiu numit Operator cu drepturi
+acces la Editorul de rutare, dar nu la Editorul de încărcare și la altul
+privilegiu numit Loader cu drepturi de acces la Load Editor, dar
+nu la Editorul de Scripturi. După ce sunt create privilegiile, le puteți aloca
+utilizatori sau grupuri din fiecare regiune.
+Pasul 1: Faceți clic pe pictograma Administrare pentru a deschide modulul Administrare.
+Pasul 2: Faceți clic pe meniul Înregistrări și selectați Privilegii. Fereastra Privilegii este
+afișat conținând privilegii existente.
+Pasul 3: În fereastra Privilegii, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare Adăugare privilegiu.
+Permisiunile stabilite pentru
+„fiecare privilegiu definește care
+-părți din Roadnet Transportation
+„Suita poate fi folosită de un
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra Adăugați
+Privilegiul este deja afișat cu unele informații
+finalizat; modificați informațiile necesare în noua intrare.
+Pasul 4: Introduceți numele și descrierea privilegiului. Trebuie să introduceți un nume.
+Pasul 5: În zona Permisiuni, selectați permisiunile pe care le va avea privilegiul. Poți
+alegeți dintre următoarele permisiuni:
+Are acces complet la regiune — utilizatorul poate folosi Roadnet Transportation
+Suită completă în anumite regiuni.
+Poate efectua întreținere — utilizatorul poate accesa modulul de întreținere
+și poate adăuga, modifica și șterge elemente de întreținere în modul în sine și în
+Ghid de operațiuni
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Cum să lucrezi cu privilegii
+redactori de scenarii și planificare. Orice utilizator care nu are acest lucru
+permisiunea nu va putea intra în modulul de întreținere.
+Pentru a permite utilizatorului să modifice Opțiunile de întreținere, bifați Can
+modificarea opțiunilor de întreținere.
+Pentru ca utilizatorul să poată configura parametrii de ștergere a rutelor de pe Roadnet
+În MobileCast, bifați Poate controla ștergerile rutelor
+traseu). Dacă această opțiune nu este selectată, utilizatorul poate șterge rute
+a0 import comenzi zilnice dacă un alt utilizator setează opțiunea. În MobileCast,
+Această permisiune afectează numai ștergerea rutelor, opririlor, comenzilor și articolelor din
+solicitat atunci când o rută este încărcată pe dispozitivul wireless.
+Pentru a permite utilizatorilor să creeze șabloane de oră de vârf și să editeze
+cele existente, bifați opțiunea Pot edita modele de oră de vârf.
+pentru orele de vârf). Un utilizator care nu are acces de editare la șabloane
+in timpul orelor de varf vei putea doar sa vezi modelele si sa il alegi pe cel care va fi
+folosit.
+Pentru a permite utilizatorilor să creeze, să editeze și să șteargă șabloane de timp
+traseu și editați modele de distanță, bifați opțiunea Poate edita timpul de călătorie/
+modele de distanță (Puteți edita modele de timp de călătorie/distanță). Unul
+utilizator care nu are acces de editare doar la modelele de timp de călătorie
+Puteți selecta modelul care va fi folosit în trasee.
+Poate configura layout-uri — utilizatorul poate crea și modifica aspectul
+import. Dacă această opțiune nu este selectată, utilizatorul poate afișa
+importați machete, dar nu le veți putea modifica.
+Poate afișa informațiile confidențiale ale angajaților — utilizatorul poate
+adăugați, modificați și vizualizați informații confidențiale în Driver și
+Angajat. Informațiile afectate din fereastra Driver sunt:
+licență, data ultimului examen fizic și test antidrog și taxe de plată. The
+Informațiile afectate din fereastra Angajat sunt: numărul fișierului ADP,
+data nașterii, data admiterii și data concedierii. Dacă această opțiune nu
+este selectat, utilizatorul nu va putea vedea aceste informații, utilizați
+Managerul de căutare nici măcar nu imprimă sau importă aceste coloane.
+Poate importa date — utilizatorul poate folosi modulul Import pentru
+importați informații în Transportation Suite. Dacă această opțiune nu este
+selectat, utilizatorul nu va putea importa informații în
+TransportationSuite.
+Poate schimba opțiunile de import/export — utilizatorul poate modifica
+opțiunile selectate la import și export. Dacă această opțiune nu este
+selectat, utilizatorul nu va putea modifica opțiunile selectate când
+import sau export.
+Poate face rapoarte — utilizatorul poate vizualiza și imprima rapoarte din
+Transportation Suite folosind modulul Rapoarte sau alt editor dvs
+au acces. Pentru a permite utilizatorului să vadă și să modifice opțiunile de raport,
+Bifați Poate accesa opțiunile de raportare. Așa că
+16 „Suită de transport Roadhnet
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu privilegii

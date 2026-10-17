@@ -1,0 +1,48 @@
+SNAA OOMIATERDDOS ESGIROS.
+Guia de operações u
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Módulos do Roadnet Transportation Suite
+n “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Configuração do módulo Administração
+Configuração do módulo Administração
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O módulo Administração permite configurar os usuários do Roadnet Transportation Suite
+€ como eles poderão utilizar o conjunto de aplicativos. Por exemplo, você pode ter um
+operador apto a criar rotas no Editor de roteirização, mas que não possa alterar as rotas no
+módulo Analista. Por outro lado, seu analista deve estar apto a alterar as rotas no módulo
+AAnalista, mas não a criar rotas no Editor de roteirização. Ou pode haver um administrador
+que deva trabalhar não somente com o Editor de roteirização e o módulo Analista, mas
+também supervisionar várias regiões, enquanto operadores e analistas só podem ver
+informações da própria região. Às várias opções do módulo Administração permitem
+controlar não somente quem pode utilizar o sistema, mas as partes do conjunto de
+aplicativos que podem utilizar e as regiões de seus negócios que podem ver.
+Para definir usuários, regiões e direitos de acesso das regiões, é preciso criar vários itens,
+incluindo os próprios usuários, osgrupos de usuários, as regiões e os privilégios.
+Privilégios são direitos que o usuário tem no Transportation Suíte; você pode criar
+conjuntos diferentes de privilégios que serão atribuídos a usuários/grupos de usuários de
+cadaregião. Usuários são as pessoas que utilizarão o Roadnet Transportation Suíte e você
+pode organizar os usuários que utilizarão o conjunto de aplicativos da mesma maneira em
+grupos de usuários. As regiões são a peça fínal do quebra-cabeça. Regiões são áreas
+geográficas às quais você atende; normalmente, uma região é equivalente a um depósito.
+Ao criar as regiões, você específica os usuários e os grupos que têm acesso a ela, bem
+como os privilégios de cada um nessa região.
+Guia de operações B
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções do módulo Administração
+Definição das opções do módulo Administração
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Se você tiver usuários que utilizarão o RIC, talvez seja conveniente permitir que os novos
+usuários sejam adicionados diretamente no RIC, em vez de utilizar o móduto
+Administração para isso. Quando você adiciona um usuário, ele é adicionado ao grupo
+aqui selecionado.
+Etapa 1: Clique no ícone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Ferramentas e selecione Opções. O menu Administration
+Options (Opções de administração) é exibido.
+Se a opção Permitir a adição de
+movo usuário RIC estiver
+selecionada, usuários poderão ser
+sac om merádir d lopeerdo:

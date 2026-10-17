@@ -1,0 +1,91 @@
+FT AAA E Roadhe Tranporiafion Sl
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu comenzile planificate
+Cum să lucrați cu comenzile planificate
+Folosit cu: Roadnet, FleetLoader
+|Roadnet Transportation Suite oferă opțiunea de a introduce manual comenzi către
+în orice moment și pentru a modifica comenzile introduse anterior. Mai mult, este
+Este posibil să introduceți modificări ale ferestrei și timpului de service, precum și instrucțiuni
+oferte speciale pentru orice comanda.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări, selectați Produs și Comenzi planificate. Fereastra
+Apare Comenzi, listând toate comenzile din cea mai recentă sesiune. La bar
+Titlul ferestrei Comenzi listează sesiunea de rutare afișată și cu
+pe care vei lucra.
+Pentru a vedea comenzile dintr-o altă sesiune de rutare, faceți clic pe
+Se afișează pictograma Modificare sesiune. Fereastra Căutare - Sesiuni de rutare va fi
+afisat. Faceți dublu clic pe sesiunea cu care doriți să lucrați sau faceți clic pe ea
+apoi faceți clic pe pictograma Proces.
+Pentru a adăuga o nouă sesiune de rutare la care să adăugați comenzi,
+faceți clic pe pictograma Creați o nouă sesiune. Fereastra Adăugați sesiune
+Toteirizarea este afișată. Completați informațiile pentru noua sesiune de rutare.
+Consultați Crearea unei noi sesiuni de rutare pentru mai multe
+informaţii.
+Pentru a adăuga o comandă viitoare, faceți clic pe pictograma Modificare sesiune care apare. Pentru a
+Va apărea fereastra Căutare - Sesiuni de rutare. Faceți dublu clic pe
+” Sesiune viitoare sau faceți clic pe sesiunea viitoare și faceți clic pe pictograma Proces; sesiunea viitoare
+acum 2 este primul pe listă.
+Note: Pentru a vedea o listă actualizată de comenzi, faceți clic pe pictograma Actualizare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+.Când deschideți o comandă viitoare, este posibil să primiți o notificare care vă informează că alta
+utilizatorul lucrează cu această viitoare comandă. Dacă se întâmplă acest lucru, va fi posibil
+deschide comanda viitoare numai pentru afișare. Nu o vei putea schimba până la celălalt
+utilizatorul a salvat și a închis comanda viitoare. După ce se întâmplă acest lucru, puteți
+schimbați-l după reîmprospătarea ferestrei (faceți clic pe pictograma Reîmprospătare sau închideți și redeschideți 2
+fereastra).
+Bmadaperações AA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu comenzile planificate
+Pasul 3: În fereastra comenzilor, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare Adăugare comandă.
+Comenzile încheiate
+Adăugați o fereastră
+cerere de sesiune
+'va fi adăugat la
+sesiune de scripting
+afisat pe piesa
+partea de sus a ferestrei.
+Pasul 4: Introduceți numărul comenzii. Acest câmp trebuie completat.
+Pasul 5: Faceți clic pe săgeata Tip comandă și selectați dacă comanda este livrare sau ridicare
+Pasul 6: Introduceți ID-ul clientului și Tipul de client. ID-ul clientului și tipul de
+clientul trebuie completat. Când introduceți informații în aceste câmpuri, numele.
+și adresa clientului sunt afișate în caseta de afișare de mai jos.
+. Notă: Dacă introduceți un ID de client și un tip inexistent, va fi afișat un mesaj
+întrebând dacă doriți să adăugați clientul. Faceți clic pe [Da] pentru a adăuga
+client. Apare meniul Client. Consultați Lucrul cu clienții pentru
+obține mai multe informații. Dacă nu geocodați clientul, acesta va fi afișat în listă
+Nu georeferențiat din sesiune în Editorul de rutare, în care poate fi
+re-scenizat.
+Pasul 7: Dacă este cazul, introduceți un selector de comandă în câmpul Selector. Utilizați
+selectoare pentru a filtra comenzile la crearea rutelor în Editorul de rutare
+Pasul 8: Pentru ca o comandă să provină dintr-un anumit depozit, faceți clic pe săgeată
+Depunerea preferată și selectați depunerea din listă. Cu excepția cazului în care cererea
+este rutat cu Secvența de rută implicită, va fi plasat pe o rută
+Originar din acest depozit. Dacă nu există rute care provin din acest depozit,
+cererea nu va fi îndeplinită.
+Pasul 9: Faceți clic pe săgeata Primit de și selectați angajatul care a primit comanda în
+lista care va fi afișată.
+FBT AA E Roadha Traporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu comenzile planificate
+Pasul 10: Introduceți cantitățile corespunzătoare în caseta Dimensiuni.
+Notă: Dacă vizualizați o comandă existentă care a fost direcționată, cantitățile
+afișate sunt cantitățile dacă comanda este livrată la Data afișată.
+Pasul 11: Introduceți o valoare între 1 și 100 pentru 2 Order Urgency. Urgența indică
+importanța livrării comenzii, cu 100 indicând că comanda ar trebui să fie
+livrat. Când luați în considerare urgența la crearea rutelor în Editorul de rutare,
+Solicitările cu o urgență mai mare vor fi direcționate mai întâi.
+Dacă utilizați rutarea săptămânală, introduceți Urgență crescută
+zilnic în zona Itinerar Săptămânal.
+Pasul 12: Dacă executați rutarea săptămânală, completați 2 informații în
+Zona itinerar săptămânal.
+Creștere zilnică — introduceți cantitatea pentru fiecare mărime crescută cu 2 în fiecare zi
+că comanda nu este livrată.
+Creștere de urgență zilnică — introduceți valoarea creșterii de urgență pentru fiecare
+zi până la data de încheiere. O valoare de urgență de 100 indică faptul că cererea trebuie
+să fie scris la acea dată.
+Notă: dacă vizualizați o comandă existentă care a fost externalizată, urgența are efect
+s urgența datei de livrare. Schimbarea acestei urgențe va schimba urgența termenului limită.

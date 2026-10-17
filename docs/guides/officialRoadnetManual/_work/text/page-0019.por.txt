@@ -1,0 +1,100 @@
+— — opções de manutenção no módulo Administração. Ú
+O Roadnet Transportation Suite permite definir as opções padrão relacionadas a diversos
+itens, como sessões de roteirização, expedição, clientes e disposítivos sem fio. Você pode
+definir que nível de detalhamento deve ser usado pelo sistema para exibir o tempo de
+atendimento, os aliases das informações de quantidade, os aliases de tamanho usados para
+medir a capacidade, o tempo de atendimento, os custos e outros fatores. Se você estiver
+usando o MobileCast, você pode definir padrões adicionais, como por exemplo para os
+códigos de motivo e o computador de bordo.
+Asopções selecionadas no menu Opções serão usadas nas sessões de roteirização, sessões
+de planejamento, rotas, cliente e expedição, a menos que uma alternativa seja
+especificada. Alguns dos itens definidos no menu Opções também podem ser definidos
+como padrão, clicando com o botão direito nesses itens na janela de listagem e
+selecionando Padronizar no menu que é exibido.
+Nota: Essas opções não podem ser definidas até que outros itens de Manutenção sejam
+adicionados.
+Etapa 1: Clique no ícone Manutenção para abrir o módulo Manutenção.
+Etapa 2: Clique no menu Ferramentas e selecione Opções. O menu Opções é exibido.
+Ferramentas > Opções
+Para obter mais informações, consulte a página Padrões gerais, página Histórico da rota,
+página Padrões gerais de roteirização, página Planejamento - geral, página Padrões de
+cliente, página Padrões de alias, página Padrões de referência de unidades, página Expedir
+- Geral, página Expedir - Nível de detalhe, página Expedir - Exceções de rotas, página
+Expedir - Carga e a página Expedir - Contabilidade.
+Configuração dos padrões gerais
+Utilizado com: Roadnet, Territory Planner, MobileCast
+A página Geral do menu Opções permite selecionar o país paárão que será pré-inserido
+ma página Atributos do menu Clientes ao adicionar um novo cliente.
+Para selecionar o país padrão, clique na seta para abrir uma lista de opções e clique em
+um país para selecioná-lo.
+Para poder escolher entre todos os fusos horários e não apenas fusos horários da América
+do Norte, marque Exibir fusos horários internacionais.
+Clique no botão [OK] para salvar as informações ou continue com outra guia.
+Guia de operações E
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Configuração da página Roteirização - Geral
+Utilizado com: Roadnet, FleetLoader
+A página Roteirização - Geral do menu Opções permite definir os padrões usados ao criar
+sessões de roteirização e rotas para o Editor de roteirização. Selecione o método de
+Cálculo de tempo/distância que deseja usar, se deseja agregar pedidos e forçar o
+monitoramento do DT, e se deseja usar barreiras (caso utilize o método XY) ou o modelo
+para horário de rush em suas sessões de roteirização. As opções selecionadas serão os
+padrões de qualquer nova sessão de roteirização e rota criadas; entretanto, estas opções
+podem ser alteradas no Editor de roteirização.
+Além de definir os padrões das sessões de roteirização, também é possível definir os
+padrões que serão usados na criação de rotas. Defina o horário de início padrão, quaisquer
+horários pré e pós-rota, além de selecionar o motorista, modelo de percurso, depósito e
+tipo de equipamento padrão.
+A guia Sessões de roteirização contém itens padrão utilizados para sessões no
+Etapa 1: Na área Padrões, selecione o motorista padrão, o modelo de tempo de percurso,
+0 tipo de equipamento e o depósito; a importância de cada depósito é explicada
+abaixo. Para selecionar um padrão, clique na seta apropriada para abrir uma
+janela Pesquisa. Clique duas vezes em um item ou clique em um item e, em
+seguida, no icone Processar, para selecioná-lo.
+Depósito refere-se ao depósito escolhido automaticamente para uma rota do
+Editor de roteirização se outro depósito não estiver atribuído.
+u “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Tipo de equipamento refere-se ao tipo de equipamento escolhido
+avtomaticamente para uma rota do Editor se outro tipo de equipamento não
+estiver atribuído. Os tipos de equipamentos determinam a capacidade do
+equipamento atribuído à rota e são utilizados para calcular os custos quando as
+rotas são criadas.
+Modelo de tempo de percurso refere-se ao método de cálculo do tempo de
+percurso para rotas do Editor. O modelo de tempo de percurso paárão será
+utilizado, a menos que outro modelo de tempo de percurso seja selecionado no
+Editor de roteirização, ou a menos que você selecione RouteNet como
+calculadora do tempo de percurso.
+Motorista refere-se ao motorista cujos custos serão utilizados para calcular os
+custos das rotas, caso nenhum outro motorista esteja atribuido à rota.
+Etapa ?2: Marque os dias úteis da semana apropriados para sua empresa. Os dias úteis da
+semana referem-se aos dias com rotas para sua empresa. Essas informações são
+vtilizadas ao determinar o dia para o qual criar uma sessão.
+Etapa 3: Ao agregar pedidos de um único cliente em uma única parada, clique no botão
+[Agregar pedidos] para abrir a janela Opções de Agregar pedidos, na qual é
+possível defínir as diretrizes que devem ser usadas ao determinar se os pedidos
+devem ser agregados ou não. Para que dois pedidos possam ser agregados, os
+pedidos devem ter a mesma ID de cliente e ter a mesma ID de rota preferencial
+u pelo menos um deles não deve ter uma ID de rota preferencial. As opções
+são explicadas abaixo.
+Seletores — se os pedidos têm seletores, você pode ignorar os seletores ao
+agregá-los (Agregar todos) ou não agregar pedidos caso os seletores não sejam
+correspondentes (Separar todos). Ou ainda, criar grupos de seletores e
+especificar que os pedidos com esses seletores podem ser agregados (Agregar
+por grupo). Insira os seletores de cada grupo nos campos Grupos de seletores.
+Agregar coletas e entregas — marque para permitir que as coletas e entregas
+sSejam agregadas. Se essa opção não estiver selecionada, os pedidos de coletas e
+entregas não serão agregados.
+Agregar pedidos com alterações de janela de atendimento não correspondentes
+— marque para permitir que os pedidos sejam agregados mesmo se as janelas
+de atendimento não forem correspondentes. Se essa opção estiver selecionada,
+clique na seta Preferência de seleção de alteração de janela de atendimento e
+escolha a janela de atendimento que deve ser usada para todos os pedidos
+agregados.
+Considerar conjuntos de habilidades — marque para permitir que os pedidos
+com atividades de pedido no mesmo conjunto de habilidades sejam agregados.
+Se esta opção não estiver selecionada e os pedidos incluírem atividades que não

@@ -1,0 +1,46 @@
+de pedido/atividades do menu Pedidos. A página Itens de pedido/atividades é
+exibida.
+o
+5)
+A terceira página do menu Pedidos permite adicionar itens de
+pedido e atividades de pedido aos pedidos.
+| Etapa3: Para adicionar um item de pedido a um pedido, clique no ícone Adicionar
+— na área Itens do pedido da janela. A janela Adicionar item de pedido é exibida.
+o Clique na seta SKU e selecione a SKU que deseja adicionar. Na área
+. Tamanhos, insira a quantidade total de SKU como cada tamanho que estiver
+utilizando. Se você estiver utilizando campos de item de pedido definidos pelo
+MET AA E Foadnet Transporiation Sule
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Para adicionar uma atividade a um pedido, clique no ícone Adicionar na
+seção Atividades da janela. A janela Adicionar atividade é exibida. Clique na
+seta Atividade e selecione a atividade que deseja adicionar. À descrição e tempo
+de atendimento da atividade são inseridos automaticamente nos campos abaixo.
+Clique no ícone Salvar ou pressione [Ctri]+[S].
+“Depois de escolher uma
+atividade, a Descrição e o Tempo
+de atendimento daquela
+Etapa 4: Clique no ícone Salvar ou pressione [Ctr1][S] para salvar o pedido.
+Para adicionar informações de janela de atendimento, tempo de atendimento ou instruções
+para o pedido, utilize a guia Alteração no menu Pedidos.
+Guia de operações 101
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+* — Regras de produto no palete por zona de armazém
+* — Regras de produto na camada por marca de SKU
+* — Regras de produto na camada por tipo de embalagem
+* — Regras de produto na camada por zona de armazém
+Para que duas SKUs sejam carregadas juntas em uma camada ou palete, não pode haver
+rTegras de produto em nenhum nível (zona de armazém, tipo de embalagem ou marca de
+SKU). Por exemplo, para que duas SKUs sejam carregadas na mesma camada de palete,
+não pode haver regras de produto de tipo de embalagem, zona de armazém ou marca de
+SKU proibindo que estejam na mesma camada.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros e selecione Regras de carregamento, em seguida
+Regras de proóuto de camada palete e vá até o tipo de regra que deseja criar. À
+janela apropriada de Regras de produto é exibida.
+.O mesmo tipo de janela é utilizado para criar todos os seis tipos de
+Etapa 3: Na lista Item de destino para regra, selecione a zona de armazém/marca de
+SKU/tipo de embalagem para o qual está criando a regra. À lista Itens não
+usados nesta regra é preenchida com as zonas de armazém/marcas de SKU/
+FE SEA SBNcA o

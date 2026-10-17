@@ -1,0 +1,66 @@
+CLEAR CURRENT SESSION=TRUE
+TIME ZONE=S
+Nume fișier: batchImpStaticRoute.cfe
+REGIUNEA ID-DLOYD
+TIP IMPORT=STATIC
+ID RUTA=UPS001
+ID SET DE RUTE=UPS078
+Ghid de operațiuni 287
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+* HETODAYE — pentru a importa întotdeauna rutele de astăzi, introduceți data
+în acest format, cu toate literele majuscule și fără spații.
+* HENEXTDAY - pentru a importa întotdeauna rutele din ziua următoare, introduceți
+1 dată în acest format, cu toate majusculele și fără spații.
+Numerele întregi acceptabile ale fusului orar din America de Nord sunt:
+* Coasta de Est=8
+* Centru=10
+* Muntii=14
+* Pacific=15
+* Alaska=16
+Pentru ca importatorul să folosească un set de aspect global în loc de un
+specific regiunii, LAYOUT SET 1S GLOBAL trebuie setat la TRUE în
+dosar.
+Pentru ca importatorul să folosească ultimul set de machete utilizate, linia setată
+de layout-uri trebuie să conțină „SET LAYOUT=*=DEFAULT”. Dacă tastați pur și simplu
+DEFAULT, va folosi setul de aspect implicit.
+După finalizarea configurației, utilizați următorii parametri pentru a
+rulați procesul de import în lot dintr-o linie de comandă, folosind
+tsimpApp.exe executabil. Toate articolele sunt necesare. De exemplu, la prompt
+comenzi, puteți tasta:
+c>tsimpapp /b /c batchimpáriver.cfe
+/d — ) Opțiuni pentru baze de date. Introduceți următorul d admin/admin(ts v30
+informații: nume de utilizator Transportation Suite
+parola (Qdatabase
+b — Configura modul lot.
+c — ) Căutați fișierul de configurare de import în | /c batchimpáriver.cfz
+tote.
+M aa Tanporiaton Tu
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Folosind procesul de import în lot
+Important: Dacă au fost setate variabilele de mediu de la Pasul 1
+corect pentru numele dvs. de utilizator și parola, nu va trebui să le utilizați
+parametrul /d.
+Pentru mai multe informații despre import, consultați Importarea în Roadnet
+TransportationSuite.
+făcut operațiuni oA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Importați machete
+Importați machete
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Informații despre clienți, extinderea clienților, comandă, întreținere și computer de bord
+poate fi importat de pe o gazdă sau alt computer în Roadnet Transportation
+Suită. Pentru ca programul să accepte aceste informații și să le plaseze acolo unde poate fi
+accesat și utilizat, trebuie să îl informați unde le găsiți în
+import. Pentru a comunica aceste informații sunt folosite machetele de import
+a0 Roadnet Transportation Suite. Puteți grupa machetele de import în seturi
+care poate fi personalizat în funcție de nevoile dumneavoastră de import.
+Când pregătiți fișierele de import, trebuie să urmați instrucțiunile de mai jos (programe
+computerul de bord generează aceste fișiere în formate proprii; Roadnet-ul
+Transportation Suite este echipat pentru a citi fișiere din majoritatea sistemelor de transport
+computer de bord):
+* — Fișier text ASCII
+* o înregistrare pe linie
+AA o o N A o AN

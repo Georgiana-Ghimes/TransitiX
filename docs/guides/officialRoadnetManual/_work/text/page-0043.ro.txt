@@ -1,0 +1,92 @@
+Data începerii — introduceți cea mai devreme dată la care poate fi livrată comanda. Ao
+introduceți informații despre dată, puteți introduce data sau faceți clic pe săgeată pentru a afișa
+un calendar. Când tastați manual, selectați caseta înainte de a introduce 2 dată.
+Dacă utilizați calendarul, pentru a schimba luna utilizați săgețile din partea stângă.
+partea de sus a calendarului pentru a derula lunile sau faceți clic pe lună și selectați din meniu
+suspendat. Pentru a schimba anul, faceți clic pe an și utilizați săgețile mici pentru a derula
+la anul corect. Faceți clic pe o dată pentru a o selecta.
+Data de încheiere — introduceți data până la care trebuie să fie livrată comanda. Este posibil
+Introduceți data manual sau faceți clic pe săgeată pentru a deschide un calendar. La tastare
+Manual, selectați caseta înainte de a introduce data. Dacă utilizați
+calendar, pentru a schimba luna utilizați săgețile din partea de sus a calendarului pentru
+parcurgeți lunile sau faceți clic pe lună și selectați din meniul derulant. Pentru a schimba
+anul, faceți clic pe an și utilizați săgețile mici pentru a derula la anul corect. Faceți clic
+la o dată pentru a o selecta.
+Pasul 13: Dacă doriți să introduceți o comandă inactivă, selectați caseta Marcare ca comandă
+inactiv în partea de jos a ferestrei
+Pasul 14: Dacă doriți ca comanda să folosească timpii de onorare în bloc, chiar dacă 2
+cantitatea nu îndeplinește limita de vrac stabilită, selectați Forțare
+Timp de service în vrac.
+Pasul 15: Introduceți în câmpuri informațiile despre câmpul definit de utilizator
+adecvat. Sunt stabilite nume de câmpuri definite de utilizator
+pe pagina Alias din meniul Opțiuni,
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu comenzile planificate
+Pasul 16: Dacă doriți să introduceți modificări în fereastra de servicii,
+service sau instrucțiuni speciale, consultați Comenzi și modificări.
+Dacă doriți să introduceți articole de comandă sau activități pentru comandă, consultați Inserare
+a articolelor de comandă și a activităților de comandă.
+MG Pasul 17: După ce ați introdus toate informațiile adecvate, faceți clic pe pictograma Salvare sau
+„” apăsați [Ctrl]+[S] pentru a introduce noua ordine,
+. Notă: Dacă comenzile sunt combinate în sesiunea de rutare și toate celelalte
+comenzile clienților sunt pe rute gata, va fi afișat un mesaj
+întrebând dacă doriți să adăugați noua comandă 2 la o rută pregătită sau să o păstrați
+cei nesupravegheati. Faceți clic pe opțiunea corespunzătoare.
+TE RENA STS S PlA S PEA AADS S R Ac
+(Mnsert]) — Pictograma Salvare ([Ctri]+[S])
+Pentru a adăuga informații despre fereastra de service, timpul de service sau instrucțiuni
+pentru a comanda, utilizați fila Modificare din meniul Comenzi.
+Pentru a adăuga articole sau activități la comandă, utilizați fila Articol de comandă
+activități din meniul Comenzi.
+Comenzile existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Adăugarea de modificări la comenzile planificate
+Meniul Comenzi vă permite să adăugați și să editați comenzile planificate care vor fi direcționate
+în Editorul de rutare. Deși meniul conține trei pagini, toate informațiile
+Informațiile obligatorii se află pe prima pagină. Puteți crea modificări de comandă
+pe a doua pagină și introduceți articole de comandă/activități de comandă prin a treia
+pagina.
+A doua pagină a meniului Comenzi este pagina Modificare. Acolo poți intra
+se schimbă fereastra de service, se adaugă timpul de service! și instrucțiuni
+comenzi speciale la o comandă nouă sau existentă. Pentru a începe această procedură, este
+trebuie să fie în fereastra Adăugare comenzi sau Editare comenzi.
+É8 Pasul 1: În fereastra Comenzi, faceți clic pe pictograma Adăugați pentru a adăuga o nouă comandă,
+— (sau Faceți dublu clic pe o comandă pe care doriți să o editați.
+Pasul 2: Când informațiile de pe pagina Comanda sunt corecte, faceți clic pe
+Treceți la meniul Comenzi.
+Pasul 3: Dacă doriți să schimbați ferestrele de onorare ale unui client pentru comandă
+curent, selectați caseta Schimbați ferestrele serviciului pentru clienți. La cutie
+FT A AAA E Roadha Traporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu comenzile planificate
+Apar ferestrele de livrare. Introduceți informațiile de modificare din
+service și deschidere și închidere în domeniile corespunzătoare,
+EE ——
+Utilizați pagina Modificare pentru a adăuga termenul de livrare
+onorarea unei comenzi, cum ar fi atunci când este nevoie de comandă
+Pasul 4: Introduceți toate modificările aplicabile în timpul serviciului, ID-ul rutei
+preferință sau instrucțiuni speciale în câmpurile corespunzătoare. Dacă un act de identitate
+Se dau instrucțiuni preferențiale totale sau speciale, acestea vor fi
+utilizate în locul informațiilor furnizate clientului atunci când rute
+au fost create în Editorul de rutare. Dacă timp de service suplimentar
+este informat, se va adăuga al 2-lea moment al serviciului pentru clienți
+opriți-vă în Editorul de rutare.
+8) Pasul 5: Faceți clic pe pictograma Satvar sau apăsați [Ctrl]+[S] pentru a salva toate cele 2 secunde
+. schimba informatiile
+Pentru a adăuga articole sau activități la comandă, utilizați fila Articol de comandă
+activități din meniul Comenzi.
+Introducerea articolelor de comandă și a activităților de comandă pentru comenzile planificate
+A treia pagină a meniului Comenzi vă permite să adăugați articole de produs și activități de comandă
+comanda la comenzile planificate. Înainte de a adăuga articole de comandă sau activități, trebuie să
+necesare pentru a adăuga SKUS-uri sau activități. Pentru a începe această procedură, este necesar
+fie în fereastra Adăugați comenzi sau Editați comenzi.
+BmadeAAperations
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu comenzile planificate
+Pasul 1: În fereastra Comenzi, faceți clic pe pictograma Adăugați pentru a adăuga o nouă comandă,
+u Faceți dublu clic pe o comandă pe care doriți să o editați.
+E R o A R E A A o

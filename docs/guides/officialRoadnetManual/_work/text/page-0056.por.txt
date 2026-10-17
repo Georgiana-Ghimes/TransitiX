@@ -1,0 +1,79 @@
+ESA aa O S ET AEN AA E ME ta SA MEAEANNOS SA TVNA PEA eAA AA ANA ANA ts TEAA NNEA sA T SAA a APPSON TERTE
+” atuais.
+Nota: Para ver uma lista atualizada de áreas, clique no ícone Atualizar; a janela será
+-” atualizada com as informações mais recentes do banco de dados.
+T e Etapa 3: Na janela Segmentos de clientes, clique no ícone Adicionar ou pressione
+í [Insert]. A janela Adicionar segmento de cliente é exibida.
+W Dica: Pac iicioçã aa eotratá sermeltánie s on existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 5 caracteres para o tipo e até 30 caracteres para a descrição. O tipo
+deve ser inserido; as outras informações são opcionais.
+EX
+Ajanela Adicionar tipo
+E ' d conta permite
+- = específicar um tipo, cor e
+aaa — discrição para o tipo de
+Tc —
+Etapa 5: Clique na seta próxima à cor para abrir uma paleta de cores. Clique em uma cor
+para selecioná-la.
+MG| Etapa6: Clique no ícone Salvar ou pressione [Ctrl]:[S] para salvar o novo segmento de
+- clientes.
+x — Etapa7: Repitaas etapas 4 a 6 para adicionar qualquer outro segmento de clientes.
+Etapa 8: Quando terminar de adicionar segmentos de clientes, clique na caixa Fechar
+para fechar a janela Adicionar segmento de clientes.
+TSNA SNS - ENE EAA S Mic
+(Mnsert]) — icone Salvar ([Ctri/=[S])
+BET A AA E Roadhet Trarporiafion Sl
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com segmentos de clientes
+Os segmentos de clientes existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+(TA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com cenários
+Como trabalhar com cenários
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os cenários são uma maneira fácil de aplicar alterações às janelas de atendimento, aos
+tempos de atendimento e até mesmo aos conjuntos de padrões de atendimento em um
+nível global. Os cenários podem ser utilizados para a roteirização no módulo Analista,
+para sessões de roteirização no editor de roteirização ou para sessões de planejamento no
+editor de planejamento. O Roadnet Transportation Suite é fornecido com um cenário
+padrão, que pode ser utilizado para fins gerais. Se você utilizar somente este cenário, não
+será necessário fazer nada. Mas se necessitar de um meio de alterar os tempos de
+atendimento, janelas de atendimento ou conjuntos de padrões de atendimento
+globalmente dentro de uma rota ou sessão, os cenários irão ajudá-lo. Por exemplo, se você
+precisa atualizar os tempos de atendimento de uma sessão - para levar em consideração a
+meve, por exemplo - você pode criar um novo cenário para atualizar instantaneamente os
+tempos de atendimento de cada cliente nessa sessão. O cenário estará disponível para uso
+quando necessário, mas a atualização ocorrerá apenas para as rotas desse dia. As sessões
+de roteirização subsequentes serão revertidas para o cenário padrão. Outra maneira
+comum de usar os cenários é para 2 contabilidade de promotores de vendas, que
+frequentemente seguem tempos de atendimento e janelas de atendimento diferentes.
+TE | Etapa 1: Clíque no ícone Mantenção para abrir o respectivo módulo
+é Etapa 2: Clique no menu Cadastros e selecione Regras de atendimento e Cenários. A
+— janela Cenários é exibida.
+N Nota: Para ver uma lista atualizada de áreas, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados.
+ÉN Etapa3: Najanela Cenários, clique no ícone Adicionar ou pressione [Insert]. À janela
+— Adicionar cenário é exibida.
+ã) Dica: Paraadicionaruma entrada semelhante a outra existente, clique com o botão direito
+D do mouse n entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar cenário é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para o nome do cenário e até 256 caracteres para 2
+descrição. O nome do cenário deve ser inserido.
+FG Etapa5: Clique no ícone Salvar ou pressione [Ctri]+[S] para salvar o novo cenário.
+Etapa 6: Repita as etapas 4 a 5 para adicionar qualquer outro cenário.
+* — Etapa7: Quando terminar de adicionar cenários, clique na caixa Fechar para fechar a
+janela Adicionar cenário.
+'Áonc MúnaaÇão — Cadóstris RJT E Hlhiódo < CoME-S ENE
+Adicionar ([Insert]) —ícone Salvar ([Ctrl]+[S])
+Os cenários existentes podem ser editados ou excluídos, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.
+TMT ,, ,, ,;,;, F , ,,,;ECRoadret Trareporiation Sufe
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.

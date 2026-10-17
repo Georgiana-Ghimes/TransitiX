@@ -1,0 +1,76 @@
+Guia de operações s
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+cliente no menu Clientes, ou ainda importá-las. Consulte Inserção de atributos
+estendidos ou Importação de clientes para obter mais informações.
+!Os nomes atribuídos aos campos Definido pelo usuário - Rota e Definido pelo
+usuário - Parada aparecerão no Analista. Você pode inserir informações nesses
+campos no menu Propriedades do Analista, ou elas podem ser importadas.
+Consulte Preenchimento dos campos definidos pelo usuário ou Importação de rotas
+diárias no MobileCast para obter mais informações.
+(Os nomes atribuídos aos campos Definido pelo usuário - Pedido e Definido pelo
+usuário - Item do pedido aparecerão no Analista e no Editor de roteirização. Você
+pode inserir informações nesses campos na Manutenção (ao inserir um pedido
+manvalmente), no menu Propriedades do Analista, ou ainda importar essas
+informações. Para obter mais informações, consulte Como trabalhar com pedidos
+planejados, Preenchimento dos campos definidos pelo usuário ou Importação de
+pedidos diários.
+Etapa 3: Se você estiver utilizando containers com o MobileCast, insira o nome que
+deseja associar aos containers no campo Container. Este nome aparecerá nos
+menus e em outros lugares onde há referências a containers.
+Etapa 4: Se deseja utilizar números de referência para monitorar as rotas no Analista do
+MobileCast, insira o alias no campo Alias de referência da rota.
+Etapa 5: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+“ “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Definição dos padrões de referência de unidade
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Apágina Referência de unidade do menu Opções permite selecionar a unidade de medida,
+custo, atendimento, distância e tempo de descarga. Este é o único local no qual é possível
+estabelecer ou alterar esses paárões no Roadnet Transportation Suite
+— = H
+TTA RsA lam REE TEA SRA RE A EEA
+em LMc
+A guia Referência de unidade permite determinar quais dos seus tamanhos serão
+Etapa 1: Clique nos círculos apropriados para selecionar a Unidade de medida, Unidade
+de custo, Unidade de atendimento, Unidade de carregamento e Unidade de
+atendimento (bulk) conforme descrito.
+Unidade de medida determina que quantidade é utilizada ao calcular as
+capacidades minimas das rotas.
+Unidade de custo determina qual quantidade (tamanho 1, 2 ou 3) será utilizada
+a0 caleular o custo por unidade entregue. É utilizada para calcular o custo do
+motorista, se o motorista for pago pelo número de unidades entregues. Além
+disso, o custo por unidade entregue é multiplicado pela taxa variável e, em
+seguida, adicionado à taxa fixa para determinar a taxa total para um cliente.
+Unidade de atendimento determina qua! quantidade (tamanho 1, 2 ou 3) será
+tilizada ao calcular o tempo de descarga.
+Unidade de atendimento (bulk) determina qual quantidade (tamanho 1, 2 ou
+3) será utilizada ao calcular o tempo de descarga dos pedidos bulk.
+Unidade de carregamento determina que tamanho será mostrado como a
+quantidade no FleetLoader.
+madeaperaçães o M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Unidade de distância determina se serão utilizadas milhas ou quilômetros para
+calcular e exibir as distâncias.
+Etapa 2: Clique na seta para selecionar o detalhamento do tempo de descarga de seus
+clientes. É possível inserir tempo de descarga com décimos, centésimos,
+milésimos, até milionésimos de minuto.
+Etapa 3: Se você importar os itens do pedido e não desejar que sejam utilizados tempos
+de atendimento de SKU para pedidos bulk, marque Ignorar tempo de
+atendimento da SKU para atendimento bulk. Se esta opção não for
+selecionada, o tempo de atendimento de SKU será adicionado ao tempo de
+descarga bulk do pedido.
+Etapa 4: Clique no circulo apropriado para selecionar Milhas ou Quilómetros como
+Unidade de distância.
+Etapa 5: No campo Precisão do tamanho, insira o número de dígitos que você deseja
+exibir à direita do separador decima! para quantidades. Por exemplo, se desejar
+inserir a quantidade 9,0025, insira 4 no campo Precisão do tamanho. É possível
+inserir o número manualmente ou utilizar as setas pequenas para rolar até o
+número. O padrão é 0, mas você pode ter até 6 dígitos depois do separador
+decimal.
+Etapa 6: Clique no botão [OK] para salvar as informações ou continue com outra guia.

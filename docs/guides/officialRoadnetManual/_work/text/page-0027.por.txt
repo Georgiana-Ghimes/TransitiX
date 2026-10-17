@@ -1,0 +1,114 @@
+L AMianiao S mt oc o -. lc nh en aa in
+coleta pelos motoristas.
+AAs rotas On Track ou não planejadas são geralmente utilizadas pelas equipes de
+vendas ou merchandising,
+Etapa 2: Para selecionar uma exceção a ser monitorada, marque a caixa próxima à
+exceção de rota e, se disponível, insira os parâmetros definidos.
+. Nota: Todos os parâmetros devem ter valores maiores que 0.
+(As exceções estão explicadas a seguir.
+Desvio de percurso - ativada quando um motorista tiver desviado além do
+permitido do percurso planejado para a rota. Essa exceção estará disponível
+somente para rotas de entrega.
+Parada não planejada - ativada quando o veículo de um motorista foi estacionado
+entre paradas por mais tempo do que um período definido. As paradas não
+planejadas são determinadas utilizando o horário das entradas de GPS. Se o veículo
+não se mover por um período de tempo maior que o especificado, a exceção de
+o ENEN o
+' Copyright 2006 United Parcel Service f America lc
+Todos os diveitos reservados
+Definição das opções
+parada não planejada será acionada. Essa exceção estará disponível somente para
+Totas de entrega.
+Chegada adiantada/Partida atrasada - ativada quando o tempo real de chegada/
+partida de um motorista para uma parada está fisicamente muito além da parada
+planejada para ser considerada uma chegada partida real válida. Em outras
+palavras, o motorista pressionou Chegada antes de realmente chegar na parada ou
+partiu da parada, dirígiu um pouco e, em seguida, pressionou Partida. Uma
+Chegada adiantada Partida atrasada é calculada utilizando as entradas do GPS para
+aúltima parada, o cliente atual e a distância máxima permitida em relação à parada.
+Essa exceção estará disponível somente para rotas de entrega.
+Tempo de atendimento - ativada quando a diferença de tempo entre o tempo de
+atendimento real e o tempo de atendimento planejado é maior do que o permitido.
+Essa exceção estará disponível somente para rotas de entrega.
+TIntervalo do GPS - ativada quando a distância entre duas entradas do GPS excede
+à distância máxima permitida.
+(GPS posterior - ativada quando a diferença entre captura do GPS e GPS recebido
+(elo servidor do MobileCast) for maior do que a permitida
+Sem GPS - ativada quando não são recebidas entradas de GPS entre o início e a
+conclusão da rota. Essa exceção ocorre apenas após a conclusão da rota
+Recibo do evento — ativada quando um tempo excessivo tiver decorrido entre o
+momento em que o evento foi enviado do servidor até o momento em que foi
+confirmado. No campo Gerar após, digite o período de tempo, em minutos, que
+pode decorrer entre o momento em que o evento foi enviado do servidor até o
+momento em que foi confirmado, antes de gerar uma exceção. Em seguida, clique
+em Confirmação do motorista ou Dispositivo processado para gerar a exceção
+utilizando o período de tempo decorrido desde o envio do evento pelo servidor até
+o momento em que ele foi confirmado pelo motorista ou pelo disposítivo sem fio.
+Essa exceção estará disponível somente para rotas de entrega.
+L$ Nota: Seaexceção Recibo de evento for desabilitada, marque Gerarrecibos de evento na
+página Expedir - Geral do menu Opções,
+Livre planejado - ativada quando uma rota está atrasada e o tempo de retoro é
+posterior ao permitido. Essa exceção estará disponível somente para rotas de
+entrega
+Rota fora da seqiência — ativada quando um analista ou motorista ressequencia
+ma parada em uma rota. Essa exceção estará disponível somente para rotas de
+entrega
+Monitoramento AA e D - ativada quando uma coleta ou entrega está marcada em
+eexcesso, em falta ou danificada. Essa exceção estará disponível somente para rotas
+de entrega.
+Fadopeaçõãeo M s TAA SS
+€ Copyrigit 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+Definição das opções
+Cancelamento da parada - ativada quando um motorista ou analista cancela uma
+parada durante a rota. Essa exceção estará disponível somente para rotas de
+entrega
+Impossibilidade de entrega na parada - ativada quando uma parada está marcada
+como impossibilidade de entrega. Essa exceção estará disponível somente para
+rotas de entrega.
+Sem contato - ativada quando decorrer muito tempo desde a recepção do último
+evento (leitura de GPS, notificação de entrega, mensagem de texto, chamada, etc )
+do dispositivo sem fio. Isso indica que o dispositivo sem fio e o motorista estiveram
+completamente sem contato por mais tempo do que o permitido.
+Violação de velocidade - ativada quando o veículo excede o limite de velocidade
+inserido. Se você não estiver utilizando um computador de bordo (OBC), a
+velocidade será coletada utilizando pines de GPS de entrada. Se estiver utilizando
+um OBC, a velocidade será monitorada utilizando a velocidade real do veículo.
+Para gerar uma exceção, caso o limite de velocidade inserido seja excedido,
+selecione Velocidade estática e insira o limite de velocidade que, ao ser excedido,
+Gerará uma exceção. Para gerar uma exceção, caso o limite de velocidade real e a
+tolerância inseridos sejam excedidos, selecione Rede de estradas e insira a
+tolerância.
+LS Nota: Todasas distâncias estão em milhas ou quilômetros, dependendo do que tenhassido
+definido na página Referência de unidade do menu Opções.
+Tniciar/concluir em local desconhecido — ativada quando o funcionário inicia ou
+concluí a rota em um local não reconhecido como cliente atribuído. À distância
+usada para determinar se o funcionário está em um cliente atribuído é definida no
+campo Distância mâxima para o cliente na página Expedir - Geral.
+Etapa 3: Clique no botão [OK] para salvar as informações ou continue com outra guia.
+Para obter mais informações sobre exceções de rotas, consulte Como trabalhar com
+exceções de rotas.
+Configuração das opções do Histórico da rota
+Utilizado com: Roadnet, MobileCast
+A página Histórico da rota do menu Opções de Manutenção permite especificar os dados
+que serão arquivados no banco de dados do Histórico da rota e o horário do dia em que
+serão salvos. O Histórico da rota é um banco de dados separado no qual você pode
+armazenar dados históricos sobre rotas que foram conciuídas. Como o banco de dados do
+Histórico da rota não armazena informações associadas às rotas diárias, ele é muito menor
+< os dados podem ser armazenados por um período de tempo mais longo. Também é mais
+fácil gravar relatórios no banco de dados do Histórico da rota. Se selecionado, será
+mecessário ativar o Histórico da rota para cada sessão que deseja incluir; você pode
+configurar a ativação do Histórico da rota como padrão para suas sessões de roteirização.
+ETA , , , E k l káI L T Foadat Tranporiafon Sãe.
+' Copyright 2006 United Parcel Service f Aerica nc
+Todos os diveitos reservados
+Definição das opções
+Nota: É necessário configurar o arquivo tsroutehistoryservice.cfe para que a atualização
+. funcione conforme esperado. Normalmente, isso é feito durante o processo de
+instalação.
+Etapa 1: Selecione os dados que deseja adicionar ao Histórico da rota
+Para que as rotas geradas no Roadnet sejam adicionadas ao Histórico da rota,
+marque Ativar o Roaánet como uma origem de dados.
+Para que as rotas concluídas no MobileCast sejam adicionadas ao Histórico da
+Tota, marque Ativar o MobileCast como uma origem de dados.
+E TS o o A ES SNE S E E o E NS E S

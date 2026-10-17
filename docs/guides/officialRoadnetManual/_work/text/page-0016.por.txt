@@ -1,0 +1,94 @@
+FATICEADAS E DAl LAnNCtaSNes.
+Etapa 6: Na lista Subscriptions (Assinaturas), marque os eventos sobre os quais o
+destinatário deve receber notificações. As opções estão explicadas a seguir.
+Tnício da rota — ocorre quando a rota é iniciada.
+Partida da rota — ocorre quando o motorista parte.
+Chegada da rota — ocorre quando o motorista retorna à partida após as entregas
+mas paradas.
+Rota concluída — ocorre quando a rota é terminada.
+Alteração da rota — ocorre quando uma alteração foi feita na rota.
+GPS — ocorre quando um ping de GPS é recebido do disposítivo sem fio.
+Sequência de paradas — ocorre quando a ordem de paradas da rota é alterada.
+Chegada da parada — ocorre quando o motorista chega à parada.
+Partida da parada — ocorre quando o motorista sai da parada.
+Cancelamento da parada — ocorre quando o motorista cancela a parada. O
+cancelamento de uma parada significa que o motorista não retornará mais a ela.
+Detalhe da entrega — ocorre quando as quantidades reais da entrega/coleta são
+digitadas.
+Exceções de rotas — ocorre quando uma das exceções da rota monitorada é
+ativada. Selecione na lista as exceções específicas que deseja monitorar.
+Sessão de roteirização — ocorre quando os pedidos são exportados do Editor de
+roteirização para o seu sistema host utilizando o recurso de envio de pedidos.
+Lembre-se de que você também deve selecionar o método que irá gerar os
+eventos que deseja receber. As opções são:
+Disposítivo — o evento foi criado em um disposítivo, pelo motorista ou por um
+ping de GPS,
+Software cliente Transportation Suite — o evento foi criado no Transportation
+Suite, normalmente por um analista.
+Hostexterno — o evento foi criado por um programa externo e transmítido para
+o Transportation Suíte utilizando a API do SOAP.
+Etapa 7: Clique no ícone Salvar ou pressione [Ctr1]:[S] para salvar o destinatário de
+notificação.
+Etapa 8: Repita as etapas 3 a 7 para adicionar mais destinatários de notificação.
+Etapa 9: Após a adição de todos os destinatários, clique na caixa Fechar para fechar a
+janela Add Notification Recipient (Adicionar destinatário de notificação).
+Guia de operações 25
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com regiões
+Como trabalhar com regiões
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Cada área ou organização para a qual você cria rotas é denominada região. É possível
+configurar regiões separadas para cada depósito. As regiões têm recursos disponíveis,
+como motoristas e equipamentos. Ao configurar as regiões, você precisa especificar os
+Privilégios que cada usuário ou grupo de usuários tem na região. Você pode conceder aos
+usuários privilégios diferentes em regiões diferentes,
+Adição de uma região
+Antes de começar a utilizar o Roadnet Transportation Suite, adicione pelo menos uma
+rTegião.
+Etapa 1: Clique no ícone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Cadastros e selecione Regiões. A janela Regiões é exibida
+contendo todas as regiões existentes.
+Etapa 3: Na janela Regiões, clique no icone Adicionar ou pressione [Insert]. A janela
+Adicionar regiões é exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar regiões é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Digite a ID e o Nome da região. A ID deve ser preenchida.
+Etapa 5: Digite o telefone e o fax da região.
+Etapa 6: Na seção Endereço, digite as respectivas informações nos campos apropriados.
+Etapa 7: Se estiver utilizando o MobileCast e monitorando folha de pagamento para
+ADP, digite o Código da empresa e o Dep. temp. da região. Consulte o
+software da ADP para obter mais informações.
+Etapa 8: Clique na guia Segurança para definir usuários e grupos, bem como os
+respectivos privilégios na região.
+Etapa 9: Na página Segurança, clique em [Adicionar usuário] ou [Adicionar grupo de
+usuários] para abrir a janela de pesquisa apropriada. Clique no usuário/grupo
+de usuários que terá acesso à região e clique no ícone Processar. Para
+26 “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com regiões
+selecionar vários usuários/grupos, mantenha a tecla [Ctrl] pressionada
+enquanto clica neles.
+É possível fornecer
+diferentes privilégios
+dentro da região a
+usuários individuais e a
+Egrupos de usuários.
+Para remover um usuário/grupo, selecione-o e clique no botão [Remover],
+Clique em [Sim] para confirmar que deseja remover o usuário/grupo da região.
+Etapa 10: Marque os privilégios que cada usuário/grupo terá na região.
+Etapa 11: Clique no ícone Salvar ou pressione [Ctr1]:[S] para salvar as informações.
+Etapa 12: Repita as etapas 4 a 11 para cada região a ser adicionada.
+Etapa 13: Após a adição de todas as regiões, clique na caixa Fechar para fechar a janela
+Adicionar regiões.
+Teone Administração — Cadastros — Regiões — ícone Adicionar ([Insert]) — ícone Salvar
+(CriH1S).
+As regiões existentes podem ser editadas ou excluídas, conforme necessário. Consulte
+Edição de itens e Exclusão de itens para obter mais informações.
+Se você tiver mais de uma região, poderá escolher uma região como padrão ou altemar a
+rTegião exibida em um módulo.
+Seleção de uma região padrão
+Se você tiver mais de uma região, talvez algumas regiões sejam utilizadas com mais

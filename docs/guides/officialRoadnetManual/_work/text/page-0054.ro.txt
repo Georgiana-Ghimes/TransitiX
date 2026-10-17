@@ -1,0 +1,82 @@
+(Cum să lucrezi cu zonele
+Cum să lucrezi cu zonele
+Folosit cu: Roadnet
+Zonele din Roadnet Transportation Suite sunt doar regiuni - state,
+provincii etc. — parcurse de echipament. Scopul dvs. în Roadnet este să permiteți
+monitorizează și raportează milele parcurse de echipamente în fiecare zonă. Vezi Cum
+Lucrați cu distanțe de zonă pentru a obține mai multe informații.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Introducere date reale și selectați Zone. Fereastra Zone este
+afisat.
+Notă: Pentru a vedea o listă actualizată de zone, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+Pasul 3: În fereastra Zone, faceți clic pe pictograma Adăugare sau apăsați [Insert]. Fereastra
+Apare Adăugare zonă.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 3 caractere în zonă. Acest câmp trebuie completat.
+Când zonele au — | 16)
+fost adăugat, tu =
+Puteți introduce distanța. —
+că un traseu ia ma — | S
+acolo
+Pasul 5: Introduceți până la 30 de caractere în Descriere
+G Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]:[S] pentru a salva noua intrare.
+zona
+x — Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte zone.
+— — PASI: Când ați terminat, faceți clic pe caseta Închidere pentru a închide fereastra Adăugare zonă.
+Pictograma de întreținere — Introducerea reală a datelor — Zone — Pictograma Adăugați ([Inserați])
+— Pictograma Salvare ([CtrI+[S])
+Zonele existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+. Important: Ștergerea zonelor afectează alte elemente de întreținere. Înainte de a șterge
+zone, trebuie să confirmați acuratețea distanțelor zonei.
+Buadeoperations AA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Cum se lucrează cu zonele
+Cum se lucrează cu zonele
+Folosit cu: Roadnet, Territory Planner, FleetLoader
+Zonele sunt folosite în Roadnet pentru a grupa locații de livrare similare în
+rutare dinamică, astfel încât să rămână pe același traseu. ÀZonele sunt
+configurat și apoi atribuit clienților dacă este necesar. În scripting
+dinamic, puteți aplica un filtru numai opririlor de rută din anumite zone.
+Deși zona de nume indică faptul că clienții ar trebui grupați geografic,
+Zonele sunt de fapt mult mai flexibile decât asta. Desigur, zonele pot fi
+folosit geografic. De exemplu, ați putea decide că toți clienții dintr-un
+Codul poștal specific trebuie direcționat împreună. Dar este și posibil să fie folosit
+Zone pentru a ruta, de exemplu, toate locațiile unui lanț de magazine cu volum mare
+care garantează echipamentul propriu.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrare și selectați Zone. Apare fereastra Zones.
+Notă: Pentru a vedea o listă actualizată de zone, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+ae&l Ftapa3: În fereastra Zones, faceți clic pe pictograma Adăugare și apăsați [Insert] Fereastra
+= Adăugați zone este afișat.
+É) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere ca zonă. Acest câmp trebuie completat.
+EE u
+Este posibil să adăugați 2 zone
+a grupa clienții după
+zona sau de orice alt n
+Sator comun. ——
+(E
+Pasul 5: Introduceți până la 30 de caractere în Descrierea zonei.
+1G| Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctri][S] pentru a salva zona.
+Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte zone.
+m — Pasul 8: Când ați terminat, faceți clic pe caseta Închidere pentru a închide fereastra Adăugare zone.
+Pictogramă de întreținere — Înregistrări — Zone — Pictograma Adăugați ([Insert]) — pictograma
+Satvar ([Ctri+[S])
+Zonele existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+MET AA o Roadhet Travporiafion Sl
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu zonele
+Important: Ștergerea zonelor afectează alte elemente de întreținere. Înainte de a șterge
+Zone, trebuie să editați clienții cu acea zonă.

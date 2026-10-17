@@ -1,0 +1,93 @@
+L i A mt —)
+r gn)
+Dacă sesiunea sursă și sesiunea destinație există în aceeași
+Baza de date, nu veți putea selecta aceeași sesiune
+pentru Sursă și Destinație.
+Pasul 5: În lista Sesiuni țintă, selectați sesiunea la care ar trebui să fie rutele
+adăugat.
+Pasul 6: Pentru ca comenzile care nu există încă în sesiune să nu fie adăugate la
+sesiunea țintă, asigurați-vă că Comenzile agregate de la sursă nu
+există în destinație nu este bifată.
+Pasul 7: Faceți clic pe [Start] pentru a începe procesul de import.
+eu — Pasul 8: Când importul este complet, faceți clic pe caseta Închidere
+Pictograma de întreținere — Instrumente — Sesiuni de rutare agregate — [Start]
+FE F AAA E Roadhe Travporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Actualizarea timpilor de service folosind întreținerea timpului de service
+Actualizați orele de service folosind întreținerea serviciului
+timp de serviciu
+Folosit cu: Roadnet
+Timpul de service este perioada petrecută de un șofer cu un client și din care face parte
+rutare și programare completă în Roadnet Transportation Suite. Vremurile de
+Îngrijirea exactă este esențială. Dacă orele de service ale clienților tăi sunt
+incorecte, orele de pe traseu vor fi, de asemenea, incorecte. Costurile de traseu sunt, de asemenea
+afectate de timpii de service. Dacă Roadnet consideră că 2 livrează într-un cont
+va dura 3 ore când în realitate durează doar 45 de minute, sistemul va plăti
+șofer timp de 3 ore. Și dacă utilizați rutarea dinamică, un client cu timpi de livrare
+serviciul incorect poate fi scriptat incorect, deoarece sistemul crede că
+Livrarea acestui client va dura 3 ore, ceea ce poate depăși timpul de rută preferat
+pentru traseu.
+Roadnet Transportation Suite include programul Service Time Maintenance,
+„un instrument puternic care facilitează actualizarea orelor de service pentru clienți
+clienţilor. Service Time Maintenance utilizează timpii reale din istoricul serviciului pentru clienți.
+livrările pentru a calcula timpii de service mai precis. Dacă utilizați
+o MobileCast, timpii de service se vor baza pe timpul finalizat; caz
+În caz contrar, timpul de service se va baza pe orele efective introduse în Roadnet.
+Cu Service Time Maintenance, puteți:
+* introduceți rapid și ușor timpi de service reale pentru opririle zilnice.
+* — calculați noi timpi de service pe baza istoricului real de livrare.
+* produce un raport pentru a vizualiza actualizările care vor fi procesate înainte
+apar.
+* — actualizați orele de service în funcție de client sau tipul de timp de serviciu.
+Pentru a utiliza Service Time Maintenance, trebuie să determinați dacă doriți
+actualizați orele de tratare pentru un client sau tipul de timp de tratare
+serviciul.
+Per Client actualizează numai fiecare client pentru care există date, folosind
+doar livrări către acest client. Timp de service pentru fiecare client
+este actualizat individual.
+După tipul de timp al serviciului grupează clienții după tipul de timp al serviciului
+serviciu și folosește toate livrările de la toți clienții cu acest tip de timp
+timp de service pentru a calcula un nou timp de service (de ex.
+toate magazinele de proximitate, toate restaurantele etc). Noul timp al
+serviciul se aplică tuturor clienților cu acest tip de timp de livrare.
+serviciul.
+Definirea criteriilor de actualizare
+Caracteristica de întreținere a timpului de service de la Roadnet vă permite să actualizați
+timpii de service pentru clienți în funcție de timpul finalizat, dacă sunteți
+Bmadeaperações ES
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+Actualizați orele de service folosind întreținerea timpului de service
+utilizând MobileCast sau datele despre trasee reale introduse manual din Roadnet.
+Caseta Update Criteria din fereastra Service Time Maintenance conține
+setările care determină ce date vor fi utilizate pentru calcularea noilor timpi de operare
+serviciul. Puteți specifica cât de departe pot merge timpii efectivi de service.
+diferă de cele planificate pentru a fi luate în considerare, precum și câte intrări efective ar trebui
+există pentru a actualiza orele de service,
+8N rtapal: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+în — Era 2: Faceți clic pe meniul Instrumente și selectați Actualizare orelor de serviciu, în
+Apoi selectați După client sau După tipul de timp al serviciului. Fereastra
+Este afișat timpul de întreținere.
+Pasul 3: Introduceți variația de timp permisă pentru timpii de așteptare și descărcare. Pentru a
+setarea variației stabilește o gamă de timpi acceptabili mai presus și dincolo
+sub timpii de service acceptabili. Doar asta opreste
+se încadrează în intervalul acceptabil al timpului de serviciu de descărcare și
+va fi utilizat în calcul cu excepția cazului în care 2 opțiunea Actualizare dacă variația
+este în afara limitelor este selectat, pentru a lua în considerare livrările care se încadrează în
+în afara intervalului stabilit. Setarea implicită este 10 minute pentru timp.
+timp de așteptare și jumătate de minut pentru timpul de descărcare.
+" - Fereastra de întreținere
+= timp de service
+vă permite să personalizați
+setări acA pentru
+Și orele de actualizare
+55 [m serviciu. Vremurile de
+F tnins sam prezența exactă sunt
+SSAA esențial pe Roadnet pentru
+) timpul pe drum, costul este
+Pasul 4: Introduceți numărul minim de livrări acceptate și procentul minim. a livrarilor
+acceptat. Numărul minim de livrări acceptate funcționează cu configurația
+variația de timp permisă în pasul 1. Roadnet-ul trebuie să aibă numărul de
+livrările specificate, iar aceste livrări trebuie să se încadreze în intervalul acceptabil
+fn omó NS u an A mn aa aaa an am aaanh

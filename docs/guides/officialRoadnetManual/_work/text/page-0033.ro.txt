@@ -1,0 +1,102 @@
+|Ex Pasul 2: Pentru a selecta tipul de compartiment care este adăugat, faceți clic pe n
+Săgeată Bin Type pentru a deschide fereastra Căutare - Bin Type
+compartiment. Faceți dublu clic pe un element pentru a-l selecta sau faceți clic pe
+element și pictograma Proces.
+Pasul 3: Introduceți până la 15 caractere în ID-ul Bin.
+Pasul 4: Faceți clic pe săgeata Culoare și selectați o culoare pentru coș. După crearea
+rute, grafica care utilizează codul de culoare selectat aici
+va arăta procentul de umplere al fiecărui compartiment.
+Pasul 5: În câmpul Minimum Equipment Type %, introduceți cea mai mică dimensiune posibilă
+pe care îl poate avea compartimentul, măsurat ca procent din capacitate
+tip total de echipament.
+MTAA A A A Foadnet Transporiation Sule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de echipamente
+Pasul 6: În câmpul Maximum Equipment Type %, introduceți cea mai mare dimensiune posibilă
+pe care îl poate avea compartimentul, măsurat ca procent din capacitate
+tip total de echipament.
+|ȘI REEAA
+„Pentru fiecare compartiment A DAA s)
+„adăugat la un tip de SGAA C000
+echipament, tu ierea an
+procentaj minim și maxim - een do,
+din capacitatea totală a tipului de — ) fh
+echipamentul care v-a trimis
+fm
+soare
+[ taaa an trasica]
+. Notă: Dacă dimensiunea compartimentului nu este reglabilă (nu are un perete mobil),
+Minim 2% din tipul de echipament și maxim % din tipul de echipament trebuie
+fii egali.
+Pasul 7: În câmpul Număr de poziții de perete, introduceți numărul de diferite
+Jocuri în care se poate monta peretele. Dacă compartimentul nu este
+reglabil, introduceți 1.
+. Notă: Roadnet permite doar ajustarea recipientelor reglabile în trepte
+egale. De exemplu, dacă un compartiment poate consuma 20 până la 65 la sută din
+capacitatea tipului de echipament și are 4 posibile poziții de pereți, cel
+compartimentul poate fi reglat în trepte de 15 la sută din capacitate
+a tipului de echipament, fiind permis să consume 20, 35, 50 sau 65 la sută
+capacitatea echipamentului.
+8) Pași: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva informațiile
+— peste compartiment.
+Pasul 9: Repetați pașii de la 2 la 8 pentru a adăuga orice alte tipuri de compartimente.
+m Pasul 10: Faceți clic pe butonul Închidere după ce ați terminat de adăugat toate compartimentele.
+Fereastra Adaugă compartiment se închide.
+MG Passoll: Dacă ați achiziționat FleetLoader și trebuie să introduceți informații despre
+compartiment pentru tipul de echipament, vezi Tipuri de echipamente și
+FleetLoader. Dacă ați terminat de introdus informații pentru tipul de
+echipament, faceți clic pe pictograma Salvare sau apăsați [Ctrl][S] pentru a salva
+tipul de echipament.
+Pasul 12: Când ați terminat de adăugat tipurile de echipamente, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugare tip de echipament.
+madeaperções sau M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de echipamente
+Tipuri de echipamente și Fleetloader
+-Fila FleetLoader, care apare numai dacă ați achiziționat FleetLoader, vă permite să
+specificați informațiile despre client și numărul de compartimente pentru echipamente.
+Dacă utilizați FleetLoader pentru a încărca vehicule, puteți specifica
+informații despre tipul de echipament, cum ar fi informații despre compartiment, făcând clic
+o filă FleetLoader. Pentru a începe această procedură, trebuie să introduceți tipul de
+echipamente.
+Pasul 1: Faceți clic pe fila FleetLoader din fereastra Adăugare tip de echipament.
+Pasul 2: selectați dacă tipul este un încărcător lateral sau un vehicul vrac. Dacă
+echipamentul folosește o remorcă, verificați dacă caseta Trailer este
+selectat. Introduceți numărul de osii din spate în câmpul Axe din spate.
+EE S u
+FE MM
+rau ta Pintiai |
+aa
+| TÊetivraatas
+[ Nestomentectes
+[ resieeitas
+[ pavmmeldecen ne vedem
+pamtas
+-Fila FleetLoader din fereastra Adăugare tip de echipament permite5
+Pasul 3: Dacă tipul este un încărcător lateral, selectați Încărcător lateral și introduceți
+numărul de coșuri din fiecare categorie din zona Bin Info
+pe partea șoferului. Dacă echipamentul include un compartiment din spate care
+poate fi accesat doar din spatele vehiculului, verificați dacă caseta
+Este selectat compartimentul din spate.
+Dacă echipamentul este un vehicul în vrac, selectați Bulk. Faceți clic pe Tip de săgeată
+pozitia paletului si selectati tipul din lista care va fi afisata. Introduceți numărul de
+Pozițiile paleților pe fiecare parte.
+T AA L Foadnet Transporiation Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrați cu tipurile de echipamente
+3) Important: Când introduceți aceste informații, numărați doar pozițiile compartimentelor!
+D palet pe partea șoferului vehiculului și nu pe întregul vehicul.
+. Notă: Dacă vehiculul este un vehicul în vrac, câmpul Info compartiment de pe partea vehiculului
+driverul nu este aplicabil, deși poate apărea în lista Tipuri de echipamente.
+Pasul 4: Pentru a specifica tipurile de compartimente pentru fiecare compartiment, faceți clic pe
+butonul [Set Bins]. Apare fereastra Define Compartments.
+Pentru a împărți un compartiment, faceți clic dreapta pe
+compartiment și selectați Split din meniul drop-down. O linie orizontală! este
+se arată prin tăierea compartimentului; utilizați mouse-ul pentru a muta linia la
+poziție corectă, pentru a împărți compartimentul. Faceți clic pentru a fixa linia.
+Pentru a atribui un tip unui compartiment, faceți dublu clic pe
+compartiment. Apare fereastra Define Attributes. Editați numărul
+compartiment și Descriere dacă doriți și selectați tipul de compartiment

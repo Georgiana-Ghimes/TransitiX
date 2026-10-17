@@ -1,0 +1,66 @@
+ME A A A A A Foadnet Tranporiation Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Inserção de alterações da janela de atendimento
+A página Alterações da janela de atendimento do menu Clientes permite inserir janelas de
+atendimento para dias é cenários específicos. Se um cliente tiver uma janela de
+atendimento de segunda-feira diferente do resto da semana, você pode inserir os horários
+da segunda-feira nesta página sem afetar as janelas de atendimento do resto da semana.
+Todas as informações nesta página são opcionais. Se inseridas, as alterações serão
+vtilizadas em lugar dos tipos de janela de atendimento do cliente.
+Etapa 1: Insira os horários de abertura e fechamento e horários de entrega preferenciais
+da alteração de janela de atendimento. Para inserir um horário, clique na caixa
+para selecionar o campo e, em seguida, digite o horário ou use as setas para
+selecionar o horário. Verifique se a parte correta do horário (horas ou minutos)
+está selecionada quando estiver inserindo o horário.
+maaa T 4
+R jascalial antizar plrias burações dh junals d atendicento-st o ciento
+tiver janelas de atendimento diferentes em um dia da semana.
+Horários de abertura/fechamento são os horários mais cedo e mais tarde
+possíveis em que o cliente pode receber uma entrega, e não quando abrem e
+EE o E NNNA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+fecham para funcionamento. Insira um horário de início (abertura) e término
+(fechamento).
+Janelas de atendimento 1 e 2 são os horários nos quais o cliente prefere receber
+entregas. Insira um início (horário mais cedo) e parada (horário mais tarde) para
+cada janela de atendimento, se necessário.
+Nota: Para que os horários sejam aceitos no sistema, é necessário inserir o horário
+completo, incluindo minutos.
+Etapa 2: Clique nas caixas Dias para selecionar os dias aos quais as janelas de
+atendimento se aplicam. Se as janelas de atendimento se aplicarem à segunda,
+quarta e sexta-feira, clique nas caixas sob 2, 4 e 6. Se nenhuma caixa for
+selecionada, a alteração terá efeito para todos os dias da semana.
+Etapa 3: Clique na seta cenário e selecione o cenário no qual as janelas de atendimento
+serão usadas.
+Etapa 4: Clique no botão [Adicionar] para inserir a alteração de janela de atendimento
+nalista.
+Para alterar os horários de uma alteração de janela de atendimento
+existente, realce esta linha na lista e altere as informações conforme necessário.
+Em seguida, clique no botão [Atualizar]. As informações serão alteradas na
+lista.
+Para excluir uma linha de uma alteração da janela de atendimento
+existente, selecione a linha na lista e clique no botão [Remover]. A linha será
+excluida da lista.
+Etapa 5: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar as informações ou
+clique em outra guia para inserir informações adicionais sobre o cliente.
+Inserção de alterações do tempo de atendimento
+A página Alterações do tempo de atendimento do menu Cliente permite inserir alterações
+de tempo de atendimento para dias e cenários específicos. Se um cliente tiver um tempo
+de atendimento de segunda-feira diferente do resto da semana, você pode inserir os
+horários da segunda-feira nesta página sem afetar os tempos de atendimento do resto da
+semana. Todas as informações nesta página são opcionais. Se inseridas, as alterações
+serão utilizadas em lugar dos tipos de tempo de atendimento do cliente.
+. Nota: Se você estiver utilizando o tempo de atendimento de SKU e desejar considerar
+somente tempo de descarga de SKU, verifique se o tempo de descarga do cliente
+está configurado como 0.
+Etapa 1: Insira os tempos de atendimento e tempos de atendimento bulk para entregas
+com e sem ajudante.
+Tempos de atendimento são o tempo total gasto para entregar produtos em um
+cliente.
+MET——————— u e o ee Rml em
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.

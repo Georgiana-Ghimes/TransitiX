@@ -1,0 +1,112 @@
+(Como trabalhar com tipos de equipamento
+Como trabalhar com tipos de equipamento
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipos de equipamentos define os tipos de equipamentos utilizados, como por exemplo o
+uso de veículos de médio porte ou reboques, e o número e a posição dos compartimentos
+de um tipo de veículo específico. Você pode definir as dimensões de um tipo de
+equipamento, incluindo o peso, e específícar sua capacidade. Além disso, é possível
+associar tipos de equipamentos a clientes, para que o tipo seja utilizado quando esse
+cliente for roteirizado. Ao utilizar roteirização de compartimento, especifique quantos de
+cada tipo de compartimento estão presentes em cada tipo de equipamento. No Territory
+Planner, existe a opção de criar territórios proporcionais ao tipo de equipamento que será
+usado. No setor de bebidas, os tipos de compartimento devem ser inseridos antes dos tipos
+de equipamento, se você estiver utilizando o FleetLoader. Após o preenchimento dos
+tipos de equipamentos, os itens individuais de equipamento podem ser inseridos.
+Você pode adicionar os tipos de equipamento individualmente ou importá-los; consulte
+Importação de itens de manutenção para obter mais informações sobre como importar
+tipos de equipamento.
+) Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+man — Etapa 2: Clique no menu Cadastros, selecione Equipamento e Tipos de equipamento. À
+janela Tipos de equipamento é exibida. À lista atual dos tipos de equipamento
+não será exibida. Isto faz o sistema funcionar mais rápido do que se a lista
+completa fosse carregada todas as vezes. Para ver a lista atual de tipos de
+equipamento ou apenas tipos específicos de equipamento, utilize o recurso
+- Pesquisar.
+Nota: Para ver uma lista atualizada de tipos de equipamento, clique no ícone Atualizar; a
+o Jjanela será atualizada com as informações mais recentes do banco de dados.
+T e Etapa3: Na janela Tipos de equipamento, clique no ícone Adicionar ou pressione
+í [Insert]. A janela Adicionar tipo de equipamento é exibida.
+S p p aucon nl dl Ssiehaáes ciná existente, clique com o botão direito
+do mouse n entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para 2 D do tipo de equipamento. Este campo deve ser
+preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+Etapa 6: Insira as informações gerais se desejar (peso e aftura do tipo de equipamento).
+Etapa 7: Se o tipo de equipamento for um reboque ou outra unidade de carga, insira a
+capacidade total do veículo como Tamanho 1, Tamanho 2 ou Tamanho 3 nos
+campos Tamanho.
+Se estiver utilizando o Roadnet, também é possível inserir a capacidade das
+categorias para cada tamanho.
+FT A o Roadhat Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de equipamento
+Se estiver utilizando o MobileCast, marque Transporta um carregamento para
+indicar que 2 capacidade do equipamento deve ser monitorada conforme a rota
+é percorrida.
+Etapa 8: Insira as informações de custo, se desejado (fixo, variável). Essas informações
+são necessárias para calcular os custos da rota com exatidão.
+TTNA o
+o
+Smenomenes| remmat |
+Este exemplo mostra um m——.
+Tveículo de médio porte de 75 = ,
+metros adicionado como PR——
+equipamento de tipo 1. A = A
+capacidade do veículo para L mo mc e
+três medidas de tamanho é F em
+adicionada à caixana pare — Q DS teneltaten ta
+N ——
+E
+(Custos fixos são aqueles que incorrem independentemente da distância
+percorrida, como o preço de locação ou de aquisição, seguro, depreciação, taxas
+de licenciamento e pedágio.
+Custos variáveis são afetados pela distância percorrida, como combustível,
+6óleo, pneus e câmaras, e reparos e peças de reposição.
+Etapa 9: Se você estiver usando o MobileCast e este tipo de equipamento contém um
+motor (por ex., um cavalo mecânico), marque Unidade de potência. Se o
+equipamento deve ser atribuído a uma rota para esta ser iniciada, isto signífica
+que um tipo designado como unidade de potência deve ser atribuido à rota.
+Etapa 10: Para evitar que este tipo de equipamento percorra estradas selecionadas
+durante horários do dia especificados (por ex., durante o horário de rush),
+selecione Proibido a partir de áreas e caminhos restritos do horário de rush
+Se esta opção for selecionada, equipamentos deste tipo não serão roteirizados
+por nenhuma área ou rua de horário de rush que contenha restrição de
+equipamento durante o período especificado do dia.
+Etapa 1: Se esse tipo de equipamento puder ir mais rápido ou mais devagar do que o
+normal, marque Ajustar tempo de percurso do tipo de equipamento por:
+Indique se este tipo de equipamento viajará Mais rápido ou Mais devagar e
+insira 2 diferença porcentual. Por exemplo, veículos menores frequentemente
+Bmiadoperaçães AAA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados
+(Como trabalhar com tipos de equipamento
+têm melhor capacidade de manobra e menos restrições que os maiores,
+portanto selecione Mais rápido se estiver usando esse tipo de equipamento.
+Etapa 12: Se você estiver utilizando roteirização de compartimento, consuíte Adição
+de compartimentos a um tipo de equipamento.
+Se adquiriu o FleetLoader, consutte Tipos de equipamento e o FleetLoader.
+) Se você terminou de inserir informações para o tipo de equipamento,
+clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar o tipo de
+equipamento.
+Etapa 13: Repita 2s etapas 4 a 12 para adicionar qualquer outro tipo de equipamento.
+m Etapa14: Quando terminar de adicionar tipos de equipamento, clique na caixa Fechar
+para fechar a janela Adicionar tipo de equipamento.
+Ícone Manutenção — Cadastros — Equipamento — Tipo de equipamento — ícone
+Adicionar ([Insert]) —icone Salvar ([Ctril+[S])
+Os tipos de equipamento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+() Tmportante:A excfusão dos tipos de equipamento afeta outros tens de manvtenção,
+Antes de excluir tipos de equipamento, é necessário excluir o equipamento
+com aquele tipo de equipamento.
+Adição de compartimentos a um tipo de equipamento
+.A página Compartimentos permite especifícar informações sobre os compartimentos
+presentes no tipo de equipamento. É necessário utilizar esta página somente se você
+pretende usar roteirização de compartimento o criar as rotas.
+Clique na guia Compartimentos para começar a inserir informações de compartimento. É
+necessário criar tipos de compartimentos e inserir o tipo de equipamento para poder
+iniciar este procedimento.
+HW| Etapal: Napágina Compartimentos, clique no ícone Adicionar ou pressione [Insert]. À
+E ts Adirinnte Coarctateatos FexRada

@@ -1,0 +1,36 @@
+madeaperaçães T
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Nota: Para que os horários sejam aceitos no sistema, é necessário inserir o horário
+completo, incluindo minutos.
+“Digite alterações da janela de atendimento para dias específicos na página
+Alterações da janela de atendimento do menu Cliente.
+Etapa 2: Clique nas caixas Dias para selecionar os dias aos quais as alterações de tempo
+de atendimento se aplicam. Se as alterações de tempo de atendimento se
+aplicarem à segunda, quarta e sexta-feira, clique nas caixas sob 2, 4 e 6.
+Nota: Se você não selecionar os dias, todos os dias serão selecionados como padrão.
+Etapa 3: Clique na seta Cenário para ver uma lista de cenários, e selecionar o cenário no
+qual os tempos de atendimento serão utilizados.
+Etapa 4: Clique no botão [Adicionar] para aceitar a alteração de tempo de atendimento.
+Para alterar os horários de uma alteração de tempo de atendimento
+existente, realce esta linha na lista e altere as informações conforme necessário.
+Em seguida, clique no botão [Atualizar]. As informações serão alteradas na
+lista.
+1 “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do menu Cliente
+Para excluir uma linha de uma alteração de tempo de atendimento
+existente, selecione a linha na lista e clique no botão [Remover]. A linha será
+excluida da lista.
+Etapa 5: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar as informações ou
+clique em outra guia para inserir informações adicionais sobre o cliente.
+Inserção de informações de extensão de cliente
+A página Extensão do cliente do menu Cliente permite digitar as informações utilizadas
+pelo Territory Planner para criar rotas estratégicas. As informações sobre extensão do
+cliente são específicas da sessão de planejamento no Territory Planner, portanto você
+pode inserir informações diferentes sobre extensões de clientes para as diferentes sessões
+existentes. Para cada extensão do cliente, escolha um território, um conjunto de padrões
+de atendimento, uma sessão e uma quantidade para o tamanho 1. As informações restantes
+são opcionais.

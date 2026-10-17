@@ -1,0 +1,72 @@
+Guia de operações j
+' Cupyrighi 2006 United Parcel Service yf America, lm
+Todos os direitos reservados.
+Como trabalhar com grupos de usuários
+Como trabalhar com grupos de usuários
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Um grupo de usuários é um conjunto de usuários que têm os mesmos privilégios em uma
+u mais regiões. Embora não seja necessário utilizar grupos de usuários, eles podem
+facilitar a alterações dos direitos de acesso dos usuários. Por exemplo, você pode criar
+grupos de usuários para gerentes que tenham acesso a várias regiões, como um Gerente
+do Nordeste, que pode supervisionar as regiões de Rio Grande do Norte, Ceará e Alagoas,
+e um Gerente do Sul, que supervisionará as regiões do Rio Grande do Sul, Santa Catarina
+e Paraná. Em seguida, basta atribuir o usuário apropriado a cada grupo. Além disso, se
+você precisar alterar o usuário no grupo, só precisará alterar o grupo, sem alterar os
+direitos de acesso do usuário de cada região afetada.
+Dica: Você pode adicionar usuários antes de criar os grupos e, em seguida, adicioná-los
+quando criar o grupo ou pode adicionar os usuários depois de criar os grupos e
+adicionar o usuário ao grupo quando criar o usuário.
+Etapa 1: Clique no icone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Cadastros e selecione Grupos de usuários. A janela Grupos de
+usuários é exibida com todos os grupos de usuários existentes.
+Etapa 3: Na janela Grupos de usuários, clique no ícone Adicionar ou pressione [Insert]
+AA janela Adicionar grupo de usuários é exibida.
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar grupo de usuários é exibida com algumas informações já preenchidas;
+altere as informações necessárias na nova entrada.
+Etapa 4: Digite a ID do grupo de usuários e a Descrição; a ID é obrigatória.
+Grupos de usuários permitem
+coletar usuários que utilizam as
+mesmas partes do Transportation
+Suite nas mesmas regiões.
+Etapa 5: Para adicionar usuários ao grupo, clique no botão [Adicionar]; a janela
+Pesquisa - Usuários é exibida.
+n “Roadhnet Transportation Suíte
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com grupos de usuários
+Etapa 6: Selecione os usuários a serem incluídos no grupo e clique no icone Processar.
+Para selecionar vários usuários, mantenha a tecla [Ctrl] pressionada enquanto
+clica nos usuários. A janela Pesquisa - Usuários é fechada e os usuários são
+exibidos na lista Membros do grupo.
+Etapa 7: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar os grupos de
+ustários.
+Etapa 8: Repita as etapas 4 a 7 para adicionar outros grupos de usuários.
+Etapa 9: Após a adição de todos os grupos de usuários, clique na caixa Fechar para
+fechar a janela Adicionar grupos de usuários.
+Os grupos de usuários existentes podem ser editados ou excluídos, conforme necessário.
+Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Tn Adiniaração: - Cobatne — Gragus de nenbdias <> kvar Miinar:
+(nsert]) — icone Salvar ([Ctri[+[S]).
+Guia de operações 2
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com usuários
+Como trabalhar com usuários
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Usuários são analistas, operadores e outras pessoas da empresa que utilizam o Roanet
+Transportation Suíte. Cada usuário pode receber acesso a diferentes partes do programa,
+diferentes regiões ou até direitos diferentes em regiões diversas. Como cada usuário pode
+ter direitos diferentes, uma ID exclusiva e uma senha devem ser criados quando o usuário
+é estabelecido. Cada vez que o Roadnet Transportation Suite é iniciado, é preciso digitar
+aID e a senha. Você pode organizar os usuários em grupos, facilitando a alteração de
+direitos de vários usuários simultaneamente. Após a criação dos usuários, você pode
+atribuir-lhes privilégios para cada região.
+Etapa 1: Clique no ícone Administração para abrir o módulo Administração.
+Etapa 2: Clique no menu Cadastros e selecione Usuários. A janela Usuários é exibida
+contendo os usuários existentes.
+Etapa 3: Na janela Usuários, clique no ícone Adicionar ou pressione [Insert]. A janela
+Adicionar usuário é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition · Documente — Cum funcționează</title>
+  <style>
+    @page { size: A4; margin: 12mm 11mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --soft: #64748b;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --bg: #f8fafc;
+      --ok: #166534;
+      --ok-bg: #dcfce7;
+      --warn: #9a3412;
+      --warn-bg: #ffedd5;
+      --amber: #b45309;
+      --amber-bg: #fef3c7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      font-size: 10.2pt;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.3em; line-height: 1.2; }
+    h1 { font-size: 20pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 12.5pt;
+      margin-top: 1.1em;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--line);
+    }
+    h3 { font-size: 10.5pt; margin-top: 0.75em; color: var(--accent); }
+    p { margin: 0.35em 0 0.55em; }
+    .muted { color: var(--muted); }
+    .hero {
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 55%, #2a6cb0 100%);
+      color: #fff;
+      padding: 22px 24px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .sub { opacity: 0.95; font-size: 11pt; max-width: 38em; }
+    .hero .meta {
+      margin-top: 12px;
+      font-size: 8.5pt;
+      opacity: 0.85;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.28);
+      font-weight: 600;
+    }
+    .lead {
+      font-size: 11pt;
+      color: var(--muted);
+      border-left: 3px solid var(--accent);
+      background: var(--bg);
+      padding: 10px 14px;
+      margin: 0 0 1em;
+      border-radius: 0 8px 8px 0;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 0.8em 0 1em;
+    }
+    .step {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 10px 12px;
+      text-align: center;
+      break-inside: avoid;
+    }
+    .step .n {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--brand);
+      color: #fff;
+      font-size: 9pt;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .step strong { display: block; font-size: 9.5pt; color: var(--brand); margin-bottom: 3px; }
+    .step span { display: block; font-size: 8.5pt; color: var(--muted); line-height: 1.35; }
+    .layers {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 0.7em 0 1em;
+    }
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 14px;
+      background: #fff;
+      break-inside: avoid;
+    }
+    .layer .tag {
+      display: inline-block;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 3px;
+    }
+    .layer strong { color: var(--brand); }
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 0.6em 0 1em;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: var(--bg);
+      break-inside: avoid;
+    }
+    .card.ok { background: var(--ok-bg); border-color: #bbf7d0; }
+    .card.warn { background: var(--warn-bg); border-color: #fed7aa; }
+    .card.amber { background: var(--amber-bg); border-color: #fde68a; }
+    .card h3 { margin-top: 0; }
+    ul { margin: 0.25em 0 0.5em; padding-left: 1.15em; }
+    li { margin: 0.2em 0; }
+    .callout {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 0.8em 0;
+      break-inside: avoid;
+    }
+    .callout strong { color: var(--brand); }
+    .foot {
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--soft);
+      font-style: italic;
+    }
+    .who {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin: 0.7em 0;
+    }
+    .who .card { background: #fff; }
+    @media print {
+      .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step, .card, .layer, .callout, .lead { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>RAI Spedition · Documente</h1>
+    <p class="sub">
+      Cum funcționează aplicația — pe scurt, în limbaj de birou.
+      De la poza șoferului până la anexa pe care o trimiteți clientului.
+    </p>
+    <div class="meta">
+      <span class="pill">Brief pentru client</span>
+      <span class="pill">Octombrie 2026</span>
+      <span class="pill">Companion documente</span>
+    </div>
+  </header>
+
+  <p class="lead">
+    <strong>Pe o frază:</strong> aplicația preia avizele (foto sau PDF), citește ce scrie pe ele,
+    vă arată ce e sigur și ce merită verificat, iar la final vă ajută să scoateți
+    <strong>Anexa Factura</strong> gata de trimis — fără să rescrieți totul de mână.
+  </p>
+
+  <h2>1. Fluxul pe scurt (ce se întâmplă, în ordine)</h2>
+
+  <div class="flow">
+    <div class="step">
+      <div class="n">1</div>
+      <strong>Intră documentul</strong>
+      <span>Șoferul fotografiază avizul sau biroul încarcă PDF-ul</span>
+    </div>
+    <div class="step">
+      <div class="n">2</div>
+      <strong>Se citește</strong>
+      <span>Sistemul „citește” pagina: TPO, auto, dată, rută, marfă, greutăți…</span>
+    </div>
+    <div class="step">
+      <div class="n">3</div>
+      <strong>Se verifică</strong>
+      <span>Câmpurile nesigure apar marcate; biroul confirmă sau corectează</span>
+    </div>
+    <div class="step">
+      <div class="n">4</div>
+      <strong>Se confirmă</strong>
+      <span>Documentul trece din „de revizuit” în gata de folosit</span>
+    </div>
+    <div class="step">
+      <div class="n">5</div>
+      <strong>Se exportă</strong>
+      <span>Selectați avizele → Unește în Anexa XLSX (formatul vostru)</span>
+    </div>
+  </div>
+
+  <p class="muted">
+    Nu trebuie să „știți IT”. Pe ecran vedeți o listă de avize, statusuri clare
+    (ok / de revizuit / verificare obligatorie) și butoane: Editează, Confirmă, Unește.
+  </p>
+
+  <h2>2. Cele 4 „straturi” ale aplicației</h2>
+  <p>Gândiți-le ca pe etajele unei clădiri — fiecare face un singur job.</p>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="tag">Strat 1 · Intrare</div>
+      <strong>De unde vine documentul</strong>
+      <p>
+        Poza din telefonul șoferului sau fișierul încărcat de birou.
+        Aplicația nu inventează avize: lucrează doar cu ce ați trimis.
+      </p>
+    </div>
+    <div class="layer">
+      <div class="tag">Strat 2 · Citire automată</div>
+      <strong>Cititorul de documente</strong>
+      <p>
+        Un motor de citire (OCR) transformă poza/PDF-ul în text și încearcă să umple câmpurile:
+        număr TPO, nr. auto, dată, rută, tip marfă, cantitate, greutăți, nr. document.
+        Uneori pagina e întunecată sau scrisă de mână — atunci scorul de încredere scade.
+      </p>
+    </div>
+    <div class="layer">
+      <div class="tag">Strat 3 · Verificare umană (HITL)</div>
+      <strong>Omul din birou rămâne șeful</strong>
+      <p>
+        HITL înseamnă <em>„human in the loop”</em>: un om e în circuit.
+        Aplicația propune; biroul decide. Nimic important nu pleacă la client fără ochi omenesc
+        când ceva e nesigur.
+      </p>
+    </div>
+    <div class="layer">
+      <div class="tag">Strat 4 · Ieșire</div>
+      <strong>Rapoarte și anexa</strong>
+      <p>
+        Din avizele confirmate se construiește Anexa Factura (și alte rapoarte),
+        pe șablonul agreat. Ce ați exportat rămâne „înghețat” în istoric —
+        ca să afișați exact ce ați trimis atunci, chiar dacă mai târziu corectați un aviz.
+      </p>
+    </div>
+  </div>
+
+  <h2>3. HITL — verificarea de către birou (pe limba omului)</h2>
+
+  <p>
+    Aplicația dă fiecărui câmp un „nivel de siguranță”. Nu e magie: e un scor.
+    Pe ecran îl vedeți ca pe culori / etichete, nu ca pe formule.
+  </p>
+
+  <div class="two">
+    <div class="card ok">
+      <h3>Verde / acceptat</h3>
+      <p>
+        Citirea e destul de sigură (de regulă ≥ 90% pe câmpurile critice:
+        TPO, nr. auto, dată). Puteți confirma mai rapid.
+      </p>
+    </div>
+    <div class="card amber">
+      <h3>Portocaliu / de revizuit</h3>
+      <p>
+        Valoarea e completată, dar merită o privire: foto slabă, scris de mână,
+        câmp pe care sistemul nu e sigur 100%.
+      </p>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card warn">
+      <h3>Verificare obligatorie</h3>
+      <p>
+        Ceva important lipsește sau e greșit formatat. Documentul nu trece „Confirmă”
+        până nu rezolvați (sau un admin forțează, cu motiv — rar și trasabil).
+      </p>
+    </div>
+    <div class="card">
+      <h3>Corecțiile voastre rămân</h3>
+      <p>
+        Dacă biroul corectează un câmp, aplicația ține minte.
+        La re-extragere nu se șterge munca omului — se păstrează ce ați editat.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>De ce există HITL?</strong>
+    Pentru că pe anexa facturii un TPO greșit sau o greutate ×100 costă mai mult
+    decât 10 secunde de verificare. Aplicația accelerează; biroul garantează.
+  </div>
+
+  <h2>4. Cine face ce</h2>
+
+  <div class="who">
+    <div class="card">
+      <h3>Șoferul</h3>
+      <ul>
+        <li>Fotografiază avizul</li>
+        <li>Îl trimite din aplicație</li>
+        <li>Nu completează anexa</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Biroul</h3>
+      <ul>
+        <li>Vede lista de avize</li>
+        <li>Revizuiește câmpurile marcate</li>
+        <li>Confirmă și unește în anexă</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Aplicația</h3>
+      <ul>
+        <li>Citește și propune valori</li>
+        <li>Marchează ce e nesigur</li>
+        <li>Exportă pe șablonul vostru</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>5. Ce probleme rezolvă (exemple reale)</h2>
+  <ul>
+    <li><strong>Greutăți citite greșit</strong> (zecimale / mii) — se repară la citire, nu pe Excel după.</li>
+    <li><strong>TPO scris de mână</strong> — se normalizează (inclusiv zerouri) sau se marchează pentru verificare.</li>
+    <li><strong>Foto întunecată</strong> — chiar dacă „pare” un TPO, câmpul rămâne portocaliu ca să nu treacă neatins.</li>
+    <li><strong>Tip marfă (găleți / saci)</strong> — se deduce din cum e tipărit avizul, nu rămâne gol ca „bucăți”.</li>
+    <li><strong>Anexa</strong> — selectați, unește, descărcați; istoricul păstrează ce ați trimis.</li>
+  </ul>
+
+  <h2>6. Ce nu face (important de știut)</h2>
+  <ul>
+    <li>Nu înlocuiește judecata biroului pe documente dubioase.</li>
+    <li>Nu e un TMS complet de dispecerat (rute GPS live, planificare curse) — e <strong>companionul de documente</strong>.</li>
+    <li>Nu „ghicește” un aviz inexistent: fără poză/PDF, nu există rând util.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Rezumat pentru decizie:</strong>
+    aplicația scurtează munca repetitivă (citit, tastat, agregat) și lasă oamenii
+    pe ce contează: verificarea și relația cu clientul final.
+  </div>
+
+  <footer class="foot">
+    RAI Spedition · Documente — brief intern / client · octombrie 2026 ·
+    limbaj ne-tehnic · document local · nu înlocuiește contractul sau ghidul din aplicație
+  </footer>
+
+</body>
+</html>

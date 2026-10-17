@@ -1,0 +1,117 @@
+GE Uma entcga.
+Acima — requer um código de motivo caso a quantidade acima real for
+diferente da quantidade acima planejada.
+Danificado — requer um código de motivo para qualquer produto danificado.
+(Coleta — requer um código de motivo para qualquer variação de quantidade de
+uma coleta
+Abaixo — requer um código de motivo caso a quantidade abaixo real seja
+diferente da quantidade abaixo planejada.
+Validar quantidades - requer que o MobileCast verifique se uma das
+circunstâncias seguíntes se aplicarão se a quantidade rea! variar em relação à
+quantidade planejada:
+* As quantidades da coleta são as mesmas que as quantidades planejadas.
+* A soma das quantidades de Entrega, Abaixo e Danificado são as
+mesmas que as quantidades planejadas de Entrega.
+.A seção Dispositivo sem fio permite estabelecer diversas opções padrão ao usar
+dispositivos sem fio com o MobileCast.
+Etapa 6: Na seção Converter tempos de, clique na seta para especificar qual fuso horário
+será utilizado pelos dispositivos sem fio ou, se os disposítivos sem fio
+utilizarem o Horário de Greenvwich, marque Sem conversão. Essa opção não
+será válida se estiver utilizando o RN Mobile e deverá ser definida somente por
+um consutor da UPS Logistics Technologies.
+Etapa 7: A Taxa de atualização do GPS (minutos) exibe o tempo entre cada leitura do
+GPS a partir do disposítivo sem fio para estimar os tempos de chegada e de
+partida. Para alterar a taxa na qual 2s informações do GPS são atualizadas,
+clique no botão [Alterar]. À caixa Taxa de sondagem de eventos/atualização do
+GPS é exibida. Digite o número de minutos no campo e clique em [OK]
+AAviso: A modificação da taxa de sondagem de eventos/atualização do GPS pode alterar
+significativamente o uso do plano de dados dos disposítivos ou dos telefones,
+Calcule as alterações de custos associadas antes de modificar esse valor.
+Etapa 8: Marque Designar paradas não planejadas como pagas para defínir todos os
+intervalos, esperas e pernoites como pagos quando adicionados durante o
+percurso pelo motorista.
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lne
+Todos os direitos reservados
+Definição das opções
+Etapa 9: Marque Gerar recibos de eventos para monitorar todos os eventos enviados
+entre o servidor MobileCast e um disposítivo sem fio. Se marcada, o Analista
+poderá visualizar quando o evento foi recebido no dispositivo sem fio, quando
+foi visualizado pelo motorista, quando o motorista o confirmou e, se for
+aplicável, quando e por que o evento foi descartado.
+A seção Integração do computador de bordo permite especifícar como deve ser a
+transferência de dados entre o MobileCast e o computador de bordo. Se você estiver
+utilizando o MobileCast com o computador de bordo Tripmaster, há diversas maneiras de
+transferir dados entre os sistemas. Uma dessas opções é utilizar o dispositivo portátil para
+transferir dados. Ao utilizar esta opção, é necessário informar ao MobileCast o endereço
+1P é a porta do computador no qual o InfoTrax está sendo executado.
+Etapa 10: Na seção Integração do computador de bordo, marque Utilizar computador
+portátil para carregar/descarregar. Em seguida, insira o endereço IP e 2 porta
+do servidor InfoTrax.
+Etapa 11: Clique no botão [OK] para salvar as informações ou continue com outra guia
+A seção Opções de telefone Java permite estabelecer diversas opções padrão ao usar
+telefones ativados para java com o MobileCast.
+Etapa 12: Se os motoristas estiverem usando telefones ativados para Java para se
+comunicarem com o analista e com o MobileCast, marque as opções abaixo
+que se apliquem à sua configuração de comunicações.
+Monitorar alterações de fuso horário — permite definir se haverá
+monitoramento quando um motorista mudar de fuso horário. O telefone
+ativado para Java não aftera os fusos horários automaticamente, mas, se essa
+opção estiver marcada, o MobileCast poderá informar se o fuso horário local
+foi alterado pelos dados de tempo enviados pelo telefone.
+Enviar por tempo — permite especificar com que frequência o telefone
+ativado para Java envia dados de posição ao servidor. Digite a frequência em
+segundos. A menor frequência possível é 60 segundos.
+Se essa opção e Enviar por distância estiverem marcadas, os dados de posição
+serão reunidos quando qualquer uma das condições for atendida.
+Enviar por distância — permite especificar com que frequência o telefone
+ativado para Java envia dados de posição ao servidor. Digite a frequência em
+milhas. À menor frequência possível é 0,5 milha.
+Se essa opção e Enviar por tempo estiverem marcadas, os dados de posição
+serão reunidos quando qualquer uma das condições for atendida.
+Modo passivo — permite que o MobileCast adicione paradas
+avtomaticamente 2 uma rota, à medida que os dados de posição forem
+enviados do telefone para o MobileCast. O Modo passivo será utilizado se
+Você estiver usando roteirização passiva ou não planejada, a qua! é
+conveniente para funcionários como um vendedor, que deseja muito pouca
+interação com o telefone ativado para Java.
+ITITITATATI A , s Roadhe Traporiafion S
+1& Coporight 2006 Unizad Parcal Sareica nf America, lmc
+Todos os direitos reservados
+Definição das opções
+Digite o tempo e 2 distância máximos de parada para o cliente nos campos
+Tempo máximo de parada e Distância máxima para o cliente.
+. Nota: Para obter mais informações sobre o modo passivo de roteirização, consulte Como
+trabalhar com rotas Ontrack.
+Enviar locais para telefone — marque se desejar que as informações sobre
+clientes dos funcionários sejam carregadas no telefone. Se um grande número de
+clientes estiver atribuído ao funcionário, o telefone poderá não funcionar
+corretamente se os clientes forem enviados para o telefone. Se essa opção não
+estiver selecionada, o funcionário não poderá visualizar os clientes no telefone. À
+UPS Logistics Technologies recomenda não marcar essa opção. Essa opção estará
+disponível somente se o Modo passivo estiver selecionado.
+Tempo máximo de parada — se você marcou Modo passivo, digite o tempo, em
+minutos, que o telefone ativado para Java poderá fícar parado antes que o
+MobileCast considere o GPS atua! como uma parada ofícial em uma rota. Por
+exemplo, se você digitou 10 minutos e um vendedor permanecer no escritório de
+um cliente por 10 minutos ou mais, o telefone ativado para Java enviará os dados
+da posição atual para o MobileCast e uma parada para a rota desse vendedor será
+adicionada automaticamente.
+Distância máxima para o cliente — se você marcou Modo passivo, digite a
+distância, em milhas/quilómetros, que o cliente pode estar do GPS atual do telefone
+ativado para Java. Por exemplo, se você digitou 0,1 milha, quando um vendedor
+chega ao escritório de um cliente, o MobileCast utilizará os dados de posição
+enviados do telefone ativado para Java para indicar todos os clientes em um raio de
+01 milha do GPS atual. Se mais de um cliente for encontrado, o cliente com a
+Iatitudelongitude mais próxima 20 GPS atual será utilizado como a parada na rota
+do vendedor.
+Exibir detalhes da entrega e da coleta — permite defínir se deseja ou não mostrar
+detalhes da entrega e da coleta de uma parada no telefone ativado para Java. Se
+você estiver monitorando itens acima, abaixo e danificados, essa opção deverá
+estar marcada.
+Configuração do Nível de detalhe padrão
+Utilizado com: MobileCast
+A página Analista - Nível de detalhe do menu Opções permite estabelecer o nível de
+detalhes que serão monitorados para as rotas no MobileCast. Você pode escolher
+monitorar apenas as paradas, pedidos ou mesmo itens de pedido dos pedidos nas rotas. Se
+Vvocê estiver utilizando containers, você também poderá estabelecer os parâmetros que

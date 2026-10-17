@@ -1,0 +1,86 @@
+Como iniciar o Roadnet Transportation Suite
+Como iniciar o Roadnet Transportation Suite
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+A primeira etapa de utilização do Roadnet Transportation Suite é abrir o programa e fazer
+logon. Depois de conectado, a barra de ferramentas do aplicativo é exibida e você pode
+simplesmente clicar em um módulo para abri-lo.
+Etapa 1: Clique duas vezes no ícone do Roadnet Transportation Suíte. A janela de logon
+é exibida.
+Etapa 2: Digite nome e senha. Lembre-se de que a senha diferencia maiúsculas de
+minúsculas: portanto, verifique se a tecla [Caps Lock] está ou não ativada.
+|O campo do banco de dados pode
+estar visível ou não na janela
+Logon, dependendo das variáveis
+definidas para o ambiente.
+Etapa 3: Clique no botão [Logon]. À barra de ferramentas do aplicativo é exibida; basta
+clicar no icone para abrir o módulo desejado.
+Alteração da senha
+A cadausuário criado no módulo Administração é atribuida uma senha. Você pode alterar
+a senha a qualquer momento em que estiver fazendo logon no Transportation Suite. Só é
+possível alterar a senha do usuário que está fazendo logon.
+É necessário estar na janela Logon para executar este procedimento.
+Etapa 1: Na janela Logon, clique no botão [Alterar senha]. A janela Alterar senha é
+exibida.
+Etapa 2: No campo Senha antiga, digite a senha atual.
+Etapa 3: No campo Nova senha, digite a nova senha. Digite a nova senha novamente no
+campo Confirmar nova senha.
+Etapa 4: Clique no botão [Alterar e logon]. À barra de ferramentas do aplicativo é
+exibida.
+Guia de operações 9
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como iniciar o Roadnet Transportation Suite
+Adição de uma conexão ODBC
+.As conexões ODBC informam ao Transportation Suíte os bancos de dados que você
+deseja utilizar. Você pode ter várias conexões ODBC diferentes, cada uma em um banco
+de dados. Por exemplo, se você utilizar bancos de dados diferentes para regiões diferentes,
+poderá criar uma conexão ODBC para o banco de dados de cada região. Você pode criar
+novas conexões ODBC na janela Logon ou adicionar uma já existente à lista de opções
+possíveis exibida durante o logon.
+É necessário estar na janela Logon para executar este procedimento.
+Etapa 1: Na janela Logon, clique no botão [Configurar]. À janela Configuração da
+Oorigem de dados é exibida.
+Etapa 2: Para adicionar uma conexão ODBC, clique no botão [Adicionar]. A janela
+Create New Datasource (Criar nova origem de dados) é exibida. Para criar a
+nova conexão ODBC, siga as etapas incluídas nesta e nas janelas seguintes.
+Para adicionar uma conexão ODBC à lista de opções exibida durante o logonno
+Transportation Suíte, marque a caixa na coluna Incluir da conexão. Uma marca
+de seleção é exibida na coluna Incluir quando uma conexão está disponível para
+logon.
+Etapa 3: Clique no botão [OK]. A janela de logon é exibida com a conexão recém-
+selecionada incluída como banco de dados.
+o “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Módulos do Roadnet Transportation Suite
+Módulos do Roadnet Transportation Suite
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O Roadnet Transportation Suite foi organizado em vários módulos; o número real de
+módulos e a disponibilidade deles depende dos módulos adquiridos. À seguir há um
+resumo de cada módulo. Para obter instruções detalhadas de como utilizar cada módulo,
+consulte as seções correspondentes deste manual.
+Manutenção — utilizado para configurar, manter e atualizar todas as informações sobre
+seus negócios, como clientes, funcionários, equipamentos, etc.
+Importação — utilizado para importar dados dos locais, informações diárias de pedidos
+e outras informações para o Roadnet Transportation Suite. O módulo Importação também
+é utilizado para importar dados de sistemas do computador de bordo.
+Roteirização — utilizado para criar rotas parão e dinâmicas com base em parâmetros
+estabelecidos. O Editor de roteirização do Roadnet também permite analisar e modificar
+rotas conforme necessário, bem como manter itens e imprimir relatórios.
+Planejamento — utilizado para criar rotas estratégicas com base em parâmetros
+estabelecidos. O Editor de planejamento do Territory Planner também permite analisar e
+modificar rotas conforme necessário, bem como manter itens, exportar rotas e imprimir
+relatórios.
+Carregamento — utilizado para carregar veículos com base em parâmetros definidos
+quando as rotas são criadas. O FleetLoader também permite analisar e alterar os veículos
+carregados, conforme necessário.
+Expedição — utilizado para monitorar o desempenho das rotas durante o dia. No móduto
+AAnalista do MobileCast, você pode alterar as rotas conforme necessário, criar novas rotas,
+bem como monitorar equipamentos e motoristas.
+Relatórios — utilizado para definir opções de relatório, bem como exibir e imprimir
+relatórios diferentes.
+Administração — utilizado para configurar os parâmetros de permissão de uso do
+Transportation Suíte criando usuários, grupos de usuários, privilégios e regiões.
+Além dos módulos que você pode acessar na barra de ferramentas, talvez você também
+tenha instalado o recurso Histórico de rotas. O Histórico de rotas estabelece um banco de
+dados separado que você pode utilizar para acessar informações de roteirização

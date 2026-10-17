@@ -1,0 +1,66 @@
+ME A A A A A Foadnet Tranporare Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+Inserarea modificărilor în fereastra de service
+Pagina Modificări ale ferestrei de service din meniul Clienți vă permite să introduceți ferestre de modificare
+serviciu pentru zile este scenarii specifice. Dacă un client are un
+Serviciu de luni diferit de restul săptămânii, puteți introduce orele
+Luni pe această pagină fără a afecta ferestrele de service pentru restul săptămânii.
+Toate informațiile de pe această pagină sunt opționale. Dacă sunt introduse, modificările vor fi
+utilizate în locul tipurilor de ferestre de serviciu pentru clienți.
+Pasul 1: Introduceți orele de deschidere și de închidere și orele de livrare preferate
+schimbarea ferestrei de service. Pentru a introduce o oră, faceți clic pe casetă
+pentru a selecta câmpul, apoi tastați ora sau folosiți săgețile pentru a
+selectați ora. Verificați dacă partea corectă a timpului (ore sau minute)
+este selectat la introducerea orei.
+Maaa T 4
+R jascalial antizar multiple holes dh junals d atendicento-st o aware
+au ferestre de service diferite într-o zi a săptămânii.
+Orele de deschidere/închidere sunt cele mai devreme și cele mai recente
+posibile situații în care clientul poate primi o livrare, mai degrabă decât atunci când deschid și
+EE o E NNNA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Utilizarea meniului Client
+închideți pentru funcționare. Introduceți o oră de început (deschidere) și de sfârșit
+(închidere).
+Ferestrele de service 1 și 2 sunt momentele în care clientul preferă să primească
+livrarile. Introduceți o pornire (cea mai veche oră) și o oprire (ultima oră) pentru
+fiecare fereastră de service, dacă este necesar.
+Notă: Pentru ca orele să fie acceptate în sistem, trebuie să introduceți ora
+complet, inclusiv minute.
+Pasul 2: Faceți clic pe casetele Zile pentru a selecta zilele pentru care
+serviciu se aplică. Dacă ferestrele de service se aplică pentru a doua,
+Miercuri și vineri, faceți clic pe casetele de sub 2, 4 și 6. Dacă nu există casete
+selectat, modificarea va intra în vigoare pentru toate zilele săptămânii.
+Pasul 3: Faceți clic pe săgeata scenariu și selectați scenariul în care ferestrele serviciului
+vor fi folosite.
+Pasul 4: Faceți clic pe butonul [Adăugați] pentru a introduce modificarea ferestrei de serviciu
+nalist.
+Pentru a modifica orele unei ferestre de service, schimbați
+existente, evidențiați această linie în listă și modificați informațiile după cum este necesar.
+Apoi faceți clic pe butonul [Actualizare]. Informațiile vor fi modificate în
+lista.
+Pentru a șterge o linie dintr-o fereastră de serviciu, modificați
+existent, selectați linia din listă și faceți clic pe butonul [Eliminare]. Linia va fi
+excluse din listă.
+Pasul 5: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva informațiile sau
+faceți clic pe altă filă pentru a introduce informații suplimentare despre client.
+Introducerea modificărilor timpului de service
+Pagina Modificări ale orei de service din meniul Client vă permite să introduceți modificări
+timp de service pentru anumite zile și scenarii. Dacă un client are timp
+Programul de prezență de luni diferit de restul săptămânii, puteți introduce
+Orele de deschidere de luni pe această pagină fără a afecta orele de deschidere pentru restul
+saptamana. Toate informațiile de pe această pagină sunt opționale. Dacă sunt introduse, modificările
+vor fi utilizate în locul tipurilor de timp pentru serviciul clienți.
+. Notă: dacă utilizați timpul de îndeplinire a SKU și doriți să luați în considerare
+Numai timpul de descărcare SKU, verificați dacă timpul de descărcare al clientului
+este setat la 0.
+Pasul 1: Introduceți timpii de realizare și timpii de realizare în bloc pentru livrări
+cu și fără ajutor.
+Timpii de îndeplinire sunt timpul total necesar pentru livrarea produselor către a
+client.
+MET——————— u e o ee Rml in
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.

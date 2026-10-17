@@ -1,0 +1,78 @@
+Pasul 8: Repetați pașii 4 2 7 pentru a continua să adăugați activități.
+x — Pasul 9: Când toate activitățile au fost adăugate, faceți clic pe caseta Închidere. A
+Fereastra Adăugați activitate se închide.
+Activitățile existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+După ce toate activitățile au fost adăugate, le puteți grupa ca seturi de activități.
+aptitudini. Consultați Lucrul cu seturi de abilități pentru mai multe
+informaţii.
+Înregistrări — Activități — Adăugați pictograma ([Insert]) — Salvați pictograma ([Ctrl]+[S])
+M AA A Roadher Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrezi cu seturi de abilități
+Cum să lucrați peste seturi de abilități
+Folosit cu: Roadnet, MobileCast
+Seturile de aptitudini sunt un grup de activități de care este capabil un angajat
+realiza. De exemplu, un instalator poate fi capabil să efectueze următoarele activități;
+instalați o mașină de spălat, instalați o mașină de spălat vase și instalați a
+eliminarea gunoiului. Apoi, când rutele sunt create, puteți specifica
+că numai angajații cu setul de abilități necesare pentru a îndeplini a
+cererea poate fi atribuită rutei.
+Înainte de a crea seturi de abilități, trebuie să adăugați activități. După
+Înainte de a crea seturi de abilități, puteți atribui un set de abilități unui
+— fonționar.
+) Pas: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+lmn — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Angajați și seturi de abilități.
+Apare fereastra Seturi de abilități, care listează toate seturile de abilități.
+- aptitudini stabilite.
+Notă: Pentru a vedea o listă actualizată de seturi de abilități, faceți clic pe pictogramă
+; A actualiza; fereastra va fi actualizată cu cele mai recente informații ale bazei de date
+Şi
+m date.
+Pasul 3: În fereastra Seturi de abilități, faceți clic pe pictograma Adăugați sau apăsați
+[Inserați]. Apare fereastra Adăugați seturi de abilități.
+Şi
+Când sunt create rute, angajații
+nu sunt alocate rutelor care includ:
+activități care nu sunt incluse în sud
+Suma Lista activităților alocate
+set de aptitudini. cel
+m t
+o =
+[pps——
+AA Bmadeoperations
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate
+(Cum să lucrezi cu seturi de abilități
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+. Faceți clic pe intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+D Add este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere pentru ID-ul setului de abilități. Acest câmp trebuie
+fi umplut.
+Pasul 5: Introduceți până la 60 de caractere în Descriere
+Pasul 6: Introduceți factorul de timp pentru gestionarea setului de abilități. Factorul de
+timpul de serviciu va fi multiplicat cu toate activitățile necesare
+o anumită ordine atunci când sunt create rutele.
+ãv Sfat: factorul timp de serviciu poate fi folosit pentru a compensa angajații cu
+diferite niveluri de calificare. De exemplu, un instalator începător ar putea
+au nevoie de mai mult timp pentru a desfășura activități decât un instalator experimentat;
+doar oferiți instalatorului începător un factor de timp de service mai mare
+, când se creează rute, se va acorda mai mult timp pentru a finaliza traseul.
+sarcina.
+Pasul 7: Din lista Activități disponibile, selectați activitățile care pot fi
+efectuate de angajați cu acest set de abilități. Trageți
+activități din lista Activități disponibile în lista Activități atribuite. The
+Angajații cu acest set de abilități nu vor fi repartizați pe rutele care
+necesită o activitate care nu este inclusă în lista lor de activități
+atribuit.
+F Pași: Faceți clic pe pictograma Satvar sau apăsați [Ctr1]+[S] pentru a salva setul de
+” abilități,
+x — Pasul 9: Repetați pașii de la 4 la 8 pentru a continua să adăugați seturi de abilități.
+* Pasul 10: Când toate activitățile au fost adăugate, faceți clic pe caseta Închidere.
+Fereastra Adăugați set de abilități se închide.
+Seturile de abilități existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Înregistrări — Angajații > Seturi de aptitudini — Adăugați pictograma ([Insert]) —pictogramă
+Salvați (Ctrl/+[S])

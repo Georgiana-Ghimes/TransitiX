@@ -1,0 +1,55 @@
+---
+description: La „commit și push” — bump obligatoriu companion version + build + changelog
+alwaysApply: true
+---
+
+# Companion: bump la commit + push
+
+**Mereu**, pe **orice branch**, când utilizatorul cere **commit și push** (sau echivalent: „commit și push”, „commitează și pushuiește”, „commit + push”):
+
+1. **Înainte de commit**, bump automat în root `package.json` → `companion`:
+   - **`build`**: +1 (obligatoriu la **fiecare** astfel de release — un build = un commit de release pe companion)
+   - **`version`** (semver companion, nu `version` TMS):
+     - **patch** (`x.y.Z+1`) — bugfix, remedieri, texte, OCR/timeout, fără ecran nou
+     - **minor** (`x.Y+1.0`) — feature vizibil (ecran, flux, provider OCR nou, regulă nouă pe UI)
+     - **major** (`X+1.0.0`) — doar dacă utilizatorul cere explicit breaking
+2. **Changelog deschis pe branch** — obligatoriu la fiecare bump
+   (bugfix-urile trebuiau deja notate la fix — `changelog-on-bugfix.mdc`; la bump le muți/consolidezi pe build-ul nou):
+   - **MISTRAL** (branch `MISTRAL-experimenting-rai-documents`):  
+     `docs/CHANGELOGS/ChangeLog-MISTRAL-experimenting-rai-documents-10-builds-110.html`
+   - deschide bloc nou pentru build-ul/versiunea noi
+   - completează **Changelog** + **Bugfix** (dacă e doar feature: Bugfix = „(nimic pe build-ul ăsta)”)
+   - actualizează index (tabel) + hero „Pe scurt” + footer
+   - notează branch-ul curent în bloc
+   - **Nu** redenumi / nu genera PDF până când utilizatorul nu zice că e gata cu perioada
+3. Commit cu `[skip version]` în mesaj (hook-ul semver TMS nu trebuie să mai bumpeze `version` root).
+4. Apoi push.
+5. **UI:** versiunea e baked la pornirea Vite (`__APP_VERSION__` / `__APP_BUILD__` din `companion`).
+   Dacă rulează `npm run dev:companion`, **repornește-l** după bump — altfel ecranul rămâne pe build-ul vechi până la restart / hard refresh.
+
+Nu aștepta confirmare — bump-ul face parte din fluxul de release, nu e opțional.
+
+## Baseline
+
+Pornit ca mirror de la **v1.8.3 / build 62**. Pe MISTRAL: Sprint 6–8 închise; Changelog #3–#9 închise (ultimul: builds **107–109**); **Changelog #10 deschis** = builds **110+** (**Sprint 9 (deschis)**).
+
+## Închidere (doar la semnalul utilizatorului)
+
+Când zice **gata** / perioadă închisă: PDF + redenumire  
+`…-10-builds-110.html` → `…-10-builds-110-<ultimulBuild>.html`  
+(+ mutare în `old/`).
+
+**Sprint 9 rămâne deschis** — se închid doar perioadele de changelog, până când utilizatorul zice explicit că închide sprintul.
+
+## Nu bump (singurele excepții)
+
+- Utilizatorul zice explicit „fără bump” / „skip version” / „fără version bump”.
+- În același tur `companion.build` e **deja** crescut pentru același set de schimbări — nu dubla.
+
+## Exemplu
+
+```json
+"companion": { "version": "1.9.2", "build": 66 }
+```
+→ feature OCR + „commit și push” → `"version": "1.10.0", "build": 67`  
+→ următorul bugfix + „commit și push” → `"version": "1.10.1", "build": 68` (+ secțiune nouă în changelog)

@@ -1,0 +1,73 @@
+EE o sa cn im ccn E a a du NEn Fonsape dS tm aadoro a scania çao É
+para fechar a janela Adicionar tipo de compartimento.
+Ícone Manutenção — Cadastros — Equipamento — Tipo de compartimento— ícone
+Adicionar ([Insert]) —ícone Salvar ([Ctri[+[S])
+Os tipos de compartimento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+5) Importante: À exclusão de tipos de compartimento afeta outros itens do módulo
+Manutenção. Antes de excluir tipos de compartimento, edite ou exclua os
+equipamentos e tipos de equipamento que contém esse tipo de
+compartimento.
+E E
+€€ Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados
+(Como trabalhar com tipos de compartimento
+Como trabalhar com tipos de compartimento
+Utilizado com: Roadnet
+Se for utilizar roteirização de compartimento, é necessário criar tipos de compartimentos
+e especificar que tipos de produto podem ser carregados em cada tipo de compartimento,
+Você poderá selecionar se SKUs de diferentes tipos de produto podem ser misturadas em
+"um tipo de compartimento, e se um tipo de compartimento é ajustável ou não (possui
+antepara móve).
+Depois de criar os tipos de compartimento, é necessário adicionar compartimentos aos
+tipos de equipamento para indicar que compartimento cada tipo de equipamento contém.
+Ao adicionar compartimentos aos tipos de equipamento, você será capaz de específicar o
+tamanho ou faixa de tamanhos possíveis (se o compartimento for ajustável) de cada
+— compartimento.
+) Etapal: Clique no ícone Manutenção para abrir o respectivo módulo,
+Múinss — Etapa 2: Clique no menu Cadastros, selecione Equipamento e Tipos de compartimento.
+A janela Tipos de compartimento é exibida.
+$ Etapa3: Najanela Tipos de compartimento, clique no ícone Adicionar ou pressione
+- Insert]. A janela Adicionar tipo de compartimento é exibida.
+Etapa 4: Insira até 15 caracteres no Tipo.
+COETETTTT x
+l
+Tocê seleciona se ários — dum
+tipos de produto podemou — f
+não ser mistrados no 4po:- NNN
+decompartimento Sevocê > u
+mão selecionar Misturável, — pn
+penas SKU: de um dos
+tipos de produto EX
+permitidos serão for tee fc eem
+carregados naquele tipode ) PT |o SSm froes
+compartimento. .
+E
+Etapa 5: Insira até 255 caracteres na Descrição.
+Etapa 6: Se diferentes tipos de produtos puderem ocupar simultaneamente o tipo de
+compartimento, marque Misturável. Se esta caixa não estiver selecionada,
+somente será permitido o carregamento de SKUs do mesmo tipo de produto
+em um compartimento.
+. Nota: Se você possuir compartimentos ajustáveis (com antepara móvel), é possível
+configurar o tamanho minimo e o máximo de ajuste de cada compartimento para a
+adição de compartimentos a um tipo de equipamento.
+BT AAA E Roadha Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de compartimento
+Etapa 7: Para especifícar que tipos de produto podem ser carregados no compartimento,
+o clique no icone Adicionar ou pressione [Insert] na caixa Tipos de produto. À
+Jjanela Pesquisa - Tipos de produto é exibida. Clique duas vezes em um item
+ª para selecioná-lo ou clique no item e no icone Processar.
+Etapa 8: Repita a etapa 7 para adicionar qualquer outro tipo de produto.
+6) Etapa9: Clique no ícone Satvar ou pressione [Ctril-[S] para salvar o novo tipo de
+= compartimento.
+me — Etapa10: Quando terminar de adicionar tipos de compartimento, clique na caixa Fechar
+para fechar a janela Adicionar tipo de compartimento.
+Ícone Manutenção — Cadastros — Equipamento — Tipos de compartimento > ícone
+Adicionar ([Insert]) —icone Salvar ([Ctrl]+[S])
+Os tipos de compartimento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados

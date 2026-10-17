@@ -1,0 +1,89 @@
+D, Roadial Tranporiafon SE
+' Copyright 2006 United Parcel Service f Aerica nc
+Toată distracția rezervată
+(Cum să lucrați cu tipurile de compartimente
+Cum să lucrați cu tipurile de compartimente
+Folosit cu: FleeiLoader
+Tipurile de compartimente sunt folosite în industria băuturilor pentru a defini tipurile de
+compartimente disponibile în echipament. Fleetl.oader folosește informații de tip
+de compartiment atunci când se determină cantitatea de produs care poate încadra într-un anumit
+compartiment. Deoarece tipurile de compartimente sunt folosite doar pentru
+determinarea cantității unui tip de ambalaj care poate fi încărcat în acesta, este
+Este necesar să se creeze tipuri numai pentru compartimente cu capacități diferite, deși
+Mai multe compartimente de un singur tip pot avea dimensiuni ușor diferite. Tipurile
+sloturile trebuie adăugate înainte de a putea fi adăugate tipuri de echipamente.
+adăugat.
+/3 Noas: Modelul ID-urilor 1, Modelul 2. Modelul 3 « Modelul 4 al tipurilor de compartimente sunt
+Păstrată de Roadnet Transportation Suite și nu poate fi modificată.
+Dacă încărcați paleți în Editorul de încărcare, utilizați tipurile de paleți
+compartiment pentru configurarea pozițiilor paleților.
+[ME Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul Întreținere.
+l — Pasul 2: Faceți clic pe meniul Înregistrări, selectați Tipuri de echipamente și compartimente.
+Apare fereastra Tipuri de coș, care conține toate tipurile de coș.
+compartiment existent.
+[) Notă: Pentru a vedea o listă actualizată de tipuri de compartimente, faceți clic pe pictograma Reîmprospătare;
+1 fereastră va fi actualizată cu cele mai recente informații din baza de date.
+| Pasul 3: În fereastra Tipuri de compartiment, faceți clic pe pictograma Adăugați sau apăsați
+m[Inserare]. Apare fereastra Add Bin Type.
+&) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. La fereastră
+AAdd este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: Introduceți până la 15 caractere pentru ID-ul tipului de coș. Acest câmp trebuie
+fi umplut.
+2
+Dimensiunile tipului de — un
+Compartimentul poate — —
+fie în inci, picioare sau — fESGE
+centimetri. /TN—
+PE cn
+Pasul 5: Introduceți până la 30 de caractere în Descriere.
+Tuadgeação —M s AAA ÃE
+€ Copyrigi 2006 United Parcel Service of America, nc
+Toată distracția rezervată
+(Cum să lucrați cu tipurile de compartimente
+Pasul 6: Introduceți dimensiunile înălțime, lățime și adâncime.
+Ã) Important: Dimensiunile trebuie introduse cu aceeași unitate de măsură ca și
+dimensiunile tipului de ambalaj. De exemplu, ambele tipuri trebuie utilizate
+inci sau picioare sau centimetri.
+Pasul 7: Definirea numărului maxim al fiecărui tip de ambalaj care se încadrează în tipul de
+compartiment, faceți clic pe butonul [Capabilități]. Fereastra de întreținere
+este afișată capacitatea tipului de recipient.
+ETA
+E — E)
+PTTAA
+Unificarea ferestrei Mamenção a [[ EM RRA
+capacitatea de tip este TE
+numărul fiecărui tip de ambalaj — |& = onh
+care se poate potrivi pe iEx z tivo
+Compartiment sau compartiment cu — |13 — DS
+sistemul calculează capacitatea pentru — | 2 15
+„tu Numele mare pentru domeniul $ ds a
+coidia
+| F f me |
+Fena P R
+F E=
+Pentru ca capacitățile să fie calculate automat, introduceți
+procent pentru a completa tipul de bin în câmpul Procent
+folosit și faceți clic pe butonul [Calculate]. Valoarea implicită este 85 la sută
+Pentru a introduce manual capabilități, faceți clic pe ID-ul tipului de capabilități.
+ambalaj pentru a-l selecta, iar în câmpul Unități, introduceți numărul maxim
+a acelui tip de ambalaj care se incadreaza in tipul de compartiment. Faceți clic pe butonul
+[Actualizare]. Continuați până când terminați de introdus toate capacitățile,
+Pentru a specifica numărul maxim de SKU diferite care pot fi
+încărcat în acel tip de compartiment, bifați Setare număr maxim și
+Introduceți numărul de SKU permise în coș.
+ET Roadat Tranporiaton SE
+„Comright 2006 United Parcel Service f America lc
+Toată distracția rezervată
+(Cum să lucrați cu tipurile de compartimente
+Notă: Trebuie adăugate tipuri de ambalaje pentru a putea intra în capacitatea de ambalare.
+. tip de compartiment.
+AVERTISMENT: Făcând clic pe butonul [Calculate], orice capacitate existentă va fi
+. înlocuit cu capacitatea calculată.
+Sfat: Pentru a preveni încărcarea unui anumit tip de pachet într-un
+O) compartiment, modificați capacitatea acestuia la 0. Compartimentele de acest tip vor fi
+renunțat la încărcarea tipului de ambalaj.
+8l Este FtapaS: Faceți clic pe butonul [OK]. Apoi faceți clic pe pictograma Salvare sau apăsați
+[CHI]=[S] pentru a salva noul tip de coș.
+Pasul 9: Repetați pașii de la 4 la 8 pentru a adăuga orice alte tipuri de compartimente.

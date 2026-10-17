@@ -1,0 +1,94 @@
+T NEN UE D L aa SNE NS RADIIO 0 NN 0
+scenariul actual sunt actualizate.
+Pasul 5: După finalizarea actualizării, fereastra Uptime Maintenance Report
+serviciul este afișat. Puteți vizualiza raportul pe ecran, îl puteți imprima sau
+exportați datele într-un alt format (fișier text, Crystal Reports"",
+Excel?, Lotus? etc.).
+a Pentru a imprima raportul, faceți clic pe pictograma Imprimare. Fereastra Print este
+afisat. Faceți clic pe [OK] pentru a imprima sau pe [Anulare] pentru a anula.
+= Pentru a exporta datele raportului, faceți clic pe pictograma Export. La fereastră
+Apare Export. Selectați formatul și destinația datelor și faceți clic pe [OK]
+pentru a exporta sau [Anulare] pentru a anula.
+Pasul 6: Faceți clic pe caseta Închidere când ați terminat pentru a ieși din Întreținerea sistemului.
+timp de serviciu.
+Instrumente — Actualizare timpi de service — După client/După tip de timp de service
+serviciu — [Actualizare]
+Folosind graficul interactiv
+Pe lângă generarea de rapoarte de întreținere a timpului de service, Roadnet
+Transportation Suite folosește o diagramă ca o altă modalitate de a vizualiza și actualiza
+date în cadrul Service Time Maintenance. Când utilizați Opțiuni grafice
+DN a o ç aa E
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Actualizați orele de service folosind întreținerea timpului de service
+interactiv, puteți accesa, manipula și actualiza datele vizual, într-un grafic
+usor de citit.
+Utilizarea opțiunilor de diagramă pentru a efectua întreținerea timpului de service oferă
+alte opțiuni nu sunt disponibile la actualizarea orelor de serviciu de către client sau de către
+tipul de timp de serviciu. De exemplu, puteți selecta actualizați clienții și
+tipuri de timp de serviciu în funcție de tipul de livrare și cantitate. tu
+De asemenea, puteți modifica timpul efectiv de service! din orice oprire, precum și
+timpii de serviciu nou calculati. Pe lângă aceste caracteristici de întreținere ale
+timpul de service, graficul vă permite, de asemenea, să afișați toate timpii de service
+pentru toți clienții și tipurile de timp de serviciu simultan.
+J Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+și — Pasul? 2: Faceți clic pe meniul Instrumente și selectați Actualizare orelor de serviciu, sub
+apoi Grafic interactiv. Fereastra Service Time Maintenance -
+Apare Opțiuni diagramă.
+Instrumente — Actualizare timpi de service — Grafic interactiv
+Pasul 3: În secțiunea Grafic după, selectați dacă doriți să calculați în funcție de un client sau
+tip specific de timp de serviciu sau dacă doriți să calculați toți clienții
+și tipurile de timp de serviciu.
+Pentru a calcula per client, faceți clic pentru a selecta opțiunea Client și utilizați săgeata
+pentru a deschide lista Clienți și a selecta clientul pe care doriți să îl calculați.
+Pentru a calcula după tipul de timp de service, faceți clic și selectați opțiunea 2
+Tip de timp de manipulare și utilizați săgeata pentru a deschide lista Tipuri de timp de manipulare.
+service și selectați tipul de timp de service pe care doriți să îl calculați.
+Pentru a calcula pentru toți clienții și tipurile de timp de serviciu, faceți clic
+pentru a selecta opțiunea Toate.
+Pasul 4: Când introduceți informații despre dată, puteți introduce data sau faceți clic pe săgeata pentru
+afișează calendarul. Utilizați pictogramele de defilare din fereastra calendarului
+pentru a parcurge lunile. Când ajungeți la data dorită, faceți clic pe număr
+din acea dată pentru a o selecta.
+Pasul 5: Introduceți variația de timp permisă pentru timpii de așteptare și descărcare. Pentru a
+setarea variației stabilește o gamă de timpi acceptabili mai presus și dincolo
+sub timpii de service acceptabili. Se oprește numai în cadrul
+Pentru calcul va fi utilizat intervalul acceptabil de timpi de așteptare și descărcare. Pentru a
+setarea implicită este de 10 minute pentru timpul de așteptare și jumătate de minut pentru
+timpul de descărcare.
+Pasul 6: Introduceți numărul minim de livrări acceptate și procentul minim de
+livrările acceptate pentru a stabili numărul minim de puncte de date
+necesare pentru a produce graficul.
+Pasul 7: În secțiunea Tip de livrare, selectați dacă doriți opriri fără ajutor
+(Fără ajutor) sau inclusiv ajutoare (Ajudante) se numără.
+MT AA o Roadhe Trarporiafion SuT
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Actualizarea timpilor de service folosind întreținerea timpului de service
+Pasul 8: În secțiunea Tip de cantitate, selectați dacă doriți opriri în bloc sau în bloc.
+Se calculează fracționalele.
+Pasul 9: Faceți clic pe [OK] pentru a deschide diagrama sau pe [Anulare] pentru a anula.
+Pentru mai multe informații despre lucrul cu diagrama, consultați Utilizarea
+grafic.
+Folosind graficul
+Caracteristica de întreținere a timpului de service a modulului de întreținere include a
+grafic care vă permite să vizualizați timpii efectivi de service ale clienților sau ale tipurilor și
+actualizați-le după cum este necesar. Pentru a deschide diagrama, faceți clic pe meniul Instrumente din
+Modul de întreținere și selectați Actualizare timpi de service și apoi Diagramă
+interactiv. După selectarea criteriilor, se deschide diagrama care arată toate datele
+existente. Pentru mai multe informații despre utilizarea caracteristicilor grafice, consultați
+Casete de date, Cum se lucrează cu graficul și butoanele de acțiune.
+Tabelul de întreținere
+timpul de serviciu oferă
+o prezentare vizuală a
+date de timp
+serviciu real și permite
+„schimbați-vă și actualizați-vă orele
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+Actualizarea timpilor de service folosind întreținerea timpului de service
+Casete de date
+În stânga și în dreapta diagramei sunt mai multe casete de date care pot fi folosite
+Vizualizați, modificați și actualizați informațiile. Mai jos sunt descrieri pentru fiecare
+una dintre casetele de date și modul în care funcționează.

@@ -1,0 +1,102 @@
+|Ex Etapa 2: Para selecionar o tipo de compartimento que está sendo adicionado, clique n
+seta de Tipo de compartimento para abrir a janela Pesquisa - Tipo de
+compartimento. Clique duas vezes em um item para selecioná-lo ou clique no
+item e no ícone Processar.
+Etapa 3: Insira até 15 caracteres na ID de compartimento.
+Etapa 4: Clique na seta Cor e selecione uma cor para o compartimento. Após criar as
+rotas, os gráficos que utilizam a codificação de cores selecionada aqui
+mostrarão a porcentagem de preenchimento de cada compartimento.
+Etapa 5: No campo % minima de tipo de equipamento, digite o menor tamanho possível
+que o compartimento pode ter, medido como um porcentagem da capacidade
+total do tipo de equipamento.
+MTAA A A A Foadnet Transporiation Sule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com tipos de equipamento
+Etapa 6: No campo % máxima de tipo de equipamento, digite o maior tamanho possível
+que o compartimento pode ter, medido como um porcentagem da capacidade
+total do tipo de equipamento.
+|E REEAA
+“Para cada compartimento A DAA s)
+'adicionado a um tipo de SGAA C000
+equipanento, você ierea an
+porcentagemminimaemáxima — een do,
+da capacidade total do tipo de — ) fh
+equipamento que o sennttaemeto
+fm
+sun
+[ taaa an trasica]
+. Nota: Se o tamanho do compartimento não for ajustável (não tiver uma antepara móvel),
+2% minima de tipo de equipamento e a % máxima de tipo de equipamento deverão
+ser iguais.
+Etapa 7: No campo Número de posições de antepara, digite o número de diferentes
+Jocais nos quais a antepara pode ser definida. Se o compartimento não for
+ajustável, digite 1.
+. Nota: O Roadnet somente permite o ajuste de compartimentos ajustáveis em incrementos
+iguais. Por exemplo, se um compartimento pode consumir de 20 a 65 por cento da
+capacidade do tipo de equipamento e tiver 4 posições possíveis de antepara, o
+compartimento poderá ser ajustado em incrementos de 15 por cento da capacidade
+do tipo de equipamento, sendo permitido que consuma 20, 35, 50 ou 65 por cento
+da capacidade do equipamento.
+8) EtapaS: Clique no ícone Salvar ou pressione [Ctr1]+[S] para salvar as informações
+— sobre o compartimento.
+Etapa 9: Repita as etapas 2 a 8 para adicionar qualquer outro tipo de compartimento.
+m Etapal10: Clique no botão Fechar após terminar de adicionar todos os compartimentos.
+AA janela Adicionar compartimento é fechada.
+MG Etapall: Se você adquiriu o FleetLoader e necessita inserir informações de
+compartimento para o tipo de equipamento, consulte Tipos de equipamento e
+o FleetLoader. Se tiver terminado de inserir informações para o tipo de
+equipamento, clique no ícone Salvar ou pressione [Ctrl][S] para salvar o
+á tipo de equipamento.
+Etapa 12: Quando terminar de adicionar tipos de equipamento, clique na caixa Fechar
+para fechar a janela Adicionar tipo de equipamento.
+madeaperaçães o M
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com tipos de equipamento
+Tipos de equipamento e o Fleetloader
+-A guia FleetLoader, que aparece somente se você adquiriu o FleetLoader, permite
+especificar informações sobre o cliente e número de compartimentos do equipamento.
+Se você estiver utilizando o FleetLoader para carregar os veículos, pode especificar
+informações sobre o tipo de equipamento, como informações do compartimento, clicando
+ma guia FleetLoader. Para iniciar este procedimento, é necessário inserir o tipo de
+equipamento.
+Etapa 1: Clique na guia FleetLoader na janela Adicionar tipo de equipamento.
+Etapa 2: Selecione se o tipo é um carregador lateral ou um veículo bulk. Se o
+equipamento utilizar um reboque, verifique se a caixa Reboque está
+selecionada. Insira o número de eixos traseiros no campo Eixos traseiros.
+EE S u
+FE MM
+má ta Pintiai |
+aa
+| TÊetivraatas
+[ Nestomentectes
+[ resieeitas
+[ pavmmeldecen te vedto
+pamtas
+-A guia FleetLoader na janela Adicionar tipo de equipamento permite que o5
+Etapa 3: Se o tipo for um carregador lateral, selecione Carregador lateral e digite o
+número de compartimentos em cada categoria na área Info do compartimento
+do lado do motorista. Se o equipamento incluir um compartimento traseiro que
+somente pode ser acessado da traseira do veículo, verifique se a caixa
+Compartimento traseiro está selecionada.
+Seo equipamento for um veículo bulk, selecione Bulk. Clique na seta Tipo de
+posição do palete e selecione o tipo na lista que será exibida. Insira o número de
+Posições dos paletes por lado.
+T AA L Foadnet Transporiation Sule
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com tipos de equipamento
+3) Importante:Ão inserir estas informações, conte somente as posições de compartimentos!
+D palete no lado do motorista do veículo e não no veículo inteiro.
+. Nota: Se o veículo for um veículo bulk, o campo Info do compartimento do lado do
+motorista não é aplicável, embora possa aparecer na lista Tipos de equipamento.
+Etapa 4: Para especificar os tipos de compartimento para cada compartimento, clique no
+botão [Definir compartimentos]. A janela Definir compartimentos é exibida.
+Para dividir um compartimento, clique com o botão direito no
+compartimento e selecione Dividir no menu suspenso. Uma linha horizonta! é
+exibida cortando o compartimento; use o mouse para mover a linha para a
+posição correta, para dividir o compartimento. Clique para fixar a linha.
+Para atribuir um tipo a um compartimento, clique duas vezes no
+compartimento. A janela Definir atributos é exibida. Edite o Número do
+compartimento e a Descrição se desejar e selecione o tipo de compartimento

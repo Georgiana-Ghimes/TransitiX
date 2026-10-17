@@ -1,0 +1,90 @@
+mover para a próxima rota e repita as etapas 4 a 10 para inserir os dados reais.
+m Etapa12: Quando terminar de inserir os dados reais, clique na caixa Fechar para fechar
+a janela Rota.
+TNE RA SNS A E SAA SAA S NS d;
+Rota — ícone Salvar ([Ctrl]+[S])
+MET AA E Roadhet Tranporiafion S
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+informações reais para a rota. Consulte Inserção de informações reais de rota para obter
+mais informações.
+Etapa 1: Clique no icone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Entrada de dados reais e selecione Rota/parada real. A janela
+Rotas reais: sessão de roteirização é exibida.
+Etapa 3: Na janela Rotas reais: sessão de roteirização, clique duas vezes na rota para a
+qual deseja inserir os dados reais. A janela Rota da rota selecionada será
+exibida automaticamente. Você também pode clicar com o botão direito e
+selecionar Editar para abrir a janela Rota.
+oU-
+Clique no ícone Sessões para exibir uma lista de sessões de roteirização, e clique
+duas vezes na sessão para a qual deseja inserir os dados reais. À sessão
+selecionada aparecerá na janela Rotas reais: sessão de roteirização. Clique duas
+vezes para abrir a janela Rota. Você também pode clicar com o botão direito e
+selecionar Editar para abrir a janela Rota.
+Notas: A janela Rotas reais: sessão de roteirização abre por padrão a sessão de
+roteirização mais recente.
+Se você deseja inserir dados reais para mais de uma rota (todas as rotas de uma
+sessão, por exemplo), selecione as rotas que deseja editar, clique com o botão
+direito em uma rota selecionada e selecione Editar, para abrir a janela Rota. Para
+editar todas as rotas, clique com o botão direito em uma rota e selecione Editar
+todos. Use as setas no alto da janela Rota para mover-se entre as rotas.
+Etapa 4: Confirme se Parada está selecionado na seção Editar dados da janela Rota.
+Etapa 5: Na lista da parte inferior da janela, clique para selecionar a parada cujas
+informações reais deseja inserir. A primeira parada já está selecionada como
+padrão.
+Etapa 6: Clique na seta Fuso horário para exibição/entrada e selecione o fuso horário
+dos horários que está inserindo. Por exemplo, se estiver inserindo horários de
+Maryland, selecione Horário da Costa Leste dos EUA.
+Nota: Qualquer horário exibido no momento será afterado para refletir o novo fuso
+horário. Entretanto, o banco de dados os armazena utilizando o fuso horário
+correto.
+Etapa 7: Dependendo se o motorista possuir ou não um computador de bordo, diversas
+informações de parada podem ser importadas. Insira as informações
+necessárias que ainda não estiverem presentes nos campos Parada, Dist.
+Guia de operações 229
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+E
+cmpaomene — omana c PORR |f TE * E
+ss
+msç fm d
+mn e h " o
+mom o mo ta
+[ ee TSS T meem m
+Quando você insere informações de tempo, distância e
+quantidade da parada, as informações da rota são atualizadas
+automaticamente.
+Etapa 8: Quando você terminar de inserir as informações reais da parada atual, clique
+no botão [Inserir] da janela Rota para mover-se automaticamente para 2
+próxima parada.
+. Nota: Se você deseja adicionar mais uma parada, clique no botão [Inserir parada] e insira
+todas as informações da parada, incluindo a ID de cliente. As paradas inseridas
+podem ser excluídas clicando no botão [Excluir parada]. Paradas que foram
+importadas não podem ser excluídas.
+6) Etapa9: Quando terminar de inserir todas as informações reais de paradas das rotas,
+. clique no icone Salvar ou pressione [Ctr1]+[S] para salvar as alterações.
+M — Etapa10: Clique na caixa Fechar para fechar a janela Rota.
+TÍcone Manutenção — Entrada de dados reais — Rota/parada real —ícone Sessões —
+“Rota > ícone Sabvar ([Ctrl]+[S])
+FIIO AA o Roadha Tranporiafion Su
+' Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados.
+(Como trabalhar com distâncias das áreas
+Como trabalhar com distâncias das áreas
+Utilizado com: Roadnet
+As distâncias das áreas juntamente com as áreas no Roadnet Transportation Suite
+permitem monitorar as milhas percorridas em cada área (estado, província, etc). Se você
+inserir distâncias das áreas regularmente, poderá gerar impressões de cada área
+individualmente, para cada item de equipamento, por data, ou para todas as áreas e
+equipamentos juntos. Para inserir as distâncias das áreas, é necessário adicionar as áreas
+e equipamentos.
+Mám Etapal: Clique no icone Manutenção para abrir o respectivo módulo.
+Í Fs Etapa 2: Clique no menu Entrada de dados reais e selecione Distâncias das áreas. À
+— janela Distância da área é exibida.
+EW Nota: Para ver uma lista atualizada de distâncias das áreas, clique no ícone Atualizar; a
+" Jjanela será atualizada com as informações mais recentes do banco de dados.
+| Etapa3: Najanela Distância da área, clique no ícone Adicionar ou pressione [Insert]. A
+- Jjanela Adicionar área é exibida.
+Ã) Dica: Paraadicionaruma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+AMN E dh to eec Snfrese Res 2E VepeachaATe, SÍRCE S

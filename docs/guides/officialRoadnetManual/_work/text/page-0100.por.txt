@@ -1,0 +1,63 @@
+Problema, de modo que um técnico de atendimento da UPS Logistics Technologies possa
+trabalhar com os dados. Este recurso está disponível somente se estiver utilizando um
+banco de dados Oracle ou SQL Server; ele não pode ser usado com um banco de dados
+Access.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Ferramentas e selecione Transporte de dados. O Assistente de
+seript de transporte de dados é exibido.
+Etapa 3: Após ler a isenção de responsabilidades, clique em [Avançar]
+Etapa 4: Se desejar transportar dados do Territory Planner, verifique se a opção Incluir
+dados de planejamento está selecionada. Selecione as sessões de planejamento
+que deseja incluir na exportação. Clique em [Avançar].
+Notas: Se você não adquiriu o Territory Planner, esta janela não será exibida.
+Se você deseja transportar dados RIC para assistência de solução de problemas,
+selecione as sessões de planejamento contendo os dados com os quais necessita de
+amda.
+Etapa 5: Se desejar transportar dados do Roadnet e/ou FleetLoader, verifique se a opção
+Tncluir dados da sessão de roteirização está selecionada. Clique na seta Data de
+início para abrir um calendário e selecionar a data de início correta. Clique na
+seta Data de término para abrir um calendário e selecionar a data de término
+correta. As sessões de roteirização com essas datas são exibidas na lista
+Sessões de roteirização. Clique com a tecla [ctrl] pressionada em cada sessão
+que desejar incluir e clique em [Avançar].
+TIITTTTITITIAIA o oadnei Transporiafion Siule
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Transporte de dados
+Notas: Se você não adquiriu o Roadnet ou o FleetLoader, esta janela não será exibida.
+. Se deseja transportar dados RIC para assistência de solução de problemas,
+selecione as sessões de roteirização contendo os dados com os quais necessita de
+ajuda.
+EE
+É possível selecionar
+-para quais sessões você
+deseja exportar dados do
+Roadnet e do
+FleciLoader.
+Etapa 6: Se descjar transportar dados do MobileCast, verifique se a opção Incluir dados
+de expedição está selecionada. Clique na seta Data de início e selecione a data
+de início das rotas a serem incluídas na exportação. Clique na seta Data de
+término e selecione a data de término das rotas a serem incluídas na
+exportação. Clique em [Avançar].
+. Notas: Se você não adquiriu o MobileCast, esta janela não será exibida.
+Se você deseja transportar dados RIC para assistência de solução de problemas,
+selecione o intervalo de datas de dados de expedição contendo os dados com os
+quais necessita de ajuda.
+Etapa 7: A janela Editar é exibida. Na janela Editar, é possível alterar qualquer uma das
+opções de exportação selecionadas. Para alterar a opção de exportação dos
+madeaperaçães o D
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+exportados.
+Etapa 8: No campo Pasta de destino do script de transporte, insira o local no qual os
+arquivos de script e exportação devem ser armazenados. É possível digitar o
+caminho do diretório ou clicar no botão [...] e navegar para o diretório
+adequado. Clique em [Concluir]
+Etapa 9: Diversos novos arquivos são criados no diretório especificado. Esses arquivos
+permitem exportar os dados selecionados do seu banco de dados, de tal
+maneira que possam ser transportados para o Atendimento ao cliente da UPS
+Logistics Technologies. O procedimento que deve ser seguido para exportar os
+dados depende do uso do Oracle ou SQL Server. Entre em contato com o
+AAtendimento ao cliente da UPS Logistics Technologies para obter assistência
+com a exportação e transporte dos dados.
+Ferramentas — Transporte de dados

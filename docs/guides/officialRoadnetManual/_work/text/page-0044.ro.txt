@@ -1,0 +1,46 @@
+comandă/activități din meniul Comenzi. Pagina Articole/Activități de comandă este
+afisat.
+cel
+5)
+A treia pagină a meniului Comenzi vă permite să adăugați articole de comandă
+comandă și comandă activități la comenzi.
+| Pasul 3: Pentru a adăuga un articol de comandă la o comandă, faceți clic pe pictograma Adăugați
+— în zona Articole de comandă a ferestrei. Apare fereastra Adăugare articol de comandă.
+o Faceți clic pe săgeata SKU și selectați SKU-ul pe care doriți să îl adăugați. În zonă
+. Mărimi, introduceți cantitatea totală SKU pentru fiecare mărime pe care o aveți
+folosind. Dacă utilizați câmpuri pentru articole de comandă definite de
+MET AA E Foadnet Transporiation Sule
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+Pentru a adăuga o activitate la o comandă, faceți clic pe pictograma Adăugați din
+Secțiunea de activități a ferestrei. Apare fereastra Adăugare activitate. Faceți clic pe
+Săgeata Activitate și selectați activitatea pe care doriți să o adăugați. La descriere și timp
+prezența la activități sunt inserate automat în câmpurile de mai jos.
+Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S].
+„După ce ai ales un
+Activitate, descriere și timp
+serviciul acestuia
+Pasul 4: Faceți clic pe pictograma Salvare sau apăsați [Ctr1][S] pentru a salva comanda.
+Pentru a adăuga informații despre fereastra de service, timpul de service sau instrucțiuni
+pentru a comanda, utilizați fila Modificare din meniul Comenzi.
+Ghid de operațiuni 101
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+* — Reguli de produs pe palet pe zonă de depozit
+* — Reguli de produs în nivel în funcție de marca SKU
+* — Reguli de produs în strat după tipul de ambalaj
+* — Reguli de produs în stratul după zonă de depozit
+Pentru ca două SKU să fie încărcate împreună pe un nivel sau palet, trebuie să existe nr
+Reguli de produs la orice nivel (zonă de depozit, tip de ambalaj sau marcă
+SKU). De exemplu, pentru două SKU-uri care urmează să fie încărcate pe același strat de paleți,
+Nu pot exista reguli de produs pentru tipul de ambalaj, zona de depozit sau marca
+SKU le interzice să fie pe același nivel.
+Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv.
+Pasul 2: Faceți clic pe meniul Înregistrări și selectați Reguli de încărcare, apoi
+Stratificați paleta Reguli de produs și derulați la tipul de regulă pe care doriți să o creați. Pentru a
+apare fereastra corespunzătoare Reguli de produs.
+.Același tip de fereastră este folosit pentru a crea toate cele șase tipuri de ferestre.
+Pasul 3: În lista articol țintă pentru regulă, selectați zona/marca depozitului
+SKU/tip de ambalaj pentru care creați regula. Pentru a lista articole nu
+utilizat în această regulă este populat cu zonele de depozit/etichete SKU/
+FE SEA SBNcA o

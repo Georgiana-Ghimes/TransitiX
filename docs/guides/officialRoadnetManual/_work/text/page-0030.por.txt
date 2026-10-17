@@ -1,0 +1,89 @@
+D , Roadial Tranporiafon SE
+' Copyright 2006 United Parcel Service f Aerica nc
+Todos os diveitos reservados
+(Como trabalhar com tipos de compartimento
+Como trabalhar com tipos de compartimento
+Utilizado com: FleeiLoader
+Os tipos de compartimentos são utilizados no setor de bebidas para definir os tipos de
+compartimentos disponíveis no equipamento. O Fleetl.oader utiliza informações de tipos
+de compartimento ao determinar a quantidade de produto que pode caber em um dado
+compartimento. Como os tipos de compartimentos são utilizados somente para
+determinar a quantidade de um tipo de embalagem que pode ser carregada nele, é
+mecessário criar tipos somente para compartimentos com capacidades diferentes, embora
+Yários compartimentos de um tipo possam ter dimensões levemente diferentes. Os tipos
+de compartimento devem ser adicionados antes que os tipos de equipamento possam ser
+adicionados.
+/3 Noas:AsIDs Padrão 1, Padrão 2. Padrão 3 « Padrão 4 de tipos de compartimento são
+Teservadas pelo Roadnet Transportation Suite e não podem ser modificadas.
+Se você estiver carregando paletes no Editor de carregamentos, utilize os tipos de
+compartimento para configurar as posições dos paletes.
+[ME Etapa 1: Clique no ícone Manvtenção para abrir o módulo Manutenção.
+l — Etapa 2: Clique no menu Cadastros, selecione Equipamento e Tipos de compartimento.
+A janela Tipos de compartimento é exibida contendo todos os tipos de
+compartimento existentes.
+[) Nota: Para ver uma lista atualizada de tipos de compartimento, clique no ícone Atualizar;
+1 janela será atualizada com as informações mais recentes do banco de dados.
+| Etapa3: Najanela Tipos de compartimento, clique no ícone Adicionar ou pressione
+m [Insert]. A janela Adicionar tipo de compartimento é exibida.
+&) Dica: Paraadicionar um entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. À janela
+AAdicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 15 caracteres para a ID do tipo de compartimento. Este campo deve
+ser preenchio.
+2
+Asdimensões dotipo de — un
+Compartimento podem — —
+estar em polegadas, pés ou — fESGE
+centímetros. / TN—
+PE cn
+Etapa 5: Insira até 30 caracteres na Descrição.
+Tuadgeação —M s AAA ÃE
+€ Copyrigi 2006 United Parcel Service of America, nc
+Todos os diveitos reservados
+(Como trabalhar com tipos de compartimento
+Etapa 6: Insira as dimensões de Altura, Largura e Profundidade.
+Ã) Importante:As dimensões devem serinscridas com a mesma unidade de medida das
+dimensões do tipo de embalagem. Por exemplo, ambos os tipos devem usar
+polegadas ou pés ou centimetros.
+Etapa 7: Para áefinir o número máximo de cada tipo de embalagem que cabe no tipo de
+compartimento, clique no botão [Capacidades]. A janela Manutenção da
+capacidade do tipo de compartimento é exibida.
+ETA
+E — E)
+PTTAA
+Unilizando a janela Mamenção da [[ EM RRA
+capacidade do fipo de é TE
+múmero de cada tipo deembalagem — |& = onh
+que pode caber no tivo de z iEx
+Compartimento ou fezer comque o — |13 — DS
+sistemacalcule acapacidade para — | 2 15
+“você O pacrão para o campo $ ds a
+coídios
+| F f me |
+Fena P R
+F E=
+Para que as capacidades sejam caleuladas automaticamente, digite a
+porcentagem para preencher o tipo de compartimento no campo Porcentagem
+tilizada e clique no botão [Calcular]. O padrão é 85 por cento
+Para inserir as capacidades manualmente, clique na ID do tipo de
+embalagem para selecioná-la e, no campo Unidades, insira o número máximo
+desse tipo de embalagem que cabe no tipo de compartimento. Clique no botão
+[Atualizar]. Continue até terminar de inserir todas as capacidades,
+Para especificar o número máximo de SKUs diferentes que podem ser
+carregadas nesse tipo de compartimento, marque Definir número máximo e
+insira o número de SKUs permitidas no compartimento.
+ET o Roadat Tranporiaton SE
+' Comright 2006 United Parcel Service f America lc
+Todos os diveitos reservados
+(Como trabalhar com tipos de compartimento
+Nota: Os tipos de embalagem devem ser adicionados para poder inserir a capacidade do
+. tipo de compartimento.
+AVISO: Clicar no botão [Calcular] faz com que qualquer capacidade existente seja
+. substituída pela capacidade calculada.
+Dica: Para evitar que um tipo de embalagem específico seja carregado em um
+O) compartimento, altere sua capacidade para 0. Os compartimentos desse tipo serão
+ienorados ao carregar o tipo de embalagem.
+8l É FtapaS: Clique no botão [OK]. Em seguida, clique no ícone Salvar ou pressione
+[CHI]=[S] para salvar o novo tipo de compartimento.
+Etapa 9: Repita as etapas 4 a 8 para adicionar qualquer outro tipo de compartimento.

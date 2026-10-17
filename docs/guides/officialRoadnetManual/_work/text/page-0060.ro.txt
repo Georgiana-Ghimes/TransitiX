@@ -1,0 +1,87 @@
+[Traducere eșuată pentru acest fragment]
+(Como trabalhar com conjuntos de padrões de atendimento.
+Como trabalhar com conjuntos de padrões de atendimento
+Utilizado com: Territory Planner
+Um conjunto de padrões de atendimento é um grupo de padrões de atendimento utilizado
+para definir opções de entrega para as extensões de clientes no Territory Planner. Cada
+extensão de cliente está associada a um conjunto de padrões de atendimento que define 2s
+possíveis opções de entrega que 2 função Atribuir dias pode escolher ao criar rotas. Como
+as frequências de entrega definidas nesses conjuntos têm como base a quantidade
+entregue, as extensões de cliente com o mesmo conjunto de padrões de atendimento
+podem ter dias de entrega diferentes em sessões de planejamento diferentes. Por exemplo,
+"um conjunto pode conter um padrão de atendimento que entrega 100% na segunda-feira
+com um nível de quantidade de 0-50 caixas e outro padrão que entrega 50% na quarta-
+feira e 50% na sexta-feira com um nível de quantidade de 51-100 caixas. À quantidade
+entregue para 2 sessão individual determinará qual padrão de atendimento será utilizado
+naquela sessão.
+É possível ter um número ilimitado de padrões para cada nível de quantidade, bem como
+um número ilimitado de níveis para cada conjunto. É necessário adicionar os padrões de
+atendimento antes de adicionar os conjuntos de padrões de atendimento.
+[M Etapal: Clique no ícone Manutenção para abrir o respectivo módulo
+Wwese — Etapa 2: Clique no menu Cadastros e selecione Regras de atendimento e Conjuntos de
+padrões de atendimento. À janela Conjuntos de padrões de atendimento é
+- exibida, listando todos os conjuntos de padrões existentes.
+Nota: Para ver uma lista atualizada de conjuntos de padrões de atendimento, clique no
+Ícone Atualizar; a janela será atualizada com as informações mais recentes do
+EJ banco de dados.
+- Etapa3: Najanela Conjuntos de padrões de atendimento, clique no ícone Adicionar ou
+_-) pressione [Insert]. A janela Adicionar conjunto de padrões de atendimento é
+exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar conjunto de padrões de atendimento é exibida com algumas informações
+Jjá preenchidas; altere 2s informações necessárias na nova entrada.
+Etapa 4: Insira até 3 caracteres para a ID do conjunto e até 30 caracteres para a
+Descrição. A ID do conjunto deve ser inserida.
+Etapa 5: Clique na seta Cenário atual para abrir uma lista de cenários, e selecione o
+cenário 2o qual está adicionando as informações de conjunto de padrões de
+atendimento.
+Bmadeaperaçães o A
+& Copyrighe 2006 Tinited Parcal Sarvice f America, lmc
+Todos os direitos reservado:
+(Como trabalhar com conjuntos de padrões de atendimento.
+Etapa 6: Clique no botão [Novo nível] e insira a quantidade máxima do nível para o
+qual deseja inserir padrões de atendimento.
+ES ——
+E
+a
+Lembre-se de war ateclatabalémn — teza |EGS aaaA
+o últmo campo de envadaantes — |[AA a
+de sabar.
+Etapa 7: Selecione os padrões de atendimento, clicando na seta para abrir uma lista de
+padrões de atendimento disponíveis e clicando em um item para selecioná-lo.
+Você pode selecionar quantos padrões de atendimento forem necessários para
+cada nível de quantidade.
+j) Dica: Verifique se saiu do padrão de atendimento anterior.
+Etapa 8: Repita 2s etapas 6 e 7 para cada nível de quantidade para o qual deseja padrões
+de atendimento separados. A quantidade máxima do nível final deve ser
+9.999.999.
+Etapa 9: Selecione o próximo cenário para o qual deseja inserir informações de
+conjunto de padrões de atendimento.
+Etapa 10: Após inserir as informações de nível para cada cenário, clique no ícone
+Salvar ou pressione [Ctrl]+[S] para salvar o novo conjunto de padrões de
+atendimento.
+Nota: Se houver mais de um cenário e você não tiver inserido informações dos conjuntos
+de padrões de atendimento para todos os cenários, a janela Opções de dados do
+conjunto de padrões de atendimento é exibida ao salvar. A janela Opções de dados
+do conjunto de padrões de atendimento lista os cenários que não têm conjuntos de
+padrões de atendimento atribuídos e oferece diversas opções. Você pode optar por
+copiați informațiile din setul de standarde de îngrijire în alte scenarii
+(Completați aceste scenarii cu date de la:), lăsați scenariile fără seturi de
+standarde de îngrijire (Salvați numai datele pe care le-am introdus) sau reveniți la
+Fereastra Set model de îngrijire pentru a atribui seturi de modele de îngrijire
+răspuns la scenarii ([Anulare])
+Pasul 11: Repetați pașii doi de la 4 la 10 pentru a adăuga alte seturi de modele.
+serviciul
+MET A E A o Roadhe Tranportafion Su
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu seturi de standarde de îngrijire
+, Pasul 12: Când ați terminat de adăugat seturi de modele de îngrijire, faceți clic
+ES în caseta Închidere pentru a închide fereastra Adăugare set de modele.
+serviciul.
+om natie: in ee aaa Vi in
+pictograma Adăugare serviciu ([Inserare]) — Pictograma Salvare (C&I/+[S])
+Seturile de modele de îngrijire existente pot fi editate sau șterse,
+după cum este necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe
+informaţii.

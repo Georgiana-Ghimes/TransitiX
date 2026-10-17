@@ -1,0 +1,83 @@
+Badeaperaçães A
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservados.
+(Como trabalhar com tipos de cliente
+Como trabalhar com tipos de cliente
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Tipos de cliente permite a especificação dos tipos de clientes existentes. Normamente, o
+tipo de cliente é simplesmente uma ID e uma descrição, mas você pode atribuir os tipos
+aos seus clientes para distinguir os depósitos de clientes e de fornecedores, separar
+departamentos em um supermercado — inúmeras utilizações. Se você estiver utilizando
+tipos de clientes para diferenciar os diversos departamentos de uma única loja, como um
+supermercado, é possível fazer com que o Roadnet Transportation Suite sincronize
+avtomaticamente os campos selecionados para cada tipo ao adicionar ou editar um cliente;
+consulte a página Clientes de Definição das opções para obter mais informações. Se
+estiver utilizando a parte de contabilidade do MobileCast, é possível associar um tipo de
+monitoramento a um tipo de cliente, para diferenciar o custo de entrega a diferentes tipos
+de clientes.
+O Roadnet Transportation Suíte é fornecido com dois tipos de clientes padrão: depósitos
+(DPT) e fábricas (SIT), mas você pode adicionar quantos forem necessários.
+[ME Etapa 1: Clique no ícone Manvtenção para abrir o respectivo móduto
+Ls — Etapa2: Clique no menu Cadastros e, em seguida, selecione Tipos de cliente. A janela
+Tipos de cliente é exibida, listando todos os tipos de clientes atuais.
+[ Nota:Paraveruma lista atualizada de tipos de cliente, clique no ícone Atualizar; a janela
+será atualizada com as informações mais recentes do banco de dados,
+4W Etapa3: Najanela Tipos de cliente, clique no ícone Adicionar ou pressione [Insert]. À
+= janela Adicionar tipos de cliente é exibida.
+Ã) Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+AAdicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 3 caracteres para o tipo e até 30 caracteres para a descrição. O tipo
+deve ser inserido.
+Exc
+E A janela Adicionar tipo de cliente
+permite especificar um tipo e uma
+= descrição para cada tipo de
+— cliente adicionado.
+P —
+o
+Etapa 5: Se você estiver utilizando tipos de monitoramento para monitorar os custos
+contábeis no MobileCast, clique na seta Tipo de monitoramento e selecione um
+. tipo de monitoramento a ser associado ao tipo de cliente. Para obter mais
+informações, consulte Tipos de parada.
+Etapa 6: Clique no ícone Salvar ou pressione [Ctrl]+[S] para salvar o novo tipo de
+cliente.
+IINI A E o Roadrer Tranporiafon Sue
+' Copyright 2006 United Parcel Service of America, lc
+Todos os direitos reservados.
+Etapa 7: Repita as etapas 4 a 6 para adicionar qualquer outro tipo de cliente.
+Etapa 8: Quando terminar de adicionar os tipos de cliente, clique na caixa Fechar para
+fechar a janela Adicionar tipo de cliente.
+Ícone Manutenção — Cadastros — Clientes — Tipo de cliente — ícone Adicionar
+(nsert]) — icone Satvar ([Ctril+[S)
+Os tipos de cliente existentes podem ser editados ou excluídos, conforme necessário.
+Consulte Edição de itens e Exclusão de itens para obter mais informações.
+Importante: A exclusão dos tipos de cliente afeta outros itens de manutenção. Antes de
+excluir tipos de clientes, é necessário excluir os clientes que desse tipo de
+cliente.
+Guia de operações m
+€ Copyright 2006 United Parcel Service of America, nc
+Todos os direitos reservado.
+(Como trabalhar com clientes
+Como trabalhar com clientes
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Os clientes são qualquer ponto para onde um veículo é enviado, como endereços de
+clientes, depósitos, fomecedores de produtos, etc. O Roadnet Transportation Suíte coloca
+os clientes em um mapa de acordo com seus geocódigos (latitude e longitude). É possível
+associar diversas características a um cliente, incluindo o endereço, telefone e número de
+fax; segmento de cliente, janela de atendimento e tipo de tempo de atendimento, e
+alterações de janela e de tempo de atendimento. Os clientes podem ser importados por
+meio do módulo Importação ou adicionados individualmente. Consulte Importação de
+clientes para obter mais informações sobre como usar o módulo Importação para importar
+clientes. Os tipos de clientes devem ser adicionados para poder adicionar os clientes
+EM | Etapa 1: Clíque no ícone Manvtenção para abrir o respectivo módulo
+Etapa 2: Clique no menu Cadastros, selecione Clientes e, em seguida, Clientes. A janela
+.. Clientes se abre com uma lista de todos os clientes atuais. À lista atual dos
+clientes não será exibida. Isto faz o sistema funcionar mais rápido do que se a
+lista completa fosse carregada todas as vezes. Para ver a lista atual de clientes
+“ou apenas clientes específicos, utilize o recurso Pesquisar.
+8 Nota: Para ver uma lista atualizada de clientes, clique no ícone Atualizar; a janela será
+atualizada com as informações mais recentes do banco de dados,
+W Etapa3: Najanela Clientes, clique no ícone Adicionar ou pressione [Insert]. À janela
+= |AENA ENE S EA sSA RPA la NME

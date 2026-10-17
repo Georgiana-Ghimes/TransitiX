@@ -1,0 +1,88 @@
+(TA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com tipos de janela de atendimento
+Como trabalhar com tipos de janela de atendimento
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+O tipos de janela de atendimento ajudam a agrupar os clientes segundo uma característica
+comum, mas esta limita-se estritamente às janelas de atendimento. Os tipos de janela de
+atendimento permitem especifícar que um grupo de clientes possui as mesmas janelas de
+atendimento, como uma cadeia de lanchonetes.
+Os tipos de janela de atendimento adicionados podem ser atribuídos aos clientes. Diversos
+tipos de janela de atendimento também são criados para cada cenário, portanto um cliente
+individual pode ter diversas janelas de atendimento, dependendo do número de cenários
+existentes. Os cenários devem ser criados para poder adicionar os tipos de janela de
+atendimento.
+. Nota: A UPS Logistics Technologies recomenda que as janelas de atendimento sejam o
+mais amplas possível. Janelas de atendimento estreitas e desnecessárias restringem
+— 0 sistema e dificultam a obtenção de economia de custos em suas rotas.
+) Etapal: Clique no ícone Manutenção para abrir o módulo Manutenção.
+Mens= — Etapa 2: Clique no menu Cadastros e selecione Regras de atendimento e Tipos de janela
+de atendimento. A janela Tipos de janela de atendimento é exibida, listando
+todos os tipos atuais.
+* = Nota: Paraver uma lista atualizada de tipos de janela de atendimento, clique no ícone
+“Atualizar; a janela será atualizada com as informações mais recentes do banco de
+m dados.
+2 Etapa3: Najanela Tipos de janela de atendimento, clique no ícone Adicionar ou
+3) pressione [Insert]. À janela Adicionar tipo de janela de atendimento é exibida.
+Dica: Paraadicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Insira até 5 caracteres para a D e até 30 caracteres para o nome. A ID deve ser
+inserida
+Etapa 5: Clique na seta próxima à cor para abrir uma paleta de cores. Clique em uma cor
+para selecioná-la.
+Etapa 6: Se mais de um cenário aparecer na janela de listagem na parte inferior da
+janela Adicionar tipo de janela de atendimento, confirme se o cenário
+desejado, para o qual você deseja inserir janelas de atendimento, está realçado.
+Etapa 7: Insira os horários de abertura e fechamento e horários de entrega preferenciais
+do tipo de janela de atendimento. Para inserir um horário, clique na caixa para
+selecionar o campo e, em seguida, digite o horário ou use as setas para
+BE , ,, , ,, E Roadhet Trareporiation Sute
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com tipos de janela de atendimento
+selecionar o horário. Verifique se a parte correta do horário (horas ou minutos)
+está selecionada quando estiver inserindo o horário.
+EE
+E
+Utilizando tipos de janelade — f —
+atendimento, você pode ter [ —
+Ljanelas de atendimento
+Quando você escolhe um n |
+cenário no Editor de ç
+reteirização ou de À d
+ED —
+peernioa,
+ameIRr 2E =
+tm 1E FS
+mum ET
+s h
+FHorários de abertura/fechamento são os horários mais cedo e mais tarde
+possíveis em que o cliente pode receber uma entrega, e não quando abrem e
+fecham para funcionamento. Insira um horário de início (abertura) e término
+(fechamento).
+Janelas de atendimento 1 e 2 são os horários nos quais o cliente prefere receber
+entregas. Insira um início (horário mais cedo) e parada (horário mais tarde) para
+cada janela de atendimento, se necessário.
+Etapa 8: Clique no botão [Atualizar] para armazenar os horários na janela de listagem
+na parte inferior da janela Adicionar
+Ã) Dica: Se houver mais de um cenário e os tempos para os outros cenários forem
+semelhantes, clique no cenário atualizado e arraste-o para outros cenários listados.
+Os horários serão copiados para os novos cenários. Em seguida, você pode editar
+!os horários dos cenários subsequentes.
+H| Etapa9: Clique no ícone Salvar ou pressione [Ctrl]-[S] para salvar a nova janela de
+. atendimento.
+xx — Etapa10: Repitaas etapas 4 a 9 para adicionar qualquer outro tipo de janela de
+“ atendimento
+Etapa 11: Quando terminar de adicionar tipos de janela de atendimento, clique na caixa
+Fechar para fechar a janela Adicionar tipo de janela de atendimento.
+Ícone Manutenção — Cadastros — Regras de atendimento — Tipos de janela de
+atendimento—ícone Adicionar ([Insert]) — ícone Salvar ([Ctrl]+[S])
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com tipos de janela de atendimento
+Os tipos de janeta de atendimento existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.

@@ -1,0 +1,92 @@
+Operații Bmiade A
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate
+Import de clienți
+Import de clienți
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Menținerea la zi a informațiilor despre clienți este una dintre cele mai importante sarcini în
+Roadnet Transportation Suite. Dacă informațiile despre clienți, cum ar fi timpul de service,
+geocodarea și fereastra de service, nu sunt corecte, pot afecta
+scripting. De exemplu, dacă Roadnet primește o comandă de la un client care nu există,
+cererea nu va fi scriptată și va fi tratată ca „neetichetat geografic”. Programul
+nu știe unde ar trebui să fie livrată comanda și, prin urmare, nu o poate livra. Roadnet nu
+poate calcula costuri precise sau timpul de drum pentru clienții care nu există și nici nu pot
+includeți această solicitare în traseu în mod dinamic. Dacă clientul nu există în Planificatorul de teritoriu,
+nu poate adăuga sau importa extensia dvs.,
+Monitorizarea tuturor clienților poate părea dificilă, mai ales dacă compania de obicei
+adăugați în mod regulat un număr semnificativ de clienți noi. Dar Roadnet
+Transportation Suite vă permite să importați un nou fișier client în orice moment,
+pe lângă faptul că vă permite să introduceți fiecare dintre ele. Puteți utiliza și acest fișier
+pentru a actualiza sau șterge informațiile existente despre clienți,
+Când importați clienți, puteți configura Transportation Suite pentru a-i geocoda sau
+poate include informații despre latitudine și longitudine în fișier. Deci clienții sunt
+geocodat (ceea ce este în mod normal cazul, cu excepția cazului în care indicați NU
+geocod), procesul va începe imediat după importarea acestora. Barul
+Starea importului va indica faptul că geocodarea este în curs.
+După importarea clienților, îi puteți afișa în Întreținere, Editor
+rutare, analist sau editor de planificare pentru a determina metoda de
+geocodificarea acestora. Dacă nu sunteți mulțumit de geocodarea unui client, vă
+Îl puteți edita și geocoda manual. Consultați Geocodarea clienților pentru
+obține mai multe informații.
+. Notă: când importați clienți noi, li se va atribui fusul orar
+selectat în pagina Clienți a meniului Opțiuni din modulul Întreținere. Dacă tu
+Dacă actualizați un client existent, fusul orar al acestuia nu se va schimba.
+Pasul 1: Faceți clic pe pictograma Import pentru a deschide modulul Import.
+me — — Notă: Dacă aveți mai multe regiuni sau scenarii, asigurați-vă că datele sunt afișate
+adecvat în partea de jos a ecranului. Pentru a schimba regiunea sau scenariul, faceți clic pur și simplu
+săgeată și selectați elementul corespunzător din lista afișată.
+Pasul 2: Faceți clic pe meniul Import și selectați Clienți. Fereastra Import Clienți este
+afisat.
+. Note: Numele setului de aspect curent este afișat în bara de stare din partea de jos
+din modulul Import. Dacă setul nu este corect, schimbați-l înainte
+—— . / , . o sm
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+Import de clienți
+import. Verificați Comutarea între seturile de aspect pentru mai multe
+informaţii.
+Pentru a vizualiza sau modifica aspectul fișierului de import, faceți clic pe săgeata [Aspect document].
+fișier] și selectați Editați din meniul derulant. Consultați Configurare
+Importați machete de fișiere pentru mai multe informații.
+Pentru a vizualiza un raport care rezumă informații despre aspect, inclusiv
+numele și locația fișierului de import și pozițiile de pornire și dimensiunea
+fiecare câmp, faceți clic pe săgeata [File Layout] și alegeți View din meniu
+suspendat. Fereastra de previzualizare a raportului apare împreună cu raportul. În această fereastră,
+puteți imprima sau exporta raportul.
+Notă: dacă aveți câmpuri în aspectul de import sau export care se suprapun,
+. acestea vor fi indicate în raport pentru a le putea corecta dacă este necesar. Pentru a
+suprapunerea câmpurilor la importarea/exportarea datelor poate duce la rezultate incorecte
+neașteptată.
+Pasul 3: pentru a actualiza informațiile numai pentru clienții existenți, faceți clic pe casetă
+Actualizați doar clienții existenți.
+W o lam al procesului
+import. Înainte de a importa
+—m clienți, puteți specifica
+Și formatul informațiilor
+—— Tatitudinea și longitudinea este formatul
+EE și | timpii de service.
+Când importul este
+finalizat, puteți afișa a
+Lantstirgu oosnas un jurnal de import sau un raport
+tee 35 — E | ds toate erorile găsite
+EE ) a condus importul
+Pasul 4: pentru a importa latitudini și longitudini pentru clienții dvs., faceți clic pe săgeata Format
+coordonatele de latitudine/longitudine și selectați formatul de coordonate în
+dosarul original. Puteți importa latitudini și longitudini din:
+*Gravus, minute, secunde — latitudine longitudine trebuie formatată în
+astfel încât câmpurile minute și secunde să aibă fiecare două cifre.
+|Domeniul de studii nu are cerințe. De exemplu, 35 de grade, 2 minute, 3
+secundele ar trebui importate ca 350203, în timp ce 5 grade, 2 minute, 3
+secundele ar trebui importate ca 50203,
+Bmadaperações A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate
+Import de clienți
+*Grade zecimale x 10000 — latitudinea/longitudinea trebuie să fie de cel puțin cinci
+cifre. De exemplu, o latitudine de 0,0345 ar trebui importată ca 00345,
+în timp ce o latitudine de 51,1234 ar trebui importată ca 511234.
+*Grade zecimale x 1000000 — latitudinea longitudinei trebuie să fie de cel puțin șapte
+cifre. De exemplu, o latitudine de 0,032245 ar trebui importată ca
+(0032245, în timp ce o latitudine de 51,122234 ar trebui importată ca
+51122234
+„Grade zecimale — nu există cerințe pentru formatarea latitudine/latitudine

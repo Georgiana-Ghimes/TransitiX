@@ -1,0 +1,60 @@
+câmpurile sunt obligatorii. "
+Pasul 7: Pentru a atribui un tip de produs SKU, faceți clic pe săgeata Tip produs pentru
+deschideți fereastra Căutare - Tip produs. Faceți dublu clic pe un articol pentru
+selectați-l sau faceți clic pe element și pe pictograma Proces. Este necesar să se atribuie un
+tipul de produs către SKU-uri numai atunci când utilizați rutarea bin.
+Pasul 8: Pentru a afișa o imagine SKU în FleetLoader, introduceți calea către
+imagine. Dacă nu este furnizată o cale aici, pictograma asociată cu tipul de cale
+ambalajul va fi afișat în Editorul de încărcare.
+Important: imaginea trebuie să fie un fișier .bmp de 28x28 pixeli și 256 de culori sau mai puțin.
+Pasul 9: În zona Proprietăți depozit, completați informațiile conform
+dorit pentru a indica locul în care este depozitat produsul în depozit. Aceasta
+informația este opțională.
+Faceți clic pe săgeata Zona Depozit. Fereastra Căutare - Zona depozit este
+afisat. Faceți dublu clic pe o zonă sau faceți clic pe zonă și pictograma
+Procesați pentru a-l selecta. Zona de depozit poate determina modul în care SKU
+este încărcat pe un palet; Aceste informații sunt afișate pe Fișa de colectare a datelor.
+palet și în Lista de selecție,
+FT A E Roadha Tranporiafion S
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu SKU-uri
+Introduceți informațiile despre depozit în câmpurile Zona principală și Zona principală.
+secundar. Aceste informații opționale vor fi afișate în Lista de selecție.
+Înainte de a vă adăuga SKU
+trebuie adăugat tipul de
+ambalaj și branding SKU.
+cel
+Pasul 10: Pentru a defini timpii de îndeplinire a SKU, introduceți orele în zonă
+Proprietățile timpului de descărcare. Puteți introduce timpuri separate pentru
+fiecare alias de dimensiune, iar timpul de serviciu va fi calculat pe baza
+cantitatea din fiecare dimensiune a articolului din comandă. Cu alte cuvinte, dacă
+specificați o cantitate pentru fiecare mărime în articolul de comandă, ori
+a fiecărei dimensiuni vor fi calculate și adăugate împreună pentru a determina
+îndeplinirea integrală a articolului de comandă.
+M Pas: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noul SKU.
+Pasul 12: Repetați pașii de la 4 la 11 pentru a adăuga orice alt SKU.
+% — Pasul 13: Când ați terminat de adăugat SKU-uri, faceți clic pe caseta Închidere pentru a închide
+Adăugați fereastra SKU.
+Pictogramă de întreținere — Înregistrări > Produs > SKU — Adăugați pictograma (fInsert]) >
+Pictograma Salvare ([CtrI+[S])
+SKU-urile existente pot fi editate sau șterse după cum este necesar. Verificați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Operations Guide sau R
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu SKU-uri
+Notă: Pentru a modifica rapid ora de realizare sau zona de depozit pentru a
+un grup de SKU, utilizați funcția Înlocuire. Pentru a înlocui informațiile, pur și simplu
+Selectați SKU-urile pe care doriți să le adăugați, faceți clic dreapta pe un SKU
+selectat și selectați Înlocuire din meniul care apare. Selectați
+Proprietăți depozit (pentru a schimba informațiile despre locația depozitului)
+„sau proprietățile timpului de descărcare (pentru a schimba orele de service)
+Introduceți noile informații și faceți clic pe butonul [OK]. Noile informații
+înlocuiți informațiile existente pentru toate SKU-urile selectate. De exemplu,
+dacă doriți să modificați timpul de îndeplinire pentru toate SKU-urile cu a
+anumit tip de ambalaj, selectați toate SKU-urile care au acel tip
+de ambalare. În fereastra Replace SKU Properties, selectați Properties
+timpul de descărcare și introduceți noul timp de service pentru fiecare dimensiune.
+Pentru a modifica aceste proprietăți pentru toate SKUS-urile, faceți clic dreapta
+un SKU și selectați Replace All din meniul care apare.

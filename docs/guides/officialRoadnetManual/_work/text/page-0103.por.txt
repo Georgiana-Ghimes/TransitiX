@@ -1,0 +1,97 @@
+Rerao, s uomine maa e aa E oaármo, j een id - esseenoaum: cnscacdeos dorteoa n aan usanis
+ser formatado como .0001 e 42.1234 pode ser formatado como 42.1234
+*Graus, minutos, segundos, centésimos de segundos — a latitude longitude
+deve ser formatada de maneira que os minutos e a parte inteira dos segundos
+tenham dois dígitos cada um. O campo de graus não tem requisitos. Por
+exemplo, 35 graus, 2 minutos, 3,21 segundos deve ser importado como
+35020321, enquanto 5 graus, 2 minutos, 3,01 segundos deve ser importado
+como 5020301
+*Graus, minutos, décimos de milésimos de minuto — a latitude/longitude deve
+ser formatada de maneira que a parte inteira do número dos minutos tenha dois
+digitos. O campo de graus não tem requisitos. Por exemplo, 35 graus, 2.1234
+minutos deve ser importado como 35021234, enquanto 5 graus, 2.6789
+minvutos deve ser importado como 502678
+. Nota: Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao
+importar clientes.
+Etapa 5: Para importar tempos de atendimento dos clientes, clique na seta Formato do
+tempo de descarga e escolha o formato no arquivo original. O tempo de
+descarga é o tempo por unidade entregue (por peça/caixa, etc.). Você pode
+importar o tempo de descarga em:
+“*minutos (1 = 1 minuto)
+*décimos de minutos (1 = 0,1 minuto; 10 peças = 1 minuto)
+*centésimos de minutos (1 = 0,01 minuto)
+*milésimos de minutos (1 = 0,001 minuto)
+*décimos de milésimos de minutos (1 = 0,0001 minuto)
+*centésimos de milésimos de minutos (1 = 0,00001 minuto)
+*milionésimos de minutos (1 = 0,000001 minuto)
+Etapa 6: Para que o Roadnet Transportation Suite não geocodifíque os clientes
+importados (se você estiver importando latitude e longitude ou simplesmente
+atualizando informações de endereço dos clientes existentes e não quiser
+geocodifícá-los novamente), marque a caixa NÃO geocodificar
+FE A AA R Roadhat Travporiafion Su
+' Copyright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+Importação de clientes
+Etapa 7: Clique no botão [Importar] para iniciar o processo de importação. A barra de
+andamento exibe o status da importação.
+Nota: Depois de importar clientes, você poderá ver o log de importação ou qualquer erro
+ocorrido durante o processo. Clique em [Exibir log] ou [Exibir erros]
+Etapa 8: Quando a importação estiver concluída, e depois de ver os relatórios, clique na
+caixa Fechar.
+Importador >Importar >Manutenção — Clientes — [Importar]
+. Nota: Após a importação dos clientes, você poderá editá-los ou excluí-los conforme
+necessário. Consulte Como trabalhar com clientes para obter mais informações.
+QÃ) Dica: Você pode utilizar o Importador para excluir registros de cliente do banco de
+dados. Um registro no arquivo de importação de clientes contendo apenas a ID do
+cliente excluirá qualquer registro correspondente no banco de dados. Você pode
+adicionar um campo de exclusão de um caractere no arquivo de importação; “S'
+ou“s” no campo de exclusão excluirá registros correspondentes. Consulte Campos
+disponíveis no arquivo de importação de clientes para obter mais informações.
+Bmadaperaçães A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+Importação de extensões de cliente
+Importação de extensões de cliente
+Utilizado com: Territory Planner
+Se você estiver utilizando o Territory Planner para criar rotas de planejamento estratégico,
+terá de importar informações de extensão de cliente. As extensões de cliente contém
+informações sobre o cliente específico de uma sessão de planejamento. como opções de
+entrega (conjunto de padrões de atendimento), quantidade entregue e informações de
+roteirização. Ao importar informações de extensões de cliente, é importante ter em mente
+algumas regras:
+* Seaquantidade de entregas importadas não permitir que cada parada seja dividida
+igualmente pelo número de entregas por ciclo, a quantidade será aumentada.
+* Um conjunto de padrões de atendimento 0 é chamado de Distribuição de
+carregamento manual. Uma extensão de cliente com um conjunto de padrões de
+atendimento O não será roteirizada quando Atribuir dias for executado.
+* Seumpadrão de atendimento inserido entrar em conflito com o conjunto fornecido,
+12 parada será novamente roteirizada conforme o padrão.
+* Paraque a extensão de cliente seja importada para a sessão de planejamento, é
+preciso importar pelo menos a ID e um outro campo, como conjunto de padrões de
+atendimento, quantidade ou território.
+Para que as extensões de cliente sejam importadas, os clientes devem ser importados.
+Você pode importar os clientes ao mesmo tempo em que 2s extensões ou separadamente.
+Consuite Importação de clientes para obter mais informações. Para ver as informações
+que podem ser importadas com as extensões de cliente, consulte Campos de layout das
+extensões de cliente.
+) Importante: Antes de importar extensões de cliente pela primeira vez defína as semanas
+ativas padrão e o conjunto padrão de atendimento. As semanas ativas padrão
+são usadas quando as semanas ativas especificadas no arquivo de download
+não correspondem às semanas do ciclo ou se você específica carregamentos
+diários, mas não semanas ativas. O conjunto padrão de atendimento é usado
+quando nenhum conjunto é especificado no arquivo de download. Para
+especificar os padrões, clique no botão [Outras opções]. Selecione o padrão
+de atendimento e marque as semanas ativas padrão. Geralmente, o conjunto
+padrão de atendimento é 2 distribuição de carregamento manval e as
+Semanas ativas padrão são todas as semanas.
+<) Etapal: Clique no ícone Importação para abrir o módulo Importação
+me — Nota:Sevocêtiver várias regiões ou cenários, verifique se são exibidos os dados
+apropriados na parte inferior da tela. Para alterar a região ou o cenário, basta clicar
+na seta e selecionar o item apropriado na lista exibida.
+Etapa 2: Clique no menu Importar e selecione Extensões de cliente. A janela Importar
+extensões de cliente é exibida.
+. Notas: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+FNT ,, ,,, E Roadhet Tranporiation Sute
+ES E ES RAA ENENA

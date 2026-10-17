@@ -1,0 +1,74 @@
+Mmadeoperaçães o D
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com códigos de detalhes financeiros do pedido
+Como trabalhar com códigos de detalhes financeiros do pedido
+Utilizado com: MobileCast
+Se você estiver monitorando informações financeiras sobre seus pedidos, poderá
+configurar códigos financeiros que o analista pode aplicar a qualquer pedido. O analista
+pode adicionar, editar ou excluir qualquer detalhe financeiro associado a um pedido,
+incluindo esses códigos financeiros. Os pedidos associados a esses códigos podem ser
+vistos também em um dispositivo portátil, possibilitando ao motorista exibir as
+informações financeiras do cliente pertencentes a uma entrega específica.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Expedir e Códigos de detalhes
+financeiros do pedido. A janela Códigos de detalhes financeiros do pedido é
+exibida, listando os códigos de detalhes financeiros existentes.
+Nota: Para ver uma lista atualizada de tipos financeiros, clique no ícone Atualizar; a
+janela será atualizada com todas as informações alteradas do banco de dados.
+Etapa 3: Na janela Códigos de detalhes financeiros do pedido, clique no ícone
+AAdicionar ou pressione a tecla [Insert]. À janela Adicionar código de detalhes
+financeiros do pedido é exibida.
+Aoadicionar umcódico — a
+financeiro, é possível —
+selecionar se ele é para ——
+itens de crédito, débito ou — p
+ajustes. -
+Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+ÕD do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar código de detalhes financeiros do pedido é exibida com algumas
+informações já preenchidas; altere as informações necessárias no novo código
+financeiro.
+Etapa 4: Insira até 3 caracteres para Código. Esse campo deve ser preenchido.
+Etapa 5: Insira até 255 caracteres na Descrição.
+— = ..s.
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com códigos de detalhes financeiros do pedido
+Etapa 6: Se você desejar que o motorista veja somente um breve resumo dos detalhes
+financeiros de um pedido, marque Agregar. Se essa opção não estiver marcada,
+o motorista verá todos os detalhes financeiros do pedido selecionado.
+Etapa 7: Selecione o tipo financeiro:
+Despesa — Itens pelos quais um cliente é responsável, geralmente na forma de
+um pagamento (ou seja, cartão de crédito, ordem de pagamento, cheque).
+Ajuste — Itens que afetarão o custo original do pedido, geralmente na forma de
+um cupom ou desconto.
+Débito — O custo original do pedido, somado a quaisquer itens que afetarão o
+custo original do pedido, geralmente na forma de um imposto ou uma taxa de
+envio.
+MG EtapaS: Clique no ícone Salvar ou pressione [Ctri]+[S] para salvar as informações.
+x Etapa9: Após a adição de todos os códigos, clique na caixa Fechar para fechar a janela
+Adicionar código de detalhes financeiros do pedido.
+Teone Manutenção — Cadastros - Expedir — Códigos de detalhes financeiros do pedido
+—ícone Adicionar ([Insert]) — icone Salvar ([Ctri]+[S])
+Os códigos de detalhes financeiros existentes podem ser editados ou excluídos, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+madeaperaçães o
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Como trabalhar com códigos de status do pedido
+Como trabalhar com códigos de status do pedido
+Utilizado com: MobileCast
+Se você estiver utilizando dispositivos portáteis e deseja atribuir o mesmo código a todos
+os pedidos de uma parada, é possível criar códigos de status de pedido para que o
+motorista possa aplicá-los em diversas situações. Por exemplo, você pode configurar
+códigos para serem aplicados pelo motorista quando um pedido é danificado, apresenta
+impossibilidade de entrega, é recusado, quando uma parada é cancelada, quando a janela
+de atendimento foi perdida, quando a parada exige uma assinatura e assim por diante.
+Esses códigos são muito semelhantes aos códigos de motivo, de cancelamento de parada,
+de impossibilidade de entrega na parada e de assinatura. À única diferença é que são
+aplicados a cada pedido de uma parada.
+Etapa 1: Clique no ícone Manutenção para abrir o respectivo módulo.
+Etapa 2: Clique no menu Cadastros, selecione Expedir e Códigos de status do pedido. À
+janela Códigos de status do pedido é exibida, listando os códigos de status do
+pedido existentes.

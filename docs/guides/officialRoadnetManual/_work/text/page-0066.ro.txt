@@ -1,0 +1,70 @@
+Primul pas în crearea unui sondaj este să adăugați sondajul în sine.
+Pasul 1: În zona Căutare a ferestrei Configurare căutare, faceți clic pe
+Adăugați. Apare fereastra Adăugare căutare.
+Sfat: pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugare căutare este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua căutare.
+Pasul 2: introduceți până la trei caractere pentru codul unic de căutare. Acest câmp
+trebuie completat.
+Pasul 3: introduceți o descriere
+Pasul 4: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva căutarea.
+Această cercetare este
+fiind creat pentru
+50 la fiecare oprire
+Pasul 5: După ce au fost adăugate toate căutările, faceți clic pe caseta Închidere pentru a închide căutarea.
+Adăugați fereastra de căutare.
+SSA NEGA SA SNE AAA SAA ANA
+(Evespr]) — Pictograma Salvare ([Ctrl]+[S])
+Căutările existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+Ghid de operațiuni 159
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+s idflranments
+m—— posibil: pora su perpundde
+elemente din lista de selecție, apăsați
+feanemesesse? — — Tasta [Enter] împletită
+ii opțiunea de a forma a
+ista
+2
+Pasul 4: Faceți clic pe săgeata Tip răspuns și selectați tipul de întrebare. Opțiunile sunt
+descrise mai jos.
+Text — driverul introduce un răspuns la întrebare pe dispozitivul wireless.
+Un exemplu de întrebare deschisă este „Ce putem face pentru a răspunde mai bine
+nevoile tale?”
+Da/Nu — Driver selectează Da sau Nu pe dispozitivul fără fir, cum ar fi
+răspuns la întrebare. Un exemplu de întrebare Da/Nu este „Ai fost
+Sunteți mulțumit de serviciile primite astăzi?”
+Listă de selecție — șoferul selectează răspunsul dintr-o listă furnizată de
+tu. Introduceți răspunsurile posibile în câmpul Date de răspuns de mai jos. Ao
+tastați răspunsurile, apăsați tasta [Enter] dintre opțiuni; aceasta va crea o
+lista de raspunsuri. Un exemplu de întrebare din lista de selecție este „Cu ce
+Cât de des mergi la cumpărături?
+TMT AA A A A Foadnet Transporiation Sufe
+€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.
+(Cum să lucrezi cu sondaje
+Mai mult de o dată pe săptămână
+O dată pe săptămână
+.La fiecare două săptămâni
+O dată pe lună”
+Numeric — șoferul introduce un număr în dispozitivul fără fir pentru
+Răspunde la întrebare. Un exemplu de întrebare numerică este „De câte ori
+Ați vizitat acest client săptămâna aceasta?
+Pasul 5: Faceți clic pe pictograma Salvare sau apăsați [Ctr1]+[S] pentru a salva întrebarea.
+Pasul 6: După ce au fost adăugate toate căutările, faceți clic pe caseta Închidere pentru a închide căutarea.
+Fereastra Adăugați întrebarea sondajului.
+Teone Maintenance — Înregistrări — Expediere - Configurare căutare >Zona de întrebări
+disponibil — Adăugați pictograma — Pictograma Salvare ([Ctri]+[S])
+Întrebările existente ale sondajului pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+Atribuirea de întrebări la sondaje
+După ce ați creat sondajul și întrebările, trebuie să selectați ce întrebări vor apărea în
+căutare și ordinea în care vor apărea.
+Pasul 1: În zona Căutări a ferestrei Configurare căutare, selectați căutarea din
+care va adăuga întrebări.
+[T
+E
+Coãe foreapem Jmmeruanea [nve firquecs temnto | jn toá [togueat (1n 1roo
+E.J.

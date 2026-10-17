@@ -1,0 +1,97 @@
+Importação de uma solução roteirizada
+Importar —Solução roteirizada —[Outras opções] > [OK]
+Opções de importação de solução roteirizada
+Configuração Descrição
+Aplicar condensação — Agrupa dois oumais clientes alocando uma ID de cliente
+de clientes para vários clientes, conforme configurado no módulo
+Manutenção.
+Tratarcampos de — — Sevocê importar detalhes da SKU na importação do pedido
+SKU como e se houver mais de uma ocorrência de uma SKU em uma
+comulativos Tegistro (inha), os campos da SKU serão totalizados. Se essa
+opção não for selecionada, a última ocorrência da SKU no
+Tegistro determinará o total dessa SKU.
+Tratarum seletor P” Sealeira P” aparecer no campo seletor, o Editor de
+comoumacoleta — — roteirização incluirá o item na rota como uma coleta.
+Usarequivalências — Sevocêtiver configurado equivalências para os tipos de
+embalagem, escolha o alias de tamanho que contém a
+quantidade do pedido original como Origem e o alias de
+tamanho que conterá a quantidade equivalente (quantidade
+original * fator de equivalência) como Destino.
+Imprimir Imprime antomaticamente os relatórios de resumo (pedidos
+automaticamente os — instivos e pedidos com uma ID de cliente inválida) na
+Telatórios resumidos — impressora selecionada em Configurar impressão. Senão for
+maimpressora padrão - selecionado, os relatórios aparecerão em uma janela
+separada na tela para exibição. Então, você poderá imprimir
+8 relatórios ou fechar a janela.
+madeaperaçães o 70
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Importação de itens de manutenção
+Importação de itens de manutenção
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+As importações de manutenção permitem importar informações sobre clientes, extensões
+de cliente, motoristas, funcionários, equipamentos, tipos de equipamento, SKUs, marcas
+de SKU, tipos de embalagem, conjuntos de habilidades, atividades do conjunto de
+habilidades e containers de outros arquivos, em vez de digitar essas informações. Você
+pode importar itens de manutenção diariamente ou quando ocorrerem mudanças
+substanciais em sua operação. Para obter mais informações sobre como importar clientes
+u extensões de cliente, consulte Importação de clientes ou Importação de extensões de
+cliente. Para obter mais informações sobre como criar layouts, consulte Configuração dos
+layouts de arquivo. Para importar motoristas, equipamentos, tipos de equipamento, SKUs,
+marcas de SKU, tipos de embalagem, conjuntos de habilidades, atividades do conjunto de
+habilidades ou containers, siga as etapas abaixo.
+Nota: Para importar itens de manutenção, o tipo correspondente deve ser adicionado. Por
+exemplo, para importar funcionários, é preciso adicionar tipos de funcionário.
+Consulte Como trabalhar com status e tipos para obter mais informações.
+Etapa 1: Clique no ícone Importação para abrir o módulo Importação.
+Nota: Se você tiver várias regiões ou cenários, verifique se são exibidos os dados
+apropriados na parte inferior da tela. Para alterar a região ou o cenário, basta clicar
+na seta e selecionar o item apropriado na lista exibida.
+Etapa 2: Clique no menu Importar, selecione Manutenção e o item que deseja importar.
+AA janela Importar é exibida. Faça as alterações necessárias em Caminho dos
+dados.
+Quando você executa uma
+importação de
+manutenção, pode
+m SE informar o sistema onde
+— 5 dados estão localizados
+ecnre tma e como tratar registros
+F
+C un E f C tm
+. Nota: O nome do conjunto de layouts atual é exibido na barra de status, na parte inferior
+do módulo Importação. Se o conjunto não estiver correto, altere-o antes da
+TETFFFA AA A o Roadnet Transporiafion Sule
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Importação de itens de manutenção
+importação. Consulte Altemância entre conjuntos de layoutpara obter mais
+informações.
+Para ver ou alterar o layout do arquivo de importação, clique na seta [Layout do
+arquivo] e selecione Editar no menu suspenso. Consulte Configuração de layouts
+de arquivo de importação para obter mais informações.
+Para visualizar um relatório que resuma as informações do layout, incluindo o
+nome e o local do arquivo de importação e as posições iniciais e o tamanho de cada
+campo, clique na seta [Layout do arquivo] e escolha Visualizar no menu suspenso.
+AA janela Visualizar relatório é exibida com o relatório. Nessa janela, você pode
+imprimir ou exportar o relatório.
+Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao
+importar itens de manutenção.
+Etapa 3: Ao importar itens de manutenção para um sistema que já tenha funcionários/
+motoristas/equipamentos tipos de equipamento/SKUs /marcas de SKU/tipos de
+embalagem/containers, você precisa indicar ao Transportation Suíte como lidar
+com as duplicatas. Se já houver itens de manutenção dessa região no
+Transportation Suíte, Selecione uma opção para situações nas quais os itens
+importados tenham a mesma ID dos existentes:
+Atualizar — atualiza as informações dos campos com as informações contidas
+no arquivo de importação.
+Substituir — substitui completamente o item existente pelo novo importado.
+Tsso significa que qualquer alteração feita no item original, como a localização
+de um equipamento, será perdida.
+Erro — ignora os itens do arquivo de importação que tenham uplicatas e exibe
+mensagens de erro indicando que os itens não foram importados.
+Etapa 4: Se a opção Compartilhar item automaticamente para todas as regiões estiver
+disponível (como ao importar equipamentos e funcionários), marque para que
+0s itens importados sejam disponibilizados para uso em todas as regiões. Se
+essa opção for selecionada, todas as regiões poderão atribuir esses itens às suas
+Fs

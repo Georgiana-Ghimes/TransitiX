@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <title>RAI Spedition — Documente · Changelog build 32</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #0A2B4E;
+      --accent: #1D4E89;
+      --line: #e2e8f0;
+      --ok: #166534;
+      --soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1, h2, h3 { color: var(--brand); margin: 0 0 0.4em; line-height: 1.2; }
+    h1 { font-size: 22pt; letter-spacing: -0.02em; }
+    h2 {
+      font-size: 13pt;
+      margin-top: 1.4em;
+      padding-bottom: 0.25em;
+      border-bottom: 2px solid var(--brand);
+    }
+    h3 { font-size: 11pt; margin-top: 1em; color: var(--accent); }
+    p { margin: 0.4em 0 0.7em; }
+    .muted { color: var(--muted); }
+    .hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #0A2B4E 0%, #1D4E89 100%);
+      color: #fff;
+      padding: 22px 24px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; margin-bottom: 6px; }
+    .hero .meta { opacity: 0.9; font-size: 9.5pt; }
+    .badge-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    ul { margin: 0.3em 0 0.8em; padding-left: 1.2em; }
+    li { margin: 0.25em 0; }
+    code, .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0.7em 0;
+      background: var(--soft);
+    }
+    .why {
+      border-left: 3px solid var(--accent);
+      background: var(--soft);
+      padding: 8px 12px;
+      margin: 0.5em 0 0.7em;
+      font-size: 9.8pt;
+      color: var(--muted);
+    }
+    .why strong { color: var(--ink); }
+    .foot {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 8.5pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>RAI Spedition — Documente · build 32</h1>
+    <div class="meta">
+      Branch <strong>RAI-spedition-driver-app</strong> · profil <strong>documents</strong><br />
+      Versiune companion <strong>v1.3.0 · build 32</strong> · 14 septembrie 2026<br />
+      Continuare după build 31 · din analiza de cod (P0/P1): utilizatori + curățare fluxuri TMS orfane + badge OCR
+    </div>
+    <div class="badge-row">
+      <span class="badge">Utilizatori în companion</span>
+      <span class="badge">Fără fluxuri moarte</span>
+      <span class="badge">paddle ≠ stub</span>
+    </div>
+  </header>
+
+  <p class="muted">
+    Changelog de testare pentru <strong>RAI Spedition — Documente</strong> (nu Transitix TMS complet).
+    Semver: <strong>1.2.0 → 1.3.0</strong> (feature vizibil: meniu Utilizatori); build <strong>32</strong>.
+  </p>
+
+  <div class="why">
+    <strong>De ce:</strong> pe profilul <code>documents</code>, ecranele TMS sunt ascunse, dar câteva fire
+    rămâneau legate de ele — admin fără invite din UI, buton „Ciornă factură” spre Financiar inexistent,
+    KPI 0/0/0 pe profilul șoferului, badge OCR care eticheta Paddle ca „stub”.
+  </div>
+
+  <section>
+    <h2>CHANGELOG</h2>
+
+    <div class="avoid-break">
+      <h3>Utilizatori în companion (admin)</h3>
+      <ul>
+        <li>Ruta <code>/users</code> adăugată în <code>OfficeRoutes</code> (profil documents) și în
+          <code>COMPANION_OFFICE_PATHS</code> — nu mai e redirecționată la <code>/avize</code>.</li>
+        <li>Intrare meniu <strong>Utilizatori</strong> în sidebar (doar rol <code>admin</code>), lângă Setări.</li>
+        <li>Adminul poate invita conturi și lega șoferi din UI — fără seed/SQL pe VM.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Shell șofer — fără date de curse TMS</h3>
+      <ul>
+        <li><code>DriverAppDocuments</code> nu mai încarcă 50 de curse la bootstrap (conexiune din cabină).</li>
+        <li>Profilul șoferului pe companion nu mai cere <code>Trip.list</code> nescopat doar pentru statistici nefolosite.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>BUGFIX</h2>
+
+    <div class="avoid-break">
+      <h3>„Ciornă factură” pe /avize (flux mort)</h3>
+      <ul>
+        <li>Butonul creea o factură TMS și îndruma spre <strong>Financiar</strong> — ecran inexistent în companion.</li>
+        <li>Ascuns pe <code>isDocumentsProfile()</code>; pe Transitix full rămâne disponibil.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>KPI Total / Livrate / Active pe profil șofer</h3>
+      <ul>
+        <li>Citeau <code>trips</code>; companionul nu dispecerizează curse → afișaj permanent 0/0/0 (pare „șofer inactiv”).</li>
+        <li>Ascunse pe profil documents; pe app-ul șofer TMS full rămân.</li>
+      </ul>
+    </div>
+
+    <div class="avoid-break">
+      <h3>Badge sursă OCR: paddle și none</h3>
+      <ul>
+        <li><code>mapProviderToSource</code> (server) și <code>normalizeExtractionSource</code> (client) mapează
+          explicit <code>paddle</code> / <code>none</code> — nu mai cad pe <code>stub</code>.</li>
+        <li><code>stub</code> înseamnă „nu s-a încercat OCR”; înainte, o citire Paddle reușită sau un eșec
+          real apăreau amândouă ca stub.</li>
+        <li><code>SourceBadge</code>: etichetă <strong>Fără OCR</strong> pentru <code>none</code> (înainte: text brut din coloană).</li>
+        <li>Teste pe ambele mapări, ținute sincronizate.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="avoid-break">
+    <h2>Testare rapidă</h2>
+    <div class="card">
+      <ol>
+        <li>Login admin companion → sidebar: <strong>Utilizatori</strong> → invite / legare șofer.</li>
+        <li><code>/avize</code>: butonul <strong>Ciornă factură</strong> nu apare.</li>
+        <li>Login șofer → Profil: fără cardurile Total / Livrate / Active.</li>
+        <li>Aviz citit cu Paddle → badge sursă <strong>Paddle</strong> (nu Stub); eșec citire → <strong>Fără OCR</strong>.</li>
+        <li>Login / topbar: <strong>v1.3.0 - build 32</strong> (după restart Vite / rebuild).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Companion v1.3.0 build 32 · 14 septembrie 2026 · branch RAI-spedition-driver-app ·
+    din analiza code build 31 (P0 #1–#2, P1 #4–#5)
+  </footer>
+
+</body>
+</html>

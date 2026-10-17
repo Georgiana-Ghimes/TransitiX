@@ -1,0 +1,90 @@
+Etapa 6: Se desejar que as entregas com este código de comentário atualizem o histórico
+de entregas, confirme se a caixa Atualizar histórico está selecionada (a caixa é
+selecionada como padrão; clique n caixa para desativar a opção Atualizar
+histórico)
+Etapa 7: Clique no ícone Satvar ou pressione [Ctrl]+[S] para salvar o novo comentário
+real vs. planejado.
+Etapa 8: Repita as etapas 2 a 7 para adicionar qualquer outro comentário.
+Etapa 9: Quando terminar de adicionar comentários, clique na caixa Fechar para fechar
+1 janela Adicionar comentários reais vs. planejados
+Tcone Manutenção — Entrada de dados reais — Comentários reais vs. planejados —
+ícone Adicionar ([Insert]) — icone Salvar ([Ctri[S])
+Os comentários reais vs. planejados existentes podem ser editados ou excluídos,
+conforme necessário. Consuíte Edição de itens e Exclusão de itens para obter mais
+informações,
+MET aaah Tranporiation Sul
+|€ Copyright 2006 United Parcel Service of âmerica, lnc
+Todos os direitos reservados.
+Inserção de informações de rotalparada real
+Inserção de informações de rota/parada real
+Utiizado com: Roadnet
+Uma responsabilidade muito importante do motorista é coletar informações reais de rota
+€ parada ao longo do dia. O recurso Rota parada real do Roadnet Transportation Suite
+permite inserir e armazenar essas informações para que possam ser acessadas mais tarde
+€ comprutadas ao executar a Manutenção do tempo de atendimento. As informações reais
+de rota parada são cruciais ao atualizar os tempos de atendimento, e são uma maneira
+eficiente de monitorar e refinar os custos, bem como as horas do DT.
+É possível inserir dados reais de rota/parada de acordo com a rota ou a parada. Ao inserir
+as informações para cada parada, as informações da rota são atualizadas
+automaticamente.
+Inserção de informações reais de rota
+Ao inserir informações reais de rota, é possível incluir informações gerais de resumo
+sobre os tempos de atendimento e percurso, a quantidade de produtos entregue, bem como
+quaisquer comentários considerados importantes.
+Se houver informações específicas da parada, insira as informações reais de parada em
+Vvez das informações reais da rota. Consulte Inserção de informações reais de parada para
+o obtermaisinformações
+EM Etapa 1: Clique no ícone Manvtenção para abrir o respectivo módulo.
+Wwess — Etapa 2: Clique no menu Entrada de dados reais e selecione Rota/parada real. À janela
+Rotas reais: sessão é exibida.
+Etapa 3: Na janela Rotas reais: sessão, clique duas vezes na rota para a qual deseja
+inserir os dados reais. A janela Rota da rota selecionada será exibida
+antomaticamente. Você também pode clicar com o botão direito e selecionar
+Editar para abrir a janela Rota
+ov-
+Clique no cone Sessões para exibir uma lista de sessões de roteirização, e clique
+El duas vezes na sessão para a qual deseja inserir os dados reais. À sessão
+selecionada aparecerá na janela Rotas reais: sessão. Clique duas vezes para abrir
+ajaneta Rota. Você também pode clicar com o botão direito e selecionar Editar
+para abrir a janela Rota.
+É n janela Rotas reais: sessão abre por padrão a sessão de roteirização mais recente.
+Se você deseja inserir dados reais para mais de uma rota (todas as rotas de uma
+sessão, por exemplo), selecione as rotas que deseja editar e clique com o botão
+direito e selecione Editar, para abrir a janela Rota. Para editar todas as rotas, clique
+com o botão direito em uma rota e selecione Editar todos. Use as setas no alto da
+janela Rota para mover-se entre as rotas.
+Tadapeaçãe o s : ;»Oâ»,»DTL» —AA
+* Copyright 2006 United Parcel Service of America, lnc.
+Todes os direitos reservados.
+Inserção de informações de rota[parada real
+Etapa 4: Clique na seta Fuso horário para exibição/entrada e selecione o fuso horário
+dos horários que está inserindo. Por exemplo, se estiver inserindo horários de
+Maryland, selecione Horário da Costa Leste dos EUA.
+Nota: Qualquer horário exibido no momento será alterado para refletir o novo fuso
+horário. Entretanto, o banco de dados os armazena utilizando o fuso horário
+cometo
+Etapa 5: Insira as datas e horas apropriadas nos campos Início da jornada, Final da
+jornada, Entrada no depósito e Saida do depósito.
+Etapa 6: Insira as informações apropriadas de milhagem nos campos Odômetro inicial e
+Odômetro final.
+Ajaneta Rotaiparadares — — |8L E
+permite inserir informações reais || E mmm — fm ) em in 5a cm 5 E
+importantes sobre rotas e p
+(paradas associadas. A inserção — J uzda —n em Tm mee
+Gessas informações ê crucialao — ||[Einm pesilauan el |ss (c | ==
+“anualizar tempos de atendimento |FRnA a d -
+e monitorar horas de DT. PE T L U i
+PA
+T s e ee
+F F
+B) Nota: Pera poder monitorar a distância desde a última perada sté o depósito, é necessário
+preencher os campos Odómetro inicial e Odômetro final.
+Etapa 7: Insira qualquer comentário necessário no campo Comentários. Se o motorista
+tiver um ajudante, selecione a caixa Ajudante.
+Etapa $: Selecione Rota na seção Editar dados da janela. A janela é alterada para
+permitir que os campos de Resumo da rota fiquem disponíveis.
+Etapa 9: Preencha as colunas Tempos, Quantidades e Totais, conforme necessário.
+Lembre-se que estes são os tempos e quantidades totais da rota.
+M6 Etapa10: Depois de terminar de inserir as informações reais da rota, clique em Salvar
+" para salvar as alterações
+Etapa 11: Se você selecionou várias rotas para editar, use as setas no alto da janela para

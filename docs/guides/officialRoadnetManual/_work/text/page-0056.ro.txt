@@ -1,0 +1,79 @@
+ESA aa O S ET AEN AA E ME ta SA MEAEANNOS SA TVNA PEA eAA AA ANA ANA ts TEAA NNEA sA T SAA a APPSON TERTE
+” curent.
+Notă: Pentru a vedea o listă actualizată de zone, faceți clic pe pictograma Reîmprospătare; fereastra va fi
+-” actualizat cu cele mai recente informații din baza de date.
+T și Pasul 3: În fereastra Segmente de clienți, faceți clic pe pictograma Adăugați sau apăsați
+í [Inserare]. Apare fereastra Adăugați segment de clienți.
+W Sfat: Pac iicioçã aa eotratá sermeltânie s on existente, faceți clic dreapta
+mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugarea este afișată cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 5 caractere pentru tip și până la 30 de caractere pentru descriere. Tipul
+trebuie introdus; alte informații sunt opționale.
+EX
+Fereastra Adăugare tip
+Și cont permite
+- = specificați un tip, o culoare și
+aaa — discreție pentru tipul de
+Tc —
+Pasul 5: Faceți clic pe săgeata de lângă culoare pentru a deschide o paletă de culori. Faceți clic pe o culoare
+pentru a-l selecta.
+MG| Pasul 6: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]:[S] pentru a salva noul segment.
+- clientii.
+x — Pasul 7: Repetați pașii de la 4 la 6 pentru a adăuga orice alte segmente de clienți.
+Pasul 8: Când ați terminat de adăugat segmente de clienți, faceți clic pe caseta Închidere
+pentru a închide fereastra Adăugați un segment de clienți.
+TSNA SNS - ENE EAA S Mic
+(Mnsert]) — Pictograma Salvare ([Ctri/=[S])
+BET A AA E Roadhet Trarporiafion Sl
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.
+(Cum să lucrați cu segmente de clienți
+Segmentele de clienți existente pot fi editate sau șterse după cum este necesar.
+necesar. Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+(TA
+€€ Copyright 2006 United Parcel Service of America, lnc
+Toate drepturile rezervate
+(Cum să lucrați cu scenarii
+Cum să lucrezi cu scenarii
+Folosit cu: Roadnet, Territory Planner, FleetLoader, MobileCast
+Scenariile sunt o modalitate ușoară de a aplica modificări la ferestrele de service,
+timpii de serviciu și chiar seturi de standarde de serviciu în a
+nivel global. Scenariile pot fi folosite pentru rutare în modulul Analyst,
+pentru sesiuni de scripting în editorul de script sau pentru sesiuni de planificare în
+editor de planificare. Roadnet Transportation Suite vine cu un scenariu
+standard, care poate fi utilizat în scopuri generale. Dacă utilizați doar acest scenariu, nu o veți face
+nu va trebui făcut nimic. Dar dacă aveți nevoie de o modalitate de a schimba ora
+service, ferestre de service sau seturi de standarde de service
+la nivel global în cadrul unei rute sau sesiuni, scenariile vă vor ajuta. De exemplu, dacă tu
+trebuie să actualizați orele de service pentru o sesiune - pentru a lua în considerare
+meve, de exemplu - puteți crea un nou scenariu pentru a actualiza instantaneu
+timpii de service pentru fiecare client din acea sesiune. Scenariul va fi disponibil pentru utilizare
+atunci când este necesar, dar actualizarea va avea loc numai pentru rutele din ziua respectivă. Sesiunile
+scenariile de rutare ulterioare vor reveni la scenariul implicit. Alt mod
+Modul obișnuit de a utiliza scenariile este pentru 2 contabilitatea promotorului de vânzări, care
+Adesea, ele urmăresc diferite ore de service și ferestre de service.
+TE | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+este Pasul 2: Faceți clic pe meniul Înregistrări și selectați Reguli de serviciu și Scenarii. A
+— Apare fereastra Scenarii.
+N Notă: Pentru a vedea o listă actualizată de zone, faceți clic pe pictograma Actualizare; fereastra va fi
+actualizat cu cele mai recente informații din baza de date.
+ÉN Pasul 3: În fereastra Scenarii, faceți clic pe pictograma Adăugare sau apăsați [Insert]. La fereastră
+— Se afișează Adăugare scenariu.
+ã) Sfat: Pentru a adăuga o intrare similară uneia existente, faceți clic dreapta
+Treceți cu mouse-ul peste intrarea existentă și selectați Clonează din meniul care apare. Fereastra
+Adăugare scenariu este afișat cu unele informații deja completate; schimba
+informațiile necesare în noua intrare.
+Pasul 4: introduceți până la 15 caractere pentru numele scenariului și până la 256 de caractere pentru 2
+descriere. Trebuie introdus numele scenariului.
+FG Pasul 5: Faceți clic pe pictograma Salvare sau apăsați [Ctri]+[S] pentru a salva noul scenariu.
+Pasul 6: Repetați pașii de la 4 la 5 pentru a adăuga orice alte scenarii.
+* — Pasul 7: Când ați terminat de adăugat scenarii, faceți clic pe caseta Închidere pentru a închide
+Adăugați o fereastră de scenariu.
+'Áonc MúnaaÇão — Cadóstris RJT E Hlhiódo < CoME-S ENE
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctrl]+[S])
+Scenariile existente pot fi editate sau șterse după cum este necesar. Consultați
+Editarea elementelor și ștergerea elementelor pentru mai multe informații.
+TMT ,, ,, ,;,;, F , ,,,;ECRoadret Trareporiation Sufe
+' Copyright 2006 United Parcel Service of America, LHC
+Toate drepturile rezervate.

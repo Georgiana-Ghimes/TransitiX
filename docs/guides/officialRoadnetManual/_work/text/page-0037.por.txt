@@ -1,0 +1,72 @@
+A RRA LA AEo o aA to a AAAA AA peefer FA DS SAn REAA E IVTELA YA SE RA SSNA RENA SD ERNESE EM TVSA META RSA IAS
+- [Insert]. A janela Adicionar alteração de equipamento é exibida.
+Ã) Dica: Paraadicionaruma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Digite a ID da rota. Esse campo deve ser preenchido.
+EX
+2) Você pode fornecer uma nova
+o : descrição para a rota ao
+fn — faesime )) inserirumaalieração de
+eem equipamento.
+Etapa 5: Clique na seta Tipo de equipamento-Equipamento:Descrição para selecionar o
+equipamento que deseja usar para a ID de rota inserida. A janela Pesquisa -
+Equipamento é exibida. Utilize o recurso Pesquisar para localizar o
+equipamento desejado. Quando o equipamento for exibido na lista, clique duas
+vezes para selecioná-lo ou clique em um item de equipamento e, em seguida,
+no icone Processar.
+Etapa 6: Se desejar, insira uma nova descrição para a rota no campo Descrição da rota.
+[G Etapa7: Clique no icone Salvar ou pressione [Ctri]=[S] para salvar a alteração do
+equipamento.
+Etapa 8: Após a adição de todas as alterações, clique na caixa Fechar para fechar a
+janela Adicionar alteração de equipamento.
+Bmadeaperaçães A
+€€ Copyright 2006 United Parcel Service of America, Inc
+Todos os direitos reservados
+(Como trabalhar com atterações de equipamentos.
+E N EA ANA
+icone Adicionar ([Inseri]) — ícone Salvar ([Ctrl*[S])
+As atterações de equipamento existentes podem ser editadas ou excluídas, conforme
+necessário. Consulte Edição de itens e Exclusão de itens para obter mais informações.
+ET AA o Roadhat Trarporiafion Su
+' Copright 2006 United Parcel Service of America, lhc
+Todos os direitos reservados.
+(Como trabalhar com zonas de armazêm
+Como trabalhar com zonas de armazém
+Utilizado com: FleetLoader
+Aszonas de armazém permitem organizar as SKUs em áreas diferentes no armazém e, em
+seguida, especificar a ordem na qual as zonas deverão ser carregadas nos paletes. Por
+exemplo, você poderá criar uma zona de armazém A, para casos de latas 350 m! de RN
+Cola, e outra zona B, que contém garrafas únicas de itens menos populares. Em seguida,
+poderá especificar que os itens na zona A sejam carregados no palete antes dos itens da
+zona B. Depois que as zonas de armazém tiverem sido estabelecidas, é possível
+—— especificarem qual zona cada SKU está.
+) Etapal: Clique no ícone Manutenção para abrir o respectivo módulo.
+Mensa — Etapa 2: Clique no menu Cadastros, selecione Produto e Zonas de armazém. A janela
+Zonas de armazém é exibida, com uma lista de todas as zonas de armazém
+estabelecidas.
+EN É Nota: Para ver uma lista atualizada de zonas de armazém, clique no icone Atualizar; a
+Jjanela será atualizada com as informações mais recentes do banco de dados.
+| Etapa3: Najanela Zonas de armazém, clique no ícone Adicionar ou pressione [Insert]
+”” AA janela Adicionar zona de armazém é exibida.
+Na parte inferior da janela Adicionar zona de armazém há uma ordem de coleta,
+listando todas as zonas de armazém existentes. A nova zona é exibida na última
+posição da lista, com uma ID de <Nova zona>
+E
+Pa É possível reorganizar a ordem de
+— coleta de todas as zonas do
+[S —— amaênaqualquermomentoem
+S uma única janela.
+[aves reae s [ )
+s n
+ES
+j) Dica: Para adicionar uma entrada semelhante a outra existente, clique com o botão direito
+do mouse na entrada existente e selecione Clonar no menu exibido. A janela
+Adicionar é exibida com algumas informações já preenchidas; altere as
+informações necessárias na nova entrada.
+Etapa 4: Digite a ID da Zona de armazém e a Descrição; a ID é obrigatória.
+o EE
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservados
+(Como trabalhar com zonas de arnazém

@@ -1,0 +1,83 @@
+[Traducere eșuată pentru acest fragment]
+Nota: Essa opção estará disponível somente se você estiver utilizando um banco de dados
+do Microsoft Access. Para agregar sessões usando outro tipo de banco de dados,
+use a opção Combinar sessões de roteirização do módulo Manutenção ou o Editor
+de roteirização.
+megls — Etapal:Cliqueno ícone Importação para abrir o módulo Importação.
+h — Nota: Sehouverregiões, verifique se a região apropriada está sendo exibida na parte
+inferior da tela. Para alterar a região, basta clicar na seta e escolher uma opção no
+menu suspenso exibido.
+Etapa 2: Clique no menu Importar e selecione Agregar a partir de arquivo. A janela
+Agregar a partir de arquivo é exibida.
+Etapa 3: Clique no botão [...] e procure o diretório no qual a sessão arquivada está
+armazenada. Selecione o banco de dados que contém a sessão que você deseja
+agregar. À sessão é exibida na lista Sessão de origem.
+[ contira nm Artiva E
+Orecurso Agregar a ª; = Pam
+“partir de arquivo E Sc
+permitesalvar e Liniao É
+agesorsessões de = m o mn )
+roteirização jn mmeantos Jeveno Traeio favo tee Feseoo — [vanve,
+diariamente a partir de — EN SEmA en E -4 EE - .. É
+E me E
+Etapa 4: Nas listas, selecione a Sessão de origem e a Sessão de destino.
+FL A A o Roadnet Transporiafion Suie
+.8 Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+“Agregar a partir de arquivo
+Etapa 5: Para que os pedidos ainda não existentes na sessão não sejam adicionados à
+sessão de destino, verifique se a opção Agregar pedidos da origem que não
+existem no destino não está marcada.
+Nota: Se você não recebeu permissão para alterar as opções de importação e exportação
+no módulo Administração, não conseguirá alterar as opções selecionadas ao usar o
+rTecurso Agregar a partir de arquivo.
+Etapa 6: Clique no botão [Iniciar] para importar as rotas da sessão arquivada para a
+sessão atual.
+Etapa 7: Quando a importação estiver concluída, clique na caixa Fechar
+Importação * Importar > Agregar a partir de arquivo — [Iniciar]
+madeaperaçães oA
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Utilização do processo de importação em lote
+Utilização do processo de importação em lote
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Se você rotineiramente importar uma grande quantidade de pedidos, clientes, rotas ou
+outros dados, poderá configurar o sistema para importar automaticamente as informações
+em um horário específico. O Roadnet Transportation Suíte inclui um importador em lotes
+que permite utilizar arquivos em lote para importar automaticamente quaisquer dados que
+possam ser importados manualmente por meio do módulo Importação. Para que o
+software importe informações, é necessário configurar as opções de importação para cada
+item, permitindo executar facilmente o processo de importação em lote a partir de um
+prompt de comando utilizando o executável tsimoApp.exe.
+. Nota: Os dados de Agregar a partir de arquivo e do computador de bordo não podem ser
+importados utilizando o processo de importação em lote.
+As opções de importação são definidas em um arquivo de configuração de importação em
+lotee, como essas opções podem variar de um item de importação para outro, é necessário
+criar arquivos de configuração separados para cada item. Quando o processo de
+importação em lote for executado, o módulo importação procurará esses arquivos de
+configuração no diretório definido pela variável de ambiente CFCONFIGPATH. Se essa
+variável não existir, o módulo importação utilizará o arquivo de configuração encontrado
+no diretório local.
+. Nota: Se você estiver utilizando importação em lote automática para importar vários itens
+(clientes, pedidos, etc.), será necessário criar uma importação em lote automática
+separada para cada item que desejar importar. Por exemplo, você terá uma
+importação em lote automática chamada batchImpLocations para importar os
+clientes e um segundo arquivo chamado batchImpOrders para importar os pedidos.
+Siga as etapas abaixo para configurar o processo de importação em lote. O processo de
+configuração precisa ser executado uma vez, embora as informações possam ser editadas
+sau schimbat în orice moment înainte de a rula importul în lot.
+Pasul 1: Interogați variabilele de mediu pentru autentificare și directorul de fișiere
+cpconfigpath. Un exemplu pentru fiecare variabilă și calea acesteia urmează mai jos.
+CPCONFIGPATH=director care stochează toate fișierele batchimp.cfe
+TS AUTOLOGIN=1
+TS USERNAME-=numele dvs. de utilizator Transportation Suite
+TS PASSWORD=parola Transportation Suite
+TS DATABASE=numele conexiunii ODBC folosită de Transportation
+Suită
+Pasul 2: Urmați exemplele de mai jos pentru a crea fișierele de configurare pentru
+TYary articole de import. Deși exemplele conțin toate câmpurile
+posibilitățile acestui fișier de configurare specific, nu este necesar să se utilizeze
+toată lumea.
+TE A AA A A L Foadnet Tranporiation Sule
+„€ Copyright 2006 United Parcel Service of America, Inc.
+Toate drepturile rezervate.

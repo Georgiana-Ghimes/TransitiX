@@ -1,0 +1,76 @@
+Etapa 2: Para adicionar um item, clique no ícone Adicionar ou pressione [Insert]. A
+janela Adicionar é exibida.
+Etapa 3: Insira todas as informações necessárias.
+Etapa 4: Quando tiver concluído a janela, clique no ícone Salvar ou pressione [Ctr1]+[S]
+para salvar o novo item.
+Etapa 5: Clique na caixa Fechar após adicionar todos os itens.
+Clonagem de itens
+É possível clonar itens de manutenção existentes. Ao clonar um item, a maior parte das
+informações necessárias é preenchida quando a janela Adicionar é exibida, reduzindo a
+quantidade de texto que é necessário digitar. Você pode alterar qualquer das informações
+existentes, conforme necessário.
+Para adicionar uma entrada semelhante a outra existente, clique com o botão direito do
+mouse na entrada existente e selecione Clonar no menu exibido. À janela Adicionar é
+exibida com algumas informações já preenchidas; altere as informações necessárias na
+nova entrada.
+Edição de itens
+Após a adição de itens no módulo Manutenção, é possível alterá-los conforme necessário.
+E “Roadhnet Transportation Suite
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com os itens de manutenção
+Etapa 1: Na janela do item (por exemplo, Equipamento), clique duas vezes sobre a
+entrada a ser modificada. À janela Editar é exibida.
+oU-
+Na janela do item, selecione as entradas a serem editadas. Clique com o botão
+direito do mouse em um tipo escolhido e selecione Editar no menu exibido. À
+janela Editar é exibida.
+Para selecionar uma única entrada, clique na entrada.
+Para selecionar várias entradas, clique na primeira entrada. Em seguida,
+mantenha pressionado o botão [Ctrl] no teclado e clique nas entradas restantes
+a serem editadas.
+Para selecionar várias entradas seguidas, clique na primeira entrada. Em
+seguida, mantenha pressionada a tecla [Shift] no teclado e clique na última
+entrada a ser editada. Todas as entradas entre essas duas serão selecionadas.
+Etapa 2: Altere as informações na janela conforme necessário. Clique no ícone Salvar
+u pressione [Ctrl]:[S] para salvar as alterações.
+.Ao editar várias entradas, utilize as setas no alto das janelas para percorrer as
+entradas selecionadas e salvar as alterações de cada uma delas,
+Nota: Os campos principais (normalmente o campo de TD ou nome) não podem ser
+alterados; eles estarão desabilitados (cinza) na janela e não será possível selecioná-
+Jos. Para editar o campo principal de uma entrada, exclua e adicione a entrada
+novamente, ou clone a entrada e, em seguida, exclua a original.
+Exclusão de ltens
+Os itens de manutenção existentes podem ser excluídos.
+Algumas entradas não devem ser excluídas até que todos os itens relacionados que
+vtilizem essa entrada sejam excluídos ou modificados. Por exemplo, um tipo de
+equipamento não deve ser excluído até que todos os equipamentos desse tipo sejam
+excluídos.
+Etapa 1: Na janela do item (por exemplo, Tipos de equipamento), clique áuas vezes
+sobre a entrada a ser excluída.
+Para selecionar uma única entrada, clique na entrada.
+Para selecionar várias entradas, clique na primeira entrada. Em seguida,
+mantenha pressionado o botão [Ctrl] no teclado e clique nas entradas restantes
+a serem excluidas,
+Para selecionar várias entradas seguidas, clique na primeira entrada. Em
+seguida, mantenha pressionada a tecla [Shift] no teclado e clique na última
+entrada a ser excluída. Todas as entradas entre essas duas serão selecionadas.
+Etapa 2: Clique no ícone Excluir ou pressione [Excluir]. Clique no botão [OK] para
+confirmar a exclusão.
+Guia de operações E
+€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+(Como trabalhar com os itens de manutenção
+oU-
+Clique com o botão direito do mouse em um tipo escolhido e selecione Excluir
+no menu exibido. Clique no botão [OK] para confirmar a exclusão.
+Nota: Se você excluir diversos itens, pode ser necessário compactar o banco de dados
+para remover os itens completamente e reduzir seu tamanho. Para compactar o
+banco de dados, selecione Compactar banco de dados no menu Ferramentas.
+n “Roadhnet Transportation Suíte
+'€ Copyright 2006 United Parcel Service of America, Inc.
+Todos os direitos reservados.
+Definição das opções
+Definição das opções
+Utilizado com: Roadnet, Territory Planner, FleetLoader, MobileCast
+Ac en a Sooos d D a dh a SA aaa n aaan do aa pureias u RS a o SA inaas tu iasr sm aa

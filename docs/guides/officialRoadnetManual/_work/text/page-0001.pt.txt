@@ -1,0 +1,53 @@
+Manual Roadnet - Guia de B moterat sen
+Gi —
+BQADN Suite®
+Guia de operacées
+e
+Roadnet, RouteNet, Territory Planner, FleetLoader e MobileCast são marcas registradas da
+United Parcel Service of America, Inc.
+A United Parcel Service of America, Inc. nao se responsabiliza por qualquer dano real ou
+conseqijencial relacionado ao uso ou uso incorreto do software Roadnet Transportation Suite ou
+de sua documentacio.
+‘© Copyright 2006 da United Parcel Service of America, Inc. UPS Logistics Technologies, Inc.
+849 Fairmount Avenue, Suite 400, Baltimore, MD 21286, EUA. Todos os direitos reservados.
+Código do programa de computador e telas de exibição © Copyright 1988, 2001 United Parcel
+Service of America, Inc. Todos os direitos reservados. Trabalho no publicado sob as leis de
+direitos autorais dos EUA. O contetdo deste material é confidencial e pertence a United Parcel
+Service of America, Inc. O uso, a divulgação ou a reprodução nao autorizada sao estritamente
+proibidos. Os direitos de uso são regulamentados e limitados pelo acordo de licenga.
+Este manual é de propriedade da United Parcel Service of America, Inc. Ele não pode ser
+reproduzido por qualquer método, em todo ou em parte, sem permiss4o por escrito do seu editor.
+Microsoft® Access é uma marca registrada ou marcas comerciais da Microsoft Corporation nos
+Estados Unidos e/ou em outros paises.
+Crystal Reports™ é uma marca registrada da Seagate Software Company.
+Geographic Data Technology, Inc.
+Este produto contém informações confidenciais pertencentes a Geographic Data Technology, Inc.
+O uso não autorizado, incluindo a copia para outros procedimentos que nfo sejam os de teste e de
+backup deste produto, é expressamente proibido.
+Tabela de conteudos
+Tabela de conteudos
+Introdução
+Tntrodução ao Roadnet Transportation Suite 1
+‘Sobre este manual. À
+Convenções utilizadas neste manual 6
+Navegação pelo Roadnet Transportation Suite 7
+Tipos de janela 7
+Gerenciamento de janelas 7
+Como iniciar o Roadnet Transportation Suite 9
+Alteração da senha 9
+Adição de uma conexao ODBC 10
+Módulos do Roadnet Transportation Suite 1
+Administragao
+Configuração do médulo Administração 13
+Definição das opgdes do modulo Administração 14
+Como trabalhar com privilégios 15
+Como trabalhar com grupos de usuarios 20
+Como trabalhar com usuarios 22
+Como trabalhar com destinatarios de notificação 24
+Como trabalhar com regides 26
+Manutengao
+Manutenção do Roadnet Transportation Suite 29
+Como trabalhar com os itens de manutenção 30
+Definição das opções 33
+‘Como trabalhar com status e tipos 58
+-Adic3o de um status ou tipo 61

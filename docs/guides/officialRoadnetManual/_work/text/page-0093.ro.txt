@@ -1,0 +1,74 @@
+informațiile necesare în noua intrare.
+Pasul 4: Alegeți data livrării. Pentru a introduce datele, selectați caseta și introduceți data.
+data sau faceți clic pe săgeată pentru a deschide un calendar. Folosește săgețile din partea de sus
+fereastra pentru a derula lunile, apoi faceți clic pe o dată până la
+selectați-l Verificați dacă este partea corectă a datei (luni sau zile).
+selectat la introducerea datei.
+Exm
+Şi
+EE Puteți introduce distanța pe care a
+Este un echipament individual în care a călătorit
+tma zonă la o anumită dată.
+mTEAA —)
+EE—
+[ | Pasul 5: Faceți clic pe săgeata ID pentru a deschide fereastra Căutare - Zona. Faceți dublu clic pe zonă
+pentru a-l selecta sau faceți clic pe el și faceți clic pe pictograma Proces.
+[ Pasul 6: Faceți clic pe săgeata Echipament pentru a deschide fereastra Căutare - Echipament
+Utilizați funcția de căutare pentru a localiza echipamentul dorit. Când cel
+echipamentul apare în listă, faceți dublu clic pentru a-l selecta sau faceți clic
+pe un articol de echipament, apoi faceți clic pe pictograma Proces.
+Operații proaste A
+€ Copsright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+(Cum să lucrați cu distanțe față de zone
+Pasul 7: Introduceți distanța parcursă de acest echipament în zonă (în mile
+" ) sau kilometri).
+Pasul 8: Faceți clic pe pictograma Salvare sau apăsați [Ctrl]+[S] pentru a salva noua intrare de fișier.
+distanta fata de zona.
+Pasul 9: Repetați pașii de la 2 la 8 pentru a adăuga orice alte distanțe de zonă.
+x — Pasul 10: Când ați terminat, faceți clic pe caseta Închidere pentru a închide fereastra Adăugați
+distanta fata de zona.
+Pictograma Întreținere — Introducerea reală a datelor — Distanțele zonei — pictograma
+Adăugați ([Inserați]) — Pictograma Salvare ([Ctrl]+[S])
+Distanțele față de zonele existente pot fi editate sau șterse după cum este necesar.
+Consultați Editarea elementelor și Ștergerea elementelor pentru mai multe informații.
+EIOIOO AAA Roadret Tranporiafon SE
+' Copyright 2006 United Parcel Service of America, Inc
+Toate drepturile rezervate.
+(Cum să agregați sesiunile de scripting
+Cum se cumulează sesiunile de rutare
+Folosit cu: Roadnet
+Dacă există mai mult de un planificator de rute care creează rute pentru aceeași regiune, poate fi necesar
+agregați toate aceste rute într-o singură sesiune pentru a putea evalua imaginea zilei
+complet, pe lângă tipărirea rapoartelor. La agregarea sesiunilor, sesiunea sursă rută
+selectate sunt adăugate la sesiunea țintă existentă. Sesiunea țintă trebuie să fie
+în baza de date cu care lucrați. Sesiunea de origine poate veni din doi
+Locații diferite: aceasta ar putea fi o altă sesiune în baza de date curentă sau dacă dvs
+Dacă utilizați baza de date Access, poate fi o bază de date de fișiere care
+ai creat.
+Pentru ca sesiunile să fie agregate, trebuie să existe următoarele condiții
+* regiunea pentru care importați rute trebuie să existe în baza de date în
+care sunt importate;
+* toate articolele de întreținere (clienți, șoferi, echipamente etc.) utilizate în
+rutele trebuie să existe în baza de date în care sunt importate;
+* dacă selectați Import fișier, fișierul trebuie să fi fost creat în același
+versiunea Roadnet în care este importată.
+Puteți agrega rutele într-o singură sesiune, în modulul Întreținere sau în
+scripting.
+E | Pasul 1: Faceți clic pe pictograma Întreținere pentru a deschide modulul respectiv
+Wm — Notă: Dacă există regiuni, verificați dacă regiunea corespunzătoare este afișată în
+partea de jos a ecranului. Pentru a schimba regiunea, faceți clic pe săgeată și alegeți o opțiune din
+meniul derulant este afișat.
+Pasul 2: Faceți clic pe meniul Instrumente și selectați Sesiuni de rutare agregate. Pentru a
+Apare fereastra Agregate Routing Sessions.
+Pasul 3: În zona Sursă, selectați baza de date în care se află sesiunea sursă.
+Dacă ați selectat Import fișier, faceți clic pe pictograma [...] și navigați la baza de date
+date care conțin sesiunea sursă.
+. Notă: Dacă nu utilizați o bază de date Access, baza de date curentă
+este singura varianta disponibila.
+Operații proaste A
+€ Copyright 2006 United Parcel Service of America, nc
+Toate drepturile rezervate.
+(Cum să agregați sesiunile de scripting
+Pasul 4: În lista Sesiuni sursă, selectați sesiunea care conține rutele dorite
+adăugați la sesiunea țintă.

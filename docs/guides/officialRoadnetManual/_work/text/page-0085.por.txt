@@ -1,0 +1,67 @@
+(Como trabalhar com modelos para horário de rush
+novo ponto final é exibido. Se cometer algum erro, clique no botão [Desfazer]
+(ISBif]+[U]) para remover o último segmento desenhado.
+Se você estiver utilizando o modo Selecionar rua, clique nos segmentos de
+Tua a serem incluídos no caminho. Clique em um segmento de rua; o segmento
+érealçado e uma caixa com a letra À aparece em uma extremidade do segmento,
+e uma caixa com a letra B aparece na extremidade oposta do segmento. Clique
+no próximo segmento que desejar incluir; a caixa “A” ou “B” move-se para a
+extremidade do novo segmento. Continue clicando até selecionar todos os
+segmentos desejados.
+. Notas: Todos os segmentos de ruas do caminho devem estar conectados. Não será
+permitido selecionar um segmento desconectado.
+No modo Horário de rush, você pode utilizar s opções Zoom e Centro para
+mover-se pelo mapa conforme necessário.
+Etapa 6: Quando terminar o caminho, clique no botão [Concluir]. A janela Editar
+atributos do caminho de horário de rush é exibida.
+ol lm alalels| 2) al lzlalo] el vl al
+Exm P
+FD mSST
+Ao desenhar um caminho de horário de rush, todos os segmentos devem
+Etapa 7: Digite um nome e descrição do caminho. Você deve digitar um nome.
+Etapa 8: Selecione a caixa e insira a alteração de porcentagem para cada período no
+qual desejar uma variação de velocidade. Selecione se a velocidade deve ser
+aumentada (Mais rápido) ou reduzida (Mais devagar). À nova velocidade será
+utilizada quando o tempo de percurso for calculado.
+MM — — — NoadrerTramporiafon SE
+' Copyright 2006 United Parcel Service of America, lc
+Todos os direitos reservados.
+(Como trabalhar com modelos para horário de rush
+Se você aumentar a velocidade em 25%, 60 MPH aumentará para 75 MPH.
+Se reduzir a velocidade em 25%, 60 MPH diminuirá para 45 MPH.
+Etapa 9: Para criar uma restrição de percurso exclusiva para o caminho, selecione a
+caixa Restrito para o período de tempo correto. Se aparecer uma marca na
+caixa, o equipamento é restringido durante o período. Se a marca estiver cinza
+u desabilitada e o caminho estiver em uma área de horário de rush, a restrição
+especificada para a área é usada. Se não houver uma marca, não há restrição de
+equipamento para o caminho.
+o estabelecer os atributos de um caminho de horário de
+Tush é possível especificar a direção do tráfego se ele for
+“diferente durante horários normais do dia.
+Etapa 10: Para cada período, selecione a direção da rua, caso seja diferente durante o
+horário normal.
+Etapa 11: Clique no botão [OK] quando os atributos estiverem definidos.
+Etapa 12: Para adicionar outro caminho de horário de rush, repita as etapas 4 a 11
+Manutenção >Arquivo >Mapa —ícone Modelo para horário de rush — Adicionar
+caminho de horário de rush — [Concluir] — [OK]
+Alteração de um caminho do horário de rush
+Após criar um caminho de horário de rush, é possível alterá-lo conforme necessário. Ao
+atterar um caminho de horário de rush, você pode selecionar somente segmentos
+individuais de ruas, e qualquer segmento adicionado ao caminho deve estar conectado ao
+caminho.
+Para alterar a variação da velocidade, restrições de percurso ou outros atributos do
+caminho, clique com o botão direito no caminho e selecione Editar atributos do caminho
+no menu que será exibido. Na janela Editar atributos do caminho de horário de rush, faça
+as alterações necessárias e clique no botão [OK].
+Badeaperaçães M
+€€ Copyright 2006 United Parcel Service of America, lnc
+Todos os direitos reservado.
+(Como trabalhar com modelos para horário de rush
+Para encurtar ou aumentar o caminho, clique com o botão direito no caminho e
+selecione Editar caminho no menu que será exibido. Para adicionar ao caminho, clique no
+segmento próximo ao fínal do caminho atual. Para remover segmentos do caminho, clique
+mo segmento no final do caminho. À caixa “A” ou “B” move-se para indicar o novo ponto
+fínal do caminho.
+Para excluir um caminho de horário de rush, clique com o botão direito no caminho e
+selecione Excluir caminho no menu que será exibido. Clique em [OK] para confinmar a
+exclusão.
