@@ -452,7 +452,18 @@ export default function AvizeReports() {
     if (!editRow) return;
     setSaving(true);
     try {
-      const payload = { ...form, status: nextAvizStatusOnSave(editRow.status) };
+      const { zone_tax_breakdown: zoneTaxBreakdown, goods_doc_only: _gdo, ...fields } = form || {};
+      const prevEd = (editRow.extracted_data && typeof editRow.extracted_data === 'object')
+        ? editRow.extracted_data
+        : {};
+      const payload = {
+        ...fields,
+        status: nextAvizStatusOnSave(editRow.status),
+        extracted_data: {
+          ...prevEd,
+          zone_tax_breakdown: zoneTaxBreakdown ? String(zoneTaxBreakdown) : null,
+        },
+      };
       if (!payload.trip_id) payload.trip_id = null;
       const saved = await api.entities.AvizDocument.update(editRow.id, payload);
       notifySuccess(
@@ -1543,7 +1554,14 @@ export default function AvizeReports() {
                             {row.duplicate_tpo && busyId !== row.id ? <div className="text-[10px] font-normal text-amber-700">duplicat</div> : null}
                           </td>
                           <td className="px-2 py-2.5 text-slate-600 truncate whitespace-nowrap">{formatDate(row.data_efectuare_cursa)}</td>
-                          <td className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? LOW_FIELD_TEXT_CLS : ''}`} title={row.numar_auto || ''}>{row.numar_auto || '-'}</td>
+                          <td
+                            className={`px-2 py-2.5 truncate max-w-[8rem] ${lowField(row, 'numar_auto') ? LOW_FIELD_TEXT_CLS : ''}`}
+                            title={lowField(row, 'numar_auto')
+                              ? `${row.numar_auto || ''} · OCR nesigur pe Auto (se stinge când Autoturisme are MTMA + verificat)`
+                              : (row.numar_auto || '')}
+                          >
+                            {row.numar_auto || '-'}
+                          </td>
                           <td
                             className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? LOW_FIELD_TEXT_CLS : ''}`}
                             title={isLearnedRoute(row) ? `${displayRoute(row)} (regulă învățată)` : displayRoute(row)}

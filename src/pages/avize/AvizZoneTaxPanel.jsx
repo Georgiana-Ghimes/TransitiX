@@ -4,7 +4,13 @@ import { api } from '@/api/client';
 import { toFiniteNumber } from '@/lib/utils';
 import { mmaLabel } from '@/lib/fleetUi';
 import {
-  FLEET_FIXABLE, avizDeliveryAddress, avizZoneTax, resolveAvizZone, zoneMapHref,
+  FLEET_FIXABLE,
+  avizDeliveryAddress,
+  avizRouteZoneLegs,
+  avizZoneTaxTrip,
+  formatZoneTaxBreakdown,
+  resolveAvizZone,
+  zoneMapHref,
   zoneTaxMessage,
 } from '@/lib/avizZoneTax';
 
@@ -22,32 +28,41 @@ const TONE = {
   under_threshold: 'border-slate-200 bg-slate-50 text-slate-700',
   outside_city: 'border-slate-200 bg-slate-50 text-slate-700',
   no_weight: 'border-slate-200 bg-slate-50 text-slate-600',
+  no_loading_street: 'border-slate-200 bg-slate-50 text-slate-700',
 };
+
+function formatAddressLine(address) {
+  if (!address?.street && !address?.locality) return null;
+  return [
+    [address.street, address.number].filter(Boolean).join(' '),
+    address.locality,
+  ].filter(Boolean).join(', ');
+}
 
 /**
  * Taxa de zonă for the aviz being edited, worked out while it is open.
  *
- * It reads the fields on screen rather than the saved row, so the answer follows the operator:
- * typing the greutate brută that OCR missed produces the fee on the spot, which is the whole
- * reason the weight is the gate.
- *
- * When the zone fee is known (> 0), it is written into Taxe suplimentare. Recalculation
- * (rută / greutate / MTMA) updates the box while it still holds the last auto value; a
- * different figure the operator typed by hand is left alone.
+ * Every stop on Rută (încărcare + fiecare livrare) is resolved (#97 / #98). Distinct zones
+ * are listed with their fees; the total is written into Taxe suplimentare (and a breakdown
+ * string for the report) while the box still holds the last auto value.
  */
 export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const [vehicles, setVehicles] = useState(null);
-  const [zoneResult, setZoneResult] = useState(undefined);
+  /** zoneResult by leg id */
+  const [zoneById, setZoneById] = useState(null);
   /** Last amount we wrote for this document (`{ id, amount }`). */
   const lastAuto = useRef({ id: null, amount: null });
 
-  // Prefer the delivery leg of Rută transport on screen (after ` / `), not only OCR delivery_address.
-  const address = useMemo(
-    () => avizDeliveryAddress({
-      ...editRow,
-      ruta_transport: form.ruta_transport ?? editRow?.ruta_transport,
-    }),
-    [editRow, form.ruta_transport],
+  const avizForRoute = useMemo(() => ({
+    ...editRow,
+    ruta_transport: form.ruta_transport ?? editRow?.ruta_transport,
+  }), [editRow, form.ruta_transport]);
+
+  const routeLegs = useMemo(() => avizRouteZoneLegs(avizForRoute), [avizForRoute]);
+  const deliveryAddress = useMemo(() => avizDeliveryAddress(avizForRoute), [avizForRoute]);
+  const legsKey = useMemo(
+    () => routeLegs.map((l) => `${l.id}:${l.raw || ''}:${l.address?.street || ''}:${l.address?.number || ''}`).join('|'),
+    [routeLegs],
   );
 
   useEffect(() => {
@@ -60,37 +75,49 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
 
   useEffect(() => {
     let alive = true;
-    // Debounce while the operator types Rută / greutate — sync resolve on every key
-    // swapped the panel for „se calculează…” and felt like the modal was refreshing.
+    setZoneById(null);
     const timer = window.setTimeout(() => {
-      resolveAvizZone(address)
-        .then((res) => { if (alive) setZoneResult(res); })
-        .catch(() => { if (alive) setZoneResult(null); });
+      Promise.all(
+        routeLegs.map(async (leg) => {
+          if (!leg.address?.street) return [leg.id, null];
+          try {
+            return [leg.id, await resolveAvizZone(leg.address)];
+          } catch {
+            return [leg.id, null];
+          }
+        }),
+      ).then((pairs) => {
+        if (!alive) return;
+        setZoneById(Object.fromEntries(pairs));
+      });
     }, 350);
     return () => {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [address]);
+  }, [legsKey]); // eslint-disable-line react-hooks/exhaustive-deps -- routeLegs via legsKey
 
-  const loading = vehicles === null || zoneResult === undefined;
+  const loading = vehicles === null || zoneById === null;
 
-  const result = useMemo(() => {
+  const trip = useMemo(() => {
     if (loading) return null;
-    return avizZoneTax({
-      // The values on screen, not the saved ones: the weight is usually being typed right now.
+    return avizZoneTaxTrip({
       aviz: {
         ...editRow,
         gross_weight_kg: form.gross_weight_kg,
         numar_auto: form.numar_auto,
+        ruta_transport: form.ruta_transport ?? editRow?.ruta_transport,
       },
       vehicles,
-      zoneResult,
-      address,
+      legs: routeLegs.map((leg) => ({
+        ...leg,
+        zoneResult: zoneById[leg.id],
+      })),
     });
-  }, [loading, editRow, form.gross_weight_kg, form.numar_auto, vehicles, zoneResult, address]);
+  }, [loading, editRow, form.gross_weight_kg, form.numar_auto, form.ruta_transport, vehicles, routeLegs, zoneById]);
 
-  const amount = result?.status === 'ok' && Number(result.amount) > 0 ? result.amount : null;
+  const amount = trip?.status === 'ok' && Number(trip.amount) > 0 ? trip.amount : null;
+  const breakdown = trip ? formatZoneTaxBreakdown(trip) : '';
 
   useEffect(() => {
     if (editRow?.id !== lastAuto.current.id) {
@@ -98,21 +125,24 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
     }
     if (amount == null) return;
     const current = toFiniteNumber(form.taxe_suplimentare);
-    if (current === amount) {
+    if (current === amount && form.zone_tax_breakdown === breakdown) {
       lastAuto.current = { id: editRow?.id ?? null, amount };
       return;
     }
     const previous = lastAuto.current.amount;
-    // First fill for this open, empty/0, or still our previous auto value → write the fee.
     const mayWrite = isUnset(form.taxe_suplimentare)
       || previous == null
       || current === previous;
     if (!mayWrite) return;
     lastAuto.current = { id: editRow?.id ?? null, amount };
-    setForm((prev) => ({ ...prev, taxe_suplimentare: String(amount) }));
-  }, [amount, editRow?.id, form.taxe_suplimentare, setForm]);
+    setForm((prev) => ({
+      ...prev,
+      taxe_suplimentare: String(amount),
+      zone_tax_breakdown: breakdown,
+    }));
+  }, [amount, breakdown, editRow?.id, form.taxe_suplimentare, form.zone_tax_breakdown, setForm]);
 
-  if (loading) {
+  if (loading || !trip) {
     return (
       <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
         Taxă zonă: se calculează…
@@ -120,42 +150,89 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
     );
   }
 
-  const tone = TONE[result.status] || 'border-amber-200 bg-amber-50 text-amber-900';
-  const message = zoneTaxMessage(result.status);
+  const tone = TONE[trip.status] || 'border-amber-200 bg-amber-50 text-amber-900';
+  const message = zoneTaxMessage(trip.status);
   const applied = !isUnset(form.taxe_suplimentare)
     && toFiniteNumber(form.taxe_suplimentare) === amount;
-  const mapHref = zoneMapHref(address, { plate: form.numar_auto });
+  const mapHref = zoneMapHref(deliveryAddress, { plate: form.numar_auto });
+  const legs = Array.isArray(trip.legs) ? trip.legs : [];
+  const chargeLines = Array.isArray(trip.chargeLines) ? trip.chargeLines : [];
 
   return (
     <div className={`sm:col-span-2 rounded-lg border px-3 py-2 text-xs ${tone}`}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="font-medium">Taxă zonă București</span>
-        {result.zoneCode && <span className="px-1.5 py-0.5 rounded bg-white/70 border border-current/20">{result.zoneCode}</span>}
-        {amount != null && <span className="font-semibold">{lei(amount)}/zi</span>}
-        {result.status === 'outside' && <span>0 lei</span>}
+        <span className="font-medium">Taxă zonă</span>
+        {trip.zones?.map((code) => (
+          <span key={code} className="px-1.5 py-0.5 rounded bg-white/70 border border-current/20">{code}</span>
+        ))}
+        {amount != null && <span className="font-semibold">Total {lei(amount)}/zi</span>}
+        {trip.status === 'outside' && !legs.length && <span>0 lei</span>}
       </div>
 
-      {result.status === 'ok' && (
-        <p className="mt-1 opacity-90">
-          {`MTMA ${mmaLabel(result.mmaKg)}, interval `}
-          {`${(result.bracket.minKg / 1000).toLocaleString('ro-RO')} la `}
-          {result.bracket.maxKg == null ? 'peste' : `${(result.bracket.maxKg / 1000).toLocaleString('ro-RO')} t`}
-          {`. Brută pe aviz ${Number(result.grossKg).toLocaleString('ro-RO')} kg.`}
+      {legs.length > 0 && (
+        <ul className="mt-1.5 space-y-1 opacity-90">
+          {legs.map((leg) => {
+            const r = leg.result || {};
+            const label = leg.label || leg.role;
+            const addr = formatAddressLine(leg.address);
+            const legAmount = r.status === 'ok' && Number(r.amount) > 0 ? r.amount : null;
+            const legMsg = zoneTaxMessage(r.status);
+            return (
+              <li key={leg.id || leg.role}>
+                <span className="font-medium">{label}</span>
+                {r.zoneCode && (
+                  <span className="ml-1.5 px-1 py-0.5 rounded bg-white/70 border border-current/20">
+                    {r.zoneCode}
+                  </span>
+                )}
+                {legAmount != null && (
+                  <span className="ml-1.5 font-semibold">{lei(legAmount)}/zi</span>
+                )}
+                {r.status === 'outside' && <span className="ml-1.5">0 lei</span>}
+                {addr && <span className="ml-1.5">— {addr}</span>}
+                {!addr && r.status === 'no_loading_street' && (
+                  <span className="ml-1.5">— {legMsg}</span>
+                )}
+                {addr && legMsg && r.status !== 'ok' && r.status !== 'outside' && (
+                  <span className="ml-1.5">({legMsg})</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {chargeLines.length > 1 && (
+        <p className="mt-1.5 font-medium opacity-90">
+          {`Total taxe zonă: ${lei(amount)}/zi (`}
+          {chargeLines.map((l) => `${l.zoneCode} ${lei(l.amount)}`).join(' + ')}
+          )
         </p>
       )}
 
-      {message && <p className="mt-1 opacity-90">{message}</p>}
+      {trip.status === 'ok' && (
+        <p className="mt-1 opacity-90">
+          {`MTMA ${mmaLabel(trip.mmaKg)}. Brută pe aviz ${Number(trip.grossKg).toLocaleString('ro-RO')} kg.`}
+          {' O taxă pe fiecare zonă distinctă; totalul merge în Taxe suplimentare / raport.'}
+        </p>
+      )}
 
-      {result.status === 'under_threshold' && result.bracket && (
+      {!legs.length && message && <p className="mt-1 opacity-90">{message}</p>}
+
+      {trip.status === 'under_threshold' && trip.bracket && (
         <p className="mt-1 opacity-75">
-          {`Tariful listat pentru acest interval ar fi ${lei(result.bracket.daily)}/zi.`}
+          {`Tariful listat pentru acest interval ar fi ${lei(trip.bracket.daily)}/zi.`}
         </p>
       )}
 
-      {result.status === 'mma_suspect' && (
+      {trip.status === 'mma_suspect' && (
         <p className="mt-1 opacity-90">
-          {`Brută ${Number(result.grossKg).toLocaleString('ro-RO')} kg peste MTMA ${mmaLabel(result.mmaKg)}.`}
+          {`Brută ${Number(trip.grossKg).toLocaleString('ro-RO')} kg peste MTMA ${mmaLabel(trip.mmaKg)}.`}
         </p>
+      )}
+
+      {FLEET_FIXABLE.has(trip.status) && message && (
+        <p className="mt-1 opacity-90">{message}</p>
       )}
 
       <div className="mt-1.5 flex flex-wrap items-center gap-3">
@@ -163,7 +240,11 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
           <button
             type="button"
             className="underline font-medium"
-            onClick={() => setForm((prev) => ({ ...prev, taxe_suplimentare: String(amount) }))}
+            onClick={() => setForm((prev) => ({
+              ...prev,
+              taxe_suplimentare: String(amount),
+              zone_tax_breakdown: breakdown,
+            }))}
           >
             {isUnset(form.taxe_suplimentare)
               ? `Pune ${lei(amount)} în Taxe suplimentare`
@@ -171,7 +252,7 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
           </button>
         )}
         {applied && <span className="opacity-75">Trecut în Taxe suplimentare.</span>}
-        {FLEET_FIXABLE.has(result.status) && (
+        {FLEET_FIXABLE.has(trip.status) && (
           <Link to="/fleet" className="underline font-medium">Deschide Autoturisme</Link>
         )}
         {mapHref && (

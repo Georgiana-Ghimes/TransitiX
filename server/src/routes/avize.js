@@ -11,6 +11,11 @@ import {
   TEMPLATE_NAME_TAKEN,
 } from '../lib/avizTemplate.js';
 import { fieldConfidenceForUi, repairAvizFromStored } from '../lib/avizOcr.js';
+import {
+  clearAutoLowWhenFleetVerified,
+  fleetStatusByPlates,
+  primaryPlate,
+} from '../lib/fleet/plateRegistry.js';
 import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
 import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
@@ -190,7 +195,7 @@ const DEFAULT_OBS_CODES = [
  * office edit of a real route is never overwritten, and nothing is written back here: this
  * decorates a response, it does not change the document.
  */
-function decorateAviz(row, { routeRules = [] } = {}) {
+function decorateAviz(row, { routeRules = [], fleetByPlate = null } = {}) {
   const serialized = repairAvizFromStored(serializeRow(row));
   const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
   const raw = serialized.extracted_data?.raw_text;
@@ -211,7 +216,13 @@ function decorateAviz(row, { routeRules = [] } = {}) {
   const source = withRoute.extraction_source
     || mapProviderToSource(withRoute.extracted_data?.provider);
   const validation = withRoute.extracted_data?.validation ?? null;
-  const field_confidence = fieldConfidenceForUi(withRoute);
+  let field_confidence = fieldConfidenceForUi(withRoute);
+  // Autoturisme with MTMA + verified clears Auto OCR-low in the list (#90).
+  const plateKey = primaryPlate(withRoute.numar_auto);
+  const fleetStatus = plateKey && fleetByPlate instanceof Map
+    ? fleetByPlate.get(plateKey)
+    : null;
+  field_confidence = clearAutoLowWhenFleetVerified(field_confidence, fleetStatus);
   const heuristicReview = [
     'numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa', 'data_efectuare_cursa',
   ].some((key) => field_confidence[key] === 'low');
@@ -234,7 +245,17 @@ function decorateAviz(row, { routeRules = [] } = {}) {
 
 async function decorateAvizForCompany(row, companyId) {
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
-  return decorateAviz(row, { routeRules });
+  const fleetByPlate = await fleetStatusByPlates(query, companyId, [row?.numar_auto]).catch(() => null);
+  return decorateAviz(row, { routeRules, fleetByPlate });
+}
+
+async function decorateAvizRows(rows, companyId, routeRules = []) {
+  const fleetByPlate = await fleetStatusByPlates(
+    query,
+    companyId,
+    (rows || []).map((r) => r?.numar_auto),
+  ).catch(() => new Map());
+  return (rows || []).map((row) => decorateAviz(row, { routeRules, fleetByPlate }));
 }
 
 /**
@@ -436,7 +457,13 @@ router.get('/', async (req, res) => {
       query(countQ.sql, countQ.params),
       listRouteRules(query, req.user.company_id).catch(() => []),
     ]);
-    const pageRows = result.rows.map((row) => decorateAviz(row, { routeRules }));
+    // Fleet status for Auto highlight (#90): MTMA + verified clears OCR-low on numar_auto.
+    const fleetByPlate = await fleetStatusByPlates(
+      query,
+      req.user.company_id,
+      result.rows.map((r) => r.numar_auto),
+    ).catch(() => new Map());
+    const pageRows = result.rows.map((row) => decorateAviz(row, { routeRules, fleetByPlate }));
     // Duplicate flag must see siblings off-page: same PSL under the same TPO on page 2
     // still has to light up the badge on page 1.
     const tpos = [...new Set(
@@ -451,8 +478,16 @@ router.get('/', async (req, res) => {
          WHERE company_id = $1 AND LOWER(numar_tpo) = ANY($2::text[])`,
         [req.user.company_id, tpos]
       );
+      const siblingFleet = await fleetStatusByPlates(
+        query,
+        req.user.company_id,
+        siblings.rows.map((r) => r.numar_auto),
+      ).catch(() => fleetByPlate);
       const byId = new Map(
-        flagDuplicateTpos(siblings.rows.map((row) => decorateAviz(row, { routeRules })))
+        flagDuplicateTpos(siblings.rows.map((row) => decorateAviz(row, {
+          routeRules,
+          fleetByPlate: siblingFleet,
+        })))
           .map((r) => [r.id, r.duplicate_tpo])
       );
       flagged = pageRows.map((r) => ({ ...r, duplicate_tpo: Boolean(byId.get(r.id)) }));
@@ -712,11 +747,12 @@ async function extractSplitPdfUpload(req, { fileUrl, originalFilename }) {
   }
 
   const routeRules = await listRouteRules(query, req.user.company_id).catch(() => []);
-  const rows = (await query(
+  const rawRows = (await query(
     `SELECT * FROM aviz_documents WHERE company_id = $1 AND id = ANY($2::uuid[])
      ORDER BY created_at ASC, original_filename ASC`,
     [req.user.company_id, docIds]
-  )).rows.map((row) => decorateAviz(row, { routeRules }));
+  )).rows;
+  const rows = await decorateAvizRows(rawRows, req.user.company_id, routeRules);
 
   const first = rows[0];
   if (!first) return null;
@@ -1090,7 +1126,8 @@ router.post('/bulk-confirm', async (req, res) => {
       return updated;
     });
     const routeRules = await listRouteRules(query, req.user.company_id).catch(() => []);
-    res.json(flagDuplicateTpos(result.rows.map((row) => decorateAviz(row, { routeRules }))));
+    const decorated = await decorateAvizRows(result.rows, req.user.company_id, routeRules);
+    res.json(flagDuplicateTpos(decorated));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Bulk confirm failed' });

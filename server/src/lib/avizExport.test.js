@@ -151,6 +151,20 @@ describe('anexa exportată, default Anexa Factura RAI', () => {
     expect(rows[0]['Greutate netă (kg)']).toBeUndefined();
   });
 
+  it('left-aligns numeric and text body cells the same way (#100)', async () => {
+    const sheet = await loadSheet(
+      { name: 'Anexa Factura RAI', columns: DEFAULT_RAI_COLUMNS },
+      [EXTRACTED_AVIZ],
+    );
+    const dataRow = sheet.getRow(2);
+    const tpoIdx = DEFAULT_RAI_COLUMNS.findIndex((c) => c.source === 'numar_tpo') + 1;
+    const qtyIdx = DEFAULT_RAI_COLUMNS.findIndex((c) => c.source === 'cantitate_marfa') + 1;
+    const valIdx = DEFAULT_RAI_COLUMNS.findIndex((c) => c.source === 'valoare_tpo') + 1;
+    expect(dataRow.getCell(tpoIdx).alignment?.horizontal).toBe('left');
+    expect(dataRow.getCell(qtyIdx).alignment?.horizontal).toBe('left');
+    expect(dataRow.getCell(valIdx).alignment?.horizontal).toBe('left');
+  });
+
   it('computes Cantitate exclusively from greutate brută, ignoring net', async () => {
     const onlyNet = {
       ...EXTRACTED_AVIZ,

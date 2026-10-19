@@ -174,6 +174,32 @@ sac
     expect(parsed.ruta_transport).toBe('Str. Ciresului, Dobroesti');
   });
 
+  it('keeps Bulevardul Pipera nr. 1/VII (not Piperii, not bare nr. 1) (#89)', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Industriei, nr. 7, Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+CS-NORDIC - OBJ PIPERA
+Bulevardul Pipera nr. 1/VII
+Voluntari RO 077190
+ROU
+Placute de inmatriculare B 404 RZC
+TPO-0033501
+PSL-0062301
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe(
+      'Str. Industriei nr. 7, Bolintin-Deal / Bvd. Pipera nr. 1/VII, Voluntari',
+    );
+    expect(parsed.delivery_address).toMatchObject({
+      locality: 'Voluntari',
+      streetName: 'pipera',
+      streetType: 'bulevardul',
+      houseNumber: '1/VII',
+    });
+  });
+
   it('stops the route before the Produs / Cantitate table (#70)', () => {
     // Few-line OCR: delivery label sits on the same line as the goods header + SKU.
     const glued = [
@@ -1145,7 +1171,7 @@ Greutate bruta: 14,807.89 kg
 `;
     const parsed = parseBaumitAviz(raw);
     expect(parsed.cantitate_marfa).toBe(598);
-    expect(parsed.tip_marfa).toBe('saci/galeti');
+    expect(parsed.tip_marfa).toBe('saci / galeti');
   });
 });
 
@@ -1187,6 +1213,42 @@ Greutate bruta: 11,157.84 kg
       'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
       DUAL_LIVRARE,
     )).toBe(false);
+  });
+
+  it('marks rută low when two+ delivery stops compete for zone tax (#96)', () => {
+    const parsed = parseBaumitAviz(DUAL_LIVRARE);
+    expect(avizFieldConfidence({
+      ...parsed,
+      extracted_data: { raw_text: DUAL_LIVRARE },
+    }).ruta_transport).toBe('low');
+  });
+});
+
+describe('multi delivery without Livrare N labels (#96)', () => {
+  const DUAL_CS = `
+Aviz de expeditie: PSL-0062999
+Data avizului de expeditie: 05.10.2026
+Expeditor
+Site: BOL Bolintin, Str. Industriei, nr. 7, Bolintin-Deal, RO 087015, ROU.
+Adrese de livrare
+CS-PRAHOVA- OBI PLOIESTI, Strada Gheorghe Doja nr. 51, Ploiesti, RO 100090.
+CS-HERASTRAU- OBI AVIATORILOR, Bulevardul Aviatorilor nr. 72, Bucuresti Sector 1, RO 011864.
+Client: NORDIC BUILD SRL, Bulevardul Aviatorilor nr. 72, Bucuresti Sector 1.
+Placuta de inmatriculare: PH 33 DRV
+Comanda de transport: TPO-0033399
+Greutate neta: 10,950.15 kg
+Greutate bruta: 11,157.84 kg
+`;
+
+  it('does not collapse to the first CS- stop; prefers București for delivery_address', () => {
+    const parsed = parseBaumitAviz(DUAL_CS);
+    expect(parsed.ruta_transport).toMatch(/Gheorghe Doja/i);
+    expect(parsed.ruta_transport).toMatch(/Aviatorilor/i);
+    expect(parsed.delivery_address).toMatchObject({
+      streetName: expect.stringMatching(/aviatorilor/i),
+      houseNumber: '72',
+      locality: expect.stringMatching(/bucuresti/i),
+    });
   });
 });
 

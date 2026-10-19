@@ -95,6 +95,7 @@ function pinZoneCaption(hit, lookup, city, streetIndex) {
       : '';
     return `Zona ${hit.zone.code}${extra}`;
   }
+  if (hit?.needsConfirm) return 'Sugestie — neconfirmată';
   if (hit?.drawn?.code) return `Contur ${hit.drawn.code}`;
   return 'În afara zonelor pe hartă';
 }
@@ -222,36 +223,10 @@ export default function ZoneMap() {
   };
 
   /**
-   * Place a Leaflet pin via public Photon (OSM), not `/zones/locate`.
-   * That API scores/caches and can refuse a pin the map still needs; the outline check
-   * and tariffs stay local from the already-loaded zones.
+   * Zone + rate for a pin already on the map. Kept separate from Photon so a suggestion can
+   * show the pin without charging until the operator confirms the substituted street.
    */
-  const placePin = async (q, {
-    displayLabel = null,
-    typedQuery = null,
-    pinOnly = false,
-    cityObj = city,
-    mmaKg = effectiveMma,
-    /** Town/locality for geocode when the pin is not in the open zone-city tab. */
-    cityHint = null,
-  } = {}) => {
-    const geoCity = String(cityHint || '').trim() || cityObj.label;
-    const point = await geocodeMapPin(q, { locality: geoCity });
-    if (!point) {
-      setHit({
-        point: null,
-        pinOnly,
-        address: q,
-        query: typedQuery || q,
-        zone: null,
-        rate: null,
-        drawn: null,
-        message: 'Adresa nu a putut fi localizată pe hartă.',
-      });
-      return { point: null };
-    }
-
-    // Which drawn outline holds the pin — same client check as before, independent of billing.
+  const zoneRateForPoint = (point, { cityObj = city, mmaKg = effectiveMma, pinOnly = false } = {}) => {
     const drawn = [...cityObj.zones]
       .sort((a, b) => b.priority - a.priority)
       .find((z) => pointInGeometry([point.latitude, point.longitude], z.outline))
@@ -268,22 +243,106 @@ export default function ZoneMap() {
         }
       }
     }
+    return { drawn, zone, rate };
+  };
 
+  /**
+   * Place a Leaflet pin via public Photon (OSM), not `/zones/locate`.
+   * That API scores/caches and can refuse a pin the map still needs; the outline check
+   * and tariffs stay local from the already-loaded zones.
+   *
+   * Photon often returns a nearby street with the same house number. Those are never treated
+   * as the typed address: either no pin, or a suggestion that must be confirmed first.
+   */
+  const placePin = async (q, {
+    displayLabel = null,
+    typedQuery = null,
+    pinOnly = false,
+    cityObj = city,
+    mmaKg = effectiveMma,
+    /** Town/locality for geocode when the pin is not in the open zone-city tab. */
+    cityHint = null,
+    /** Skip street-agreement gate (operator confirmed a Photon suggestion). */
+    acceptSuggestion = false,
+  } = {}) => {
+    const geoCity = String(cityHint || '').trim() || cityObj.label;
+    const point = await geocodeMapPin(q, { locality: geoCity });
+    if (!point) {
+      setHit({
+        point: null,
+        pinOnly,
+        address: q,
+        query: typedQuery || q,
+        zone: null,
+        rate: null,
+        drawn: null,
+        needsConfirm: false,
+        message: 'Adresa nu a fost recunoscută.',
+      });
+      return { point: null };
+    }
+
+    const typed = typedQuery || q;
+    // Index path (pinOnly) already owns zone/tax — a soft Photon miss must not open the
+    // "confirm suggestion" card over the index answer. Only free-text geocode needs confirmation.
+    if (point.match === 'suggestion' && !acceptSuggestion && !pinOnly) {
+      const label = String(point.label || q).trim();
+      const hit = {
+        address: q,
+        query: typed,
+        point: { ...point, label, query: typed },
+        suggestion: { label, latitude: point.latitude, longitude: point.longitude },
+        needsConfirm: true,
+        zone: null,
+        rate: null,
+        drawn: null,
+        pinOnly: false,
+        matched_by: null,
+        mma_kg: mmaKg,
+        message: `Adresa „${typed}” nu a fost recunoscută exact. Propunere: ${label}.`,
+      };
+      setHit(hit);
+      return hit;
+    }
+
+    const { drawn, zone, rate } = zoneRateForPoint(point, { cityObj, mmaKg, pinOnly });
     const label = String(displayLabel || point.label || q).trim();
     const hit = {
       address: q,
-      query: typedQuery || q,
-      point: { ...point, label, query: typedQuery || q },
+      query: typed,
+      point: { ...point, label, query: typed },
       // Index owns zone + tax on pinOnly; a wrong Photon hit must not flash ZA.
       zone: pinOnly ? null : zone,
       rate: pinOnly ? null : rate,
       drawn: pinOnly ? null : drawn,
       pinOnly,
+      needsConfirm: false,
       matched_by: drawn ? 'polygon' : null,
       mma_kg: mmaKg,
     };
     setHit(hit);
     return hit;
+  };
+
+  /** Operator accepted Photon's nearby street — only then compute zone/tax on that pin. */
+  const confirmGeocodeSuggestion = () => {
+    if (!hit?.suggestion || !hit?.point) return;
+    const point = hit.point;
+    const { drawn, zone, rate } = zoneRateForPoint(point, { mmaKg: hit.mma_kg });
+    const label = hit.suggestion.label;
+    setAddress(label);
+    setHit({
+      ...hit,
+      address: label,
+      point: { ...point, label },
+      suggestion: null,
+      needsConfirm: false,
+      message: null,
+      zone,
+      rate,
+      drawn,
+      matched_by: drawn ? 'polygon' : null,
+    });
   };
 
   /**
@@ -357,8 +416,8 @@ export default function ZoneMap() {
       });
       if (!res.point) {
         notifyError(
-          'Adresă negăsită',
-          res.message || 'Photon/OSM nu a găsit această adresă pe hartă.',
+          'Adresă nerecunoscută',
+          res.message || 'Adresa nu a fost recunoscută pe hartă.',
         );
       }
     } catch (err) {
@@ -654,8 +713,13 @@ export default function ZoneMap() {
       ) : null}
 
       {/* Geocode card only when the index did not already answer — otherwise two cards fight. */}
-      {hit?.point && !hit.pinOnly && !(lookup && lookup.status !== 'unknown') ? (
-        <LocateResult hit={hit} fromPlate={fromPlate} />
+      {hit && !hit.pinOnly && !(lookup && lookup.status !== 'unknown')
+        && (hit.point || hit.message) ? (
+        <LocateResult
+          hit={hit}
+          fromPlate={fromPlate}
+          onConfirmSuggestion={confirmGeocodeSuggestion}
+        />
       ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
@@ -1000,73 +1064,104 @@ function pickRate(rates, mmaKg) {
   })[0] ?? null;
 }
 
-function LocateResult({ hit, fromPlate }) {
+function LocateResult({ hit, fromPlate, onConfirmSuggestion }) {
   const drawn = hit.drawn;
   const charged = hit.zone;
   const amount = formatAmount(hit.rate);
+  const pending = Boolean(hit.needsConfirm);
+
+  if (!hit.point && hit.message) {
+    return (
+      <div className={`${cardCls} p-3 text-sm`}>
+        <div className="flex items-start gap-2 text-amber-800">
+          <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
+          <p>{hit.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`${cardCls} p-3 space-y-2 text-sm`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <MapPin className="w-4 h-4 text-[#1D4E89] shrink-0" />
+        <MapPin className={`w-4 h-4 shrink-0 ${pending ? 'text-amber-600' : 'text-[#1D4E89]'}`} />
         <span className="text-slate-700 font-medium">{hit.point.label || hit.address}</span>
-        {hit.query && hit.query !== hit.address ? (
+        {hit.query && hit.query !== (hit.point?.label || hit.address) ? (
           <span className="text-[11px] text-slate-400">căutat ca „{hit.query}”</span>
         ) : null}
-        {hit.outcome?.action === 'review' ? (
-          <span className="text-[11px] text-amber-700">
-            Geocodare incertă, verifică pinul pe hartă.
-          </span>
-        ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Zonă</span>
-        {drawn ? (
-          <>
-            <span
-              className="px-2 py-0.5 rounded-full text-white text-xs font-semibold"
-              style={{ backgroundColor: drawn.color }}
-            >
-              {drawn.code}
-            </span>
-            <span className="text-slate-600">{drawn.name}</span>
-            <span className="text-[11px] text-slate-400">{drawn.threshold}</span>
-          </>
-        ) : (
-          <span className="text-slate-500">În afara zonelor restricționate.</span>
-        )}
-      </div>
+      {pending ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-2">
+          <p className="text-amber-900 text-sm">
+            Adresa introdusă nu a fost recunoscută exact. Potrivirea de pe hartă este o
+            <strong> sugestie</strong> — zona și taxa nu se calculează până confirmi.
+          </p>
+          <button
+            type="button"
+            onClick={onConfirmSuggestion}
+            className="inline-flex h-9 items-center px-3 text-sm font-medium rounded-lg bg-amber-700 text-white hover:bg-amber-800"
+          >
+            Folosește „{hit.suggestion?.label || hit.point.label}”
+          </button>
+        </div>
+      ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Calcul</span>
-        {charged && hit.rate ? (
-          <>
-            <span className="text-slate-800 font-semibold">{amount}</span>
-            <span className="text-[11px] text-slate-400">
-              {charged.code} · {hit.matched_by === 'polygon' ? 'după contur' : 'după text'}
-              {hit.mma_kg != null ? ` · ${mmaLabel(hit.mma_kg)}` : ''}
-              {fromPlate?.status === 'found' ? ` · ${fromPlate.plate}` : ''}
-            </span>
-          </>
-        ) : charged && hit.mma_kg == null ? (
-          // Same sentence as the index path uses. The two disagreeing about what is missing
-          // would send the same operator to two different places for one problem.
-          <MissingMma fromPlate={fromPlate} />
-        ) : charged ? (
-          <span className="inline-flex items-center gap-1 text-amber-700">
-            <TriangleAlert className="w-3.5 h-3.5" />
-            {`${charged.code} nu are tarif valabil la ${hit.date} pentru ${mmaLabel(hit.mma_kg)}.`}
-          </span>
-        ) : drawn ? (
-          <span className="inline-flex items-center gap-1 text-amber-700">
-            <TriangleAlert className="w-3.5 h-3.5" />
-            {drawn.code} nu e activată pentru calcul, TPO-ul nu va adăuga nicio taxă aici.
-          </span>
-        ) : (
-          <span className="text-slate-500">Nicio taxă de zonă.</span>
-        )}
-      </div>
+      {!pending ? (
+        <>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Zonă</span>
+            {drawn ? (
+              <>
+                <span
+                  className="px-2 py-0.5 rounded-full text-white text-xs font-semibold"
+                  style={{ backgroundColor: drawn.color }}
+                >
+                  {drawn.code}
+                </span>
+                <span className="text-slate-600">{drawn.name}</span>
+                <span className="text-[11px] text-slate-400">{drawn.threshold}</span>
+              </>
+            ) : (
+              <span className="text-slate-500">În afara zonelor restricționate.</span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-[11px] uppercase tracking-wide text-slate-400 w-16">Calcul</span>
+            {charged && hit.rate ? (
+              <>
+                <span className="text-slate-800 font-semibold">{amount}</span>
+                <span className="text-[11px] text-slate-400">
+                  {charged.code} · {hit.matched_by === 'polygon' ? 'după contur' : 'după text'}
+                  {hit.mma_kg != null ? ` · ${mmaLabel(hit.mma_kg)}` : ''}
+                  {fromPlate?.status === 'found' ? ` · ${fromPlate.plate}` : ''}
+                </span>
+              </>
+            ) : charged && hit.mma_kg == null ? (
+              // Same sentence as the index path uses. The two disagreeing about what is missing
+              // would send the same operator to two different places for one problem.
+              <MissingMma fromPlate={fromPlate} />
+            ) : charged ? (
+              <span className="inline-flex items-center gap-1 text-amber-700">
+                <TriangleAlert className="w-3.5 h-3.5" />
+                {`${charged.code} nu are tarif valabil la ${hit.date} pentru ${mmaLabel(hit.mma_kg)}.`}
+              </span>
+            ) : drawn ? (
+              <span className="inline-flex items-center gap-1 text-amber-700">
+                <TriangleAlert className="w-3.5 h-3.5" />
+                {drawn.code} nu e activată pentru calcul, TPO-ul nu va adăuga nicio taxă aici.
+              </span>
+            ) : (
+              <span className="text-slate-500">Nicio taxă de zonă.</span>
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="text-[11px] text-slate-500">
+          Pinul de pe hartă arată sugestia, nu adresa introdusă.
+        </p>
+      )}
     </div>
   );
 }

@@ -80,6 +80,15 @@ export function refineFieldsWithBlocks(fields, blocks) {
       }
       touched = true;
     }
+    // PSL/TRO digits are glyph-critical: blend page mean even when the page is not
+    // "weak" overall, so moiré / shadow photos mark Nr. document for review (#88).
+    if (name === 'numar_document_marfa' && pageMean != null) {
+      next = Math.min(next, pageMean);
+      if (field.block_confidence == null) {
+        field.block_confidence = Math.round(pageMean * 1000) / 1000;
+      }
+      touched = true;
+    }
     if (!touched) continue;
     field.confidence = Math.round(next * 100) / 100;
     field.status = fieldStatus(field.confidence);

@@ -195,9 +195,10 @@ function foldGoodsToken(value) {
 export function normalizeGoodsUnit(raw) {
   const folded = foldGoodsToken(raw);
   if (!folded) return null;
-  // Mixed bag+bucket tip (#62) — before startsWith('sac'), which would keep only saci.
+  // Mixed packaging tip (#62 / #99) — before startsWith('sac'), which would keep only saci.
   const compact = folded.replace(/\s+/g, '');
-  if (compact === 'saci/galeti' || compact === 'galeti/saci') return 'saci/galeti';
+  if (compact === 'saci/galeti' || compact === 'galeti/saci') return 'saci / galeti';
+  if (compact === 'saci/bucati' || compact === 'bucati/saci') return 'saci / bucati';
   if (GOODS_UNIT_ALIASES[folded]) return GOODS_UNIT_ALIASES[folded];
   if (folded.startsWith('sac')) return 'saci';
   if (folded.startsWith('gal')) return 'galeti';
@@ -292,6 +293,10 @@ export function mapAnnexRows(columns, avize) {
         raw = annexQuantityValue(row);
       } else if (col.source === 'tip_marfa') {
         raw = annexTipMarfa(row);
+      } else if (col.source === 'zone_tax_detail') {
+        // Persisted when Editează writes the auto zone total (#98).
+        const ed = row?.extracted_data;
+        raw = (ed && typeof ed === 'object' && ed.zone_tax_breakdown) || '';
       } else {
         raw = col.source ? row?.[col.source] : undefined;
       }

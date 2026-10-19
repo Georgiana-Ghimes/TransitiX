@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PdfCanvasViewer from '@/components/PdfCanvasViewer';
 import { previewKind } from '@/lib/avizOps';
-import { containedRect } from '@/lib/ocrBlocks';
 import { fetchUploadBlob, resolvePreviewSource, withAccessToken } from '@/lib/uploadUrl';
+import { imagePreviewZoomStyle } from './AvizPreviewZoomBar';
 
 const SOURCE_LABEL = {
   driver_manual: 'Manual șofer',
@@ -74,9 +74,8 @@ const PREVIEW_FRAME_FILL =
  * @param {boolean} [props.fill]
  * @param {number} [props.zoom]  Fit-width multiplier (1 = fit). PDFs re-render; images use CSS scale.
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
- *   Rendered on top of an *image* preview, in a box that hugs the rendered picture exactly
- *   (so percentage-positioned children land on the page, not in the letterbox). PDFs are
- *   drawn on a canvas, so the overlay stays image-only.
+ *   Rendered on top of an *image* preview, covering the fit-width picture (scroll with the
+ *   page). PDFs are drawn on a canvas, so the overlay stays image-only.
  */
 export default function AvizFilePreview({
   fileUrl,
@@ -127,31 +126,11 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null
   const [pdfBlob, setPdfBlob] = useState(null);
   const [error, setError] = useState('');
   const [natural, setNatural] = useState(null);
-  const [boxSize, setBoxSize] = useState(null);
-  const boxRef = useRef(null);
   /** Last fileUrl we already painted — keep the same blob/object URL across soft remounts. */
   const loadedUrlRef = useRef('');
   const kind = previewKind(fileUrl);
   const frame = fill ? PREVIEW_FRAME_FILL : PREVIEW_FRAME_FIXED;
   const wantsOverlay = Boolean(overlay) && kind === 'image';
-
-  // The overlay has to sit on the picture, not on the box around it. `object-contain`
-  // letterboxes, so the picture's rectangle is computed from the box size and the natural
-  // size - and recomputed when the box changes (drawer resize, phone rotation).
-  useEffect(() => {
-    if (!wantsOverlay || !src) return undefined;
-    const el = boxRef.current;
-    if (!el) return undefined;
-    const update = () => setBoxSize({ width: el.clientWidth, height: el.clientHeight });
-    update();
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', update);
-      return () => window.removeEventListener('resize', update);
-    }
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [wantsOverlay, src]);
 
   useEffect(() => {
     let objectUrl = '';
@@ -291,70 +270,51 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null
       />
     );
   }
-  if (wantsOverlay) {
-    const rect = natural && boxSize
-      ? containedRect(boxSize.width, boxSize.height, natural.naturalWidth, natural.naturalHeight)
-      : null;
-    return (
-      <div
-        ref={boxRef}
-        className={`${fill ? 'absolute inset-0' : 'relative w-full min-h-[240px] h-[36vh] max-h-[420px]'} bg-slate-100 overflow-hidden`}
-      >
-        <img
-          alt="Aviz"
-          className="absolute inset-0 w-full h-full object-contain"
-          src={src}
-          onError={() => setError('Nu am putut afișa imaginea.')}
-          onLoad={(e) => setNatural({ naturalWidth: e.currentTarget.naturalWidth, naturalHeight: e.currentTarget.naturalHeight })}
-        />
-        {rect ? (
-          <div
-            className="absolute pointer-events-none"
-            style={{ left: rect.left, top: rect.top, width: rect.width, height: rect.height }}
-          >
-            {overlay(natural)}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-  if (kind === 'image') {
-    if (zoomFactor === 1) {
+  if (kind === 'image' || wantsOverlay) {
+    // Fit-width × zoom (same as PDF). Scroll tall phone screenshots instead of shrinking
+    // them with object-contain (#91). Width = zoom%, never CSS scale + inverse width —
+    // that made 75% look like a heavy zoom-in on screenshots.
+    const scrollPane = fill
+      || zoomFactor !== 1
+      || wantsOverlay;
+    if (scrollPane) {
       return (
-        <img
-          alt="Aviz"
-          className={frame}
-          src={src}
-          onError={() => setError('Nu am putut afișa imaginea.')}
-        />
+        <div
+          className={
+            fill
+              ? 'absolute inset-0 overflow-auto overscroll-contain bg-slate-100'
+              : 'relative w-full min-h-[240px] h-[36vh] max-h-[420px] overflow-auto overscroll-contain bg-slate-100'
+          }
+        >
+          <div className="relative bg-white" style={imagePreviewZoomStyle(zoomFactor)}>
+            <img
+              alt="Aviz"
+              className="block w-full h-auto"
+              src={src}
+              onError={() => setError('Nu am putut afișa imaginea.')}
+              onLoad={wantsOverlay ? (e) => setNatural({
+                naturalWidth: e.currentTarget.naturalWidth,
+                naturalHeight: e.currentTarget.naturalHeight,
+              }) : undefined}
+            />
+            {wantsOverlay && natural ? (
+              <div className="absolute inset-0 pointer-events-none">
+                {overlay(natural)}
+              </div>
+            ) : null}
+          </div>
+        </div>
       );
     }
     return (
-      <div
-        className={
-          fill
-            ? 'absolute inset-0 overflow-auto bg-slate-100'
-            : 'w-full min-h-[240px] h-[36vh] max-h-[420px] overflow-auto bg-slate-100'
-        }
-      >
-        <div
-          className="origin-top-left"
-          style={{
-            transform: `scale(${zoomFactor})`,
-            width: `${100 / zoomFactor}%`,
-          }}
-        >
-          <img
-            alt="Aviz"
-            className="w-full h-auto object-contain bg-white"
-            src={src}
-            onError={() => setError('Nu am putut afișa imaginea.')}
-          />
-        </div>
-      </div>
+      <img
+        alt="Aviz"
+        className={frame}
+        src={src}
+        onError={() => setError('Nu am putut afișa imaginea.')}
+      />
     );
   }
-
   return (
     <div className={`${fill ? 'absolute inset-0 flex flex-col justify-center' : ''} p-4 space-y-2`}>
       <p className="text-xs text-slate-500">Nu există preview pentru acest tip de fișier.</p>

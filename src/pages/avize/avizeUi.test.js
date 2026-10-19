@@ -14,7 +14,9 @@ import {
   AVIZ_DEFAULT_PAGE_SIZE,
   AVIZ_STATUS_DOT_LEGEND,
   AVIZ_STATUS_DOT_ONELINER,
+  CAROUSEL_EDIT_FIELDS,
   LOW_FIELD_TEXT_CLS,
+  OCR_OWNED_FIELDS,
   isGoodsDocOnly,
   missingRequiredCarouselFields,
   rowsNeedingOcrVerify,
@@ -31,6 +33,7 @@ import {
   lowField,
   manualAvizEditLabels,
   requiresAnnexReviewGate,
+  reviewDraftFromPayload,
   shouldAutoDownloadEmailFallback,
   TEMPLATE_ACTION_LEGEND,
   waitForAvizExtractSettled,
@@ -228,6 +231,38 @@ describe('avizeUi', () => {
     expect(unackedLowOcrFields({ ...low, status: 'confirmed' })).toEqual([]);
     expect(rowsNeedingOcrVerify([low, ok, acked]).map((r) => r.id)).toEqual(['low']);
     expect(rowsNeedingCarouselEdit([low, ok]).map((r) => r.id)).toEqual(['low']);
+  });
+
+  it('#91 Verificare OCR / Confirmă carousel expose every OCR-owned field (not only TPO/auto/dată/cantitate)', () => {
+    const draft = reviewDraftFromPayload({
+      values: {
+        numar_tpo: 'TPO-1',
+        numar_auto: 'B-01-XXX',
+        data_efectuare_cursa: '2026-10-03',
+        cantitate_marfa: '12',
+        ruta_transport: 'Site → Livrare',
+        tip_marfa: 'Adeziv',
+        gross_weight_kg: '9000',
+        net_weight_kg: '8500',
+        numar_document_marfa: 'PSL-1',
+      },
+      issues: [{ field: 'ruta_transport', value: 'Site → Livrare' }],
+    });
+    for (const key of OCR_OWNED_FIELDS) {
+      expect(draft).toHaveProperty(key);
+    }
+    expect(draft.ruta_transport).toBe('Site → Livrare');
+    expect(draft.gross_weight_kg).toBe('9000');
+    expect(draft.tip_marfa).toBe('Adeziv');
+    expect(draft.numar_document_marfa).toBe('PSL-1');
+
+    const carouselKeys = CAROUSEL_EDIT_FIELDS.map((f) => f.key);
+    for (const key of [
+      'ruta_transport', 'tip_marfa', 'cantitate_marfa',
+      'gross_weight_kg', 'net_weight_kg', 'numar_document_marfa',
+    ]) {
+      expect(carouselKeys).toContain(key);
+    }
   });
 
   it('#95 HITL / verificare obligatorie needs caution even when carousel has nothing to type', () => {

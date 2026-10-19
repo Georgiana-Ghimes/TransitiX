@@ -685,12 +685,27 @@ Aviz de expeditie: PSL-0062056
 15.00 pce Palet Euro returnabil
 Greutate bruta: 14,807.89 kg
 `;
-    expect(extractQuantity(text).value).toEqual({ quantity: 598, unit: 'saci/galeti' });
-    expect(extractGoodsUnit(text).value).toBe('saci/galeti');
+    expect(extractQuantity(text).value).toEqual({ quantity: 598, unit: 'saci / galeti' });
+    expect(extractGoodsUnit(text).value).toBe('saci / galeti');
     const doc = extractDocument(text, { documentType: 'aviz' });
     expect(doc.values.quantity).toBe(598);
-    expect(doc.values.tip_marfa).toBe('saci/galeti');
-    expect(doc.values.quantity_unit).toBe('saci/galeti');
+    expect(doc.values.tip_marfa).toBe('saci / galeti');
+    expect(doc.values.quantity_unit).toBe('saci / galeti');
+  });
+
+  it('keeps mixed tip when a footer names only saci (#99)', () => {
+    const text = `
+Aviz de expeditie: PSL-0062999
+270.00 sac Adeziv FlexBond
+108.00 sac Nivela Quattro
+24.00 buc UniBaza Grund
+7.00 pce Palet Euro returnabil
+Numarul de saci: 378,00
+Greutate bruta: 9,623.76 kg
+`;
+    expect(extractGoodsUnit(text).value).toBe('saci / galeti');
+    expect(extractQuantity(text).value).toMatchObject({ unit: 'saci / galeti' });
+    expect(extractQuantity(text).value.quantity).toBe(402);
   });
 
   it('keeps a single product line and ignores euro-pallet pce', () => {
@@ -1242,6 +1257,35 @@ Auto: B 112 VFM
     expect(fields.numar_tpo.confidence).toBeGreaterThanOrEqual(CRITICAL_BANDS.auto);
   });
 
+  it('blends page mean onto Nr. document marfă so moiré photos mark it for review (#88)', () => {
+    const fields = {
+      numar_document_marfa: {
+        value: 'PSL-0032301', confidence: 0.9, matched: 'PSL-0032301', status: 'ok',
+      },
+    };
+    const blocks = [
+      { text: 'Aviz de expeditie PSL-0032301', confidence: 0.68 },
+      { text: 'Greutate bruta 9623.76', confidence: 0.74 },
+    ];
+    refineFieldsWithBlocks(fields, blocks);
+    expect(fields.numar_document_marfa.confidence).toBeLessThan(CRITICAL_BANDS.auto);
+    expect(fields.numar_document_marfa.status).toBe('review');
+  });
+
+  it('recovers greutate netă beside brută when the net label is mangled (#88)', () => {
+    const text = `
+Aviz de expeditie: PSL-0062301
+Greutate xxx: 9.450,15 kg
+Greutate brută: 9.623,76 kg
+`;
+    expect(extractNetWeight(text).value).toBe(9450.15);
+    expect(extractNetWeight(text).confidence).toBeLessThan(0.8);
+  });
+
+  it('reads greutate netă through short OCR junk after the label (#88)', () => {
+    expect(extractNetWeight('Greutate netă :: 9.450,15 kg').value).toBe(9450.15);
+  });
+
   /**
    * A hand over the corner of the page truncates the code without making it look wrong.
    * Copied onto an invoice that is worse than a blank field, so it has to reach an operator.
@@ -1564,7 +1608,7 @@ Numarul de paleti 15.00
 
   it('ranks a named packaging above a bare count wherever they appear', () => {
     // sac + buc on one page is a mixed load (#62), not “saci wins and buc disappears”.
-    expect(extractGoodsUnit('768 buc, 420 saci').value).toBe('saci/galeti');
+    expect(extractGoodsUnit('768 buc, 420 saci').value).toBe('saci / galeti');
     expect(extractGoodsUnit('18 paleti si 768 buc').value).toBe('paleti');
   });
 

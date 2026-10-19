@@ -343,15 +343,17 @@ const WEIGHT_UNITS = { kg: 1, kgs: 1, t: 1000, to: 1000, tone: 1000, tona: 1000,
  * The digits are matched without `\s`, so a number cannot swallow the following line on a PDF
  * that puts every token on its own row. A literal space still allows "15 744,00".
  */
-function matchLabelledWeight(blob, label) {
+function matchLabelledWeight(blob, label, { allowNoiseGap = false } = {}) {
   const unit = '(kg|to?ne?|t)\\b';
   const num = '([\\d][\\d., ]*)';
   // Optional parentheses around the unit: "(kg)" or bare "kg".
   const unitToken = `\\(?\\s*${unit}\\s*\\)?`;
+  // Moiré / diagonal shadow often inserts junk between „Greutate netă” and the figure (#88).
+  const gap = allowNoiseGap ? '(?:[^\\d\\n]{0,20})?' : '';
 
   // Label, then unit, then number — `Greutate bruta, kg 15,744.00` / `Greutate brută (kg) 9.487,80`.
   const unitThenNum = blob.match(
-    new RegExp(`(?:${label})\\s*[,:\\-]?\\s*${unitToken}\\s*[:\\-]?\\s*${num}`, 'i'),
+    new RegExp(`(?:${label})\\s*[,:\\-]?\\s*${gap}${unitToken}\\s*[:\\-]?\\s*${num}`, 'i'),
   );
   if (unitThenNum) {
     return { raw: unitThenNum[2], unit: unitThenNum[1], matched: unitThenNum[0] };
@@ -359,7 +361,7 @@ function matchLabelledWeight(blob, label) {
 
   // Label, then number, then unit — `Greutate bruta: 9.000 kg`.
   const numThenUnit = blob.match(
-    new RegExp(`(?:${label})\\s*[:\\-]?\\s*${num}\\s*${unit}`, 'i'),
+    new RegExp(`(?:${label})\\s*[:\\-]?\\s*${gap}${num}\\s*${unit}`, 'i'),
   );
   if (numThenUnit) {
     return { raw: numThenUnit[1], unit: numThenUnit[2], matched: numThenUnit[0] };
@@ -403,7 +405,8 @@ function weightFrom(hit, confidence) {
 }
 
 const GROSS_LABEL = 'greutate\\s*(?:bruta|brută)|masa\\s*(?:bruta|brută)|gross\\s*weight|g\\.?\\s*bruta';
-const NET_LABEL = 'greutate\\s*(?:neta|netă)|masa\\s*(?:neta|netă)|net\\s*weight';
+/** Soft `net\\w*` covers neta / netă / netä / OCR “net” truncations under moiré (#88). */
+const NET_LABEL = 'greutate\\s*(?:neta|netă|net\\w*)|masa\\s*(?:neta|netă|net\\w*)|net\\s*weight';
 
 /** Bag/unit sizes like "25 kg" on the product line — not a truck load. */
 export const LOAD_WEIGHT_MIN_KG = 100;
@@ -735,8 +738,44 @@ export function repairGrossMissingDigit(grossKg, netKg) {
   return null;
 }
 
+/**
+ * When „Greutate netă” is mangled but brută was read, pick another load-sized kg below gross (#88).
+ */
+function matchNetBesideGross(blob, grossKg) {
+  const g = Number(grossKg);
+  if (!Number.isFinite(g) || g < LOAD_WEIGHT_MIN_KG) return null;
+  const re = /([\d][\d.,]*)\s*kg\b/gi;
+  const candidates = [];
+  let m;
+  while ((m = re.exec(blob)) !== null) {
+    const value = parseNumber(normalizeWeightRaw(m[1]));
+    if (value == null || !isPlausibleLoadWeightKg(value)) continue;
+    if (Math.abs(value - g) < 0.05) continue;
+    // Net is always ≤ gross; packaging delta on a truck is rarely > 5 t.
+    if (value > g + 0.05 || g - value > 5000) continue;
+    candidates.push({ value, raw: m[1], matched: m[0] });
+  }
+  if (!candidates.length) return null;
+  // Prefer the heaviest remaining (closest under gross = real net + light packaging).
+  candidates.sort((a, b) => b.value - a.value);
+  return { raw: candidates[0].raw, unit: 'kg', matched: candidates[0].matched };
+}
+
 export function extractNetWeight(text) {
-  return weightFrom(matchLabelledWeight(String(text || ''), NET_LABEL), 0.9) ?? NO_MATCH;
+  const blob = String(text || '');
+  const labelled = weightFrom(
+    matchLabelledWeight(blob, NET_LABEL, { allowNoiseGap: true }),
+    0.9,
+  );
+  if (labelled) return labelled;
+
+  // Gross known, net label lost to shadow — recover another kg line with low confidence (#88).
+  const gross = weightFrom(matchLabelledWeight(blob, GROSS_LABEL), 0.9);
+  if (gross?.value != null) {
+    const beside = weightFrom(matchNetBesideGross(blob, gross.value), 0.55);
+    if (beside) return beside;
+  }
+  return NO_MATCH;
 }
 
 /**
@@ -775,18 +814,62 @@ function foldUnit(unit) {
     .replace(/\p{M}/gu, '');
 }
 
-/** Mixed bag+bucket sheets (#62): tip and quantity cover both packaging types. */
-export const MIXED_SAC_GALETI = 'saci/galeti';
+/**
+ * Mixed bag+bucket sheets (#62 / #99): tip and quantity cover both packaging types.
+ * Spaced „ / ” is what Editează shows; compact form still normalises the same.
+ */
+export const MIXED_SAC_GALETI = 'saci / galeti';
+/** True pieces (not Baumit găleți-as-buc) alongside bags (#99). */
+export const MIXED_SAC_BUCATI = 'saci / bucati';
 
 function isMixedSacGaleti(unit) {
   const u = foldUnit(unit).replace(/\s+/g, '');
   return u === 'saci/galeti' || u === 'galeti/saci';
 }
 
+function isMixedGoodsTip(unit) {
+  const u = foldUnit(unit).replace(/\s+/g, '');
+  return isMixedSacGaleti(u) || u === 'saci/bucati' || u === 'bucati/saci';
+}
+
+/** Preferred tip order when several packaging types share one aviz (#99). */
+const MIXED_TIP_ORDER = ['saci', 'galeti', 'bucati', 'm3'];
+
+/** Join packaging unit keys for Tip marfă: `saci / galeti` (#99). */
+export function formatMixedGoodsTip(units) {
+  const labels = { saci: 'saci', galeti: 'galeti', bucati: 'bucati', m3: 'm³', paleti: 'paleti' };
+  const seen = new Set();
+  for (const u of units || []) {
+    const key = u === 'm³' ? 'm3' : foldUnit(u);
+    if (!labels[key] || key === 'paleti') continue;
+    seen.add(key);
+  }
+  const ordered = MIXED_TIP_ORDER.filter((k) => seen.has(k));
+  if (ordered.length < 2) return null;
+  return ordered.map((k) => labels[k]).join(' / ');
+}
+
+/**
+ * Distinct goods packaging on the page (document order), after buc→găleți remap when needed.
+ * Null when only one type (or only euro-pallets).
+ */
+function mixedGoodsFromLines(lines, folded) {
+  const remapped = remapBucToGaleti(lines, folded);
+  const tip = formatMixedGoodsTip(remapped.map((l) => l.unit));
+  if (!tip) return null;
+  const goods = remapped.filter((l) => {
+    const u = l.unit;
+    return u === 'saci' || u === 'galeti' || u === 'bucati' || u === 'm3';
+  });
+  if (goods.length < 2) return null;
+  const sum = Math.round(goods.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
+  return { tip, sum, goods, matched: goods.map((l) => l.matched).join(' + ') };
+}
+
 function quantityKey(unit) {
   const u = foldUnit(unit);
   // Must run before startsWith('sac') — otherwise "saci/galeti" collapses to saci alone (#62).
-  if (isMixedSacGaleti(u)) return 'saci';
+  if (isMixedGoodsTip(u)) return 'saci';
   if (u === 'm3' || u === 'mc') return 'm3';
   if (u.startsWith('sac')) return 'saci';
   if (u.startsWith('pal')) return 'paleti';
@@ -985,6 +1068,14 @@ function packagingFooterTotal(folded) {
  */
 export function extractGoodsUnit(text) {
   const folded = foldUnit(text);
+  const lines = collectPackagingLines(folded);
+
+  // Mixed packaging beats a single footer label (#62 / #99): „Numărul de saci” must not
+  // hide găleți/bucăți lines on the same aviz.
+  const mixed = mixedGoodsFromLines(lines, folded);
+  if (mixed) {
+    return result(mixed.tip, 0.88, mixed.matched);
+  }
 
   const fromFooter = packagingFooterUnit(folded);
   if (fromFooter) {
@@ -993,13 +1084,10 @@ export function extractGoodsUnit(text) {
   }
 
   // Prefer the same line inventory as extractQuantity so Tip and Cantitate agree (#62 / #76).
-  const remapped = remapBucToGaleti(collectPackagingLines(folded), folded);
+  const remapped = remapBucToGaleti(lines, folded);
   const goods = remapped.filter((l) => l.unit === 'saci' || l.unit === 'galeti');
   const hasSaci = goods.some((l) => l.unit === 'saci');
   const hasGaleti = goods.some((l) => l.unit === 'galeti');
-  if (hasSaci && hasGaleti) {
-    return result(MIXED_SAC_GALETI, 0.85, goods.map((l) => l.matched).join(' + '));
-  }
   // Bags or buckets alone beat the "N pal" package column (and euro-pallet pce).
   if (hasSaci) {
     return result('saci', 0.85, goods.map((l) => l.matched).join(' + '));
@@ -1069,6 +1157,7 @@ export function packagingWordIn(text) {
   const folded = foldUnit(text);
   if (!folded) return null;
   if (/saci\s*\/\s*galeti|galeti\s*\/\s*saci/.test(folded)) return MIXED_SAC_GALETI;
+  if (/saci\s*\/\s*bucati|bucati\s*\/\s*saci/.test(folded)) return MIXED_SAC_BUCATI;
   let best = null;
   const re = new RegExp(`\\b${GOODS_UNIT_SOURCE}\\b`, 'gi');
   let match = re.exec(folded);
@@ -1388,6 +1477,22 @@ export function extractQuantity(text) {
 }
 
 function extractQuantityCore(blob, folded) {
+  const lines = collectPackagingLines(folded);
+
+  // Mixed sac + găleți/bucăți first (#62 / #99), even when a footer names only one unit.
+  const mixed = mixedGoodsFromLines(lines, folded);
+  if (
+    mixed
+    && isPlausibleQuantity(mixed.sum, mixed.tip)
+    && !isWeightMistakenForQuantity(mixed.sum, mixed.tip, blob)
+  ) {
+    return result(
+      { quantity: mixed.sum, unit: mixed.tip },
+      0.9,
+      mixed.matched,
+    );
+  }
+
   const footer = packagingFooterTotal(folded);
   if (
     footer
@@ -1401,7 +1506,6 @@ function extractQuantityCore(blob, folded) {
   }
 
   const footerUnit = packagingFooterUnit(folded);
-  const lines = collectPackagingLines(folded);
 
   // Footer label seen (tip = găleți) but the figure failed OCR: sum product lines instead of
   // grabbing the first `48 buc`. Report the footer unit so Tip marfă and Cantitate agree.
@@ -1471,25 +1575,7 @@ function extractQuantityCore(blob, folded) {
     return NO_MATCH;
   }
 
-  // sac + buc/găleți on the same aviz: sum both, tip = saci/galeti, skip euro-pallet (#62).
   const remapped = remapBucToGaleti(lines, folded);
-  const mixedGoods = remapped.filter((l) => l.unit === 'saci' || l.unit === 'galeti');
-  const mixedHasSaci = mixedGoods.some((l) => l.unit === 'saci');
-  const mixedHasGaleti = mixedGoods.some((l) => l.unit === 'galeti');
-  if (mixedHasSaci && mixedHasGaleti && mixedGoods.length >= 2) {
-    const sum = Math.round(mixedGoods.reduce((acc, l) => acc + l.qty, 0) * 100) / 100;
-    if (
-      isPlausibleQuantity(sum, MIXED_SAC_GALETI)
-      && !isWeightMistakenForQuantity(sum, MIXED_SAC_GALETI, blob)
-    ) {
-      return result(
-        { quantity: sum, unit: MIXED_SAC_GALETI },
-        0.88,
-        mixedGoods.map((l) => l.matched).join(' + '),
-      );
-    }
-  }
-
   const bestRank = Math.max(...remapped.map((l) => l.rank));
   const topUnit = remapped.find((l) => l.rank === bestRank)?.unit;
   const top = remapped.filter((l) => l.unit === topUnit);

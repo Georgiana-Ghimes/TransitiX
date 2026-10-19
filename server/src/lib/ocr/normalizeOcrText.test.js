@@ -116,6 +116,13 @@ describe('normalizeOcrText', () => {
     expect(normalizeOcrText('Str. Industriului, nr. 7')).toContain('Industriei');
   });
 
+  it('repairs Bulevardul Piperii → Pipera (#89)', () => {
+    expect(normalizeOcrText('Bulevardul Piperii nr. 1/VII')).toContain('Bulevardul Pipera');
+    expect(normalizeOcrText('Bvd. Piperii nr. 1')).toContain('Bvd. Pipera');
+    // Unrelated “Piperii” (without boulevard type) stays put.
+    expect(normalizeOcrText('Magazin Piperii')).toBe('Magazin Piperii');
+  });
+
   it('repairs handwritten TPO with a slash separator', () => {
     expect(normalizeOcrText('Num de comanda de transport: TPO / 31027')).toContain('TPO-31027');
     expect(normalizeOcrText('TPO/31027')).toContain('TPO-31027');

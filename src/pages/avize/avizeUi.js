@@ -19,7 +19,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Verificare OCR',
-    text: 'Deschide imaginea lângă câmpurile cu încredere sub 80 % sau regulă eșuată. Salvează corecțiile (audit old→new) apoi Marchează verificat.',
+    text: 'Deschide documentul lângă toate câmpurile citite din aviz (TPO, auto, dată, rută, tip marfă, cantitate, greutăți, document marfă). Salvează corecțiile (audit old→new) apoi Marchează verificat. Preview-ul se derulează ca să vezi toată pagina.',
   },
   {
     name: 'Re-extrage',
@@ -43,7 +43,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Text roșu bold (OCR nesigur)',
-    text: 'TPO, auto sau rută în roșu bold înseamnă că OCR-ul nu e sigur (ștampilă peste text, citire slabă, format ciudat). Nu înseamnă „editat manual”. Confirmă / Unește sunt blocate până verifici pe document (Verifică → Marchează verificat, sau Salvează în carusel). Un TPO greșit ajunge în grupul greșit din Excel.',
+    text: 'TPO, auto sau rută în roșu bold înseamnă că OCR-ul nu e sigur (ștampilă peste text, citire slabă, format ciudat). Nu înseamnă „editat manual”. Confirmă / Unește sunt blocate până verifici pe document (Verifică → Marchează verificat, sau Salvează în carusel). Un TPO greșit ajunge în grupul greșit din Excel. Pe Auto: dacă mașina e în Autoturisme cu MTMA și fără insigna „din OCR, neverificat”, evidențierea se stinge la refresh / Re-extrage — nu mai rămâne roșu doar pentru că OCR-ul a fost slab pe o poză anterioară.',
   },
   {
     name: 'Unește în Anexa XLSX',
@@ -130,11 +130,33 @@ export function formatIncarcareLabel(row, formatDate = (d) => d) {
  * The fields Re-extrage rewrites from the file, mirrors `EXTRACT_COLUMNS` on the server, narrowed
  * to the ones the edit form can actually change. Km, taxe, valoare TPO and observations are absent
  * on purpose: extraction never touches them, so they are never at risk.
+ *
+ * Same set is the editable surface of Verificare OCR (#91): flagged route / weights / tip marfă /
+ * document marfă must be correctable there, not only via Editează.
  */
-const OCR_OWNED_FIELDS = [
+export const OCR_OWNED_FIELDS = [
   'numar_tpo', 'data_efectuare_cursa', 'numar_auto', 'ruta_transport', 'tip_marfa',
   'cantitate_marfa', 'gross_weight_kg', 'net_weight_kg', 'numar_document_marfa',
 ];
+
+/**
+ * Draft keys for the HITL drawer: every OCR-owned column, plus any issue field that is not in
+ * that list (defensive — a new finding key still gets an input).
+ */
+export function reviewDraftFromPayload(data) {
+  const next = {};
+  const values = data?.values || {};
+  for (const key of OCR_OWNED_FIELDS) {
+    const raw = values[key] ?? '';
+    next[key] = key === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+  }
+  for (const issue of data?.issues || []) {
+    if (!issue?.field || next[issue.field] !== undefined) continue;
+    const raw = issue.value ?? values[issue.field] ?? '';
+    next[issue.field] = issue.field === 'data_efectuare_cursa' ? toDateIso(raw) : raw;
+  }
+  return next;
+}
 
 function ocrValueFor(values, key) {
   // The extractor calls it `quantity`; the column is `cantitate_marfa`.
@@ -228,13 +250,21 @@ export const CAROUSEL_REQUIRED_KEYS = [
   'ruta_transport',
 ];
 
-/** Essential fields for the force/export carousel (subset of AVIZ_FORM_FIELDS). */
+/**
+ * Essential fields for the force/export carousel (subset of AVIZ_FORM_FIELDS).
+ * Includes every OCR-owned column so Confirmă can fix a flagged route / weight / tip marfă
+ * without closing and opening Editează (#91).
+ */
 export const CAROUSEL_EDIT_FIELDS = [
   { key: 'numar_tpo', label: 'Număr TPO', required: true },
   { key: 'numar_document_marfa', label: 'Număr document marfă (TRO/PSL)', required: false },
   { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', type: 'date', required: true },
   { key: 'numar_auto', label: 'Număr auto', required: true },
   { key: 'ruta_transport', label: 'Rută transport', wide: true, required: true },
+  { key: 'tip_marfa', label: 'Tip marfă' },
+  { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³/bucăți)', inputMode: 'decimal' },
+  { key: 'gross_weight_kg', label: 'Greutate brută (kg)', inputMode: 'decimal' },
+  { key: 'net_weight_kg', label: 'Greutate netă (kg)', inputMode: 'decimal' },
   { key: 'km_parcursi', label: 'Km parcurși', inputMode: 'decimal' },
   { key: 'taxe_suplimentare', label: 'Taxe suplimentare', inputMode: 'decimal' },
   { key: 'observatii', label: 'Observații', wide: true },
@@ -409,6 +439,9 @@ export function emptyForm(row = {}) {
   form.ruta_display = row.ruta_display == null ? '' : String(row.ruta_display);
   form.trip_id = row.trip_id ?? '';
   form.goods_doc_only = isGoodsDocOnly(row);
+  // Zone fee lines written by the Taxă zonă panel (#98) — not a form field, saved into extracted_data.
+  const ed = row.extracted_data && typeof row.extracted_data === 'object' ? row.extracted_data : {};
+  form.zone_tax_breakdown = ed.zone_tax_breakdown == null ? '' : String(ed.zone_tax_breakdown);
   return form;
 }
 
@@ -484,7 +517,7 @@ export const AVIZ_STATUS_DOT_LEGEND = [
 ];
 
 export const AVIZ_STATUS_DOT_ONELINER =
-  'Bulinele = status în coloana Stare; text roșu bold pe TPO / auto / rută = OCR nesigur — Confirmă / Unește blocate până verifici pe document (Verifică sau Salvează în carusel).';
+  'Bulinele = status în coloana Stare; text roșu bold pe TPO / auto / rută = OCR nesigur — Confirmă / Unește blocate până verifici pe document (Verifică sau Salvează în carusel). Auto roșu dispare când plăcuța e în Autoturisme cu MTMA completat și fără „din OCR, neverificat” (la refresh listă sau după Re-extrage).';
 
 /**
  * Validation findings stored on extract (decorateAviz also mirrors them as validation_findings).

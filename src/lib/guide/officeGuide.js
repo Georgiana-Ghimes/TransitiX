@@ -95,15 +95,16 @@ const TAXA_ZONA = {
   title: 'Taxa de zonă București',
   lead: 'Se calculează singură în Editează aviz și intră în Taxe suplimentare, de unde ajunge în Excel.',
   blocks: [
-    p('Trei lucruri trebuie să fie adevărate ca să apară o sumă: avizul are greutate brută citită, adresa de livrare se rezolvă într-o zonă, iar mașina are MTMA completat în Autoturisme.'),
+    p('Trei lucruri trebuie să fie adevărate ca să apară o sumă: avizul are greutate brută citită, cel puțin un capăt al rutei (încărcare sau livrare) se rezolvă într-o zonă, iar mașina are MTMA completat în Autoturisme.'),
     terms([
-      { term: 'Zona decide adresa', text: 'Strada de livrare de pe aviz e căutată într-un index de străzi livrat cu aplicația. Nimic nu pleacă spre internet, adresele clienților rămân la tine.' },
+      { term: 'Toate opririle', text: 'Din Rută se citesc încărcarea și fiecare livrare. Accesul se datorează pe fiecare zonă distinctă: A + B → două linii și un total; aceeași zonă de două ori → o singură taxă. Totalul intră în Taxe suplimentare (și în raport); detaliul pe zone poate fi adăugat ca coloană „Taxe zonă (detaliu)”.' },
+      { term: 'Zona decide adresa', text: 'Străzile de pe aviz sunt căutate într-un index livrat cu aplicația. Nimic nu pleacă spre internet, adresele clienților rămân la tine.' },
       { term: 'Prețul decide MTMA', text: 'Masa maximă autorizată din cartea mașinii, nu cât era încărcată. Primăria taxează autorizația după MTMA, deci un camion plecat pe jumătate gol plătește tot tariful lui.' },
       { term: 'Brută peste MTMA', text: 'Dacă avizul arată mai mult decât MTMA din registru, nu se taxează nimic și primești avertisment: un camion nu poate cântări mai mult decât masa lui autorizată, deci MTMA e greșit.' },
       { term: 'Sub prag', text: 'Zona A e restricționată peste 5 t MTMA, zona B peste 7,5 t. Sub prag nu e nevoie de autorizație, deci suma e 0, dar îți arată ce tarif ar fi fost listat pentru intervalul acela.' },
     ]),
     p('Tarifele sunt cele din HCGMB 514/2025, în vigoare de la 01.01.2026, pe intervale de MTMA: 5 la 7,5 t, 7,5 la 12,5 t, 12,5 la 16 t, 16 la 22 t, 22 la 40 t și peste 40 t.'),
-    note('Se taxează capătul de livrare. Capătul de încărcare apare pe aviz ca un cod de sit (BOL, MIL), nu ca o stradă, deci un camion care pleacă din depozitul Militari nu e taxat pentru drumul acela.'),
+    note('Dacă încărcarea e doar un cod de sit (BOL, MIL-NEAMTIU) fără stradă, acel capăt nu poate fi taxat: apare menționat în panou, iar taxa rămâne pe capătul care are stradă rezolvabilă.'),
   ],
 };
 

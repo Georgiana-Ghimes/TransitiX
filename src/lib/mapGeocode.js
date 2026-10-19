@@ -1,24 +1,78 @@
 /**
- * Map-only geocode for Harta zonelor: public Photon (OSM), first usable hit.
+ * Map-only geocode for Harta zonelor: public Photon (OSM), first *agreeing* hit.
  *
  * Deliberately separate from `/zones/locate`: that path caches and scores confidence;
  * the map only needs a raw OSM coordinate so an operator can see the pin vs zone outlines.
  *
  * Photon is picky about over-specified queries (`strada X 1F, Town, Romania` often returns
  * nothing while `X, Town` hits), so we try progressively shorter candidates.
+ *
+ * A hit whose street name does not agree with what was typed is never auto-accepted: that is
+ * how "strada Garii 12, Chiajna" used to become "Strada Simion Ghinea 12" with a confident
+ * pin and tax answer. Weak / partial street overlap comes back as a suggestion the operator
+ * must confirm before zone/tax are calculated.
  */
+
+import { plainText, streetNameWithoutType } from './streetName.js';
 
 const PHOTON_PUBLIC = 'https://photon.komoot.io/api/';
 /** Same Romania bbox the server Photon client uses. */
 const RO_BBOX = '20.26,43.62,29.72,48.27';
 
 function fold(value) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ș|ş/g, 's')
-    .replace(/ț|ţ/g, 't');
+  return plainText(value);
+}
+
+/** Street-name tokens from a free-text query (no type word, no house number, no locality). */
+export function queryStreetTokens(query, locality = null) {
+  let text = String(query || '').trim();
+  if (!text) return [];
+  const loc = String(locality || '').trim();
+  if (loc) {
+    const re = new RegExp(`,\\s*${loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i');
+    text = text.replace(re, '').trim();
+  }
+  text = text
+    .replace(/,?\s*Romania\s*$/i, '')
+    .replace(/\bnr\.?\s*[0-9]+[A-Za-z]?\b/gi, ' ')
+    .replace(/\b[0-9]+[A-Za-z]?\b/g, ' ')
+    .replace(/[,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const bare = streetNameWithoutType(text);
+  return bare.split(/\s+/).filter((t) => t.length >= 2);
+}
+
+function featureStreetTokens(props) {
+  const street = props?.street || props?.name || '';
+  const bare = streetNameWithoutType(street);
+  return bare.split(/\s+/).filter((t) => t.length >= 2 && !/^\d+[a-z]?$/.test(t));
+}
+
+function tokenHits(want, got) {
+  return want.filter((w) => got.some((g) => (
+    g === w
+    || (w.length >= 4 && g.length >= 4 && (g.includes(w) || w.includes(g)))
+  )));
+}
+
+/**
+ * How the Photon street compares to what was typed.
+ *   ok          — enough name overlap to trust the pin
+ *   suggestion  — some overlap, but not enough to charge without a human
+ *   none        — different street (or no street at all when one was asked for)
+ */
+export function streetAgreement(wantTokens, gotTokens) {
+  if (!wantTokens.length) return 'ok';
+  if (!gotTokens.length) return 'none';
+  const hits = tokenHits(wantTokens, gotTokens);
+  if (!hits.length) return 'none';
+  // Every typed token appears in the result ("ghinea" → Simion Ghinea, or full match).
+  if (hits.length >= wantTokens.length) return 'ok';
+  // Result is a shorter spelling of the same street (OSM dropped a given name).
+  if (gotTokens.every((g) => tokenHits(wantTokens, [g]).length > 0)) return 'ok';
+  // Shared token(s) but also a disagreeing name ("Simion Barnutiu" vs "Simion Ghinea").
+  return 'suggestion';
 }
 
 /** Shorter queries Photon is more likely to answer. */
@@ -58,7 +112,9 @@ export function mapGeocodeQueries(query, locality = null) {
     .trim();
   if (bare) add(loc ? `${bare}, ${loc}` : bare);
 
-  if (loc) add(loc);
+  // Bare locality only when the query had no street name — otherwise Photon pins the town
+  // centre and the map used to treat that as the typed address.
+  if (!queryStreetTokens(base, loc).length && loc) add(loc);
   return out;
 }
 
@@ -81,6 +137,7 @@ function featureToPin(feature, query) {
     query,
     provider: 'photon-map',
     city: props.city || props.district || null,
+    street: props.street || props.name || null,
   };
 }
 
@@ -119,24 +176,42 @@ async function photonSearch(q, { signal } = {}) {
 }
 
 /**
- * @returns {{ latitude: number, longitude: number, label: string, query: string } | null}
+ * @returns {{
+ *   latitude: number,
+ *   longitude: number,
+ *   label: string,
+ *   query: string,
+ *   match: 'accepted' | 'suggestion',
+ * } | null}
  */
 export async function geocodeMapPin(query, { locality = null, signal = undefined } = {}) {
   const candidates = mapGeocodeQueries(query, locality);
   if (!candidates.length) return null;
 
+  const wantStreet = queryStreetTokens(query, locality);
+  let suggestion = null;
   let lastErr = null;
+
   for (const q of candidates) {
     try {
       const features = preferLocality(await photonSearch(q, { signal }), locality);
       for (const feature of features) {
         const pin = featureToPin(feature, q);
-        if (pin) return pin;
+        if (!pin) continue;
+        const gotStreet = featureStreetTokens(feature.properties || {});
+        const agreement = streetAgreement(wantStreet, gotStreet);
+        if (agreement === 'ok') {
+          return { ...pin, match: 'accepted' };
+        }
+        if (agreement === 'suggestion' && !suggestion) {
+          suggestion = { ...pin, match: 'suggestion' };
+        }
       }
     } catch (err) {
       lastErr = err;
     }
   }
+  if (suggestion) return suggestion;
   if (lastErr) throw lastErr;
   return null;
 }

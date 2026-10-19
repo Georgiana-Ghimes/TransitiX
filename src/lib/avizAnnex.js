@@ -7,7 +7,7 @@ export const AVIZ_FORM_FIELDS = [
   { key: 'numar_auto', label: 'Număr auto' },
   { key: 'ruta_transport', label: 'Rută transport' },
   { key: 'tip_marfa', label: 'Tip marfă' },
-  { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³)', inputMode: 'decimal' },
+  { key: 'cantitate_marfa', label: 'Cantitate (saci/galeți/m³/bucăți)', inputMode: 'decimal' },
   { key: 'gross_weight_kg', label: 'Greutate brută (kg)', inputMode: 'decimal' },
   { key: 'net_weight_kg', label: 'Greutate netă (kg)', inputMode: 'decimal' },
   { key: 'numar_document_marfa', label: 'Număr document marfă' },

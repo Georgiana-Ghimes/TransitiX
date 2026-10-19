@@ -9,10 +9,12 @@ import {
 } from './avizFieldSchema.js';
 
 describe('avizFieldSchema', () => {
-  it('marks TPO/auto/date as critical OCR fields', () => {
+  it('marks TPO/auto/date/document as critical OCR fields', () => {
     expect(fieldMeta('numar_tpo').critical).toBe(true);
     expect(fieldMeta('numar_auto').critical).toBe(true);
     expect(fieldMeta('data_efectuare_cursa').critical).toBe(true);
+    // Wrong digit on PSL still looks like a real aviz number (#88).
+    expect(fieldMeta('numar_document_marfa').critical).toBe(true);
     expect(fieldMeta('valoare_tpo').source).toBe('ocr');
     expect(fieldMeta('km_parcursi').source).toBe('ocr');
     expect(fieldMeta('observatii').source).toBe('manual');

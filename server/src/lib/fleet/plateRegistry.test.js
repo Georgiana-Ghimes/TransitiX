@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   applyFleetPlateCorrection,
+  boostNumarAutoFieldWhenFleetVerified,
+  clearAutoLowWhenFleetVerified,
   digitEditDistance,
+  fleetPlateVerified,
   pickFleetPlateCorrection,
   plateParts,
   resolveOcrPlateAgainstFleet,
@@ -48,6 +51,36 @@ describe('pickFleetPlateCorrection (#78)', () => {
       from: 'B-23-NKL',
       to: 'B-29-NKL',
     });
+  });
+});
+
+describe('fleet plate verified clears Auto OCR-low (#90)', () => {
+  it('requires known plate + MTMA + not added_by_ocr', () => {
+    expect(fleetPlateVerified({ known: true, mmaKg: 11111, addedByOcr: false })).toBe(true);
+    expect(fleetPlateVerified({ known: true, mmaKg: null, addedByOcr: false })).toBe(false);
+    expect(fleetPlateVerified({ known: true, mmaKg: 11111, addedByOcr: true })).toBe(false);
+    expect(fleetPlateVerified({ known: false, mmaKg: null, addedByOcr: false })).toBe(false);
+  });
+
+  it('clears numar_auto low on list decorate when Autoturisme is complete', () => {
+    expect(clearAutoLowWhenFleetVerified(
+      { numar_auto: 'low', numar_tpo: 'ok' },
+      { known: true, mmaKg: 11111, addedByOcr: false },
+    )).toEqual({ numar_auto: 'ok', numar_tpo: 'ok' });
+    expect(clearAutoLowWhenFleetVerified(
+      { numar_auto: 'low' },
+      { known: true, mmaKg: null, addedByOcr: true },
+    )).toEqual({ numar_auto: 'low' });
+  });
+
+  it('boosts stored field object on re-extract when fleet is verified', () => {
+    const boosted = boostNumarAutoFieldWhenFleetVerified(
+      { value: 'B-404-RZC', confidence: 0.42, status: 'review' },
+      { known: true, mmaKg: 11111, addedByOcr: false },
+    );
+    expect(boosted.status).toBe('ok');
+    expect(boosted.confidence).toBeGreaterThanOrEqual(0.9);
+    expect(boosted.matched).toBe('fleet_verified');
   });
 });
 

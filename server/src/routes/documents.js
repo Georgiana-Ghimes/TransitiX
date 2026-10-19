@@ -15,7 +15,12 @@ import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
 import { normalizeGoodsUnit } from '../lib/avizTemplate.js';
 import { isGenericCountUnit, looksLikeOcrGoodsDump, packagingWordIn } from '../lib/ocr/fields.js';
-import { ensureVehicleForPlate, resolveOcrPlateAgainstFleet } from '../lib/fleet/plateRegistry.js';
+import {
+  boostNumarAutoFieldWhenFleetVerified,
+  ensureVehicleForPlate,
+  resolveOcrPlateAgainstFleet,
+  vehicleForPlate,
+} from '../lib/fleet/plateRegistry.js';
 import { ROUTING } from '../lib/ocr/avizFieldSchema.js';
 import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
 import {
@@ -334,6 +339,14 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
                   : merged.fields.numar_auto.matched,
               };
             }
+          }
+          // Plate already on Autoturisme with MTMA + verified → persist Auto as ok (#90).
+          const fleetStatus = await vehicleForPlate(pool, companyId, columns.numar_auto);
+          if (merged.fields?.numar_auto) {
+            merged.fields.numar_auto = boostNumarAutoFieldWhenFleetVerified(
+              merged.fields.numar_auto,
+              fleetStatus,
+            );
           }
         } catch (err) {
           console.error('[documents] fleet plate repair failed', err);

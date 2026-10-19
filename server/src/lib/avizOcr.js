@@ -210,7 +210,7 @@ function parseQty(blob) {
   const qty = Number(packed.quantity);
   const tip = normalizeGoodsUnit(packed.unit) || String(packed.unit || '').toLowerCase() || 'saci';
   if (!Number.isFinite(qty) || !isPlausibleQuantity(qty, tip)) return null;
-  const rank = tip === 'saci/galeti' ? 6
+  const rank = (tip === 'saci/galeti' || tip === 'saci / galeti' || tip === 'saci / bucati') ? 6
     : tip === 'm³' || tip === 'm3' || tip === 'mc' ? 5
       : tip === 'galeti' ? 4
         : tip === 'saci' ? 3
@@ -324,11 +324,14 @@ const GOODS_TABLE_STOPS = [
 const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)(?![a-z]))/;
 
 /**
- * House number shape: `31B`, `1F`, OCR `IF`/`LF`.
+ * House number shape: `31B`, `1F`, OCR `IF`/`LF`, building wing `1/VII` (#89).
  * At most 4 digits; leading `\b` so a postcode run (`077085`) cannot yield `7085`.
+ * Slash + Roman/digit is part of the printed number on Baumit (Pipera nr. 1/VII) — do not
+ * stop at the bare digits or the wing is dropped from Rută / zona tax.
  */
-const HOUSE_NUM_BODY = String.raw`\b(?:nr\.?\s*)?(?:[0-9]{1,4}[a-z]{0,2}|[il]f)\b`;
-const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>[0-9]{1,4}[a-z]{0,2}|[il]f)\b`, 'i');
+const HOUSE_CORE = String.raw`[0-9]{1,4}[a-z]{0,2}(?:/[0-9ivxlcdm]{1,6})?|[il]f`;
+const HOUSE_NUM_BODY = String.raw`\b(?:nr\.?\s*)?(?:${HOUSE_CORE})\b`;
+const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>${HOUSE_CORE})\b`, 'i');
 
 /**
  * Street line after a type word — name then optional house, or house then name.
@@ -710,31 +713,18 @@ export function clipRouteGoodsTable(route) {
   return clipped || raw;
 }
 
-/**
- * Text under the Expeditor heading only. Site codes that appear later (e.g. MIL inside
- * Adresa de livrare) must not become the load origin.
- */
-function parseExpeditorSection(blob) {
-  return sliceSection(
-    blob,
-    ['expeditor'],
-    [
-      'adrese de livrare',
-      'adresa de livrare',
-      'adresa livrare',
-      'aviz de expeditie',
-      'aviz de expediție',
-      'client factura',
-      'client factură',
-      'client:',
-      'placuta de inmatriculare',
-      'transportator',
-      'destinatar',
-      'comanda vanzare',
-      'termeni de livrare',
-    ]
-  );
-}
+/** Labels that open the delivery / unload column — never Expeditor / Client factură (#96). */
+const DELIVERY_SECTION_STARTS = [
+  'adrese de livrare',
+  'adresa de livrare',
+  'adresa livrare',
+  'loc de descarcare',
+  'loc descarcare',
+  'adresa de descarcare',
+  'adresa descarcare',
+  'punct de descarcare',
+  'destinatie',
+];
 
 const DELIVERY_SECTION_STOPS = [
   'client factura',
@@ -754,6 +744,40 @@ const DELIVERY_SECTION_STOPS = [
   ...GOODS_TABLE_STOPS,
 ];
 
+/** Earliest index of a delivery/unload heading in folded text, or -1. */
+function earliestDeliveryLabelIndex(folded) {
+  let best = -1;
+  for (const label of DELIVERY_SECTION_STARTS) {
+    const i = folded.indexOf(label);
+    if (i >= 0 && (best < 0 || i < best)) best = i;
+  }
+  return best;
+}
+
+/**
+ * Text under the Expeditor heading only. Site codes that appear later (e.g. MIL inside
+ * Adresa de livrare) must not become the load origin.
+ */
+function parseExpeditorSection(blob) {
+  return sliceSection(
+    blob,
+    ['expeditor'],
+    [
+      ...DELIVERY_SECTION_STARTS,
+      'aviz de expeditie',
+      'aviz de expediție',
+      'client factura',
+      'client factură',
+      'client:',
+      'placuta de inmatriculare',
+      'transportator',
+      'destinatar',
+      'comanda vanzare',
+      'termeni de livrare',
+    ]
+  );
+}
+
 function emptyAddressBlock() {
   return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
 }
@@ -768,23 +792,16 @@ function isBucharestAddressBlock(block) {
 }
 
 /**
- * Baumit multi-stop sales sheets: "Adrese de livrare" + "Livrare 1:" / "Livrare 2:".
- * Returns one block per stop, document order (#61).
+ * Parse address blocks from marker ranges in a folded delivery section.
+ * @param {string} folded
+ * @param {{ index: number, end: number }[]} markers
+ * @param {'after'|'at'} contentFrom — after marker text, or including it (CS- codes).
  */
-function parseMultiDeliveryBlocks(section) {
-  const folded = fold(section);
-  if (!folded.trim()) return [];
-  const markers = [];
-  const re = /\blivrare\s*(\d+)\s*[:.\-]?\s*/gi;
-  let m;
-  while ((m = re.exec(folded)) !== null) {
-    markers.push({ index: m.index, end: m.index + m[0].length, n: Number(m[1]) });
-  }
+function blocksFromMarkers(folded, markers, contentFrom = 'after') {
   if (markers.length < 2) return [];
-
   const blocks = [];
   for (let i = 0; i < markers.length; i += 1) {
-    const from = markers[i].end;
+    const from = contentFrom === 'at' ? markers[i].index : markers[i].end;
     const to = i + 1 < markers.length ? markers[i + 1].index : folded.length;
     const chunk = folded.slice(from, to);
     const interleaved = /\t/.test(chunk) || /\bc\d{8}\b/.test(chunk);
@@ -795,16 +812,45 @@ function parseMultiDeliveryBlocks(section) {
 }
 
 /**
+ * Baumit multi-stop sales sheets under "Adrese de livrare" (#61 / #96).
+ * Prefer numbered "Livrare N:"; else CS- site codes; else repeated street-type starts.
+ * Without this, a dual-stop section without "Livrare 1/2" collapsed to the *first*
+ * street via parseDestBlock — inconsistent with the last/București rule on labelled stops.
+ */
+function parseMultiDeliveryBlocks(section) {
+  const folded = fold(section);
+  if (!folded.trim()) return [];
+
+  const livrareMarkers = [];
+  const livrareRe = /\blivrare\s*(\d+)\s*[:.\-]?\s*/gi;
+  let m;
+  while ((m = livrareRe.exec(folded)) !== null) {
+    livrareMarkers.push({ index: m.index, end: m.index + m[0].length, n: Number(m[1]) });
+  }
+  const fromLivrare = blocksFromMarkers(folded, livrareMarkers, 'after');
+  if (fromLivrare.length >= 2) return fromLivrare;
+
+  // Baumit customer sites: `CS-PRAHOVA- OBI…` / `CS-HERASTRAU- OBI…` without Livrare N.
+  const csMarkers = [];
+  const csRe = /\bcs-[a-z0-9][a-z0-9\-]*/gi;
+  while ((m = csRe.exec(folded)) !== null) {
+    csMarkers.push({ index: m.index, end: m.index + m[0].length });
+  }
+  const fromCs = blocksFromMarkers(folded, csMarkers, 'at');
+  if (fromCs.length >= 2) return fromCs;
+
+  // Do not split on bare street-type words: Baumit two-column OCR often leaves the
+  // Client factură street (Aeroportului / Locotenent Moga) in the same slice (#96).
+  return [];
+}
+
+/**
  * Text above „Adresa de livrare” when OCR drops the Expeditor heading (#80).
  * Site/street still print there; without this the route keeps only the delivery leg.
  */
 function expeditorHeadFallback(blob) {
   const folded = fold(blob);
-  let deliveryAt = -1;
-  for (const label of ['adrese de livrare', 'adresa de livrare', 'adresa livrare']) {
-    const i = folded.indexOf(label);
-    if (i >= 0 && (deliveryAt < 0 || i < deliveryAt)) deliveryAt = i;
-  }
+  const deliveryAt = earliestDeliveryLabelIndex(folded);
   if (deliveryAt <= 0) return '';
   let from = 0;
   const exp = folded.lastIndexOf('expeditor', deliveryAt);
@@ -838,11 +884,7 @@ export function originFromSiteDepozit(blob) {
   if (!head.trim()) {
     // OCR dropped the "Expeditor" word — take text before Adresa/Adrese de livrare only.
     const folded = fold(blob);
-    let deliveryAt = -1;
-    for (const label of ['adrese de livrare', 'adresa de livrare', 'adresa livrare']) {
-      const i = folded.indexOf(label);
-      if (i >= 0 && (deliveryAt < 0 || i < deliveryAt)) deliveryAt = i;
-    }
+    const deliveryAt = earliestDeliveryLabelIndex(folded);
     head = deliveryAt >= 0 ? folded.slice(0, deliveryAt) : '';
   }
   if (!head.trim()) return null;
@@ -888,12 +930,12 @@ export function originFromSiteDepozit(blob) {
 
 /**
  * Every delivery stop on the page (one or many).
- * Multi-stop: "Adrese de livrare" + Livrare 1 / Livrare 2 (#61).
+ * Multi-stop: "Adrese de livrare" + Livrare 1 / Livrare 2 / CS- sites (#61 / #96).
  */
 export function parseDeliveryAddresses(blob) {
   const section = sliceSection(
     blob,
-    ['adrese de livrare', 'adresa de livrare', 'adresa livrare'],
+    DELIVERY_SECTION_STARTS,
     DELIVERY_SECTION_STOPS,
   );
   const multi = parseMultiDeliveryBlocks(section);
@@ -910,7 +952,17 @@ export function parseDeliveryAddresses(blob) {
 }
 
 /**
- * Primary delivery block for zone-tax fallback: București if present, else last stop (#61).
+ * True when the labelled delivery column has two+ stops — zone tax picks one
+ * (București if present, else last) and the operator must see that choice (#96).
+ */
+export function hasAmbiguousDeliveryChoice(blob) {
+  return parseDeliveryAddresses(blob).length >= 2;
+}
+
+/**
+ * Primary delivery block for zone-tax fallback: among *labelled delivery* stops only,
+ * București if present, else last stop in document order (#61 / #96).
+ * Never Expeditor / Client — those sit outside the delivery section.
  */
 export function parseDeliveryAddress(blob) {
   const all = parseDeliveryAddresses(blob);
@@ -1021,7 +1073,9 @@ function preferQuantity(row, parsed) {
       const raw = fold(row?.extracted_data?.raw_text || '');
       const hasPackagingTotal = /numar(?:ul)?\s+de\s+(galeti|saci|paleti)/i.test(raw);
       const parsedNorm = String(normalizeGoodsUnit(parsedTip) || parsedTip).toLowerCase();
-      const parsedIsPackaging = ['galeti', 'saci', 'paleti', 'saci/galeti', 'm3', 'mc', 'm³'].includes(
+      const parsedIsPackaging = [
+        'galeti', 'saci', 'paleti', 'saci/galeti', 'saci / galeti', 'saci / bucati', 'm3', 'mc', 'm³',
+      ].includes(
         parsedNorm,
       );
       if (hasPackagingTotal || (parsedIsPackaging && Number(parsedQty) > Number(stored))) {
@@ -1084,9 +1138,7 @@ export function isSuspiciousRoute(value, rawText = null) {
   if (rawText) {
     const folded = fold(rawText);
     const hasOriginLabel = folded.includes('expeditor');
-    const hasDelivery = folded.includes('adrese de livrare')
-      || folded.includes('adresa de livrare')
-      || folded.includes('adresa livrare');
+    const hasDelivery = earliestDeliveryLabelIndex(folded) >= 0;
     if (hasOriginLabel && hasDelivery) {
       const originStreet = parseExpeditorAddress(rawText)?.streetName;
       const siteOrigin = originFromSiteDepozit(rawText);
@@ -1213,10 +1265,13 @@ export function avizFieldConfidence(row) {
   const raw = row?.extracted_data?.raw_text;
   const qtyLow = isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa)
     || quantityConflictsWithRaw(row?.cantitate_marfa, row?.tip_marfa, raw);
+  // Multi-stop delivery: tax picks București/last — mark rută so the choice is visible (#96).
+  const routeLow = isSuspiciousRoute(row?.ruta_transport, raw)
+    || (raw ? hasAmbiguousDeliveryChoice(raw) : false);
   return {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',
-    ruta_transport: isSuspiciousRoute(row?.ruta_transport, raw) ? 'low' : 'ok',
+    ruta_transport: routeLow ? 'low' : 'ok',
     cantitate_marfa: qtyLow ? 'low' : 'ok',
   };
 }

@@ -195,6 +195,38 @@ describe('validateAvizFields', () => {
     })).toBe(ROUTING.HITL_REQUIRED);
   });
 
+  it('warns when gross is present but net is empty under a greutate netă label (#88)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033501',
+      data_efectuare_cursa: '2026-10-01',
+      numar_auto: 'B 404 RZC',
+      gross_weight_kg: 9623.76,
+      net_weight_kg: null,
+    }, {}, {
+      today: '2026-10-01',
+      rawText: 'Greutate netă: 9.450,15 kg\nGreutate brută: 9.623,76 kg\n',
+    });
+    expect(findings.some((f) => f.rule === 'net_missing_near_gross' && f.field === 'net_weight_kg')).toBe(true);
+  });
+
+  it('warns when two+ labelled delivery stops compete for zone tax (#96)', () => {
+    const rawText = `
+Expeditor Site: BOL Bolintin, Str. Industriei, nr. 7, Bolintin-Deal.
+Adrese de livrare
+Livrare 1: CS-PRAHOVA- OBI PLOIESTI, Strada Gheorghe Doja nr. 51, Ploiesti.
+Livrare 2: CS-HERASTRAU- OBI AVIATORILOR, Bulevardul Aviatorilor nr. 72, Bucuresti Sector 1.
+Client: NORDIC BUILD SRL.
+`;
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033301',
+      data_efectuare_cursa: '2026-10-05',
+      numar_auto: 'PH 33 DRV',
+      ruta_transport:
+        'Str. Industriei nr. 7, Bolintin-Deal / Str. Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti',
+    }, {}, { today: '2026-10-05', rawText });
+    expect(findings.some((f) => f.rule === 'delivery_address_ambiguous' && f.field === 'ruta_transport')).toBe(true);
+  });
+
   it('forces HITL when the page has a handwritten corectat note (#65)', () => {
     const findings = validateAvizFields({
       numar_tpo: 'TPO-0033200',

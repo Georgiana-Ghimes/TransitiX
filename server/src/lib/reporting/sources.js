@@ -43,6 +43,9 @@ export const REPORT_SOURCES = [
   { key: 'data_facturare', label: 'Dată facturare', group: 'comercial', type: 'date', total: 'none' },
   { key: 'valoare_tpo', label: 'Valoare TPO', group: 'comercial', type: 'money', numFmt: '#,##0.00', total: 'sum' },
   { key: 'taxe_suplimentare', label: 'Taxe suplimentare', group: 'comercial', type: 'money', numFmt: '#,##0.00', total: 'sum' },
+  // Breakdown of distinct zones charged on the trip (ZA 2.133 lei; ZB 363 lei). Not summed —
+  // it is a label; the money total is taxe_suplimentare (#98).
+  { key: 'zone_tax_detail', label: 'Taxe zonă (detaliu)', group: 'comercial', type: 'text', total: 'none', computed: true },
   { key: 'tarif_km', label: 'Tarif km', group: 'comercial', type: 'number', numFmt: '#,##0.0000', total: 'none' },
 
   { key: 'observatii', label: 'Observații', group: 'meta', type: 'text', total: 'none' },

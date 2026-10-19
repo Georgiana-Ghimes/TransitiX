@@ -197,13 +197,18 @@ export async function vehiclesMissingMma(db, companyId) {
  * unknown or merely incomplete, and those need different sentences: one is "add the vehicle",
  * the other is "open this vehicle and fill in one field". Collapsing them is how an operator
  * ends up retyping a figure that was already supposed to be recorded once.
+ *
+ * `addedByOcr` mirrors Autoturisme „din OCR, neverificat” (#90).
  */
 export async function vehicleForPlate(db, companyId, numarAuto) {
   const plate = primaryPlate(numarAuto);
-  if (!plate) return { plate: null, known: false, mmaKg: null, vehicleId: null };
+  if (!plate) {
+    return { plate: null, known: false, mmaKg: null, vehicleId: null, addedByOcr: false };
+  }
 
-  const res = await db.query(
-    `SELECT id, mma_kg FROM vehicles
+  const res = await runDbQuery(
+    db,
+    `SELECT id, mma_kg, added_by_ocr FROM vehicles
      WHERE company_id = $1 AND upper(btrim(plate)) = upper($2)
      ORDER BY mma_kg IS NULL, created_at
      LIMIT 1`,
@@ -215,6 +220,78 @@ export async function vehicleForPlate(db, companyId, numarAuto) {
     known: Boolean(row),
     vehicleId: row?.id ?? null,
     mmaKg: row?.mma_kg == null ? null : Number(row.mma_kg),
+    addedByOcr: Boolean(row?.added_by_ocr),
+  };
+}
+
+/**
+ * Fleet row is complete enough to trust the plate on an aviz: MTMA filled and the
+ * „din OCR, neverificat” badge cleared (#90).
+ */
+export function fleetPlateVerified(status) {
+  if (!status?.known) return false;
+  if (status.mmaKg == null || !Number.isFinite(Number(status.mmaKg))) return false;
+  if (status.addedByOcr) return false;
+  return true;
+}
+
+/**
+ * Drop OCR-low on `numar_auto` when Autoturisme already confirms the plate (#90).
+ * Pure: list decorate and extract both call this so the highlight tracks fleet state.
+ */
+export function clearAutoLowWhenFleetVerified(fieldConfidence, fleetStatus) {
+  if (!fleetPlateVerified(fleetStatus)) return fieldConfidence || {};
+  const fc = fieldConfidence && typeof fieldConfidence === 'object' ? fieldConfidence : {};
+  if (fc.numar_auto !== 'low') return fc;
+  return { ...fc, numar_auto: 'ok' };
+}
+
+/**
+ * Batch lookup for list decorate — one query for the page's plates.
+ * @returns {Map<string, { plate: string, known: boolean, mmaKg: number|null, vehicleId: string|null, addedByOcr: boolean }>}
+ */
+export async function fleetStatusByPlates(db, companyId, numarAutos) {
+  const plates = [...new Set(
+    (Array.isArray(numarAutos) ? numarAutos : [])
+      .map((v) => primaryPlate(v))
+      .filter(Boolean),
+  )];
+  const map = new Map();
+  if (!plates.length || !companyId) return map;
+
+  const res = await runDbQuery(
+    db,
+    `SELECT id, plate, mma_kg, added_by_ocr FROM vehicles
+     WHERE company_id = $1
+       AND upper(btrim(plate)) = ANY($2::text[])`,
+    [companyId, plates.map((p) => p.toUpperCase())],
+  );
+  for (const row of res.rows) {
+    const key = String(row.plate || '').trim().toUpperCase();
+    if (!key) continue;
+    // Prefer the row that already has MTMA when duplicates exist.
+    const prev = map.get(key);
+    const next = {
+      plate: key,
+      known: true,
+      vehicleId: row.id,
+      mmaKg: row.mma_kg == null ? null : Number(row.mma_kg),
+      addedByOcr: Boolean(row.added_by_ocr),
+    };
+    if (!prev || (prev.mmaKg == null && next.mmaKg != null)) map.set(key, next);
+  }
+  return map;
+}
+
+/** Boost stored OCR field object when fleet already verified the plate (persist on re-extract). */
+export function boostNumarAutoFieldWhenFleetVerified(field, fleetStatus) {
+  if (!fleetPlateVerified(fleetStatus) || !field || typeof field !== 'object') return field;
+  const confidence = Math.max(Number(field.confidence) || 0, 0.9);
+  return {
+    ...field,
+    confidence,
+    status: 'ok',
+    matched: field.matched || 'fleet_verified',
   };
 }
 

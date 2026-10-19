@@ -41,7 +41,8 @@ export const CRITICAL_BANDS = Object.freeze({
 /** @type {AvizFieldMeta[]} */
 export const AVIZ_FIELD_SCHEMA = Object.freeze([
   { key: 'numar_tpo', label: 'TPO', source: 'ocr', critical: true, bands: CRITICAL_BANDS },
-  { key: 'numar_document_marfa', label: 'Nr. document marfă', source: 'ocr', critical: false, bands: DEFAULT_BANDS },
+  // Critical: a single wrong digit (PSL-003… vs PSL-006…) looks valid and ships on invoices (#88).
+  { key: 'numar_document_marfa', label: 'Nr. document marfă', source: 'ocr', critical: true, bands: CRITICAL_BANDS },
   { key: 'numar_auto', label: 'Nr. auto', source: 'ocr', critical: true, bands: CRITICAL_BANDS },
   { key: 'data_efectuare_cursa', label: 'Data efectuare cursă', source: 'ocr', critical: true, bands: CRITICAL_BANDS },
   { key: 'ruta_transport', label: 'Rută transport', source: 'ocr', critical: false, bands: DEFAULT_BANDS },

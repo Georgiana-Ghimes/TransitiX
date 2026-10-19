@@ -143,6 +143,10 @@ export function renderReportWorkbook({ name, columns, rows, totals = null, merge
     ? groupRowsByTpoForMerge(rows, columns)
     : (Array.isArray(rows) ? rows : []);
 
+  // Explicit left align on every body cell (#100). Excel defaults numbers to the right;
+  // that made numeric columns look like a different row than the text ones.
+  const BODY_ALIGN = { vertical: 'middle', horizontal: 'left' };
+
   for (const row of dataRows) {
     const excelRow = sheet.addRow(columns.map((col) => row[col.key] ?? ''));
     excelRow.eachCell((cell, colNumber) => {
@@ -154,6 +158,7 @@ export function renderReportWorkbook({ name, columns, rows, totals = null, merge
           cell.numFmt = numberFormatFor(col.source);
         }
       }
+      cell.alignment = BODY_ALIGN;
       cell.border = THIN_BORDER;
     });
   }
@@ -171,6 +176,7 @@ export function renderReportWorkbook({ name, columns, rows, totals = null, merge
     totalRow.eachCell((cell, colNumber) => {
       const col = columns[colNumber - 1];
       if (col && totals[col.key]) cell.numFmt = numberFormatFor(col.source);
+      cell.alignment = BODY_ALIGN;
       cell.border = THIN_BORDER;
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
     });

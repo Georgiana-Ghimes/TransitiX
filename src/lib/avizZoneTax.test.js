@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  avizDeliveryAddress, avizZoneTax, deliveryLegFromRuta, parseSpacedRouteLeg,
+  avizDeliveryAddress, avizLoadingAddress, avizRouteZoneLegs, avizZoneTax, avizZoneTaxTrip,
+  deliveryLegFromRuta, formatZoneTaxBreakdown, originLegFromRuta, parseSpacedRouteLeg,
   tractorPlate, zoneBracket, zoneMapHref, zoneThresholdKg,
 } from './avizZoneTax.js';
 
@@ -221,6 +222,144 @@ describe('zoneMapHref', () => {
 
   it('returns null when there is no street to open on the map', () => {
     expect(zoneMapHref({ street: null, number: '52' })).toBeNull();
+  });
+});
+
+describe('originLegFromRuta / avizLoadingAddress (#97)', () => {
+  it('takes the first leg as loading', () => {
+    expect(originLegFromRuta(
+      'Bvd. Iuliu Maniu nr. 220, Bucuresti / Șosea Viilor nr. 52, Bucuresti',
+    )).toBe('Bvd. Iuliu Maniu nr. 220, Bucuresti');
+  });
+
+  it('returns null on a single-leg route (no separate loading end)', () => {
+    expect(originLegFromRuta('Șosea Viilor nr. 52, Bucuresti')).toBeNull();
+  });
+
+  it('builds a street address from the loading leg', () => {
+    expect(avizLoadingAddress({
+      ruta_transport: 'Bvd. Iuliu Maniu nr. 220, Bucuresti / Șosea Viilor nr. 52, Bucuresti',
+    })).toMatchObject({
+      street: 'bulevardul Iuliu Maniu',
+      number: '220',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+    });
+  });
+
+  it('cannot zone a site-code loading leg', () => {
+    expect(avizLoadingAddress({
+      ruta_transport: 'MIL-NEAMTIU / Șosea Viilor nr. 52, Bucuresti',
+    })).toBeNull();
+  });
+});
+
+describe('avizZoneTaxTrip (#97)', () => {
+  const loadAddr = {
+    street: 'bulevardul Iuliu Maniu', number: '220',
+    locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
+  };
+  const unloadAddr = {
+    street: 'soseaua Viilor', number: '52',
+    locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
+  };
+
+  it('charges Zone A and Zone B separately and sums them', () => {
+    const out = avizZoneTaxTrip({
+      aviz: AVIZ,
+      vehicles: FLEET,
+      legs: [
+        { role: 'incarcare', address: loadAddr, zoneResult: IN_ZONE_A },
+        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
+      ],
+    });
+    expect(out.status).toBe('ok');
+    expect(out.amount).toBe(2133 + 363);
+    expect(out.zones).toEqual(['ZA', 'ZB']);
+    expect(out.legs).toHaveLength(2);
+    expect(out.legs[0].result.amount).toBe(2133);
+    expect(out.legs[1].result.amount).toBe(363);
+  });
+
+  it('charges the same zone only once when both ends land in it', () => {
+    const out = avizZoneTaxTrip({
+      aviz: AVIZ,
+      vehicles: FLEET,
+      legs: [
+        { role: 'incarcare', address: loadAddr, zoneResult: IN_ZONE_B },
+        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
+      ],
+    });
+    expect(out.amount).toBe(363);
+    expect(out.zones).toEqual(['ZB']);
+  });
+
+  it('charges only the delivery end when loading is outside the city', () => {
+    const out = avizZoneTaxTrip({
+      aviz: AVIZ,
+      vehicles: FLEET,
+      legs: [
+        {
+          role: 'incarcare',
+          address: {
+            street: 'strada Republicii', number: '1F',
+            locality: 'Bolintin-Deal', cityId: null, supported: false,
+          },
+          zoneResult: null,
+        },
+        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_A },
+      ],
+    });
+    expect(out.status).toBe('ok');
+    expect(out.amount).toBe(2133);
+    expect(out.zones).toEqual(['ZA']);
+    expect(out.legs[0].result.status).toBe('outside_city');
+  });
+
+  it('reports site-code loading without inventing a street fee', () => {
+    const out = avizZoneTaxTrip({
+      aviz: {
+        ...AVIZ,
+        ruta_transport: 'MIL-NEAMTIU / Șosea Viilor nr. 52, Bucuresti',
+      },
+      vehicles: FLEET,
+      legs: [
+        { role: 'incarcare', address: null, zoneResult: null, raw: 'MIL-NEAMTIU' },
+        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
+      ],
+    });
+    expect(out.legs[0].result.status).toBe('no_loading_street');
+    expect(out.amount).toBe(363);
+    expect(out.zones).toEqual(['ZB']);
+  });
+
+  it('formats a reportable breakdown of charged zones (#98)', () => {
+    const out = avizZoneTaxTrip({
+      aviz: AVIZ,
+      vehicles: FLEET,
+      legs: [
+        { role: 'incarcare', label: 'Încărcare', address: loadAddr, zoneResult: IN_ZONE_A },
+        { role: 'livrare', label: 'Livrare 1', address: unloadAddr, zoneResult: IN_ZONE_B },
+      ],
+    });
+    expect(formatZoneTaxBreakdown(out)).toMatch(/ZA/);
+    expect(formatZoneTaxBreakdown(out)).toMatch(/ZB/);
+    expect(out.total).toBe(2133 + 363);
+    expect(out.chargeLines).toHaveLength(2);
+  });
+});
+
+describe('avizRouteZoneLegs (#98)', () => {
+  it('keeps every stop on a multi-delivery route, not only București', () => {
+    const legs = avizRouteZoneLegs({
+      ruta_transport:
+        'Bvd. Iuliu Maniu nr. 220, Bucuresti / Str. Gheorghe Doja nr. 51, Ploiesti / Șosea Viilor nr. 52, Bucuresti',
+    });
+    expect(legs).toHaveLength(3);
+    expect(legs.map((l) => l.label)).toEqual(['Încărcare', 'Livrare 1', 'Livrare 2']);
+    expect(legs[1].address.locality).toMatch(/Ploiesti/i);
+    expect(legs[2].address.street).toMatch(/viilor/i);
   });
 });
 

@@ -3,8 +3,9 @@
  *
  * Three facts meet here and each comes from somewhere different:
  *
- *   the zone    from the delivery address on the aviz, answered by the shipped street index,
- *               so a customer's address is never sent anywhere
+ *   the zone(s) from the loading and delivery legs of the route (street index), so a
+ *               customer's address is never sent anywhere. Access is owed per zone entered
+ *               (#97): load in A + unload in B → both fees; same zone at both ends → once
  *   the bracket from the lorry's MTMA in Autoturisme, because that is what PMB prices. The
  *               figure on the weighbridge is what the lorry weighed that morning; the
  *               authorisation is bought against the mass on the registration papers, and a
@@ -17,10 +18,8 @@
  * the registry figure proves the registry figure is wrong, and that is worth saying out loud
  * before it prices a year of trips into the wrong bracket.
  *
- * Only the delivery address is considered. A lorry that loads at the Militari depot has
- * already driven inside Zone B before it goes anywhere, but the aviz names that end of the
- * journey as a site code ("MIL"), not as a street, and there is nothing here to resolve it
- * with. Charging the delivery end is what can be established from the document.
+ * A loading leg that is only a site code (BOL / MIL-NEAMTIU) cannot be zoned — that end is
+ * reported as unresolved, and only street-backed ends are charged.
  */
 import { toFiniteNumber } from './utils.js';
 import { canonicalPlateClient } from './fleetUi.js';
@@ -152,11 +151,12 @@ export function avizZoneTax({ aviz, vehicles, zoneResult, address }) {
 export const ZONE_TAX_MESSAGE = {
   no_weight: 'Fără greutate brută pe aviz, deci taxa de zonă nu se calculează automat.',
   weight_implausible: 'Greutatea brută citită nu poate fi reală, verific-o pe document.',
-  no_address: 'Avizul nu are o adresă de livrare din care să citesc zona.',
-  outside_city: 'Livrarea nu este într-un oraș cu zone taxate.',
-  address_unknown: 'Strada de livrare nu este în indexul orașului, verific-o pe hartă.',
+  no_address: 'Avizul nu are o adresă (încărcare sau livrare) din care să citesc zona.',
+  no_loading_street: 'Încărcarea e doar cod de depozit (BOL/MIL), fără stradă — nu pot taxa zona de încărcare.',
+  outside_city: 'Adresa nu este într-un oraș cu zone taxate.',
+  address_unknown: 'Strada nu este în indexul orașului, verific-o pe hartă.',
   address_unsure: 'Adresa nu decide singură zona, confirm-o pe Harta zonelor.',
-  outside: 'Livrarea este în afara zonelor taxate, nu se adaugă nimic.',
+  outside: 'Adresa este în afara zonelor taxate, nu se adaugă nimic pe acest capăt.',
   plate_missing: 'Avizul nu are număr de înmatriculare, deci nu știu ce tonaj se taxează.',
   plate_invalid: 'Numărul auto de pe aviz nu este un număr de înmatriculare valid.',
   vehicle_unknown: 'Mașina nu este în Autoturisme, adaug-o ca să pot lua MTMA.',
@@ -166,6 +166,12 @@ export const ZONE_TAX_MESSAGE = {
   no_bracket: 'MTMA-ul mașinii nu intră în niciun interval din tariful zonei.',
   ok: null,
 };
+
+/** Shared fleet / weight failures — apply once to the whole trip, not per leg. */
+const TRIP_BLOCKING = new Set([
+  'no_weight', 'weight_implausible', 'plate_missing', 'plate_invalid',
+  'vehicle_unknown', 'mma_missing', 'mma_suspect',
+]);
 
 export function zoneTaxMessage(status) {
   return ZONE_TAX_MESSAGE[status] ?? null;
@@ -195,16 +201,33 @@ const ROUTE_TYPE_CAPTURE = String.raw`Str\.?|Șoseaua|Soseaua|Șosea|Sosea|Sos\.
  */
 const ROUTE_LEG_SPLIT = /\s*(?:→|->|–|—)\s*|\s+\/\s+|\s+-\s+/;
 
+/** Every origin / stop text from `ruta_transport`, document order (#98). */
+export function routeLegTexts(ruta) {
+  const s = String(ruta || '').trim();
+  if (!s) return [];
+  return s.split(ROUTE_LEG_SPLIT).map((p) => p.trim()).filter(Boolean);
+}
+
+/**
+ * Loading half of `ruta_transport` (first leg when the route has origin / destination).
+ * Site codes alone (`MIL-NEAMTIU`) are returned as text — `avizLoadingAddress` drops them
+ * when they are not a street the index can resolve (#97).
+ */
+export function originLegFromRuta(ruta) {
+  const parts = routeLegTexts(ruta);
+  if (parts.length < 2) return null;
+  return parts[0] || null;
+}
+
 /**
  * Delivery half of `ruta_transport` for zone tax.
  * Multi-stop (#61): prefer a București leg among destinations; else the last stop.
  * Single-leg routes (delivery only) are used as-is.
  * Separators `→` / `->` / ` - ` / ` / ` must all yield the same delivery leg (#71).
+ * For full multi-stop charging use `avizRouteZoneLegs` (#98).
  */
 export function deliveryLegFromRuta(ruta) {
-  const s = String(ruta || '').trim();
-  if (!s) return null;
-  const parts = s.split(ROUTE_LEG_SPLIT).map((p) => p.trim()).filter(Boolean);
+  const parts = routeLegTexts(ruta);
   if (!parts.length) return null;
   const delivery = parts.length >= 2 ? parts.slice(1) : parts;
   const bucharest = delivery.find((leg) => {
@@ -334,6 +357,19 @@ export function zoneMapHref(address, { plate = null } = {}) {
 }
 
 /**
+ * Loading address from the origin leg of `ruta_transport`, when it is a real street.
+ * Site/depot codes alone cannot be zoned — returns null so the panel can say so (#97).
+ */
+export function avizLoadingAddress(aviz) {
+  const fromRoute = parseSpacedRouteLeg(originLegFromRuta(aviz?.ruta_transport));
+  if (!fromRoute?.street) return null;
+  return addressFromParts({
+    ...fromRoute,
+    locality: fromRoute.locality,
+  });
+}
+
+/**
  * The delivery address, in the shape the street index wants.
  *
  * Prefer the delivery leg of `ruta_transport` (after ` / `, `→`, `->`, or spaced `-`).
@@ -363,6 +399,138 @@ export function avizDeliveryAddress(aviz) {
     number: addr?.houseNumber ?? null,
     locality: ocrLocality,
   });
+}
+
+/**
+ * Every stop on the route that can be shown / zoned (#97 / #98).
+ * First leg = încărcare; each later street leg = a livrare (multi-stop keeps all of them).
+ * City indexes beyond București plug in via `taxedCityIdFromLocality` / street indexes.
+ *
+ * @returns {Array<{ id: string, role: string, label: string, address: object|null, raw: string|null }>}
+ */
+export function avizRouteZoneLegs(aviz) {
+  const texts = routeLegTexts(aviz?.ruta_transport);
+  if (!texts.length) {
+    const delivery = avizDeliveryAddress(aviz);
+    if (!delivery?.street) return [];
+    return [{ id: 'livrare', role: 'livrare', label: 'Livrare', address: delivery, raw: null }];
+  }
+
+  const deliveryCount = Math.max(0, texts.length - 1);
+  return texts.map((raw, i) => {
+    const parsed = parseSpacedRouteLeg(raw);
+    const address = parsed?.street
+      ? addressFromParts({ ...parsed, locality: parsed.locality })
+      : null;
+    if (i === 0) {
+      return { id: 'incarcare', role: 'incarcare', label: 'Încărcare', address, raw };
+    }
+    const label = deliveryCount > 1 ? `Livrare ${i}` : 'Livrare';
+    return { id: `livrare_${i}`, role: 'livrare', label, address, raw };
+  });
+}
+
+/**
+ * Compact text for reports / extracted_data: `ZA 2.133 lei; ZB 363 lei` (#98).
+ */
+export function formatZoneTaxBreakdown(trip) {
+  const lines = Array.isArray(trip?.chargeLines) ? trip.chargeLines : [];
+  if (!lines.length) return '';
+  return lines
+    .map((line) => `${line.zoneCode} ${Number(line.amount).toLocaleString('ro-RO')} lei`)
+    .join('; ');
+}
+
+/**
+ * Zone fee for the whole trip: `avizZoneTax` per stop, then one charge per distinct
+ * zone code, with a total for Taxe suplimentare / raport (#97 / #98).
+ *
+ * @param {{
+ *   aviz: object,
+ *   vehicles: object[],
+ *   legs: Array<{ id?: string, role: string, label?: string, address: object|null, zoneResult: object|null|undefined, raw?: string|null }>,
+ * }} input
+ */
+export function avizZoneTaxTrip({ aviz, vehicles, legs }) {
+  const list = Array.isArray(legs) ? legs : [];
+  const priced = list.map((leg) => {
+    if (leg.role === 'incarcare' && !leg.address?.street && (leg.raw || originLegFromRuta(aviz?.ruta_transport))) {
+      return {
+        ...leg,
+        result: result('no_loading_street', { grossKg: toFiniteNumber(aviz?.gross_weight_kg) }),
+      };
+    }
+    return {
+      ...leg,
+      result: avizZoneTax({
+        aviz,
+        vehicles,
+        zoneResult: leg.zoneResult,
+        address: leg.address || { street: null },
+      }),
+    };
+  });
+
+  const blocking = priced.find((leg) => TRIP_BLOCKING.has(leg.result.status));
+  if (blocking) {
+    return {
+      ...blocking.result,
+      amount: null,
+      total: null,
+      legs: priced,
+      zones: [],
+      chargeLines: [],
+    };
+  }
+
+  /** One charge per zone code (two stops in ZA → once; ZA + ZB → both). */
+  const chargedByZone = new Map();
+  for (const leg of priced) {
+    const r = leg.result;
+    if (r.status !== 'ok' || !(Number(r.amount) > 0) || !r.zoneCode) continue;
+    if (!chargedByZone.has(r.zoneCode)) chargedByZone.set(r.zoneCode, leg);
+  }
+
+  const zones = [...chargedByZone.keys()];
+  const chargeLines = zones.map((code) => {
+    const leg = chargedByZone.get(code);
+    return {
+      zoneCode: code,
+      amount: Number(leg.result.amount),
+      label: leg.label || leg.role,
+      address: leg.address || null,
+      legId: leg.id || leg.role,
+    };
+  });
+  const amount = chargeLines.reduce((sum, line) => sum + line.amount, 0);
+  const firstOk = chargedByZone.size
+    ? chargedByZone.get(zones[0]).result
+    : null;
+
+  if (firstOk) {
+    return {
+      ...firstOk,
+      status: 'ok',
+      amount,
+      total: amount,
+      zoneCode: zones.length === 1 ? zones[0] : zones.join('+'),
+      legs: priced,
+      zones,
+      chargeLines,
+    };
+  }
+
+  // Nothing to charge: prefer a delivery leg's outcome for the banner tone/message.
+  const delivery = [...priced].reverse().find((l) => l.role === 'livrare') || priced[priced.length - 1];
+  const fallback = delivery?.result || result('no_address');
+  return {
+    ...fallback,
+    amount: fallback.status === 'outside' || fallback.status === 'under_threshold' ? 0 : null,
+    total: fallback.status === 'outside' || fallback.status === 'under_threshold' ? 0 : null,
+    legs: priced,
+    zones: [],
+    chargeLines: [],
+  };
 }
 
 /**

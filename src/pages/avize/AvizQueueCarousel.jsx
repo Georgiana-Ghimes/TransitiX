@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import RoDateField from '@/components/RoDateField';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
+import AvizPreviewZoomBar, { usePreviewZoom } from './AvizPreviewZoomBar';
 import {
   CAROUSEL_EDIT_FIELDS,
   consecutiveSameTpoPeers,
@@ -118,6 +119,11 @@ export default function AvizQueueCarousel({
     return `${tpo} · ${gluedPeers.length} curse adiacente · ${gluedUrls.length} fișier(e) lipite în preview`;
   }, [mergeTpoPreview, gluedPeers, gluedUrls.length, current?.numar_tpo]);
 
+  const previewZoomKey = `${current?.id || ''}|${gluedUrls.join('|')}`;
+  const {
+    zoom: previewZoom, zoomAtMin, zoomAtMax, zoomIn, zoomOut,
+  } = usePreviewZoom(previewZoomKey);
+
   useEffect(() => {
     onCompletenessChange?.({
       allRequiredComplete,
@@ -213,17 +219,27 @@ export default function AvizQueueCarousel({
       */}
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 overflow-hidden">
         <div className="min-h-0 h-[min(28vh,220px)] max-h-[min(28vh,220px)] lg:h-auto lg:max-h-none border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col overflow-hidden">
-          {gluedLabel ? (
-            <p className="shrink-0 px-3 py-1.5 text-[11px] font-medium text-[#0A2B4E] bg-sky-50 border-b border-sky-100">
-              {gluedLabel}
-            </p>
-          ) : null}
+          <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
+            <span className="truncate min-w-0">
+              {gluedLabel || 'Document'}
+            </span>
+            {gluedUrls.length > 0 ? (
+              <AvizPreviewZoomBar
+                zoom={previewZoom}
+                onZoomOut={zoomOut}
+                onZoomIn={zoomIn}
+                zoomAtMin={zoomAtMin}
+                zoomAtMax={zoomAtMax}
+              />
+            ) : null}
+          </div>
           <div className="relative flex-1 min-h-0 overflow-hidden">
             {gluedUrls.length > 0 ? (
               <AvizFilePreview
                 fileUrl={gluedUrls[0]}
                 fileUrls={gluedUrls.length > 1 ? gluedUrls : undefined}
                 fill
+                zoom={previewZoom}
               />
             ) : (
               <p className="p-4 text-sm text-slate-500">Fără fișier pe acest rând.</p>

@@ -5,7 +5,12 @@
  */
 
 import { consignmentKey } from '../avizQuery.js';
-import { normalizePlate, normalizeTpo } from '../avizOcr.js';
+import {
+  hasAmbiguousDeliveryChoice,
+  normalizePlate,
+  normalizeTpo,
+  parseDeliveryAddresses,
+} from '../avizOcr.js';
 import {
   ROUTING,
   confidenceBand,
@@ -372,6 +377,46 @@ export function validateAvizFields(values = {}, fields = {}, { today, rawText } 
     }
   }
 
+  // Gross filled but net empty while the page names „Greutate netă” — moiré / shadow (#88).
+  {
+    const netRaw = values.net_weight_kg;
+    const gross = Number(values.gross_weight_kg);
+    const netEmpty = netRaw == null || String(netRaw).trim() === '';
+    const hasNetLabel = /greutate\s*net|masa\s*net|net\s*weight/i.test(String(rawText || ''));
+    if (netEmpty && Number.isFinite(gross) && gross > 0 && hasNetLabel) {
+      findings.push(finding({
+        rule: 'net_missing_near_gross',
+        field: 'net_weight_kg',
+        severity: 'warning',
+        title: 'Greutate netă lipsă',
+        message: `Brută e ${gross} kg, dar greutatea netă nu s-a citit — verifică pe poză (umbră / moiré).`,
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Two+ labelled delivery stops: tax picks București / last — operator must see the choice (#96).
+  {
+    const raw = String(rawText || '');
+    if (raw && hasAmbiguousDeliveryChoice(raw)) {
+      const stops = parseDeliveryAddresses(raw);
+      const labels = stops
+        .map((b) => [b.streetName, b.houseNumber, b.locality].filter(Boolean).join(' '))
+        .filter(Boolean)
+        .slice(0, 4);
+      findings.push(finding({
+        rule: 'delivery_address_ambiguous',
+        field: 'ruta_transport',
+        severity: 'warning',
+        title: 'Mai multe adrese de livrare',
+        message: labels.length
+          ? `Documentul are ${stops.length} puncte de livrare (${labels.join('; ')}). Taxa de zonă folosește București dacă există, altfel ultima adresă — verifică rută și taxă.`
+          : `Documentul are ${stops.length} puncte de livrare. Verifică care adresă e corectă pentru rută și taxa de zonă.`,
+        source: 'rule_failed',
+      }));
+    }
+  }
+
   // Tip + Cantitate both empty while the page clearly has a goods table (#76).
   {
     const tipEmpty = !String(values.tip_marfa || '').trim();
@@ -491,7 +536,13 @@ export function computeRouting({ fields = {}, findings = [] } = {}) {
   for (const key of ocrFieldKeys()) {
     const field = fields[key] || fields[key === 'cantitate_marfa' ? 'quantity' : key];
     if (!field || field.confidence == null) {
-      if (criticalOcrKeys().includes(key) && !String(field?.value ?? '').trim()) {
+      // Nr. document is critical for confidence banding (#88) but not always printed
+      // (some layouts). Empty must not force HITL the way TPO / auto / date do.
+      if (
+        criticalOcrKeys().includes(key)
+        && key !== 'numar_document_marfa'
+        && !String(field?.value ?? '').trim()
+      ) {
         routing = worstRouting(routing, ROUTING.HITL_REQUIRED);
       }
       continue;

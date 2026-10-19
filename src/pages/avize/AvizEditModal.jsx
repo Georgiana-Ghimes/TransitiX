@@ -8,26 +8,13 @@ import { rotateImageFile } from '@/lib/imagePreprocess';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { appendObservationCode } from '@/lib/observationCodes';
 import { fetchUploadBlob } from '@/lib/uploadUrl';
-import { Download, Loader2, Minus, Pencil, Plus, RotateCw, X } from 'lucide-react';
+import { Download, Loader2, Pencil, RotateCw, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
+import AvizPreviewZoomBar, { previewZoomBtnCls, usePreviewZoom } from './AvizPreviewZoomBar';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import {
   avizEditFindings, downloadBlob, emptyForm, findingsForField, inputCls, isLearnedRoute, labelCls, lowField,
 } from './avizeUi';
-
-/** Fit-width multipliers for the Document preview pane. */
-const PREVIEW_ZOOM_STEPS = [0.75, 1, 1.25, 1.5, 2];
-
-const toolbarBtnCls =
-  'inline-flex items-center gap-1 px-2 py-0.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50';
-
-function stepZoom(current, direction) {
-  const idx = PREVIEW_ZOOM_STEPS.findIndex((z) => z === current);
-  const at = idx >= 0 ? idx : PREVIEW_ZOOM_STEPS.indexOf(1);
-  const next = at + direction;
-  if (next < 0 || next >= PREVIEW_ZOOM_STEPS.length) return current;
-  return PREVIEW_ZOOM_STEPS[next];
-}
 
 /**
  * Editează owns its draft. Parent list poll / zone-tax / findings must not wipe typed values
@@ -41,22 +28,18 @@ export default function AvizEditModal({
   const [form, setForm] = useState(() => emptyForm(editRow));
   const [rotating, setRotating] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [previewZoom, setPreviewZoom] = useState(1);
+  const {
+    zoom: previewZoom, zoomAtMin, zoomAtMax, zoomIn, zoomOut,
+  } = usePreviewZoom(editRow?.id);
 
   useEffect(() => {
     setForm(emptyForm(editRow));
   }, [editRow?.id, formRevision]);
 
-  useEffect(() => {
-    setPreviewZoom(1);
-  }, [editRow?.id]);
-
   const reviewFindings = avizEditFindings(editRow, { form });
   const fileKind = previewKind(editRow?.file_url);
   const canRotateImage = fileKind === 'image' && typeof onFileReplaced === 'function';
   const canDownload = Boolean(editRow?.file_url) && !String(editRow.file_url).startsWith('manual://');
-  const zoomAtMin = previewZoom <= PREVIEW_ZOOM_STEPS[0];
-  const zoomAtMax = previewZoom >= PREVIEW_ZOOM_STEPS[PREVIEW_ZOOM_STEPS.length - 1];
 
   const downloadFile = async () => {
     if (!canDownload || downloading) return;
@@ -120,35 +103,19 @@ export default function AvizEditModal({
                 {editRow?.original_filename ? ` · ${editRow.original_filename}` : ''}
               </span>
               <span className="flex items-center gap-1 shrink-0 normal-case tracking-normal font-normal">
-                <button
-                  type="button"
-                  disabled={zoomAtMin}
-                  onClick={() => setPreviewZoom((z) => stepZoom(z, -1))}
-                  className={toolbarBtnCls}
-                  title="Micșorează"
-                  aria-label="Micșorează"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="min-w-[2.75rem] text-center tabular-nums text-slate-700" title="Zoom față de lățimea panoului">
-                  {Math.round(previewZoom * 100)}%
-                </span>
-                <button
-                  type="button"
-                  disabled={zoomAtMax}
-                  onClick={() => setPreviewZoom((z) => stepZoom(z, 1))}
-                  className={toolbarBtnCls}
-                  title="Mărește"
-                  aria-label="Mărește"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+                <AvizPreviewZoomBar
+                  zoom={previewZoom}
+                  onZoomOut={zoomOut}
+                  onZoomIn={zoomIn}
+                  zoomAtMin={zoomAtMin}
+                  zoomAtMax={zoomAtMax}
+                />
                 {canDownload ? (
                   <button
                     type="button"
                     disabled={downloading || rotating || saving}
                     onClick={downloadFile}
-                    className={toolbarBtnCls}
+                    className={previewZoomBtnCls}
                     title="Descarcă fișierul"
                   >
                     {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
@@ -161,7 +128,7 @@ export default function AvizEditModal({
                       type="button"
                       disabled={rotating || saving}
                       onClick={() => rotatePreview(90)}
-                      className={toolbarBtnCls}
+                      className={previewZoomBtnCls}
                       title="Rotește 90° în sens orar"
                     >
                       {rotating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
@@ -171,7 +138,7 @@ export default function AvizEditModal({
                       type="button"
                       disabled={rotating || saving}
                       onClick={() => rotatePreview(180)}
-                      className={toolbarBtnCls}
+                      className={previewZoomBtnCls}
                       title="Întoarce cu capul în sus (180°)"
                     >
                       180°

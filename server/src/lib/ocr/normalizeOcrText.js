@@ -127,6 +127,11 @@ export function normalizeOcrText(text) {
   out = out.replace(/\bBolintin[\s\-._]*Dea[l1I]\b/gi, 'Bolintin-Deal');
   // Str. Industriei often becomes „Industriului” in dark photos.
   out = out.replace(/\bIndustriului\b/gi, 'Industriei');
+  // Bulevardul Pipera: OCR genitive-izes to Piperii on clean scans (#89). Keep the place name.
+  out = out.replace(
+    /\b(Bulevardul|Blvd\.?|Bvd\.?|Bld\.?|Bd\.?|B-dul|Bdul)\s+Piperii\b/gi,
+    '$1 Pipera',
+  );
 
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(

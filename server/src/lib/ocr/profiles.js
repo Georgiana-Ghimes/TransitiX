@@ -172,8 +172,13 @@ function recoverDocNearLabels(text) {
 
 const docNoField = (patterns) => (text) => {
   const found = matchPatterns(text, patterns, { transform: canonicalDocNo });
+  const labelled = recoverDocNearLabels(text);
+  // Two different codes on the page (glare twin vs label) → trust the label, force review (#88).
+  if (labelled?.value && found?.value && labelled.value !== found.value) {
+    return { value: labelled.value, confidence: 0.54, matched: labelled.matched };
+  }
   if (found?.value) return found;
-  return recoverDocNearLabels(text) ?? NO_MATCH;
+  return labelled ?? NO_MATCH;
 };
 
 const ROUTE_NOISE = /paletizare|infoliere|infotiere|servici|taxa|descarcare|macara|ambalaj|gtin|cod\s*marf|\bprodus\b|\bcantitate\b/i;
