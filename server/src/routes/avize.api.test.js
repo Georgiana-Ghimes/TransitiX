@@ -433,7 +433,8 @@ describe('POST /api/avize/export HITL gate (#48)', () => {
     const ok = await makeAviz(ctx.company.id, {
       status: 'confirmed',
       needs_review: false,
-      numar_tpo: 'TPO-OK-48',
+      // Digits after TPO- only — repairAvizFromStored / normalizeTpo drop letter suffixes (#58).
+      numar_tpo: 'TPO-0311999',
     });
 
     const refused = await api().post('/api/avize/export').set(auth(ctx.adminToken))
@@ -471,7 +472,8 @@ describe('POST /api/avize/export merge_tpo_cells hard TPO lock', () => {
     const ok = await makeAviz(ctx.company.id, {
       status: 'confirmed',
       needs_review: false,
-      numar_tpo: 'TPO-MERGE-OK',
+      // Digits after TPO- only — otherwise repair clears TPO to null and merge gate 409s the “ok” row.
+      numar_tpo: 'TPO-0311999',
     });
 
     const refused = await api().post('/api/avize/export').set(auth(ctx.adminToken))
