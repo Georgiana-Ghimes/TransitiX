@@ -1521,39 +1521,41 @@ router.post('/draft-invoice', async (req, res) => {
 
 router.get('/reports', async (req, res) => {
   try {
+    // Same window as the Avize list + Calitate OCR: upload day (created_at), not
+    // data_efectuare_cursa — the sheet date is often older than the photo.
     const from = String(req.query.from || '').slice(0, 10) || null;
     const to = String(req.query.to || '').slice(0, 10) || null;
     const dateWhere = [];
     const params = [req.user.company_id];
     let i = 2;
     if (from) {
-      dateWhere.push(`data_efectuare_cursa >= $${i}`);
+      dateWhere.push(`created_at >= $${i}::date`);
       params.push(from);
       i += 1;
     }
     if (to) {
-      dateWhere.push(`data_efectuare_cursa <= $${i}`);
+      dateWhere.push(`created_at < ($${i}::date + INTERVAL '1 day')`);
       params.push(to);
       i += 1;
     }
     const filter = dateWhere.length ? `AND ${dateWhere.join(' AND ')}` : '';
     const byPlate = await query(
-      `SELECT COALESCE(NULLIF(numar_auto, ''), '—') AS plate,
+      `SELECT COALESCE(NULLIF(TRIM(numar_auto), ''), '—') AS plate,
               COUNT(*)::int AS count,
               COALESCE(SUM(km_parcursi), 0)::float AS km
        FROM aviz_documents
        WHERE company_id = $1 ${filter}
        GROUP BY 1
-       ORDER BY km DESC, count DESC
+       ORDER BY count DESC, km DESC
        LIMIT 50`,
       params
     );
     const weekly = await query(
-      `SELECT date_trunc('week', data_efectuare_cursa)::date AS week_start,
+      `SELECT date_trunc('week', created_at AT TIME ZONE 'Europe/Bucharest')::date AS week_start,
               COUNT(*)::int AS count,
               COUNT(*) FILTER (WHERE status = 'confirmed')::int AS confirmed
        FROM aviz_documents
-       WHERE company_id = $1 AND data_efectuare_cursa IS NOT NULL ${filter}
+       WHERE company_id = $1 ${filter}
        GROUP BY 1
        ORDER BY 1 DESC
        LIMIT 12`,

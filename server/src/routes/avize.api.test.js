@@ -547,3 +547,32 @@ describe('POST/PUT /api/avize/templates unique name (#50)', () => {
     }
   });
 });
+
+describe('GET /api/avize/reports · data încărcării', () => {
+  it('filters Km/avize by created_at, not data_efectuare_cursa', async () => {
+    const plate = `REP-${Date.now()}`;
+    await makeAviz(ctx.company.id, {
+      numar_auto: plate,
+      data_efectuare_cursa: '2020-01-01',
+      status: 'confirmed',
+      km_parcursi: 10,
+    });
+    const oldUpload = await makeAviz(ctx.company.id, {
+      numar_auto: plate,
+      data_efectuare_cursa: '2026-10-19',
+      status: 'confirmed',
+      km_parcursi: 99,
+    });
+    await query(
+      `UPDATE aviz_documents SET created_at = '2020-06-01T12:00:00Z' WHERE id = $1`,
+      [oldUpload.id],
+    );
+
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await api().get(`/api/avize/reports?from=${today}&to=${today}`)
+      .set(auth(ctx.adminToken));
+    expect(res.status).toBe(200);
+    const row = (res.body.by_plate || []).find((r) => r.plate === plate);
+    expect(row).toMatchObject({ plate, count: 1, km: 10 });
+  });
+});

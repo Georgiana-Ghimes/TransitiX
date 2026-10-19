@@ -60,16 +60,31 @@ describe('summariseFeedback', () => {
       corrected('zz', [['tip_marfa', 'x', 'y']]), // extracted before the window
     ];
     const out = summariseFeedback({ events, documents });
-    expect(out.documents).toMatchObject({ total: 4, touched: 2, touched_outside_window: 1, touch_rate: 0.5, corrections: 4 });
+    // Outside-window edits (doc zz) stay out of rates so % din citite never exceeds 100 %.
+    expect(out.documents).toMatchObject({
+      total: 4, touched: 2, touched_outside_window: 1, touch_rate: 0.5,
+      corrections: 3, corrections_outside_window: 1,
+    });
     expect(out.fields[0]).toMatchObject({ field: 'numar_tpo', label: 'TPO', critical: true, corrections: 2, documents: 2, doc_rate: 0.5 });
     expect(out.fields[0].examples[0]).toEqual({ from: 'TP0-1', to: 'TPO-1' });
+    expect(out.fields.some((f) => f.field === 'tip_marfa')).toBe(false);
     expect(out.routing.auto).toEqual({ total: 1, touched: 0, touch_rate: 0 });
     expect(out.routing.hitl_optional).toEqual({ total: 2, touched: 1, touch_rate: 0.5 });
     expect(out.routing.hitl_required).toEqual({ total: 1, touched: 1, touch_rate: 1 });
     expect(out.rules).toEqual([{ rule: 'tpo_format', documents: 1, doc_rate: 0.25 }]);
-    expect(out.operators).toEqual([{ name: 'Ana', corrections: 3 }, { name: 'Ion', corrections: 1 }]);
+    expect(out.operators).toEqual([{ name: 'Ana', corrections: 2 }, { name: 'Ion', corrections: 1 }]);
     expect(out.enough_data).toBe(false);
     expect(out.suggestions).toEqual([]);
+  });
+
+  it('ignores non-OCR fields (e.g. Observații) in field_changes', () => {
+    const out = summariseFeedback({
+      documents: [doc('a', 'auto')],
+      events: [corrected('a', [['observatii', '', 'nota birou'], ['numar_auto', 'X', 'B 1 ABC']])],
+    });
+    expect(out.documents.corrections).toBe(1);
+    expect(out.fields).toHaveLength(1);
+    expect(out.fields[0].field).toBe('numar_auto');
   });
 
   it('falls back to detail.corrections for older events', () => {

@@ -9,6 +9,19 @@ function exportWho(row) {
   return row.user_name || row.user_email || '-';
 }
 
+function Panel({ title, hint, children, actions }) {
+  return (
+    <div className="rounded-xl border border-slate-300 bg-slate-50/80 shadow-sm overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-200 bg-white/70">
+        <h2 className="text-sm font-semibold text-[#0A2B4E]">{title}</h2>
+        {hint ? <span className="text-[11px] text-slate-500">{hint}</span> : null}
+        {actions ? <div className="ml-auto">{actions}</div> : null}
+      </div>
+      <div className="p-3 bg-white">{children}</div>
+    </div>
+  );
+}
+
 export default function AvizReportsTab({ filterBar, reportData, onRefresh, range }) {
   const [pendingDelete, setPendingDelete] = useState(null); // { type: 'one'|'all', row? }
   const [deleting, setDeleting] = useState(false);
@@ -39,111 +52,118 @@ export default function AvizReportsTab({ filterBar, reportData, onRefresh, range
   return (
     <div className="space-y-4">
       {filterBar}
-      <p className="text-xs text-slate-500">
-        Sintezele nu modifică șablonul Anexa Factura RAI. Unește rămâne pe tab-ul Avize OCR.
+      <p className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
+        Sinteze pe <strong>data încărcării</strong> (aceeași ca lista Avize). Nu modifică șablonul Anexa Factura RAI —
+        Unește rămâne pe tab-ul Avize OCR.
       </p>
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
-          <h2 className="text-sm font-semibold text-[#0A2B4E] mb-3">Km / avize pe număr auto</h2>
-          <table className="w-full text-sm min-w-[280px]">
-            <thead>
-              <tr className="text-xs text-slate-500 border-b">
-                <th className="text-left py-2">Auto</th>
-                <th className="text-right py-2">Avize</th>
-                <th className="text-right py-2">Km</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(reportData.by_plate || []).length === 0 ? (
-                <tr><td colSpan={3} className="py-3 text-slate-400 text-sm">Niciun aviz în interval.</td></tr>
-              ) : (reportData.by_plate || []).map((row) => (
-                <tr key={row.plate} className="border-b border-slate-50">
-                  <td className="py-2">{row.plate}</td>
-                  <td className="py-2 text-right">{row.count}</td>
-                  <td className="py-2 text-right">{row.km}</td>
+        <Panel title="Km / avize pe număr auto" hint="încărcare în interval">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[280px]">
+              <thead>
+                <tr className="text-xs text-slate-600 border-b border-slate-200 bg-slate-100/80">
+                  <th className="text-left py-2 px-1 font-medium">Auto</th>
+                  <th className="text-right py-2 px-1 font-medium">Avize</th>
+                  <th className="text-right py-2 px-1 font-medium">Km</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
-          <h2 className="text-sm font-semibold text-[#0A2B4E] mb-3">Avize pe săptămână</h2>
-          <table className="w-full text-sm min-w-[280px]">
-            <thead>
-              <tr className="text-xs text-slate-500 border-b">
-                <th className="text-left py-2">Săptămână</th>
-                <th className="text-right py-2">Total</th>
-                <th className="text-right py-2">Confirmate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(reportData.weekly || []).length === 0 ? (
-                <tr><td colSpan={3} className="py-3 text-slate-400 text-sm">Nicio săptămână în interval.</td></tr>
-              ) : (reportData.weekly || []).map((row) => (
-                <tr key={row.week_start} className="border-b border-slate-50">
-                  <td className="py-2">{String(row.week_start).slice(0, 10)}</td>
-                  <td className="py-2 text-right">{row.count}</td>
-                  <td className="py-2 text-right">{row.confirmed}</td>
+              </thead>
+              <tbody>
+                {(reportData.by_plate || []).length === 0 ? (
+                  <tr><td colSpan={3} className="py-3 text-slate-500 text-sm">Niciun aviz încărcat în interval.</td></tr>
+                ) : (reportData.by_plate || []).map((row) => (
+                  <tr key={row.plate} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 px-1 text-slate-800">{row.plate}</td>
+                    <td className="py-2 px-1 text-right tabular-nums font-medium text-[#0A2B4E]">{row.count}</td>
+                    <td className="py-2 px-1 text-right tabular-nums text-slate-700">{row.km}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+        <Panel title="Avize pe săptămână" hint="săptămână ISO · data încărcării">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[280px]">
+              <thead>
+                <tr className="text-xs text-slate-600 border-b border-slate-200 bg-slate-100/80">
+                  <th className="text-left py-2 px-1 font-medium">Săptămână (luni)</th>
+                  <th className="text-right py-2 px-1 font-medium">Total</th>
+                  <th className="text-right py-2 px-1 font-medium">Confirmate</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {(reportData.weekly || []).length === 0 ? (
+                  <tr><td colSpan={3} className="py-3 text-slate-500 text-sm">Nicio săptămână în interval.</td></tr>
+                ) : (reportData.weekly || []).map((row) => (
+                  <tr key={row.week_start} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 px-1 text-slate-800">{String(row.week_start).slice(0, 10)}</td>
+                    <td className="py-2 px-1 text-right tabular-nums font-medium text-[#0A2B4E]">{row.count}</td>
+                    <td className="py-2 px-1 text-right tabular-nums text-slate-700">{row.confirmed}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
       </div>
       <OcrQualityCard from={range?.from} to={range?.to} />
-      <div className="bg-white rounded-xl border border-slate-200/80 p-4 overflow-x-auto">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <h2 className="text-sm font-semibold text-[#0A2B4E]">Istoric export</h2>
+      <Panel
+        title="Istoric export"
+        hint="ultimele 30 · fără filtru de dată"
+        actions={(
           <button
             type="button"
             disabled={exports.length === 0 || deleting}
             onClick={() => setPendingDelete({ type: 'all' })}
-            className="ml-auto text-xs px-2 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+            className="text-xs px-2 py-1 rounded border border-red-200 text-red-700 bg-white hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
           >
             {deleting && pendingDelete?.type === 'all'
               ? <Loader2 className="w-3 h-3 animate-spin" />
               : <Trash2 className="w-3 h-3" />}
             Șterge tot istoricul
           </button>
-        </div>
-        <table className="w-full text-sm min-w-[480px]">
-          <thead>
-            <tr className="text-xs text-slate-500 border-b">
-              <th className="text-left py-2">Când</th>
-              <th className="text-left py-2">Cine</th>
-              <th className="text-left py-2">Tip</th>
-              <th className="text-left py-2">Fișier</th>
-              <th className="text-right py-2">Avize</th>
-              <th className="text-right py-2 w-20"> </th>
-            </tr>
-          </thead>
-          <tbody>
-            {exports.length === 0 ? (
-              <tr><td colSpan={6} className="py-3 text-slate-400 text-sm">Niciun export încă.</td></tr>
-            ) : exports.map((row) => (
-              <tr key={row.id} className="border-b border-slate-50">
-                <td className="py-2">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
-                <td className="py-2 truncate" title={row.user_email || ''}>{exportWho(row)}</td>
-                <td className="py-2">{row.kind}</td>
-                <td className="py-2 truncate">{row.filename || '-'}</td>
-                <td className="py-2 text-right">{row.aviz_count ?? '-'}</td>
-                <td className="py-2 text-right">
-                  <button
-                    type="button"
-                    disabled={deleting}
-                    onClick={() => setPendingDelete({ type: 'one', row })}
-                    className="text-xs px-2 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
-                    title="Șterge din istoric"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Șterge
-                  </button>
-                </td>
+        )}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
+            <thead>
+              <tr className="text-xs text-slate-600 border-b border-slate-200 bg-slate-100/80">
+                <th className="text-left py-2 px-1 font-medium">Când</th>
+                <th className="text-left py-2 px-1 font-medium">Cine</th>
+                <th className="text-left py-2 px-1 font-medium">Tip</th>
+                <th className="text-left py-2 px-1 font-medium">Fișier</th>
+                <th className="text-right py-2 px-1 font-medium">Avize</th>
+                <th className="text-right py-2 px-1 w-20"> </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {exports.length === 0 ? (
+                <tr><td colSpan={6} className="py-3 text-slate-500 text-sm">Niciun export încă.</td></tr>
+              ) : exports.map((row) => (
+                <tr key={row.id} className="border-b border-slate-100 last:border-0">
+                  <td className="py-2 px-1 text-slate-800">{String(row.created_at || '').slice(0, 16).replace('T', ' ')}</td>
+                  <td className="py-2 px-1 truncate text-slate-700" title={row.user_email || ''}>{exportWho(row)}</td>
+                  <td className="py-2 px-1 text-slate-700">{row.kind}</td>
+                  <td className="py-2 px-1 truncate text-slate-700">{row.filename || '-'}</td>
+                  <td className="py-2 px-1 text-right tabular-nums font-medium text-[#0A2B4E]">{row.aviz_count ?? '-'}</td>
+                  <td className="py-2 px-1 text-right">
+                    <button
+                      type="button"
+                      disabled={deleting}
+                      onClick={() => setPendingDelete({ type: 'one', row })}
+                      className="text-xs px-2 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+                      title="Șterge din istoric"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Șterge
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

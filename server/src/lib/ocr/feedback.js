@@ -86,17 +86,22 @@ export function avizOcrFieldChanges(prev, data, user, { now = new Date() } = {})
   return out;
 }
 
+const OCR_FIELD_SET = new Set(FEEDBACK_FIELDS);
+
+/** Only OCR schema fields — Observații / junk keys never enter Calitate OCR. */
 function changesOf(event) {
   const detail = event?.detail ?? {};
+  let raw = [];
   if (Array.isArray(detail.field_changes)) {
-    return detail.field_changes
+    raw = detail.field_changes
       .filter((c) => c && c.field)
       .map((c) => ({ field: String(c.field), old_value: c.old_value ?? null, new_value: c.new_value ?? null }));
+  } else if (detail.corrections && typeof detail.corrections === 'object') {
+    raw = Object.entries(detail.corrections).map(([field, value]) => ({
+      field, old_value: null, new_value: value,
+    }));
   }
-  if (detail.corrections && typeof detail.corrections === 'object') {
-    return Object.entries(detail.corrections).map(([field, value]) => ({ field, old_value: null, new_value: value }));
-  }
-  return [];
+  return raw.filter((c) => OCR_FIELD_SET.has(c.field));
 }
 
 function rate(num, den) {
@@ -112,17 +117,27 @@ function rate(num, den) {
  */
 export function summariseFeedback({ events = [], documents = [] } = {}) {
   const docById = new Map(documents.map((d) => [String(d.id), d]));
-  const touched = new Set();
+  const touchedInWindow = new Set();
+  const touchedOutside = new Set();
   const perField = new Map();
   const perOperator = new Map();
-  let changesTotal = 0;
+  let changesInWindow = 0;
+  let changesOutside = 0;
 
   for (const ev of events) {
     const docId = String(ev.document_id ?? '');
     const changes = changesOf(ev);
     if (!changes.length) continue;
-    touched.add(docId);
-    changesTotal += changes.length;
+    const inWindow = docById.has(docId);
+    if (inWindow) touchedInWindow.add(docId);
+    else touchedOutside.add(docId);
+
+    if (inWindow) changesInWindow += changes.length;
+    else changesOutside += changes.length;
+
+    // Rates / field table = only docs extracted in this window, so % din citite ≤ 100 %.
+    if (!inWindow) continue;
+
     const who = ev.user_name || ev.user_email || ev.detail?.field_changes?.[0]?.operator_name || null;
     if (who) perOperator.set(who, (perOperator.get(who) || 0) + changes.length);
     for (const c of changes) {
@@ -146,17 +161,14 @@ export function summariseFeedback({ events = [], documents = [] } = {}) {
   for (const doc of documents) {
     const key = byRouting[doc.routing] ? doc.routing : 'unknown';
     byRouting[key].total += 1;
-    if (touched.has(String(doc.id))) byRouting[key].touched += 1;
+    if (touchedInWindow.has(String(doc.id))) byRouting[key].touched += 1;
     for (const rule of doc.failed_rules ?? []) {
       ruleCounts.set(rule, (ruleCounts.get(rule) || 0) + 1);
     }
   }
 
   const totalDocs = documents.length;
-  // Documents corrected but extracted before the window still count as touches; they are
-  // not in `documents`, so the rate denominator is the union.
-  const touchedInWindow = [...touched].filter((id) => docById.has(id)).length;
-  const touchedOutside = touched.size - touchedInWindow;
+  const touchedCount = touchedInWindow.size;
 
   const fields = [...perField.values()]
     .map((slot) => ({
@@ -166,9 +178,10 @@ export function summariseFeedback({ events = [], documents = [] } = {}) {
       corrections: slot.corrections,
       documents: slot.docs.size,
       doc_rate: rate(slot.docs.size, totalDocs),
+      edit_rate: rate(slot.corrections, totalDocs),
       examples: slot.examples,
     }))
-    .sort((a, b) => b.documents - a.documents || b.corrections - a.corrections || a.field.localeCompare(b.field));
+    .sort((a, b) => b.corrections - a.corrections || b.documents - a.documents || a.field.localeCompare(b.field));
 
   const rules = [...ruleCounts.entries()]
     .map(([rule, count]) => ({ rule, documents: count, doc_rate: rate(count, totalDocs) }))
@@ -217,11 +230,12 @@ export function summariseFeedback({ events = [], documents = [] } = {}) {
   return {
     documents: {
       total: totalDocs,
-      touched: touchedInWindow,
-      touched_outside_window: touchedOutside,
-      touch_rate: rate(touchedInWindow, totalDocs),
-      corrections: changesTotal,
-      corrections_per_touched_doc: rate(changesTotal, touched.size),
+      touched: touchedCount,
+      touched_outside_window: touchedOutside.size,
+      touch_rate: rate(touchedCount, totalDocs),
+      corrections: changesInWindow,
+      corrections_outside_window: changesOutside,
+      corrections_per_touched_doc: rate(changesInWindow, touchedCount),
     },
     routing,
     fields,
