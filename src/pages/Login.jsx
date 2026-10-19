@@ -13,35 +13,71 @@ import { isDocumentsProfile, companionAppTitle } from '@/lib/appProfile';
 import { postLoginPath } from "@/lib/roles";
 import { friendlyErrorMessage } from '@/lib/notify';
 
+/** Prefer React state; fall back to the DOM (browser autofill often skips onChange). */
+function credentialsFromSubmit(event, emailState, passwordState) {
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const email = String(emailState || data.get('email') || '').trim();
+  const password = String(passwordState || data.get('password') || '');
+  return { email, password };
+}
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [existingSession, setExistingSession] = useState(null);
+  const [sessionCheck, setSessionCheck] = useState(() => (api.auth.getToken() ? 'checking' : 'none'));
   const [unverified, setUnverified] = useState(null);
   const [googleBusy, setGoogleBusy] = useState(false);
   const returnTo = safeReturnTo();
   const navigate = useNavigate();
   const providers = useAuthProviders();
 
+  // A temporary password has to be replaced before anything else; the server enforces it too.
+  const afterSignIn = (user) => (user?.must_change_password
+    ? `/change-password${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
+    : postLoginPath(user, returnTo));
+
   useEffect(() => {
-    if (!api.auth.getToken()) return;
+    if (!api.auth.getToken()) {
+      setSessionCheck('none');
+      return;
+    }
+    let cancelled = false;
+    setSessionCheck('checking');
     api.auth.me()
-      .then((u) => setExistingSession(u))
-      .catch(() => setExistingSession(null));
+      .then((u) => {
+        if (cancelled) return;
+        // Already signed in: land where login would have sent them (companion → /avize).
+        window.location.replace(afterSignIn(u));
+      })
+      .catch(() => {
+        if (!cancelled) setSessionCheck('none');
+      });
+    return () => { cancelled = true; };
+    // returnTo is from the URL at mount; afterSignIn closes over it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only session gate
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const { email: submitEmail, password: submitPassword } = credentialsFromSubmit(e, email, password);
+    if (!submitEmail || !submitPassword) {
+      setError('Completează emailul și parola.');
+      return;
+    }
+    // Keep controlled fields in sync if autofill filled the DOM only.
+    if (submitEmail !== email) setEmail(submitEmail);
+    if (submitPassword !== password) setPassword(submitPassword);
     setLoading(true);
     try {
-      const data = await api.auth.loginViaEmailPassword(email, password);
+      const data = await api.auth.loginViaEmailPassword(submitEmail, submitPassword);
       window.location.href = afterSignIn(data?.user);
     } catch (err) {
       if (err?.data?.code === "EMAIL_NOT_VERIFIED") {
-        setUnverified(err.data.email || email);
+        setUnverified(err.data.email || submitEmail);
       } else {
         setError(friendlyErrorMessage(err));
       }
@@ -49,11 +85,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
-  // A temporary password has to be replaced before anything else; the server enforces it too.
-  const afterSignIn = (user) => (user?.must_change_password
-    ? `/change-password${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
-    : postLoginPath(user, returnTo));
 
   const handleGoogle = async (credential) => {
     setError("");
@@ -86,13 +117,16 @@ export default function Login() {
     }
   };
 
-  const handleClearSession = async () => {
-    await api.auth.logout(false);
-    setExistingSession(null);
-  };
-
   const documentsCompanion = isDocumentsProfile();
   const appTitle = companionAppTitle();
+
+  if (sessionCheck === 'checking') {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" aria-label="Se verifică sesiunea" />
+      </div>
+    );
+  }
 
   return (
     <AuthLayout
@@ -113,22 +147,6 @@ export default function Login() {
         )
       }
     >
-      {existingSession && (
-        <div className="mb-4 p-3 rounded-lg bg-slate-100 text-slate-700 text-sm flex items-center justify-between gap-3">
-          <span>
-            Ești conectat ca <strong>{existingSession.email}</strong>
-            {existingSession.role ? ` (${existingSession.role})` : ""}.
-          </span>
-          <button
-            type="button"
-            onClick={handleClearSession}
-            className="shrink-0 text-primary font-medium hover:underline"
-          >
-            Deconectează
-          </button>
-        </div>
-      )}
-
       {unverified ? (
         <div className="space-y-4">
           <CheckEmailPanel email={unverified} emailSent={false} />
@@ -155,19 +173,21 @@ export default function Login() {
 
       <ErrorBox message={error} />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" method="post" autoComplete="on">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="email"
+              name="email"
               type="email"
               autoComplete="email"
               autoFocus
               placeholder="admin@transitix.ro"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onInput={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
               required
             />
@@ -184,11 +204,13 @@ export default function Login() {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
+              name="password"
               type="password"
               autoComplete="current-password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onInput={(e) => setPassword(e.target.value)}
               className="pl-10 h-12"
               required
             />
