@@ -123,6 +123,14 @@ describe('avizQuery', () => {
     expect(params.slice(-2)).toEqual([100, 200]);
   });
 
+  it('orders by created_at then filename then id so edit/re-extract cannot reshuffle ties', () => {
+    const { sql } = buildAvizListQuery({ companyId: 'co', limit: 50, offset: 0 });
+    expect(sql).toMatch(/ORDER BY a\.created_at DESC/);
+    expect(sql).toMatch(/a\.original_filename ASC NULLS LAST/);
+    expect(sql).toMatch(/a\.id ASC/);
+    expect(sql).not.toMatch(/ORDER BY a\.updated_at/);
+  });
+
   it('accepts any page size from 1 to 500; unknown falls back', () => {
     expect(normalizeAvizPage({ limit: 999, offset: -3 }))
       .toEqual({ limit: AVIZ_DEFAULT_PAGE_SIZE, offset: 0 });

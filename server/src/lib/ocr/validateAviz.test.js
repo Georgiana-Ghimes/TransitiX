@@ -102,16 +102,79 @@ describe('validateAvizFields', () => {
     })).toBe(ROUTING.HITL_REQUIRED);
   });
 
-  it('forces HITL when the trip date is years too old (#77)', () => {
+  it('forces HITL when the trip year differs from upload year (#102)', () => {
     const findings = validateAvizFields({
       numar_tpo: 'TPO-0033531',
       data_efectuare_cursa: '2020-10-02',
       numar_auto: 'B 615 TXA',
     }, {}, { today: '2026-10-08' });
-    const old = findings.filter((f) => f.rule === 'date_too_old');
-    expect(old).toHaveLength(1);
-    expect(old[0].severity).toBe('error');
-    expect(computeRouting({ fields: {}, findings: old })).toBe(ROUTING.HITL_REQUIRED);
+    const wrong = findings.filter((f) => f.rule === 'date_wrong_year');
+    expect(wrong).toHaveLength(1);
+    expect(wrong[0].severity).toBe('error');
+    expect(computeRouting({ fields: {}, findings: wrong })).toBe(ROUTING.HITL_REQUIRED);
+  });
+
+  it('flags OCR year 2019 vs upload 2026 on PSL-style aviz (#102)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033501',
+      numar_document_marfa: 'PSL-0062301',
+      data_efectuare_cursa: '2019-10-01',
+      numar_auto: 'B 404 RZC',
+    }, {
+      data_efectuare_cursa: { value: '2019-10-01', confidence: 0.92, status: 'ok' },
+      numar_tpo: { confidence: 0.95, status: 'ok', value: 'TPO-0033501' },
+    }, { today: '2026-10-19' });
+    const wrong = findings.filter((f) => f.rule === 'date_wrong_year');
+    expect(wrong).toHaveLength(1);
+    expect(wrong[0].message).toMatch(/2019-10-01/);
+    expect(wrong[0].message).toMatch(/2026/);
+    expect(computeRouting({
+      fields: {
+        data_efectuare_cursa: { value: '2019-10-01', confidence: 0.92, status: 'ok' },
+      },
+      findings: wrong,
+    })).toBe(ROUTING.HITL_REQUIRED);
+  });
+
+  it('demotes date field confidence when trip year is wrong (#102)', async () => {
+    const result = await validateAvizExtraction({
+      values: {
+        numar_tpo: 'TPO-0033501',
+        data_efectuare_cursa: '2019-10-01',
+        numar_auto: 'B-404-RZC',
+      },
+      fields: {
+        data_efectuare_cursa: { value: '2019-10-01', confidence: 0.94, status: 'ok' },
+        numar_tpo: { value: 'TPO-0033501', confidence: 0.95, status: 'ok' },
+      },
+      today: '2026-10-19',
+    });
+    expect(result.needs_review).toBe(true);
+    expect(result.findings.some((f) => f.rule === 'date_wrong_year')).toBe(true);
+    expect(result.fields.data_efectuare_cursa.confidence).toBeLessThan(0.55);
+    expect(result.fields.data_efectuare_cursa.status).toBe('review');
+  });
+
+  it('accepts a past day in the same year as upload (#102)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-1',
+      data_efectuare_cursa: '2026-10-01',
+      numar_auto: 'B 01 ABC',
+    }, {}, { today: '2026-10-19' });
+    expect(findings.some((f) => (
+      f.rule === 'date_wrong_year' || f.rule === 'date_in_past' || f.rule === 'date_in_future'
+    ))).toBe(false);
+  });
+
+  it('accepts trip date equal to upload day (#102)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-1',
+      data_efectuare_cursa: '2026-10-19',
+      numar_auto: 'B 01 ABC',
+    }, {}, { today: '2026-10-19' });
+    expect(findings.some((f) => (
+      f.rule === 'date_wrong_year' || f.rule === 'date_in_future'
+    ))).toBe(false);
   });
 
   it('forces HITL when trip date is empty and asks for manual fill (#81)', () => {
@@ -207,6 +270,34 @@ describe('validateAvizFields', () => {
       rawText: 'Greutate netă: 9.450,15 kg\nGreutate brută: 9.623,76 kg\n',
     });
     expect(findings.some((f) => f.rule === 'net_missing_near_gross' && f.field === 'net_weight_kg')).toBe(true);
+  });
+
+  it('warns on both weight fields when neither was read but greutate is on the page (#88 reopen)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033501',
+      data_efectuare_cursa: '2026-10-01',
+      numar_auto: 'B 404 RZC',
+      gross_weight_kg: null,
+      net_weight_kg: null,
+    }, {}, {
+      today: '2026-10-01',
+      rawText: 'Greutate netă: 9.450,15 kg\nGreutate brută: 9.623,76 kg\n',
+    });
+    expect(findings.some((f) => f.rule === 'weights_missing' && f.field === 'gross_weight_kg')).toBe(true);
+    expect(findings.some((f) => f.rule === 'weights_missing' && f.field === 'net_weight_kg')).toBe(true);
+  });
+
+  it('warns when Rută is empty but Adresa de livrare is on the page (#88 reopen)', () => {
+    const findings = validateAvizFields({
+      numar_tpo: 'TPO-0033501',
+      data_efectuare_cursa: '2026-10-01',
+      numar_auto: 'B 404 RZC',
+      ruta_transport: null,
+    }, {}, {
+      today: '2026-10-01',
+      rawText: 'Expeditor Site BOL\nAdresa de livrare Bulevardul Pipera nr. 1/VII Voluntari\n',
+    });
+    expect(findings.some((f) => f.rule === 'ruta_missing' && f.field === 'ruta_transport')).toBe(true);
   });
 
   it('warns when two+ labelled delivery stops compete for zone tax (#96)', () => {

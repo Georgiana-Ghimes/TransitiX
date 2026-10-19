@@ -9,7 +9,7 @@ import { hitRateLimit } from '../lib/rateLimit.js';
 import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { lookupOcrText, storeOcrText } from '../lib/ocr/textCache.js';
 import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
-import { validateAvizExtraction } from '../lib/ocr/validateAviz.js';
+import { bucharestYmd, validateAvizExtraction } from '../lib/ocr/validateAviz.js';
 import { summariseFeedback } from '../lib/ocr/feedback.js';
 import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
 import { OCR_PROFILES, profilesFor } from '../lib/ocr/profiles.js';
@@ -367,7 +367,10 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         documentId: doc.id,
         queryFn: query,
         rawText: text.text,
+        // Plausibility vs upload day (#102) — not wall-clock if extract runs later.
+        today: bucharestYmd(doc.created_at ? new Date(doc.created_at) : new Date()),
       });
+      if (validation.fields) merged.fields = validation.fields;
       const needsReview = Boolean(validation.needs_review);
       const sets = Object.keys(columns).map((c, i) => `${c} = $${i + 7}`);
 
@@ -984,7 +987,9 @@ router.put('/:id/corrections', async (req, res) => {
       documentId: doc.id,
       queryFn: query,
       rawText: doc.extracted_data?.raw_text,
+      today: bucharestYmd(doc.created_at ? new Date(doc.created_at) : new Date()),
     });
+    if (validation.fields) merged.fields = validation.fields;
     const needsReview = Boolean(validation.needs_review);
 
     const fieldChanges = Object.entries(corrections).map(([field, next]) => ({

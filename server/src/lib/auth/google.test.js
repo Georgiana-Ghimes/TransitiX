@@ -1,7 +1,9 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetGoogleCertCache, verifyGoogleIdToken } from './google.js';
+import {
+  googleSignInAllowed, googleSignInEnabled, resetGoogleCertCache, verifyGoogleIdToken,
+} from './google.js';
 
 const CLIENT_ID = 'client-123.apps.googleusercontent.com';
 const NOW = Date.UTC(2026, 8, 17, 12, 0, 0);
@@ -33,7 +35,31 @@ function certsFetch(certs = { k1: PEM }) {
 
 const opts = (extra = {}) => ({ clientId: CLIENT_ID, now: NOW, ...certsFetch(), ...extra });
 
-beforeEach(() => resetGoogleCertCache());
+beforeEach(() => {
+  resetGoogleCertCache();
+  delete process.env.ALLOW_GOOGLE_SIGNIN;
+  delete process.env.GOOGLE_CLIENT_ID;
+});
+
+describe('googleSignIn feature flag', () => {
+  it('defaults to allowed when the flag is unset', () => {
+    expect(googleSignInAllowed()).toBe(true);
+  });
+
+  it('turns off when ALLOW_GOOGLE_SIGNIN=false', () => {
+    process.env.ALLOW_GOOGLE_SIGNIN = 'false';
+    process.env.GOOGLE_CLIENT_ID = CLIENT_ID;
+    expect(googleSignInAllowed()).toBe(false);
+    expect(googleSignInEnabled()).toBe(false);
+  });
+
+  it('needs both the flag and a client id to expose the button', () => {
+    process.env.ALLOW_GOOGLE_SIGNIN = 'true';
+    expect(googleSignInEnabled()).toBe(false);
+    process.env.GOOGLE_CLIENT_ID = CLIENT_ID;
+    expect(googleSignInEnabled()).toBe(true);
+  });
+});
 
 describe('verifyGoogleIdToken', () => {
   it('returns the identity of a genuine token, address lowercased', async () => {

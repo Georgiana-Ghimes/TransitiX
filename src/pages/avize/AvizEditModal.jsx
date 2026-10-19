@@ -11,9 +11,11 @@ import { fetchUploadBlob } from '@/lib/uploadUrl';
 import { Download, Loader2, Pencil, RotateCw, X } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizPreviewZoomBar, { previewZoomBtnCls, usePreviewZoom } from './AvizPreviewZoomBar';
+import AvizReextractBanner from './AvizReextractBanner';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import {
   avizEditFindings, downloadBlob, emptyForm, findingsForField, inputCls, isLearnedRoute, labelCls, lowField,
+  reextractBlockedReason, shouldOfferReextract,
 } from './avizeUi';
 
 /**
@@ -23,9 +25,12 @@ import {
  * `formRevision` bumps only when the parent deliberately reloads the draft (Re-extrage).
  */
 export default function AvizEditModal({
-  editRow, formRevision = 0, obsCodes, saving, onClose, onSave, onFileReplaced,
+  editRow, formRevision = 0, obsCodes, saving, reextracting = false,
+  onClose, onSave, onReextract, onFileReplaced,
 }) {
   const [form, setForm] = useState(() => emptyForm(editRow));
+  /** Seed snapshot — Re-extrage greys out only after typing away from this. */
+  const [ocrBaseline, setOcrBaseline] = useState(() => emptyForm(editRow));
   const [rotating, setRotating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const {
@@ -33,10 +38,14 @@ export default function AvizEditModal({
   } = usePreviewZoom(editRow?.id);
 
   useEffect(() => {
-    setForm(emptyForm(editRow));
+    const next = emptyForm(editRow);
+    setForm(next);
+    setOcrBaseline(next);
   }, [editRow?.id, formRevision]);
 
   const reviewFindings = avizEditFindings(editRow, { form });
+  const showReextract = shouldOfferReextract(editRow, { form, findings: reviewFindings });
+  const reextractBlock = reextractBlockedReason(form, ocrBaseline);
   const fileKind = previewKind(editRow?.file_url);
   const canRotateImage = fileKind === 'image' && typeof onFileReplaced === 'function';
   const canDownload = Boolean(editRow?.file_url) && !String(editRow.file_url).startsWith('manual://');
@@ -96,7 +105,17 @@ export default function AvizEditModal({
 
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 px-5 pb-2 overflow-hidden">
           {/* Cap preview on phone so landscape photos cannot bury Salvează (#94). */}
-          <div className="min-h-[160px] h-[min(28vh,240px)] max-h-[min(28vh,240px)] sm:h-[min(34vh,300px)] sm:max-h-[min(34vh,300px)] lg:h-auto lg:max-h-none lg:min-h-0 flex flex-col border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+          <div className="min-h-0 flex flex-col gap-1 lg:min-h-0 overflow-hidden">
+            {showReextract ? (
+              <AvizReextractBanner
+                onReextract={onReextract}
+                row={editRow}
+                reextracting={reextracting}
+                disabled={saving || rotating}
+                blockedReason={reextractBlock}
+              />
+            ) : null}
+          <div className="min-h-[160px] h-[min(28vh,240px)] max-h-[min(28vh,240px)] sm:h-[min(34vh,300px)] sm:max-h-[min(34vh,300px)] lg:h-auto lg:max-h-none lg:min-h-0 flex flex-col border border-slate-200 rounded-lg overflow-hidden bg-slate-50 flex-1">
             <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
               <span className="truncate min-w-0 flex-1">
                 Document
@@ -150,6 +169,7 @@ export default function AvizEditModal({
             <div className="relative flex-1 min-h-0">
               <AvizFilePreview fileUrl={editRow.file_url} fill zoom={previewZoom} />
             </div>
+          </div>
           </div>
 
           <div className="min-h-0 overflow-y-auto overscroll-contain pr-1">
@@ -227,11 +247,11 @@ export default function AvizEditModal({
           </div>
         </div>
 
-        <div className="shrink-0 flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <button type="button" className="px-4 py-2.5 text-sm border rounded-lg min-h-[44px]" onClick={onClose}>Anulează</button>
+        <div className="shrink-0 flex flex-wrap justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <button type="button" className="px-4 py-2.5 text-sm border rounded-lg min-h-[44px]" onClick={onClose} disabled={saving || reextracting}>Anulează</button>
           <button
             type="button"
-            disabled={saving || rotating}
+            disabled={saving || rotating || reextracting}
             onClick={() => onSave(form)}
             className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg disabled:opacity-60 min-h-[44px]"
           >

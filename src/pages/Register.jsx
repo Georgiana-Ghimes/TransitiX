@@ -297,7 +297,7 @@ export default function Register() {
 
   return (
     <AuthLayout icon={UserPlus} title="Creează cont" subtitle="Înregistrează firma pe Transitix" footer={footer}>
-      {(providers.google_client_id || import.meta.env.DEV) && (
+      {providers.google_signin_enabled && providers.google_client_id ? (
         <>
           <GoogleSignInButton
             clientId={providers.google_client_id}
@@ -307,7 +307,7 @@ export default function Register() {
           />
           <OrDivider />
         </>
-      )}
+      ) : null}
 
       <ErrorBox message={error}>
         {currentCheck?.email_taken && (

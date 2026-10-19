@@ -44,7 +44,7 @@ export default function BrandLogo({
         width={96}
         height={96}
         decoding="async"
-        fetchPriority={priority ? 'high' : 'auto'}
+        fetchpriority={priority ? 'high' : 'auto'}
         className={cn('h-9 w-9 object-contain shrink-0', imgClassName, className)}
       />
     );
@@ -58,7 +58,7 @@ export default function BrandLogo({
         width={795}
         height={120}
         decoding={priority ? 'sync' : 'async'}
-        fetchPriority={priority ? 'high' : 'auto'}
+        fetchpriority={priority ? 'high' : 'auto'}
         className={cn(
           'h-8 w-auto max-w-[11.5rem] object-contain object-left dark:hidden',
           imgClassName,

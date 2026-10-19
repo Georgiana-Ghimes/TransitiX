@@ -12,6 +12,7 @@ import {
   parseDeliveryAddresses,
 } from '../avizOcr.js';
 import {
+  CRITICAL_BANDS,
   ROUTING,
   confidenceBand,
   criticalOcrKeys,
@@ -216,24 +217,28 @@ export function validateAvizFields(values = {}, fields = {}, { today, rawText } 
       source: 'rule_failed',
     }));
   } else {
+    // Reference day = upload / „today” (caller should pass created_at as YYYY-MM-DD).
+    // Same calendar year is required (#102): OCR often flips 2026→2019/2020.
+    // Past days *within* that year are fine (e.g. 01.10 when upload is 19.10).
+    const refYear = String(day).slice(0, 4);
+    const dateYear = String(dateYmd).slice(0, 4);
     const maxOk = addDaysYmd(day, 1);
-    const minOk = addDaysYmd(day, -400);
-    if (dateYmd > maxOk) {
+    if (dateYear !== refYear) {
+      findings.push(finding({
+        rule: 'date_wrong_year',
+        field: 'data_efectuare_cursa',
+        severity: 'error',
+        title: 'An greșit pe dată',
+        message: `Data ${dateYmd} nu e din anul încărcării (${refYear}). Data cursei trebuie să fie din ${refYear} — verifică anul pe poză (OCR confundă des 6 cu 0).`,
+        source: 'rule_failed',
+      }));
+    } else if (dateYmd > maxOk) {
       findings.push(finding({
         rule: 'date_in_future',
         field: 'data_efectuare_cursa',
-        title: 'Dată în viitor',
-        message: `Data ${dateYmd} este după ${maxOk}.`,
-        source: 'rule_failed',
-      }));
-    } else if (dateYmd < minOk) {
-      // OCR often turns 2026→2020; a multi-year-old trip date on a fresh upload is an error (#77).
-      findings.push(finding({
-        rule: 'date_too_old',
-        field: 'data_efectuare_cursa',
         severity: 'error',
-        title: 'Dată foarte veche',
-        message: `Data ${dateYmd} e cu peste un an în urmă — verifică anul pe poză (OCR confundă des 6 cu 0).`,
+        title: 'Dată în viitor',
+        message: `Data ${dateYmd} este după ${maxOk} — verifică pe poză.`,
         source: 'rule_failed',
       }));
     }
@@ -390,6 +395,54 @@ export function validateAvizFields(values = {}, fields = {}, { today, rawText } 
         severity: 'warning',
         title: 'Greutate netă lipsă',
         message: `Brută e ${gross} kg, dar greutatea netă nu s-a citit — verifică pe poză (umbră / moiré).`,
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Both weight columns empty while the page clearly has a weighbridge section (#88 reopen).
+  {
+    const grossEmpty = values.gross_weight_kg == null || String(values.gross_weight_kg).trim() === '';
+    const netEmpty = values.net_weight_kg == null || String(values.net_weight_kg).trim() === '';
+    const raw = String(rawText || '');
+    const hasWeightSection = (
+      /greutate\s*(?:bruta|brută|neta|netă|net)|masa\s*(?:bruta|brută|neta|netă)/i.test(raw)
+      || (/\bgreutate\b/i.test(raw) && /\b\d{1,3}[.,]\d{3}/.test(raw))
+    );
+    if (grossEmpty && netEmpty && hasWeightSection) {
+      findings.push(finding({
+        rule: 'weights_missing',
+        field: 'gross_weight_kg',
+        severity: 'error',
+        title: 'Greutăți lipsă',
+        message: 'Pe poză există greutăți (brută / netă), dar nu s-au citit — verifică pe poză (umbră / moiré). Fără brută nu se calculează taxa zonă.',
+        source: 'rule_failed',
+      }));
+      findings.push(finding({
+        rule: 'weights_missing',
+        field: 'net_weight_kg',
+        severity: 'warning',
+        title: 'Greutate netă lipsă',
+        message: 'Pe poză există greutăți, dar neta nu s-a citit — verifică pe poză (umbră / moiré).',
+        source: 'rule_failed',
+      }));
+    }
+  }
+
+  // Rută empty while Expeditor / Adresa de livrare labels are on the page (#88 reopen).
+  {
+    const rutaEmpty = !String(values.ruta_transport || '').trim();
+    const raw = String(rawText || '');
+    const hasAddressLabels = (
+      /adres[ae]\s+de\s+livrare|loc\s+de\s+desc[aă]rcare|expeditor/i.test(raw)
+    );
+    if (rutaEmpty && hasAddressLabels) {
+      findings.push(finding({
+        rule: 'ruta_missing',
+        field: 'ruta_transport',
+        severity: 'warning',
+        title: 'Rută transport lipsă',
+        message: 'Pe poză există Expeditor / Adresa de livrare, dar ruta nu s-a citit — completează din stânga (nu din Client).',
         source: 'rule_failed',
       }));
     }
@@ -554,7 +607,32 @@ export function computeRouting({ fields = {}, findings = [] } = {}) {
 }
 
 /**
+ * Cap Data efectuare cursă into HITL when plausibility failed — so list/Editează mark the field
+ * even if the extractor scored the (wrong) digits highly (#102).
+ */
+export function demoteImplausibleDateField(fields, findings) {
+  if (!fields || typeof fields !== 'object') return fields;
+  const bad = (findings || []).some((f) => (
+    f?.field === 'data_efectuare_cursa'
+    && ['date_wrong_year', 'date_in_past', 'date_too_old', 'date_in_future', 'date_unparseable'].includes(f.rule)
+  ));
+  if (!bad || !fields.data_efectuare_cursa) return fields;
+  const cur = fields.data_efectuare_cursa;
+  const cap = Math.round((CRITICAL_BANDS.optional - 0.01) * 100) / 100;
+  const conf = Number(cur.confidence);
+  return {
+    ...fields,
+    data_efectuare_cursa: {
+      ...cur,
+      confidence: Number.isFinite(conf) ? Math.min(conf, cap) : cap,
+      status: 'review',
+    },
+  };
+}
+
+/**
  * Full validation package stored on extracted_data.validation.
+ * Returns `fields` when date plausibility demoted confidence (#102).
  */
 export async function validateAvizExtraction({
   values,
@@ -586,7 +664,8 @@ export async function validateAvizExtraction({
     }
   }
 
-  const routing = computeRouting({ fields, findings });
+  const fieldsOut = demoteImplausibleDateField(fields, findings);
+  const routing = computeRouting({ fields: fieldsOut || fields, findings });
   const failed_rules = [...new Set(findings.map((f) => f.rule))];
   const needs_review = routing !== ROUTING.AUTO
     || findings.some((f) => f.severity === 'error');
@@ -596,6 +675,7 @@ export async function validateAvizExtraction({
     routing,
     failed_rules,
     needs_review,
+    fields: fieldsOut,
     validated_at: new Date().toISOString(),
   };
 }

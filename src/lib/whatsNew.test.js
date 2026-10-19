@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  WHATS_NEW_KEEP,
   WHATS_NEW_SEEN_BUILD_KEY,
   WHATS_NEW_SEEN_KEY,
   WHATS_NEW_RELEASES,
@@ -7,6 +8,7 @@ import {
   fetchWhatsNewClientIp,
   getSeenWhatsNew,
   getSeenWhatsNewBuild,
+  keepNewestWhatsNewReleases,
   markWhatsNewSeen,
   normalizeIp,
   parseBuild,
@@ -130,8 +132,17 @@ describe('whatsNew', () => {
     }).map((r) => r.build)).toEqual([110, 108]);
   });
 
-  it('ships at least one client-facing note for the current companion train', () => {
+  it('ships at least one client-facing note and at most WHATS_NEW_KEEP', () => {
     expect(WHATS_NEW_RELEASES.length).toBeGreaterThan(0);
+    expect(WHATS_NEW_RELEASES.length).toBeLessThanOrEqual(WHATS_NEW_KEEP);
+    expect(keepNewestWhatsNewReleases([
+      { build: 1, title: 'a', highlights: ['x'] },
+      { build: 6, title: 'f', highlights: ['x'] },
+      { build: 5, title: 'e', highlights: ['x'] },
+      { build: 4, title: 'd', highlights: ['x'] },
+      { build: 3, title: 'c', highlights: ['x'] },
+      { build: 2, title: 'b', highlights: ['x'] },
+    ]).map((r) => r.build)).toEqual([6, 5, 4, 3, 2]);
     for (const release of WHATS_NEW_RELEASES) {
       expect(release.build).toBeGreaterThan(0);
       expect(String(release.title || '').length).toBeGreaterThan(8);

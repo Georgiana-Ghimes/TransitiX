@@ -224,7 +224,8 @@ function decorateAviz(row, { routeRules = [], fleetByPlate = null } = {}) {
     : null;
   field_confidence = clearAutoLowWhenFleetVerified(field_confidence, fleetStatus);
   const heuristicReview = [
-    'numar_tpo', 'numar_auto', 'ruta_transport', 'cantitate_marfa', 'data_efectuare_cursa',
+    'numar_tpo', 'numar_document_marfa', 'numar_auto', 'ruta_transport',
+    'cantitate_marfa', 'data_efectuare_cursa',
   ].some((key) => field_confidence[key] === 'low');
   const existingRouting = validation?.routing ?? null;
   const validation_routing = heuristicReview

@@ -80,6 +80,8 @@ export default function AvizeReports() {
   /** Bumps when Re-extrage should re-seed the Editează draft (not on list poll). */
   const [editFormRevision, setEditFormRevision] = useState(0);
   const [reviewId, setReviewId] = useState(null);
+  /** Bumps Verifică drawer after Re-extrage settles. */
+  const [reviewReloadKey, setReviewReloadKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [deleteRow, setDeleteRow] = useState(null);
   const [deleteBulkOpen, setDeleteBulkOpen] = useState(false);
@@ -446,7 +448,25 @@ export default function AvizeReports() {
   const closeReviewDrawer = useCallback(() => setReviewId(null), []);
   const loadRef = useRef(load);
   loadRef.current = load;
-  const refreshAfterReview = useCallback(() => { void loadRef.current(); }, []);
+  /** Patch one row in place — never reload the page list (that used to reshuffle ties). */
+  const patchAvizRow = useCallback((id, patch) => {
+    if (!id || !patch) return;
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }, []);
+
+  const refreshAfterReview = useCallback(async () => {
+    const id = reviewId;
+    if (!id) {
+      void loadRef.current();
+      return;
+    }
+    try {
+      const row = await api.entities.AvizDocument.get(id);
+      patchAvizRow(id, row);
+    } catch {
+      void loadRef.current();
+    }
+  }, [reviewId, patchAvizRow]);
 
   const saveEdit = useCallback(async (form) => {
     if (!editRow) return;
@@ -472,14 +492,14 @@ export default function AvizeReports() {
           ? 'Atenție: același transport există deja pe alt rând. Salvarea a rămas.'
           : 'Câmpurile au fost actualizate.'
       );
+      patchAvizRow(editRow.id, saved || payload);
       setEditRow(null);
-      await loadRef.current();
     } catch (e) {
       notifyError('Salvare eșuată', e);
     } finally {
       setSaving(false);
     }
-  }, [editRow]);
+  }, [editRow, patchAvizRow]);
 
   const saveForceGateItem = useCallback(async (row, form) => {
     if (!row?.id) return;
@@ -558,7 +578,18 @@ export default function AvizeReports() {
         : prev.peerRows;
       return { ...prev, queue: nextQueue, peerRows: nextPeers };
     });
-    void loadRef.current();
+    // Same row stays at the same index in the main list (no full reload / reshuffle).
+    setRows((prev) => prev.map((r) => {
+      if (r.id !== row.id) return r;
+      return {
+        ...r,
+        ...payload,
+        ...(saved || {}),
+        file_url: row.file_url || saved?.file_url,
+        goods_doc_only: goodsDocOnly,
+        needs_review: false,
+      };
+    }));
   }, []);
 
   const forceGatePeers = useCallback((ids) => {
@@ -942,7 +973,34 @@ export default function AvizeReports() {
             setEditFormRevision((n) => n + 1);
             return { ...prev, ...settled };
           });
+          setForceGate((prev) => {
+            if (!prev?.queue?.length) return prev;
+            const patchRow = (r) => (r.id === row.id ? { ...r, ...settled } : r);
+            return {
+              ...prev,
+              queue: prev.queue.map(patchRow),
+              row: prev.row?.id === row.id ? { ...prev.row, ...settled } : prev.row,
+            };
+          });
+          if (reviewId === row.id) setReviewReloadKey((n) => n + 1);
         }
+      } else if (settled || result) {
+        const fresh = settled || result;
+        setEditRow((prev) => {
+          if (prev?.id !== row.id) return prev;
+          setEditFormRevision((n) => n + 1);
+          return { ...prev, ...fresh };
+        });
+        setForceGate((prev) => {
+          if (!prev?.queue?.length) return prev;
+          const patchRow = (r) => (r.id === row.id ? { ...r, ...fresh } : r);
+          return {
+            ...prev,
+            queue: prev.queue.map(patchRow),
+            row: prev.row?.id === row.id ? { ...prev.row, ...fresh } : prev.row,
+          };
+        });
+        if (reviewId === row.id) setReviewReloadKey((n) => n + 1);
       }
       await load();
       if (!String(settled?.numar_tpo || result?.numar_tpo || '').trim()) {
@@ -1652,8 +1710,10 @@ export default function AvizeReports() {
           formRevision={editFormRevision}
           obsCodes={obsCodes}
           saving={saving}
+          reextracting={busyId === editRow.id}
           onClose={closeEditModal}
           onSave={saveEdit}
+          onReextract={requestReextract}
           onFileReplaced={(row) => {
             if (!row?.id) return;
             setEditRow((prev) => (prev?.id === row.id ? { ...prev, ...row } : prev));
@@ -1665,8 +1725,11 @@ export default function AvizeReports() {
       {reviewId && (
         <AvizReviewDrawer
           documentId={reviewId}
+          reloadKey={reviewReloadKey}
+          reextracting={busyId === reviewId}
           onClose={closeReviewDrawer}
           onSaved={refreshAfterReview}
+          onReextract={requestReextract}
         />
       )}
 
@@ -1676,9 +1739,11 @@ export default function AvizeReports() {
           queue={forceGate.queue || []}
           initialId={forceGate.queue?.[0]?.id || forceGate.row?.id}
           busy={busy || exporting || Boolean(busyId)}
+          reextracting={Boolean(busyId)}
           onCancel={() => setForceGate(null)}
           onConfirm={runForceGateConfirm}
           onSaveItem={saveForceGateItem}
+          onReextract={requestReextract}
           peerRows={forceGate.peerRows || null}
           mergeTpoPreview={Boolean(forceGate.mergeTpoPreview)}
           mergeTpoRequired={Boolean(forceGate.mergeTpoRequired ?? forceGate.mergeTpoPreview)}

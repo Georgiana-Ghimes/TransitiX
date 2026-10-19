@@ -38,6 +38,13 @@ describe('friendlyErrorMessage', () => {
     expect(errorTitle('Eroare', httpError(401, 'Unauthorized'))).toBe('Sesiune expirată');
   });
 
+  it('keeps login credential failures (401) instead of saying the session expired', () => {
+    expect(friendlyErrorMessage(httpError(401, 'Email sau parolă greșite.')))
+      .toBe('Email sau parolă greșite.');
+    expect(friendlyErrorMessage(httpError(403, 'Contul este dezactivat. Contactează administratorul firmei.')))
+      .toMatch(/dezactivat/);
+  });
+
   it('names a lost connection as such instead of blaming the server', () => {
     const offline = new TypeError('Failed to fetch');
     expect(isOfflineError(offline)).toBe(true);

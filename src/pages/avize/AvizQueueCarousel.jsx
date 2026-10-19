@@ -3,6 +3,7 @@ import RoDateField from '@/components/RoDateField';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AvizFilePreview from './AvizFilePreview';
 import AvizPreviewZoomBar, { usePreviewZoom } from './AvizPreviewZoomBar';
+import AvizReextractBanner from './AvizReextractBanner';
 import {
   CAROUSEL_EDIT_FIELDS,
   consecutiveSameTpoPeers,
@@ -15,6 +16,8 @@ import {
   missingRequiredCarouselFields,
   normalizeTpoKey,
   previewFileUrlsForPeers,
+  reextractBlockedReason,
+  shouldOfferReextract,
   unackedLowOcrFields,
 } from './avizeUi';
 
@@ -31,7 +34,9 @@ export default function AvizQueueCarousel({
   queue = [],
   initialId = null,
   saving = false,
+  reextracting = false,
   onSave,
+  onReextract,
   onCompletenessChange,
   /** Full selection (upload order) for adjacent same-TPO preview when merge is on. */
   peerRows = null,
@@ -61,6 +66,7 @@ export default function AvizQueueCarousel({
   const [index, setIndex] = useState(startIndex);
   const current = ordered[index] || null;
   const [form, setForm] = useState(() => emptyForm(current));
+  const [ocrBaseline, setOcrBaseline] = useState(() => emptyForm(current));
   // Reset position only when the queue id-set changes (new modal), not after field saves.
   const queueIdsRef = useRef(orderedIds);
 
@@ -80,8 +86,11 @@ export default function AvizQueueCarousel({
   }, [ordered.length, ordered]);
 
   useEffect(() => {
-    setForm(emptyForm(current));
-  }, [current?.id]);
+    const next = emptyForm(current);
+    setForm(next);
+    setOcrBaseline(next);
+    // Reseed after Re-extrage (updated_at / OCR status change), not only on id change.
+  }, [current?.id, current?.updated_at, current?.status, current?.ocr_confidence]);
 
   const goodsDocOnly = Boolean(form.goods_doc_only);
   const missing = useMemo(() => missingRequiredCarouselFields(form), [form]);
@@ -218,7 +227,19 @@ export default function AvizQueueCarousel({
         „Salvează” / modal footer below the fold (#94). Form fields scroll; save stays sticky.
       */}
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0 flex-1 overflow-hidden">
-        <div className="min-h-0 h-[min(28vh,220px)] max-h-[min(28vh,220px)] lg:h-auto lg:max-h-none border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col overflow-hidden">
+        <div className="min-h-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col overflow-hidden">
+          {shouldOfferReextract(current, { form }) ? (
+            <div className="shrink-0 px-2 pt-1.5 pb-1">
+              <AvizReextractBanner
+                onReextract={onReextract}
+                row={current}
+                reextracting={reextracting}
+                disabled={saving}
+                blockedReason={reextractBlockedReason(form, ocrBaseline)}
+              />
+            </div>
+          ) : null}
+          <div className="min-h-0 h-[min(28vh,220px)] max-h-[min(28vh,220px)] lg:h-auto lg:max-h-none flex flex-col flex-1 overflow-hidden">
           <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
             <span className="truncate min-w-0">
               {gluedLabel || 'Document'}
@@ -244,6 +265,7 @@ export default function AvizQueueCarousel({
             ) : (
               <p className="p-4 text-sm text-slate-500">Fără fișier pe acest rând.</p>
             )}
+          </div>
           </div>
         </div>
 
@@ -368,7 +390,7 @@ export default function AvizQueueCarousel({
             <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-3 py-2.5 space-y-1.5">
               <button
                 type="button"
-                disabled={saving || !current}
+                disabled={saving || reextracting || !current}
                 onClick={() => { void handleSave(); }}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] disabled:opacity-60 shadow-sm min-h-[44px]"
               >

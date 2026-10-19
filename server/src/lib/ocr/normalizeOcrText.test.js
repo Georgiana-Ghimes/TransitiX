@@ -2,8 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { normalizeOcrText, sanitizeOcrText } from './normalizeOcrText.js';
 
 describe('sanitizeOcrText (provider boundary)', () => {
-  it('drops control and zero-width characters, keeps newlines and tabs', () => {
-    expect(sanitizeOcrText('TPO\u200B-0025629\u0000\u0007\r\nB 330 SRS\tkm')).toBe('TPO-0025629\nB 330 SRS km');
+  it('drops control and zero-width characters, keeps newlines and tab cell borders', () => {
+    expect(sanitizeOcrText('TPO\u200B-0025629\u0000\u0007\r\nB 330 SRS\tkm')).toBe('TPO-0025629\nB 330 SRS\tkm');
+  });
+
+  it('keeps Baumit Adresa|Client tabs so delivery is not glued to the Client seat', () => {
+    const raw = [
+      'Adresă de livrare\tClient',
+      'str Garlei nr.10\tALEEA TERASEI NR.5',
+      'Potiogi RO 137370\tBucurești Sector 4 RO 041772',
+    ].join('\n');
+    const out = sanitizeOcrText(raw);
+    expect(out).toContain('Adresă de livrare\tClient');
+    expect(out).toContain('str Garlei nr.10\tALEEA TERASEI NR.5');
+    expect(out).not.toMatch(/str Garlei nr\.10 ALEEA TERASEI/);
   });
 
   it('normalises unicode so a composed and a decomposed ș compare equal', () => {
@@ -55,6 +67,19 @@ describe('sanitizeOcrText (provider boundary)', () => {
     expect(out).toContain('Greutate netă:');
     expect(out).toContain('Greutate brută:');
     expect(out).not.toMatch(/brutä|netä/);
+  });
+
+  it('maps OCR $ to Romanian ș / șt (Balote$i ← Balotești)', () => {
+    expect(sanitizeOcrText('Str. Fabricii nr. 20, Balote$i RO 077040')).toContain('Balotești');
+    expect(sanitizeOcrText('Balote$i')).toBe('Balotești');
+    expect(sanitizeOcrText('pret $12')).toBe('pret $12');
+  });
+});
+
+describe('normalizeOcrText street OCR fixes', () => {
+  it('repairs Kepublicii → Republicii (TPO-0033490)', () => {
+    expect(normalizeOcrText('Str. Kepublicii, nr. 1F Bolintin-Deal')).toContain('Republicii');
+    expect(normalizeOcrText('Str. Kepublicii, nr. 1F Bolintin-Deal')).not.toMatch(/Kepublicii/i);
   });
 });
 

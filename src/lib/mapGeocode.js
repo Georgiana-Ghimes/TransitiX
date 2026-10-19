@@ -23,24 +23,36 @@ function fold(value) {
   return plainText(value);
 }
 
+/** Six-digit Romanian postcode from a free-text query or OCR field. */
+export function extractRoPostcode(text) {
+  const m = String(text || '').match(/\b(?:RO\s*)?(\d{6})\b/i);
+  return m?.[1] || null;
+}
+
 /** Street-name tokens from a free-text query (no type word, no house number, no locality). */
 export function queryStreetTokens(query, locality = null) {
   let text = String(query || '').trim();
   if (!text) return [];
   const loc = String(locality || '').trim();
+  const locEsc = loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (loc) {
-    const re = new RegExp(`,\\s*${loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i');
-    text = text.replace(re, '').trim();
+    // End-anchored or anywhere (query may continue with `, 077190`).
+    text = text
+      .replace(new RegExp(`,\\s*${locEsc}\\b`, 'gi'), ' ')
+      .replace(new RegExp(`\\b${locEsc}\\b`, 'gi'), ' ')
+      .trim();
   }
   text = text
     .replace(/,?\s*Romania\s*$/i, '')
-    .replace(/\bnr\.?\s*[0-9]+[A-Za-z]?\b/gi, ' ')
-    .replace(/\b[0-9]+[A-Za-z]?\b/g, ' ')
+    .replace(/\b(?:RO\s*)?\d{6}\b/gi, ' ')
+    // House: `nr. 52`, `600A`, `1/VII` (OCR on Pipera etc.).
+    .replace(/\bnr\.?\s*[0-9]+[A-Za-z]*(?:\/[A-Za-z0-9]+)?\b/gi, ' ')
+    .replace(/\b[0-9]+[A-Za-z]*(?:\/[A-Za-z0-9]+)?\b/g, ' ')
     .replace(/[,]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   const bare = streetNameWithoutType(text);
-  return bare.split(/\s+/).filter((t) => t.length >= 2);
+  return bare.split(/\s+/).filter((t) => t.length >= 2 && !t.startsWith('/'));
 }
 
 function featureStreetTokens(props) {
@@ -76,9 +88,10 @@ export function streetAgreement(wantTokens, gotTokens) {
 }
 
 /** Shorter queries Photon is more likely to answer. */
-export function mapGeocodeQueries(query, locality = null) {
+export function mapGeocodeQueries(query, locality = null, postcode = null) {
   const base = String(query || '').trim();
   const loc = String(locality || '').trim();
+  const pc = extractRoPostcode(postcode) || extractRoPostcode(base);
   const out = [];
   const add = (q) => {
     const t = String(q || '').replace(/\s+/g, ' ').trim().replace(/^,|,$/g, '').trim();
@@ -89,32 +102,54 @@ export function mapGeocodeQueries(query, locality = null) {
     if (!loc || fold(q).includes(fold(loc))) return q;
     return `${q}, ${loc}`;
   };
+  const withPost = (q) => {
+    if (!q || !pc || fold(q).includes(pc)) return q;
+    return `${q}, ${pc}`;
+  };
 
   if (!base && !loc) return out;
 
-  add(withLoc(base));
+  // Full query first (often already carries locality + postcode from Editează).
+  add(withPost(withLoc(base)));
   add(withLoc(base.replace(/,?\s*Romania\s*$/i, '').trim()));
 
-  // Drop house numbers: "nr. 1F", bare "600A".
+  // Drop house numbers: "nr. 1F", "1/VII", bare "600A" — keep a six-digit postcode.
   const noNum = base
-    .replace(/\bnr\.?\s*[0-9]+[A-Za-z]?\b/gi, ' ')
-    .replace(/\b[0-9]+[A-Za-z]?\b/g, ' ')
+    .replace(/\bnr\.?\s*[0-9]+[A-Za-z]*(?:\/[A-Za-z0-9]+)?\b/gi, ' ')
+    .replace(/\b(?!\d{6}\b)[0-9]+[A-Za-z]*(?:\/[A-Za-z0-9]+)?\b/g, ' ')
     .replace(/\s+,/g, ',')
     .replace(/,\s*,/g, ',')
     .replace(/\s+/g, ' ')
     .trim();
-  add(withLoc(noNum));
+  add(withPost(withLoc(noNum)));
 
   // Street type words often disagree with OSM ("strada" vs "Bulevardul Republicii").
-  const bare = noNum
-    .replace(/^(strada|bulevardul|soseaua|aleea|piata|calea)\s+/i, '')
-    .replace(new RegExp(`,\\s*${loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'), '')
+  const locEsc = loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const tidyCommas = (s) => String(s || '')
+    .replace(/\b(?:RO\s*)?\d{6}\b/gi, ' ')
+    .replace(/,\s*,+/g, ',')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,]+|[\s,]+$/g, '')
     .trim();
-  if (bare) add(loc ? `${bare}, ${loc}` : bare);
+  const bare = tidyCommas(
+    noNum
+      .replace(/^(strada|bulevardul|soseaua|aleea|piata|calea)\s+/i, '')
+      .replace(loc ? new RegExp(`,\\s*${locEsc}\\b`, 'gi') : /$^/, '')
+      .replace(loc ? new RegExp(`\\b${locEsc}\\b`, 'gi') : /$^/, ''),
+  );
+  if (bare) {
+    const streetLoc = loc ? `${bare}, ${loc}` : bare;
+    add(withPost(streetLoc));
+    add(streetLoc);
+  }
+
+  // Street + postcode (no locality) — Photon often resolves the right settlement from the code.
+  if (pc && bare) add(`${bare}, ${pc}`);
 
   // Bare locality only when the query had no street name — otherwise Photon pins the town
   // centre and the map used to treat that as the typed address.
-  if (!queryStreetTokens(base, loc).length && loc) add(loc);
+  if (!queryStreetTokens(base, loc).length && loc) add(withPost(loc));
   return out;
 }
 
@@ -147,6 +182,17 @@ function preferLocality(features, locality) {
   const matched = features.filter((f) => {
     const p = f.properties || {};
     return [p.city, p.district, p.county, p.name].some((x) => fold(x).includes(want));
+  });
+  return matched.length ? matched : features;
+}
+
+/** Prefer OSM hits whose postcode matches the aviz (under Adresa de livrare). */
+function preferPostcode(features, postcode) {
+  const pc = extractRoPostcode(postcode);
+  if (!pc || !features.length) return features;
+  const matched = features.filter((f) => {
+    const got = String(f.properties?.postcode || '').replace(/\s+/g, '');
+    return got === pc;
   });
   return matched.length ? matched : features;
 }
@@ -184,8 +230,13 @@ async function photonSearch(q, { signal } = {}) {
  *   match: 'accepted' | 'suggestion',
  * } | null}
  */
-export async function geocodeMapPin(query, { locality = null, signal = undefined } = {}) {
-  const candidates = mapGeocodeQueries(query, locality);
+export async function geocodeMapPin(query, {
+  locality = null,
+  postcode = null,
+  signal = undefined,
+} = {}) {
+  const pc = extractRoPostcode(postcode) || extractRoPostcode(query);
+  const candidates = mapGeocodeQueries(query, locality, pc);
   if (!candidates.length) return null;
 
   const wantStreet = queryStreetTokens(query, locality);
@@ -194,7 +245,8 @@ export async function geocodeMapPin(query, { locality = null, signal = undefined
 
   for (const q of candidates) {
     try {
-      const features = preferLocality(await photonSearch(q, { signal }), locality);
+      let features = await photonSearch(q, { signal });
+      features = preferPostcode(preferLocality(features, locality), pc);
       for (const feature of features) {
         const pin = featureToPin(feature, q);
         if (!pin) continue;

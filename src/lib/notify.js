@@ -47,15 +47,14 @@ const BOILERPLATE = new RegExp([
   'gateway timeout',
   'invalid json body',
   'unexpected end of json input',
+  // JWT / middleware English — never show these on Login or toast; status copy wins.
+  'invalid or expired token',
+  'invalid token',
+  'jwt expired',
+  'jwt malformed',
+  'jwt must be provided',
+  'no authorization token',
 ].join('|'), 'i');
-
-/**
- * Statuses where the status copy always wins.
- *
- * "Not signed in" and "not allowed here" mean exactly one thing to a reader, and no phrasing the
- * server invents improves on it, `Invalid or expired token` describes a token, not a next step.
- */
-const STATUS_WINS = new Set([401, 403]);
 
 /** No response at all, the phone lost signal, or the API is not running. */
 const OFFLINE = /failed to fetch|networkerror|load failed|network request failed/i;
@@ -97,10 +96,11 @@ export function friendlyErrorMessage(errorOrMessage) {
     return 'Format invalid pentru unul din câmpuri. Verifică datele și numerele introduse.';
   }
 
-  // A message written for a reader beats generic status copy, that is the whole point of the
-  // server bothering to write one. Boilerplate does not count as one, and neither does anything
-  // arriving with a status that already says all there is to say.
-  if (!STATUS_WINS.has(status) && msg && msg !== 'Eroare necunoscută' && !BOILERPLATE.test(msg)) {
+  // A message written for a reader beats generic status copy — including on 401/403.
+  // Login returns 401 with „Email sau parolă greșite.”; swallowing that as „Sesiunea a
+  // expirat” made every failed sign-in look like a dead session. English JWT boilerplate
+  // still loses to STATUS_COPY via BOILERPLATE above.
+  if (msg && msg !== 'Eroare necunoscută' && !BOILERPLATE.test(msg)) {
     return msg;
   }
 

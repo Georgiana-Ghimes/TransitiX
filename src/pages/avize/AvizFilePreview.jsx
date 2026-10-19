@@ -1,8 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PdfCanvasViewer from '@/components/PdfCanvasViewer';
 import { previewKind } from '@/lib/avizOps';
+import { prepareImageForUpload } from '@/lib/imagePreprocess';
 import { fetchUploadBlob, resolvePreviewSource, withAccessToken } from '@/lib/uploadUrl';
 import { imagePreviewZoomStyle } from './AvizPreviewZoomBar';
+
+/**
+ * Bake EXIF + upright portrait for on-screen preview (#103).
+ * Does not write the server file — 90°/180° in Editează still replace bytes on disk.
+ */
+async function blobForUprightPreview(blob) {
+  if (!blob || typeof File === 'undefined') return blob;
+  try {
+    const type = blob.type && String(blob.type).startsWith('image/')
+      ? blob.type
+      : 'image/jpeg';
+    const file = new File([blob], 'aviz-preview.jpg', { type });
+    const upright = await prepareImageForUpload(file, { preferPortrait: true });
+    return upright instanceof Blob ? upright : blob;
+  } catch {
+    return blob;
+  }
+}
 
 const SOURCE_LABEL = {
   driver_manual: 'Manual șofer',
@@ -186,7 +205,9 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null
             });
             return;
           }
-          objectUrl = URL.createObjectURL(blob);
+          const displayBlob = await blobForUprightPreview(blob);
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(displayBlob);
           loadedUrlRef.current = fileUrl;
           setPdfBlob(null);
           setSrc(objectUrl);

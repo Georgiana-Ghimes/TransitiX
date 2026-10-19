@@ -9,7 +9,11 @@ import { Loader2, X } from 'lucide-react';
 import AvizBlockOverlay from './AvizBlockOverlay';
 import AvizFilePreview from './AvizFilePreview';
 import AvizPreviewZoomBar, { usePreviewZoom } from './AvizPreviewZoomBar';
-import { inputCls, labelCls, OCR_OWNED_FIELDS, reviewDraftFromPayload } from './avizeUi';
+import AvizReextractBanner from './AvizReextractBanner';
+import {
+  inputCls, labelCls, OCR_OWNED_FIELDS, reextractBlockedReason, reviewDraftFromPayload,
+  shouldOfferReextract,
+} from './avizeUi';
 
 const ISSUE_SOURCE_LABEL = {
   low_confidence: 'Încredere scăzută',
@@ -39,11 +43,14 @@ function orderedDraftKeys(draft) {
 /**
  * HITL drawer: original scan beside problematic fields; corrections go through the API.
  */
-export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
+export default function AvizReviewDrawer({
+  documentId, reloadKey = 0, reextracting = false, onClose, onSaved, onReextract,
+}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [payload, setPayload] = useState(null);
   const [draft, setDraft] = useState({});
+  const [ocrBaseline, setOcrBaseline] = useState({});
   const [activeField, setActiveField] = useState(null);
   const [showAllBlocks, setShowAllBlocks] = useState(false);
   // Parent often passes inline `() => …` — keep latest without putting them in effect deps
@@ -60,7 +67,9 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
       .then((data) => {
         if (cancelled) return;
         setPayload(data);
-        setDraft(reviewDraftFromPayload(data));
+        const next = reviewDraftFromPayload(data);
+        setDraft(next);
+        setOcrBaseline(next);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -70,7 +79,7 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [documentId]);
+  }, [documentId, reloadKey]);
 
   const saveCorrections = async () => {
     if (!payload) return;
@@ -90,7 +99,9 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
       // Soft refresh: keep the pane mounted (no setLoading) so the preview does not flash.
       const refreshed = await api.documents.review(documentId);
       setPayload(refreshed);
-      setDraft(reviewDraftFromPayload(refreshed));
+      const next = reviewDraftFromPayload(refreshed);
+      setDraft(next);
+      setOcrBaseline(next);
       onSavedRef.current?.();
     } catch (err) {
       notifyError('Salvare eșuată', err);
@@ -174,7 +185,29 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
               Bounded height + overflow-auto so a tall aviz page is never clipped with no
               way to scroll (#91). Legend stays outside the scroll pane.
             */}
-            <div className="flex flex-col gap-2 min-h-0 h-[min(42vh,360px)] lg:h-full">
+            <div className="flex flex-col gap-1.5 min-h-0 h-[min(42vh,360px)] lg:h-full">
+              {shouldOfferReextract(
+                payload?.document
+                  ? {
+                    id: documentId,
+                    ...payload.document,
+                    field_confidence: payload.fields || payload.document.field_confidence,
+                  }
+                  : { id: documentId },
+                { form: draft, findings: issues },
+              ) ? (
+                <AvizReextractBanner
+                  onReextract={onReextract}
+                  row={payload?.document ? {
+                    id: documentId,
+                    file_url: fileUrl,
+                    ...payload.document,
+                  } : { id: documentId, file_url: fileUrl }}
+                  reextracting={reextracting}
+                  disabled={saving}
+                  blockedReason={reextractBlockedReason(draft, ocrBaseline)}
+                />
+              ) : null}
               <div className="shrink-0 flex items-center justify-between gap-2 px-2 py-1 border border-slate-200 rounded-lg bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
                 <span className="truncate min-w-0">Document</span>
                 <AvizPreviewZoomBar
@@ -312,7 +345,7 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
               <div className="shrink-0 flex flex-wrap gap-2 pt-2 border-t border-slate-100 bg-white py-2">
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={saving || reextracting}
                   onClick={saveCorrections}
                   className="px-3 py-2 text-sm rounded-lg bg-[#0A2B4E] text-white disabled:opacity-50"
                 >
@@ -320,7 +353,7 @@ export default function AvizReviewDrawer({ documentId, onClose, onSaved }) {
                 </button>
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={saving || reextracting}
                   onClick={approve}
                   className="px-3 py-2 text-sm rounded-lg border border-emerald-300 text-emerald-800 bg-emerald-50 disabled:opacity-50"
                 >

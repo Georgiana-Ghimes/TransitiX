@@ -316,7 +316,9 @@ export function buildAvizListQuery({
     FROM aviz_documents a
     LEFT JOIN users u ON u.id = a.uploaded_by AND u.company_id = a.company_id
     WHERE ${where.join(' AND ')}
-    ORDER BY a.created_at DESC
+    ORDER BY a.created_at DESC,
+      a.original_filename ASC NULLS LAST,
+      a.id ASC
     LIMIT $${nextIndex} OFFSET $${nextIndex + 1}`;
   return { sql, params, page };
 }

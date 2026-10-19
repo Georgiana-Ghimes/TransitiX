@@ -154,12 +154,15 @@ function destinationToDeliveryShape(destination) {
   const house = String(destination.house_number || '').replace(/\s+/g, '');
   const houseNorm = /^[IL]F$/i.test(house) ? `1${house.slice(-1).toUpperCase()}` : (house || null);
   const typeRaw = String(destination.street_type || '').toLowerCase().replace(/\.$/, '') || null;
+  const postcodeMatch = String(destination.postcode || destination.postal_code || '')
+    .match(/\b(\d{6})\b/);
   return {
     locality,
     street: [streetName, houseNorm].filter(Boolean).join(' ') || null,
     streetName,
     streetType: typeRaw,
     houseNumber: houseNorm,
+    postcode: postcodeMatch?.[1] || null,
   };
 }
 

@@ -29,7 +29,9 @@ import {
   passwordProblem,
   validateSignup,
 } from '../lib/auth/signup.js';
-import { googleClientId, verifyGoogleIdToken } from '../lib/auth/google.js';
+import {
+  googleClientId, googleSignInAllowed, googleSignInEnabled, verifyGoogleIdToken,
+} from '../lib/auth/google.js';
 import { appLink, deliverAccountEmail, resetEmail, verificationEmail } from '../lib/auth/mail.js';
 import { normaliseEmail, unusablePasswordSeed } from '../lib/users/rules.js';
 
@@ -206,7 +208,7 @@ router.post('/login', attemptLimit(), async (req, res) => {
       return res.status(400).json({ message: 'Completează emailul și parola.' });
     }
     const result = await query(
-      `SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE LIMIT 1`,
+      `SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
       [email]
     );
     const user = result.rows[0];
@@ -215,7 +217,16 @@ router.post('/login', attemptLimit(), async (req, res) => {
       // table is scoped per company. Repeated failures on a real account are the signal worth
       // having anyway.
       await auditSecurity(req, { user, action: 'login_failed' });
-      return res.status(401).json({ message: 'Email sau parolă greșite.' });
+      return res.status(401).json({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Email sau parolă greșite. Verifică datele și încearcă din nou.',
+      });
+    }
+    if (!user.is_active) {
+      return res.status(403).json({
+        code: 'ACCOUNT_DISABLED',
+        message: 'Contul este dezactivat. Contactează administratorul firmei.',
+      });
     }
     // Only a self sign-up waits on its link. Invited people prove the address by setting their
     // password from it, a manual account is vouched for by its admin, and rows written by a seed
@@ -239,9 +250,12 @@ router.post('/login', attemptLimit(), async (req, res) => {
 
 /** What the sign-in and sign-up screens may offer on this server. */
 router.get('/providers', (_req, res) => {
+  const googleOn = googleSignInEnabled();
   res.json({
     signup_enabled: signupEnabled(),
-    google_client_id: googleClientId(),
+    google_signin_enabled: googleOn,
+    // Only hand the client id to the browser when the flag allows the button.
+    google_client_id: googleOn ? googleClientId() : null,
     email_configured: emailConfigured(),
     password_min_length: PASSWORD_MIN_LENGTH,
   });
@@ -400,6 +414,12 @@ router.post('/resend-verification', mailLimit, async (req, res) => {
  */
 router.post('/google', attemptLimit(), async (req, res) => {
   try {
+    if (!googleSignInAllowed() || !googleClientId()) {
+      return res.status(403).json({
+        code: 'GOOGLE_SIGNIN_DISABLED',
+        message: 'Autentificarea cu Google este dezactivată pe acest server. Folosește email și parola.',
+      });
+    }
     const identity = await verifyGoogleIdToken(req.body?.credential);
     const email = normaliseEmail(identity.email);
     const existing = (await findByGoogleSub({ query }, identity.sub))
@@ -407,10 +427,16 @@ router.post('/google', attemptLimit(), async (req, res) => {
 
     if (existing) {
       if (!existing.is_active) {
-        return res.status(403).json({ message: 'Contul este dezactivat. Contactează administratorul firmei.' });
+        return res.status(403).json({
+          code: 'ACCOUNT_DISABLED',
+          message: 'Contul este dezactivat. Contactează administratorul firmei.',
+        });
       }
       if (existing.google_sub && existing.google_sub !== identity.sub) {
-        return res.status(401).json({ message: 'Adresa este legată de alt cont Google.' });
+        return res.status(401).json({
+          code: 'GOOGLE_ACCOUNT_MISMATCH',
+          message: 'Adresa este legată de alt cont Google. Folosește contul corect sau autentifică-te cu parola.',
+        });
       }
       const updated = (await query(
         `UPDATE users

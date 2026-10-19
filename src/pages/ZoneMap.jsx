@@ -262,11 +262,13 @@ export default function ZoneMap() {
     mmaKg = effectiveMma,
     /** Town/locality for geocode when the pin is not in the open zone-city tab. */
     cityHint = null,
+    /** OCR postcode from Adresa de livrare — biases Photon toward the right settlement. */
+    postcode = null,
     /** Skip street-agreement gate (operator confirmed a Photon suggestion). */
     acceptSuggestion = false,
   } = {}) => {
     const geoCity = String(cityHint || '').trim() || cityObj.label;
-    const point = await geocodeMapPin(q, { locality: geoCity });
+    const point = await geocodeMapPin(q, { locality: geoCity, postcode });
     if (!point) {
       setHit({
         point: null,
@@ -356,11 +358,14 @@ export default function ZoneMap() {
     mmaValue = mma,
     /** Non-zone town from Editează — skip the city street index and geocode there. */
     localityHint = null,
+    /** Six-digit postcode from aviz OCR (under Adresa de livrare). */
+    postcodeHint = null,
   } = {}) => {
     const q = String(qIn ?? address).trim();
     if (!q) return;
     const cityObj = cityById(cityIdValue) || city;
     const geoCityHint = String(localityHint || '').trim() || null;
+    const geoPostcode = String(postcodeHint || '').trim() || null;
     const mmaNum = Number(String(mmaValue ?? '').replace(',', '.'));
     const mmaKg = mmaValue === '' || mmaValue == null
       ? resolveVehicleMma(vehicles, plateValue).mmaKg
@@ -394,6 +399,7 @@ export default function ZoneMap() {
                 pinOnly: true,
                 cityObj,
                 mmaKg,
+                postcode: geoPostcode,
               });
               if (!res.point) {
                 notifyError(
@@ -413,6 +419,7 @@ export default function ZoneMap() {
         cityObj,
         mmaKg,
         cityHint: geoCityHint || cityObj.label,
+        postcode: geoPostcode,
       });
       if (!res.point) {
         notifyError(
@@ -448,6 +455,7 @@ export default function ZoneMap() {
       : cityId;
     const nextPlate = (searchParams.get('plate') || '').trim();
     const nextLocality = (searchParams.get('locality') || '').trim();
+    const nextPostcode = (searchParams.get('postcode') || '').trim();
 
     if (nextCity !== cityId) setCityId(nextCity);
     setAddress(q);
@@ -458,6 +466,7 @@ export default function ZoneMap() {
       cityIdValue: nextCity,
       plateValue: nextPlate || plate,
       localityHint: nextLocality || null,
+      postcodeHint: nextPostcode || null,
     });
     // runSearch closes over fleet/index; waiting on `loading` is enough for the deep-link.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional once-per-query

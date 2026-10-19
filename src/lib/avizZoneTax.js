@@ -3,9 +3,9 @@
  *
  * Three facts meet here and each comes from somewhere different:
  *
- *   the zone(s) from the loading and delivery legs of the route (street index), so a
- *               customer's address is never sent anywhere. Access is owed per zone entered
- *               (#97): load in A + unload in B → both fees; same zone at both ends → once
+ *   the zone(s) from the delivery stop(s) only (street index). The Expeditor / loading
+ *               address is never used for tax — only Adresa de livrare. Multi-stop: each
+ *               unload street is considered; the same zone code is charged once
  *   the bracket from the lorry's MTMA in Autoturisme, because that is what PMB prices. The
  *               figure on the weighbridge is what the lorry weighed that morning; the
  *               authorisation is bought against the mass on the registration papers, and a
@@ -17,9 +17,6 @@
  * The weight has one more job. A lorry cannot weigh more than its own MTMA, so a brută above
  * the registry figure proves the registry figure is wrong, and that is worth saying out loud
  * before it prices a year of trips into the wrong bracket.
- *
- * A loading leg that is only a site code (BOL / MIL-NEAMTIU) cannot be zoned — that end is
- * reported as unresolved, and only street-backed ends are charged.
  */
 import { toFiniteNumber } from './utils.js';
 import { canonicalPlateClient } from './fleetUi.js';
@@ -151,16 +148,16 @@ export function avizZoneTax({ aviz, vehicles, zoneResult, address }) {
 export const ZONE_TAX_MESSAGE = {
   no_weight: 'Fără greutate brută pe aviz, deci taxa de zonă nu se calculează automat.',
   weight_implausible: 'Greutatea brută citită nu poate fi reală, verific-o pe document.',
-  no_address: 'Avizul nu are o adresă (încărcare sau livrare) din care să citesc zona.',
-  no_loading_street: 'Încărcarea e doar cod de depozit (BOL/MIL), fără stradă — nu pot taxa zona de încărcare.',
-  outside_city: 'Adresa nu este într-un oraș cu zone taxate.',
+  no_address: 'Avizul nu are o adresă de livrare din care să citesc zona.',
+  no_loading_street: 'Taxa de zonă nu folosește adresa de încărcare (Expeditor).',
+  outside_city: 'Adresa de livrare nu este într-un oraș cu zone taxate.',
   address_unknown: 'Strada nu este în indexul orașului, verific-o pe hartă.',
   address_unsure: 'Adresa nu decide singură zona, confirm-o pe Harta zonelor.',
   outside: 'Adresa este în afara zonelor taxate, nu se adaugă nimic pe acest capăt.',
   plate_missing: 'Avizul nu are număr de înmatriculare, deci nu știu ce tonaj se taxează.',
   plate_invalid: 'Numărul auto de pe aviz nu este un număr de înmatriculare valid.',
   vehicle_unknown: 'Mașina nu este în Autoturisme, adaug-o ca să pot lua MTMA.',
-  mma_missing: 'Mașina nu are MTMA completat, completează-l în Autoturisme.',
+  mma_missing: 'Mașina nu are MTMA completat.',
   mma_suspect: 'Greutatea brută depășește MTMA din Autoturisme, deci MTMA este greșit.',
   under_threshold: 'Sub pragul de acces al zonei, nu este nevoie de autorizație.',
   no_bracket: 'MTMA-ul mașinii nu intră în niciun interval din tariful zonei.',
@@ -302,7 +299,13 @@ export function taxedCityIdFromLocality(value) {
   return null;
 }
 
-function addressFromParts({ street, number, locality }) {
+/** Six-digit Romanian postcode from OCR / route text. */
+export function normalizeRoPostcode(value) {
+  const m = String(value || '').match(/\b(\d{6})\b/);
+  return m?.[1] || null;
+}
+
+function addressFromParts({ street, number, locality, postcode }) {
   const loc = String(locality || '').trim() || null;
   let cityId = taxedCityIdFromLocality(loc);
   // Only București has a shipped zone index. OCR often prints
@@ -314,6 +317,7 @@ function addressFromParts({ street, number, locality }) {
     number: number ?? null,
     locality: cityId === 'bucuresti' ? 'Bucuresti' : loc,
     cityId,
+    postcode: normalizeRoPostcode(postcode),
     // A locality we have no index for is "no zones here", not "unknown street".
     supported: Boolean(cityId),
   };
@@ -323,7 +327,9 @@ function addressFromParts({ street, number, locality }) {
  * Free-text query for Harta zonelor: street (+ number) as the index expects it.
  * Outside a zoned city, append the locality so the geocoder does not land on the
  * first same-named street in Romania (often București).
- * Example: `bulevardul Iuliu Maniu 600A` / `strada Republicii 1F, Bolintin-Deal`.
+ * OCR postcode (under Adresa de livrare, before Client) is appended when present —
+ * Photon uses it to pin the right town (#postal).
+ * Example: `bulevardul Pipera 1/VII, Voluntari, 077190`.
  */
 export function zoneMapSearchQuery(address) {
   if (!address?.street) return null;
@@ -333,6 +339,8 @@ export function zoneMapSearchQuery(address) {
   if (address.locality && !address.supported) {
     q = `${q}, ${address.locality}`;
   }
+  const pc = normalizeRoPostcode(address.postcode);
+  if (pc) q = `${q}, ${pc}`;
   return q;
 }
 
@@ -342,6 +350,7 @@ export function zoneMapSearchQuery(address) {
  *
  * For towns without zone tariffs, `locality` is also passed so the map geocodes against
  * that place instead of appending the open city tab (București).
+ * `postcode` is passed separately so the map can prefer Photon hits with that code.
  */
 export function zoneMapHref(address, { plate = null } = {}) {
   const q = zoneMapSearchQuery(address);
@@ -351,14 +360,16 @@ export function zoneMapHref(address, { plate = null } = {}) {
   if (address.locality && !address.supported) {
     params.set('locality', address.locality);
   }
+  const pc = normalizeRoPostcode(address.postcode);
+  if (pc) params.set('postcode', pc);
   const plateStr = String(plate || '').trim();
   if (plateStr) params.set('plate', plateStr);
   return `/zone-map?${params.toString()}`;
 }
 
 /**
- * Loading address from the origin leg of `ruta_transport`, when it is a real street.
- * Site/depot codes alone cannot be zoned — returns null so the panel can say so (#97).
+ * Loading / Expeditor address from the origin leg of `ruta_transport`.
+ * Kept for route display helpers — zone tax must never call this (#delivery-only).
  */
 export function avizLoadingAddress(aviz) {
   const fromRoute = parseSpacedRouteLeg(originLegFromRuta(aviz?.ruta_transport));
@@ -385,12 +396,15 @@ export function avizDeliveryAddress(aviz) {
   const typeQuery = ROUTE_TYPE_TO_QUERY[type.toLowerCase().replace(/\.$/, '')] || type || null;
   const ocrStreet = name ? (typeQuery ? `${typeQuery} ${name}` : name) : null;
   const ocrLocality = addr?.locality ?? null;
+  const ocrPostcode = normalizeRoPostcode(addr?.postcode);
 
   const fromRoute = parseSpacedRouteLeg(deliveryLegFromRuta(aviz?.ruta_transport));
   if (fromRoute?.street) {
     return addressFromParts({
       ...fromRoute,
       locality: fromRoute.locality || ocrLocality,
+      // Route text rarely carries RO ##### — keep the OCR postcode under Adresa de livrare.
+      postcode: fromRoute.postcode || ocrPostcode,
     });
   }
 
@@ -398,13 +412,14 @@ export function avizDeliveryAddress(aviz) {
     street: ocrStreet,
     number: addr?.houseNumber ?? null,
     locality: ocrLocality,
+    postcode: ocrPostcode,
   });
 }
 
 /**
- * Every stop on the route that can be shown / zoned (#97 / #98).
- * First leg = încărcare; each later street leg = a livrare (multi-stop keeps all of them).
- * City indexes beyond București plug in via `taxedCityIdFromLocality` / street indexes.
+ * Delivery stops only for zone tax — never Expeditor / încărcare.
+ * Multi-stop: every unload leg after the first (origin) part of `ruta_transport`.
+ * Single-leg route or OCR-only: one livrare from `avizDeliveryAddress`.
  *
  * @returns {Array<{ id: string, role: string, label: string, address: object|null, raw: string|null }>}
  */
@@ -416,17 +431,21 @@ export function avizRouteZoneLegs(aviz) {
     return [{ id: 'livrare', role: 'livrare', label: 'Livrare', address: delivery, raw: null }];
   }
 
-  const deliveryCount = Math.max(0, texts.length - 1);
-  return texts.map((raw, i) => {
+  // Origin is always first when the route has Expeditor / livrare(s). Never tax it.
+  const deliveryTexts = texts.length >= 2 ? texts.slice(1) : texts;
+  if (!deliveryTexts.length) {
+    const delivery = avizDeliveryAddress(aviz);
+    if (!delivery?.street) return [];
+    return [{ id: 'livrare', role: 'livrare', label: 'Livrare', address: delivery, raw: null }];
+  }
+
+  return deliveryTexts.map((raw, i) => {
     const parsed = parseSpacedRouteLeg(raw);
     const address = parsed?.street
       ? addressFromParts({ ...parsed, locality: parsed.locality })
       : null;
-    if (i === 0) {
-      return { id: 'incarcare', role: 'incarcare', label: 'Încărcare', address, raw };
-    }
-    const label = deliveryCount > 1 ? `Livrare ${i}` : 'Livrare';
-    return { id: `livrare_${i}`, role: 'livrare', label, address, raw };
+    const label = deliveryTexts.length > 1 ? `Livrare ${i + 1}` : 'Livrare';
+    return { id: `livrare_${i + 1}`, role: 'livrare', label, address, raw };
   });
 }
 
@@ -442,8 +461,52 @@ export function formatZoneTaxBreakdown(trip) {
 }
 
 /**
- * Zone fee for the whole trip: `avizZoneTax` per stop, then one charge per distinct
- * zone code, with a total for Taxe suplimentare / raport (#97 / #98).
+ * Live sync for Taxe suplimentare while Editează is open.
+ * Writes when the box is empty/zero or still holds the last auto amount; clears that
+ * auto amount when the address no longer yields a fee (outside / under threshold / blocked).
+ *
+ * @returns {{ lastAutoAmount: number|null, patch: { taxe_suplimentare: string, zone_tax_breakdown: string }|null }}
+ */
+export function zoneTaxAutoFormPatch({
+  amount,
+  breakdown = '',
+  taxeSuplimentare,
+  zoneTaxBreakdown,
+  lastAutoAmount,
+}) {
+  const raw = String(taxeSuplimentare ?? '').trim();
+  const current = toFiniteNumber(taxeSuplimentare);
+  const unset = raw === '' || current === 0;
+  const mayWrite = unset || lastAutoAmount == null || current === lastAutoAmount;
+  const breakdownStr = breakdown == null ? '' : String(breakdown);
+
+  if (amount != null && Number(amount) > 0) {
+    if (!mayWrite) return { lastAutoAmount, patch: null };
+    if (current === amount && String(zoneTaxBreakdown ?? '') === breakdownStr) {
+      return { lastAutoAmount: amount, patch: null };
+    }
+    return {
+      lastAutoAmount: amount,
+      patch: { taxe_suplimentare: String(amount), zone_tax_breakdown: breakdownStr },
+    };
+  }
+
+  // No billable fee — drop a value we auto-filled so a route edit cannot leave a stale tax.
+  if (lastAutoAmount == null) return { lastAutoAmount: null, patch: null };
+  if (!mayWrite) return { lastAutoAmount, patch: null };
+  if (unset && !String(zoneTaxBreakdown ?? '').trim()) {
+    return { lastAutoAmount: null, patch: null };
+  }
+  return {
+    lastAutoAmount: null,
+    patch: { taxe_suplimentare: '', zone_tax_breakdown: '' },
+  };
+}
+
+/**
+ * Zone fee for the whole trip: `avizZoneTax` per *delivery* stop, then one charge per
+ * distinct zone code, with a total for Taxe suplimentare / raport.
+ * Expeditor / `incarcare` legs are dropped — never part of the fee.
  *
  * @param {{
  *   aviz: object,
@@ -452,24 +515,16 @@ export function formatZoneTaxBreakdown(trip) {
  * }} input
  */
 export function avizZoneTaxTrip({ aviz, vehicles, legs }) {
-  const list = Array.isArray(legs) ? legs : [];
-  const priced = list.map((leg) => {
-    if (leg.role === 'incarcare' && !leg.address?.street && (leg.raw || originLegFromRuta(aviz?.ruta_transport))) {
-      return {
-        ...leg,
-        result: result('no_loading_street', { grossKg: toFiniteNumber(aviz?.gross_weight_kg) }),
-      };
-    }
-    return {
-      ...leg,
-      result: avizZoneTax({
-        aviz,
-        vehicles,
-        zoneResult: leg.zoneResult,
-        address: leg.address || { street: null },
-      }),
-    };
-  });
+  const list = (Array.isArray(legs) ? legs : []).filter((leg) => leg?.role !== 'incarcare');
+  const priced = list.map((leg) => ({
+    ...leg,
+    result: avizZoneTax({
+      aviz,
+      vehicles,
+      zoneResult: leg.zoneResult,
+      address: leg.address || { street: null },
+    }),
+  }));
 
   const blocking = priced.find((leg) => TRIP_BLOCKING.has(leg.result.status));
   if (blocking) {

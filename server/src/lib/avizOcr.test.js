@@ -197,7 +197,69 @@ PSL-0062301
       streetName: 'pipera',
       streetType: 'bulevardul',
       houseNumber: '1/VII',
+      postcode: '077190',
     });
+  });
+
+  it('keeps Balotesti when OCR prints county IF (or stub I) before RO (#TPO-0033547)', () => {
+    for (const delivery of [
+      'Str. Fabricii nr. 20, Balotesti IF RO 077040',
+      'Str. Fabricii nr. 20, Balotesti I RO 077040',
+      'Str. Fabricii nr. 20, Balotești IF RO 077040',
+    ]) {
+      const raw = `
+Expeditor
+Str. Republicii nr. 1F, Bolintin-Deal RO 087015
+Adresa de livrare
+${delivery}
+TPO-0033547
+`;
+      const parsed = parseBaumitAviz(raw);
+      expect(parsed.ruta_transport).toBe(
+        'Str. Republicii nr. 1F, Bolintin-Deal / Str. Fabricii nr. 20, Balotesti',
+      );
+      expect(parsed.delivery_address?.locality).toBe('Balotesti');
+    }
+  });
+
+  it('maps OCR Balote$i (ș→$) to Balotesti on the route', () => {
+    const raw = `
+Expeditor
+Str. Republicii nr. 1F, Bolintin-Deal RO 087015
+Adresa de livrare
+Str. Fabricii nr. 20, Balote$i RO 077040
+TPO-0033547
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe(
+      'Str. Republicii nr. 1F, Bolintin-Deal / Str. Fabricii nr. 20, Balotesti',
+    );
+    expect(parsed.ruta_transport).not.toContain('$');
+    expect(parsed.delivery_address?.locality).toBe('Balotesti');
+  });
+
+  it('keeps Expeditor origin when OCR emits Client header before Site/street lines', () => {
+    // Two-column read order: after "Expeditor", the right "Client" header can appear
+    // before the left Site/street. Stopping Expeditor at Client used to drop the origin
+    // and leave Rută as delivery-only.
+    const raw = `
+Expeditor
+Client
+C23911230 NORDIC BUILD SRL
+Stradă Aeroportului nr. 72 Bucuresti Sector 1 RO 013596
+Site: BOL Bolintin
+Str. Industriei, nr. 7, Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+CS-NORDIC- OBI PIPERA
+Bulevardul Pipera nr. 1/VII
+Voluntari RO 077190
+TPO-0033643
+PSL-0062400
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/^Str\. Industriei nr\. 7, Bolintin-Deal\s*\//);
+    expect(parsed.ruta_transport).toMatch(/Pipera/);
+    expect(parsed.ruta_transport).not.toMatch(/^Bvd\. Pipera|^Bulevardul Pipera/i);
   });
 
   it('stops the route before the Produs / Cantitate table (#70)', () => {
@@ -488,6 +550,62 @@ Client factură:	C23901185 DEMOS INTERMED SRL
     });
     expect(repaired.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Ciresului nr. 31B, Dobroesti');
     expect(repaired.ruta_transport).not.toMatch(/Locotenent|Fundeni/i);
+  });
+
+  it('never takes a right-column-only Client street (leading tab) as Adresa de livrare', () => {
+    // pdf-parse sometimes emits the Client seat as a row with an empty left cell.
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresă de livrare	Client
+CS-CONCELEX- OBI LOHN	C23000014 AP-CONCELEX- OBI LOHN
+Sosea Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+	Stradă Aeroportului nr. 120-T București Sector 1 RO 013596
+Client factură:	C23901527 CONCELEX SRL
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('stops Adresa de livrare at a standalone Client header (never the seat below)', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+Sosea Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+Client
+C23000014 AP-CONCELEX Stradă Aeroportului nr. 120-T București Sector 1 RO 013596
+Placuta de inmatriculare B 34 BAU
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('ignores a Client street dumped as a full line after the left postcode', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresă de livrare	Client
+CS-CONCELEX- OBI LOHN	C23000014 AP-CONCELEX
+Sosea	Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+Stradă Aeroportului nr. 120-T București Sector 1 RO 013596
+Client factură: C23901527 CONCELEX SRL
+TPO-0025803
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
   });
 
   it('reads 11.08.2026 13:10 as 11 August, not 1 August', () => {

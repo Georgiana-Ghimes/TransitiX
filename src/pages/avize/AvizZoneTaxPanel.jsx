@@ -11,6 +11,7 @@ import {
   formatZoneTaxBreakdown,
   resolveAvizZone,
   zoneMapHref,
+  zoneTaxAutoFormPatch,
   zoneTaxMessage,
 } from '@/lib/avizZoneTax';
 
@@ -28,7 +29,6 @@ const TONE = {
   under_threshold: 'border-slate-200 bg-slate-50 text-slate-700',
   outside_city: 'border-slate-200 bg-slate-50 text-slate-700',
   no_weight: 'border-slate-200 bg-slate-50 text-slate-600',
-  no_loading_street: 'border-slate-200 bg-slate-50 text-slate-700',
 };
 
 function formatAddressLine(address) {
@@ -42,9 +42,10 @@ function formatAddressLine(address) {
 /**
  * Taxa de zonă for the aviz being edited, worked out while it is open.
  *
- * Every stop on Rută (încărcare + fiecare livrare) is resolved (#97 / #98). Distinct zones
- * are listed with their fees; the total is written into Taxe suplimentare (and a breakdown
- * string for the report) while the box still holds the last auto value.
+ * Only Adresa de livrare (each unload stop on Rută after Expeditor) is resolved.
+ * Expeditor / încărcare is never taxed. Distinct zones are listed with their fees; the
+ * total is written into Taxe suplimentare (and a breakdown string for the report) while
+ * the box still holds the last auto value.
  */
 export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const [vehicles, setVehicles] = useState(null);
@@ -60,8 +61,16 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
 
   const routeLegs = useMemo(() => avizRouteZoneLegs(avizForRoute), [avizForRoute]);
   const deliveryAddress = useMemo(() => avizDeliveryAddress(avizForRoute), [avizForRoute]);
+  /** Any typed change to the delivery leg (street, nr, locality, postcode) must re-resolve. */
   const legsKey = useMemo(
-    () => routeLegs.map((l) => `${l.id}:${l.raw || ''}:${l.address?.street || ''}:${l.address?.number || ''}`).join('|'),
+    () => routeLegs.map((l) => [
+      l.id,
+      l.raw || '',
+      l.address?.street || '',
+      l.address?.number || '',
+      l.address?.locality || '',
+      l.address?.postcode || '',
+    ].join('\u001f')).join('|'),
     [routeLegs],
   );
 
@@ -76,9 +85,10 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   useEffect(() => {
     let alive = true;
     setZoneById(null);
+    const legs = routeLegs;
     const timer = window.setTimeout(() => {
       Promise.all(
-        routeLegs.map(async (leg) => {
+        legs.map(async (leg) => {
           if (!leg.address?.street) return [leg.id, null];
           try {
             return [leg.id, await resolveAvizZone(leg.address)];
@@ -90,12 +100,12 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
         if (!alive) return;
         setZoneById(Object.fromEntries(pairs));
       });
-    }, 350);
+    }, 250);
     return () => {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [legsKey]); // eslint-disable-line react-hooks/exhaustive-deps -- routeLegs via legsKey
+  }, [legsKey, routeLegs]);
 
   const loading = vehicles === null || zoneById === null;
 
@@ -123,24 +133,22 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
     if (editRow?.id !== lastAuto.current.id) {
       lastAuto.current = { id: editRow?.id ?? null, amount: null };
     }
-    if (amount == null) return;
-    const current = toFiniteNumber(form.taxe_suplimentare);
-    if (current === amount && form.zone_tax_breakdown === breakdown) {
-      lastAuto.current = { id: editRow?.id ?? null, amount };
-      return;
-    }
-    const previous = lastAuto.current.amount;
-    const mayWrite = isUnset(form.taxe_suplimentare)
-      || previous == null
-      || current === previous;
-    if (!mayWrite) return;
-    lastAuto.current = { id: editRow?.id ?? null, amount };
-    setForm((prev) => ({
-      ...prev,
-      taxe_suplimentare: String(amount),
-      zone_tax_breakdown: breakdown,
-    }));
-  }, [amount, breakdown, editRow?.id, form.taxe_suplimentare, form.zone_tax_breakdown, setForm]);
+    // Wait until the address resolve finishes — do not clear Taxe while the operator is still typing.
+    if (loading || !trip) return;
+    const next = zoneTaxAutoFormPatch({
+      amount,
+      breakdown,
+      taxeSuplimentare: form.taxe_suplimentare,
+      zoneTaxBreakdown: form.zone_tax_breakdown,
+      lastAutoAmount: lastAuto.current.amount,
+    });
+    lastAuto.current = { id: editRow?.id ?? null, amount: next.lastAutoAmount };
+    if (!next.patch) return;
+    setForm((prev) => ({ ...prev, ...next.patch }));
+  }, [
+    loading, trip, amount, breakdown, editRow?.id,
+    form.taxe_suplimentare, form.zone_tax_breakdown, setForm,
+  ]);
 
   if (loading || !trip) {
     return (
@@ -157,6 +165,12 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const mapHref = zoneMapHref(deliveryAddress, { plate: form.numar_auto });
   const legs = Array.isArray(trip.legs) ? trip.legs : [];
   const chargeLines = Array.isArray(trip.chargeLines) ? trip.chargeLines : [];
+  const messageOnLeg = legs.some((leg) => {
+    const r = leg.result || {};
+    const addr = formatAddressLine(leg.address);
+    const legMsg = zoneTaxMessage(r.status);
+    return Boolean(addr && legMsg && r.status !== 'ok' && r.status !== 'outside');
+  });
 
   return (
     <div className={`sm:col-span-2 rounded-lg border px-3 py-2 text-xs ${tone}`}>
@@ -190,9 +204,6 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
                 )}
                 {r.status === 'outside' && <span className="ml-1.5">0 lei</span>}
                 {addr && <span className="ml-1.5">— {addr}</span>}
-                {!addr && r.status === 'no_loading_street' && (
-                  <span className="ml-1.5">— {legMsg}</span>
-                )}
                 {addr && legMsg && r.status !== 'ok' && r.status !== 'outside' && (
                   <span className="ml-1.5">({legMsg})</span>
                 )}
@@ -217,7 +228,7 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
         </p>
       )}
 
-      {!legs.length && message && <p className="mt-1 opacity-90">{message}</p>}
+      {message && !messageOnLeg && <p className="mt-1 opacity-90">{message}</p>}
 
       {trip.status === 'under_threshold' && trip.bracket && (
         <p className="mt-1 opacity-75">
@@ -229,10 +240,6 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
         <p className="mt-1 opacity-90">
           {`Brută ${Number(trip.grossKg).toLocaleString('ro-RO')} kg peste MTMA ${mmaLabel(trip.mmaKg)}.`}
         </p>
-      )}
-
-      {FLEET_FIXABLE.has(trip.status) && message && (
-        <p className="mt-1 opacity-90">{message}</p>
       )}
 
       <div className="mt-1.5 flex flex-wrap items-center gap-3">

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   avizDeliveryAddress, avizLoadingAddress, avizRouteZoneLegs, avizZoneTax, avizZoneTaxTrip,
   deliveryLegFromRuta, formatZoneTaxBreakdown, originLegFromRuta, parseSpacedRouteLeg,
-  tractorPlate, zoneBracket, zoneMapHref, zoneThresholdKg,
+  tractorPlate, zoneBracket, zoneMapHref, zoneTaxAutoFormPatch, zoneThresholdKg,
 } from './avizZoneTax.js';
 
 const FLEET = [
@@ -207,6 +207,40 @@ describe('zoneMapHref', () => {
     );
   });
 
+  it('includes OCR postcode in q and as postcode= for map geocode', () => {
+    const href = zoneMapHref(
+      {
+        street: 'bulevardul Pipera',
+        number: '1/VII',
+        locality: 'Voluntari',
+        cityId: null,
+        supported: false,
+        postcode: '077190',
+      },
+      { plate: 'B-404-RZC' },
+    );
+    expect(href).toContain('q=bulevardul+Pipera+1%2FVII%2C+Voluntari%2C+077190');
+    expect(href).toContain('locality=Voluntari');
+    expect(href).toContain('postcode=077190');
+    expect(href).toContain('plate=B-404-RZC');
+  });
+
+  it('keeps OCR postcode when the route leg wins over delivery_address', () => {
+    const addr = avizDeliveryAddress({
+      ruta_transport: 'BOL / Bvd. Pipera nr. 52, Voluntari',
+      delivery_address: {
+        locality: 'Voluntari',
+        streetName: 'pipera',
+        streetType: 'bulevardul',
+        houseNumber: '52',
+        postcode: '077190',
+      },
+    });
+    expect(addr.postcode).toBe('077190');
+    expect(addr.locality).toBe('Voluntari');
+    expect(zoneMapHref(addr)).toContain('postcode=077190');
+  });
+
   it('opens Șos. Viilor 52 on the Bucharest index, not as a non-zoned locality', () => {
     const href = zoneMapHref(
       avizDeliveryAddress({
@@ -255,7 +289,7 @@ describe('originLegFromRuta / avizLoadingAddress (#97)', () => {
   });
 });
 
-describe('avizZoneTaxTrip (#97)', () => {
+describe('avizZoneTaxTrip (delivery only)', () => {
   const loadAddr = {
     street: 'bulevardul Iuliu Maniu', number: '220',
     locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
@@ -264,8 +298,12 @@ describe('avizZoneTaxTrip (#97)', () => {
     street: 'soseaua Viilor', number: '52',
     locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
   };
+  const unloadPloiesti = {
+    street: 'strada Gheorghe Doja', number: '51',
+    locality: 'Ploiesti', cityId: null, supported: false,
+  };
 
-  it('charges Zone A and Zone B separately and sums them', () => {
+  it('never charges the Expeditor / încărcare leg even if it is in a taxed zone', () => {
     const out = avizZoneTaxTrip({
       aviz: AVIZ,
       vehicles: FLEET,
@@ -275,49 +313,30 @@ describe('avizZoneTaxTrip (#97)', () => {
       ],
     });
     expect(out.status).toBe('ok');
-    expect(out.amount).toBe(2133 + 363);
-    expect(out.zones).toEqual(['ZA', 'ZB']);
-    expect(out.legs).toHaveLength(2);
-    expect(out.legs[0].result.amount).toBe(2133);
-    expect(out.legs[1].result.amount).toBe(363);
-  });
-
-  it('charges the same zone only once when both ends land in it', () => {
-    const out = avizZoneTaxTrip({
-      aviz: AVIZ,
-      vehicles: FLEET,
-      legs: [
-        { role: 'incarcare', address: loadAddr, zoneResult: IN_ZONE_B },
-        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
-      ],
-    });
     expect(out.amount).toBe(363);
     expect(out.zones).toEqual(['ZB']);
+    expect(out.legs).toHaveLength(1);
+    expect(out.legs[0].role).toBe('livrare');
   });
 
-  it('charges only the delivery end when loading is outside the city', () => {
+  it('charges each distinct delivery zone once (multi-stop unload)', () => {
+    const unloadA = {
+      street: 'bulevardul Aviatorilor', number: '72',
+      locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
+    };
     const out = avizZoneTaxTrip({
       aviz: AVIZ,
       vehicles: FLEET,
       legs: [
-        {
-          role: 'incarcare',
-          address: {
-            street: 'strada Republicii', number: '1F',
-            locality: 'Bolintin-Deal', cityId: null, supported: false,
-          },
-          zoneResult: null,
-        },
-        { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_A },
+        { role: 'livrare', label: 'Livrare 1', address: unloadA, zoneResult: IN_ZONE_A },
+        { role: 'livrare', label: 'Livrare 2', address: unloadAddr, zoneResult: IN_ZONE_B },
       ],
     });
-    expect(out.status).toBe('ok');
-    expect(out.amount).toBe(2133);
-    expect(out.zones).toEqual(['ZA']);
-    expect(out.legs[0].result.status).toBe('outside_city');
+    expect(out.amount).toBe(2133 + 363);
+    expect(out.zones).toEqual(['ZA', 'ZB']);
   });
 
-  it('reports site-code loading without inventing a street fee', () => {
+  it('ignores a site-code Expeditor and prices only delivery', () => {
     const out = avizZoneTaxTrip({
       aviz: {
         ...AVIZ,
@@ -329,37 +348,60 @@ describe('avizZoneTaxTrip (#97)', () => {
         { role: 'livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
       ],
     });
-    expect(out.legs[0].result.status).toBe('no_loading_street');
+    expect(out.legs).toHaveLength(1);
     expect(out.amount).toBe(363);
     expect(out.zones).toEqual(['ZB']);
   });
 
-  it('formats a reportable breakdown of charged zones (#98)', () => {
+  it('formats a reportable breakdown of charged delivery zones', () => {
     const out = avizZoneTaxTrip({
       aviz: AVIZ,
       vehicles: FLEET,
       legs: [
         { role: 'incarcare', label: 'Încărcare', address: loadAddr, zoneResult: IN_ZONE_A },
-        { role: 'livrare', label: 'Livrare 1', address: unloadAddr, zoneResult: IN_ZONE_B },
+        { role: 'livrare', label: 'Livrare', address: unloadAddr, zoneResult: IN_ZONE_B },
       ],
     });
-    expect(formatZoneTaxBreakdown(out)).toMatch(/ZA/);
+    expect(formatZoneTaxBreakdown(out)).not.toMatch(/ZA/);
     expect(formatZoneTaxBreakdown(out)).toMatch(/ZB/);
-    expect(out.total).toBe(2133 + 363);
-    expect(out.chargeLines).toHaveLength(2);
+    expect(out.total).toBe(363);
+    expect(out.chargeLines).toHaveLength(1);
+  });
+
+  it('does not invent a fee from an unsupported delivery locality', () => {
+    const out = avizZoneTaxTrip({
+      aviz: AVIZ,
+      vehicles: FLEET,
+      legs: [
+        { role: 'livrare', address: unloadPloiesti, zoneResult: null },
+      ],
+    });
+    expect(out.status).toBe('outside_city');
+    expect(out.amount).toBeNull();
   });
 });
 
-describe('avizRouteZoneLegs (#98)', () => {
-  it('keeps every stop on a multi-delivery route, not only București', () => {
+describe('avizRouteZoneLegs (delivery only)', () => {
+  it('skips Expeditor and keeps every unload stop on a multi-delivery route', () => {
     const legs = avizRouteZoneLegs({
       ruta_transport:
         'Bvd. Iuliu Maniu nr. 220, Bucuresti / Str. Gheorghe Doja nr. 51, Ploiesti / Șosea Viilor nr. 52, Bucuresti',
     });
-    expect(legs).toHaveLength(3);
-    expect(legs.map((l) => l.label)).toEqual(['Încărcare', 'Livrare 1', 'Livrare 2']);
-    expect(legs[1].address.locality).toMatch(/Ploiesti/i);
-    expect(legs[2].address.street).toMatch(/viilor/i);
+    expect(legs).toHaveLength(2);
+    expect(legs.map((l) => l.label)).toEqual(['Livrare 1', 'Livrare 2']);
+    expect(legs.every((l) => l.role === 'livrare')).toBe(true);
+    expect(legs[0].address.locality).toMatch(/Ploiesti/i);
+    expect(legs[1].address.street).toMatch(/viilor/i);
+  });
+
+  it('does not expose the Expeditor street as a tax leg', () => {
+    const legs = avizRouteZoneLegs({
+      ruta_transport: 'Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti',
+    });
+    expect(legs).toHaveLength(1);
+    expect(legs[0].label).toBe('Livrare');
+    expect(legs[0].address.street).toMatch(/viilor/i);
+    expect(JSON.stringify(legs)).not.toMatch(/Republicii|Bolintin/i);
   });
 });
 
@@ -426,7 +468,12 @@ describe('deliveryLegFromRuta / parseSpacedRouteLeg', () => {
 describe('avizDeliveryAddress', () => {
   it('reads the street and number OCR kept apart from the route code', () => {
     expect(avizDeliveryAddress(AVIZ)).toEqual({
-      street: 'viilor', number: '52', locality: 'Bucuresti', cityId: 'bucuresti', supported: true,
+      street: 'viilor',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      supported: true,
+      postcode: null,
     });
   });
 
@@ -581,5 +628,56 @@ describe('zoneThresholdKg', () => {
 
   it('has no threshold for a zone somebody invented', () => {
     expect(zoneThresholdKg('ZZ')).toBeNull();
+  });
+});
+
+describe('zoneTaxAutoFormPatch (live refresh on address edit)', () => {
+  it('fills Taxe suplimentare from a new zone fee', () => {
+    expect(zoneTaxAutoFormPatch({
+      amount: 2133,
+      breakdown: 'ZA 2.133 lei',
+      taxeSuplimentare: '',
+      zoneTaxBreakdown: '',
+      lastAutoAmount: null,
+    })).toEqual({
+      lastAutoAmount: 2133,
+      patch: { taxe_suplimentare: '2133', zone_tax_breakdown: 'ZA 2.133 lei' },
+    });
+  });
+
+  it('updates the auto amount when the address moves to another zone', () => {
+    expect(zoneTaxAutoFormPatch({
+      amount: 363,
+      breakdown: 'ZB 363 lei',
+      taxeSuplimentare: '2133',
+      zoneTaxBreakdown: 'ZA 2.133 lei',
+      lastAutoAmount: 2133,
+    })).toEqual({
+      lastAutoAmount: 363,
+      patch: { taxe_suplimentare: '363', zone_tax_breakdown: 'ZB 363 lei' },
+    });
+  });
+
+  it('clears a stale auto tax when the address leaves the zoned area', () => {
+    expect(zoneTaxAutoFormPatch({
+      amount: null,
+      breakdown: '',
+      taxeSuplimentare: '2133',
+      zoneTaxBreakdown: 'ZA 2.133 lei',
+      lastAutoAmount: 2133,
+    })).toEqual({
+      lastAutoAmount: null,
+      patch: { taxe_suplimentare: '', zone_tax_breakdown: '' },
+    });
+  });
+
+  it('does not overwrite a tax the operator typed by hand', () => {
+    expect(zoneTaxAutoFormPatch({
+      amount: 363,
+      breakdown: 'ZB 363 lei',
+      taxeSuplimentare: '5000',
+      zoneTaxBreakdown: '',
+      lastAutoAmount: 2133,
+    })).toEqual({ lastAutoAmount: 2133, patch: null });
   });
 });

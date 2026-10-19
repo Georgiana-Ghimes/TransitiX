@@ -1048,6 +1048,31 @@ Placuta de inmatriculare B 911 VFM / B 138 VRT
     expect(result.values.ruta_transport).toMatch(/Bolintin-Deal/i);
   });
 
+  it('keeps tabbed Adresa|Client delivery and repairs Kepublicii (TPO-0033490)', () => {
+    // pdf-parse: left = unload, tab, right = Client. sanitize used to flatten tabs → delivery lost;
+    // OCR also read Republicii as Kepublicii on the first page.
+    const text = [
+      'BAUMIT ROMANIA COM SRL',
+      'Aviz de expeditie rezumat: TPO-0033490',
+      'Expeditor',
+      'Str. Kepublicii, nr. IF Bolintin-Deal RO 087015 ROU',
+      'Adresă de livrare\tClient',
+      'PECON COMPANY SRL\tC23902200 PECON COMPANY SRL',
+      'str Garlei nr.10\tALEEA TERASEI NR.5 BL.AI, sc.l, ET. 3, AP.16',
+      'Potiogi RO 137370\tBucurești Sector 4 RO 041772',
+      'Placuta de inmatriculare B 112 RMP',
+      'Greutate bruta: 9037.2 kg',
+      'Greutate neta: 8895 kg',
+      'Aviz de expeditie: PSL-0058145',
+    ].join('\n');
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.values.ruta_transport).toMatch(/Republicii/i);
+    expect(result.values.ruta_transport).not.toMatch(/Kepublicii/i);
+    expect(result.values.ruta_transport).toMatch(/Garlei/i);
+    expect(result.values.ruta_transport).toMatch(/Potiogi/i);
+    expect(result.values.ruta_transport).toMatch(/\//);
+  });
+
   it('still accepts an explicit City - City route with spaces around the dash', () => {
     const result = extractDocument(PSL_AVIZ);
     expect(result.values.ruta_transport).toMatch(/Bucuresti\s*-\s*Chiajna/i);
@@ -1270,6 +1295,38 @@ Auto: B 112 VFM
     refineFieldsWithBlocks(fields, blocks);
     expect(fields.numar_document_marfa.confidence).toBeLessThan(CRITICAL_BANDS.auto);
     expect(fields.numar_document_marfa.status).toBe('review');
+  });
+
+  it('marks Nr. document for review when page mean is “good” but not excellent (#88 reopen)', () => {
+    // Moiré often yields ~0.85 page mean while flipping 6→1; that sat above auto (0.80).
+    const fields = {
+      numar_document_marfa: {
+        value: 'PSL-0012301', confidence: 0.92, matched: 'PSL-0012301', status: 'ok',
+      },
+    };
+    const blocks = [
+      { text: 'Aviz de expeditie: PSL-0012301', confidence: 0.88 },
+      { text: 'TPO-0033501', confidence: 0.86 },
+      { text: 'Greutate bruta', confidence: 0.82 },
+    ];
+    refineFieldsWithBlocks(fields, blocks);
+    expect(fields.numar_document_marfa.confidence).toBeLessThan(CRITICAL_BANDS.auto);
+    expect(fields.numar_document_marfa.status).toBe('review');
+  });
+
+  it('keeps Nr. document trusted on a clear page mean (≥ 0.92)', () => {
+    const fields = {
+      numar_document_marfa: {
+        value: 'PSL-0062301', confidence: 0.95, matched: 'PSL-0062301', status: 'ok',
+      },
+    };
+    const blocks = [
+      { text: 'Aviz de expeditie: PSL-0062301', confidence: 0.96 },
+      { text: 'Greutate bruta 9623.76', confidence: 0.94 },
+    ];
+    refineFieldsWithBlocks(fields, blocks);
+    expect(fields.numar_document_marfa.confidence).toBeGreaterThanOrEqual(CRITICAL_BANDS.auto);
+    expect(fields.numar_document_marfa.status).toBe('ok');
   });
 
   it('recovers greutate netă beside brută when the net label is mangled (#88)', () => {

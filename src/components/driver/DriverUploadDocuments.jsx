@@ -299,7 +299,7 @@ export default function DriverUploadDocuments({ user }) {
       }
       // Rotate, downscale and re-encode in the browser first: a 6 MB frame becomes ~1 MB
       // before the size check, so a phone camera at full resolution is not refused for it.
-      const files = await prepareImagesForUpload(picked);
+      const files = await prepareImagesForUpload(picked, { preferPortrait: true });
       const tooBig = files.find((f) => f.size > MAX_UPLOAD_BYTES);
       if (tooBig) {
         notifyError(

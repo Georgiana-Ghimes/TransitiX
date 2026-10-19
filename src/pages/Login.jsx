@@ -11,7 +11,7 @@ import { CheckEmailPanel, ErrorBox, useAuthProviders } from "@/components/auth/A
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { isDocumentsProfile, companionAppTitle } from '@/lib/appProfile';
 import { postLoginPath } from "@/lib/roles";
-import { friendlyErrorMessage } from '@/lib/notify';
+import { loginErrorMessage } from '@/lib/loginMessages';
 
 /** Prefer React state; fall back to the DOM (browser autofill often skips onChange). */
 function credentialsFromSubmit(event, emailState, passwordState) {
@@ -79,7 +79,7 @@ export default function Login() {
       if (err?.data?.code === "EMAIL_NOT_VERIFIED") {
         setUnverified(err.data.email || submitEmail);
       } else {
-        setError(friendlyErrorMessage(err));
+        setError(loginErrorMessage(err));
       }
     } finally {
       setLoading(false);
@@ -93,24 +93,19 @@ export default function Login() {
       const data = await api.auth.google({ credential, intent: "signin" });
       window.location.href = afterSignIn(data?.user);
     } catch (err) {
-      if (err?.data?.code === "GOOGLE_NEEDS_INVITE") {
-        // Domain already has a company, this mailbox does not: creating another firm from Login
-        // is how people end up locked out of the one their colleagues use.
-        setError(err.data.message || friendlyErrorMessage(err));
-      } else if (err?.data?.code === "GOOGLE_NEEDS_COMPANY") {
-        if (err.data.domain_in_use) {
-          setError(
-            `Există deja conturi pe @${err.data.domain}, dar nu pentru ${err.data.email}. `
-            + "Cere o invitație administratorului, apoi încearcă din nou cu Google."
-          );
-        } else {
-          // No account for this address yet: creating one is the sign-up screen's job.
-          navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
-            state: { googlePending: { ...err.data, credential } },
-          });
-        }
+      if (err?.data?.code === "GOOGLE_NEEDS_COMPANY" && !err.data.domain_in_use) {
+        // No account for this address yet: creating one is the sign-up screen's job.
+        navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
+          state: { googlePending: { ...err.data, credential } },
+        });
+      } else if (err?.data?.code === "GOOGLE_NEEDS_COMPANY" && err.data.domain_in_use) {
+        setError(
+          `Există deja conturi pe @${err.data.domain}, dar nu pentru ${err.data.email}. `
+          + "Cere o invitație administratorului, apoi încearcă din nou cu Google."
+        );
       } else {
-        setError(friendlyErrorMessage(err));
+        // GOOGLE_NEEDS_INVITE, ACCOUNT_DISABLED, signup closed, wrong Google link, …
+        setError(loginErrorMessage(err));
       }
     } finally {
       setGoogleBusy(false);
@@ -160,7 +155,7 @@ export default function Login() {
         </div>
       ) : (
       <>
-      {providers && (providers.google_client_id || import.meta.env.DEV) && (
+      {providers?.google_signin_enabled && providers.google_client_id ? (
         <>
           <GoogleSignInButton
             clientId={providers.google_client_id}
@@ -169,7 +164,7 @@ export default function Login() {
           />
           <OrDivider />
         </>
-      )}
+      ) : null}
 
       <ErrorBox message={error} />
 

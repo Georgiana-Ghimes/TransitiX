@@ -22,6 +22,9 @@ function fold(value) {
   return String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    // OCR ș/șt→$ (Balote$i ← Balotești) — must not stay as a dollar in Rută.
+    .replace(/([aeiou])\$i\b/g, '$1sti')
+    .replace(/\$/g, 's')
     .replace(/ș|ş|Ș|Ş/g, 's')
     .replace(/ț|ţ|Ț|Ţ/g, 't')
     .toLowerCase();
@@ -260,9 +263,39 @@ const HEADING_ROW_COMPANIONS = new Set([
   'referinta clientului',
   'referință client',
   'referință clientului',
+  // Baumit prints "Adresa de livrare | Client" on one heading row — right header only.
+  'client',
 ]);
 
-function sliceSection(blob, startLabels, stopLabels) {
+/**
+ * Bare "Client" column header (right of Adresa de livrare). Not "referința client",
+ * not "client factură" (those have their own stops). Word-boundary only.
+ */
+function standaloneClientHeaderIndex(folded, from, protectUntil) {
+  const slice = folded.slice(from);
+  const re = /(?:^|[\n\t])client(?!\s+factur)(?=\s|$|\t|:)/g;
+  let m;
+  while ((m = re.exec(slice)) !== null) {
+    const lead = m[0].match(/^[\n\t]/) ? 1 : 0;
+    const abs = from + m.index + lead;
+    if (abs < protectUntil) continue;
+    const before = fold(folded.slice(Math.max(0, abs - 28), abs));
+    if (/referint[aă]?\s*$/.test(before)) continue;
+    return abs;
+  }
+  return -1;
+}
+
+/**
+ * @param {string} blob
+ * @param {string[]} startLabels
+ * @param {string[]} stopLabels
+ * @param {{ stopAtClientHeader?: boolean }} [opts]
+ *   `stopAtClientHeader` only for Adresa de livrare — never for Expeditor. OCR often
+ *   emits the right-column "Client" header before the left-column Site/street lines;
+ *   cutting Expeditor there dropped the origin and left only the delivery leg in Rută.
+ */
+function sliceSection(blob, startLabels, stopLabels, { stopAtClientHeader = false } = {}) {
   const folded = fold(blob);
   let start = -1;
   let labelLen = 0;
@@ -290,11 +323,30 @@ function sliceSection(blob, startLabels, stopLabels) {
     if (HEADING_ROW_COMPANIONS.has(stopFold) && abs < protectUntil) continue;
     if (abs < end) end = abs;
   }
+  // Right-column "Client" ends Adresa de livrare only (delivery slice).
+  if (stopAtClientHeader) {
+    const clientAt = standaloneClientHeaderIndex(folded, from, protectUntil);
+    if (clientAt >= 0 && clientAt < end) end = clientAt;
+  }
   return folded.slice(from, end);
 }
 
 /** Grammatical noise — never a locality. No town/street whitelist. */
-const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client|produs|cantitate|denumire)$/;
+const LOCALITY_NOISE = /^(rou|ro|romania|sector|site|depozite?|nr|numar|str|strada|sosea|soseaua|sos|bvd|blvd|aleea|al|piata|pta|calea|pagina|client|produs|cantitate|denumire|ilfov)$/;
+
+/**
+ * Romanian county plate codes (2 letters) and OCR stubs ("I" from "IF") — printed after
+ * the town before RO ##### (e.g. `Balotesti IF RO 077040`). Never a locality name.
+ */
+const COUNTY_OR_STUB = /^(i|b|ab|ag|ar|bc|bh|bn|br|bt|bv|bz|cj|cl|cs|ct|cv|db|dj|gj|gl|gr|hd|hr|if|il|is|mh|mm|ms|nt|ot|ph|sb|sj|sm|sv|tl|tm|tr|vl|vn|vs)$/;
+
+/** True when a folded token can be the town on an aviz address line. */
+function isPlausibleLocalityToken(word) {
+  const w = fold(word).replace(/[,.]+$/g, '');
+  if (!w || w.length < 3) return false;
+  if (LOCALITY_NOISE.test(w) || STREET_NAME_STOP.test(w) || COUNTY_OR_STUB.test(w)) return false;
+  return true;
+}
 
 /** Second street-name token stops here (grammatical), not at town names — towns vary. */
 const STREET_NAME_STOP = /^(nr|numar|sector|ro|rou|romania|produs|cantitate|denumire|um)$/;
@@ -446,6 +498,35 @@ function parseStreetParts(folded, localityFolded = '') {
 }
 
 /**
+ * Romanian postcode from a delivery block: `RO 077190` (under Adresa de livrare, before Client)
+ * or bare six digits when the two-column PDF dropped "RO".
+ * @returns {string|null} six digits when possible
+ */
+function postcodeFromSection(folded) {
+  const withRo = String(folded || '').match(/\bro\s*(\d{5,6})\b/i);
+  if (withRo?.[1]) {
+    const digits = withRo[1];
+    return digits.length === 6 ? digits : digits.padStart(6, '0');
+  }
+  const bare = String(folded || '').match(/\b(\d{6})\b/);
+  return bare?.[1] || null;
+}
+
+/**
+ * Last plausible town token in a phrase (skip county `IF` / stub `I` before RO).
+ * `Balotesti IF RO 077040` → balotesti, not if.
+ */
+function lastPlausibleLocality(phrase) {
+  const words = fold(phrase).split(/\s+/).filter(Boolean);
+  for (let i = words.length - 1; i >= 0; i -= 1) {
+    const tok = words[i].replace(/^[(\[]+|[),\]]+$/g, '');
+    // Hyphenated towns: bolintin-deal
+    if (isPlausibleLocalityToken(tok)) return tok;
+  }
+  return null;
+}
+
+/**
  * Locality from an address block: place before `RO #####`, or `Place ######` when the
  * two-column PDF drops the "RO" onto the Client column.
  */
@@ -456,24 +537,27 @@ function localityFromSection(folded) {
     let before = folded.slice(0, roAt).replace(/[,.\s]+$/g, '').trim();
     // Bare "Bucuresti Sector" (tab OCR drops the digit) still names the city.
     before = before.replace(/\bsector(?:ul)?\s*[0-9]*\s*$/i, '').replace(/[,.\s]+$/g, '').trim();
-    const m = before.match(/([a-z][a-z]*(?:-[a-z]+)?)$/);
-    if (m?.[1] && !LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) {
-      return m[1];
-    }
+    // Skip trailing county plate (`IF`) / OCR stub (`I`) — TPO-0033547 Balotești.
+    const fromRo = lastPlausibleLocality(before);
+    if (fromRo) return fromRo;
   }
 
   // Two-column OCR: locality\tpostcode with no "RO" on the delivery side.
   // Also "Bucuresti Sector\t050151" — strip a trailing sector label before the digits.
-  for (const m of folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(?:sector(?:ul)?\s*[0-9]*\s+)?(\d{5,6})\b/g)) {
-    if (!LOCALITY_NOISE.test(m[1]) && !STREET_NAME_STOP.test(m[1])) return m[1];
+  const digitHits = [...folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(?:sector(?:ul)?\s*[0-9]*\s+)?(\d{5,6})\b/g)];
+  for (let i = digitHits.length - 1; i >= 0; i -= 1) {
+    const name = digitHits[i][1];
+    if (isPlausibleLocalityToken(name)) return name;
   }
 
   // Comma after house number is common on sales sheets (#61).
-  const afterNr = folded.match(
-    /\bnr\.?\s*[a-z0-9][a-z0-9\-]*\s*,?\s+([a-z][a-z]*(?:-[a-z]+)?)\b/
-  );
-  if (afterNr?.[1] && !LOCALITY_NOISE.test(afterNr[1]) && !STREET_NAME_STOP.test(afterNr[1])) {
-    return afterNr[1];
+  // Prefer the last plausible word after nr. (skip `IF` / `I` when Balotești follows).
+  const afterNrChunks = [...folded.matchAll(
+    /\bnr\.?\s*[a-z0-9][a-z0-9\-]*\s*,?\s+([a-z][a-z0-9\-\s]{1,40}?)(?=\s+ro\b|\s+\d{5,6}\b|$)/gi,
+  )];
+  for (let i = afterNrChunks.length - 1; i >= 0; i -= 1) {
+    const fromNr = lastPlausibleLocality(afterNrChunks[i][1]);
+    if (fromNr) return fromNr;
   }
   return null;
 }
@@ -503,19 +587,41 @@ function isAddressContinuationCell(text) {
   return /[a-z]{3,}/.test(f);
 }
 
+/** True when left-column text already has a complete unload address (RO / postcode). */
+function leftHasDeliveryPostcode(parts) {
+  return /\bro\s*\d{5,6}\b|\b\d{5,6}\b/.test(fold(parts.join(' ')));
+}
+
 /**
  * When Adresa de livrare | Client share a row, pdf-parse emits tab-separated cells.
- * Keep only the left cell(s) — unloading address. Right = Client seat, never parsed.
+ * Keep only the left cell(s) — unloading address under Expeditor. Right = Client seat,
+ * never parsed as delivery.
  */
 function leftColumnFromInterleaved(section) {
   const left = [];
   for (const line of String(section || '').split(/\r?\n/)) {
-    if (!line.trim()) continue;
-    const cells = line.split(/\t+/).map((c) => c.trim()).filter(Boolean);
+    if (!line.trim() && !/^\t/.test(line)) continue;
+    // Leading tab ⇒ empty left cell: the whole row is the Client column.
+    const rawCells = line.split(/\t+/);
+    const rightColumnOnly = /^\t/.test(line) || (rawCells.length > 1 && !String(rawCells[0] || '').trim());
+    if (rightColumnOnly) continue;
+
+    const cells = rawCells.map((c) => c.trim()).filter(Boolean);
     if (!cells.length) continue;
     const firstFold = fold(cells[0]);
     if (firstFold === 'client') continue;
+
+    // After a complete left address, further lines are Client seat dumps (no leading tab).
+    if (leftHasDeliveryPostcode(left)) {
+      if (/^(rou|ro)$/i.test(firstFold)) {
+        left.push(cells[0]);
+      }
+      continue;
+    }
+
     if (cells.length === 1) {
+      // Lone Client id / AP- row with tabs collapsed — not delivery.
+      if (looksLikeClientIdCell(cells[0])) continue;
       left.push(cells[0]);
       continue;
     }
@@ -581,14 +687,54 @@ function leftColumnFromInterleaved(section) {
 }
 
 /**
+ * Remove a Client column dump that OCR placed inside the Expeditor slice (before Site /
+ * street). Resume at `Site:` only — Client seats also have Str./Șosea, so street-type
+ * is not a safe resume marker.
+ */
+function scrubClientDumpFromExpeditor(folded) {
+  const s = String(folded || '');
+  if (!s.trim()) return s;
+  // Baumit load origin is labelled Site; everything from Client / C######## until Site is seat dump.
+  return s
+    .replace(/(?:^|\s)client(?!\s+factur)\b[\s\S]*?(?=\bsite\b|$)/gi, ' ')
+    .replace(/\bc\d{8}\b[\s\S]*?(?=\bsite\b|$)/gi, ' ')
+    .replace(/\bap-[a-z0-9][\s\S]*?(?=\bsite\b|$)/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * One unload address only: keep through the first RO ##### (optional ROU).
+ * A second street after that is the Client column (or another stop handled elsewhere).
+ */
+function clipToFirstDeliveryPostcode(folded) {
+  const m = folded.match(/\bro\s*\d{5,6}\b/);
+  if (!m || m.index == null) {
+    // Tab OCR sometimes drops "RO" and leaves locality + 5–6 digits alone.
+    const bare = folded.match(/\b\d{5,6}\b/);
+    if (!bare || bare.index == null || bare.index < 4) return folded;
+    return folded.slice(0, bare.index + bare[0].length).trim();
+  }
+  let end = m.index + m[0].length;
+  const after = folded.slice(end);
+  const rou = after.match(/^\s*rou\b/);
+  if (rou) end += rou[0].length;
+  return folded.slice(0, end).trim();
+}
+
+/**
  * Street + locality inside one labelled block (Expeditor or Adresa de livrare).
  * Structure only: `Str. …` + place — no hard-coded town list.
  */
 function parseDestBlock(section, { interleaved = false } = {}) {
   if (!section || !String(section).trim()) {
-    return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
+    return {
+      locality: null, street: null, streetName: null, streetType: null, houseNumber: null, postcode: null,
+    };
   }
 
+  // Delivery is always the left column under Expeditor. When tabs (or Client markers)
+  // are present, rebuild from left cells only — never the Client seat on the right.
   const source = interleaved ? leftColumnFromInterleaved(section) : section;
   let folded = fold(source)
     .replace(/bucurestisector/g, 'bucuresti sector')
@@ -601,15 +747,23 @@ function parseDestBlock(section, { interleaved = false } = {}) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // On a clean single-column block, Client codes still mark the end of the delivery address.
-  // After left-column rebuild they should already be gone — clipping would only hurt.
-  if (!interleaved) {
+  if (interleaved) {
+    // Delivery (left column): Client id / AP- still mark the end when a right-column
+    // dump lost its leading tab.
     let clipAt = folded.length;
     for (const re of [/\bc\d{8}\b/, /\bap-[a-z0-9]/]) {
       const m = re.exec(folded);
       if (m && m.index >= 8 && m.index < clipAt) clipAt = m.index;
     }
     folded = folded.slice(0, clipAt);
+    // One unload address: anything after the first postcode is Client (or a later stop).
+    folded = clipToFirstDeliveryPostcode(folded);
+  } else {
+    // Expeditor: OCR often inserts the right-column Client header / C######## block
+    // *before* Site/street. End-clipping at C######## would drop the origin and leave
+    // Rută as delivery-only — strip the Client dump, then keep through first postcode.
+    folded = scrubClientDumpFromExpeditor(folded);
+    folded = clipToFirstDeliveryPostcode(folded);
   }
   folded = scrubSectionNoise(folded);
 
@@ -624,6 +778,7 @@ function parseDestBlock(section, { interleaved = false } = {}) {
 
   const locality = localityRaw ? displayWords(localityRaw) : null;
   const street = compactStreet(streetName, rawHouse);
+  const postcode = postcodeFromSection(folded);
 
   return {
     locality,
@@ -631,6 +786,7 @@ function parseDestBlock(section, { interleaved = false } = {}) {
     streetName: streetName || null,
     streetType,
     houseNumber: rawHouse ? formatHouseNumber(rawHouse) : null,
+    postcode,
   };
 }
 
@@ -779,7 +935,9 @@ function parseExpeditorSection(blob) {
 }
 
 function emptyAddressBlock() {
-  return { locality: null, street: null, streetName: null, streetType: null, houseNumber: null };
+  return {
+    locality: null, street: null, streetName: null, streetType: null, houseNumber: null, postcode: null,
+  };
 }
 
 function isUsableAddressBlock(block) {
@@ -804,8 +962,8 @@ function blocksFromMarkers(folded, markers, contentFrom = 'after') {
     const from = contentFrom === 'at' ? markers[i].index : markers[i].end;
     const to = i + 1 < markers.length ? markers[i + 1].index : folded.length;
     const chunk = folded.slice(from, to);
-    const interleaved = /\t/.test(chunk) || /\bc\d{8}\b/.test(chunk);
-    const block = parseDestBlock(chunk, { interleaved });
+    // Delivery stops are always the left column — never Client on the right.
+    const block = parseDestBlock(chunk, { interleaved: true });
     if (isUsableAddressBlock(block)) blocks.push(block);
   }
   return blocks;
@@ -937,17 +1095,14 @@ export function parseDeliveryAddresses(blob) {
     blob,
     DELIVERY_SECTION_STARTS,
     DELIVERY_SECTION_STOPS,
+    { stopAtClientHeader: true },
   );
   const multi = parseMultiDeliveryBlocks(section);
   if (multi.length) return multi;
 
-  // Stop at Client factură / transport. "Referința client" is a same-row column header —
-  // scrubbed as noise, not a hard stop (stopping there used to leave only "Str. Republicii").
-  const foldedHead = fold(section).trimStart();
-  const interleaved = /^(client\b|\S+\t)/.test(section.trimStart())
-    || /\bc\d{8}\b/.test(foldedHead)
-    || /\t/.test(section);
-  const one = parseDestBlock(section, { interleaved });
+  // Always left-column rebuild: Adresa de livrare sits under Expeditor on the left.
+  // The Client seat on the right is never the unload address (tabs or not).
+  const one = parseDestBlock(section, { interleaved: true });
   return isUsableAddressBlock(one) ? [one] : [];
 }
 
@@ -1285,7 +1440,9 @@ function worseConfidence(a, b) {
 }
 
 /** Keys the OCR verify hard-lock cares about (aligned with companion OCR_VERIFY_KEYS). */
-const OCR_VERIFY_FIELD_KEYS = new Set(['numar_tpo', 'numar_auto', 'ruta_transport']);
+const OCR_VERIFY_FIELD_KEYS = new Set([
+  'numar_tpo', 'numar_document_marfa', 'numar_auto', 'ruta_transport',
+]);
 
 /**
  * Prefer stored OCR field objects for the UI amber flags; fall back to heuristics

@@ -151,6 +151,79 @@ export function orientationAxesDiffer(oriented, raw) {
   return oriented.width !== raw.width || oriented.height !== raw.height;
 }
 
+/**
+ * Read JPEG EXIF Orientation (1..8). Tags 3/2/4 keep the same pixel axes — size compare alone
+ * misses them and the page can stay stored upside-down (#103).
+ * @param {ArrayBuffer|Uint8Array} bytes
+ * @returns {number|null}
+ */
+export function readJpegExifOrientation(bytes) {
+  const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+  if (b.length < 4 || b[0] !== 0xFF || b[1] !== 0xD8) return null;
+  let i = 2;
+  while (i + 4 < b.length) {
+    if (b[i] !== 0xFF) {
+      i += 1;
+      continue;
+    }
+    const marker = b[i + 1];
+    if (marker === 0xDA || marker === 0xD9) break;
+    const len = (b[i + 2] << 8) | b[i + 3];
+    if (len < 2 || i + 2 + len > b.length) break;
+    if (marker === 0xE1 && len >= 14) {
+      const start = i + 4;
+      // "Exif\0\0"
+      if (
+        b[start] === 0x45 && b[start + 1] === 0x78 && b[start + 2] === 0x69
+        && b[start + 3] === 0x66 && b[start + 4] === 0 && b[start + 5] === 0
+      ) {
+        const tiff = start + 6;
+        const le = b[tiff] === 0x49 && b[tiff + 1] === 0x49;
+        const be = b[tiff] === 0x4D && b[tiff + 1] === 0x4D;
+        if (le || be) {
+          const u16 = (o) => (le ? b[o] | (b[o + 1] << 8) : (b[o] << 8) | b[o + 1]);
+          const u32 = (o) => (le
+            ? (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0
+            : ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0);
+          const ifd0 = tiff + u32(tiff + 4);
+          if (ifd0 + 2 <= b.length) {
+            const n = u16(ifd0);
+            for (let k = 0; k < n; k += 1) {
+              const e = ifd0 + 2 + k * 12;
+              if (e + 12 > b.length) break;
+              if (u16(e) === 0x0112) {
+                const val = u16(e + 8);
+                return val >= 1 && val <= 8 ? val : null;
+              }
+            }
+          }
+        }
+      }
+    }
+    i += 2 + len;
+  }
+  return null;
+}
+
+/** Orientation tags that change how the page must be drawn (anything except normal). */
+export function exifOrientationNeedsBake(orientation) {
+  const o = Number(orientation);
+  return Number.isFinite(o) && o >= 2 && o <= 8;
+}
+
+async function fileExifOrientation(file) {
+  if (!file || typeof file.slice !== 'function') return null;
+  try {
+    const buf = await file.slice(0, 128 * 1024).arrayBuffer();
+    return readJpegExifOrientation(buf);
+  } catch {
+    return null;
+  }
+}
+
+/** 180° needs a clear win — shadow + stamp often score a hair above upright (#103). */
+export const ROTATION_180_SCORE_MARGIN = 0.35;
+
 /** Max side of the thumbnail used to pick 0/90/180/270. */
 export const ORIENT_SAMPLE_SIDE = 480;
 
@@ -264,12 +337,17 @@ export function sizeAfterRotation(width, height, degrees) {
 /**
  * Pick the rotation (CW degrees) that best uprights a document thumbnail.
  * When `preferPortrait` is set, landscape results are skipped.
+ * A 180° flip only wins when it beats 0° by `minMargin180` — cab shadows + foot stamps
+ * often tip a slightly higher score the wrong way (#103).
  *
  * @param {Array<{ degrees: number, score: number, width: number, height: number }>} candidates
- * @param {{ preferPortrait?: boolean }} [opts]
+ * @param {{ preferPortrait?: boolean, minMargin180?: number }} [opts]
  * @returns {number} degrees CW
  */
-export function pickBestDocumentRotation(candidates, { preferPortrait = false } = {}) {
+export function pickBestDocumentRotation(candidates, {
+  preferPortrait = false,
+  minMargin180 = ROTATION_180_SCORE_MARGIN,
+} = {}) {
   const list = Array.isArray(candidates) ? candidates : [];
   let pool = preferPortrait
     ? list.filter((c) => Number(c.height) >= Number(c.width))
@@ -279,6 +357,15 @@ export function pickBestDocumentRotation(candidates, { preferPortrait = false } 
   for (let i = 1; i < pool.length; i += 1) {
     const c = pool[i];
     if (c.score > best.score) best = c;
+  }
+  const baseline = pool.find((c) => Number(c.degrees) === 0)
+    || list.find((c) => Number(c.degrees) === 0);
+  if (
+    baseline
+    && Number(best.degrees) === 180
+    && Number(best.score) < Number(baseline.score) + Number(minMargin180)
+  ) {
+    return 0;
   }
   return Number(best.degrees) || 0;
 }
@@ -377,13 +464,13 @@ export async function prepareImageForUpload(file, {
   try {
     // `from-image` bakes the EXIF orientation into the pixels; the re-encoded JPEG has none.
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    let needsOrientBake = false;
+    const exifOrient = await fileExifOrientation(file);
+    let needsOrientBake = exifOrientationNeedsBake(exifOrient);
     try {
       rawBitmap = await createImageBitmap(file, { imageOrientation: 'none' });
-      needsOrientBake = orientationAxesDiffer(bitmap, rawBitmap);
+      needsOrientBake = needsOrientBake || orientationAxesDiffer(bitmap, rawBitmap);
     } catch {
-      // Older engines without `none` — leave bake decision to size / preferPortrait.
-      needsOrientBake = false;
+      // Older engines without `none` — EXIF tag / preferPortrait still force a bake.
     }
     const rotationDeg = preferPortrait ? chooseDocumentRotation(bitmap, { preferPortrait }) : 0;
     const needsContentRotate = rotationDeg !== 0;

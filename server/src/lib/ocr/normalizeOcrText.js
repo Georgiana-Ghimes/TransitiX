@@ -55,6 +55,9 @@ export function sanitizeOcrText(text) {
   // Mistral often confuses Romanian ă with German ä (same glyph family on forms):
   // `Greutate brutä` / `netä` then miss every weight regex that only allows bruta|brută.
   out = out.replace(/ä/g, 'ă').replace(/Ä/g, 'Ă');
+  // Romanian ș / șt often land as `$`: `Balote$i` ← Balotești, `chi$inău` ← chișinău.
+  out = out.replace(/([A-Za-zăâîĂÂÎ])\$i\b/g, '$1ști');
+  out = out.replace(/([A-Za-zĂÂÎȘȚăâîșț])\$([A-Za-zĂÂÎȘȚăâîșț])/g, '$1ș$2');
   // Zero-width / BOM / soft hyphen.
   out = out.replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '');
   // Control characters except tab and newline; CR → LF.
@@ -80,8 +83,18 @@ export function sanitizeOcrText(text) {
   out = out.replace(/\|/g, ' ');
   // A run of 4+ identical punctuation marks is a rendering artefact (`....`, `~~~~`, `####`).
   out = out.replace(/([^\w\s\n])\1{3,}/g, ' ');
-  // Trailing spaces per line, collapse inner runs, cap blank lines at one.
-  out = out.split('\n').map((line) => line.replace(/[ \t]+/g, ' ').trim()).join('\n');
+  // Collapse spaces inside each line, but keep tab cell borders — Baumit pdf-parse emits
+  // Adresa de livrare | Client as tab-separated columns; turning tabs into spaces glued the
+  // Client seat onto the unload street and dropped the delivery half of Rută (TPO-0033490).
+  out = out.split('\n').map((line) => {
+    if (line.includes('\t')) {
+      return line
+        .split('\t')
+        .map((cell) => cell.replace(/ +/g, ' ').trim())
+        .join('\t');
+    }
+    return line.replace(/[ \t]+/g, ' ').trim();
+  }).join('\n');
   out = out.replace(/\n{3,}/g, '\n\n').trim();
   return out;
 }
@@ -127,6 +140,8 @@ export function normalizeOcrText(text) {
   out = out.replace(/\bBolintin[\s\-._]*Dea[l1I]\b/gi, 'Bolintin-Deal');
   // Str. Industriei often becomes „Industriului” in dark photos.
   out = out.replace(/\bIndustriului\b/gi, 'Industriei');
+  // Str. Republicii: night / grain often reads the leading R as K (`Kepublicii`).
+  out = out.replace(/\bKepublicii\b/gi, 'Republicii');
   // Bulevardul Pipera: OCR genitive-izes to Piperii on clean scans (#89). Keep the place name.
   out = out.replace(
     /\b(Bulevardul|Blvd\.?|Bvd\.?|Bld\.?|Bd\.?|B-dul|Bdul)\s+Piperii\b/gi,

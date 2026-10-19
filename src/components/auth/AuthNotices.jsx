@@ -162,7 +162,13 @@ export function useAuthProviders() {
       .then((p) => { if (!cancelled) setProviders(p); })
       .catch(() => {
         if (!cancelled) {
-          setProviders({ signup_enabled: false, google_client_id: null, email_configured: false, failed: true });
+          setProviders({
+            signup_enabled: false,
+            google_signin_enabled: false,
+            google_client_id: null,
+            email_configured: false,
+            failed: true,
+          });
         }
       });
     return () => { cancelled = true; };

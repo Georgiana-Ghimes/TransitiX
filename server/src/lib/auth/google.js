@@ -7,6 +7,8 @@
  * hand somebody the account of whoever the address belongs to.
  *
  * Unset `GOOGLE_CLIENT_ID` means the feature is off, not "accept any audience".
+ * `ALLOW_GOOGLE_SIGNIN=false` hides the button and refuses `/auth/google` even when a
+ * client id is configured (feature flag for deployments that keep the key but turn UI off).
  */
 import jwt from 'jsonwebtoken';
 
@@ -15,6 +17,16 @@ const ISSUERS = ['accounts.google.com', 'https://accounts.google.com'];
 
 export function googleClientId() {
   return String(process.env.GOOGLE_CLIENT_ID || '').trim() || null;
+}
+
+/** Explicit flag; defaults on. Pair with a client id before the screens offer Google. */
+export function googleSignInAllowed() {
+  return String(process.env.ALLOW_GOOGLE_SIGNIN ?? 'true').trim().toLowerCase() !== 'false';
+}
+
+/** What `/auth/providers` exposes: flag on and a client id configured. */
+export function googleSignInEnabled() {
+  return googleSignInAllowed() && Boolean(googleClientId());
 }
 
 let cache = { certs: null, expiresAt: 0 };

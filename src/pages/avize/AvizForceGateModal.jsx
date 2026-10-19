@@ -14,9 +14,11 @@ export default function AvizForceGateModal({
   queue = [],
   initialId = null,
   busy = false,
+  reextracting = false,
   onConfirm,
   onCancel,
   onSaveItem,
+  onReextract,
   peerRows = null,
   mergeTpoPreview = false,
   mergeTpoRequired = false,
@@ -199,7 +201,9 @@ export default function AvizForceGateModal({
               queue={queue}
               initialId={initialId}
               saving={savingItem || busy}
+              reextracting={reextracting}
               onSave={onSaveItem ? handleSave : undefined}
+              onReextract={onReextract}
               onCompletenessChange={handleCompleteness}
               peerRows={peerRows}
               mergeTpoPreview={mergeTpoPreview}

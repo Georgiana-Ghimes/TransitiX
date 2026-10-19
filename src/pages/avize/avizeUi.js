@@ -11,7 +11,7 @@ export const AVIZ_ACTION_LEGEND = [
   },
   {
     name: 'Editează',
-    text: 'Corectează extracția sau completează câmpurile care nu sunt pe aviz (km, tarif, taxe, observații). Salvarea rămâne după refresh, inclusiv dată, auto, rută și document. Folosește Re-extrage doar dacă vrei din nou valorile din PDF.',
+    text: 'Corectează extracția sau completează câmpurile care nu sunt pe aviz (km, tarif, taxe, observații). Salvarea rămâne după refresh. Deasupra pozei e banda verde Re-extrage — apasă când OCR-ul a greșit (umbră, moiré) ca să citească din nou din document.',
   },
   {
     name: 'Confirmă',
@@ -208,6 +208,33 @@ export function hasManualAvizEdits(row) {
 }
 
 /**
+ * True when the modal draft differs from the seed snapshot on OCR-owned fields.
+ * Compare form↔form (both from emptyForm / reviewDraft), not form↔row — formatting
+ * mismatches were greying Re-extrage on open.
+ */
+export function formHasOcrDraftEdits(form, baselineForm) {
+  if (!form || !baselineForm) return false;
+  for (const key of OCR_OWNED_FIELDS) {
+    const draft = key === 'data_efectuare_cursa' ? toDateIso(form[key]) : form[key];
+    const base = key === 'data_efectuare_cursa'
+      ? toDateIso(baselineForm[key])
+      : baselineForm[key];
+    if (!sameValue(draft, base, key)) return true;
+  }
+  return false;
+}
+
+/**
+ * Grey out Re-extrage only after the operator types in the modal — not for saved edits.
+ */
+export function reextractBlockedReason(form, baselineForm) {
+  if (form && baselineForm && formHasOcrDraftEdits(form, baselineForm)) {
+    return 'Ai modificat câmpuri — Salvează sau revino la valorile din document ca să poți Re-extrage.';
+  }
+  return null;
+}
+
+/**
  * Same gate as server `annexExportReviewBlocked`: anexă must not ship OCR that still
  * needs a human. Prefer stored validation (DB), not list-decoration heuristics that
  * OR `needs_review` for low-confidence fields and would block after „Marchează verificat”.
@@ -234,12 +261,24 @@ export function annexReviewBlockedRows(rows, selectedIds) {
 
 /** Same gate as confirm/HITL: queue for the force-confirm carousel, oldest upload first. */
 export function confirmBlockedRows(rows, selectedIds) {
-  const blocked = annexReviewBlockedRows(rows, selectedIds);
-  return [...blocked].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  return sortAvizeByUploadAsc(annexReviewBlockedRows(rows, selectedIds));
+}
+
+/**
+ * Stable list / carousel order. Same keys as GET /api/avize (created_at, filename, id).
+ * Edit / verify / re-extract must never reshuffle rows — only these immutable fields decide.
+ */
+export function compareAvizListOrder(a, b, { ascending = true } = {}) {
+  const dir = ascending ? 1 : -1;
+  const byCreated = String(a?.created_at || '').localeCompare(String(b?.created_at || ''));
+  if (byCreated) return byCreated * dir;
+  const byName = String(a?.original_filename || '').localeCompare(String(b?.original_filename || ''), 'ro');
+  if (byName) return byName;
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
 }
 
 export function sortAvizeByUploadAsc(rows) {
-  return [...(rows || [])].sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  return [...(rows || [])].sort((a, b) => compareAvizListOrder(a, b, { ascending: true }));
 }
 
 /** Required keys in the Unește/Confirmă carousel (must stay aligned with CAROUSEL_EDIT_FIELDS). */
@@ -316,7 +355,14 @@ export function rowsMissingTpo(rows, ids = null) {
  * TPO / auto / rută with low OCR that the operator has not yet accepted
  * (not in corrected_fields). Confirmed rows are clear.
  */
-export const OCR_VERIFY_KEYS = ['numar_tpo', 'numar_auto', 'ruta_transport'];
+/** Digit-critical + route: low OCR must be acknowledged before annex (#88 includes PSL). */
+export const OCR_VERIFY_KEYS = [
+  'numar_tpo',
+  'numar_document_marfa',
+  'numar_auto',
+  'data_efectuare_cursa',
+  'ruta_transport',
+];
 
 export function unackedLowOcrFields(row) {
   if (!row || row.status === 'confirmed') return [];
@@ -327,7 +373,7 @@ export function unackedLowOcrFields(row) {
   return OCR_VERIFY_KEYS.filter((key) => {
     if (goodsOnly && key === 'numar_tpo') return false;
     if (corrected.has(key)) return false;
-    return row?.field_confidence?.[key] === 'low';
+    return lowField(row, key);
   });
 }
 
@@ -497,8 +543,58 @@ export async function waitForAvizExtractSettled(id, fetchRow, {
   return last;
 }
 
+/**
+ * Amber / red OCR flag for one field. Accepts decorateAviz `low`/`ok` strings and the
+ * raw extractor objects `{ confidence, status }` stored on the row.
+ */
 export function lowField(row, key) {
-  return row?.field_confidence?.[key] === 'low';
+  const v = row?.field_confidence?.[key];
+  if (v === 'low') return true;
+  if (v === 'ok' || v == null) return false;
+  if (typeof v === 'object') {
+    if (v.status === 'review' || v.status === 'missing') return true;
+    if (v.status === 'ok') return false;
+    const conf = Number(v.confidence);
+    if (Number.isFinite(conf)) return conf < 0.8;
+  }
+  return false;
+}
+
+/** Show Re-extrage in modals only when at least this many OCR fields look empty / wrong. */
+export const REEXTRACT_MIN_TROUBLED_FIELDS = 3;
+
+/**
+ * Count OCR-owned fields that are empty in the draft (or row) or marked OCR-unsure / finding.
+ * „Doar document marfă” skips Număr TPO (allowed blank).
+ */
+export function countTroubledOcrFields(row, { form = null, findings = null } = {}) {
+  if (!row && !form) return 0;
+  const goodsOnly = isGoodsDocOnly(form || row);
+  const findingList = Array.isArray(findings)
+    ? findings
+    : (row?.validation_findings
+      ?? row?.extracted_data?.validation?.findings
+      ?? []);
+  const findingFields = new Set(
+    findingList
+      .filter((f) => f && f.field && (f.severity === 'error' || f.severity === 'warning'))
+      .map((f) => f.field),
+  );
+  let n = 0;
+  for (const key of OCR_OWNED_FIELDS) {
+    if (goodsOnly && key === 'numar_tpo') continue;
+    const raw = form?.[key] !== undefined && form?.[key] !== null
+      ? form[key]
+      : row?.[key];
+    const empty = !String(raw ?? '').trim();
+    if (empty || lowField(row, key) || findingFields.has(key)) n += 1;
+  }
+  return n;
+}
+
+/** Modal Re-extrage banner — only when OCR is clearly struggling (≥ 3 troubled fields). */
+export function shouldOfferReextract(row, opts = {}) {
+  return countTroubledOcrFields(row, opts) >= REEXTRACT_MIN_TROUBLED_FIELDS;
 }
 
 /** List / table class when OCR confidence on a field is low. */
@@ -520,6 +616,22 @@ export const AVIZ_STATUS_DOT_ONELINER =
   'Bulinele = status în coloana Stare; text roșu bold pe TPO / auto / rută = OCR nesigur — Confirmă / Unește blocate până verifici pe document (Verifică sau Salvează în carusel). Auto roșu dispare când plăcuța e în Autoturisme cu MTMA completat și fără „din OCR, neverificat” (la refresh listă sau după Re-extrage).';
 
 /**
+ * Absence / “field empty” rules — hide once Editează has a value (#81).
+ * Wrong-but-plausible OCR (low confidence, bad format) must stay visible (#88).
+ */
+const ABSENCE_FINDING_RULES = new Set([
+  'tpo_missing',
+  'date_missing',
+  'plate_missing',
+  'doc_no_missing',
+  'gross_missing_near_net',
+  'net_missing_near_gross',
+  'weights_missing',
+  'goods_missing',
+  'ruta_missing',
+]);
+
+/**
  * Validation findings stored on extract (decorateAviz also mirrors them as validation_findings).
  * Info / duplicate badges stay out of the edit-form review strip.
  */
@@ -533,8 +645,16 @@ export function avizEditFindings(row, { form } = {}) {
   for (const f of raw) {
     if (!f || f.severity === 'info' || f.source === 'duplicate_suspect') continue;
     if (f.severity !== 'error' && f.severity !== 'warning') continue;
-    // Hide a field finding once the operator has typed a value in Editează (#81).
-    if (form && f.field && String(form[f.field] ?? '').trim()) continue;
+    // Only clear *missing* findings when the operator filled the box. Keep low-confidence
+    // / invalid-format warnings on a filled wrong PSL (#88 reopen).
+    if (
+      form
+      && f.field
+      && String(form[f.field] ?? '').trim()
+      && (ABSENCE_FINDING_RULES.has(f.rule) || /_missing$/.test(String(f.rule || '')))
+    ) {
+      continue;
+    }
     const key = `${f.rule}|${f.field || ''}|${f.message || ''}`;
     if (seen.has(key)) continue;
     seen.add(key);

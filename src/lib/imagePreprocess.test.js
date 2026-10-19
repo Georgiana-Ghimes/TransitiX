@@ -9,10 +9,12 @@ import {
   contrastStretchParams,
   lumaHistogram,
   needsPortraitRotate,
+  exifOrientationNeedsBake,
   orientationAxesDiffer,
   pickBestDocumentRotation,
   prepareImageForUpload,
   prepareImagesForUpload,
+  readJpegExifOrientation,
   scoreDocumentOrientation,
   shouldPrepare,
   sizeAfterRotation,
@@ -68,6 +70,30 @@ describe('needsPortraitRotate / orientationAxesDiffer', () => {
     expect(orientationAxesDiffer({ width: 1600, height: 900 }, { width: 900, height: 1600 })).toBe(true);
     expect(orientationAxesDiffer({ width: 800, height: 600 }, { width: 800, height: 600 })).toBe(false);
     expect(orientationAxesDiffer(null, { width: 1, height: 1 })).toBe(false);
+  });
+
+  it('flags EXIF Orientation 3 (180°) for bake even when axes match (#103)', () => {
+    expect(exifOrientationNeedsBake(1)).toBe(false);
+    expect(exifOrientationNeedsBake(null)).toBe(false);
+    expect(exifOrientationNeedsBake(3)).toBe(true);
+    expect(exifOrientationNeedsBake(6)).toBe(true);
+  });
+
+  it('reads Orientation from a minimal JPEG APP1 Exif block (#103)', () => {
+    // SOI + APP1(Exif, II, IFD0 with Orientation=3) + EOI — not a full image, parser only.
+    // APP1 length 0x0022 = 34 → 32 bytes after the length field.
+    const app1 = [
+      0xFF, 0xE1, 0x00, 0x22,
+      0x45, 0x78, 0x69, 0x66, 0x00, 0x00, // Exif\0\0
+      0x49, 0x49, 0x2A, 0x00, // II + 42
+      0x08, 0x00, 0x00, 0x00, // IFD0 offset
+      0x01, 0x00, // 1 entry
+      0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, // Orientation=3
+      0x00, 0x00, 0x00, 0x00, // next IFD
+    ];
+    const jpeg = Uint8Array.from([0xFF, 0xD8, ...app1, 0xFF, 0xD9]);
+    expect(readJpegExifOrientation(jpeg)).toBe(3);
+    expect(readJpegExifOrientation(Uint8Array.from([0x00, 0x01]))).toBeNull();
   });
 });
 
@@ -137,6 +163,20 @@ describe('document upright scoring', () => {
       { degrees: 180, score: 0.8, width: 1600, height: 900 },
       { degrees: 270, score: 1.1, width: 900, height: 1600 },
     ], { preferPortrait: true })).toBe(270);
+  });
+
+  it('keeps 0° when 180° only wins by a hair (shadow / stamp) (#103)', () => {
+    expect(pickBestDocumentRotation([
+      { degrees: 0, score: 1.0, width: 900, height: 1600 },
+      { degrees: 180, score: 1.2, width: 900, height: 1600 },
+    ], { preferPortrait: true })).toBe(0);
+  });
+
+  it('accepts 180° when it clearly beats upright (#103)', () => {
+    expect(pickBestDocumentRotation([
+      { degrees: 0, score: 0.2, width: 900, height: 1600 },
+      { degrees: 180, score: 1.4, width: 900, height: 1600 },
+    ], { preferPortrait: true })).toBe(180);
   });
 });
 

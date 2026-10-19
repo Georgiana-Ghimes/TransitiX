@@ -23,6 +23,16 @@ describe('mapGeocodeQueries', () => {
     expect(mapGeocodeQueries('Chiajna', 'Chiajna')).toContain('Chiajna');
     expect(mapGeocodeQueries('strada Garii 12', 'Chiajna')).not.toContain('Chiajna');
   });
+
+  it('tries street + postcode so Photon can pin the OCR settlement', () => {
+    const qs = mapGeocodeQueries(
+      'bulevardul Pipera 1/VII, Voluntari, 077190',
+      'Voluntari',
+      '077190',
+    );
+    expect(qs[0]).toContain('077190');
+    expect(qs.some((q) => /^pipera,\s*077190$/i.test(q))).toBe(true);
+  });
 });
 
 describe('streetAgreement', () => {
@@ -46,6 +56,50 @@ describe('streetAgreement', () => {
 describe('queryStreetTokens', () => {
   it('drops type word, house number and locality', () => {
     expect(queryStreetTokens('strada Garii 12, Chiajna', 'Chiajna')).toEqual(['garii']);
+  });
+
+  it('drops a six-digit postcode so it is not treated as a street token', () => {
+    expect(queryStreetTokens('bulevardul Pipera 1/VII, Voluntari, 077190', 'Voluntari'))
+      .toEqual(['pipera']);
+  });
+});
+
+describe('geocodeMapPin postcode preference', () => {
+  it('prefers the Photon hit whose postcode matches the aviz', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        features: [
+          {
+            geometry: { coordinates: [26.1, 44.4] },
+            properties: {
+              street: 'Bulevardul Pipera',
+              city: 'București',
+              postcode: '014254',
+            },
+          },
+          {
+            geometry: { coordinates: [26.12, 44.48] },
+            properties: {
+              street: 'Bulevardul Pipera',
+              city: 'Voluntari',
+              postcode: '077190',
+            },
+          },
+        ],
+      }),
+    })));
+
+    const pin = await geocodeMapPin('bulevardul Pipera 1/VII, Voluntari', {
+      locality: 'Voluntari',
+      postcode: '077190',
+    });
+    expect(pin).toMatchObject({
+      latitude: 44.48,
+      longitude: 26.12,
+      match: 'accepted',
+      label: expect.stringContaining('Voluntari'),
+    });
   });
 });
 

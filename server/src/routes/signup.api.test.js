@@ -63,7 +63,24 @@ describe('what the screens may offer', () => {
   it('reports sign-up, Google and the password minimum', async () => {
     const res = await api().get('/api/auth/providers');
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ signup_enabled: true, google_client_id: 'test-client', password_min_length: 10 });
+    expect(res.body).toMatchObject({
+      signup_enabled: true,
+      google_signin_enabled: true,
+      google_client_id: 'test-client',
+      password_min_length: 10,
+    });
+  });
+
+  it('hides Google when ALLOW_GOOGLE_SIGNIN=false even with a client id', async () => {
+    const prev = process.env.ALLOW_GOOGLE_SIGNIN;
+    process.env.ALLOW_GOOGLE_SIGNIN = 'false';
+    try {
+      const res = await api().get('/api/auth/providers');
+      expect(res.body).toMatchObject({ google_signin_enabled: false, google_client_id: null });
+    } finally {
+      if (prev === undefined) delete process.env.ALLOW_GOOGLE_SIGNIN;
+      else process.env.ALLOW_GOOGLE_SIGNIN = prev;
+    }
   });
 });
 

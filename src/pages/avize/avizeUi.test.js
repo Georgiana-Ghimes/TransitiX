@@ -24,7 +24,11 @@ import {
   displayRoute,
   emptyForm,
   formatIncarcareLabel,
+  countTroubledOcrFields,
+  formHasOcrDraftEdits,
   hasManualAvizEdits,
+  reextractBlockedReason,
+  shouldOfferReextract,
   isLearnedRoute,
   canDeleteTemplate,
   isLockedRai,
@@ -106,6 +110,13 @@ describe('avizeUi', () => {
       { id: 'b', created_at: '2026-10-14T11:00:00Z' },
       { id: 'a', created_at: '2026-10-14T09:00:00Z' },
     ]).map((r) => r.id)).toEqual(['a', 'b']);
+
+    // Same upload instant: filename then id — never depends on updated_at / status.
+    expect(sortAvizeByUploadAsc([
+      { id: 'z', created_at: '2026-10-14T10:00:00Z', original_filename: 'BAU-a21.pdf' },
+      { id: 'y', created_at: '2026-10-14T10:00:00Z', original_filename: 'BAU-a20.pdf' },
+      { id: 'x', created_at: '2026-10-14T10:00:00Z', original_filename: 'BAU-a20.pdf' },
+    ]).map((r) => r.id)).toEqual(['x', 'y', 'z']);
 
     const editOnly = rowsNeedingCarouselEdit([
       {
@@ -318,6 +329,55 @@ describe('avizeUi', () => {
     expect(hasManualAvizEdits({ corrected_fields: [] })).toBe(false);
   });
 
+  it('blocks Re-extrage in modals only after typing away from the seed snapshot', () => {
+    const seed = { numar_tpo: 'TPO-1', numar_auto: 'B 100 XYZ' };
+    expect(formHasOcrDraftEdits(seed, seed)).toBe(false);
+    expect(formHasOcrDraftEdits({ ...seed, numar_auto: 'B 999 ZZZ' }, seed)).toBe(true);
+    expect(reextractBlockedReason(seed, seed)).toBeNull();
+    expect(reextractBlockedReason({ ...seed, numar_tpo: 'TPO-9' }, seed)).toMatch(/modificat/i);
+    // Saved office edits alone must not grey the button on open.
+    expect(reextractBlockedReason(seed, seed)).toBeNull();
+  });
+
+  it('offers modal Re-extrage only when ≥3 OCR fields are empty or unsure', () => {
+    const filled = {
+      numar_tpo: 'TPO-1',
+      numar_document_marfa: 'PSL-1',
+      numar_auto: 'B 100 XYZ',
+      data_efectuare_cursa: '2026-10-01',
+      ruta_transport: 'A / B',
+      tip_marfa: 'Saci',
+      cantitate_marfa: '10',
+      gross_weight_kg: '1000',
+      net_weight_kg: '900',
+      field_confidence: {},
+    };
+    expect(countTroubledOcrFields(filled, { form: filled })).toBe(0);
+    expect(shouldOfferReextract(filled, { form: filled })).toBe(false);
+
+    const twoEmpty = {
+      ...filled,
+      tip_marfa: '',
+      net_weight_kg: '',
+    };
+    expect(countTroubledOcrFields(twoEmpty, { form: twoEmpty })).toBe(2);
+    expect(shouldOfferReextract(twoEmpty, { form: twoEmpty })).toBe(false);
+
+    const threeEmpty = { ...twoEmpty, ruta_transport: '' };
+    expect(countTroubledOcrFields(threeEmpty, { form: threeEmpty })).toBe(3);
+    expect(shouldOfferReextract(threeEmpty, { form: threeEmpty })).toBe(true);
+
+    const oneLow = {
+      ...filled,
+      field_confidence: {
+        numar_document_marfa: 'low',
+        numar_auto: 'low',
+        ruta_transport: { confidence: 0.5, status: 'review' },
+      },
+    };
+    expect(shouldOfferReextract(oneLow, { form: filled })).toBe(true);
+  });
+
   it('spots an office edit that never touched corrected_fields', () => {
     const extracted = {
       corrected_fields: [],
@@ -379,6 +439,9 @@ describe('avizeUi', () => {
   it('marks low-confidence fields', () => {
     expect(lowField({ field_confidence: { numar_tpo: 'low' } }, 'numar_tpo')).toBe(true);
     expect(lowField({}, 'numar_tpo')).toBe(false);
+    expect(lowField({
+      field_confidence: { numar_document_marfa: { confidence: 0.79, status: 'review' } },
+    }, 'numar_document_marfa')).toBe(true);
   });
 
   it('surfaces date_missing in Editează until the operator types a date (#81)', () => {
@@ -395,6 +458,41 @@ describe('avizeUi', () => {
     expect(open).toHaveLength(1);
     expect(findingsForField(open, 'data_efectuare_cursa')).toHaveLength(1);
     expect(avizEditFindings(row, { form: { data_efectuare_cursa: '2026-10-05' } })).toEqual([]);
+  });
+
+  it('keeps date_wrong_year warning while the wrong year is still in the form (#102)', () => {
+    const row = {
+      validation_findings: [{
+        rule: 'date_wrong_year',
+        severity: 'error',
+        field: 'data_efectuare_cursa',
+        title: 'An greșit pe dată',
+        message: 'Data 2019-10-01 nu e din anul încărcării (2026).',
+      }],
+      field_confidence: {
+        data_efectuare_cursa: { confidence: 0.54, status: 'review' },
+      },
+    };
+    const open = avizEditFindings(row, { form: { data_efectuare_cursa: '2019-10-01' } });
+    expect(open).toHaveLength(1);
+    expect(findingsForField(open, 'data_efectuare_cursa')).toHaveLength(1);
+    expect(lowField(row, 'data_efectuare_cursa')).toBe(true);
+  });
+
+  it('keeps low-confidence Nr. document warning while the wrong PSL is still in the form (#88)', () => {
+    const row = {
+      validation_findings: [{
+        rule: 'critical_low_confidence',
+        severity: 'error',
+        field: 'numar_document_marfa',
+        source: 'low_confidence',
+        title: 'Nr. document marfă: încredere scăzută',
+        message: 'Scor OCR 79% — sub pragul de acceptare.',
+      }],
+    };
+    const open = avizEditFindings(row, { form: { numar_document_marfa: 'PSL-0012301' } });
+    expect(open).toHaveLength(1);
+    expect(findingsForField(open, 'numar_document_marfa')).toHaveLength(1);
   });
 
   it('seeds edit form from a row including trip_id', () => {

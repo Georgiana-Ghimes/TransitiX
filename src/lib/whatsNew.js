@@ -6,11 +6,15 @@ export const WHATS_NEW_SEEN_BUILD_KEY = 'transitix_whats_new_seen_build';
 /** localStorage JSON: `{ build, ip }` for the last dismissed „Ce este nou?”. */
 export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 
+/** Only the newest N releases stay in the modal and in `WHATS_NEW_RELEASES`. */
+export const WHATS_NEW_KEEP = 5;
+
 /**
  * Client-facing release notes, newest builds first in the array is fine —
  * {@link sortReleasesNewestFirst} normalizes order for the modal.
  *
  * Keep wording plain: what the office person gains, not how we built it.
+ * Cap at {@link WHATS_NEW_KEEP}: when adding a build, drop the oldest.
  *
  * @typedef {{ build: number, version?: string, dateLabel?: string, title: string, highlights: string[] }} WhatsNewRelease
  * @typedef {{ build: number|null, ip: string|null }} WhatsNewSeen
@@ -18,6 +22,18 @@ export const WHATS_NEW_SEEN_KEY = 'transitix_whats_new_seen';
 
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
+  {
+    build: 125,
+    version: '1.28.0',
+    dateLabel: 'octombrie 2026',
+    title: 'Login clar; livrare/taxă; listă fără salt',
+    highlights: [
+      'La autentificare greșită vezi motivul real (parolă, cont dezactivat…), nu „sesiune expirată”. Google poate fi ascuns din configurare.',
+      'Adresa de livrare și taxa de zonă: doar descărcarea (nu Expeditor / Client din dreapta); taxa se recalculează când editezi Rută.',
+      'Re-extrage apare deasupra documentului când merită; #102 dată din alt an marcată; preview mai puțin întors greșit.',
+      'În listă, Editează / Verifică / Re-extrage nu mai mută avizul din locul lui.',
+    ],
+  },
   {
     build: 120,
     version: '1.26.14',
@@ -62,60 +78,6 @@ export const WHATS_NEW_RELEASES = [
       'Cu „Unește celulele TPO” pe șablon: fără Număr TPO pe un aviz nu poți uni oricum; completezi TPO în carousel (sau oprești bifa). Serverul blochează la fel.',
     ],
   },
-  {
-    build: 116,
-    version: '1.26.10',
-    dateLabel: 'octombrie 2026',
-    title: 'Salvează / Confirmă rămân la vedere',
-    highlights: [
-      'Pe telefon și pe ecran mic: poza din modal (inclusiv landscape) nu mai împinge butoanele Salvează / Confirmă sub ecran. Footer-ul rămâne lipit jos; câmpurile se derulează deasupra.',
-      'În Editează aviz, pe poze: butoane 90° și 180° ca să îndrepți pagina pe loc.',
-    ],
-  },
-  {
-    build: 115,
-    version: '1.26.9',
-    dateLabel: 'octombrie 2026',
-    title: 'Poze pe dos: buton 180° în Editează',
-    highlights: [
-      'În Editează aviz, pe poze: butoane 90° și 180° ca să îndrepți pagina pe loc (fără să reîncarci tot).',
-      'La încărcare, orientarea automată e mai atentă: antetul pe lățime bate ștampilele din colț, ca pagina să nu rămână cu capul în jos.',
-    ],
-  },
-  {
-    build: 114,
-    version: '1.26.8',
-    dateLabel: 'octombrie 2026',
-    title: 'Pozele se îndreaptă la încărcare (și pe dos)',
-    highlights: [
-      'La încărcare pe Avize, pozele de pe telefon (inclusiv WhatsApp) sunt rotite automat: landscape → portret, iar dacă pagina e cu capul în jos se întoarce cum trebuie.',
-      'Se aplică și orientarea din EXIF: nu mai rămân pagini pe o parte după upload.',
-    ],
-  },
-  {
-    build: 112,
-    version: '1.26.6',
-    dateLabel: 'octombrie 2026',
-    title: 'Anexa Baumit: TPO-uri unite cum trebuie',
-    highlights: [
-      'Pe șablon: bifă „Unește celulele TPO”. În Excel, cursele aceluiași TPO sunt grupate și Număr TPO e sudat pe verticală. Nu mai rămân rupte dacă în listă erau amestecate cu alte TPO-uri.',
-      'La Unește în Anexă sau Confirmă selectate: dacă lipsesc TPO / dată / auto / rută, treci documentele unul câte unul (preview + formular). Salvezi și treci la următorul; butonul de salvare rămâne jos, la vedere.',
-      'Când totul e complet, Unește / Confirmă din josul ferestrei. Dacă tot vrei să continui cu goluri, poți: îți asumi.',
-      'Cu bifă ON, în preview paginile adiacente cu același TPO apar lipite (ca pe un aviz multi-pagină).',
-      'PDF cu mai multe avize: continuările pe același document rămân un fișier; în listă vezi intervalul de pagini (ex. pag. 6/7).',
-    ],
-  },
-  {
-    build: 110,
-    version: '1.26.4',
-    dateLabel: 'octombrie 2026',
-    title: 'Avizele se văd cum trebuie',
-    highlights: [
-      'Deschizi un PDF și îl vezi în fereastră, inclusiv pe telefon. Fără ecran gol.',
-      'Corectezi, apeși Salvează, și textul rămâne pe loc. Nu mai dispare din senin.',
-      'Pozele apar lângă câmpuri, la fel ca PDF-urile.',
-    ],
-  },
 ];
 
 export function parseBuild(value) {
@@ -146,6 +108,16 @@ export function whatsNewIpChanged(seenIp, currentIp) {
 
 export function sortReleasesNewestFirst(releases = WHATS_NEW_RELEASES) {
   return [...releases].sort((a, b) => (b.build || 0) - (a.build || 0));
+}
+
+/** Newest-first, capped at {@link WHATS_NEW_KEEP}. */
+export function keepNewestWhatsNewReleases(
+  releases = WHATS_NEW_RELEASES,
+  keep = WHATS_NEW_KEEP,
+) {
+  const n = Number(keep);
+  const limit = Number.isFinite(n) && n > 0 ? Math.floor(n) : WHATS_NEW_KEEP;
+  return sortReleasesNewestFirst(releases).slice(0, limit);
 }
 
 /**
@@ -247,14 +219,16 @@ export function releasesForModal({
   currentIp = null,
 } = {}) {
   const current = parseBuild(currentBuild);
-  const known = sortReleasesNewestFirst(releases).filter((r) => {
+  const known = keepNewestWhatsNewReleases(releases).filter((r) => {
     const b = parseBuild(r.build);
     if (b == null) return false;
     if (current == null) return true;
     return b <= current;
   });
   if (all) return known;
-  return unseenReleases(effectiveSeenBuild(getSeenWhatsNew(), currentIp), currentBuild, releases);
+  return keepNewestWhatsNewReleases(
+    unseenReleases(effectiveSeenBuild(getSeenWhatsNew(), currentIp), currentBuild, known),
+  );
 }
 
 /** Client IP as seen by the API (first hop / X-Forwarded-For). */
