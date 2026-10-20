@@ -251,6 +251,41 @@ describe('deactivating', () => {
   });
 });
 
+describe('deleting', () => {
+  it('removes the row and frees the email for a new invite', async () => {
+    const email = freshEmail();
+    const { body } = await invite({ name: 'De Șters', email, role: 'dispatcher' });
+    const gone = await api().delete(`/api/users/${body.user.id}`).set(admin());
+    expect(gone.status).toBe(200);
+    expect(gone.body.ok).toBe(true);
+    expect((await query('SELECT id FROM users WHERE id = $1', [body.user.id])).rowCount).toBe(0);
+
+    const again = await invite({ name: 'Re Invitat', email, role: 'finance' });
+    expect(again.status).toBe(201);
+    expect(again.body.user.email).toBe(email);
+  });
+
+  it('unlinks the driver profile instead of deleting it', async () => {
+    const email = freshEmail();
+    const { body } = await invite({ name: 'Sofer Șters', email, role: 'driver' });
+    const driver = (await query(
+      `INSERT INTO drivers (company_id, name, email, phone, is_active, user_id)
+       VALUES ($1, 'Profil Care Rămâne', $2, '0700000099', TRUE, $3) RETURNING id`,
+      [ctx.company.id, email, body.user.id]
+    )).rows[0];
+
+    expect((await api().delete(`/api/users/${body.user.id}`).set(admin())).status).toBe(200);
+    const row = await query('SELECT user_id, name FROM drivers WHERE id = $1', [driver.id]);
+    expect(row.rows[0].user_id).toBeNull();
+    expect(row.rows[0].name).toBe('Profil Care Rămâne');
+  });
+
+  it('refuses to delete you', async () => {
+    const res = await api().delete(`/api/users/${ctx.admin.id}`).set(admin());
+    expect(res.status).toBe(422);
+  });
+});
+
 describe('the driver profile link', () => {
   it('links and unlinks', async () => {
     const { body } = await invite({ name: 'Sofer De Legat', email: freshEmail(), role: 'driver' });

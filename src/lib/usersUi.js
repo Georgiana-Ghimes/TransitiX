@@ -103,7 +103,16 @@ export function warningsFor(user, { adminCount } = {}) {
  * server will accept. A button that always fails is worse than no button.
  */
 export function actionsFor(user, { currentUserId, adminCount } = {}) {
-  if (!user) return { canChangeRole: false, canDeactivate: false, canActivate: false, canResend: false, canLinkDriver: false };
+  if (!user) {
+    return {
+      canChangeRole: false,
+      canDeactivate: false,
+      canActivate: false,
+      canResend: false,
+      canLinkDriver: false,
+      canDelete: false,
+    };
+  }
   const isSelf = user.id === currentUserId;
   const isLastAdmin = user.role === 'admin' && user.is_active && adminCount <= 1;
 
@@ -113,6 +122,8 @@ export function actionsFor(user, { currentUserId, adminCount } = {}) {
     canActivate: !user.is_active,
     canResend: user.is_active && user.state !== 'active',
     canLinkDriver: user.role === 'driver',
+    // Same lock as deactivate for the last active admin; deactivated accounts stay deletable.
+    canDelete: !isSelf && !isLastAdmin,
   };
 }
 

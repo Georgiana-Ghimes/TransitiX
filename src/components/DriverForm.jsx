@@ -5,6 +5,7 @@ import ModalShell from '@/components/ModalShell';
 import { FieldError, FormErrorBanner, fieldInputClass } from '@/components/FormFeedback';
 import { normalizeDriver, validateDriver } from '@/lib/entityValidation';
 import { useEntityForm } from '@/lib/useEntityForm';
+import { isDocumentsProfile } from '@/lib/appProfile';
 
 export default function DriverForm({ driver, onClose, onSave }) {
   const { form, set, errors, formError, saving, fieldId, handleSubmit } = useEntityForm({
@@ -54,7 +55,9 @@ export default function DriverForm({ driver, onClose, onSave }) {
   return (
     <ModalShell onClose={onClose} panelClassName="max-w-2xl" labelledBy="driver-form-title">
       <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <h2 id="driver-form-title" className="font-semibold text-[#0A2B4E]">{driver ? 'Editează șofer' : 'Șofer nou'}</h2>
+        <h2 id="driver-form-title" className="font-semibold text-[#0A2B4E]">
+          {driver ? 'Editează șofer' : 'Șofer nou'}
+        </h2>
         <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5 text-slate-500" /></button>
       </div>
       <form onSubmit={handleSubmit} className="p-6 space-y-5" noValidate>
@@ -71,7 +74,14 @@ export default function DriverForm({ driver, onClose, onSave }) {
             </select>
           </div>
           {labelled('phone', 'Telefon *', { required: true, inputMode: 'tel', placeholder: '0722 123 456' })}
-          {labelled('email', 'Email', { type: 'email' })}
+          {labelled(
+            'email',
+            isDocumentsProfile() ? 'Email (pentru contul de login)' : 'Email',
+            { type: 'email' },
+            isDocumentsProfile()
+              ? 'La invitație / cont manual cu rol Șofer, același email leagă automat profilul.'
+              : undefined,
+          )}
           {labelled('hire_date', 'Data angajării', { type: 'date' })}
           {labelled('birth_date', 'Data nașterii', { type: 'date' })}
         </div>
@@ -82,7 +92,11 @@ export default function DriverForm({ driver, onClose, onSave }) {
             {labelled('shift_start', 'Început tură', { type: 'time' })}
             {labelled('shift_end', 'Sfârșit tură', { type: 'time' })}
           </div>
-          <p className="text-[11px] text-slate-400">Optimizatorul nu planifică în afara intervalului.</p>
+          <p className="text-[11px] text-slate-400">
+            {isDocumentsProfile()
+              ? 'Opțional — util dacă folosiți tura pe fișa șoferului.'
+              : 'Optimizatorul nu planifică în afara intervalului.'}
+          </p>
         </div>
 
         <div className="space-y-3">

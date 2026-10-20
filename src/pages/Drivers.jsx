@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
 import StatusBadge from '@/components/StatusBadge';
 import DriverForm from '@/components/DriverForm';
 import SuggestSearch from '@/components/SuggestSearch';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { notifyError, notifySuccess } from '@/lib/notify';
+import { useAuth } from '@/lib/AuthContext';
+import { isDocumentsProfile } from '@/lib/appProfile';
 import { Plus, Users, Phone, Mail } from 'lucide-react';
 
 export default function Drivers() {
+  const { user } = useAuth();
+  const canDelete = user?.role === 'admin';
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -75,7 +80,7 @@ export default function Drivers() {
     confirmAction?.type === 'remove'
       ? {
           title: 'Șterge șoferul?',
-          description: `Ștergeți definitiv ${confirmAction.driver?.name || 'acest șofer'}? Acțiunea nu poate fi anulată.`,
+          description: `Ștergeți definitiv profilul lui ${confirmAction.driver?.name || 'acest șofer'}? Contul de login (dacă există) rămâne în Setări › Utilizatori; curse legate își pierd doar legătura cu profilul. Acțiunea nu poate fi anulată.`,
           confirmLabel: 'Șterge definitiv',
           variant: 'danger',
         }
@@ -91,7 +96,19 @@ export default function Drivers() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A2B4E] tracking-tight">Șoferi</h1>
-          <p className="text-sm text-slate-500 mt-1">{filtered.length} șoferi</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {filtered.length} șoferi
+            {isDocumentsProfile() && (
+              <>
+                {' · '}
+                date reale (nume, email, telefon); contul de login se creează în{' '}
+                <Link to="/settings?tab=users" className="text-[#1D4E89] hover:underline">
+                  Setări › Utilizatori
+                </Link>
+                {' '}cu același email (rol Șofer).
+              </>
+            )}
+          </p>
         </div>
         <button onClick={() => { setEditDriver(null); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0A2B4E] rounded-lg hover:bg-[#1D4E89] transition-colors">
           <Plus className="w-4 h-4" /> Șofer nou
@@ -142,10 +159,16 @@ export default function Drivers() {
                 {d.is_active !== false ? (
                   <button onClick={() => setConfirmAction({ type: 'deactivate', driver: d })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-amber-700 bg-amber-50 rounded-lg py-1.5 hover:bg-amber-100">Dezactivează</button>
                 ) : (
-                  <>
-                    <button onClick={() => handleReactivate(d)} className="flex-1 min-w-[5.5rem] text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
-                    <button onClick={() => setConfirmAction({ type: 'remove', driver: d })} className="flex-1 min-w-[5.5rem] text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100">Șterge</button>
-                  </>
+                  <button onClick={() => handleReactivate(d)} className="flex-1 min-w-[5.5rem] text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg py-1.5 hover:bg-emerald-100">Reactivează</button>
+                )}
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmAction({ type: 'remove', driver: d })}
+                    className="flex-1 min-w-[5.5rem] text-xs font-medium text-red-600 bg-red-50 rounded-lg py-1.5 hover:bg-red-100"
+                  >
+                    Șterge
+                  </button>
                 )}
               </div>
             </div>
@@ -154,7 +177,11 @@ export default function Drivers() {
       ) : (
         <div className="bg-white rounded-xl border border-slate-200/80 p-12 text-center text-slate-400 shadow-sm">
           <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nu există șoferi. Adaugă primul șofer.</p>
+          <p className="text-sm">
+            {isDocumentsProfile()
+              ? 'Nu există șoferi. Adaugă primul cu date reale (nume, email), apoi creează-i contul din Setări › Utilizatori.'
+              : 'Nu există șoferi. Adaugă primul șofer.'}
+          </p>
         </div>
       )}
 

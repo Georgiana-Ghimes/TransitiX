@@ -225,6 +225,16 @@ function foldPlace(value) {
 }
 
 /**
+ * Peel a trailing Romanian postcode (`… 52, 050151` / `… 52 050151`) so deep-links that
+ * still put the code in `q` do not miss the street index.
+ */
+function stripTrailingPostcode(query) {
+  const raw = String(query || '').trim();
+  if (!raw) return raw;
+  return raw.replace(/,?\s*\b\d{5,6}\b\s*$/u, '').trim() || raw;
+}
+
+/**
  * Peel `, Bucuresti` (or any trailing locality) off an aviz-style line.
  *
  * `Bvd. Iuliu Maniu nr. 600A, Bucuresti` must become the street+number before we split the
@@ -238,6 +248,8 @@ function stripTrailingLocality(query) {
   const head = raw.slice(0, idx).trim();
   const tail = raw.slice(idx + 1).trim();
   if (!head || !tail) return raw;
+  // Postcode-only tail: keep peeling (deep-link / Photon leftover).
+  if (/^\d{5,6}$/.test(tail.replace(/\s/g, ''))) return head;
   // Locality: letters / spaces / hyphens. Not ", 12", not ", bl. A2", not ", Sector 6".
   if (!/^[A-Za-zĂÂÎȘŢăâîșțŞŢ][A-Za-zĂÂÎȘŢăâîșțŞŢ\s\-]*$/u.test(tail)) return raw;
   const tailFold = foldPlace(tail);
@@ -284,8 +296,10 @@ export function lookupAddress(index, query, opts = {}) {
   // Only the exact and bare-name paths count as "this whole string is a street". The fuzzy
   // suggestion pass drops single characters, so it happily matched "Bd. Dacia 5" to Bulevardul
   // Dacia and swallowed the number, the one part of the query that decides the answer there.
-  let streetQuery = stripTrailingLocality(raw);
+  let streetQuery = stripTrailingPostcode(raw);
+  streetQuery = stripTrailingLocality(streetQuery);
   streetQuery = stripTrailingCityLabel(streetQuery, opts.cityLabel);
+  streetQuery = stripTrailingPostcode(streetQuery);
   const key = normalizeStreetName(streetQuery);
   const bare = index.byBareName?.get(streetNameWithoutType(streetQuery)) ?? [];
   if (index.byKey?.has(key) || bare.length) {

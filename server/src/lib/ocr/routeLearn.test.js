@@ -3,9 +3,12 @@ import {
   addressTokensFromOcr,
   applyLearnedRoute,
   buildRouteRuleFromOcr,
+  learnedRouteConflictsWithOcr,
   matchRouteRule,
   MIN_LEARN_TOKENS,
   preferLearnedRoute,
+  primaryStreetTokenFromOcr,
+  primaryStreetTokenFromRoute,
 } from './routeLearn.js';
 
 const REZUMAT = `
@@ -116,6 +119,42 @@ Adresa de livrare Str. Republicii nr. 1F Domnesti RO 077000
     const kept = preferLearnedRoute('OFFICE', REZUMAT, rules, { corrected: true });
     expect(kept.route).toBe('OFFICE');
     expect(kept.learned).toBe(false);
+  });
+
+  it('refuses to learn from OCR without a delivery street (no bol+bucuresti-only rules)', () => {
+    const built = buildRouteRuleFromOcr(`
+Expeditor Site: BOL Bolintin
+Adresa de livrare București Sector 5 RO 050151
+`);
+    expect(built).toBeNull();
+  });
+
+  it('does not rewrite Șos. Viilor as Bvd. Iancu when a broad bol+bucuresti rule matches', () => {
+    // Real failure: a correction on Concelex@Iancu stored tokens [bol, bucuresti] (or similar)
+    // and re-extract on Viilor/050151 replaced the structural route with Iancu de Hunedoara.
+    const broad = {
+      match_tokens: ['bol', 'bucuresti'],
+      match_regex: 'broad',
+      ruta_transport:
+        'Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Iancu de Hunedoara nr. 30, Bucuresti',
+      updated_at: new Date().toISOString(),
+    };
+    expect(primaryStreetTokenFromOcr(OTHER_ADDRESS)).toBe('viilor');
+    expect(primaryStreetTokenFromRoute(broad.ruta_transport)).toBe('iancu');
+    expect(learnedRouteConflictsWithOcr(OTHER_ADDRESS, broad.ruta_transport)).toBe(true);
+
+    const structural = 'Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti';
+    const applied = applyLearnedRoute(
+      { ruta_transport: structural },
+      OTHER_ADDRESS,
+      [broad],
+    );
+    expect(applied.learned).toBe(false);
+    expect(applied.values.ruta_transport).toBe(structural);
+
+    const preferred = preferLearnedRoute(structural, OTHER_ADDRESS, [broad]);
+    expect(preferred.learned).toBe(false);
+    expect(preferred.route).toBe(structural);
   });
 
   it('refuses to learn when fewer than MIN_LEARN_TOKENS', () => {

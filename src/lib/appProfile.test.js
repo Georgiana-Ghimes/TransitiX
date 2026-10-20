@@ -26,6 +26,7 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/zone-map')).toBe(true);
     expect(isCompanionOfficePath('/fleet')).toBe(true);
     expect(isCompanionOfficePath('/fleet/itp')).toBe(true);
+    expect(isCompanionOfficePath('/drivers')).toBe(true);
     // Old /users bookmarks still resolve (redirect to Setări → Utilizatori).
     expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);

@@ -10,11 +10,13 @@
  * can click matches what the server will accept.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertTriangle, Check, Copy, KeyRound, Loader2, Mail, RefreshCw, Search, ShieldCheck, UserPlus, Users as UsersIcon,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import {
   actionsFor,
@@ -28,6 +30,7 @@ import {
 import {
   PASSWORD_MIN_LENGTH, inviteEmailNotices, isEmailShape, passwordProblem,
 } from '@/lib/emailKind';
+import { isDocumentsProfile } from '@/lib/appProfile';
 
 function StateBadge({ state }) {
   const meta = stateMeta(state);
@@ -139,11 +142,12 @@ const EMPTY_FORM = { name: '', email: '', role: 'dispatcher', phone: '', tempora
  * Adding a person: by invitation (the default, they choose their own password) or by hand, for
  * somebody who cannot open an email right now.
  */
-function AddPersonForm({ roles, adminEmail, emailConfigured, onAdded, onLink, onTemporary }) {
+function AddPersonForm({ roles, adminEmail, emailConfigured, unlinkedDrivers = [], onAdded, onLink, onTemporary }) {
   const [mode, setMode] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
+  const [fromDriverId, setFromDriverId] = useState('');
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const notices = useMemo(() => inviteEmailNotices(form.email, { adminEmail }), [form.email, adminEmail]);
@@ -155,6 +159,21 @@ function AddPersonForm({ roles, adminEmail, emailConfigured, onAdded, onLink, on
     setMode(null);
     setError('');
     setForm(EMPTY_FORM);
+    setFromDriverId('');
+  };
+
+  const pickDriver = (driverId) => {
+    setFromDriverId(driverId);
+    if (!driverId) return;
+    const d = (unlinkedDrivers || []).find((x) => String(x.id) === String(driverId));
+    if (!d) return;
+    setForm((prev) => ({
+      ...prev,
+      name: d.name || prev.name,
+      email: d.email || prev.email,
+      phone: d.phone || prev.phone,
+      role: 'driver',
+    }));
   };
 
   const submit = async (e) => {
@@ -252,16 +271,49 @@ function AddPersonForm({ roles, adminEmail, emailConfigured, onAdded, onLink, on
       )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <input required value={form.name} onChange={set('name')} placeholder="Nume complet" className={inputCls} />
-        <input required type="email" value={form.email} onChange={set('email')} placeholder="Email" className={inputCls} />
-        <input value={form.phone} onChange={set('phone')} placeholder="Telefon (opțional)" className={inputCls} />
-        <select value={form.role} onChange={set('role')} className={inputCls}>
+        <select value={form.role} onChange={set('role')} className={inputCls} aria-label="Rol">
           {Object.entries(roles || {}).map(([role, meta]) => (
             <option key={role} value={role}>{meta.label}</option>
           ))}
         </select>
+        <input required value={form.name} onChange={set('name')} placeholder="Nume complet" className={inputCls} />
+        <input required type="email" value={form.email} onChange={set('email')} placeholder="Email" className={inputCls} />
+        <input value={form.phone} onChange={set('phone')} placeholder="Telefon (opțional)" className={inputCls} />
       </div>
       <p className="text-[12px] text-slate-500">{roles?.[form.role]?.description}</p>
+
+      {form.role === 'driver' && (
+        <div className="space-y-1.5">
+          <label className="block text-[12px] text-slate-600">
+            Prefill din șofer (fără cont încă)
+          </label>
+          <select
+            value={fromDriverId}
+            onChange={(e) => pickDriver(e.target.value)}
+            className={`${inputCls} w-full sm:max-w-md`}
+          >
+            <option value="">— alege șoferul sau completează manual —</option>
+            {(unlinkedDrivers || []).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}{d.email ? ` · ${d.email}` : ' · fără email'}
+              </option>
+            ))}
+          </select>
+          {isDocumentsProfile() && (
+            <p className="text-[12px] text-slate-500">
+              {(unlinkedDrivers || []).length === 0
+                ? (
+                  <>
+                    Nu există șoferi fără cont. Adaugă-i întâi în{' '}
+                    <Link to="/drivers" className="text-[#1D4E89] hover:underline">Flotă › Șoferi</Link>
+                    {' '}cu email real, apoi revino aici.
+                  </>
+                )
+                : 'La același email, serverul leagă automat profilul de șofer de contul cu rol Șofer.'}
+            </p>
+          )}
+        </div>
+      )}
 
       {form.role === 'admin' && (
         <p className="text-[12px] text-amber-800 flex items-start gap-1.5">
@@ -315,6 +367,7 @@ function AddPersonForm({ roles, adminEmail, emailConfigured, onAdded, onLink, on
 
 function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, onLink }) {
   const [busy, setBusy] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const actions = actionsFor(user, { currentUserId, adminCount });
   const warnings = warningsFor(user, { adminCount });
 
@@ -412,7 +465,8 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
               onClick={() => run('active', () => api.users.setActive(user.id, false), (res) => {
                 notifySuccess('Cont dezactivat', deactivationNotice(res));
               })}
-              className="text-[12px] px-2 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-40"
+              className="text-[12px] px-2 py-1.5 rounded-lg border border-amber-200 text-amber-800 hover:bg-amber-50 disabled:opacity-40"
+              title="Suspendă accesul; emailul rămâne ocupat până reactivezi sau ștergi"
             >
               Dezactivează
             </button>
@@ -427,8 +481,33 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
               Reactivează
             </button>
           )}
+
+          {actions.canDelete && (
+            <button
+              type="button" disabled={busy === 'delete'}
+              onClick={() => setConfirmDelete(true)}
+              className="text-[12px] px-2 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-40"
+              title="Șterge definitiv contul și eliberează emailul"
+            >
+              Șterge
+            </button>
+          )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        busy={busy === 'delete'}
+        variant="danger"
+        title="Ștergi contul definitiv?"
+        description={`${user.name || 'Utilizatorul'} (${user.email}) dispare din listă. Emailul poate fi folosit la o invitație nouă. Profilul de șofer rămâne; jurnalul păstrează cine a făcut ce. Pentru o pauză temporară folosește Dezactivează.`}
+        confirmLabel="Șterge contul"
+        onClose={() => { if (busy !== 'delete') setConfirmDelete(false); }}
+        onConfirm={() => run('delete', () => api.users.remove(user.id), () => {
+          setConfirmDelete(false);
+          notifySuccess('Cont șters', `${user.email} poate fi invitat din nou.`);
+        })}
+      />
     </li>
   );
 }
@@ -471,8 +550,8 @@ export function UsersPanel({ embedded = false } = {}) {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-[#0A2B4E]">Utilizatori</h1>
             <p className="text-[12px] text-slate-500">
-              Invitații, conturi manuale, roluri și acces. O parolă setată de administrator e doar
-              temporară; conturile se dezactivează, nu se șterg.
+              Invitații, conturi manuale, roluri și acces. Dezactivarea suspendă; ștergerea elimină
+              contul și eliberează emailul. Parola setată de administrator e doar temporară.
             </p>
           </div>
           <button
@@ -488,7 +567,7 @@ export function UsersPanel({ embedded = false } = {}) {
       {embedded && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-slate-500">
-            Invitații, roluri și acces. Conturile se dezactivează, nu se șterg.
+            Invitații, roluri și acces. Poți dezactiva (suspendare) sau șterge definitiv un cont.
           </p>
           <button
             type="button" onClick={load} disabled={loading}
@@ -513,6 +592,7 @@ export function UsersPanel({ embedded = false } = {}) {
           roles={data?.roles}
           adminEmail={me?.email}
           emailConfigured={data?.email_configured !== false}
+          unlinkedDrivers={data?.unlinked_drivers || []}
           onAdded={load}
           onLink={setLink}
           onTemporary={setTemporary}

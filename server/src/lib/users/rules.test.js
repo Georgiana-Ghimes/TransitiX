@@ -5,6 +5,7 @@ import {
   ROLE_NAMES,
   checkActivate,
   checkDeactivate,
+  checkDelete,
   checkRoleChange,
   driverReady,
   inviteState,
@@ -157,6 +158,38 @@ describe('checkActivate', () => {
 
   it('refuses one that is already on', () => {
     expect(checkActivate({ target: { is_active: true } }).ok).toBe(false);
+  });
+});
+
+describe('checkDelete', () => {
+  it('allows deleting a colleague', () => {
+    expect(checkDelete({
+      actorId: 'u1', target: { id: 'u2', role: 'driver', is_active: true }, adminCount: 1,
+    }).ok).toBe(true);
+  });
+
+  it('allows deleting a deactivated account so the email is free again', () => {
+    expect(checkDelete({
+      actorId: 'u1', target: { id: 'u2', role: 'finance', is_active: false }, adminCount: 1,
+    }).ok).toBe(true);
+  });
+
+  it('refuses deleting yourself', () => {
+    expect(checkDelete({
+      actorId: 'u1', target: { id: 'u1', role: 'admin', is_active: true }, adminCount: 2,
+    }).ok).toBe(false);
+  });
+
+  it('refuses deleting the last active admin', () => {
+    expect(checkDelete({
+      actorId: 'u1', target: { id: 'u2', role: 'admin', is_active: true }, adminCount: 1,
+    }).ok).toBe(false);
+  });
+
+  it('allows deleting a deactivated admin when another admin is active', () => {
+    expect(checkDelete({
+      actorId: 'u1', target: { id: 'u2', role: 'admin', is_active: false }, adminCount: 1,
+    }).ok).toBe(true);
   });
 });
 

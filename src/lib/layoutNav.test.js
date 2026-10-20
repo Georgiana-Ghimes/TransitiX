@@ -15,10 +15,12 @@ describe('navPathActive', () => {
       children: [
         { path: '/fleet' },
         { path: '/fleet/itp' },
+        { path: '/drivers' },
       ],
     };
     expect(navGroupActive('/fleet', group)).toBe(true);
     expect(navGroupActive('/fleet/itp', group)).toBe(true);
+    expect(navGroupActive('/drivers', group)).toBe(true);
     expect(navGroupActive('/avize', group)).toBe(false);
   });
 });

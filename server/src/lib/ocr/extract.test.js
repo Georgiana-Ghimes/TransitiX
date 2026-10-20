@@ -1031,6 +1031,30 @@ Greutate bruta: 9964 kg
     expect(result.values.ruta_transport).not.toBe('Bolintin-Deal');
   });
 
+  it('keeps Intrarea Navigatorilor and peels DEMOS INTERMED SRL (07.10.2026 BAU)', () => {
+    // Firm on the line above the street became `Str. Intermed Srl Intrare Navigatorilor`.
+    const text = [
+      'BAUMIT ROMANIA COM SRL',
+      'Expeditor',
+      'Site: BOL Bolintin',
+      'Str. Republicii, nr. IF Bolintin-Deal RO 087015 ROU',
+      'Aviz de expeditie: PSL-0058258',
+      'Adresă de livrare\tClient',
+      'DEMOS INTERMED SRL\tC23901185 DEMOS INTERMED SRL',
+      'Intrare Navigatorilor nr 15\tLocotenent Moga Nr. 18',
+      'Bucuresti Sector 1 RO 014482\tFundeni RO 077086',
+      'Placuta de inmatriculare B 112 VFM',
+      'Greutate bruta: 9000 kg',
+      'TPO-0039999',
+    ].join('\n');
+    const result = extractDocument(text, { documentType: 'aviz' });
+    expect(result.values.ruta_transport).toBe(
+      'Str. Republicii nr. 1F, Bolintin-Deal / Intrarea Navigatorilor nr. 15, Bucuresti',
+    );
+    expect(result.values.ruta_transport).not.toMatch(/Intermed/i);
+    expect(result.values.ruta_transport).not.toMatch(/Str\.\s*Intrarea/i);
+  });
+
   it('keeps Republicii nr. + Bolintin-Deal when Referința client sits on the heading row', () => {
     const text = `
 BAUMIT ROMANIA COM SRL

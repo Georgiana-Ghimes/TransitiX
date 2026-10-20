@@ -178,6 +178,15 @@ describe('effectiveZone', () => {
 describe('house numbers', () => {
   const resolve = (query) => resolveAddress(index, lookupAddress(index, query), cityZones);
 
+  it('peels a trailing postcode so Editează deep-links still hit the index', () => {
+    // zoneMapHref used to put 050151 in q; lookupAddress then answered unknown and the pin
+    // never dropped — the map just opened empty.
+    const withPc = lookupAddress(index, 'soseaua Viilor 52, 050151', { cityLabel: 'București' });
+    expect(withPc).toMatchObject({ status: 'exact', found: { key: 'soseaua viilor' }, number: '52' });
+    const spaced = lookupAddress(index, 'Șoseaua Viilor 52 050151', { cityLabel: 'București' });
+    expect(spaced).toMatchObject({ status: 'exact', found: { key: 'soseaua viilor' }, number: '52' });
+  });
+
   it('lets the number decide on a street the boundary runs through', () => {
     // Calea 13 Septembrie is named in both official perimeters. 102 is inside Zone A; 250 is
     // far enough out to be Zone B. The street alone cannot say either.

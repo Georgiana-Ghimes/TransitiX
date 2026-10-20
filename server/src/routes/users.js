@@ -1,10 +1,10 @@
 /**
  * Administering the people who use the system.
  *
- * Everything here used to be an `INSERT` typed by whoever had database access. Three routes out
- * of four exist because of what that implied: an invitation so nobody sets somebody else's
- * password, deactivation so nobody is deleted, and a role change that refuses to strip the last
- * administrator.
+ * Everything here used to be an `INSERT` typed by whoever had database access. The routes exist
+ * because of what that implied: an invitation so nobody sets somebody else's password,
+ * deactivation to suspend access, delete to remove the login (and free the email), and a role
+ * change that refuses to strip the last administrator.
  *
  * Admin-only throughout, and every write is recorded on the audit trail, a screen that can hand
  * out administrator rights and leave no trace would undo the point of having a trail at all.
@@ -24,6 +24,7 @@ import {
   ROLES,
   checkActivate,
   checkDeactivate,
+  checkDelete,
   checkRoleChange,
   driverReady,
   inviteState,
@@ -392,6 +393,67 @@ router.put('/:id/active', async (req, res) => {
     });
   } catch (err) {
     fail(res, err, 'Contul nu a putut fi actualizat.');
+  }
+});
+
+/**
+ * Removes the login row permanently.
+ *
+ * Prefer deactivation when the person may come back. Delete when the account was a mistake or
+ * the email must be free for a new invitation. Audit keeps denormalised name/email; FKs on
+ * `users.id` are SET NULL or CASCADE (sessions go with the row).
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const target = await loadUser(req.user.company_id, req.params.id);
+    if (!target) return res.status(404).json({ message: 'Utilizator inexistent.' });
+
+    const verdict = checkDelete({
+      actorId: req.user.id,
+      target,
+      adminCount: await activeAdminCount(req.user.company_id),
+    });
+    if (!verdict.ok) return res.status(422).json({ message: verdict.reason });
+
+    // Trail first: after DELETE the entity_id still points at a gone id, but label/changes stay.
+    await auditUser(req, {
+      action: 'delete',
+      target,
+      changes: {
+        email: { from: target.email, to: null },
+        name: { from: target.name, to: null },
+        role: { from: target.role, to: null },
+      },
+      detail: {
+        driver_unlinked: Boolean(target.driver_id),
+        was_active: Boolean(target.is_active),
+      },
+    });
+
+    await query(
+      `UPDATE drivers SET user_id = NULL, updated_at = NOW()
+       WHERE company_id = $1 AND user_id = $2`,
+      [req.user.company_id, target.id]
+    );
+
+    await revokeAllForUser(target.id);
+
+    const deleted = await query(
+      `DELETE FROM users WHERE id = $1 AND company_id = $2 RETURNING id`,
+      [target.id, req.user.company_id]
+    );
+    if (!deleted.rowCount) {
+      return res.status(404).json({ message: 'Utilizator inexistent.' });
+    }
+
+    res.json({
+      ok: true,
+      id: target.id,
+      email: target.email,
+      access_token_ttl: process.env.JWT_EXPIRES_IN || '24h',
+    });
+  } catch (err) {
+    fail(res, err, 'Contul nu a putut fi șters.');
   }
 });
 

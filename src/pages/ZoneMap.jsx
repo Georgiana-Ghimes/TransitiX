@@ -121,6 +121,8 @@ export default function ZoneMap() {
   const [mma, setMma] = useState('');
   const [plate, setPlate] = useState('');
   const [searching, setSearching] = useState(false);
+  /** Photon pin in flight after the street index already answered (Editează deep-link). */
+  const [pinning, setPinning] = useState(false);
   const [hit, setHit] = useState(null);
 
   const [streetIndex, setStreetIndex] = useState(null);
@@ -270,6 +272,8 @@ export default function ZoneMap() {
     const geoCity = String(cityHint || '').trim() || cityObj.label;
     const point = await geocodeMapPin(q, { locality: geoCity, postcode });
     if (!point) {
+      // Index path already shows zone/tax in `lookup` — do not replace that with an empty hit.
+      if (pinOnly) return { point: null };
       setHit({
         point: null,
         pinOnly,
@@ -365,7 +369,10 @@ export default function ZoneMap() {
     if (!q) return;
     const cityObj = cityById(cityIdValue) || city;
     const geoCityHint = String(localityHint || '').trim() || null;
-    const geoPostcode = String(postcodeHint || '').trim() || null;
+    // Deep-link ?postcode= wins; else peel a trailing CP from the search box (manual re-run).
+    const fromBox = String(q).match(/\b(\d{5,6})\b\s*$/);
+    const geoPostcode = String(postcodeHint || '').trim()
+      || (fromBox ? fromBox[1].padStart(6, '0') : null);
     const mmaNum = Number(String(mmaValue ?? '').replace(',', '.'));
     const mmaKg = mmaValue === '' || mmaValue == null
       ? resolveVehicleMma(vehicles, plateValue).mmaKg
@@ -386,14 +393,18 @@ export default function ZoneMap() {
           // React flushes `streetIndex` state on the first search.
           setLookup(fromIndex.status === 'unknown' ? fromIndex : { ...fromIndex, index });
           if (fromIndex.status !== 'unknown') {
-            // Index answers the zone. Geocode with the canonical street label so Photon does
-            // not land on a random "Iuliu Maniu" POI, and keep a single result card.
+            // Index already answered zone/tax — drop the spinner now. Photon only places the
+            // pin; waiting on it made every index hit feel as slow as a cold geocode.
+            setSearching(false);
             const pinLabel = [
               fromIndex.found?.label,
               fromIndex.number,
             ].filter(Boolean).join(' ');
+            setPinning(true);
             try {
-              const res = await placePin(pinLabel || q, {
+              // Always pass OCR postcode when present — settlement search is mandatory for the
+              // pin (Voluntari / Cocani / sector CP). Street-without-CP remains a fallback.
+              await placePin(pinLabel || q, {
                 displayLabel: pinLabel || q,
                 typedQuery: q,
                 pinOnly: true,
@@ -401,14 +412,10 @@ export default function ZoneMap() {
                 mmaKg,
                 postcode: geoPostcode,
               });
-              if (!res.point) {
-                notifyError(
-                  'Strada e în index, dar pinul lipsește',
-                  'Zona e calculată mai sus; Photon/OSM nu a găsit coordonate pe hartă.',
-                );
-              }
-            } catch (err) {
-              notifyError('Pinul pe hartă a eșuat', err);
+            } catch {
+              /* index answer stays; pin is best-effort */
+            } finally {
+              setPinning(false);
             }
             return;
           }
@@ -443,7 +450,7 @@ export default function ZoneMap() {
   // or outside zones: `?q=strada+X,+Bolintin-Deal&locality=Bolintin-Deal`
   useEffect(() => {
     if (loading) return;
-    const q = (searchParams.get('q') || searchParams.get('address') || '').trim();
+    let q = (searchParams.get('q') || searchParams.get('address') || '').trim();
     if (!q) return;
     const key = searchParams.toString();
     if (autoSearchKey.current === key) return;
@@ -455,14 +462,25 @@ export default function ZoneMap() {
       : cityId;
     const nextPlate = (searchParams.get('plate') || '').trim();
     const nextLocality = (searchParams.get('locality') || '').trim();
-    const nextPostcode = (searchParams.get('postcode') || '').trim();
+    let nextPostcode = (searchParams.get('postcode') || '').trim();
+    // Legacy deep-links put the CP in `q` (`…52, 050151`). Peel it so the street index hits.
+    const pcInQuery = q.match(/,?\s*\b(\d{5,6})\b\s*$/);
+    if (pcInQuery) {
+      if (!nextPostcode) nextPostcode = pcInQuery[1].padStart(6, '0');
+      q = q.slice(0, pcInQuery.index).trim();
+    }
+    if (!q) return;
 
     if (nextCity !== cityId) setCityId(nextCity);
-    setAddress(q);
+    // Show CP in the search box (as before). Index peels it; Photon gets it via postcodeHint.
+    const displayQ = nextPostcode && !new RegExp(`\\b${nextPostcode}\\b`).test(q)
+      ? `${q}, ${nextPostcode}`
+      : q;
+    setAddress(displayQ);
     if (nextPlate) setPlate(nextPlate);
 
     void runSearch({
-      q,
+      q: displayQ,
       cityIdValue: nextCity,
       plateValue: nextPlate || plate,
       localityHint: nextLocality || null,
@@ -482,15 +500,9 @@ export default function ZoneMap() {
     setHit(null);
     setSearching(true);
     try {
-      const res = await placePin(q, { displayLabel: q, typedQuery: q, pinOnly: true });
-      if (!res.point) {
-        notifyError(
-          'Strada e în index, dar pinul lipsește',
-          'Photon/OSM nu a găsit coordonate pe hartă.',
-        );
-      }
-    } catch (err) {
-      notifyError('Pinul pe hartă a eșuat', err);
+      await placePin(q, { displayLabel: q, typedQuery: q, pinOnly: true });
+    } catch {
+      /* pin is best-effort; index card already shows the street */
     } finally {
       setSearching(false);
     }
@@ -701,6 +713,13 @@ export default function ZoneMap() {
           ratesFor={ratesFor}
           onPick={pickSuggestion}
         />
+      ) : null}
+
+      {pinning && !hit?.point ? (
+        <div className={`${cardCls} flex items-center gap-2 px-3 py-2 text-sm text-slate-600`}>
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          Așez pinul pe hartă…
+        </div>
       ) : null}
 
       {lookup?.status === 'unknown' && lookup.suggestions.length && !hit ? (

@@ -23,6 +23,17 @@ export const WHATS_NEW_KEEP = 5;
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 128,
+    version: '1.29.0',
+    dateLabel: 'octombrie 2026',
+    title: 'Șoferi pe companion; taxă zonă și pin cu CP',
+    highlights: [
+      'Flotă › Șoferi: adaugi și ștergi profiluri de șofer; la Utilizatori poți precompleta din șofer fără cont.',
+      'Administratorul poate șterge definitiv un cont (nu doar dezactiva), cu confirmare.',
+      'Taxă zonă: Viilor / cod poștal, Intrarea Navigatorilor (fără firmă în stradă); „Vezi pinul” caută din nou cu CP în câmp.',
+    ],
+  },
+  {
     build: 127,
     version: '1.28.2',
     dateLabel: 'octombrie 2026',
@@ -65,16 +76,6 @@ export const WHATS_NEW_RELEASES = [
       'În Editează: zoom pe document (− / % / +) și Descarcă fișierul stocat.',
       'Cu „Unește celulele TPO” pe șablon: fără Număr TPO nu poți nici Confirma, nici Uni (doar „Doar document marfă” sau oprești bifa).',
       'Confirmă pe server nu mai trece peste OCR nesigur pe TPO, nici cu „oricum”: trebuie Verifică / Salvează pe document.',
-    ],
-  },
-  {
-    build: 119,
-    version: '1.26.13',
-    dateLabel: 'octombrie 2026',
-    title: 'TRO / document marfă în carusel',
-    highlights: [
-      'La Unește / Confirmă: vezi și Număr document marfă (TRO/PSL), nu doar TPO.',
-      'Bifă „Doar document marfă (fără TPO pe pagină)” pentru avize de transfer: TPO nu e obligatoriu; în Anexă rămân la coada listei după TPO-uri.',
     ],
   },
 ];

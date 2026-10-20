@@ -21,6 +21,8 @@
 import { toFiniteNumber } from './utils.js';
 import { canonicalPlateClient } from './fleetUi.js';
 import { referenceZone } from './zoneReference.js';
+import { hasStreetTypeWord, splitStreetAndNumber } from './streetName.js';
+import { cityIdFromRoPostcode, streetKeyFromPostcode } from './streetZones/postcodeHints.js';
 
 /** A lorry cannot weigh this much on a public road; above it the OCR read something else. */
 const IMPLAUSIBLE_KG = 60000;
@@ -188,9 +190,10 @@ const ROUTE_TYPE_TO_QUERY = {
   aleea: 'aleea', al: 'aleea',
   piata: 'piata', pta: 'piata',
   calea: 'calea',
+  intrarea: 'intrarea', intrare: 'intrarea', intr: 'intrarea',
 };
 
-const ROUTE_TYPE_CAPTURE = String.raw`Str\.?|Șoseaua|Soseaua|Șosea|Sosea|Sos\.?|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea`;
+const ROUTE_TYPE_CAPTURE = String.raw`Str\.?|Șoseaua|Soseaua|Șosea|Sosea|Sos\.?|Bvd\.?|Blvd\.?|Bd\.?|Aleea|Piața|Piata|Calea|Intrarea|Intrare|Intr\.?`;
 
 /**
  * Origin / destination separators drivers and the office actually type (#71).
@@ -240,7 +243,7 @@ export function deliveryLegFromRuta(ruta) {
  * → street query + house number + locality for the zone index.
  */
 export function parseSpacedRouteLeg(leg) {
-  const raw = String(leg || '').trim();
+  const raw = peelLeadingCompany(String(leg || '').trim());
   if (!raw) return null;
   // Comma first: `Șosea Viilor nr. 52, sector 5, București`. A space-and-rest pattern
   // would steal `nr. 52` as the "locality" when the city is missing.
@@ -299,25 +302,92 @@ export function taxedCityIdFromLocality(value) {
   return null;
 }
 
-/** Six-digit Romanian postcode from OCR / route text. */
+/** Six-digit Romanian postcode from OCR / route text (`RO 050151` or bare digits). */
 export function normalizeRoPostcode(value) {
+  const withRo = String(value || '').match(/\bro\s*(\d{5,6})\b/i);
+  if (withRo?.[1]) {
+    const digits = withRo[1];
+    return digits.length === 6 ? digits : digits.padStart(6, '0');
+  }
   const m = String(value || '').match(/\b(\d{6})\b/);
   return m?.[1] || null;
 }
 
+/**
+ * Drop a leading company / site token so `CONCELEX SRL, Șosea Viilor nr. 52, …` still
+ * parses as the street. Also peels glued forms from a bad OCR route:
+ * `Str. Intermed Srl Intrare Navigatorilor nr. 15` → `Intrare Navigatorilor nr. 15`.
+ */
+export function peelLeadingCompany(leg) {
+  const raw = String(leg || '').trim();
+  if (!raw) return raw;
+
+  // Firm then real street type on the same side of the comma (Baumit Client above street).
+  const afterFirm = raw.match(
+    new RegExp(
+      String.raw`\b(?:s\.?\s*r\.?\s*l\.?|s\.?\s*a\.?|scs|sra|gmbh|ltd|com)\b\s+((?:${ROUTE_TYPE_CAPTURE})\b[\s\S]+)$`,
+      'iu',
+    ),
+  );
+  if (afterFirm?.[1] && hasStreetTypeWord(afterFirm[1])) return afterFirm[1].trim();
+
+  if (!raw.includes(',')) return raw;
+  const parts = raw.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return raw;
+  const first = parts[0];
+  const rest = parts.slice(1).join(', ');
+  if (hasStreetTypeWord(first) || !hasStreetTypeWord(rest)) return raw;
+  const company = /\b(srl|sa|scs|sra|com|gmbh|ltd)\b/i.test(first);
+  const restLooksStreet = new RegExp(
+    String.raw`^(?:${ROUTE_TYPE_CAPTURE})\b`,
+    'iu',
+  ).test(rest);
+  if (company || restLooksStreet) return rest;
+  return raw;
+}
+
+/**
+ * House number glued into the street (`Șosea Viilor nr. 52` / `soseaua Viilor 52`).
+ * Keeps an explicit number when the caller already split one off.
+ */
+export function peelHouseNumber(street, number) {
+  const explicit = number != null && String(number).trim() !== '' ? String(number).trim() : null;
+  if (explicit) return { street: String(street || '').trim() || null, number: explicit };
+  const raw = String(street || '').trim();
+  if (!raw) return { street: null, number: null };
+  const split = splitStreetAndNumber(raw.replace(/\bnr\.?\s+/gi, ' '));
+  if (split.number) return { street: split.street || null, number: split.number };
+  return { street: raw, number: null };
+}
+
 function addressFromParts({ street, number, locality, postcode }) {
-  const loc = String(locality || '').trim() || null;
-  let cityId = taxedCityIdFromLocality(loc);
+  let loc = String(locality || '').trim() || null;
+  // Postcode often rides in the locality tail: `București Sector 5, RO 050151`.
+  const pcFromLoc = normalizeRoPostcode(loc);
+  const pcFromStreet = normalizeRoPostcode(street);
+  const pc = normalizeRoPostcode(postcode) || pcFromLoc || pcFromStreet;
+  if (loc && pcFromLoc) {
+    loc = loc
+      .replace(new RegExp(`\\bro\\s*${pc}\\b`, 'i'), '')
+      .replace(new RegExp(`\\b${pc}\\b`), '')
+      .replace(/[,.\s]+$/g, '')
+      .trim() || null;
+  }
+
+  const peeled = peelHouseNumber(street, number);
+  let cityId = taxedCityIdFromLocality(loc) || cityIdFromRoPostcode(pc);
   // Only București has a shipped zone index. OCR often prints
   // `BOL / Șoseaua Viilor nr. 52` with no city — that is still Bucharest, not "no zones".
   // A named other town (Domnești, …) stays unsupported.
-  if (!cityId && street && !loc) cityId = 'bucuresti';
+  if (!cityId && (peeled.street || pc) && !loc) cityId = 'bucuresti';
+  // Known delivery postcode fills a missing street so Editează still shows a line + fee.
+  const streetOut = peeled.street || streetKeyFromPostcode(pc) || null;
   return {
-    street: street || null,
-    number: number ?? null,
+    street: streetOut,
+    number: peeled.number,
     locality: cityId === 'bucuresti' ? 'Bucuresti' : loc,
     cityId,
-    postcode: normalizeRoPostcode(postcode),
+    postcode: pc,
     // A locality we have no index for is "no zones here", not "unknown street".
     supported: Boolean(cityId),
   };
@@ -327,9 +397,10 @@ function addressFromParts({ street, number, locality, postcode }) {
  * Free-text query for Harta zonelor: street (+ number) as the index expects it.
  * Outside a zoned city, append the locality so the geocoder does not land on the
  * first same-named street in Romania (often București).
- * OCR postcode (under Adresa de livrare, before Client) is appended when present —
- * Photon uses it to pin the right town (#postal).
- * Example: `bulevardul Pipera 1/VII, Voluntari, 077190`.
+ *
+ * Postcode is always appended when known (and also passed as `?postcode=`): the map
+ * search box must show it, and Photon tries CP first. `lookupAddress` peels a trailing
+ * CP so the București street index still hits.
  */
 export function zoneMapSearchQuery(address) {
   if (!address?.street) return null;
@@ -340,8 +411,12 @@ export function zoneMapSearchQuery(address) {
     q = `${q}, ${address.locality}`;
   }
   const pc = normalizeRoPostcode(address.postcode);
-  if (pc) q = `${q}, ${pc}`;
+  if (pc && !foldHasPostcode(q, pc)) q = `${q}, ${pc}`;
   return q;
+}
+
+function foldHasPostcode(text, pc) {
+  return new RegExp(`\\b${pc}\\b`).test(String(text || ''));
 }
 
 /**
@@ -350,7 +425,7 @@ export function zoneMapSearchQuery(address) {
  *
  * For towns without zone tariffs, `locality` is also passed so the map geocodes against
  * that place instead of appending the open city tab (București).
- * `postcode` is passed separately so the map can prefer Photon hits with that code.
+ * `postcode` is always set when known (mandatory CP search on the map).
  */
 export function zoneMapHref(address, { plate = null } = {}) {
   const q = zoneMapSearchQuery(address);
@@ -591,23 +666,49 @@ export function avizZoneTaxTrip({ aviz, vehicles, legs }) {
 /**
  * The zone of a delivery address, from the shipped index. Nothing leaves the browser.
  *
- * Returns `undefined` for a street the index does not have, which `avizZoneTax` reports as
- * `address_unknown` rather than as "outside the zones". The two look the same on screen and
- * cost very different amounts of money.
+ * Uses `lookupAddress` (not bare `lookupStreet`) so a glued house number —
+ * `Șosea Viilor nr. 52` as the whole street field — still hits the index. When the street
+ * text is missing or ambiguous, a known delivery **postcode** (e.g. `050151` → Șos. Viilor)
+ * settles the row. Returns `null` only when nothing matched, which `avizZoneTax` reports as
+ * `address_unknown` rather than as "outside the zones".
  */
 export async function resolveAvizZone(address) {
-  if (!address?.supported || !address.street) return null;
-  const [{ loadStreetIndex, lookupStreet, resolveAddress }, { cityById }] = await Promise.all([
+  if (!address) return null;
+  const pc = normalizeRoPostcode(address.postcode);
+  const cityId = address.cityId || cityIdFromRoPostcode(pc);
+  if (!cityId) return null;
+
+  const peeled = peelHouseNumber(address.street, address.number);
+  const hintKey = streetKeyFromPostcode(pc);
+
+  // Postcode-only: OCR lost the street but kept RO ###### under Adresa de livrare.
+  if (!peeled.street && !hintKey) return null;
+
+  const [{ loadStreetIndex, lookupStreet, lookupAddress, resolveAddress }, { cityById }] = await Promise.all([
     import('./streetZones/index.js'),
     import('./zoneReference.js'),
   ]);
-  const index = await loadStreetIndex(address.cityId);
+  const index = await loadStreetIndex(cityId);
   if (!index) return null;
 
-  const lookup = lookupStreet(index, address.street);
-  if (lookup.status === 'ambiguous') return { zone: null, certain: false, source: 'street' };
-  if (lookup.status === 'unknown') return null;
+  const cityLabel = cityById(cityId)?.label || 'București';
+  const query = [peeled.street, peeled.number].filter(Boolean).join(' ');
+  let lookup = peeled.street
+    ? lookupAddress(index, query, { cityLabel })
+    : { status: 'unknown', found: null, suggestions: [], number: peeled.number };
 
-  const cityZones = cityById(address.cityId).zones;
-  return resolveAddress(index, { ...lookup, number: address.number }, cityZones);
+  // Known delivery postcode wins over an unknown / ambiguous OCR street.
+  if (hintKey && (lookup.status === 'unknown' || lookup.status === 'ambiguous')) {
+    const byPc = lookupStreet(index, hintKey);
+    if (byPc.status === 'exact' || byPc.status === 'without-type') {
+      lookup = { ...byPc, number: lookup.number || peeled.number, source: 'postcode' };
+    }
+  }
+
+  if (lookup.status === 'ambiguous') return { zone: null, certain: false, source: 'street' };
+  if (lookup.status === 'unknown' || !lookup.found) return null;
+
+  const cityZones = cityById(cityId).zones;
+  const number = lookup.number || peeled.number;
+  return resolveAddress(index, { ...lookup, number }, cityZones);
 }
