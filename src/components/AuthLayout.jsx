@@ -14,7 +14,7 @@ export default function AuthLayout({ icon: Icon, brandLogo = false, title, subti
               width={795}
               height={120}
               decoding="sync"
-              fetchpriority="high"
+              fetchPriority="high"
               className="h-12 sm:h-14 w-auto max-w-[min(100%,18rem)] mx-auto mb-4 object-contain"
             />
           ) : Icon ? (
