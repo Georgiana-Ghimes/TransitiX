@@ -48,7 +48,9 @@ export default function ModalShell({
         aria-modal="true"
         aria-labelledby={labelledBy}
         className={cn(
-          'relative z-10 bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto',
+          // Default: scroll the whole panel. Callers that pass flex + overflow-hidden
+          // (e.g. WhatsNew) keep a fixed header/footer with a scrollable body instead.
+          'relative z-10 bg-white rounded-xl shadow-xl w-full max-h-[min(90dvh,90vh)] overflow-y-auto',
           panelClassName
         )}
         onClick={(e) => e.stopPropagation()}

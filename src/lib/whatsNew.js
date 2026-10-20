@@ -23,6 +23,17 @@ export const WHATS_NEW_KEEP = 5;
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 127,
+    version: '1.28.2',
+    dateLabel: 'octombrie 2026',
+    title: '„Ce este nou?” ușor de închis pe telefon',
+    highlights: [
+      'Pe telefon, fereastra „Ce este nou?” e scurtă: poți închide cu X sau Gata, fără să umple tot ecranul.',
+      'La deschiderea automată vezi doar ultima actualizare; din meniu rămân toate notele recente.',
+      'În aplicația de șofer acest mesaj nu mai apare.',
+    ],
+  },
+  {
     build: 126,
     version: '1.28.1',
     dateLabel: 'octombrie 2026',
@@ -64,17 +75,6 @@ export const WHATS_NEW_RELEASES = [
     highlights: [
       'La Unește / Confirmă: vezi și Număr document marfă (TRO/PSL), nu doar TPO.',
       'Bifă „Doar document marfă (fără TPO pe pagină)” pentru avize de transfer: TPO nu e obligatoriu; în Anexă rămân la coada listei după TPO-uri.',
-    ],
-  },
-  {
-    build: 118,
-    version: '1.26.12',
-    dateLabel: 'octombrie 2026',
-    title: 'OCR nesigur blochează Confirmă / Unește',
-    highlights: [
-      'TPO / auto / rută în roșu bold = OCR nesigur. Confirmă și Unește sunt blocate până verifici pe document: Verifică → Marchează verificat, sau Salvează în carusel (chiar dacă nu schimbi valoarea).',
-      'Nu mai apare „Gata de confirmare” doar pentru că TPO-ul e umplut greșit (ex. sub ștampilă).',
-      'Serverul refuză anexa dacă Număr TPO e încă OCR nesigur și neverificat.',
     ],
   },
 ];
@@ -209,13 +209,20 @@ export function shouldAutoOpenWhatsNew(
 }
 
 /**
- * @param {{ all?: boolean, currentBuild?: string|number, releases?: WhatsNewRelease[], currentIp?: string|null }} [opts]
+ * @param {{
+ *   all?: boolean,
+ *   currentBuild?: string|number,
+ *   releases?: WhatsNewRelease[],
+ *   currentIp?: string|null,
+ *   limit?: number|null,
+ * }} [opts] `limit` caps the list (auto-open uses 1 so phones stay usable).
  */
 export function releasesForModal({
   all = false,
   currentBuild = APP_BUILD,
   releases = WHATS_NEW_RELEASES,
   currentIp = null,
+  limit = null,
 } = {}) {
   const current = parseBuild(currentBuild);
   const known = keepNewestWhatsNewReleases(releases).filter((r) => {
@@ -224,10 +231,14 @@ export function releasesForModal({
     if (current == null) return true;
     return b <= current;
   });
-  if (all) return known;
-  return keepNewestWhatsNewReleases(
-    unseenReleases(effectiveSeenBuild(getSeenWhatsNew(), currentIp), currentBuild, known),
-  );
+  const list = all
+    ? known
+    : keepNewestWhatsNewReleases(
+      unseenReleases(effectiveSeenBuild(getSeenWhatsNew(), currentIp), currentBuild, known),
+    );
+  const n = Number(limit);
+  if (Number.isFinite(n) && n > 0) return list.slice(0, Math.floor(n));
+  return list;
 }
 
 /** Client IP as seen by the API (first hop / X-Forwarded-For). */

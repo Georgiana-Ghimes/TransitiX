@@ -164,13 +164,19 @@ export default function Layout() {
     }
   }, [isDriver, documentsCompanion]);
 
-  // Companion: show „Ce este nou?” after a new build, or again from another IP.
+  // Drivers never see „Ce este nou?” (office notes only). Close if role flips.
+  useEffect(() => {
+    if (!isDriver) return;
+    setWhatsNewOpen(false);
+  }, [isDriver]);
+
+  // Companion office: show after a new build, or again from another IP. Never on /driver-app.
   useEffect(() => {
     if (isDriver || !documentsCompanion) return;
     let cancelled = false;
     (async () => {
       const ip = await fetchWhatsNewClientIp();
-      if (cancelled) return;
+      if (cancelled || isDriverRole(user)) return;
       setWhatsNewClientIp(ip);
       if (shouldAutoOpenWhatsNew(undefined, undefined, ip)) {
         setWhatsNewShowAll(false);
@@ -178,7 +184,7 @@ export default function Layout() {
       }
     })();
     return () => { cancelled = true; };
-  }, [isDriver, documentsCompanion]);
+  }, [isDriver, documentsCompanion, user]);
 
   // Navigate when the tour *step* changes, not whenever the user leaves the step path.
   // Listening to `location.pathname` yanked every sidebar click back to the current step,

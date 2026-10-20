@@ -132,6 +132,15 @@ describe('whatsNew', () => {
     }).map((r) => r.build)).toEqual([110, 108]);
   });
 
+  it('releasesForModal respects limit (auto-open shows one note on phones)', () => {
+    expect(releasesForModal({
+      all: true,
+      currentBuild: '110',
+      releases: SAMPLE,
+      limit: 1,
+    }).map((r) => r.build)).toEqual([110]);
+  });
+
   it('ships at least one client-facing note and at most WHATS_NEW_KEEP', () => {
     expect(WHATS_NEW_RELEASES.length).toBeGreaterThan(0);
     expect(WHATS_NEW_RELEASES.length).toBeLessThanOrEqual(WHATS_NEW_KEEP);
