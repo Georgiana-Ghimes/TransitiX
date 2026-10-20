@@ -3,26 +3,40 @@
  *
  * Two things every one of them has to get right:
  *
- * - **Where the link points.** The browser sends `origin` so a link opens the app it came from,
- *   but an origin taken on trust lets anybody request a reset for somebody else with their own
- *   host in it, and the victim's token arrives there. With `CLIENT_ORIGIN` set, only that origin
- *   is used; without it (local development) the browser's value is accepted.
+ * - **Where the link points.** Reset / invite / verify links must open a **stable** public app
+ *   host (prod), not whatever Cloudflare quick-tunnel or localhost the operator clicked from.
+ *   Prefer `PUBLIC_APP_ORIGIN`; else the first entry of `CLIENT_ORIGIN` (canonical). Request
+ *   `origin` is never used for the email URL when either is set — CORS can still list tunnels
+ *   in `CLIENT_ORIGIN`, but the token must not land on a URL that dies overnight.
+ *   Without both (local bare API), the browser origin / Host header is accepted.
  * - **Whether it went.** `sendEmail` resolves happily with no provider configured. A stubbed send
  *   is reported as not sent, so the caller can hand the link over instead of waiting for nothing.
  */
 import { sendEmail } from '../email.js';
 
-function allowedOrigins() {
-  return String(process.env.CLIENT_ORIGIN || '')
+function splitOrigins(value) {
+  return String(value || '')
     .split(',')
     .map((o) => o.trim().replace(/\/$/, ''))
     .filter(Boolean);
 }
 
-export function linkOrigin(req) {
-  const asked = String(req?.body?.origin || '').trim().replace(/\/$/, '');
+function allowedOrigins() {
+  return splitOrigins(process.env.CLIENT_ORIGIN);
+}
+
+/** Stable host for password / invite / verify links (never an ephemeral tunnel). */
+export function publicAppOrigin() {
+  const dedicated = splitOrigins(process.env.PUBLIC_APP_ORIGIN);
+  if (dedicated[0]) return dedicated[0];
   const allowed = allowedOrigins();
-  if (allowed.length > 0) return allowed.includes(asked) ? asked : allowed[0];
+  return allowed[0] || '';
+}
+
+export function linkOrigin(req) {
+  const canonical = publicAppOrigin();
+  if (canonical) return canonical;
+  const asked = String(req?.body?.origin || '').trim().replace(/\/$/, '');
   if (/^https?:\/\/[^\s/]+$/i.test(asked)) return asked;
   return `${req.protocol}://${req.get('host')}`;
 }

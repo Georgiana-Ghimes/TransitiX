@@ -219,6 +219,9 @@ function main() {
 [vps-deploy]   curl -sS http://127.0.0.1:3002/api/health
 [vps-deploy]   curl -sS https://rai-transitix.filumforge.ro/api/health
 [vps-deploy]   → deschide site-ul în browser (login)
+[vps-deploy] Linkuri reset/invitație: în server/.env.companion setează
+[vps-deploy]   CLIENT_ORIGIN=https://rai-transitix.filumforge.ro
+[vps-deploy]   (sau PUBLIC_APP_ORIGIN=… dacă CLIENT_ORIGIN listează și un tunnel)
 [vps-deploy]
 [vps-deploy] Dacă tot nu răspunde după ~1 min:
 [vps-deploy]   systemctl status rai-api --no-pager
