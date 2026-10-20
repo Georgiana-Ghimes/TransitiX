@@ -7,6 +7,12 @@
  * Companion DB (local :5435 / VM RAI):
  *   COMPANION=1 PLATFORM_ADMIN_EMAILS=… PLATFORM_ADMIN_BOOTSTRAP_PASSWORD='…' \
  *     npm run platform:bootstrap --prefix server
+ *
+ * Rotate password on an existing GOD user (opt-in):
+ *   COMPANION=1 PLATFORM_ADMIN_RESET_PASSWORD=1 \
+ *     PLATFORM_ADMIN_EMAILS=platformadmin@transitix.ro \
+ *     PLATFORM_ADMIN_BOOTSTRAP_PASSWORD='GodAdmin123!' \
+ *     npm run platform:bootstrap --prefix server
  */
 import './loadEnv.js';
 import { query, pool } from './db.js';

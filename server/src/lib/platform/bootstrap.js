@@ -6,6 +6,9 @@
  *
  * Re-running is safe: existing users with those emails are elevated to platform_admin
  * on the platform company; passwords are left alone unless the user is newly created.
+ *
+ * To rotate the password on an existing GOD account (opt-in):
+ *   PLATFORM_ADMIN_RESET_PASSWORD=1 PLATFORM_ADMIN_BOOTSTRAP_PASSWORD='…' …
  */
 
 import bcrypt from 'bcryptjs';
@@ -18,9 +21,15 @@ function parseEmails(raw) {
     .filter(Boolean);
 }
 
+function truthyEnv(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
 export async function bootstrapPlatformAdmins(query, {
   emails = process.env.PLATFORM_ADMIN_EMAILS,
   password = process.env.PLATFORM_ADMIN_BOOTSTRAP_PASSWORD,
+  resetPassword = truthyEnv(process.env.PLATFORM_ADMIN_RESET_PASSWORD),
 } = {}) {
   const list = parseEmails(emails);
   if (!list.length) {
@@ -31,6 +40,7 @@ export async function bootstrapPlatformAdmins(query, {
   const results = [];
   let created = 0;
   let promoted = 0;
+  let reset = 0;
 
   for (const email of list) {
     const found = await query(
@@ -71,10 +81,32 @@ export async function bootstrapPlatformAdmins(query, {
       [platform.id, row.id],
     );
     promoted += 1;
-    results.push({
-      email,
-      action: row.role === 'platform_admin' && row.company_id === platform.id ? 'unchanged' : 'promoted',
-    });
+
+    let action = row.role === 'platform_admin' && row.company_id === platform.id
+      ? 'unchanged'
+      : 'promoted';
+
+    if (resetPassword) {
+      const pwd = String(password || '').trim();
+      if (pwd.length < 10) {
+        results.push({ email, action: 'skipped', reason: 'need_password_to_reset' });
+        continue;
+      }
+      const password_hash = await bcrypt.hash(pwd, 12);
+      await query(
+        `UPDATE users
+         SET password_hash = $1,
+             reset_token = NULL,
+             reset_token_expires_at = NULL,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [password_hash, row.id],
+      );
+      reset += 1;
+      action = 'password_reset';
+    }
+
+    results.push({ email, action });
   }
 
   return {
@@ -82,6 +114,7 @@ export async function bootstrapPlatformAdmins(query, {
     platform_company_id: platform.id,
     created,
     promoted,
+    reset,
     results,
   };
 }
