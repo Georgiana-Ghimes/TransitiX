@@ -15,6 +15,9 @@ describe('companyModules', () => {
   it('maps paths to modules', () => {
     expect(moduleForPath('/dispatch')).toBe('dispatch');
     expect(moduleForPath('/trips/abc')).toBe('trips');
+    expect(moduleForPath('/fleet')).toBe('fleet');
+    expect(moduleForPath('/fleet/itp')).toBe('fleet');
+    expect(moduleForPath('/drivers')).toBe('fleet');
     expect(moduleForPath('/settings')).toBe(null);
   });
 

@@ -36,7 +36,8 @@ export const MODULE_FLAGS = [
   { key: 'driver_upload', label: 'Upload documente șofer', defaultOn: ['full', 'documents'] },
   { key: 'dispatch', label: 'Dispecerat', defaultOn: ['full'] },
   { key: 'trips', label: 'Curse / CMR', defaultOn: ['full'] },
-  { key: 'fleet', label: 'Flotă & șoferi', defaultOn: ['full'] },
+  // Companion office nav includes Autoturisme / ITP / Șoferi (build 128+).
+  { key: 'fleet', label: 'Flotă & șoferi', defaultOn: ['full', 'documents'] },
   { key: 'gps', label: 'Tracking GPS', defaultOn: ['full'] },
   { key: 'planning', label: 'Planning / optimizare', defaultOn: ['full'] },
   { key: 'finance', label: 'Financiar', defaultOn: ['full'] },

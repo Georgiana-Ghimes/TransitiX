@@ -11,12 +11,13 @@ describe('platformFlags', () => {
     expect(profileLabel(f)).toBe('TMS full');
   });
 
-  it('documents profile keeps full catalog with TMS modules off', () => {
+  it('documents profile keeps full catalog with TMS modules off (fleet on for Șoferi)', () => {
     const f = normalizeFlags({ app_profile: 'documents' });
     expect(f.app_profile).toBe('documents');
     expect(f.modules.avize).toBe(true);
     expect(f.modules.reports).toBe(true);
     expect(f.modules.driver_upload).toBe(true);
+    expect(f.modules.fleet).toBe(true);
     expect(f.modules.dispatch).toBe(false);
     expect(f.modules.gps).toBe(false);
     expect(f.modules.commercial).toBe(false);
@@ -27,7 +28,7 @@ describe('platformFlags', () => {
   it('preserves explicit overrides on documents', () => {
     const f = normalizeFlags({
       app_profile: 'documents',
-      modules: { avize: false, dispatch: true },
+      modules: { avize: false, dispatch: true, fleet: false },
     });
     expect(f.modules.avize).toBe(false);
     expect(f.modules.dispatch).toBe(true);

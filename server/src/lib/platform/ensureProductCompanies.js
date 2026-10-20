@@ -24,7 +24,7 @@ const ALL_MODULE_KEYS = [
 ];
 
 /** Modules on for the documents companion; everything else stays explicit false. */
-const DOCUMENTS_ON = new Set(['avize', 'reports', 'driver_upload']);
+const DOCUMENTS_ON = new Set(['avize', 'reports', 'driver_upload', 'fleet']);
 
 function modulesForProfile(profileKey) {
   const modules = {};

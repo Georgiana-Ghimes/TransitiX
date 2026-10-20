@@ -337,7 +337,14 @@ export default function Layout() {
     }
   }
 
-  if (!isPlatform && !isDriverRole(user) && !isPathAllowedForCompany(user, location.pathname)) {
+  // Documents shell always exposes COMPANION_OFFICE_PATHS (incl. /drivers), even when an
+  // older ensure_apps row stored modules.fleet=false — otherwise Șoferi bounces to /avize.
+  if (
+    !isPlatform
+    && !isDriverRole(user)
+    && !isPathAllowedForCompany(user, location.pathname)
+    && !(treatAsDocumentsEarly && isCompanionOfficePath(location.pathname))
+  ) {
     return <Navigate to={homePathForRole(user)} replace />;
   }
 

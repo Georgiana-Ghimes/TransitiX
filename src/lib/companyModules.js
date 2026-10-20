@@ -10,6 +10,7 @@ export const PATH_MODULE = {
   '/load-planner': 'loading',
   '/trips': 'trips',
   '/vehicles': 'fleet',
+  '/fleet': 'fleet',
   '/drivers': 'fleet',
   '/locations': 'locations',
   '/territories': 'territories',
