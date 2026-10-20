@@ -21,6 +21,7 @@ describe('appProfile', () => {
     expect(isDocumentsProfile()).toBe(true);
     expect(isCompanionOfficePath('/avize')).toBe(true);
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
+    expect(isCompanionOfficePath('/platform')).toBe(true);
     expect(isCompanionOfficePath('/settings')).toBe(true);
     expect(isCompanionOfficePath('/zone-map')).toBe(true);
     expect(isCompanionOfficePath('/fleet')).toBe(true);
@@ -29,6 +30,12 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
     expect(isCompanionOfficePath('/finance')).toBe(false);
+    const withTrips = {
+      role: 'admin',
+      company: { feature_flags: { modules: { trips: true, dispatch: false } } },
+    };
+    expect(isCompanionOfficePath('/trips', withTrips)).toBe(true);
+    expect(isCompanionOfficePath('/dispatch', withTrips)).toBe(false);
   });
 
   it('companionTagline defaults for documents profile', async () => {

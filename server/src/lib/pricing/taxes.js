@@ -62,7 +62,10 @@ export function pointInPolygon(point, geometry) {
 
 /**
  * Textual fallback: county codes and city names carried on the zone.
- * `{ counties: ['B','IF'], cities: ['bucuresti'], postcodes: ['0106'] }`
+ * `{ counties: ['B'], cities: ['bucuresti'], postcodes: ['0106'] }`
+ *
+ * Within one list (e.g. counties B|IF) any value matches. Across lists, all present
+ * dimensions must match — so județ B + oraș București is an intersection, not a union.
  */
 export function matchesTextually(zone, place) {
   const matcher = zone?.matcher || {};
@@ -70,13 +73,19 @@ export function matchesTextually(zone, place) {
   const cities = (matcher.cities || []).map(norm);
   const postcodes = (matcher.postcodes || []).map((c) => String(c).trim());
 
-  if (counties.length && place?.county && counties.includes(String(place.county).toUpperCase())) return true;
-  if (cities.length && place?.city && cities.includes(norm(place.city))) return true;
-  if (postcodes.length && place?.postcode) {
-    const code = String(place.postcode).trim();
-    if (postcodes.some((prefix) => code.startsWith(prefix))) return true;
+  const checks = [];
+  if (counties.length) {
+    checks.push(Boolean(place?.county && counties.includes(String(place.county).toUpperCase())));
   }
-  return false;
+  if (cities.length) {
+    checks.push(Boolean(place?.city && cities.includes(norm(place.city))));
+  }
+  if (postcodes.length) {
+    const code = place?.postcode != null ? String(place.postcode).trim() : '';
+    checks.push(Boolean(code && postcodes.some((prefix) => code.startsWith(prefix))));
+  }
+  if (!checks.length) return false;
+  return checks.every(Boolean);
 }
 
 /**

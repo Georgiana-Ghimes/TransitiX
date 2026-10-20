@@ -106,8 +106,9 @@ function SessionsCard() {
 
 export default function Settings() {
   const { user } = useAuth();
-  const canSave = user?.role === 'admin';
-  const isAdmin = user?.role === 'admin';
+  const impersonating = Boolean(user?.impersonation?.active);
+  const canSave = user?.role === 'admin' && !impersonating;
+  const isAdmin = user?.role === 'admin' && !impersonating;
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

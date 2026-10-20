@@ -8,6 +8,7 @@ import {
   markNotificationRead,
   markAllComputedRead,
   deleteReadComputed,
+  sortInboxNotifications,
 } from '../lib/officeNotifications.js';
 
 const router = Router();
@@ -27,9 +28,7 @@ router.get('/inbox', async (req, res) => {
     );
     const stored = result.rows.map(serializeRow);
     const computed = await getComputedNotifications(companyId, dismissalState);
-    const items = [...stored, ...computed].sort(
-      (a, b) => new Date(b.created_at || b.created_date) - new Date(a.created_at || a.created_date)
-    );
+    const items = sortInboxNotifications([...stored, ...computed]);
     const unread_count = items.filter((n) => !n.is_read).length;
     const read_count = items.filter((n) => n.is_read).length;
     res.json({ items, unread_count, read_count });

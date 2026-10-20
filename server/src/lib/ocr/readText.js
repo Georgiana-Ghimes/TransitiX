@@ -71,6 +71,12 @@ export function interactiveOcrMaxPages() {
   return Number(process.env.OCR_INTERACTIVE_MAX_PAGES) || 3;
 }
 
+/** PNG/JPEG (etc.) uploads — force background OCR so tunnels don't drop long interactive calls. */
+export function isRasterAvizUpload(fileUrl, filename) {
+  const s = `${fileUrl || ''} ${filename || ''}`.toLowerCase();
+  return /\.(png|jpe?g|gif|webp)(?:\?|#|\s|$)/i.test(s);
+}
+
 /** Concurrent Mistral calls from this process (API rate / cost control). */
 export function ocrConcurrency() {
   return Math.max(1, Math.floor(Number(process.env.OCR_CONCURRENCY) || 2));

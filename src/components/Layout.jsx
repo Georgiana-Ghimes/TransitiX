@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -6,22 +6,24 @@ import {
   LayoutDashboard, Truck, Users, Route, FileText, Wallet,
   LogOut, Menu, X, Building2, MapPin, Brain, Package,
   ChevronsLeft, ChevronsRight, ChevronDown, Boxes, ClipboardList, FileSpreadsheet, HelpCircle, LayoutGrid,
-  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Settings, Map, CalendarClock, Ticket,
+  MapPinned, Network, Layers, Receipt, ShieldCheck, History, UserCog, Inbox, Settings, Map, CalendarClock, Ticket,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
-import { homePathForRole, isDriverRole } from '@/lib/roles';
+import { homePathForRole, isDriverRole, isPlatformAdmin } from '@/lib/roles';
+import { isModuleEnabled, isPathAllowedForCompany } from '@/lib/companyModules';
 import {
   companionTagline,
   isCompanionOfficePath,
   isDocumentsProfile,
 } from '@/lib/appProfile';
+import { detectSlugFromPath, tenantPath } from '@/lib/tenantPath';
 import {
-  OFFICE_TOUR_STEPS,
   clampTourStep,
   hasSeenOfficeTour,
   markOfficeTourSeen,
+  officeTourStepsForUser,
   tourNavHighlightPath,
   tourMobileHighlightMenuButton,
 } from '@/lib/officeTour';
@@ -38,30 +40,38 @@ import { prefetchOfficeChunks, prefetchPath } from '@/lib/routePrefetch';
 
 const NAV = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { label: 'Dispecerat', path: '/dispatch', icon: Network },
-  { label: 'Încărcare', path: '/loading', icon: Boxes },
-  { label: 'Plan 2D', path: '/load-planner', icon: LayoutGrid },
-  { label: 'Curse', path: '/trips', icon: Route },
-  { label: 'Flotă', path: '/vehicles', icon: Truck },
-  { label: 'Șoferi', path: '/drivers', icon: Users },
-  { label: 'Locații', path: '/locations', icon: MapPinned },
-  { label: 'Teritorii', path: '/territories', icon: Layers },
-  { label: 'Harta zonelor', path: '/zone-map', icon: Map },
-  { label: 'Autoturisme', path: '/fleet', icon: Truck },
-  { label: 'Tracking GPS', path: '/gps', icon: MapPin },
-  { label: 'Planning AI', path: '/planning', icon: Brain },
-  { label: 'Clienți', path: '/clients', icon: Building2 },
-  { label: 'Financiar', path: '/finance', icon: Wallet },
-  { label: 'Depozit', path: '/warehouse', icon: Package },
-  { label: 'Documente', path: '/documents', icon: FileText },
-  { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
-  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
-  { label: 'Verificări date', path: '/checks', icon: ShieldCheck },
-  { label: 'Config. comercială', path: '/commercial', icon: Receipt },
+  { label: 'Dispecerat', path: '/dispatch', icon: Network, module: 'dispatch' },
+  { label: 'Încărcare', path: '/loading', icon: Boxes, module: 'loading' },
+  { label: 'Plan 2D', path: '/load-planner', icon: LayoutGrid, module: 'loading' },
+  { label: 'Curse', path: '/trips', icon: Route, module: 'trips' },
+  { label: 'Flotă', path: '/vehicles', icon: Truck, module: 'fleet' },
+  { label: 'Șoferi', path: '/drivers', icon: Users, module: 'fleet' },
+  { label: 'Locații', path: '/locations', icon: MapPinned, module: 'locations' },
+  { label: 'Teritorii', path: '/territories', icon: Layers, module: 'territories' },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map, module: 'avize' },
+  { label: 'Autoturisme', path: '/fleet', icon: Truck, module: 'fleet' },
+  { label: 'Tracking GPS', path: '/gps', icon: MapPin, module: 'gps' },
+  { label: 'Planning AI', path: '/planning', icon: Brain, module: 'planning' },
+  { label: 'Clienți', path: '/clients', icon: Building2, module: 'trips' },
+  { label: 'Financiar', path: '/finance', icon: Wallet, module: 'finance' },
+  { label: 'Depozit', path: '/warehouse', icon: Package, module: 'warehouse' },
+  { label: 'Documente', path: '/documents', icon: FileText, module: 'documents_expiry' },
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList, module: 'avize' },
+  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet, module: 'reports' },
+  { label: 'Verificări date', path: '/checks', icon: ShieldCheck, module: 'avize' },
+  { label: 'Config. comercială', path: '/commercial', icon: Receipt, module: 'commercial' },
   // Admin-only: the searchable log answers "what has this person been doing", which is an
   // owner's question. The per-record trail behind it stays open to the whole office.
-  { label: 'Utilizatori', path: '/users', icon: UserCog, roles: ['admin'] },
-  { label: 'Jurnal modificări', path: '/audit', icon: History, roles: ['admin'] },
+  { label: 'Utilizatori', path: '/users', icon: UserCog, roles: ['admin'], module: 'users_admin' },
+  { label: 'Jurnal modificări', path: '/audit', icon: History, roles: ['admin'], module: 'audit' },
+];
+
+/** GOD operator nav — no per-tenant company rows in the rail. */
+const PLATFORM_NAV = [
+  { label: 'Acasă', path: '/platform', icon: ShieldCheck, end: true },
+  { label: 'Companii', path: '/platform/companies', icon: Building2 },
+  { label: 'Solicitări', path: '/platform/leads', icon: Inbox },
+  { label: 'Utilizatori', path: '/platform/users', icon: UserCog },
 ];
 
 const COMPANION_OFFICE_NAV = [
@@ -112,8 +122,16 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isDriver = isDriverRole(user);
+  const isPlatform = isPlatformAdmin(user);
   const documentsCompanion = isDocumentsProfile();
-  const navItems = documentsCompanion ? COMPANION_OFFICE_NAV : NAV;
+  const companyProfile = user?.company?.feature_flags?.app_profile;
+  const treatAsDocumentsEarly = companyProfile === 'documents'
+    || (!companyProfile && documentsCompanion);
+  // Full TMS catalog; hide Dashboard home for documents-profile companies.
+  const tenantNav = treatAsDocumentsEarly
+    ? COMPANION_OFFICE_NAV
+    : NAV;
+  const navItems = isPlatform ? PLATFORM_NAV : tenantNav;
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -147,14 +165,21 @@ export default function Layout() {
     prefetchOfficeChunks();
   }, []);
 
-  const tourCurrent = tourOpen ? OFFICE_TOUR_STEPS[clampTourStep(tourStep)] : null;
-  const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
-  const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
-  const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
+  // Prefer company app_profile (single-host multi-tenant) over Vite build profile.
+  // Early: tour gate must match Layout redirect rules (documents bounce `/` → `/avize`).
+  const treatAsDocuments = treatAsDocumentsEarly;
+  const documentsShell = treatAsDocuments;
+  const tourSteps = useMemo(
+    () => officeTourStepsForUser(user, { treatAsDocuments }),
+    [user, treatAsDocuments],
+  );
+  const tourEnabled = !isDriver && !isPlatform && tourSteps.length > 0;
 
   // Office tour is for the full sidebar app only, never driver or documents companion.
   useEffect(() => {
-    if (isDriver || documentsCompanion) {
+    // Documents / limited tenants must not auto-run the full TMS script — Layout would
+    // bounce `/`, `/trips`, … and fight navigate() (Maximum update depth).
+    if (!tourEnabled || treatAsDocuments || documentsCompanion) {
       setTourOpen(false);
       return;
     }
@@ -162,7 +187,12 @@ export default function Layout() {
       setTourStep(0);
       setTourOpen(true);
     }
-  }, [isDriver, documentsCompanion]);
+  }, [tourEnabled, treatAsDocuments, documentsCompanion]);
+
+  const tourCurrent = tourOpen ? tourSteps[clampTourStep(tourStep, tourSteps.length)] : null;
+  const tourNavPath = tourOpen ? tourNavHighlightPath(tourCurrent) : null;
+  const tourHighlightGhid = tourCurrent?.highlightTarget === 'ghid';
+  const tourHighlightDashboard = tourCurrent?.highlightTarget === 'dashboard';
 
   // Drivers never see „Ce este nou?” (office notes only). Close if role flips.
   useEffect(() => {
@@ -190,31 +220,37 @@ export default function Layout() {
   // Listening to `location.pathname` yanked every sidebar click back to the current step,
   // so the rest of the app looked broken (and racing lazy loads could surface ErrorBoundary).
   useEffect(() => {
-    if (isDriver || !tourOpen) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
-    if (current.path && !tourAtPath(location.pathname, current.path)) {
+    if (!tourOpen || !tourEnabled) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
+    if (
+      current?.path
+      && !tourAtPath(location.pathname, current.path)
+      && isPathAllowedForCompany(user, current.path)
+      && !(treatAsDocuments && (current.path === '/' || !isCompanionOfficePath(current.path, user)))
+    ) {
       navigate(current.path);
     }
     // intentionally omit location.pathname, user may explore freely during the tour
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [isDriver, tourOpen, tourStep, navigate]);
+  }, [tourOpen, tourEnabled, tourStep, tourSteps, treatAsDocuments, user, navigate]);
 
   // Desktop: open drawer for nav steps; mobile keeps drawer closed (sheet explains ☰).
   useEffect(() => {
-    if (isDriver || !tourOpen || !isDesktop) return;
+    if (!tourOpen || !isDesktop) return;
     if (tourHighlightDashboard) setMobileOpen(false);
     else if (tourNavPath || tourHighlightGhid) setMobileOpen(true);
-  }, [isDriver, tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
+  }, [tourOpen, tourStep, isDesktop, tourHighlightDashboard, tourNavPath, tourHighlightGhid]);
 
   useEffect(() => {
-    if (isDriver || !tourOpen || isDesktop) return;
+    if (!tourOpen || isDesktop) return;
     setMobileOpen(false);
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop]);
 
   // Desktop-only spotlight on sidebar nav or dashboard content.
   useEffect(() => {
-    if (isDriver || !tourOpen || !isDesktop) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    if (!tourOpen || !isDesktop) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
+    if (!current) return;
     const id = requestAnimationFrame(() => {
       document.querySelectorAll('[data-tour-dashboard]').forEach((el) => {
         el.classList.toggle('tour-content-highlight', current.highlightTarget === 'dashboard');
@@ -233,17 +269,17 @@ export default function Layout() {
         el.classList.remove('tour-content-highlight');
       });
     };
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop, tourSteps]);
 
   // Mobile: ring the ☰ button when the step refers to the menu.
   useEffect(() => {
-    if (isDriver || !tourOpen || isDesktop) return;
-    const current = OFFICE_TOUR_STEPS[clampTourStep(tourStep)];
+    if (!tourOpen || isDesktop) return;
+    const current = tourSteps[clampTourStep(tourStep, tourSteps.length)];
     const btn = document.querySelector('[data-tour-mobile-menu]');
     if (!btn) return;
     btn.classList.toggle('tour-mobile-menu-highlight', tourMobileHighlightMenuButton(current));
     return () => btn.classList.remove('tour-mobile-menu-highlight');
-  }, [isDriver, tourOpen, tourStep, isDesktop]);
+  }, [tourOpen, tourStep, isDesktop, tourSteps]);
 
   const closeTour = () => {
     markOfficeTourSeen();
@@ -264,22 +300,50 @@ export default function Layout() {
 
   const displayName = user?.full_name || user?.name || user?.email || 'Utilizator';
   const initials = displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
-  const roleLabel = { admin: 'Admin', dispatcher: 'Dispecer', driver: 'Șofer', finance: 'Finance' }[user?.role] || user?.role || '';
+  const roleLabel = {
+    admin: 'Admin',
+    dispatcher: 'Dispecer',
+    driver: 'Șofer',
+    finance: 'Finance',
+    platform_admin: 'Platformă',
+  }[user?.role] || user?.role || '';
 
   const showIconsOnly = isDesktop && collapsed;
   const sidebarWidth = isDesktop
     ? (collapsed ? SIDEBAR_RAIL : SIDEBAR_EXPANDED)
     : SIDEBAR_EXPANDED;
 
+  const impersonating = Boolean(user?.impersonation?.active);
+
+  if (isPlatform) {
+    if (!location.pathname.startsWith('/platform')) {
+      return <Navigate to="/platform" replace />;
+    }
+  }
+
+  // Wrong tenant slug in the URL → jump to this company's prefix.
+  if (!isPlatform && user?.company?.slug) {
+    const urlSlug = detectSlugFromPath(typeof window !== 'undefined' ? window.location.pathname : '');
+    if (urlSlug && urlSlug !== user.company.slug) {
+      const target = tenantPath(user.company.slug, location.pathname);
+      if (typeof window !== 'undefined') {
+        window.location.replace(target);
+        return null;
+      }
+    }
+  }
+
+  if (!isPlatform && !isDriverRole(user) && !isPathAllowedForCompany(user, location.pathname)) {
+    return <Navigate to={homePathForRole(user)} replace />;
+  }
+
   if (isDriver) {
     if (location.pathname !== '/driver-app') {
       return <Navigate to={homePathForRole(user)} replace />;
     }
-    // The companion's slim shell draws its own padding and safe-areas; the full driver app
-    // still expects the outer gutter it was built with.
     return (
       <div className="min-h-[100dvh] bg-[#F8F9FA]">
-        {documentsCompanion ? (
+        {documentsShell ? (
           <ErrorBoundary label={location.pathname} resetKey={location.pathname}>
             <Suspense fallback={<PageLoader />}>
               <Outlet />
@@ -299,23 +363,41 @@ export default function Layout() {
   }
 
   if (location.pathname === '/driver-app' || location.pathname.startsWith('/driver-app/')) {
-    return <Navigate to={documentsCompanion ? '/avize' : '/'} replace />;
+    return <Navigate to={documentsShell ? '/avize' : '/'} replace />;
   }
 
-  if (documentsCompanion) {
+  if (treatAsDocuments && !isPlatform) {
     if (location.pathname === '/') {
       return <Navigate to="/avize" replace />;
     }
-    // Dev-only tooling is reachable in either profile; the route itself does not exist in a
-    // production build, so this cannot open anything for a customer.
     const devTool = import.meta.env.DEV && location.pathname.startsWith('/dev/');
-    if (!devTool && !isCompanionOfficePath(location.pathname)) {
+    if (!devTool && !isCompanionOfficePath(location.pathname, user)) {
       return <Navigate to="/avize" replace />;
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
+      {impersonating && (
+        <div className="shrink-0 z-50 bg-amber-500 text-[#0A2B4E] text-sm px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow">
+          <span>
+            Impersonare: <strong>{user?.company?.name || 'firmă'}</strong>
+            {' '}ca <strong>{user?.email}</strong>
+            {user?.impersonation?.actor_email ? (
+              <> · GOD {user.impersonation.actor_email}</>
+            ) : null}
+          </span>
+          <button
+            type="button"
+            className="shrink-0 px-3 py-1 rounded-md bg-[#0A2B4E] text-white text-xs font-medium hover:bg-[#1D4E89]"
+            onClick={() => api.platform.exitImpersonation()}
+          >
+            Ieși din firmă
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-1 min-h-0">
       {!isDesktop && mobileOpen && !tourOpen && (
         <div className="fixed inset-0 bg-black/40 z-[55]" onClick={() => setMobileOpen(false)} />
       )}
@@ -327,14 +409,18 @@ export default function Layout() {
       <aside
         style={{ width: sidebarWidth }}
         className={cn(
-          'h-screen bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
+          'bg-[#0A2B4E] text-white flex flex-col shrink-0 overflow-hidden',
           'transition-[width,transform] duration-300 ease-in-out',
           // Mobile drawer must sit above the sticky white header (z-50), or branding is clipped.
           tourOpen ? 'z-50' : isDesktop ? 'z-40' : 'z-[60]',
           isDesktop
-            ? 'sticky top-0 translate-x-0'
+            ? cn(
+                'sticky top-0 translate-x-0',
+                impersonating ? 'h-[calc(100dvh-2.75rem)]' : 'h-screen',
+              )
             : cn(
-                'fixed top-0 left-0',
+                'fixed left-0 h-screen',
+                impersonating ? 'top-[2.75rem]' : 'top-0',
                 mobileOpen ? 'translate-x-0' : '-translate-x-full'
               )
         )}
@@ -391,7 +477,11 @@ export default function Layout() {
 
         <nav className={cn('flex-1 py-3 overflow-y-auto overflow-x-hidden', showIconsOnly ? 'px-2' : 'px-3')}>
           <ul className="space-y-1">
-            {navItems.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
+            {navItems.filter((item) => {
+              if (item.roles && !item.roles.includes(user?.role)) return false;
+              if (item.module && !isModuleEnabled(user, item.module)) return false;
+              return true;
+            }).map((item) => {
               const Icon = item.icon;
               const children = Array.isArray(item.children) ? item.children : null;
               const groupActive = navGroupActive(location.pathname, item);
@@ -468,7 +558,10 @@ export default function Layout() {
                 );
               }
 
-              const active = navPathActive(location.pathname, item.path);
+              // PLATFORM_NAV „Acasă” uses end:true so /platform/companies does not highlight it.
+              const active = item.end
+                ? location.pathname === item.path
+                : navPathActive(location.pathname, item.path);
               return (
                 <li key={item.path}>
                   <Link
@@ -546,7 +639,12 @@ export default function Layout() {
             <HelpCircle className="w-5 h-5 shrink-0" />
             {!showIconsOnly && <span>Ghid</span>}
           </Link>
-          {user?.role === 'admin' && (
+          {/*
+            Company settings: real tenant admins only.
+            Hide while GOD is impersonating — firm config belongs to the company's own admin,
+            not the platform operator walking the portal as someone else.
+          */}
+          {!isPlatform && !impersonating && user?.role === 'admin' && (
           <Link
             to="/settings"
             title="Setări companie"
@@ -678,6 +776,7 @@ export default function Layout() {
           <OfficeTour
             isDesktop={isDesktop}
             step={tourStep}
+            steps={tourSteps}
             onStepChange={setTourStep}
             onClose={closeTour}
           />
@@ -691,6 +790,7 @@ export default function Layout() {
             onClose={() => setWhatsNewOpen(false)}
           />
         )}
+      </div>
       </div>
     </div>
   );

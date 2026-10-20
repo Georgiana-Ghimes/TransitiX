@@ -10,6 +10,12 @@ export const OCR_AVIZ_FIELDS = [
   'tip_marfa',
   'cantitate_marfa',
   'numar_document_marfa',
+  'numar_sor',
+  'gross_weight_kg',
+  'net_weight_kg',
+  'pallet_weight_kg',
+  'pallets',
+  'quantity_unit',
 ];
 
 /** Salvează / re-extract must not demote Confirmat back to Extras. */

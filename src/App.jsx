@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -10,6 +10,13 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { isDocumentsProfile } from '@/lib/appProfile';
+import { isPlatformAdmin, postLoginPath } from '@/lib/roles';
+import {
+  RESERVED_SLUGS,
+  detectSlugFromPath,
+  normalizeSlug,
+  tenantPath,
+} from '@/lib/tenantPath';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import Trips from '@/pages/Trips';
@@ -21,6 +28,7 @@ import Settings from '@/pages/Settings';
 import Warehouse from '@/pages/Warehouse';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import RequestAccess from '@/pages/RequestAccess';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import VerifyEmail from '@/pages/VerifyEmail';
@@ -46,11 +54,13 @@ const Documents = lazy(() => import('@/pages/Documents'));
 const Checks = lazy(() => import('@/pages/Checks'));
 const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
-const Users = lazy(() => import('@/pages/Users'));
+const PlatformAdmin = lazy(() => import('@/pages/PlatformAdmin'));
+const PlatformCompanies = lazy(() => import('@/pages/PlatformCompanies'));
+const PlatformLeads = lazy(() => import('@/pages/PlatformLeads'));
+const PlatformUsers = lazy(() => import('@/pages/PlatformUsers'));
+const PlatformCompanyPage = lazy(() => import('@/pages/PlatformCompanyPage'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const DriverAppDocuments = lazy(() => import('@/pages/DriverAppDocuments'));
-// Folded away in a production build: `import.meta.env.DEV` becomes `false`, the ternary
-// collapses, and the dynamic import never becomes a chunk. Verified against dist/.
 const SharpnessCalibration = import.meta.env.DEV
   ? lazy(() => import('@/pages/dev/SharpnessCalibration'))
   : null;
@@ -58,35 +68,33 @@ const ClientPortal = lazy(() => import('@/pages/ClientPortal'));
 
 function LoginRedirect() {
   const location = useLocation();
-  const returnTo = `${location.pathname}${location.search}`;
+  // With a tenant basename, location.pathname is already unprefixed (/avize).
+  // Prefer the real browser path so returnTo keeps /{slug}/….
+  const returnTo = typeof window !== 'undefined'
+    ? `${window.location.pathname}${window.location.search}`
+    : `${location.pathname}${location.search}`;
   const q = returnTo && returnTo !== '/'
     ? `?returnTo=${encodeURIComponent(returnTo)}`
     : '';
   return <Navigate to={`/login${q}`} replace />;
 }
 
-function OfficeRoutes() {
-  if (isDocumentsProfile()) {
-    return (
-      <>
-        <Route path="/" element={<Navigate to="/avize" replace />} />
-        <Route path="/avize" element={<AvizeReports />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/zone-map" element={<ZoneMap />} />
-        <Route path="/fleet" element={<Fleet />} />
-        <Route path="/fleet/itp" element={<FleetItp />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
-        <Route path="/ghid" element={<Guide />} />
-        <Route path="/driver-app" element={<DriverAppDocuments />} />
-        <Route path="*" element={<Navigate to="/avize" replace />} />
-      </>
-    );
-  }
+function TenantDriverApp() {
+  const { user } = useAuth();
+  const docs = user?.company?.feature_flags?.app_profile === 'documents' || isDocumentsProfile();
+  return docs ? <DriverAppDocuments /> : <DriverApp />;
+}
 
+function OfficeRoutes() {
+  // Single host: full TMS catalog is always registered; modules + Layout hide what's off.
   return (
     <>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/platform" element={<PlatformAdmin />} />
+      <Route path="/platform/companies" element={<PlatformCompanies />} />
+      <Route path="/platform/leads" element={<PlatformLeads />} />
+      <Route path="/platform/users" element={<PlatformUsers />} />
+      <Route path="/platform/companies/:id" element={<PlatformCompanyPage />} />
       <Route path="/trips" element={<Trips />} />
       <Route path="/trips/:id" element={<TripDetail />} />
       <Route path="/vehicles" element={<Vehicles />} />
@@ -110,8 +118,8 @@ function OfficeRoutes() {
       <Route path="/checks" element={<Checks />} />
       <Route path="/commercial" element={<Commercial />} />
       <Route path="/audit" element={<Audit />} />
-      <Route path="/users" element={<Users />} />
-      <Route path="/driver-app" element={<DriverApp />} />
+      <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
+      <Route path="/driver-app" element={<TenantDriverApp />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/ghid" element={<Guide />} />
     </>
@@ -137,6 +145,7 @@ const AuthenticatedApp = () => {
     <ErrorBoundary label="app">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/request-access" element={<RequestAccess />} />
         {/* Offered on both profiles; the page itself asks the server whether sign-up is open. */}
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -165,14 +174,68 @@ const AuthenticatedApp = () => {
   );
 };
 
+/**
+ * Tenant URLs are /{slug}/avize. Basename comes only from the browser path so
+ * Router never mounts with /{slug} while the URL is still "/".
+ * Platform GOD and auth pages use basename "".
+ */
+function TenantAwareRouter({ children }) {
+  const { user, isLoadingAuth } = useAuth();
+  const [redirecting, setRedirecting] = useState(false);
+
+  const fromUrl = useMemo(
+    () => (typeof window !== 'undefined' ? detectSlugFromPath(window.location.pathname) : null),
+    // Re-evaluate when auth settles (impersonation / login may change session without remount).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.id, user?.company?.slug, isLoadingAuth],
+  );
+
+  const basename = fromUrl ? `/${fromUrl}` : '';
+
+  useEffect(() => {
+    if (isLoadingAuth || typeof window === 'undefined') return;
+    if (isPlatformAdmin(user)) return;
+    const slug = user?.company?.slug;
+    if (!slug || fromUrl) return;
+
+    const path = window.location.pathname || '/';
+    const search = window.location.search || '';
+    const first = path.split('/').filter(Boolean)[0] || '';
+    const reserved = Boolean(first) && RESERVED_SLUGS.has(normalizeSlug(first));
+    if (reserved) return;
+
+    // Bare `/` or unprefixed app path (/avize) while logged into a tenant.
+    const target = first
+      ? tenantPath(slug, path) + search
+      : postLoginPath(user) + search;
+    if (target === path + search) return;
+    setRedirecting(true);
+    window.location.replace(target);
+  }, [user, isLoadingAuth, fromUrl]);
+
+  if (redirecting) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <Router basename={basename} key={basename || 'root'}>
+      {children}
+    </Router>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
+        <TenantAwareRouter>
           <ScrollToTop />
           <AuthenticatedApp />
-        </Router>
+        </TenantAwareRouter>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

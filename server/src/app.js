@@ -35,6 +35,8 @@ import tachographRoutes from './routes/tachograph.js';
 import maintenanceRoutes from './routes/maintenance.js';
 import auditRoutes from './routes/audit.js';
 import userRoutes from './routes/users.js';
+import platformRoutes from './routes/platform.js';
+import publicRoutes from './routes/public.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
@@ -193,6 +195,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/entities', entityRoutes);
 app.use('/api/integrations', express.json({ limit: '10mb' }), integrationRoutes);
@@ -222,6 +225,7 @@ app.use('/api/tachograph', tachographRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/platform', platformRoutes);
 
 /**
  * The built frontend, when there is one.

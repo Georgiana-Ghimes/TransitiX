@@ -16,6 +16,8 @@ const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 const HAS_ALNUM = /[\p{L}\p{N}]/u;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^[+()\d][\d\s().-]{5,20}$/;
+/** Person names: letters (incl. diacritics), spaces between words, hyphen only as punctuation. */
+const PERSON_NAME_RE = /^[\p{L}]+(?:[\s-]+[\p{L}]+)*$/u;
 const SKU_RE = /^[A-Za-z0-9._-]+$/;
 const CODE_RE = /^[A-Za-z0-9 ./-]+$/;
 /**
@@ -92,9 +94,37 @@ function checkVatId(errors, field, value, label) {
 }
 
 function checkEmail(errors, field, value) {
+  if (value == null || value === '') return;
+  const raw = String(value);
+  // Reject before trim — optional blank is fine; spaces-only or "a @b.ro" must fail visibly.
+  if (/\s/.test(raw)) {
+    errors[field] = 'Emailul nu poate conține spații.';
+    return;
+  }
+  if (!EMAIL_RE.test(raw)) errors[field] = 'Email invalid (ex. nume@firma.ro).';
+}
+
+function checkPersonName(errors, field, value, label, { required = false, min = 3, max = 120 } = {}) {
   const text = trimmed(value);
-  if (text === '') return;
-  if (!EMAIL_RE.test(text)) errors[field] = 'Email invalid (ex. nume@firma.ro).';
+  if (text === '') {
+    if (required) errors[field] = `Completează ${label}.`;
+    return;
+  }
+  if (CONTROL_CHARS.test(text)) {
+    errors[field] = `${capitalize(label)} conține caractere nepermise.`;
+    return;
+  }
+  if (text.length < min) {
+    errors[field] = `${capitalize(label)}: minim ${min} caractere.`;
+    return;
+  }
+  if (text.length > max) {
+    errors[field] = `${capitalize(label)}: maxim ${max} caractere.`;
+    return;
+  }
+  if (!PERSON_NAME_RE.test(text)) {
+    errors[field] = `${capitalize(label)}: doar litere, spații și cratimă (-).`;
+  }
 }
 
 function checkPhone(errors, field, value, { required = false } = {}) {
@@ -185,7 +215,7 @@ function normalizeClient(form) {
 
 function validateDriver(form) {
   const errors = {};
-  checkText(errors, 'name', form.name, 'numele complet', { required: true, min: 3, max: 120 });
+  checkPersonName(errors, 'name', form.name, 'numele complet', { required: true, min: 3, max: 120 });
   checkPhone(errors, 'phone', form.phone, { required: true });
   checkEmail(errors, 'email', form.email);
   checkPattern(errors, 'license_number', form.license_number, 'numărul permisului', CODE_RE, 'Numărul permisului: doar litere, cifre, spațiu, . - /', 40);
@@ -341,8 +371,11 @@ export function validateEntityInput(entity, body, { partial = false } = {}) {
   if (!validator) return { errors: null, data: body };
 
   const sent = (key) => Object.prototype.hasOwnProperty.call(body ?? {}, key);
-  const normalized = validator.normalize(body ?? {});
-  const errors = validator.validate(normalized);
+  const raw = body ?? {};
+  // Validate the payload as sent (before trim) so leading spaces in email cannot be
+  // silently accepted the way a post-normalize check would.
+  const errors = validator.validate(raw);
+  const normalized = validator.normalize(raw);
 
   // The normalizers fill in every field they know about, which on a partial write would send
   // `null` for columns the caller never mentioned and blank them in the database.

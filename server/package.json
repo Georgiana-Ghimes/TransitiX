@@ -12,6 +12,7 @@
     "seed:demo": "node src/seed-demo.js",
     "seed:fleet": "node src/seed-fleet-data.js",
     "ensure:stefan": "node scripts/ensure-stefan-accounts.js",
+    "platform:bootstrap": "node src/bootstrap-platform-admin.js",
     "backfill:locations": "node src/backfill-locations.js",
     "geocode:locations": "node src/geocode-locations.js"
   },

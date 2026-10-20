@@ -32,6 +32,10 @@ const DRIVER_CASES = [
   { name: 'a', phone: '0722123456' },
   { name: 'Lucan Florin', phone: '1' },
   { name: 'Lucan Florin', phone: '0722123456', email: 'asd' },
+  { name: 'a#@!$%!@R%@!%R!@%!@', phone: '0722123456' },
+  { name: 'Ana-Maria Popescu', phone: '0722123456' },
+  { name: 'Lucan Florin', phone: '0722123456', email: '  sofer@firma.ro' },
+  { name: 'Lucan Florin', phone: '0722123456', email: 'sofer @firma.ro' },
   { name: 'Lucan Florin', phone: '0722123456', license_number: '-32133131' },
   { name: 'Lucan Florin', phone: '0722123456', license_category: 'text arbitrar' },
   { name: 'Lucan Florin', phone: '0722123456', license_number: 'B123456', license_expiry: '' },
@@ -122,6 +126,39 @@ describe('validateEntityInput', () => {
   it('still rejects a bad value inside a partial update', () => {
     const { errors } = validateEntityInput('Driver', { phone: '1' }, { partial: true });
     expect(errors.phone).toMatch(/Telefon invalid/);
+  });
+
+  it('rejects a driver name that is not a person name', () => {
+    const { errors } = validateEntityInput(
+      'Driver',
+      { name: 'a#@!$%!@R%@!%R!@%!@', phone: '0722123456' },
+      { partial: false },
+    );
+    expect(errors.name).toMatch(/doar litere/);
+  });
+
+  it('rejects a driver email that contains whitespace', () => {
+    const spaced = validateEntityInput(
+      'Driver',
+      { name: 'Lucan Florin', phone: '0722123456', email: 'sofer @firma.ro' },
+      { partial: false },
+    );
+    expect(spaced.errors.email).toMatch(/spații/);
+    const padded = validateEntityInput(
+      'Driver',
+      { name: 'Lucan Florin', phone: '0722123456', email: '  sofer@firma.ro' },
+      { partial: false },
+    );
+    expect(padded.errors.email).toMatch(/spații/);
+  });
+
+  it('accepts hyphenated Romanian driver names', () => {
+    const { errors } = validateEntityInput(
+      'Driver',
+      { name: 'Ana-Maria Popescu', phone: '0722123456' },
+      { partial: false },
+    );
+    expect(errors).toBeNull();
   });
 
   // The normalizers fill in every field they know about; sending those back on a partial write

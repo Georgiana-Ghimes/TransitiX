@@ -1,5 +1,10 @@
+import { withApiOrigin } from '@/lib/apiOrigin';
+
 const TOKEN_KEY = 'transitix_access_token';
 const REFRESH_KEY = 'transitix_refresh_token';
+const GOD_TOKEN_KEY = 'transitix_god_access_token';
+const GOD_REFRESH_KEY = 'transitix_god_refresh_token';
+const GOD_RETURN_KEY = 'transitix_god_return_to';
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -15,8 +20,32 @@ function setRefreshToken(token) {
   else localStorage.removeItem(REFRESH_KEY);
 }
 
+function stashGodSession() {
+  const access = localStorage.getItem(TOKEN_KEY);
+  const refresh = localStorage.getItem(REFRESH_KEY);
+  if (access) localStorage.setItem(GOD_TOKEN_KEY, access);
+  if (refresh) localStorage.setItem(GOD_REFRESH_KEY, refresh);
+}
+
+function clearGodStash() {
+  localStorage.removeItem(GOD_TOKEN_KEY);
+  localStorage.removeItem(GOD_REFRESH_KEY);
+}
+
+function restoreGodSession() {
+  const access = localStorage.getItem(GOD_TOKEN_KEY);
+  const refresh = localStorage.getItem(GOD_REFRESH_KEY);
+  clearGodStash();
+  if (!access) return false;
+  setToken(access);
+  if (refresh) setRefreshToken(refresh);
+  else setRefreshToken(null);
+  return true;
+}
+
 function skipAuthRefresh(path) {
-  return /^\/auth\/(login|register|refresh|logout|reset-password|verify-email|resend-verification|google|check-email|providers)/.test(path);
+  return /^\/auth\/(login|register|refresh|logout|reset-password|verify-email|resend-verification|google|check-email|providers)/.test(path)
+    || /^\/public\//.test(path);
 }
 
 let refreshInFlight = null;
@@ -26,7 +55,7 @@ async function refreshAccessToken() {
   refreshInFlight = (async () => {
     const refresh_token = localStorage.getItem(REFRESH_KEY);
     if (!refresh_token) throw new Error('No refresh token');
-    const res = await fetch('/api/auth/refresh', {
+    const res = await fetch(withApiOrigin('/api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token }),
@@ -66,7 +95,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData, sig
     opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(`/api${path}`, opts);
+  const res = await fetch(withApiOrigin(`/api${path}`), opts);
   let data = null;
   const text = await res.text();
   try {
@@ -102,7 +131,7 @@ async function request(path, { method = 'GET', body, headers = {}, formData, sig
  */
 async function downloadFile(url, opts, retried, retry, fallbackName) {
   const token = getToken();
-  const res = await fetch(url, {
+  const res = await fetch(withApiOrigin(url), {
     ...opts,
     headers: { ...(opts.headers ?? {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
@@ -401,7 +430,7 @@ export const api = {
     /** Local UBL XML, never claims SPV send. */
     async downloadUbl(id, retried = false) {
       const token = getToken();
-      const res = await fetch(`/api/invoices/${encodeURIComponent(id)}/ubl`, {
+      const res = await fetch(withApiOrigin(`/api/invoices/${encodeURIComponent(id)}/ubl`), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.status === 401 && !retried) {
@@ -490,7 +519,7 @@ export const api = {
       if (tripId) fd.append('trip_id', tripId);
       fd.append('document_type', document_type);
       for (const file of files) fd.append('files', file);
-      const res = await fetch('/api/driver-documents', {
+      const res = await fetch(withApiOrigin('/api/driver-documents'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -523,7 +552,7 @@ export const api = {
       fd.append('file', file);
       if (driver_id) fd.append('driver_id', driver_id);
       if (vehicle_id) fd.append('vehicle_id', vehicle_id);
-      const res = await fetch('/api/tachograph/import', {
+      const res = await fetch(withApiOrigin('/api/tachograph/import'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -590,7 +619,7 @@ export const api = {
     streamUrl() {
       const token = getToken();
       const qs = token ? `?access_token=${encodeURIComponent(token)}` : '';
-      return `/api/telematics/stream${qs}`;
+      return withApiOrigin(`/api/telematics/stream${qs}`);
     },
   },
   routes: {
@@ -751,6 +780,114 @@ export const api = {
       return request('/notifications/read', { method: 'DELETE' });
     },
   },
+  platform: {
+    me() {
+      return request('/platform/me');
+    },
+    companies({ ensureApps = false } = {}) {
+      const q = ensureApps ? '?ensure_apps=1' : '';
+      return request(`/platform/companies${q}`);
+    },
+    ensureApps() {
+      return request('/platform/apps/ensure', { method: 'POST' });
+    },
+    createCompany(body) {
+      return request('/platform/companies', { method: 'POST', body });
+    },
+    stats() {
+      return request('/platform/stats');
+    },
+    users({ q, companyId } = {}) {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (companyId) params.set('company_id', companyId);
+      const qs = params.toString();
+      return request(`/platform/users${qs ? `?${qs}` : ''}`);
+    },
+    setUserActive(userId, is_active) {
+      return request(`/platform/users/${encodeURIComponent(userId)}/active`, {
+        method: 'PUT',
+        body: { is_active: Boolean(is_active) },
+      });
+    },
+    resetUserPassword(userId) {
+      return request(`/platform/users/${encodeURIComponent(userId)}/reset-password`, {
+        method: 'POST',
+      });
+    },
+    company(id) {
+      return request(`/platform/companies/${encodeURIComponent(id)}`);
+    },
+    patchCompany(id, body) {
+      return request(`/platform/companies/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body,
+      });
+    },
+    putFeatureFlags(companyId, feature_flags) {
+      return request(`/platform/companies/${encodeURIComponent(companyId)}/feature-flags`, {
+        method: 'PUT',
+        body: { feature_flags },
+      });
+    },
+    companyUsers(id) {
+      return request(`/platform/companies/${encodeURIComponent(id)}/users`);
+    },
+    inviteCompanyUser(id, body) {
+      return request(`/platform/companies/${encodeURIComponent(id)}/users/invite`, {
+        method: 'POST',
+        body,
+      });
+    },
+    leads({ status } = {}) {
+      const q = status ? `?status=${encodeURIComponent(status)}` : '';
+      return request(`/platform/leads${q}`);
+    },
+    patchLead(id, body) {
+      return request(`/platform/leads/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body,
+      });
+    },
+    /** Enter a customer company as its admin; stashes GOD tokens + return path for exit. */
+    async impersonate(companyId, { returnTo } = {}) {
+      stashGodSession();
+      const back = returnTo
+        || (typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : '/platform');
+      try {
+        localStorage.setItem(GOD_RETURN_KEY, back.startsWith('/platform') ? back : '/platform');
+      } catch { /* ignore */ }
+      const data = await request(`/platform/companies/${encodeURIComponent(companyId)}/impersonate`, {
+        method: 'POST',
+      });
+      setToken(data.access_token);
+      setRefreshToken(data.refresh_token);
+      return data;
+    },
+    /** Restore stashed GOD session and return to the page that started impersonation. */
+    exitImpersonation() {
+      let returnTo = '/platform';
+      try {
+        const stored = localStorage.getItem(GOD_RETURN_KEY);
+        localStorage.removeItem(GOD_RETURN_KEY);
+        if (stored && stored.startsWith('/platform')) returnTo = stored;
+      } catch { /* ignore */ }
+      if (!restoreGodSession()) {
+        setToken(null);
+        setRefreshToken(null);
+        window.location.href = '/login';
+        return;
+      }
+      window.location.href = returnTo;
+    },
+  },
+  public: {
+    requestAccess(body) {
+      return request('/public/request-access', { method: 'POST', body });
+    },
+  },
   search(q, limit = 5) {
     const params = new URLSearchParams({ q, limit: String(limit) });
     return request(`/search?${params.toString()}`);
@@ -842,6 +979,7 @@ export const api = {
       }
       setToken(null);
       setRefreshToken(null);
+      clearGodStash();
       if (redirectTo !== false) {
         window.location.href = typeof redirectTo === 'string' ? redirectTo : '/login';
       }
@@ -914,7 +1052,7 @@ export const api = {
       const fd = new FormData();
       fd.append('file', file);
       if (dryRun) fd.append('dry_run', 'true');
-      const res = await fetch('/api/commercial/observation-codes/import', {
+      const res = await fetch(withApiOrigin('/api/commercial/observation-codes/import'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
@@ -1055,7 +1193,7 @@ export const api = {
     },
     async exportXlsx({ template_id, aviz_ids, allow_unconfirmed = false }, retried = false) {
       const token = getToken();
-      const res = await fetch('/api/avize/export', {
+      const res = await fetch(withApiOrigin('/api/avize/export'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1111,7 +1249,7 @@ export const api = {
     },
     async zipExport({ template_id, aviz_ids }, retried = false) {
       const token = getToken();
-      const res = await fetch('/api/avize/zip', {
+      const res = await fetch(withApiOrigin('/api/avize/zip'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

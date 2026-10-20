@@ -80,6 +80,37 @@ function publicUser(row) {
   };
 }
 
+/** Attach tenant feature_flags so the UI can hide modules without an extra round-trip. */
+async function publicUserWithCompany(row, req = null) {
+  const base = publicUser(row);
+  if (!row?.company_id) return { ...base, company: null };
+  const company = await query(
+    `SELECT id, name, slug, is_platform, feature_flags
+     FROM companies WHERE id = $1`,
+    [row.company_id],
+  );
+  const c = company.rows[0];
+  if (!c) return { ...base, company: null };
+  const out = {
+    ...base,
+    company: {
+      id: c.id,
+      name: c.name,
+      slug: c.slug || null,
+      is_platform: Boolean(c.is_platform),
+      feature_flags: c.feature_flags && typeof c.feature_flags === 'object' ? c.feature_flags : {},
+    },
+  };
+  if (req?.user?.impersonator_id) {
+    out.impersonation = {
+      active: true,
+      actor_id: req.user.impersonator_id,
+      actor_email: req.user.impersonator_email || null,
+    };
+  }
+  return out;
+}
+
 function httpError(status, message, extra = {}) {
   const err = new Error(message);
   err.status = status;
@@ -242,7 +273,7 @@ router.post('/login', attemptLimit(), async (req, res) => {
     await query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
     await auditSecurity(req, { user, action: 'login' });
     const tokens = await issueTokens(user, req);
-    res.json({ ...tokens, user: publicUser(user) });
+    res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     failAuth(res, err, 'Autentificarea nu a reușit. Încearcă din nou.');
   }
@@ -364,7 +395,7 @@ router.post('/verify-email', attemptLimit(), async (req, res) => {
     }
     await auditSecurity(req, { user, action: 'login', detail: { email_verified: true } });
     const tokens = await issueTokens(user, req);
-    res.json({ ...tokens, user: publicUser(user) });
+    res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     failAuth(res, err, 'Confirmarea nu a reușit. Încearcă din nou.');
   }
@@ -450,7 +481,7 @@ router.post('/google', attemptLimit(), async (req, res) => {
       )).rows[0];
       await auditSecurity(req, { user: updated, action: 'login', detail: { provider: 'google' } });
       const tokens = await issueTokens(updated, req);
-      return res.json({ ...tokens, user: publicUser(updated) });
+      return res.json({ ...tokens, user: await publicUserWithCompany(updated) });
     }
 
     if (!signupEnabled()) {
@@ -520,7 +551,7 @@ router.post('/google', attemptLimit(), async (req, res) => {
     await query(`UPDATE users SET last_login = NOW() WHERE id = $1`, [user.id]);
     await auditSecurity(req, { user, action: 'create', detail: { signup: 'google' } });
     const tokens = await issueTokens(user, req);
-    res.status(201).json({ ...tokens, user: publicUser(user), created: true });
+    res.status(201).json({ ...tokens, user: await publicUserWithCompany(user), created: true });
   } catch (err) {
     if (isPgUniqueViolation(err)) {
       return res.status(409).json({ message: 'Contul Google este deja legat de alt utilizator.' });
@@ -567,7 +598,7 @@ router.post('/change-password', authRequired, attemptLimit(), async (req, res) =
       detail: { password_changed: true, revoked, was_temporary: user.must_change_password },
     });
     const tokens = await issueTokens(updated, req);
-    res.json({ ...tokens, user: publicUser(updated) });
+    res.json({ ...tokens, user: await publicUserWithCompany(updated) });
   } catch (err) {
     failAuth(res, err, 'Parola nu a putut fi schimbată. Încearcă din nou.');
   }
@@ -577,7 +608,7 @@ router.get('/me', authRequired, async (req, res) => {
   try {
     const result = await query(`SELECT * FROM users WHERE id = $1`, [req.user.id]);
     if (!result.rows[0]) return res.status(401).json({ message: 'Utilizatorul nu există.' });
-    res.json(publicUser(result.rows[0]));
+    res.json(await publicUserWithCompany(result.rows[0], req));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Nu am putut încărca datele contului.' });
@@ -619,7 +650,7 @@ router.post('/refresh', async (req, res) => {
       await touchSession(payload.jti);
       await revokeSession(payload.jti);
     }
-    res.json({ ...tokens, user: publicUser(user) });
+    res.json({ ...tokens, user: await publicUserWithCompany(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Reînnoirea sesiunii nu a reușit. Conectează-te din nou.' });

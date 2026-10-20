@@ -1272,6 +1272,8 @@ ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS net_weight_kg NUMERIC(12,2);
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallet_weight_kg NUMERIC(12,2);
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS pallets INT;
 ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS quantity_unit TEXT;
+-- Sales order reference on Baumit PSL avize (not the goods document number).
+ALTER TABLE aviz_documents ADD COLUMN IF NOT EXISTS numar_sor TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_batch ON aviz_documents(company_id, batch_id);
 CREATE INDEX IF NOT EXISTS idx_aviz_documents_review
@@ -1437,7 +1439,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
   user_role TEXT,
   action TEXT NOT NULL
     CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
-                      'sessions_revoked', 'export', 'import', 'run')),
+                      'sessions_revoked', 'export', 'import', 'run',
+                      'impersonate_start', 'impersonate_end')),
   entity TEXT NOT NULL,
   entity_id UUID,
   label TEXT,
@@ -1455,6 +1458,52 @@ CREATE INDEX IF NOT EXISTS idx_audit_events_entity
   ON audit_events(company_id, entity, entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_events_user
   ON audit_events(company_id, user_id, created_at DESC);
+
+-- Allow platform GOD impersonation events.
+ALTER TABLE audit_events DROP CONSTRAINT IF EXISTS audit_events_action_check;
+ALTER TABLE audit_events ADD CONSTRAINT audit_events_action_check
+  CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
+                    'sessions_revoked', 'export', 'import', 'run',
+                    'impersonate_start', 'impersonate_end'));
+
+-- Platform (GOD) admin — not a customer tenant admin.
+-- Customer "admin" stays company-scoped. Platform operators live on a dedicated
+-- is_platform company so company_id stays NOT NULL and existing tenancy filters stay safe.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_platform BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS feature_flags JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE UNIQUE INDEX IF NOT EXISTS companies_one_platform
+  ON companies ((true)) WHERE is_platform = TRUE;
+
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check
+  CHECK (role IN ('admin', 'dispatcher', 'driver', 'finance', 'platform_admin'));
+
+-- Public URL slug alongside UUID PK (e.g. /txdemo7k2m/avize).
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS companies_slug_uniq
+  ON companies (slug) WHERE slug IS NOT NULL;
+
+-- Lead form "Solicită acces" — GOD converts these into companies; never auto-provisions.
+CREATE TABLE IF NOT EXISTS access_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name TEXT NOT NULL,
+  contact_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  message TEXT,
+  preferred_profile TEXT NOT NULL DEFAULT 'full'
+    CHECK (preferred_profile IN ('full', 'documents')),
+  status TEXT NOT NULL DEFAULT 'new'
+    CHECK (status IN ('new', 'contacted', 'converted', 'dismissed')),
+  notes TEXT,
+  converted_company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_access_leads_status_created
+  ON access_leads (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_access_leads_email
+  ON access_leads (LOWER(email));
 
 -- Self sign-up, Google sign-in and accounts an admin adds by hand.
 --

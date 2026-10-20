@@ -233,7 +233,7 @@ export const ENTITY_MAP = {
     writable: [
       'file_url', 'original_filename', 'status', 'extracted_data',
       'numar_tpo', 'data_efectuare_cursa', 'data_facturare', 'valoare_tpo', 'numar_auto',
-      'ruta_transport', 'tip_marfa', 'cantitate_marfa', 'numar_document_marfa',
+      'ruta_transport', 'tip_marfa', 'cantitate_marfa', 'numar_document_marfa', 'numar_sor',
       'numar_curse', 'taxe_suplimentare', 'km_parcursi', 'tarif_km', 'observatii',
       'ruta_display', 'trip_id',
       'batch_id', 'document_type', 'ocr_profile_id', 'ocr_confidence',

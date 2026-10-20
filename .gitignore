@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 !server/.env.example
+scripts/vercel-pc.env
+!scripts/vercel-pc.env.example
 
 # Logs
 /logs
@@ -54,3 +56,7 @@ __pycache__/
 /tools/mistral-ocr/*.png
 /tools/mistral-ocr/*.jpg
 /tools/mistral-ocr/out/
+
+# Local tunnel binary
+tools/cloudflared.exe
+

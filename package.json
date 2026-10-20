@@ -36,6 +36,7 @@
     "db:seed": "npm run seed --prefix server",
     "db:seed:fleet": "npm run seed:fleet --prefix server",
     "db:ensure:stefan": "npm run ensure:stefan --prefix server",
+    "platform:bootstrap": "npm run platform:bootstrap --prefix server",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:api": "vitest run --config server/vitest.config.js",

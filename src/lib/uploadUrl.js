@@ -1,3 +1,5 @@
+import { withApiOrigin } from '@/lib/apiOrigin';
+
 const TOKEN_KEY = 'transitix_access_token';
 
 function readToken() {
@@ -12,11 +14,11 @@ function readToken() {
 export function withAccessToken(url) {
   if (!url || typeof url !== 'string') return url;
   if (!url.startsWith('/uploads/')) return url;
-  if (url.includes('access_token=')) return url;
+  if (url.includes('access_token=')) return withApiOrigin(url);
   const token = readToken();
-  if (!token) return url;
+  if (!token) return withApiOrigin(url);
   const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}access_token=${encodeURIComponent(token)}`;
+  return withApiOrigin(`${url}${sep}access_token=${encodeURIComponent(token)}`);
 }
 
 /** True when the response looks like an uploaded file, not an HTML SPA fallback. */
@@ -37,7 +39,7 @@ export async function fetchUploadBlob(url) {
   if (!url || typeof url !== 'string') return null;
   const clean = url.split('?')[0];
   const token = readToken();
-  const res = await fetch(clean, {
+  const res = await fetch(withApiOrigin(clean), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   // A 200 HTML shell (SPA catch-all / wrong path) must not become a blob iframe —

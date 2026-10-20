@@ -376,3 +376,20 @@ export async function getComputedNotifications(companyId, dismissalState = new M
       is_read: Boolean(dismissalState.get(item.id)?.is_read),
     }));
 }
+
+/**
+ * Inbox order: unread first, then newest. Computed expiry alerts all stamp created_at as
+ * "now" on every rebuild, so a date-only sort interleaved newly unread rows with older
+ * read ones that happened to rebuild in the same second.
+ */
+export function sortInboxNotifications(items) {
+  return [...(items || [])].sort((a, b) => {
+    const unreadDelta = Number(Boolean(a?.is_read)) - Number(Boolean(b?.is_read));
+    if (unreadDelta !== 0) return unreadDelta;
+    const ta = new Date(a?.created_at || a?.created_date || 0).getTime();
+    const tb = new Date(b?.created_at || b?.created_date || 0).getTime();
+    const safeA = Number.isFinite(ta) ? ta : 0;
+    const safeB = Number.isFinite(tb) ? tb : 0;
+    return safeB - safeA;
+  });
+}
