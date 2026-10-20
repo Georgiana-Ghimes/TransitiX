@@ -230,7 +230,6 @@ const FULL_ONLY = [
         { term: 'Flotă și Șoferi', text: 'Datele mașinilor și ale echipei, cu avertizări la expirarea ITP, RCA și permis.' },
         { term: 'Dispecerat și Planificare', text: 'Alocarea zilnică a curselor.' },
         { term: 'Financiar', text: 'Facturi ca ciornă, cu numerotare ordonată. Trimiterea la ANAF nu e legată încă.' },
-        { term: 'Verificări date', text: 'Lista problemelor de date pe care le vede programul, cu ce se strică dacă rămân.' },
         { term: 'Jurnal modificări', text: 'Cine ce a schimbat. Disponibil numai adminului.' },
       ]),
       note('Tracking GPS și Planning AI sunt demonstrative, cu date simulate. Sunt marcate ca atare în meniu.'),

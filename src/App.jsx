@@ -51,7 +51,6 @@ const LoadPlanner2D = lazy(() => import('@/loadplanner/LoadPlannerPage'));
 const PlanningAI = lazy(() => import('@/pages/PlanningAI'));
 const Finance = lazy(() => import('@/pages/Finance'));
 const Documents = lazy(() => import('@/pages/Documents'));
-const Checks = lazy(() => import('@/pages/Checks'));
 const Commercial = lazy(() => import('@/pages/Commercial'));
 const Audit = lazy(() => import('@/pages/Audit'));
 const PlatformAdmin = lazy(() => import('@/pages/PlatformAdmin'));
@@ -115,7 +114,6 @@ function OfficeRoutes() {
       <Route path="/documents" element={<Documents />} />
       <Route path="/avize" element={<AvizeReports />} />
       <Route path="/reports" element={<Reports />} />
-      <Route path="/checks" element={<Checks />} />
       <Route path="/commercial" element={<Commercial />} />
       <Route path="/audit" element={<Audit />} />
       <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />

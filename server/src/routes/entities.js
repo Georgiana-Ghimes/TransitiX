@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool, query, withTransaction } from '../db.js';
 import { authRequired, officeRequired } from '../middleware/auth.js';
+import { requireEntityModule } from '../middleware/requireModule.js';
 import {
   ENTITY_MAP,
   parseOrder,
@@ -34,6 +35,8 @@ import { firstErrorMessage, validateEntityInput } from '../lib/validation/entity
 const router = Router();
 
 router.use(authRequired);
+// GOD feature_flags.modules — entity CRUD cannot bypass a disabled module.
+router.use('/:entity', requireEntityModule);
 
 function requireEntityAction(action) {
   return (req, res, next) => {

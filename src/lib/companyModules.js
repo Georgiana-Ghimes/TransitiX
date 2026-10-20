@@ -22,10 +22,10 @@ export const PATH_MODULE = {
   '/documents': 'documents_expiry',
   '/avize': 'avize',
   '/reports': 'reports',
+  '/zone-map': 'zone_map',
   '/commercial': 'commercial',
   '/users': 'users_admin',
   '/audit': 'audit',
-  '/checks': 'avize',
 };
 
 export function companyModules(userOrCompany) {

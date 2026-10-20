@@ -1071,22 +1071,6 @@ export const api = {
       return data;
     },
   },
-  validation: {
-    /** What each rule looks for, so the screen explains itself from one source. */
-    rules() {
-      return request('/validation/rules');
-    },
-    findings({ window_days, include_dismissed } = {}) {
-      const params = new URLSearchParams();
-      if (window_days) params.set('window_days', String(window_days));
-      if (include_dismissed) params.set('include_dismissed', 'true');
-      const qs = params.toString();
-      return request(`/validation/findings${qs ? `?${qs}` : ''}`);
-    },
-    dismiss(key) {
-      return request('/validation/findings/dismiss', { method: 'POST', body: { key } });
-    },
-  },
   reports: {
     /** The fields a template may draw on, grouped for the column picker. */
     sources() {

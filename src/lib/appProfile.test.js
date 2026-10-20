@@ -23,7 +23,6 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/reports/export')).toBe(true);
     expect(isCompanionOfficePath('/platform')).toBe(true);
     expect(isCompanionOfficePath('/settings')).toBe(true);
-    expect(isCompanionOfficePath('/zone-map')).toBe(true);
     expect(isCompanionOfficePath('/fleet')).toBe(true);
     expect(isCompanionOfficePath('/fleet/itp')).toBe(true);
     expect(isCompanionOfficePath('/drivers')).toBe(true);
@@ -31,12 +30,20 @@ describe('appProfile', () => {
     expect(isCompanionOfficePath('/users')).toBe(true);
     expect(isCompanionOfficePath('/trips')).toBe(false);
     expect(isCompanionOfficePath('/finance')).toBe(false);
-    const withTrips = {
+    // Harta zonelor is a GOD module, not a hard companion path.
+    expect(isCompanionOfficePath('/zone-map')).toBe(false);
+    const withZones = {
       role: 'admin',
-      company: { feature_flags: { modules: { trips: true, dispatch: false } } },
+      company: {
+        feature_flags: {
+          app_profile: 'documents',
+          modules: { zone_map: true, trips: true, dispatch: false },
+        },
+      },
     };
-    expect(isCompanionOfficePath('/trips', withTrips)).toBe(true);
-    expect(isCompanionOfficePath('/dispatch', withTrips)).toBe(false);
+    expect(isCompanionOfficePath('/zone-map', withZones)).toBe(true);
+    expect(isCompanionOfficePath('/trips', withZones)).toBe(true);
+    expect(isCompanionOfficePath('/dispatch', withZones)).toBe(false);
   });
 
   it('companionTagline defaults for documents profile', async () => {

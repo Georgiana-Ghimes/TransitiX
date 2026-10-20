@@ -10,6 +10,8 @@ import { ensurePlatformCompany } from '../lib/platform/company.js';
 import {
   ensureProductCompanies,
   mergeModules,
+  materializeFeatureFlags,
+  modulesNeedMaterialize,
 } from '../lib/platform/ensureProductCompanies.js';
 import { allocateUniqueSlug, tenantAppKey } from '../lib/platform/slug.js';
 import { durationMs, newSessionId, recordSession } from '../lib/sessions.js';
@@ -99,7 +101,12 @@ router.get('/companies/:id', async (req, res) => {
     const id = String(req.params.id || '').trim();
     const result = await query(`${COMPANY_SELECT} AND c.id = $1`, [id]);
     if (!result.rows[0]) return res.status(404).json({ message: 'Company not found' });
-    res.json(result.rows[0]);
+    const row = result.rows[0];
+    // Display-only: fill missing module keys in the response. Persist only via Salvează (PATCH).
+    if (modulesNeedMaterialize(row.feature_flags)) {
+      row.feature_flags = materializeFeatureFlags(row.feature_flags || {});
+    }
+    res.json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to load company' });
@@ -211,13 +218,14 @@ router.put('/companies/:id/feature-flags', async (req, res) => {
       return res.status(400).json({ message: 'feature_flags must be an object' });
     }
 
+    const materialized = materializeFeatureFlags(flags);
     const result = await query(
       `UPDATE companies
        SET feature_flags = $2::jsonb,
            updated_at = NOW()
        WHERE id = $1 AND is_platform = FALSE
        RETURNING id, name, slug, feature_flags`,
-      [id, JSON.stringify(flags)],
+      [id, JSON.stringify(materialized)],
     );
     if (!result.rows[0]) {
       return res.status(404).json({ message: 'Company not found' });
@@ -288,7 +296,7 @@ router.patch('/companies/:id', async (req, res) => {
         return res.status(400).json({ message: 'feature_flags must be an object' });
       }
       fields.push(`feature_flags = $${i++}`);
-      values.push(JSON.stringify(body.feature_flags));
+      values.push(JSON.stringify(materializeFeatureFlags(body.feature_flags)));
     }
 
     if (!fields.length) {

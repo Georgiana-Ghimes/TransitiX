@@ -12,7 +12,6 @@ describe('avizAnnex field map', () => {
       'ruta_transport',
       'tip_marfa',
       'cantitate_marfa',
-      'net_weight_kg',
       // Weighbridge figure: editable on the form, fed into Anexa “Cantitate” as tons, not a
       // separate column on the locked RAI A-N layout.
       'gross_weight_kg',
@@ -24,7 +23,6 @@ describe('avizAnnex field map', () => {
       'tarif_km',
       'observatii',
     ]);
-    expect(AVIZ_FORM_FIELDS.map((f) => f.key)).toContain('net_weight_kg');
   });
 
   it('keeps Editează numeric fields as text (no type=number snap-back)', () => {

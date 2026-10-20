@@ -3,6 +3,8 @@ import {
   PRODUCT_APPS,
   allocateProductCui,
   ensureProductCompanies,
+  materializeFeatureFlags,
+  modulesNeedMaterialize,
 } from './ensureProductCompanies.js';
 
 function mockQuery(rowsBySql = {}) {
@@ -20,6 +22,38 @@ function mockQuery(rowsBySql = {}) {
   queryFn.calls = calls;
   return queryFn;
 }
+
+describe('materializeFeatureFlags', () => {
+  it('fills documents defaults including fleet when modules missing', () => {
+    expect(modulesNeedMaterialize({ app_key: 'rai_documents', app_profile: 'documents' })).toBe(true);
+    const f = materializeFeatureFlags({ app_key: 'rai_documents', app_profile: 'documents' });
+    expect(f.modules.avize).toBe(true);
+    expect(f.modules.reports).toBe(true);
+    expect(f.modules.zone_map).toBe(true);
+    expect(f.modules.driver_upload).toBe(true);
+    expect(f.modules.fleet).toBe(true);
+    expect(f.modules.users_admin).toBe(true);
+    expect(f.modules.dispatch).toBe(false);
+  });
+
+  it('infers documents profile from app_key alone (no fail-open to full TMS)', () => {
+    const f = materializeFeatureFlags({ app_key: 'rai_documents' });
+    expect(f.app_profile).toBe('documents');
+    expect(f.modules.dispatch).toBe(false);
+    expect(f.modules.avize).toBe(true);
+    expect(f.modules.commercial).toBe(false);
+  });
+
+  it('keeps explicit module overrides', () => {
+    const f = materializeFeatureFlags({
+      app_profile: 'documents',
+      modules: { fleet: false, dispatch: true },
+    });
+    expect(f.modules.fleet).toBe(false);
+    expect(f.modules.dispatch).toBe(true);
+    expect(f.modules.avize).toBe(true);
+  });
+});
 
 describe('allocateProductCui', () => {
   it('returns preferred CUI when free', async () => {

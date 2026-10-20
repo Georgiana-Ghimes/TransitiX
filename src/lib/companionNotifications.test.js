@@ -16,19 +16,16 @@ describe('companionNotificationLink', () => {
 });
 
 describe('isCompanionRelevantNotification', () => {
-  it('keeps driver uploads and fleet MTMA alerts', () => {
+  it('keeps driver uploads and document expiry', () => {
     expect(isCompanionRelevantNotification({
       type: 'driver_upload', link: '/avize',
-    })).toBe(true);
-    expect(isCompanionRelevantNotification({
-      type: 'data_issue', link: '/fleet',
     })).toBe(true);
     expect(isCompanionRelevantNotification({
       type: 'document_expiry', link: '/vehicles',
     })).toBe(true);
   });
 
-  it('drops trip / CMR / client alerts', () => {
+  it('drops trip / CMR / client alerts and retired data_issue', () => {
     expect(isCompanionRelevantNotification({
       type: 'trip_status', link: '/trips/1',
     })).toBe(false);
@@ -44,14 +41,8 @@ describe('isCompanionRelevantNotification', () => {
     expect(isCompanionRelevantNotification({
       type: 'route_exception', link: '/live',
     })).toBe(false);
-  });
-
-  it('drops data issues that only open Curse or Controale', () => {
     expect(isCompanionRelevantNotification({
-      type: 'data_issue', link: '/trips/abc',
-    })).toBe(false);
-    expect(isCompanionRelevantNotification({
-      type: 'data_issue', link: '/checks',
+      type: 'data_issue', link: '/fleet',
     })).toBe(false);
   });
 

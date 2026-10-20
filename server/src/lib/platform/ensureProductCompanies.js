@@ -6,6 +6,7 @@ import { PRODUCT_SLUGS } from './slug.js';
 const ALL_MODULE_KEYS = [
   'avize',
   'reports',
+  'zone_map',
   'driver_upload',
   'dispatch',
   'trips',
@@ -24,7 +25,9 @@ const ALL_MODULE_KEYS = [
 ];
 
 /** Modules on for the documents companion; everything else stays explicit false. */
-const DOCUMENTS_ON = new Set(['avize', 'reports', 'driver_upload', 'fleet']);
+const DOCUMENTS_ON = new Set([
+  'avize', 'reports', 'zone_map', 'driver_upload', 'fleet', 'users_admin',
+]);
 
 function modulesForProfile(profileKey) {
   const modules = {};
@@ -78,6 +81,36 @@ export async function allocateProductCui(queryFn, profile) {
     if (!hit.rows[0]) return cui;
   }
   return `${profile.defaultCui}-${Date.now().toString(36)}`;
+}
+
+/**
+ * Canonical feature_flags for a company row (app_key / profile / portal + full modules map).
+ * Missing module keys take the profile default; explicit false stays off.
+ */
+export function materializeFeatureFlags(raw = {}) {
+  const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  // Prefer explicit app_profile; else infer documents from app_key so tag-only RAI
+  // rows never fail-open as full TMS (all modules on).
+  let profileKey = 'full';
+  if (src.app_profile === 'documents' || src.app_key === PRODUCT_APPS.documents.appKey) {
+    profileKey = 'documents';
+  } else if (src.app_profile === 'full') {
+    profileKey = 'full';
+  }
+  const app = PRODUCT_APPS[profileKey];
+  return {
+    app_key: src.app_key || app.appKey,
+    app_profile: profileKey,
+    portal_url: String(src.portal_url || `/${app.slug}`).trim() || `/${app.slug}`,
+    modules: mergeModules(profileKey, src.modules),
+  };
+}
+
+/** True when modules were never persisted (tag-only app_key / empty {}). */
+export function modulesNeedMaterialize(raw) {
+  const mods = raw?.modules;
+  if (!mods || typeof mods !== 'object' || Array.isArray(mods)) return true;
+  return Object.keys(mods).length === 0;
 }
 
 /**

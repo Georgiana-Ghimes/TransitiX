@@ -11,7 +11,6 @@ import { isCompanionOfficePath, isDocumentsProfile } from './appProfile.js';
 const COMPANION_TYPES = new Set([
   'driver_upload',
   'document_expiry',
-  'data_issue',
   'system',
 ]);
 
@@ -46,7 +45,6 @@ export function isCompanionRelevantNotification(item) {
   // No destination (or only dead full-TMS destinations) → drop.
   if (!path) return item.type === 'system';
   if (path === '/drivers' || path.startsWith('/drivers/')) return false;
-  if (path === '/checks' || path.startsWith('/checks/')) return false;
   if (path === '/trips' || path.startsWith('/trips/')) return false;
 
   return isCompanionOfficePath(path);

@@ -9,7 +9,7 @@ import { isPathAllowedForCompany, moduleForPath } from './companyModules.js';
 export const COMPANION_OFFICE_PATHS = [
   '/avize',
   '/reports',
-  '/zone-map',
+  // /zone-map is a GOD module (zone_map), not a hard companion path
   '/fleet',
   '/drivers',
   '/settings',

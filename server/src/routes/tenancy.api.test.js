@@ -92,7 +92,7 @@ describe('writing across companies', () => {
 
 describe('roles', () => {
   it('keeps a driver out of the office screens', async () => {
-    for (const path of ['/api/reports/sources', '/api/validation/rules', '/api/avize/templates']) {
+    for (const path of ['/api/reports/sources', '/api/avize/templates']) {
       expect((await api().get(path).set(auth(mine.driverToken))).status, path).toBe(403);
     }
   });

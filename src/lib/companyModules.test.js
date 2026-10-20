@@ -18,6 +18,7 @@ describe('companyModules', () => {
     expect(moduleForPath('/fleet')).toBe('fleet');
     expect(moduleForPath('/fleet/itp')).toBe('fleet');
     expect(moduleForPath('/drivers')).toBe('fleet');
+    expect(moduleForPath('/zone-map')).toBe('zone_map');
     expect(moduleForPath('/settings')).toBe(null);
   });
 
@@ -26,6 +27,10 @@ describe('companyModules', () => {
     expect(isModuleEnabled(raiUser, 'dispatch')).toBe(false);
     expect(isPathAllowedForCompany(raiUser, '/avize')).toBe(true);
     expect(isPathAllowedForCompany(raiUser, '/gps')).toBe(false);
+    expect(isPathAllowedForCompany(
+      { ...raiUser, company: { feature_flags: { ...raiUser.company.feature_flags, modules: { ...raiUser.company.feature_flags.modules, zone_map: false } } } },
+      '/zone-map',
+    )).toBe(false);
   });
 
   it('platform admin bypasses module gates', () => {

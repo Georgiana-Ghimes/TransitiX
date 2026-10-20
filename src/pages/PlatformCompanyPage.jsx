@@ -5,7 +5,7 @@ import {
   ArrowLeft, Ban, Copy, KeyRound, Loader2, Settings2, ToggleLeft, Building2, LogIn, RefreshCw, Users,
 } from 'lucide-react';
 import { friendlyErrorMessage, notifyError, notifySuccess } from '@/lib/notify';
-import { APP_PROFILES, MODULE_FLAGS, normalizeFlags } from '@/lib/platformFlags';
+import { APP_PROFILES, modulesByGroup, normalizeFlags } from '@/lib/platformFlags';
 import { demoAccountsForAppKey } from '@/lib/demoTenantAccounts';
 import { homePathForRole, postLoginPath } from '@/lib/roles';
 
@@ -26,6 +26,12 @@ const ROLE_OPTIONS = [
 function tabFromSearch(params) {
   const t = params.get('tab');
   return TABS.some((x) => x.id === t) ? t : 'overview';
+}
+
+/** DB never got a modules map (tag-only app_key/profile) — UI shows defaults until Salvează. */
+function modulesMissingInDb(raw) {
+  const m = raw?.modules;
+  return !m || typeof m !== 'object' || Array.isArray(m) || Object.keys(m).length === 0;
 }
 
 export default function PlatformCompanyPage() {
@@ -74,7 +80,8 @@ export default function PlatformCompanyPage() {
       setFlags(nextFlags);
       setBaseline({
         form: nextForm,
-        flags: JSON.stringify(nextFlags),
+        // Force dirty when defaults are only in the UI — Salvează writes them to Postgres.
+        flags: modulesMissingInDb(row.feature_flags) ? '' : JSON.stringify(nextFlags),
       });
     } catch (err) {
       setError(friendlyErrorMessage(err));
@@ -107,7 +114,7 @@ export default function PlatformCompanyPage() {
     if (tab === 'users') loadUsers();
   }, [tab, id]);
 
-  const modulesForProfile = useMemo(() => MODULE_FLAGS, []);
+  const moduleGroups = useMemo(() => modulesByGroup(), []);
 
   const dirty = useMemo(() => {
     if (!baseline) return false;
@@ -177,40 +184,19 @@ export default function PlatformCompanyPage() {
 
   const setProfile = (profileKey) => {
     const meta = APP_PROFILES[profileKey];
-    setFlags((prev) => normalizeFlags({
-      ...prev,
+    // Local only — Salvează persists. Resets modules to profile defaults.
+    setFlags(normalizeFlags({
       app_profile: profileKey,
       app_key: meta.appKey,
-      portal_url: prev.portal_url || meta.defaultPortalUrl,
+      portal_url: flags.portal_url || meta.defaultPortalUrl,
     }, profileKey));
   };
 
-  const saveModulesNow = async (nextFlags) => {
-    setSaving(true);
-    try {
-      const updated = await api.platform.patchCompany(id, {
-        feature_flags: nextFlags,
-      });
-      setCompany(updated);
-      setFlags(normalizeFlags(updated.feature_flags));
-      notifySuccess('Module salvate', 'Scrise pe companies.feature_flags');
-    } catch (err) {
-      notifyError('Salvare eșuată', friendlyErrorMessage(err));
-      await load();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggleModuleAndSave = (key) => {
-    setFlags((prev) => {
-      const next = {
-        ...prev,
-        modules: { ...prev.modules, [key]: !prev.modules[key] },
-      };
-      void saveModulesNow(next);
-      return next;
-    });
+  const toggleModule = (key) => {
+    setFlags((prev) => ({
+      ...prev,
+      modules: { ...prev.modules, [key]: !prev.modules[key] },
+    }));
   };
 
   const inviteUser = async (e) => {
@@ -423,36 +409,77 @@ export default function PlatformCompanyPage() {
       )}
 
       {tab === 'modules' && (
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 space-y-2">
-          <p className="text-sm text-slate-500 mb-3">
-            Catalogul complet TMS. Valorile se scriu pe firmă în Postgres (
-            <code className="text-[11px] bg-slate-100 px-1 rounded">companies.feature_flags.modules</code>
-            ). Pe tenant, modulele on apar în meniu după refresh / re-login.
-          </p>
-          {modulesForProfile.map((m) => {
-            const on = flags.modules[m.key] !== false;
-            const atypical = flags.app_profile === 'documents' && !m.defaultOn.includes('documents') && on;
-            return (
-            <label
-              key={m.key}
-              className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 cursor-pointer"
-            >
-              <span className="text-sm text-slate-700">
-                {m.label}
-                {atypical ? (
-                  <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-700">extra</span>
-                ) : null}
-              </span>
-              <input
-                type="checkbox"
-                checked={on}
-                disabled={saving}
-                onChange={() => toggleModuleAndSave(m.key)}
-                className="w-4 h-4 accent-[#0A2B4E]"
-              />
-            </label>
-            );
-          })}
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3">
+            <p className="text-sm text-slate-500">
+              Module pe grupuri. Bifările rămân locale până apeși{' '}
+              <strong className="font-medium text-slate-700">Salvează</strong>
+              {' '}sus — se scriu în{' '}
+              <code className="text-[11px] bg-slate-100 px-1 rounded">companies.feature_flags.modules</code>
+              . Pe tenant: refresh după salvare.
+            </p>
+            {dirty && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-3">
+                Modificări nesalvate (sau default-uri de profil încă nescrise în DB). Apasă{' '}
+                <strong>Salvează</strong> sus.
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {moduleGroups.map((group) => {
+              const onCount = group.modules.filter((m) => flags.modules[m.key] !== false).length;
+              return (
+                <section
+                  key={group.id}
+                  className="bg-white rounded-xl border border-slate-200/80 overflow-hidden flex flex-col"
+                >
+                  <header className="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-[#0A2B4E]">{group.label}</h3>
+                        {group.hint ? (
+                          <p className="text-[11px] text-slate-500 mt-0.5">{group.hint}</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-slate-500 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                        {onCount}/{group.modules.length}
+                      </span>
+                    </div>
+                  </header>
+                  <ul className="divide-y divide-slate-100 p-1">
+                    {group.modules.map((m) => {
+                      const on = flags.modules[m.key] !== false;
+                      const atypical = flags.app_profile === 'documents'
+                        && !m.defaultOn.includes('documents')
+                        && on;
+                      return (
+                        <li key={m.key}>
+                          <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+                            <span className="text-sm text-slate-700">
+                              {m.label}
+                              {atypical ? (
+                                <span className="ml-2 text-[10px] uppercase tracking-wide text-amber-700">
+                                  extra
+                                </span>
+                              ) : null}
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              disabled={saving}
+                              onChange={() => toggleModule(m.key)}
+                              className="w-4 h-4 accent-[#0A2B4E]"
+                            />
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         </div>
       )}
 

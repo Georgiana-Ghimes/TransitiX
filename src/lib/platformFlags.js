@@ -22,34 +22,73 @@ export const APP_PROFILES = {
     appKey: 'rai_documents',
     label: 'RAI Spedition — Documente',
     shortLabel: 'Companion documente',
-    description: 'Companion slim: avize, rapoarte, upload șofer. Restul modulelor TMS există ca flag, dar off.',
+    description: 'Companion: avize, rapoarte, flotă/șoferi, upload. Restul TMS există ca flag, dar off.',
     defaultPortalUrl: '/raidocs4n9p',
     defaultName: 'RAI Spedition — Documente',
     defaultCui: 'RO-RAI-DOCS',
   },
 };
 
+/** Sidebar / GOD UI sections for MODULE_FLAGS.group */
+export const MODULE_GROUPS = [
+  {
+    id: 'documents',
+    label: 'Documente & OCR',
+    hint: 'Avize, anexe, hartă zone, upload de pe drum',
+  },
+  {
+    id: 'operations',
+    label: 'Operațiuni',
+    hint: 'Dispecerat, curse, încărcare, planning',
+  },
+  {
+    id: 'fleet',
+    label: 'Flotă & teren',
+    hint: 'Mașini, șoferi, GPS, locații',
+  },
+  {
+    id: 'backoffice',
+    label: 'Comercial & back-office',
+    hint: 'Financiar, depozit, tarife',
+  },
+  {
+    id: 'admin',
+    label: 'Administrare',
+    hint: 'Conturi și jurnal',
+  },
+];
+
 /** Full TMS module catalog — shown for every company in platform setup. */
 export const MODULE_FLAGS = [
-  { key: 'avize', label: 'Avize / Rapoarte', defaultOn: ['full', 'documents'] },
-  { key: 'reports', label: 'Rapoarte', defaultOn: ['full', 'documents'] },
-  { key: 'driver_upload', label: 'Upload documente șofer', defaultOn: ['full', 'documents'] },
-  { key: 'dispatch', label: 'Dispecerat', defaultOn: ['full'] },
-  { key: 'trips', label: 'Curse / CMR', defaultOn: ['full'] },
+  { key: 'avize', label: 'Avize / Rapoarte', group: 'documents', defaultOn: ['full', 'documents'] },
+  { key: 'reports', label: 'Rapoarte', group: 'documents', defaultOn: ['full', 'documents'] },
+  { key: 'zone_map', label: 'Harta zonelor', group: 'documents', defaultOn: ['full', 'documents'] },
+  { key: 'driver_upload', label: 'Upload documente șofer', group: 'documents', defaultOn: ['full', 'documents'] },
+  { key: 'documents_expiry', label: 'Documente expirare', group: 'documents', defaultOn: ['full'] },
+  { key: 'dispatch', label: 'Dispecerat', group: 'operations', defaultOn: ['full'] },
+  { key: 'trips', label: 'Curse / CMR', group: 'operations', defaultOn: ['full'] },
+  { key: 'loading', label: 'Plan încărcare', group: 'operations', defaultOn: ['full'] },
+  { key: 'planning', label: 'Planning / optimizare', group: 'operations', defaultOn: ['full'] },
   // Companion office nav includes Autoturisme / ITP / Șoferi (build 128+).
-  { key: 'fleet', label: 'Flotă & șoferi', defaultOn: ['full', 'documents'] },
-  { key: 'gps', label: 'Tracking GPS', defaultOn: ['full'] },
-  { key: 'planning', label: 'Planning / optimizare', defaultOn: ['full'] },
-  { key: 'finance', label: 'Financiar', defaultOn: ['full'] },
-  { key: 'warehouse', label: 'Depozit', defaultOn: ['full'] },
-  { key: 'documents_expiry', label: 'Documente expirare', defaultOn: ['full'] },
-  { key: 'locations', label: 'Locații / geocodare', defaultOn: ['full'] },
-  { key: 'territories', label: 'Teritorii', defaultOn: ['full'] },
-  { key: 'loading', label: 'Plan încărcare', defaultOn: ['full'] },
-  { key: 'commercial', label: 'Comercial / tarife', defaultOn: ['full'] },
-  { key: 'audit', label: 'Jurnal modificări', defaultOn: ['full'] },
-  { key: 'users_admin', label: 'Administrare utilizatori', defaultOn: ['full'] },
+  { key: 'fleet', label: 'Flotă & șoferi', group: 'fleet', defaultOn: ['full', 'documents'] },
+  { key: 'gps', label: 'Tracking GPS', group: 'fleet', defaultOn: ['full'] },
+  { key: 'locations', label: 'Locații / geocodare', group: 'fleet', defaultOn: ['full'] },
+  { key: 'territories', label: 'Teritorii', group: 'fleet', defaultOn: ['full'] },
+  { key: 'finance', label: 'Financiar', group: 'backoffice', defaultOn: ['full'] },
+  { key: 'warehouse', label: 'Depozit', group: 'backoffice', defaultOn: ['full'] },
+  { key: 'commercial', label: 'Comercial / tarife', group: 'backoffice', defaultOn: ['full'] },
+  // Companion Setări › Utilizatori — same default as server DOCUMENTS_ON.
+  { key: 'users_admin', label: 'Administrare utilizatori', group: 'admin', defaultOn: ['full', 'documents'] },
+  { key: 'audit', label: 'Jurnal modificări', group: 'admin', defaultOn: ['full'] },
 ];
+
+/** Groups with their modules, in display order (for GOD Module tab). */
+export function modulesByGroup(modules = MODULE_FLAGS) {
+  return MODULE_GROUPS.map((g) => ({
+    ...g,
+    modules: modules.filter((m) => m.group === g.id),
+  })).filter((g) => g.modules.length > 0);
+}
 
 export function defaultModulesForProfile(profile = 'full') {
   const prof = profile === 'documents' ? 'documents' : 'full';
@@ -66,7 +105,14 @@ export function defaultModulesForProfile(profile = 'full') {
  */
 export function normalizeFlags(raw, profile = 'full') {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
-  const prof = src.app_profile === 'documents' ? 'documents' : (profile === 'documents' ? 'documents' : 'full');
+  let prof = 'full';
+  if (src.app_profile === 'documents' || src.app_key === APP_PROFILES.documents.appKey) {
+    prof = 'documents';
+  } else if (src.app_profile === 'full') {
+    prof = 'full';
+  } else if (profile === 'documents') {
+    prof = 'documents';
+  }
   const meta = APP_PROFILES[prof];
   const modulesIn = src.modules && typeof src.modules === 'object' ? src.modules : {};
   const defaults = defaultModulesForProfile(prof);

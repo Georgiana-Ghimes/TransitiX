@@ -19,7 +19,6 @@ import geoRoutes from './routes/geo.js';
 import tpoRoutes from './routes/tpo.js';
 import documentRoutes from './routes/documents.js';
 import reportRoutes from './routes/reports.js';
-import validationRoutes from './routes/validation.js';
 import commercialRoutes from './routes/commercial.js';
 import cmrRoutes from './routes/cmr.js';
 import driverDocumentRoutes from './routes/driverDocuments.js';
@@ -40,6 +39,7 @@ import publicRoutes from './routes/public.js';
 import { uploadRoot } from './uploadPath.js';
 import { query } from './db.js';
 import { authRequired } from './middleware/auth.js';
+import { requireModule } from './middleware/requireModule.js';
 import { applyBearerFromQuery, canReadUpload, safeUploadBasename } from './lib/concurrency.js';
 import { securityHeadersMiddleware, trustProxySetting, uploadFrameHeaders } from './lib/security.js';
 import { emailConfigured } from './lib/email.js';
@@ -194,37 +194,45 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+/** Tenant module gate after JWT — GOD flags only change via /api/platform. */
+function tenantModule(moduleKey, router) {
+  return [authRequired, requireModule(moduleKey), router];
+}
+
 app.use('/api/auth', authRoutes);
 app.use('/api/public', publicRoutes);
+// Company profile / settings: always for office (not a GOD module toggle).
 app.use('/api/company', companyRoutes);
 app.use('/api/entities', entityRoutes);
 app.use('/api/integrations', express.json({ limit: '10mb' }), integrationRoutes);
-app.use('/api/trips', tripRoutes);
+app.use('/api/trips', ...tenantModule('trips', tripRoutes));
 app.use('/api/confirm', confirmRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/search', searchRoutes);
-app.use('/api/avize', avizeRoutes);
-app.use('/api/fleet', fleetRoutes);
+app.use('/api/avize', ...tenantModule('avize', avizeRoutes));
+app.use('/api/fleet', ...tenantModule('fleet', fleetRoutes));
 app.use('/api/geo', geoRoutes);
-app.use('/api/tpo', tpoRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/validation', validationRoutes);
-app.use('/api/commercial', commercialRoutes);
-app.use('/api/cmr', cmrRoutes);
-app.use('/api/driver-documents', driverDocumentRoutes);
-app.use('/api/routes', routePlanRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/planning', planningRoutes);
-app.use('/api/telematics', telematicsRoutes);
-app.use('/api/loading', loadingRoutes);
-app.use('/api/territories', territoryRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/tachograph', tachographRoutes);
-app.use('/api/maintenance', maintenanceRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/tpo', ...tenantModule('avize', tpoRoutes));
+app.use('/api/documents', ...tenantModule('documents_expiry', documentRoutes));
+app.use('/api/reports', ...tenantModule('reports', reportRoutes));
+// Commercial router applies per-route module gates (zones → zone_map; overview → commercial).
+app.use('/api/commercial', authRequired, commercialRoutes);
+app.use('/api/cmr', ...tenantModule('trips', cmrRoutes));
+app.use('/api/driver-documents', ...tenantModule('driver_upload', driverDocumentRoutes));
+app.use('/api/routes', ...tenantModule('dispatch', routePlanRoutes));
+app.use('/api/orders', ...tenantModule('dispatch', orderRoutes));
+app.use('/api/planning', ...tenantModule('planning', planningRoutes));
+app.use('/api/telematics', ...tenantModule('gps', telematicsRoutes));
+app.use('/api/loading', ...tenantModule('loading', loadingRoutes));
+app.use('/api/territories', ...tenantModule('territories', territoryRoutes));
+app.use('/api/analytics', ...tenantModule('planning', analyticsRoutes));
+app.use('/api/invoices', ...tenantModule('finance', invoiceRoutes));
+app.use('/api/tachograph', ...tenantModule('fleet', tachographRoutes));
+app.use('/api/maintenance', ...tenantModule('fleet', maintenanceRoutes));
+app.use('/api/audit', ...tenantModule('audit', auditRoutes));
+// Setări › Utilizatori — GOD flag users_admin (on by default for documents + full).
+app.use('/api/users', ...tenantModule('users_admin', userRoutes));
+// Feature flags / tenants / impersonation — platform_admin only (router enforces).
 app.use('/api/platform', platformRoutes);
 
 /**

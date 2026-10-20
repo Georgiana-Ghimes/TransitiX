@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { formatAppVersion } from '@/lib/appVersion';
 import { homePathForRole, isDriverRole, isPlatformAdmin } from '@/lib/roles';
 import { isModuleEnabled, isPathAllowedForCompany } from '@/lib/companyModules';
+import { mergeDocumentsNav, navGroupActive, navPathActive } from '@/lib/layoutNav';
 import {
   companionTagline,
   isCompanionOfficePath,
@@ -35,7 +36,6 @@ import WhatsNewModal from '@/components/WhatsNewModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import BrandLogo from '@/components/BrandLogo';
 import PageLoader from '@/components/PageLoader';
-import { navGroupActive, navPathActive } from '@/lib/layoutNav';
 import { prefetchOfficeChunks, prefetchPath } from '@/lib/routePrefetch';
 
 const NAV = [
@@ -48,7 +48,7 @@ const NAV = [
   { label: 'Șoferi', path: '/drivers', icon: Users, module: 'fleet' },
   { label: 'Locații', path: '/locations', icon: MapPinned, module: 'locations' },
   { label: 'Teritorii', path: '/territories', icon: Layers, module: 'territories' },
-  { label: 'Harta zonelor', path: '/zone-map', icon: Map, module: 'avize' },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map, module: 'zone_map' },
   { label: 'Autoturisme', path: '/fleet', icon: Truck, module: 'fleet' },
   { label: 'Tracking GPS', path: '/gps', icon: MapPin, module: 'gps' },
   { label: 'Planning AI', path: '/planning', icon: Brain, module: 'planning' },
@@ -58,7 +58,6 @@ const NAV = [
   { label: 'Documente', path: '/documents', icon: FileText, module: 'documents_expiry' },
   { label: 'Avize OCR', path: '/avize', icon: ClipboardList, module: 'avize' },
   { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet, module: 'reports' },
-  { label: 'Verificări date', path: '/checks', icon: ShieldCheck, module: 'avize' },
   { label: 'Config. comercială', path: '/commercial', icon: Receipt, module: 'commercial' },
   // Admin-only: the searchable log answers "what has this person been doing", which is an
   // owner's question. The per-record trail behind it stays open to the whole office.
@@ -75,13 +74,14 @@ const PLATFORM_NAV = [
 ];
 
 const COMPANION_OFFICE_NAV = [
-  { label: 'Avize OCR', path: '/avize', icon: ClipboardList },
-  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet },
-  { label: 'Harta zonelor', path: '/zone-map', icon: Map },
+  { label: 'Avize OCR', path: '/avize', icon: ClipboardList, module: 'avize' },
+  { label: 'Rapoarte', path: '/reports', icon: FileSpreadsheet, module: 'reports' },
+  { label: 'Harta zonelor', path: '/zone-map', icon: Map, module: 'zone_map' },
   {
     label: 'Flotă',
     path: '/fleet',
     icon: Truck,
+    module: 'fleet',
     children: [
       { label: 'Autoturisme', path: '/fleet', icon: Truck },
       { label: 'ITP', path: '/fleet/itp', icon: CalendarClock },
@@ -129,10 +129,15 @@ export default function Layout() {
   const companyProfile = user?.company?.feature_flags?.app_profile;
   const treatAsDocumentsEarly = companyProfile === 'documents'
     || (!companyProfile && documentsCompanion);
-  // Full TMS catalog; hide Dashboard home for documents-profile companies.
-  const tenantNav = treatAsDocumentsEarly
-    ? COMPANION_OFFICE_NAV
-    : NAV;
+  // Documents shell + any TMS module GOD turned on (flags → sidebar).
+  const tenantNav = useMemo(() => {
+    if (!treatAsDocumentsEarly) return NAV;
+    return mergeDocumentsNav(
+      COMPANION_OFFICE_NAV,
+      NAV,
+      (mod) => isModuleEnabled(user, mod),
+    );
+  }, [treatAsDocumentsEarly, user]);
   const navItems = isPlatform ? PLATFORM_NAV : tenantNav;
   const isDesktop = useDesktop();
   const [mobileOpen, setMobileOpen] = useState(false);

@@ -43,6 +43,17 @@ export const AuthProvider = ({ children }) => {
     checkUserAuth();
   }, [checkUserAuth]);
 
+  // GOD may toggle modules while a tenant tab is open — refresh flags on focus.
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!api.auth.getToken()) return;
+      checkUserAuth();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [checkUserAuth]);
+
   const logout = (shouldRedirect = true) => {
     // Hard redirect first, clearing auth while still on /driver-app fights the
     // driver↔office Navigate guards and can flash a blank page.

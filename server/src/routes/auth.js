@@ -34,6 +34,7 @@ import {
 } from '../lib/auth/google.js';
 import { appLink, deliverAccountEmail, resetEmail, verificationEmail } from '../lib/auth/mail.js';
 import { normaliseEmail, unusablePasswordSeed } from '../lib/users/rules.js';
+import { materializeFeatureFlags } from '../lib/platform/ensureProductCompanies.js';
 
 const router = Router();
 // One window per route: a burst of sign-ups must not lock the same office out of signing in.
@@ -154,9 +155,13 @@ async function domainInUse(db, domain) {
 async function createCompanyWithAdmin(client, {
   companyName, email, name, passwordHash, createdVia, verified, googleSub = null, verifyHash = null,
 }) {
+  // Self-serve signup = full TMS defaults; GOD can later switch profile / modules.
+  const flags = materializeFeatureFlags({ app_profile: 'full' });
   const company = await client.query(
-    `INSERT INTO companies (name, email) VALUES ($1, $2) RETURNING id, name`,
-    [companyName, email]
+    `INSERT INTO companies (name, email, feature_flags)
+     VALUES ($1, $2, $3::jsonb)
+     RETURNING id, name`,
+    [companyName, email, JSON.stringify(flags)]
   );
   const user = await client.query(
     `INSERT INTO users (company_id, name, email, password_hash, role, created_via,

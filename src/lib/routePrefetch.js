@@ -31,7 +31,6 @@ export function prefetchOfficeChunks() {
     void import('@/pages/Dispatch');
     void import('@/pages/Fleet');
     void import('@/pages/Commercial');
-    void import('@/pages/Checks');
   };
 
   if (typeof window.requestIdleCallback === 'function') {
@@ -56,7 +55,6 @@ export function prefetchPath(path) {
     '/settings': () => import('@/pages/Settings'),
     '/ghid': () => import('@/pages/Guide'),
     '/commercial': () => import('@/pages/Commercial'),
-    '/checks': () => import('@/pages/Checks'),
     '/audit': () => import('@/pages/Audit'),
     '/users': () => import('@/pages/Users'),
     '/loading': () => import('@/pages/LoadPlanner'),

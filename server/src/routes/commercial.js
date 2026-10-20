@@ -13,6 +13,7 @@ import multer from 'multer';
 import ExcelJS from 'exceljs';
 import { pool, query, withTransaction } from '../db.js';
 import { authRequired, officeRequired, adminRequired } from '../middleware/auth.js';
+import { requireAnyModule, requireModule } from '../middleware/requireModule.js';
 import { serializeRow } from '../entities.js';
 import { findOverlaps, findTariff, tariffHistory } from '../lib/pricing/tariffs.js';
 import { findZoneRate, pointInPolygon, resolveZone } from '../lib/pricing/taxes.js';
@@ -24,6 +25,11 @@ import { actorFrom, recordAudit } from '../lib/audit/events.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
+
+/** Zone map + tax rows — not the full Comercial screen. Not tied to avize. */
+const zonesModule = requireAnyModule('zone_map', 'commercial');
+const commercialOnly = requireModule('commercial');
+const avizeOrCommercial = requireAnyModule('avize', 'commercial');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -50,7 +56,7 @@ function plainText(value) {
  * an overlap is not an error, the newest still wins, but it is almost always a forgotten
  * `valid_to`, and the screen has to name it in the same terms the calculation would.
  */
-router.get('/overview', async (req, res) => {
+router.get('/overview', commercialOnly, async (req, res) => {
   try {
     const companyId = req.user.company_id;
     const [
@@ -117,7 +123,7 @@ router.get('/overview', async (req, res) => {
 });
 
 /** The history for one class on one contract, oldest change last. */
-router.get('/contracts/:id/history', async (req, res) => {
+router.get('/contracts/:id/history', commercialOnly, async (req, res) => {
   try {
     const rows = await query(
       'SELECT * FROM contract_tariffs WHERE company_id = $1 AND contract_id = $2',
@@ -141,7 +147,7 @@ router.get('/contracts/:id/history', async (req, res) => {
  * tables. On the documents companion none of the rest exists, and a screen that drags the whole
  * commercial configuration behind it is a screen that breaks when any part of it does.
  */
-router.get('/zones', async (req, res) => {
+router.get('/zones', zonesModule, async (req, res) => {
   try {
     const companyId = req.user.company_id;
     const [zones, rates] = await Promise.all([
@@ -168,7 +174,7 @@ router.get('/zones', async (req, res) => {
  * Geocoding stays on the shared path in `geo/geocode.js`, confidence is the provider-agnostic
  * score, and a low one is reported rather than quietly treated as a hit.
  */
-router.post('/zones/locate', async (req, res) => {
+router.post('/zones/locate', zonesModule, async (req, res) => {
   try {
     const companyId = req.user.company_id;
     const street = String(req.body?.address || '').trim();
@@ -287,7 +293,7 @@ router.post('/zones/locate', async (req, res) => {
 });
 
 /** The depot every trip's kilometres start and end at. */
-router.put('/depot', adminRequired, async (req, res) => {
+router.put('/depot', commercialOnly, adminRequired, async (req, res) => {
   try {
     const locationId = req.body?.location_id ?? null;
     if (locationId) {
@@ -351,7 +357,7 @@ router.put('/depot', adminRequired, async (req, res) => {
 });
 
 /** Reads a sheet of the customer's own observation codes. */
-router.post('/observation-codes/import', adminRequired, (req, res) => {
+router.post('/observation-codes/import', avizeOrCommercial, adminRequired, (req, res) => {
   upload.single('file')(req, res, async (uploadErr) => {
     if (uploadErr) return res.status(400).json({ message: uploadErr.message || 'Încărcare eșuată' });
     if (!req.file) return res.status(400).json({ message: 'Niciun fișier trimis' });
