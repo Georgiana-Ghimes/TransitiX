@@ -722,7 +722,8 @@ export default function Layout() {
           )}
 
           <div className="flex items-center justify-end gap-2 sm:gap-3 min-w-0 ml-auto shrink-0">
-            <NotificationBell />
+            {/* GOD has no tenant office inbox — calling /notifications returns 403. */}
+            {!isPlatform && <NotificationBell />}
 
             <div className="relative">
               <button

@@ -15,7 +15,7 @@ export const APP_PROFILES = {
     description: 'Platforma completă: dispecerat, flotă, curse, GPS, financiar, avize.',
     defaultPortalUrl: '/txdemo7k2m',
     defaultName: 'Transitix Demo',
-    defaultCui: 'RO12345678',
+    defaultCui: 'RO-TX-FULL',
   },
   documents: {
     key: 'documents',

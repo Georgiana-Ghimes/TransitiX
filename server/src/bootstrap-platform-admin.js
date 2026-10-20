@@ -3,15 +3,14 @@
  *
  *   PLATFORM_ADMIN_EMAILS=you@x.ro PLATFORM_ADMIN_BOOTSTRAP_PASSWORD='…' \
  *     npm run platform:bootstrap --prefix server
+ *
+ * Companion DB (local :5435 / VM RAI):
+ *   COMPANION=1 PLATFORM_ADMIN_EMAILS=… PLATFORM_ADMIN_BOOTSTRAP_PASSWORD='…' \
+ *     npm run platform:bootstrap --prefix server
  */
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import './loadEnv.js';
 import { query, pool } from './db.js';
 import { bootstrapPlatformAdmins } from './lib/platform/bootstrap.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const result = await bootstrapPlatformAdmins(query);
 await pool.end();

@@ -41,7 +41,10 @@ export const PRODUCT_APPS = {
     slug: PRODUCT_SLUGS.transitix_full,
     label: 'Transitix TMS',
     defaultName: 'Transitix Demo',
-    defaultCui: 'RO12345678',
+    // Prefer RO-TX-FULL so a companion DB whose RAI firm still holds the old
+    // seed CUI RO12345678 does not 23505 on ensure_apps.
+    defaultCui: 'RO-TX-FULL',
+    legacyCuis: ['RO12345678'],
     defaultEmail: 'contact@transitix.ro',
     get defaultModules() {
       return modulesForProfile('full');
@@ -54,12 +57,28 @@ export const PRODUCT_APPS = {
     label: 'RAI Spedition — Documente',
     defaultName: 'RAI Spedition — Documente',
     defaultCui: 'RO-RAI-DOCS',
+    legacyCuis: [],
     defaultEmail: 'documente@rai-spedition.ro',
     get defaultModules() {
       return modulesForProfile('documents');
     },
   },
 };
+
+/** Pick a free CUI for a new product row (never steal another company's CUI). */
+export async function allocateProductCui(queryFn, profile) {
+  const preferred = [profile.defaultCui, ...(profile.legacyCuis || [])].filter(Boolean);
+  for (const cui of preferred) {
+    const hit = await queryFn(`SELECT 1 FROM companies WHERE cui = $1 LIMIT 1`, [cui]);
+    if (!hit.rows[0]) return cui;
+  }
+  for (let i = 2; i <= 20; i += 1) {
+    const cui = `${profile.defaultCui}-${i}`;
+    const hit = await queryFn(`SELECT 1 FROM companies WHERE cui = $1 LIMIT 1`, [cui]);
+    if (!hit.rows[0]) return cui;
+  }
+  return `${profile.defaultCui}-${Date.now().toString(36)}`;
+}
 
 /**
  * Merge stored modules onto the full catalog.
@@ -170,14 +189,15 @@ export async function ensureProductCompanies(queryFn) {
     }
 
     if (profile.key === 'full') {
+      const adoptCuis = [profile.defaultCui, ...(profile.legacyCuis || [])];
       const demo = await queryFn(
         `SELECT id, name, slug, feature_flags FROM companies
          WHERE is_platform = FALSE
            AND (feature_flags->>'app_key' IS NULL OR feature_flags->>'app_key' = '')
-           AND (cui = $1 OR lower(name) LIKE '%transitix%')
+           AND (cui = ANY($1::text[]) OR lower(name) LIKE '%transitix%')
          ORDER BY created_at
          LIMIT 1`,
-        [profile.defaultCui],
+        [adoptCuis],
       );
       if (demo.rows[0]) {
         const demoPrev = demo.rows[0].feature_flags || {};
@@ -239,11 +259,12 @@ export async function ensureProductCompanies(queryFn) {
       continue;
     }
 
+    const cui = await allocateProductCui(queryFn, profile);
     const inserted = await queryFn(
       `INSERT INTO companies (name, cui, email, is_platform, slug, feature_flags, settings)
        VALUES ($1, $2, $3, FALSE, $4, $5::jsonb, '{}'::jsonb)
        RETURNING id, name, slug`,
-      [profile.defaultName, profile.defaultCui, profile.defaultEmail, slug, JSON.stringify(flags)],
+      [profile.defaultName, cui, profile.defaultEmail, slug, JSON.stringify(flags)],
     );
     created.push({
       id: inserted.rows[0].id,
