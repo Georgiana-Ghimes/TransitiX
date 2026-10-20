@@ -34,7 +34,7 @@ const STREET_TYPES = [
   ['strada', 'str'],
   ['piata', 'pta', 'pt'],
   ['aleea', 'al'],
-  ['intrarea', 'intr', 'int'],
+  ['intrarea', 'intrare', 'intr', 'int'],
   ['splaiul', 'spl'],
   ['drumul', 'dr'],
   ['prelungirea', 'prel'],

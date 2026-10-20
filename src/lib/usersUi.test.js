@@ -124,19 +124,27 @@ describe('actionsFor', () => {
     const actions = actionsFor(user({ id: 'u1', role: 'admin' }), { currentUserId: 'u1', adminCount: 2 });
     expect(actions.canChangeRole).toBe(false);
     expect(actions.canDeactivate).toBe(false);
+    expect(actions.canDelete).toBe(false);
   });
 
   it('protects the last admin', () => {
     const actions = actionsFor(user({ id: 'u2', role: 'admin' }), { currentUserId: 'u1', adminCount: 1 });
     expect(actions.canChangeRole).toBe(false);
     expect(actions.canDeactivate).toBe(false);
+    expect(actions.canDelete).toBe(false);
   });
 
-  it('offers reactivation on a deactivated account, and nothing else', () => {
+  it('offers reactivation and delete on a deactivated account', () => {
     const actions = actionsFor(user({ id: 'u2', is_active: false }), { currentUserId: 'u1', adminCount: 2 });
     expect(actions.canActivate).toBe(true);
     expect(actions.canDeactivate).toBe(false);
     expect(actions.canResend).toBe(false);
+    expect(actions.canDelete).toBe(true);
+  });
+
+  it('offers delete on an active colleague', () => {
+    expect(actionsFor(user({ id: 'u2', is_active: true }), { currentUserId: 'u1', adminCount: 2 })
+      .canDelete).toBe(true);
   });
 
   it('offers resending only while an invitation is outstanding', () => {

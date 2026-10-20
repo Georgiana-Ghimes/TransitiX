@@ -392,7 +392,10 @@ const GOODS_TABLE_STOPS = [
  * used to become the type and leave `Ibutie Srl` / `Uct Srl` as the street name (#53).
  * Lookarounds (not `\b`) so `str.` still matches before a space (`.` is non-word).
  */
-const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea)(?![a-z]))/;
+const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea|intrarea|intrare|intr\.?)(?![a-z]))/;
+
+/** Company form before the real street type (`DEMOS INTERMED SRL Intrare Navigatorilor`). */
+const COMPANY_FORM_RE = /\b(?:s\.?\s*r\.?\s*l\.?|s\.?\s*a\.?|scs|sra|gmbh|ltd|com)\b/i;
 
 /**
  * House number shape: `31B`, `1F`, OCR `IF`/`LF`, building wing `1/VII` (#89).
@@ -815,6 +818,9 @@ function parseDestBlock(section, { interleaved = false } = {}) {
     folded = clipToFirstDeliveryPostcode(folded);
   }
   folded = scrubSectionNoise(folded);
+  // Client / site company sits above the street on Baumit (`DEMOS INTERMED SRL` then
+  // `Intrare Navigatorilor`). Without this, the loose name matcher eats the firm + street.
+  folded = scrubLeadingCompanyBeforeStreet(folded);
 
   // Postcode first: a București CP (01–06) corrects a wrong OCR town (Timisoara on
   // Bvd. Timișoara) before street parsing, so the street name is not stripped as locality.
@@ -860,7 +866,29 @@ function streetTypeLabel(type) {
   if (t === 'al' || /^alee/.test(t)) return 'Aleea';
   if (/^pta|^piata/.test(t)) return 'Piața';
   if (/^cale/.test(t)) return 'Calea';
+  if (/^intr/.test(t)) return 'Intrarea';
   return null;
+}
+
+/**
+ * Drop `DEMOS INTERMED SRL` (etc.) when a recognised street type follows.
+ * Keeps `Intrare Navigatorilor nr. 15` instead of gluing the firm into the street name.
+ */
+function scrubLeadingCompanyBeforeStreet(folded) {
+  const raw = String(folded || '').trim();
+  if (!raw || !COMPANY_FORM_RE.test(raw)) return raw;
+  // Prefer SRL/S.A. (etc.) — never a bare `com` alone (too common in OCR noise).
+  const firm = /\b(?:s\.?\s*r\.?\s*l\.?|s\.?\s*a\.?|scs|sra|gmbh|ltd)\b/i;
+  // Named group inside a lookahead still occupies [1] — use a non-capturing type atom.
+  const typeAtom = STREET_TYPE_RE.source.replace('(?<type>', '(?:');
+  const afterFirm = raw.match(
+    new RegExp(
+      String.raw`${firm.source}\s+(?=${typeAtom})([\s\S]+)$`,
+      'i',
+    ),
+  );
+  if (afterFirm?.[1]) return afterFirm[1].trim();
+  return raw;
 }
 
 /**
@@ -872,7 +900,12 @@ function formatAddressLine(block) {
   const name = displayWords(block.streetName);
   // Type alone ("Șosea") or number alone ("nr. 52") is not an address leg.
   if (!name) return displayWords(block.locality);
-  const type = streetTypeLabel(block.streetType) || 'Str.';
+  // Prefer the OCR type; default Str. only when the name is not already a typed street
+  // (`Intrarea Navigatorilor` must not become `Str. Intrarea Navigatorilor`).
+  const nameFold = fold(name);
+  const nameHasType = new RegExp(`^${STREET_TYPE_RE.source}\\b`, STREET_TYPE_RE.flags).test(nameFold);
+  const type = streetTypeLabel(block.streetType)
+    || (nameHasType ? null : 'Str.');
   const nr = block.houseNumber ? `nr. ${block.houseNumber}` : null;
   const streetLine = [type, name, nr].filter(Boolean).join(' ');
   const locality = displayWords(block.locality);
@@ -1303,7 +1336,7 @@ function preferQuantity(row, parsed) {
 function looksLikeSiteCodeLeg(leg) {
   const s = String(leg || '').trim();
   if (!s) return false;
-  if (/\b(str\.|strada|șosea|sosea|sos\.|bvd\.|blvd|aleea|piața|piata|calea|nr\.)\b/i.test(s)) {
+  if (/\b(str\.|strada|șosea|sosea|sos\.|bvd\.|blvd|aleea|piața|piata|calea|intrarea|intrare|nr\.)\b/i.test(s)) {
     return false;
   }
   // Bare site code or Site-Depozit glue (MIL-NEAMTIU), with no street words.

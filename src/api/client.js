@@ -366,6 +366,10 @@ export const api = {
         body: { is_active },
       });
     },
+    /** Permanent remove — frees the email for a new invite. Prefer setActive(false) to suspend. */
+    remove(id) {
+      return request(`/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
     linkDriver(id, driver_id) {
       return request(`/users/${encodeURIComponent(id)}/driver`, {
         method: 'PUT',

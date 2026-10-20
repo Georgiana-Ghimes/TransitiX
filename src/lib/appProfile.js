@@ -8,6 +8,7 @@ export const COMPANION_OFFICE_PATHS = [
   '/reports',
   '/zone-map',
   '/fleet',
+  '/drivers',
   '/settings',
   '/users',
   '/ghid',

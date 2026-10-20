@@ -10,9 +10,10 @@
  * 1. **Nobody sets a password for somebody else.** An invitation carries a link; the person
  *    chooses their own. An admin who types a colleague's password knows it forever, and the
  *    audit trail then cannot tell the two of them apart.
- * 2. **Nobody is deleted.** `users.id` is on the audit trail, on the sessions and on the driver
- *    profile. Removing the row would blank the one column that says who did what. Deactivation
- *    is the operation; the history stays.
+ * 2. **Deactivation suspends; delete removes.** Suspend keeps the row (and blocks re-invite of
+ *    the same email). Delete removes the login row so the address can be invited again. The
+ *    audit trail keeps denormalised `user_name` / `user_email`, so history does not depend on
+ *    the row surviving. Foreign keys on `users.id` are SET NULL or CASCADE.
  */
 
 export const ROLES = {
@@ -92,6 +93,23 @@ export function checkDeactivate({ actorId, target, adminCount }) {
     return { ok: false, reason: 'Nu îți poți dezactiva propriul cont.' };
   }
   if (target.role === 'admin' && adminCount <= 1) {
+    return { ok: false, reason: 'Este ultimul administrator activ. Promovează pe altcineva întâi.' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Whether an account may be permanently removed.
+ *
+ * Same self / last-active-admin guards as deactivate. A deactivated account may still be
+ * deleted (that is how the email becomes free again). Deleting the last *active* admin is
+ * refused; a deactivated admin does not count toward that lock.
+ */
+export function checkDelete({ actorId, target, adminCount }) {
+  if (target.id === actorId) {
+    return { ok: false, reason: 'Nu îți poți șterge propriul cont.' };
+  }
+  if (target.role === 'admin' && target.is_active && adminCount <= 1) {
     return { ok: false, reason: 'Este ultimul administrator activ. Promovează pe altcineva întâi.' };
   }
   return { ok: true };

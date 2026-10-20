@@ -57,6 +57,8 @@ export default function AvizZoneTaxPanel({ editRow, form, setForm }) {
   const avizForRoute = useMemo(() => ({
     ...editRow,
     ruta_transport: form.ruta_transport ?? editRow?.ruta_transport,
+    // repairAvizFromStored puts delivery_address (with OCR postcode) on the list/edit row.
+    delivery_address: editRow?.delivery_address ?? null,
   }), [editRow, form.ruta_transport]);
 
   const routeLegs = useMemo(() => avizRouteZoneLegs(avizForRoute), [avizForRoute]);

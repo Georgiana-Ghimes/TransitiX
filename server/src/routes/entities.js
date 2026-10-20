@@ -549,6 +549,12 @@ router.delete('/:entity/:id', officeRequired, requireEntityAction('delete'), asy
   try {
     const cfg = ENTITY_MAP[req.params.entity];
     if (!cfg) return res.status(404).json({ message: 'Tip de înregistrare necunoscut.' });
+    // Driver profiles: only admins may hard-delete (UI matches). Others deactivate.
+    if (req.params.entity === 'Driver' && req.user?.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Doar un administrator poate șterge un șofer. Poți să-l dezactivezi.',
+      });
+    }
 
     // RETURNING the whole row, not just the id: a delete is the one event where nothing else
     // will hold what was there, so the trail keeps the row itself.

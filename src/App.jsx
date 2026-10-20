@@ -75,6 +75,7 @@ function OfficeRoutes() {
         <Route path="/zone-map" element={<ZoneMap />} />
         <Route path="/fleet" element={<Fleet />} />
         <Route path="/fleet/itp" element={<FleetItp />} />
+        <Route path="/drivers" element={<Drivers />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/users" element={<Navigate to="/settings?tab=users" replace />} />
         <Route path="/ghid" element={<Guide />} />

@@ -75,6 +75,8 @@ const COMPANION_OFFICE_NAV = [
     children: [
       { label: 'Autoturisme', path: '/fleet', icon: Truck },
       { label: 'ITP', path: '/fleet/itp', icon: CalendarClock },
+      // Same master data as full TMS /drivers — real people before Setări › Utilizatori accounts.
+      { label: 'Șoferi', path: '/drivers', icon: Users },
     ],
   },
 ];
@@ -129,9 +131,10 @@ export default function Layout() {
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [whatsNewShowAll, setWhatsNewShowAll] = useState(false);
   const [whatsNewClientIp, setWhatsNewClientIp] = useState(null);
-  const [flotaOpen, setFlotaOpen] = useState(() =>
-    String(location.pathname || '').startsWith('/fleet')
-  );
+  const [flotaOpen, setFlotaOpen] = useState(() => {
+    const p = String(location.pathname || '');
+    return p.startsWith('/fleet') || p.startsWith('/drivers');
+  });
 
   const openWhatsNew = (all = true) => {
     setWhatsNewShowAll(all);
@@ -140,7 +143,8 @@ export default function Layout() {
   };
 
   useEffect(() => {
-    if (location.pathname.startsWith('/fleet')) setFlotaOpen(true);
+    const p = location.pathname || '';
+    if (p.startsWith('/fleet') || p.startsWith('/drivers')) setFlotaOpen(true);
   }, [location.pathname]);
 
   useEffect(() => {

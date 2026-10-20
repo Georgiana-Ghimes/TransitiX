@@ -81,16 +81,59 @@ export function addressTokensFromOcr(rawText) {
 }
 
 /**
+ * Primary street word from a route delivery leg (`… / Șosea Viilor nr. 52, Bucuresti` → `viilor`).
+ * Used to refuse a learned Iancu rule on a page that clearly says Viilor.
+ */
+export function primaryStreetTokenFromRoute(ruta) {
+  const parts = String(ruta || '').split(/\s*\/\s*/).map((p) => p.trim()).filter(Boolean);
+  const delivery = parts.length >= 2 ? parts[parts.length - 1] : parts[0] || '';
+  const folded = fold(delivery)
+    .replace(/\bnr\.?\s*\d+[a-z]?\b/g, ' ')
+    .replace(/\b\d{5,6}\b/g, ' ')
+    .replace(/\b(str|strada|sosea|soseaua|sos|bvd|blvd|bd|bulevardul|aleea|piata|calea|sector|bucuresti)\b/g, ' ');
+  const words = folded.split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !TOKEN_NOISE.has(w) && !/^\d+$/.test(w));
+  return words[0] || null;
+}
+
+export function primaryStreetTokenFromOcr(rawText) {
+  const delivery = parseDeliveryAddress(rawText);
+  if (!delivery?.streetName) return null;
+  const words = fold(delivery.streetName)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !TOKEN_NOISE.has(w));
+  return words[0] || null;
+}
+
+/**
  * Build match material: tokens + a joined regex (for storage / debugging).
  * Matching uses tokens AND-ed via {@link textMatchesTokens}, not the joined string alone.
+ *
+ * Refuses rules without a delivery street name — `bol`+`bucuresti` alone matched every
+ * Bolintin→București aviz and rewrote Șos. Viilor as Bvd. Iancu de Hunedoara on re-extract.
  * @returns {{ tokens: string[], matchRegex: string }|null}
  */
 export function buildRouteRuleFromOcr(rawText) {
+  const delivery = parseDeliveryAddress(rawText);
+  if (!delivery?.streetName) return null;
   const tokens = addressTokensFromOcr(rawText);
   if (tokens.length < MIN_LEARN_TOKENS) return null;
+  // Street fingerprint must stay in the key (not only site + city).
+  const streetTok = primaryStreetTokenFromOcr(rawText);
+  if (!streetTok || !tokens.includes(streetTok)) return null;
   // Stored as token1.*token2 style documentation; real match uses match_tokens.
   const matchRegex = tokens.map((t) => tokenPattern(t)).join('&&');
   return { tokens, matchRegex };
+}
+
+/**
+ * True when a learned route would replace a different street the structural parser already
+ * read clearly from Adresa de livrare (Viilor on the page vs learned Iancu).
+ */
+export function learnedRouteConflictsWithOcr(rawText, learnedRuta) {
+  const ocrStreet = primaryStreetTokenFromOcr(rawText);
+  const learnedStreet = primaryStreetTokenFromRoute(learnedRuta);
+  if (!ocrStreet || !learnedStreet) return false;
+  return ocrStreet !== learnedStreet;
 }
 
 /** True when every token appears in folded OCR with word-ish boundaries. */
@@ -149,6 +192,7 @@ export function matchRouteRule(rawText, rules = []) {
 /**
  * Apply a matched rule onto extraction values (mutates a shallow copy).
  * Skips when ruta_transport is in correctedFields (office pinned this document).
+ * Skips when Adresa de livrare already names a different street than the learned route.
  */
 export function applyLearnedRoute(values, rawText, rules, { correctedFields = [] } = {}) {
   const out = { ...(values || {}) };
@@ -159,6 +203,9 @@ export function applyLearnedRoute(values, rawText, rules, { correctedFields = []
   if (!rule?.ruta_transport) {
     return { values: out, learned: false, rule: null };
   }
+  if (learnedRouteConflictsWithOcr(rawText, rule.ruta_transport)) {
+    return { values: out, learned: false, rule: null };
+  }
   out.ruta_transport = rule.ruta_transport;
   return { values: out, learned: true, rule };
 }
@@ -166,11 +213,15 @@ export function applyLearnedRoute(values, rawText, rules, { correctedFields = []
 /**
  * For list/decorate: when a rule matches and the office did not pin ruta_transport,
  * show the learned value (same address → same route). Never overrides corrected_fields.
+ * Never replaces a clear OCR street with a different learned street.
  */
 export function preferLearnedRoute(storedRoute, rawText, rules, { corrected = false } = {}) {
   if (corrected) return { route: storedRoute, learned: false, rule: null };
   const rule = matchRouteRule(rawText, rules);
   if (!rule?.ruta_transport) {
+    return { route: storedRoute, learned: false, rule: null };
+  }
+  if (learnedRouteConflictsWithOcr(rawText, rule.ruta_transport)) {
     return { route: storedRoute, learned: false, rule: null };
   }
   const same = String(storedRoute || '').trim() === String(rule.ruta_transport).trim();

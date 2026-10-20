@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearMapGeocodeCache,
   geocodeMapPin,
   mapGeocodeQueries,
   queryStreetTokens,
@@ -8,6 +9,7 @@ import {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  clearMapGeocodeCache();
 });
 
 describe('mapGeocodeQueries', () => {
@@ -24,14 +26,17 @@ describe('mapGeocodeQueries', () => {
     expect(mapGeocodeQueries('strada Garii 12', 'Chiajna')).not.toContain('Chiajna');
   });
 
-  it('tries street + postcode so Photon can pin the OCR settlement', () => {
+  it('puts postcode candidates first when the aviz carries a CP', () => {
     const qs = mapGeocodeQueries(
       'bulevardul Pipera 1/VII, Voluntari, 077190',
       'Voluntari',
       '077190',
     );
     expect(qs[0]).toContain('077190');
+    expect(qs).toContain('077190');
     expect(qs.some((q) => /^pipera,\s*077190$/i.test(q))).toBe(true);
+    // Without-CP fallback still present after the mandatory CP pass.
+    expect(qs.some((q) => /voluntari/i.test(q) && !q.includes('077190'))).toBe(true);
   });
 });
 
@@ -185,5 +190,92 @@ describe('geocodeMapPin', () => {
       json: async () => ({ features: [] }),
     })));
     expect(await geocodeMapPin('nicăieri')).toBeNull();
+  });
+
+  it('stops after the first candidate that agrees (does not hammer Photon)', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        features: [{
+          geometry: { coordinates: [26.10, 44.43] },
+          properties: {
+            street: 'Șoseaua Viilor',
+            housenumber: '52',
+            city: 'București',
+          },
+        }],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pin = await geocodeMapPin('Șoseaua Viilor 52', { locality: 'București' });
+    expect(pin).toMatchObject({ match: 'accepted', latitude: 44.43 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toMatch(/lat=44\.4325/);
+    expect(url).toMatch(/lon=26\.1039/);
+  });
+
+  it('caches a pin so the second search skips the network', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        features: [{
+          geometry: { coordinates: [26.10, 44.43] },
+          properties: { street: 'Calea Victoriei', city: 'București' },
+        }],
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await geocodeMapPin('Calea Victoriei 1', { locality: 'București' });
+    await geocodeMapPin('Calea Victoriei 1', { locality: 'București' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a same street name under a different postcode when the query carried the CP', async () => {
+    const fetchMock = vi.fn(async (url) => {
+      const q = String(url);
+      if (q.includes('137181') && !q.includes('Principala')) {
+        return {
+          ok: true,
+          json: async () => ({
+            features: [{
+              geometry: { coordinates: [25.90, 44.63] },
+              properties: { name: 'Cocani', city: 'Dâmbovița', postcode: '137181', type: 'locality' },
+            }],
+          }),
+        };
+      }
+      if (q.includes('137181')) {
+        return {
+          ok: true,
+          json: async () => ({
+            features: [{
+              geometry: { coordinates: [24.11, 45.15] },
+              properties: {
+                street: 'Strada Principală',
+                housenumber: '64B',
+                city: 'Bărbătești',
+                postcode: '247028',
+              },
+            }],
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({ features: [] }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pin = await geocodeMapPin('strada Principala 64B', {
+      locality: 'Cocani',
+      postcode: '137181',
+    });
+    expect(pin).toMatchObject({
+      latitude: 44.63,
+      longitude: 25.90,
+      match: 'accepted',
+    });
+    expect(pin.label).not.toMatch(/Bărbătești/i);
   });
 });

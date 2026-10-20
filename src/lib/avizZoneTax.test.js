@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   avizDeliveryAddress, avizLoadingAddress, avizRouteZoneLegs, avizZoneTax, avizZoneTaxTrip,
   deliveryLegFromRuta, formatZoneTaxBreakdown, originLegFromRuta, parseSpacedRouteLeg,
-  tractorPlate, zoneBracket, zoneMapHref, zoneTaxAutoFormPatch, zoneThresholdKg,
+  peelLeadingCompany, tractorPlate, zoneBracket, zoneMapHref, zoneTaxAutoFormPatch,
+  zoneThresholdKg,
 } from './avizZoneTax.js';
 
 const FLEET = [
@@ -241,16 +242,18 @@ describe('zoneMapHref', () => {
     expect(zoneMapHref(addr)).toContain('postcode=077190');
   });
 
-  it('opens Șos. Viilor 52 on the Bucharest index, not as a non-zoned locality', () => {
+  it('opens Șos. Viilor 52 with postcode in q and ?postcode= (CP search mandatory)', () => {
     const href = zoneMapHref(
       avizDeliveryAddress({
         ruta_transport: 'BOL / Șoseaua Viilor nr. 52, sector 5, București',
+        delivery_address: { postcode: '050151' },
       }),
       { plate: 'B 112 VFM / B 475 AGR' },
     );
-    expect(href).toBe(
-      '/zone-map?q=soseaua+Viilor+52&city=bucuresti&plate=B+112+VFM+%2F+B+475+AGR',
-    );
+    expect(href).toContain('q=soseaua+Viilor+52%2C+050151');
+    expect(href).toContain('city=bucuresti');
+    expect(href).toContain('postcode=050151');
+    expect(href).toContain('plate=B+112+VFM+%2F+B+475+AGR');
     expect(href).not.toMatch(/locality=/);
   });
 
@@ -463,6 +466,28 @@ describe('deliveryLegFromRuta / parseSpacedRouteLeg', () => {
       locality: null,
     });
   });
+
+  it('peels Intermed SRL before Intrare Navigatorilor (legacy glued route)', () => {
+    expect(peelLeadingCompany(
+      'Str. Intermed Srl Intrare Navigatorilor nr. 15, Bucuresti',
+    )).toBe('Intrare Navigatorilor nr. 15, Bucuresti');
+    expect(parseSpacedRouteLeg(
+      'Str. Intermed Srl Intrare Navigatorilor nr. 15, Bucuresti',
+    )).toMatchObject({
+      street: 'intrarea Navigatorilor',
+      number: '15',
+      locality: 'Bucuresti',
+      streetType: 'intrarea',
+    });
+    expect(avizDeliveryAddress({
+      ruta_transport:
+        'Str. Republicii nr. 1F, Bolintin-Deal / Str. Intermed Srl Intrare Navigatorilor nr. 15, Bucuresti',
+    })).toMatchObject({
+      street: 'intrarea Navigatorilor',
+      number: '15',
+      cityId: 'bucuresti',
+    });
+  });
 });
 
 describe('avizDeliveryAddress', () => {
@@ -617,6 +642,57 @@ describe('resolveAvizZone for Șos. Viilor 52', () => {
     });
     const zone = await resolveAvizZone(address);
     expect(zone).toMatchObject({ zone: 'ZB', certain: true });
+  });
+
+  it('still finds the street when the house number is glued into the street field', async () => {
+    // Editează / bad OCR used to call lookupStreet("Șosea Viilor nr. 52") → unknown → "nu e în index".
+    const { resolveAvizZone } = await import('./avizZoneTax.js');
+    const zone = await resolveAvizZone({
+      street: 'Șosea Viilor nr. 52',
+      number: null,
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      postcode: '050151',
+      supported: true,
+    });
+    expect(zone).toMatchObject({ zone: 'ZB', certain: true });
+  });
+
+  it('uses postcode 050151 when the street text is lost or is only a company name', async () => {
+    const { resolveAvizZone } = await import('./avizZoneTax.js');
+    const zone = await resolveAvizZone({
+      street: 'CONCELEX SRL',
+      number: '52',
+      locality: 'Bucuresti',
+      cityId: 'bucuresti',
+      postcode: '050151',
+      supported: true,
+    });
+    expect(zone).toMatchObject({ zone: 'ZB', certain: true });
+  });
+
+  it('peels CONCELEX SRL off the delivery leg before indexing', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport:
+        'Str. Republicii nr. 1F, Bolintin-Deal / CONCELEX SRL, Șosea Viilor nr. 52, București Sector 5',
+      delivery_address: { postcode: '050151' },
+    });
+    expect(out).toMatchObject({
+      street: 'soseaua Viilor',
+      number: '52',
+      cityId: 'bucuresti',
+      postcode: '050151',
+      supported: true,
+    });
+  });
+
+  it('harvests RO 050151 from the locality tail into postcode', () => {
+    const out = avizDeliveryAddress({
+      ruta_transport: 'BOL / Șosea Viilor nr. 52, București Sector 5, RO 050151',
+    });
+    expect(out.postcode).toBe('050151');
+    expect(out.cityId).toBe('bucuresti');
+    expect(out.street).toBe('soseaua Viilor');
   });
 });
 

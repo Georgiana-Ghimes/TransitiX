@@ -51,6 +51,7 @@ export function prefetchPath(path) {
     '/dispatch': () => import('@/pages/Dispatch'),
     '/fleet': () => import('@/pages/Fleet'),
     '/fleet/itp': () => import('@/pages/FleetItp'),
+    '/drivers': () => import('@/pages/Drivers'),
     '/zone-map': () => import('@/pages/ZoneMap'),
     '/settings': () => import('@/pages/Settings'),
     '/ghid': () => import('@/pages/Guide'),
