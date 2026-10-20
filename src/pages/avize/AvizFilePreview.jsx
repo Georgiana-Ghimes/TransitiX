@@ -8,6 +8,9 @@ import { imagePreviewZoomStyle } from './AvizPreviewZoomBar';
 /**
  * Bake EXIF + upright portrait for on-screen preview (#103).
  * Does not write the server file — 90°/180° in Editează still replace bytes on disk.
+ *
+ * Never use this path in Editează: preferPortrait re-scores 0/90/180/270 and can undo
+ * the operator's rotate buttons (toast says rotated, preview looks the same).
  */
 async function blobForUprightPreview(blob) {
   if (!blob || typeof File === 'undefined') return blob;
@@ -92,6 +95,8 @@ const PREVIEW_FRAME_FILL =
  *   stacked in one scroll — used for „Unește TPO” adjacent peers.
  * @param {boolean} [props.fill]
  * @param {number} [props.zoom]  Fit-width multiplier (1 = fit). PDFs re-render; images use CSS scale.
+ * @param {boolean} [props.uprightPreview=true]  Auto EXIF + portrait score for display (#103).
+ *   Set false in Editează so 90°/180° buttons show the file as stored on disk.
  * @param {(ctx: {naturalWidth: number, naturalHeight: number}) => React.ReactNode} [props.overlay]
  *   Rendered on top of an *image* preview, covering the fit-width picture (scroll with the
  *   page). PDFs are drawn on a canvas, so the overlay stays image-only.
@@ -101,6 +106,7 @@ export default function AvizFilePreview({
   fileUrls = null,
   fill = false,
   zoom = 1,
+  uprightPreview = true,
   overlay = null,
 }) {
   const urls = Array.isArray(fileUrls) && fileUrls.length
@@ -126,7 +132,7 @@ export default function AvizFilePreview({
               Fișier {i + 1} / {urls.length}
             </p>
             <div className="relative min-h-[200px]">
-              <AvizFilePreview fileUrl={url} fill={false} zoom={zoom} />
+              <AvizFilePreview fileUrl={url} fill={false} zoom={zoom} uprightPreview={uprightPreview} />
             </div>
           </div>
         ))}
@@ -136,11 +142,17 @@ export default function AvizFilePreview({
 
   const singleUrl = urls[0] || '';
   return (
-    <AvizFilePreviewSingle fileUrl={singleUrl} fill={fill} zoom={zoom} overlay={overlay} />
+    <AvizFilePreviewSingle
+      fileUrl={singleUrl}
+      fill={fill}
+      zoom={zoom}
+      uprightPreview={uprightPreview}
+      overlay={overlay}
+    />
   );
 }
 
-function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null }) {
+function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, uprightPreview = true, overlay = null }) {
   const [src, setSrc] = useState('');
   const [pdfBlob, setPdfBlob] = useState(null);
   const [error, setError] = useState('');
@@ -205,7 +217,9 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null
             });
             return;
           }
-          const displayBlob = await blobForUprightPreview(blob);
+          const displayBlob = uprightPreview
+            ? await blobForUprightPreview(blob)
+            : blob;
           if (cancelled) return;
           objectUrl = URL.createObjectURL(displayBlob);
           loadedUrlRef.current = fileUrl;
@@ -242,7 +256,7 @@ function AvizFilePreviewSingle({ fileUrl, fill = false, zoom = 1, overlay = null
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [fileUrl, kind]);
+  }, [fileUrl, kind, uprightPreview]);
 
   const isManualPlaceholder = String(fileUrl || '').startsWith('manual://');
   const openUrl = !isManualPlaceholder && (src || withAccessToken(fileUrl));

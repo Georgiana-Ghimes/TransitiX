@@ -60,8 +60,13 @@ export function sanitizeOcrText(text) {
   out = out.replace(/([A-Za-zĂÂÎȘȚăâîșț])\$([A-Za-zĂÂÎȘȚăâîșț])/g, '$1ș$2');
   // Zero-width / BOM / soft hyphen.
   out = out.replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '');
+  // Reportlab / some PDF extractors emit NUL (`\u0000`) where the page had a
+  // column tab (Adresa de livrare | Client). Map to tab *before* stripping
+  // controls — otherwise columns glue (`Timisoara RO 061344Fundeni…`) and
+  // delivery is lost or polluted by the Client seat.
+  out = out.replace(/\u0000/g, '\t');
   // Control characters except tab and newline; CR → LF.
-  out = out.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
+  out = out.replace(/\r\n?/g, '\n').replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '');
   // Non-breaking and exotic spaces.
   out = out.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
   // Typographic quotes and dashes.

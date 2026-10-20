@@ -1,0 +1,84 @@
+{
+  "_comment": "ClickUp #71 — same delivery leg for every origin→destination separator. Spaced - only; Bolintin-Deal must not split.",
+  "destination": "Șoseaua Viilor nr. 52, București",
+  "expectedDeliveryLeg": "Șoseaua Viilor nr. 52, București",
+  "expectedAddress": {
+    "street": "soseaua Viilor",
+    "number": "52",
+    "locality": "Bucuresti",
+    "cityId": "bucuresti",
+    "supported": true
+  },
+  "separators": [
+    { "id": "unicode_arrow", "sep": "→", "label": "Unicode →" },
+    { "id": "ascii_arrow", "sep": "->", "label": "ASCII ->" },
+    { "id": "spaced_hyphen", "sep": " - ", "label": "spaced hyphen - " },
+    { "id": "en_dash", "sep": " – ", "label": "en dash –" },
+    { "id": "em_dash", "sep": " — ", "label": "em dash —" },
+    { "id": "slash", "sep": " / ", "label": "space / space" }
+  ],
+  "origins": [
+    "BOL Bolintin",
+    "Str. Industriei nr. 7, Bolintin-Deal",
+    "Bolintin-Deal"
+  ],
+  "routes": [
+    {
+      "id": "arrow_unicode",
+      "ruta": "BOL Bolintin → Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "arrow_ascii",
+      "ruta": "BOL Bolintin -> Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "spaced_hyphen",
+      "ruta": "BOL Bolintin - Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "en_dash",
+      "ruta": "BOL Bolintin – Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "em_dash",
+      "ruta": "BOL Bolintin — Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "slash",
+      "ruta": "BOL Bolintin / Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "site_plus_arrow",
+      "ruta": "Str. Industriei nr. 7, Bolintin-Deal → Șoseaua Viilor nr. 52, sector 5, București"
+    },
+    {
+      "id": "site_plus_ascii",
+      "ruta": "Str. Industriei nr. 7, Bolintin-Deal -> Șoseaua Viilor nr. 52, sector 5, București"
+    },
+    {
+      "id": "site_plus_spaced_hyphen",
+      "ruta": "Str. Industriei nr. 7, Bolintin-Deal - Șoseaua Viilor nr. 52, sector 5, București"
+    },
+    {
+      "id": "site_plus_slash",
+      "ruta": "Str. Industriei nr. 7, Bolintin-Deal / Șoseaua Viilor nr. 52, sector 5, București"
+    },
+    {
+      "id": "delivery_only",
+      "ruta": "Șoseaua Viilor nr. 52, București"
+    },
+    {
+      "id": "annex_short_slash",
+      "ruta": "Bol-Bucuresti / Viilor52",
+      "note": "short annex style; locality may be inferred separately"
+    }
+  ],
+  "negative": [
+    {
+      "id": "glued_hyphen_place",
+      "ruta": "Str. Republicii nr. 1F, Bolintin-Deal",
+      "expectedDeliveryLeg": "Str. Republicii nr. 1F, Bolintin-Deal",
+      "note": "hyphen inside Bolintin-Deal is NOT a leg separator"
+    }
+  ]
+}

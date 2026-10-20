@@ -3,7 +3,21 @@ import { normalizeOcrText, sanitizeOcrText } from './normalizeOcrText.js';
 
 describe('sanitizeOcrText (provider boundary)', () => {
   it('drops control and zero-width characters, keeps newlines and tab cell borders', () => {
-    expect(sanitizeOcrText('TPO\u200B-0025629\u0000\u0007\r\nB 330 SRS\tkm')).toBe('TPO-0025629\nB 330 SRS\tkm');
+    // NUL → tab (PDF column marker); BEL and other controls still dropped.
+    expect(sanitizeOcrText('TPO\u200B-0025629\u0000\u0007\r\nB 330 SRS\tkm')).toBe('TPO-0025629\t\nB 330 SRS\tkm');
+  });
+
+  it('turns PDF NUL column separators into tabs (reportlab Adresa|Client)', () => {
+    const raw = [
+      'Adresa de livrare\u0000Client',
+      'Bulevardul Timisoara nr. 26\u0000Strada Locotenent Moga nr. 18',
+      'Timisoara RO 061344\u0000Fundeni RO 077086',
+    ].join('\n');
+    const out = sanitizeOcrText(raw);
+    expect(out).toContain('Adresa de livrare\tClient');
+    expect(out).toContain('Bulevardul Timisoara nr. 26\tStrada Locotenent Moga nr. 18');
+    expect(out).toContain('Timisoara RO 061344\tFundeni RO 077086');
+    expect(out).not.toMatch(/061344Fundeni/);
   });
 
   it('keeps Baumit Adresa|Client tabs so delivery is not glued to the Client seat', () => {

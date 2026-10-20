@@ -1,0 +1,126 @@
+{
+  "clickup": 71,
+  "count": 12,
+  "items": [
+    {
+      "index": 1,
+      "slug": "01_sep-unicode-arrow",
+      "pdf": "pdf/01_sep-unicode-arrow.pdf",
+      "png": "png/01_sep-unicode-arrow.png",
+      "tpo": "TPO-0332711",
+      "psl": "PSL-0662711",
+      "sep": "→",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 2,
+      "slug": "02_sep-ascii-arrow",
+      "pdf": "pdf/02_sep-ascii-arrow.pdf",
+      "png": "png/02_sep-ascii-arrow.png",
+      "tpo": "TPO-0332712",
+      "psl": "PSL-0662712",
+      "sep": "->",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 3,
+      "slug": "03_sep-spaced-hyphen",
+      "pdf": "pdf/03_sep-spaced-hyphen.pdf",
+      "png": "png/03_sep-spaced-hyphen.png",
+      "tpo": "TPO-0332713",
+      "psl": "PSL-0662713",
+      "sep": " - ",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 4,
+      "slug": "04_sep-en-dash",
+      "pdf": "pdf/04_sep-en-dash.pdf",
+      "png": "png/04_sep-en-dash.png",
+      "tpo": "TPO-0332714",
+      "psl": "PSL-0662714",
+      "sep": "–",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 5,
+      "slug": "05_sep-em-dash",
+      "pdf": "pdf/05_sep-em-dash.pdf",
+      "png": "png/05_sep-em-dash.png",
+      "tpo": "TPO-0332715",
+      "psl": "PSL-0662715",
+      "sep": "—",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 6,
+      "slug": "06_sep-slash",
+      "pdf": "pdf/06_sep-slash.pdf",
+      "png": "png/06_sep-slash.png",
+      "tpo": "TPO-0332716",
+      "psl": "PSL-0662716",
+      "sep": " / ",
+      "expect": "ZB Viilor (control)"
+    },
+    {
+      "index": 7,
+      "slug": "07_origin-deal-unicode-arrow",
+      "pdf": "pdf/07_origin-deal-unicode-arrow.pdf",
+      "png": "png/07_origin-deal-unicode-arrow.png",
+      "tpo": "TPO-0332717",
+      "psl": "PSL-0662717",
+      "sep": "Deal →",
+      "expect": "ZB Viilor; Deal stays in origin"
+    },
+    {
+      "index": 8,
+      "slug": "08_origin-deal-ascii-arrow",
+      "pdf": "pdf/08_origin-deal-ascii-arrow.pdf",
+      "png": "png/08_origin-deal-ascii-arrow.png",
+      "tpo": "TPO-0332718",
+      "psl": "PSL-0662718",
+      "sep": "Deal ->",
+      "expect": "ZB Viilor; Deal stays in origin"
+    },
+    {
+      "index": 9,
+      "slug": "09_origin-deal-spaced-hyphen",
+      "pdf": "pdf/09_origin-deal-spaced-hyphen.pdf",
+      "png": "png/09_origin-deal-spaced-hyphen.png",
+      "tpo": "TPO-0332719",
+      "psl": "PSL-0662719",
+      "sep": "Deal - ",
+      "expect": "ZB Viilor; Deal stays in origin"
+    },
+    {
+      "index": 10,
+      "slug": "10_origin-deal-slash",
+      "pdf": "pdf/10_origin-deal-slash.pdf",
+      "png": "png/10_origin-deal-slash.png",
+      "tpo": "TPO-0332720",
+      "psl": "PSL-0662720",
+      "sep": "Deal / ",
+      "expect": "ZB Viilor; Deal stays in origin"
+    },
+    {
+      "index": 11,
+      "slug": "11_delivery-only-no-separator",
+      "pdf": "pdf/11_delivery-only-no-separator.pdf",
+      "png": "png/11_delivery-only-no-separator.png",
+      "tpo": "TPO-0332721",
+      "psl": "PSL-0662721",
+      "sep": "(none)",
+      "expect": "ZB Viilor"
+    },
+    {
+      "index": 12,
+      "slug": "12_negative-glued-hyphen-bolintin-deal",
+      "pdf": "pdf/12_negative-glued-hyphen-bolintin-deal.pdf",
+      "png": "png/12_negative-glued-hyphen-bolintin-deal.png",
+      "tpo": "TPO-0332722",
+      "psl": "PSL-0662722",
+      "sep": "n/a",
+      "expect": "NO taxed city"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+# ClickUp #71 — paste each "ruta:" line into Editează → Rută transport
+# Expected: same zone tax on Șoseaua Viilor 52, București (not origin / not Bolintin-Deal split)
+# Separators under test: →  |  ->  |  - (spaced)  |  –  |  —  |  /
+
+## unicode arrow →
+ruta: BOL Bolintin → Șoseaua Viilor nr. 52, București
+
+## ascii arrow ->
+ruta: BOL Bolintin -> Șoseaua Viilor nr. 52, București
+
+## spaced hyphen -
+ruta: BOL Bolintin - Șoseaua Viilor nr. 52, București
+
+## en dash –
+ruta: BOL Bolintin – Șoseaua Viilor nr. 52, București
+
+## em dash —
+ruta: BOL Bolintin — Șoseaua Viilor nr. 52, București
+
+## slash /
+ruta: BOL Bolintin / Șoseaua Viilor nr. 52, București
+
+## origin with Bolintin-Deal (glued hyphen must stay in origin) + →
+ruta: Str. Industriei nr. 7, Bolintin-Deal → Șoseaua Viilor nr. 52, sector 5, București
+
+## origin Bolintin-Deal + ->
+ruta: Str. Industriei nr. 7, Bolintin-Deal -> Șoseaua Viilor nr. 52, sector 5, București
+
+## origin Bolintin-Deal + spaced -
+ruta: Str. Industriei nr. 7, Bolintin-Deal - Șoseaua Viilor nr. 52, sector 5, București
+
+## origin Bolintin-Deal + /
+ruta: Str. Industriei nr. 7, Bolintin-Deal / Șoseaua Viilor nr. 52, sector 5, București
+
+## delivery only (no separator)
+ruta: Șoseaua Viilor nr. 52, București
+
+## NEGATIVE — must NOT split Bolintin-Deal
+ruta: Str. Republicii nr. 1F, Bolintin-Deal

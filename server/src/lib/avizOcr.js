@@ -273,7 +273,10 @@ const HEADING_ROW_COMPANIONS = new Set([
  */
 function standaloneClientHeaderIndex(folded, from, protectUntil) {
   const slice = folded.slice(from);
-  const re = /(?:^|[\n\t])client(?!\s+factur)(?=\s|$|\t|:)/g;
+  // Bare column header only (`Client` / `Client:` / `Client\t…`).
+  // Do NOT treat a company name like "Client Timisoara SRL" as the header —
+  // that used to truncate Adresa de livrare before the street on PDF extracts.
+  const re = /(?:^|[\n\t])client(?!\s+factur)(?=\s*(?:$|\t|:|\n))/g;
   let m;
   while ((m = re.exec(slice)) !== null) {
     const lead = m[0].match(/^[\n\t]/) ? 1 : 0;
@@ -311,9 +314,25 @@ function sliceSection(blob, startLabels, stopLabels, { stopAtClientHeader = fals
   // Companion column headers on the same row as the start label must not truncate the
   // address lines below. Cap the window at the first newline (or ~80 chars) — never at
   // a street that may belong to the *next* section.
+  //
+  // PDF extractors (and some OCR) often put "Adresa de livrare" and "Client" on two
+  // consecutive lines with no tab — treat a lone following "client" as the heading
+  // companion, not as the end of the delivery block.
   const rest = folded.slice(from);
+  let protectUntil = from + Math.min(rest.length, 80);
   const firstNl = rest.indexOf('\n');
-  const protectUntil = from + (firstNl >= 0 ? firstNl + 1 : Math.min(rest.length, 80));
+  if (firstNl >= 0) {
+    protectUntil = from + firstNl + 1;
+    if (stopAtClientHeader) {
+      const afterHeading = folded.slice(protectUntil);
+      const loneClient = afterHeading.match(/^\s*client(?!\s+factur)(?=\s|$|\t|:)/);
+      if (loneClient) {
+        const afterClient = afterHeading.slice(loneClient[0].length);
+        const nextNl = afterClient.indexOf('\n');
+        protectUntil += loneClient[0].length + (nextNl >= 0 ? nextNl + 1 : 0);
+      }
+    }
+  }
   let end = folded.length;
   for (const stop of stopLabels) {
     const hit = findFoldedLabel(folded.slice(from), stop);
@@ -510,6 +529,36 @@ function postcodeFromSection(folded) {
   }
   const bare = String(folded || '').match(/\b(\d{6})\b/);
   return bare?.[1] || null;
+}
+
+/**
+ * Settlement implied by a Romanian postcode when the range is unambiguous.
+ * București sectors use 01xxxx–06xxxx. Other prefixes are left null so OCR
+ * locality wins (Ilfov 07xxxx, county towns, etc.).
+ * @returns {string|null} folded locality token, e.g. `bucuresti`
+ */
+export function localityHintFromPostcode(postcode) {
+  const pc = String(postcode || '').replace(/\s+/g, '');
+  if (!/^\d{6}$/.test(pc)) return null;
+  const prefix = Number(pc.slice(0, 2));
+  if (prefix >= 1 && prefix <= 6) return 'bucuresti';
+  return null;
+}
+
+/**
+ * Prefer postcode settlement when OCR locality is missing or conflicts
+ * (e.g. site/street "Timisoara" + RO 061344 under Adresa de livrare).
+ * Does not invent towns outside known ranges — those keep the OCR value.
+ */
+export function resolveLocalityWithPostcode(localityRaw, postcode) {
+  const hint = localityHintFromPostcode(postcode);
+  if (!hint) return localityRaw || null;
+  const loc = fold(localityRaw || '');
+  if (!loc) return hint;
+  if (/\bbucuresti\b/.test(loc) || /^sector(?:ul)?\s*[1-6]\b/.test(loc)) {
+    return localityRaw;
+  }
+  return hint;
 }
 
 /**
@@ -767,7 +816,10 @@ function parseDestBlock(section, { interleaved = false } = {}) {
   }
   folded = scrubSectionNoise(folded);
 
-  const localityRaw = localityFromSection(folded);
+  // Postcode first: a București CP (01–06) corrects a wrong OCR town (Timisoara on
+  // Bvd. Timișoara) before street parsing, so the street name is not stripped as locality.
+  const postcode = postcodeFromSection(folded);
+  const localityRaw = resolveLocalityWithPostcode(localityFromSection(folded), postcode);
   const localityFolded = localityRaw ? fold(localityRaw) : '';
 
   const { streetType, streetName, houseNumber: houseRaw } = parseStreetParts(folded, localityFolded);
@@ -778,7 +830,6 @@ function parseDestBlock(section, { interleaved = false } = {}) {
 
   const locality = localityRaw ? displayWords(localityRaw) : null;
   const street = compactStreet(streetName, rawHouse);
-  const postcode = postcodeFromSection(folded);
 
   return {
     locality,

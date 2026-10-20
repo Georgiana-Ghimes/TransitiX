@@ -167,7 +167,12 @@ export default function AvizEditModal({
               </span>
             </div>
             <div className="relative flex-1 min-h-0">
-              <AvizFilePreview fileUrl={editRow.file_url} fill zoom={previewZoom} />
+              <AvizFilePreview
+                fileUrl={editRow.file_url}
+                fill
+                zoom={previewZoom}
+                uprightPreview={false}
+              />
             </div>
           </div>
           </div>

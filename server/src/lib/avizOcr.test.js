@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { parseBaumitAviz, normalizePlate, repairAvizFromStored, avizFieldConfidence, fieldConfidenceForUi, isFalseRoute, isSuspiciousRoute, quantityConflictsWithRaw, clipRouteGoodsTable } from './avizOcr.js';
+import {
+  parseBaumitAviz,
+  normalizePlate,
+  repairAvizFromStored,
+  avizFieldConfidence,
+  fieldConfidenceForUi,
+  isFalseRoute,
+  isSuspiciousRoute,
+  quantityConflictsWithRaw,
+  clipRouteGoodsTable,
+  localityHintFromPostcode,
+  resolveLocalityWithPostcode,
+} from './avizOcr.js';
 import { mapAnnexRows, DEFAULT_RAI_COLUMNS, resolveExportColumns } from './avizTemplate.js';
 
 const PSL_FIXTURE = `
@@ -33,6 +45,26 @@ Site: BOL Bolintin
 Livrare zona centrala B
 80 buc
 `;
+
+describe('localityHintFromPostcode / resolveLocalityWithPostcode', () => {
+  it('maps București sector ranges 01–06 only', () => {
+    expect(localityHintFromPostcode('061344')).toBe('bucuresti');
+    expect(localityHintFromPostcode('050151')).toBe('bucuresti');
+    expect(localityHintFromPostcode('011743')).toBe('bucuresti');
+    expect(localityHintFromPostcode('077190')).toBeNull();
+    expect(localityHintFromPostcode('300001')).toBeNull();
+    expect(localityHintFromPostcode('087015')).toBeNull();
+  });
+
+  it('overrides conflicting OCR town when CP is București', () => {
+    expect(resolveLocalityWithPostcode('timisoara', '061344')).toBe('bucuresti');
+    expect(resolveLocalityWithPostcode('galati', '041837')).toBe('bucuresti');
+    expect(resolveLocalityWithPostcode(null, '061344')).toBe('bucuresti');
+    expect(resolveLocalityWithPostcode('Bucuresti', '061344')).toBe('Bucuresti');
+    expect(resolveLocalityWithPostcode('timisoara', '300001')).toBe('timisoara');
+    expect(resolveLocalityWithPostcode('Voluntari', '077190')).toBe('Voluntari');
+  });
+});
 
 describe('normalizePlate', () => {
   it('normalizes spaced Romanian plates', () => {
@@ -198,6 +230,170 @@ PSL-0062301
       streetType: 'bulevardul',
       houseNumber: '1/VII',
       postcode: '077190',
+    });
+  });
+
+  describe('postcode clarifies locality (wrong Timisoara + București CP)', () => {
+    const origin = `Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU`;
+
+    /**
+     * Baumit-shaped sheets where the printed / OCR town says Timisoara (site name or
+     * street homonym) but Adresa de livrare carries a București RO ######.
+     * Rută must show Bucuresti without embedding the postcode.
+     */
+    const cases = [
+      {
+        name: 'Demoval OBI TIMISOARA / Bvd. Timisoara + 061344',
+        delivery: `Adresa de livrare
+CS-DEMOVAL - OBI TIMISOARA
+Bulevardul Timisoara nr. 26
+Timisoara RO 061344
+ROU`,
+        street: /Bvd\. Timisoara nr\. 26, Bucuresti/,
+        postcode: '061344',
+        streetName: 'timisoara',
+      },
+      {
+        name: 'Viilor with wrong Timisoara town + 050151',
+        delivery: `Adresa de livrare
+CS-CONCELEX
+Sosea Viilor nr. 52
+Timisoara RO 050151
+ROU`,
+        street: /Șosea Viilor nr\. 52, Bucuresti/,
+        postcode: '050151',
+        streetName: 'viilor',
+      },
+      {
+        name: 'Iancu + 011743 (Sector 1 CP)',
+        delivery: `Adresa de livrare
+CS-CONCELEX- OBI LOHN
+Bulevardul Iancu nr. 30
+Timisoara RO 011743
+ROU`,
+        street: /Bvd\. Iancu nr\. 30, Bucuresti/,
+        postcode: '011743',
+        streetName: 'iancu',
+      },
+      {
+        name: 'Ghencea + 061692',
+        delivery: `Adresa de livrare
+DEDEMAN GHENCEA
+Bdul Ghencea nr. 91
+Timisoara RO 061692
+ROU`,
+        street: /Bvd\. Ghencea nr\. 91, Bucuresti/,
+        postcode: '061692',
+        streetName: 'ghencea',
+      },
+      {
+        name: 'Metalurgiei + 041837 (two-column tabs)',
+        delivery: `Adresă de livrare	Client
+CS-AVALON	C23941012 AVALON
+Bulevardul Metalurgiei nr. 84	BDUL METALURGIEI NR. 61
+Timisoara RO 041837	București Sector 4 RO 041832
+ROU	ROU`,
+        street: /Bvd\. Metalurgiei nr\. 84, Bucuresti/,
+        postcode: '041837',
+        streetName: 'metalurgiei',
+      },
+      {
+        name: 'missing town line — only street Timisoara + CP',
+        delivery: `Adresa de livrare
+CS-DEMOVAL - OBI TIMISOARA
+Bulevardul Timisoara nr. 26
+RO 061344
+ROU`,
+        street: /Bvd\. Timisoara nr\. 26, Bucuresti/,
+        postcode: '061344',
+        streetName: 'timisoara',
+      },
+    ];
+
+    it.each(cases)('$name → Bucuresti in route, CP kept on delivery_address only', ({
+      delivery, street, postcode, streetName,
+    }) => {
+      const parsed = parseBaumitAviz(`${origin}\n${delivery}\nTPO-0099001\nPSL-0099001`);
+      expect(parsed.ruta_transport).toMatch(/^Str\. Republicii nr\. 1F, Bolintin-Deal\s*\//);
+      expect(parsed.ruta_transport).toMatch(street);
+      // Street may still be named Timisoara; the *town* after the comma must not.
+      expect(parsed.ruta_transport).not.toMatch(/,\s*Timisoara\b/i);
+      expect(parsed.ruta_transport).toMatch(/,\s*Bucuresti\b/);
+      expect(parsed.ruta_transport).not.toMatch(/\b0\d{5}\b/);
+      expect(parsed.delivery_address).toMatchObject({
+        locality: 'Bucuresti',
+        postcode,
+        streetName,
+      });
+    });
+
+    it('does not override a real Timișoara delivery (30xxxx)', () => {
+      const raw = `${origin}
+Adresa de livrare
+Depozit Timisoara
+Bulevardul Take Ionescu nr. 10
+Timisoara RO 300001
+ROU
+TPO-0099002
+`;
+      const parsed = parseBaumitAviz(raw);
+      expect(parsed.ruta_transport).toMatch(/Timisoara/);
+      expect(parsed.ruta_transport).not.toMatch(/Bucuresti/i);
+      expect(parsed.delivery_address).toMatchObject({
+        locality: 'Timisoara',
+        postcode: '300001',
+      });
+    });
+
+    it('leaves Ilfov 07xxxx locality alone (Voluntari)', () => {
+      const raw = `${origin}
+Adresa de livrare
+Bulevardul Pipera nr. 1/VII
+Voluntari RO 077190
+TPO-0099003
+`;
+      const parsed = parseBaumitAviz(raw);
+      expect(parsed.ruta_transport).toMatch(/Voluntari/);
+      expect(parsed.delivery_address?.locality).toBe('Voluntari');
+      expect(parsed.delivery_address?.postcode).toBe('077190');
+    });
+
+    it('keeps real Timisoara delivery when Client header is on the next line (no tab)', () => {
+      // PDF extractors often split the heading row onto two lines.
+      const raw = `${origin}
+Adresa de livrare
+Client
+Depozit Timisoara
+Bulevardul Take Ionescu nr. 10
+Timisoara RO 300001
+ROU
+TPO-0099007
+`;
+      const parsed = parseBaumitAviz(raw);
+      expect(parsed.ruta_transport).toMatch(/Take Ionescu/);
+      expect(parsed.ruta_transport).toMatch(/Timisoara/);
+      expect(parsed.ruta_transport).not.toMatch(/Bucuresti/i);
+      expect(parsed.delivery_address).toMatchObject({
+        locality: 'Timisoara',
+        postcode: '300001',
+        streetName: 'take ionescu',
+      });
+    });
+
+    it('does not truncate delivery when the Client cell starts with "Client … SRL"', () => {
+      const raw = `${origin}
+Adresa de livrare\tClient
+Depozit Timisoara\tClient Timisoara SRL
+Bulevardul Take Ionescu nr. 10\tStr. Facturare 1
+Timisoara RO 300001\tTimisoara RO 300001
+TPO-0099007
+`;
+      const parsed = parseBaumitAviz(raw);
+      expect(parsed.ruta_transport).toMatch(/Take Ionescu/);
+      expect(parsed.ruta_transport).toMatch(/,\s*Timisoara\b/);
+      expect(parsed.delivery_address?.postcode).toBe('300001');
     });
   });
 

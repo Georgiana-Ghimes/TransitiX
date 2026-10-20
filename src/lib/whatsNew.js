@@ -23,6 +23,16 @@ export const WHATS_NEW_KEEP = 5;
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 126,
+    version: '1.28.1',
+    dateLabel: 'octombrie 2026',
+    title: 'Rotire vizibilă + rută din CP București',
+    highlights: [
+      'După 90° sau 180°, preview-ul din Editează arată fișierul rotit (nu mai anulează vizual rotația).',
+      'Dacă OCR citește greșit orașul (ex. Timișoara) dar CP-ul e București (01–06), ruta folosește București — fără CP în textul rutei.',
+    ],
+  },
+  {
     build: 125,
     version: '1.28.0',
     dateLabel: 'octombrie 2026',
@@ -65,17 +75,6 @@ export const WHATS_NEW_RELEASES = [
       'TPO / auto / rută în roșu bold = OCR nesigur. Confirmă și Unește sunt blocate până verifici pe document: Verifică → Marchează verificat, sau Salvează în carusel (chiar dacă nu schimbi valoarea).',
       'Nu mai apare „Gata de confirmare” doar pentru că TPO-ul e umplut greșit (ex. sub ștampilă).',
       'Serverul refuză anexa dacă Număr TPO e încă OCR nesigur și neverificat.',
-    ],
-  },
-  {
-    build: 117,
-    version: '1.26.11',
-    dateLabel: 'octombrie 2026',
-    title: 'OCR nesigur vizibil; TPO obligatoriu la Unește',
-    highlights: [
-      'TPO / auto / rută evidențiate când OCR-ul nu e sigur (ștampilă, citire slabă), nu „editat manual”. În listă: eticheta „OCR nesigur”.',
-      'La Unește oricum: bifezi explicit că îți asumi datele incomplete sau nesigure.',
-      'Cu „Unește celulele TPO” pe șablon: fără Număr TPO pe un aviz nu poți uni oricum; completezi TPO în carousel (sau oprești bifa). Serverul blochează la fel.',
     ],
   },
 ];
