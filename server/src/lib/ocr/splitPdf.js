@@ -116,9 +116,18 @@ export function avizSplitKeysForPage(text) {
   return keys;
 }
 
+/** TRO / PSL keys only (not TPO) out of a page's split keys. */
+function documentKeysOf(keys) {
+  return [...keys].filter((k) => !k.startsWith('TPO-'));
+}
+
 /**
  * How to cut pages into avize. Only when ≥2 distinct document keys appear.
  * Continuation pages (no key, or the same key reprinted) stay with the previous aviz.
+ *
+ * A different TRO/PSL always starts a new aviz, even under the same TPO: one transport
+ * order carries several avize (goods PSL + returnable-pallet PSL on the same truck).
+ * TPO glues a page only when it shows no TRO/PSL of its own (mangled text layer, #108).
  *
  * @param {string[]} pageTexts
  * @returns {null | number[][]} page-index groups, or null = keep as one file
@@ -149,12 +158,14 @@ export function planAvizPdfSplits(pageTexts) {
       current.pages.push(i);
       continue;
     }
-    let overlap = false;
-    for (const k of keys) {
-      if (current.keys.has(k)) {
-        overlap = true;
-        break;
-      }
+    const pageDocs = documentKeysOf(keys);
+    const groupDocs = documentKeysOf(current.keys);
+    let overlap;
+    if (pageDocs.length && groupDocs.length) {
+      // Both sides name their aviz: same document only when a TRO/PSL matches.
+      overlap = pageDocs.some((k) => current.keys.has(k));
+    } else {
+      overlap = [...keys].some((k) => current.keys.has(k));
     }
     if (overlap) {
       current.pages.push(i);

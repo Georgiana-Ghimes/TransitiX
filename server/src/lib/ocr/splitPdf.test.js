@@ -91,6 +91,15 @@ describe('avizDocumentKeys / planAvizPdfSplits', () => {
       'TPO-0035189 greutate continuation',
     ])).toBeNull();
   });
+
+  it('splits two PSLs under the same TPO (goods aviz on 2 pages + pallet aviz)', () => {
+    // Baumit TPO-0035236: PSL-0061279 pages 1/2 + 2/2, PSL-0061280 (paleți EUR) page 1/1.
+    expect(planAvizPdfSplits([
+      'Paginä\t1/2\nAviz de expeditie: PSL-0061279\nComandä de transport TPO-0035236',
+      'Paginä\t2/2\nAviz de expeditie: PSL-0061279\nComandä de transport TPO-0035236',
+      'Paginä\t1/1\nAviz de expeditie: PSL-0061280\nComandä de transport TPO-0035236',
+    ])).toEqual([[0, 1], [2]]);
+  });
 });
 
 describe('jsPDF text layer (same generator as avize.api tests)', () => {
