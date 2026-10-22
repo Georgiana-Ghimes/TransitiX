@@ -27,13 +27,33 @@ UI_LOG="$LOG_DIR/vite.log"
 CF_LOG="$LOG_DIR/cloudflared.log"
 PID_FILE="$LOG_DIR/pids"
 
+# Each service runs in its own process group (setsid), so stopping it reaches npm, the
+# `node --watch` supervisor and its child. Killing only the subshell pid used to leave the
+# watcher holding :3002: the restarted API died with EADDRINUSE, the stale one kept the old
+# env, and migrations never ran after a pull.
+start_group() {
+  local log="$1"; shift
+  setsid bash -c "cd \"$ROOT\" && $*" >"$log" 2>&1 &
+  echo $!
+}
+
+kill_group() {
+  local pid="$1"
+  [[ -n "$pid" ]] || return 0
+  kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+}
+
 stop_old() {
   if [[ -f "$PID_FILE" ]]; then
     while read -r pid; do
-      kill "$pid" 2>/dev/null || true
+      kill_group "$pid"
     done < "$PID_FILE"
     rm -f "$PID_FILE"
   fi
+  # Leftovers from older versions of this script (plain `kill` on the subshell).
+  pkill -f 'node --watch src/index.js' 2>/dev/null || true
+  pkill -f 'node src/migrate.js' 2>/dev/null || true
+  pkill -f 'vite --mode companion' 2>/dev/null || true
   # Best-effort cleanup of leftover listeners on companion ports.
   for port in 3002 5174; do
     pids=$(ss -lntp 2>/dev/null | awk -v p=":$port" '$4 ~ p {print}' | grep -oP 'pid=\K[0-9]+' || true)
@@ -111,18 +131,10 @@ fi
 grep -q '^COMPANION=' server/.env 2>/dev/null || echo 'COMPANION=1' >> server/.env
 
 echo "==> API on :3002 (COMPANION=$COMPANION)"
-(
-  cd "$ROOT"
-  COMPANION=1 npm run dev --prefix server
-) >"$API_LOG" 2>&1 &
-echo $! >>"$PID_FILE"
+start_group "$API_LOG" "COMPANION=1 npm run dev --prefix server" >>"$PID_FILE"
 
 echo "==> Vite companion on :5174"
-(
-  cd "$ROOT"
-  COMPANION=1 npm run dev:companion
-) >"$UI_LOG" 2>&1 &
-echo $! >>"$PID_FILE"
+start_group "$UI_LOG" "COMPANION=1 npm run dev:companion" >>"$PID_FILE"
 
 echo "==> waiting for Vite"
 for _ in $(seq 1 60); do
@@ -191,15 +203,14 @@ set_client_origin "$PUBLIC_URL"
 echo "==> restarting API so .env reloads"
 # Kill only the API child (first pid) and start again.
 API_PID="$(head -1 "$PID_FILE")"
-kill "$API_PID" 2>/dev/null || true
-sleep 1
-(
-  cd "$ROOT"
-  COMPANION=1 npm run dev --prefix server
-) >"$API_LOG" 2>&1 &
+kill_group "$API_PID"
+for _ in $(seq 1 20); do
+  ss -lnt 2>/dev/null | grep -q ':3002 ' || break
+  sleep 0.5
+done
 # replace first pid line
 {
-  echo $!
+  start_group "$API_LOG" "COMPANION=1 npm run dev --prefix server"
   tail -n +2 "$PID_FILE"
 } >"$PID_FILE.tmp"
 mv "$PID_FILE.tmp" "$PID_FILE"
@@ -212,4 +223,4 @@ echo "  Local API: http://127.0.0.1:3002/api/health"
 echo "  Public:    $PUBLIC_URL"
 echo "  Logs:      $LOG_DIR"
 echo
-echo "Stop later with:  kill \$(cat $PID_FILE); pkill -f 'cloudflared tunnel --url'"
+echo "Stop later with:  for p in \$(cat $PID_FILE); do kill -- -\$p; done; pkill -f 'cloudflared tunnel --url'"
