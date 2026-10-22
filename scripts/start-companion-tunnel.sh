@@ -4,8 +4,9 @@
 #   bash scripts/start-companion-tunnel.sh
 #
 # Instalează/repară cloudflared dacă lipsește sau e stub invalid (ex. 9 bytes),
-# pornește API + Vite + tunnel, așteaptă URL trycloudflare, scrie CLIENT_ORIGIN
-# în server/.env (+ .env.companion), apoi repornește API pentru CORS.
+# face build la UI (dist/), pornește API (care servește și UI-ul pe :3002) + tunnel,
+# așteaptă URL trycloudflare, scrie CLIENT_ORIGIN în server/.env (+ .env.companion),
+# apoi repornește API pentru CORS. Pentru lucru pe UI: UI_MODE=dev (Vite pe :5174).
 
 set -euo pipefail
 
@@ -65,18 +66,26 @@ stop_old() {
   sleep 1
 }
 
+# What the tunnel serves.
+#   dist (default) — `vite build` once, the API serves dist/ on :3002: one origin, no HMR.
+#   dev            — `vite dev` on :5174 for working on the UI. Never hand this to drivers: the
+#                    Vite client reloads the page whenever its socket drops, and opening the phone
+#                    camera drops it, so the photo the driver just took was lost on return.
+UI_MODE="${UI_MODE:-dist}"
+if [[ "$UI_MODE" == "dev" ]]; then UI_PORT=5174; else UI_PORT=3002; fi
+
 pick_origin() {
   local lan
   lan="$(hostname -I 2>/dev/null | awk '{print $1}')"
-  if curl -sf --connect-timeout 2 "http://127.0.0.1:5174/" >/dev/null; then
-    echo "http://127.0.0.1:5174"
-  elif [[ -n "${lan:-}" ]] && curl -sf --connect-timeout 2 "http://${lan}:5174/" >/dev/null; then
-    echo "http://${lan}:5174"
+  if curl -sf --connect-timeout 2 "http://127.0.0.1:${UI_PORT}/" >/dev/null; then
+    echo "http://127.0.0.1:${UI_PORT}"
+  elif [[ -n "${lan:-}" ]] && curl -sf --connect-timeout 2 "http://${lan}:${UI_PORT}/" >/dev/null; then
+    echo "http://${lan}:${UI_PORT}"
   elif [[ -n "${lan:-}" ]]; then
-    # Vite not up yet when we pick; prefer LAN if loopback has been flaky on this VM.
-    echo "http://${lan}:5174"
+    # UI not up yet when we pick; prefer LAN if loopback has been flaky on this VM.
+    echo "http://${lan}:${UI_PORT}"
   else
-    echo "http://127.0.0.1:5174"
+    echo "http://127.0.0.1:${UI_PORT}"
   fi
 }
 
@@ -130,16 +139,28 @@ if [[ -f server/.env.companion ]]; then
 fi
 grep -q '^COMPANION=' server/.env 2>/dev/null || echo 'COMPANION=1' >> server/.env
 
+if [[ "$UI_MODE" != "dev" ]]; then
+  # Before the API starts: it decides at boot whether there is a dist/ to serve.
+  echo "==> building UI (dist/) — log: $UI_LOG"
+  if ! COMPANION=1 npm run build:companion >"$UI_LOG" 2>&1; then
+    echo "FAILED: UI build. Last lines:"
+    tail -n 30 "$UI_LOG" || true
+    exit 1
+  fi
+fi
+
 echo "==> API on :3002 (COMPANION=$COMPANION)"
 start_group "$API_LOG" "COMPANION=1 npm run dev --prefix server" >>"$PID_FILE"
 
-echo "==> Vite companion on :5174"
-start_group "$UI_LOG" "COMPANION=1 npm run dev:companion" >>"$PID_FILE"
+if [[ "$UI_MODE" == "dev" ]]; then
+  echo "==> Vite companion on :5174 (UI_MODE=dev)"
+  start_group "$UI_LOG" "COMPANION=1 npm run dev:companion" >>"$PID_FILE"
+fi
 
-echo "==> waiting for Vite"
-for _ in $(seq 1 60); do
-  if curl -sf --connect-timeout 1 "http://127.0.0.1:5174/" >/dev/null \
-    || curl -sf --connect-timeout 1 "http://$(hostname -I | awk '{print $1}'):5174/" >/dev/null; then
+echo "==> waiting for the UI on :${UI_PORT}"
+for _ in $(seq 1 90); do
+  if curl -sf --connect-timeout 1 "http://127.0.0.1:${UI_PORT}/" >/dev/null \
+    || curl -sf --connect-timeout 1 "http://$(hostname -I | awk '{print $1}'):${UI_PORT}/" >/dev/null; then
     break
   fi
   sleep 1
