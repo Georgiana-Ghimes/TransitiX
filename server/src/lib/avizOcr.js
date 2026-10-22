@@ -374,12 +374,20 @@ const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\
 const COMPANY_FORM_RE = /\b(?:s\.?\s*r\.?\s*l\.?|s\.?\s*a\.?|scs|sra|gmbh|ltd|com)\b/i;
 
 /**
- * House number shape: `31B`, `1F`, OCR `IF`/`LF`, building wing `1/VII` (#89).
+ * House number shape: `31B`, `1F`, OCR `IF`/`LF`, building wing `1/VII` (#89), range `17-21`.
  * At most 4 digits; leading `\b` so a postcode run (`077085`) cannot yield `7085`.
  * Slash + Roman/digit is part of the printed number on Baumit (Pipera nr. 1/VII) — do not
  * stop at the bare digits or the wing is dropped from Rută / zona tax.
  */
-const HOUSE_CORE = String.raw`[0-9]{1,4}[a-z]{0,2}(?:/[0-9ivxlcdm]{1,6})?|[il]f`;
+// A range (`Calea Giulesti nr. 1-3`, `Str. Hornbach nr. 17-21`) is one printed number; cutting
+// it at the dash sent the route to a house that is not on the aviz.
+const HOUSE_CORE = String.raw`[0-9]{1,4}[a-z]{0,2}(?:/[0-9ivxlcdm]{1,6}|-[0-9]{1,4}[a-z]?)?|[il]f`;
+/**
+ * Short words inside a street name (`Pierre de Coubertin`, `Calea lui Traian`). Only between two
+ * real words: on their own they are noise, which is what the 3-letter minimum keeps out.
+ */
+const STREET_NAME_LINK = String.raw`(?:de|la|lui|din)`;
+const STREET_NAME_WORDS = String.raw`[a-z]{3,}(?:\s+(?:${STREET_NAME_LINK}\s+)?[a-z]{3,}){0,3}`;
 const HOUSE_NUM_BODY = String.raw`\b(?:nr\.?\s*)?(?:${HOUSE_CORE})\b`;
 const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>${HOUSE_CORE})\b`, 'i');
 
@@ -392,14 +400,14 @@ const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>${HOUSE_CORE}
 // Lookahead must use the full house pattern: a single `[0-9]\b` fails on `52` (no boundary
 // between the two digits) and was why only the number survived as a leg.
 const STREET_AFTER_TYPE_NAME_FIRST = new RegExp(
-  String.raw`^\s*,?\s*(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3})` +
+  String.raw`^\s*,?\s*(?<name>${STREET_NAME_WORDS})` +
   String.raw`(?=\s*(?:,|${HOUSE_NUM_BODY}|\bro\b|\bsector\b|\d{5}|$))` +
   String.raw`(?:\s*,)?(?:\s*${HOUSE_NUM_RE.source})?`,
   'i'
 );
 const STREET_AFTER_TYPE_HOUSE_FIRST = new RegExp(
   String.raw`^\s*,?\s*${HOUSE_NUM_RE.source}\s+` +
-  String.raw`(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3})` +
+  String.raw`(?<name>${STREET_NAME_WORDS})` +
   String.raw`(?=\s*(?:,|\bro\b|\bsector\b|\d{5}|$))`,
   'i'
 );
@@ -423,9 +431,19 @@ function isUsableStreetToken(word, localityFolded = '') {
   return true;
 }
 
-/** Keep name tokens that are not the locality / grammatical noise. */
+const STREET_NAME_LINK_RE = new RegExp(`^${STREET_NAME_LINK}$`);
+
+/** Keep name tokens that are not the locality / grammatical noise (a link word only between two). */
 function cleanStreetName(rawName, localityFolded = '') {
-  const parts = fold(rawName).split(/\s+/).filter((tok) => isUsableStreetToken(tok, localityFolded));
+  const tokens = fold(rawName).split(/\s+/).filter(Boolean);
+  const parts = tokens.filter((tok, i) => {
+    if (STREET_NAME_LINK_RE.test(tok)) {
+      return i > 0 && i < tokens.length - 1
+        && isUsableStreetToken(tokens[i - 1], localityFolded)
+        && isUsableStreetToken(tokens[i + 1], localityFolded);
+    }
+    return isUsableStreetToken(tok, localityFolded);
+  });
   return parts.length ? parts.join(' ') : null;
 }
 
@@ -1363,10 +1381,11 @@ export function expeditorOrigin(blob) {
 /**
  * Route = origin leg + every delivery stop read from the page.
  * The origin is passed in so a leg from somewhere else (the company's learned addresses)
- * goes through exactly the same delivery parse and clipping as a read one.
+ * goes through exactly the same delivery parse and clipping as a read one. `destLegs` does the
+ * same for delivery stops filled from memory.
  */
-export function buildRouteWithOrigin(blob, originLeg, { originNeedsDelivery = false } = {}) {
-  const dests = parseDeliveryAddresses(blob).map(formatAddressLine).filter(Boolean);
+export function buildRouteWithOrigin(blob, originLeg, { originNeedsDelivery = false, destLegs = null } = {}) {
+  const dests = (destLegs || parseDeliveryAddresses(blob).map(formatAddressLine)).filter(Boolean);
   const origin = originNeedsDelivery && !dests.length ? null : originLeg;
   const legs = [origin, ...dests].filter(Boolean);
   if (!legs.length) return null;

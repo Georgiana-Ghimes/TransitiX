@@ -17,9 +17,22 @@
 import {
   buildRouteWithOrigin,
   expeditorOrigin,
+  formatAddressLine,
+  parseDeliveryAddresses,
 } from '../avizOcr.js';
 
 export const ADDRESS_ROLE_ORIGIN = 'origin';
+/**
+ * Adresa de livrare. Same idea as the depot: the customer's site comes back on many avize, and
+ * a clean read of it fills a page where only the town and postcode survived. Bucharest postcodes
+ * name a street block, so the postcode alone already narrows it to one or two addresses.
+ */
+export const ADDRESS_ROLE_DELIVERY = 'delivery';
+
+/** Rows from before roles existed are origins. */
+function hasRole(address, role) {
+  return (address?.role || ADDRESS_ROLE_ORIGIN) === role;
+}
 
 /**
  * Memory reads the Baumit Expeditor / Adresa de livrare layout. CMR and carnet routes are built
@@ -180,35 +193,118 @@ export function pickKnownAddress(addresses, { postcode, locality, hints = [] } =
  * @returns {{ route: string, address: object } | null}
  */
 export function fillOriginFromMemory(rawText, addresses) {
-  if (!rawText || !addresses?.length) return null;
-  const origin = expeditorOrigin(rawText);
-  if (origin.status === 'street') return null;
-  if (origin.status === 'site' && /-/.test(origin.leg || '')) return null;
-  const postcode = origin.block?.postcode;
-  if (!normalizePostcode(postcode)) return null;
-  const locality = origin.block?.locality || null;
-  const address = pickKnownAddress(addresses, {
-    postcode,
-    locality,
-    hints: expeditorStreetHints(rawText, locality),
-  });
+  const address = pickOriginFromMemory(rawText, addresses);
   if (!address) return null;
   const route = buildRouteWithOrigin(rawText, address.display, { originNeedsDelivery: true });
   if (!route || !route.includes(' / ')) return null;
   return { route, address };
 }
 
+/** The learned depot for this page when its Expeditor street is unreadable, else null. */
+function pickOriginFromMemory(rawText, addresses) {
+  const origins = (addresses || []).filter((a) => hasRole(a, ADDRESS_ROLE_ORIGIN));
+  if (!rawText || !origins.length) return null;
+  const origin = expeditorOrigin(rawText);
+  if (origin.status === 'street') return null;
+  if (origin.status === 'site' && /-/.test(origin.leg || '')) return null;
+  const postcode = origin.block?.postcode;
+  if (!normalizePostcode(postcode)) return null;
+  const locality = origin.block?.locality || null;
+  return pickKnownAddress(origins, {
+    postcode,
+    locality,
+    hints: expeditorStreetHints(rawText, locality),
+  });
+}
+
+const DELIVERY_HINT_NOISE = new Set([
+  ...HINT_NOISE, 'client', 'factura', 'sucursala', 'bucuresti', 'sector', 'construct', 'build',
+]);
+
+/** Word-ish leftovers of the street under Adresa de livrare (same idea as the Expeditor hints). */
+export function deliveryStreetHints(rawText, locality) {
+  const folded = fold(rawText);
+  const start = folded.search(/adres[aăe]\s+de\s+livrare/);
+  if (start < 0) return [];
+  const rest = folded.slice(start).replace(/^adres[aăe]\s+de\s+livrare/, '');
+  const end = rest.search(/client\s+factura|transportator|comanda\s+de\s+transport|referinta/);
+  const section = end >= 0 ? rest.slice(0, end) : rest.slice(0, 300);
+  const townWords = new Set(fold(locality).split(/[\s-]+/).filter(Boolean));
+  return [...new Set(section.split(/[^a-z]+/).filter((w) => (
+    w.length >= 4 && !DELIVERY_HINT_NOISE.has(w) && !townWords.has(w)
+  )))];
+}
+
 /**
- * Apply memory onto a values object (extract) or a row (list/export).
- * Never touches a route the office pinned (`corrected_fields`).
+ * Delivery stops with the unreadable ones filled from this company's learned delivery
+ * addresses. A stop whose street was read stays as read; only a stop that kept its postcode
+ * but lost its street is looked up.
+ *
+ * @returns {{ legs: string[], addresses: object[] } | null}  null when nothing was filled
  */
-export function applyOriginMemory(values, rawText, addresses, { correctedFields = [] } = {}) {
+export function fillDeliveryFromMemory(rawText, addresses) {
+  const known = (addresses || []).filter((a) => hasRole(a, ADDRESS_ROLE_DELIVERY));
+  if (!rawText || !known.length) return null;
+  const blocks = parseDeliveryAddresses(rawText);
+  if (!blocks.length) return null;
+  const used = [];
+  const legs = blocks.map((block) => {
+    if (block.streetName) return formatAddressLine(block);
+    const postcode = normalizePostcode(block.postcode);
+    if (!postcode) return formatAddressLine(block);
+    const address = pickKnownAddress(known, {
+      postcode,
+      locality: block.locality,
+      hints: deliveryStreetHints(rawText, block.locality),
+    });
+    if (!address) return formatAddressLine(block);
+    used.push(address);
+    return address.display;
+  });
+  if (!used.length) return null;
+  return { legs: legs.filter(Boolean), addresses: used };
+}
+
+/**
+ * Apply memory onto a values object (extract) or a row (list/export): the Expeditor and every
+ * delivery stop whose street the page lost. Never touches a route the office pinned
+ * (`corrected_fields`).
+ *
+ * @returns {{ values: object, address: object|null, deliveryAddresses: object[] }}
+ *   `address` is the origin used, `deliveryAddresses` the delivery ones.
+ */
+export function applyAddressMemory(values, rawText, addresses, { correctedFields = [] } = {}) {
   const out = { ...(values || {}) };
-  if (correctedFields.includes('ruta_transport')) return { values: out, address: null };
-  const filled = fillOriginFromMemory(rawText, addresses);
-  if (!filled) return { values: out, address: null };
-  out.ruta_transport = filled.route;
-  return { values: out, address: filled.address };
+  const none = { values: out, address: null, deliveryAddresses: [] };
+  if (correctedFields.includes('ruta_transport')) return none;
+
+  const originAddress = pickOriginFromMemory(rawText, addresses);
+  const delivery = fillDeliveryFromMemory(rawText, addresses);
+  if (!originAddress && !delivery) return none;
+
+  let route;
+  if (originAddress) {
+    route = buildRouteWithOrigin(rawText, originAddress.display, {
+      originNeedsDelivery: true,
+      destLegs: delivery?.legs || null,
+    });
+  } else {
+    const { leg, status } = expeditorOrigin(rawText);
+    route = buildRouteWithOrigin(rawText, leg, {
+      originNeedsDelivery: status === 'locality',
+      destLegs: delivery.legs,
+    });
+  }
+  if (!route || !route.includes(' / ')) return none;
+  out.ruta_transport = route;
+  return { values: out, address: originAddress, deliveryAddresses: delivery?.addresses || [] };
+}
+
+/** Origin-only view of {@link applyAddressMemory}, kept for callers that predate delivery memory. */
+export function applyOriginMemory(values, rawText, addresses, opts = {}) {
+  const origins = (addresses || []).filter((a) => hasRole(a, ADDRESS_ROLE_ORIGIN));
+  const { values: out, address } = applyAddressMemory(values, rawText, origins, opts);
+  return { values: out, address };
 }
 
 /**
@@ -229,6 +325,29 @@ export function originObservationFromOcr(rawText) {
     display: origin.leg,
     match_key: addressMatchKey(origin.leg),
   };
+}
+
+/**
+ * Clean Adresa de livrare reads worth remembering: every stop with a street, a town and a
+ * six-digit postcode. One per (postcode, address), so a stop printed twice counts once.
+ * @returns {{ postcode, locality, street_name, display, match_key }[]}
+ */
+export function deliveryObservationsFromOcr(rawText) {
+  if (!rawText) return [];
+  const seen = new Set();
+  const out = [];
+  for (const block of parseDeliveryAddresses(rawText)) {
+    const postcode = normalizePostcode(block?.postcode);
+    const locality = block?.locality || null;
+    if (!block?.streetName || !postcode || !locality) continue;
+    const display = formatAddressLine(block);
+    if (!display) continue;
+    const matchKey = addressMatchKey(display);
+    if (seen.has(`${postcode}|${matchKey}`)) continue;
+    seen.add(`${postcode}|${matchKey}`);
+    out.push({ postcode, locality, street_name: block.streetName, display, match_key: matchKey });
+  }
+  return out;
 }
 
 const STREET_LEG_RE = /\b(?:str|strada|sos|sosea|soseaua|bvd|blvd|bd|bulevardul|b-dul|calea|aleea|al|intrarea|piata|nr)\b\.?/i;
@@ -277,6 +396,37 @@ export function originObservationFromCorrection(rawText, correctedRoute) {
   };
 }
 
+/**
+ * The delivery legs of a route the office typed, each tied to a postcode printed under Adresa
+ * de livrare. Legs pair with the page's stops in order when the counts agree (one stop, or the
+ * same number of stops); otherwise we cannot tell which postcode a leg belongs to and learn
+ * nothing. A leg whose town disagrees with its stop's town is skipped.
+ */
+export function deliveryObservationsFromCorrection(rawText, correctedRoute) {
+  const legs = String(correctedRoute || '').split(/\s+\/\s+/).map((l) => l.trim()).filter(Boolean);
+  const destLegs = legs.slice(1);
+  if (!destLegs.length) return [];
+  const stops = parseDeliveryAddresses(rawText || '');
+  if (!stops.length || stops.length !== destLegs.length) return [];
+  const out = [];
+  destLegs.forEach((leg, i) => {
+    if (!looksLikeStreetLeg(leg)) return;
+    const postcode = normalizePostcode(stops[i]?.postcode);
+    if (!postcode) return;
+    const { street_name: streetName, locality: legTown } = splitAddressLeg(leg);
+    const pageTown = stops[i]?.locality || null;
+    if (legTown && pageTown && fold(legTown) !== fold(pageTown)) return;
+    out.push({
+      postcode,
+      locality: legTown || pageTown,
+      street_name: streetName,
+      display: leg,
+      match_key: addressMatchKey(leg),
+    });
+  });
+  return out;
+}
+
 // ── persistence ─────────────────────────────────────────────────────────────────────────
 
 const COLUMNS = `id, company_id, role, postcode, locality, street_name, display, match_key, source,
@@ -288,9 +438,10 @@ const MAX_MERGE_HOPS = 5;
 
 export async function listKnownAddresses(queryFn, companyId, { role = ADDRESS_ROLE_ORIGIN } = {}) {
   if (!companyId) return [];
+  // `role: null` → every role (extract fills origin and delivery from one list).
   const { rows } = await queryFn(
     `SELECT ${COLUMNS} FROM aviz_known_addresses
-     WHERE company_id = $1 AND role = $2 AND disabled = FALSE AND merged_into IS NULL
+     WHERE company_id = $1 AND ($2::text IS NULL OR role = $2) AND disabled = FALSE AND merged_into IS NULL
      ORDER BY postcode, seen_count DESC`,
     [companyId, role],
   );
@@ -392,8 +543,11 @@ export async function mergeKnownAddresses(queryFn, { sourceId, targetId, userId 
   const source = rows.find((r) => r.id === sourceId);
   const target = rows.find((r) => r.id === targetId);
   if (!source || !target) throw new AddressMergeError('not_found', 'Adresa nu a fost găsită.');
-  if (source.company_id !== target.company_id || source.role !== target.role) {
+  if (source.company_id !== target.company_id) {
     throw new AddressMergeError('other_company', 'Adresele sunt la firme diferite.');
+  }
+  if (source.role !== target.role) {
+    throw new AddressMergeError('other_role', 'Un depozit de expeditor nu se unește cu o adresă de livrare.');
   }
   if (source.merged_into) throw new AddressMergeError('already_merged', 'Adresa e deja unită cu alta.');
   if (target.merged_into) throw new AddressMergeError('target_merged', 'Adresa țintă e ea însăși o variantă unită.');

@@ -726,6 +726,45 @@ Adresa de livrare Sosea nr. 52 Viilor Bucuresti Sector 5 RO 050151
     expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
   });
 
+  it('keeps a house range whole (nr. 17-21, nr. 1-3), not the first number', () => {
+    const raw = `
+Expeditor
+Site: BOI Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresa de livrare\tClient
+HORNBACH CENTRALA SRL MILITARI\tC23933758 HORNBACH CENTRALA SRL MILITARI
+Str. Hornbach, nr. 17-21\tStr. Hornbach, nr.17-21
+Domnesti RO 077090\tDomnesti RO 077090
+ROU\tROU
+Client factura:\tC23935004 HORNBACH CENTRALA SRL
+`;
+    expect(parseBaumitAviz(raw).ruta_transport)
+      .toBe('Str. Republicii nr. 1F, Bolintin-Deal / Str. Hornbach nr. 17-21, Domnesti');
+
+    const giulesti = raw
+      .replace(/Str\. Hornbach, nr\. ?17-21/g, 'Calea Giulesti, nr. 1-3')
+      .replace(/Domnesti RO 077090/g, 'Bucuresti Sector 6 RO 060251');
+    expect(parseBaumitAviz(giulesti).ruta_transport).toMatch(/\/ Calea Giulesti nr\. 1-3, Bucuresti$/);
+  });
+
+  it('keeps a street name with a link word (Bd. Pierre de Coubertin)', () => {
+    const raw = `
+Expeditor
+Site: BOI Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresa de livrare\tClient
+COUBERTIN BUILD SRL\tC23967502 COUBERTIN BUILD SRL
+Bd. Pierre de Coubertin, nr. 3-5\tBd. Pierre de Coubertin, nr. 3-5
+Bucuresti Sector 2 RO 021901\tBucuresti Sector 2 RO 021901
+ROU\tROU
+Client factura:\tCOUBERTIN BUILD SRL
+`;
+    const route = parseBaumitAviz(raw).ruta_transport;
+    expect(route).toMatch(/\/ Bvd\. Pierre De Coubertin nr\. 3-5, Bucuresti$/);
+    // A link word on its own is still not a street name.
+    expect(route).not.toMatch(/\/ Bucuresti$/);
+  });
+
   it('replaces a stored Client-column delivery leg with Adresa de livrare from raw OCR', () => {
     const raw = `
 Expeditor

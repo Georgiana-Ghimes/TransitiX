@@ -18,7 +18,7 @@ import {
 } from '../lib/fleet/plateRegistry.js';
 import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
 import {
-  applyOriginMemory,
+  applyAddressMemory,
   isAddressMemoryProfile,
   listKnownAddresses,
 } from '../lib/ocr/addressMemory.js';
@@ -213,13 +213,16 @@ function routeWithCompanyMemory(serialized, { routeRules = [], knownAddresses = 
   let extracted_data = serialized.extracted_data;
   if (!raw || corrected.includes('ruta_transport')) return { ruta, extracted_data };
   if (knownAddresses.length && isAddressMemoryProfile(serialized.ocr_profile_id)) {
-    const memory = applyOriginMemory({ ruta_transport: ruta }, raw, knownAddresses);
-    if (memory.address) {
+    const memory = applyAddressMemory({ ruta_transport: ruta }, raw, knownAddresses);
+    if (memory.address || memory.deliveryAddresses.length) {
       ruta = memory.values.ruta_transport;
       extracted_data = {
         ...(extracted_data || {}),
-        origin_source: 'memory',
-        origin_address_id: memory.address.id,
+        ...(memory.address ? { origin_source: 'memory', origin_address_id: memory.address.id } : {}),
+        ...(memory.deliveryAddresses.length ? {
+          delivery_source: 'memory',
+          delivery_address_ids: memory.deliveryAddresses.map((a) => a.id),
+        } : {}),
       };
     }
   }
@@ -232,6 +235,8 @@ function routeWithCompanyMemory(serialized, { routeRules = [], knownAddresses = 
         route_source: 'learned',
         origin_source: null,
         origin_address_id: null,
+        delivery_source: null,
+        delivery_address_ids: null,
       };
     }
   }
@@ -257,8 +262,9 @@ function decorateAviz(row, { routeRules = [], fleetByPlate = null, knownAddresse
     ? fleetByPlate.get(plateKey)
     : null;
   field_confidence = clearAutoLowWhenFleetVerified(field_confidence, fleetStatus);
-  // The origin street came from the company's address memory, not this page (#112).
-  if (extracted_data?.origin_source === 'memory' && !corrected.includes('ruta_transport')) {
+  // A street on the route came from the company's address memory, not this page (#112).
+  const fromMemory = extracted_data?.origin_source === 'memory' || extracted_data?.delivery_source === 'memory';
+  if (fromMemory && !corrected.includes('ruta_transport')) {
     field_confidence = { ...field_confidence, ruta_transport: 'low' };
   }
   const heuristicReview = [
@@ -284,7 +290,7 @@ function decorateAviz(row, { routeRules = [], fleetByPlate = null, knownAddresse
 
 async function decorateAvizForCompany(row, companyId) {
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
-  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId, { role: null }).catch(() => []);
   const fleetByPlate = await fleetStatusByPlates(query, companyId, [row?.numar_auto]).catch(() => null);
   return decorateAviz(row, { routeRules, fleetByPlate, knownAddresses });
 }
@@ -295,7 +301,7 @@ async function decorateAvizRows(rows, companyId, routeRules = []) {
     companyId,
     (rows || []).map((r) => r?.numar_auto),
   ).catch(() => new Map());
-  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId, { role: null }).catch(() => []);
   return (rows || []).map((row) => decorateAviz(row, { routeRules, fleetByPlate, knownAddresses }));
 }
 
@@ -329,7 +335,7 @@ async function loadAvizeByIds(companyId, avizIds) {
     [companyId, avizIds]
   );
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
-  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId, { role: null }).catch(() => []);
   return docs.rows.map((row) => {
     const repaired = repairAvizFromStored(serializeRow(row));
     const { ruta, extracted_data } = routeWithCompanyMemory(repaired, { routeRules, knownAddresses });
@@ -490,7 +496,7 @@ router.get('/', async (req, res) => {
       query(sql, params),
       query(countQ.sql, countQ.params),
       listRouteRules(query, req.user.company_id).catch(() => []),
-      listKnownAddresses(query, req.user.company_id).catch(() => []),
+      listKnownAddresses(query, req.user.company_id, { role: null }).catch(() => []),
     ]);
     // Fleet status for Auto highlight (#90): MTMA + verified clears OCR-low on numar_auto.
     const fleetByPlate = await fleetStatusByPlates(

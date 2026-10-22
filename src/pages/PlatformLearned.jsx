@@ -7,6 +7,7 @@ import { friendlyErrorMessage, notifyError, notifySuccess } from '@/lib/notify';
 import {
   LEARNED_SOURCE_LABEL,
   LEARNED_TRUST_LABEL,
+  learnedRoleLabel,
   learnedTrustClass,
   mergePrompt,
   mergedVariantsLabel,
@@ -15,7 +16,8 @@ import {
 /**
  * GOD: what each company's avize have taught the extractor (#112).
  *
- *   Adrese învățate — origin addresses filled in when the Expeditor street is unreadable.
+ *   Adrese învățate — Expeditor depots and customer delivery sites, filled in when the street is
+ *                     unreadable on a page.
  *   Reguli rută     — whole routes learned from an office correction (routeLearn).
  *
  * Both can be wrong; this is where they are confirmed, corrected or switched off.
@@ -98,6 +100,13 @@ function AddressRow({ item, onPatch, busy }) {
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full ${
+              item.role === 'delivery' ? 'bg-sky-50 text-sky-700' : 'bg-indigo-50 text-indigo-700'
+            }`}
+          >
+            {learnedRoleLabel(item.role)}
+          </span>
           <span className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full ${learnedTrustClass(item.trust)}`}>
             {LEARNED_TRUST_LABEL[item.trust] || item.trust}
           </span>
@@ -168,6 +177,7 @@ function AddressRow({ item, onPatch, busy }) {
 function AddAddressForm({ companies, defaultCompanyId, onCreated }) {
   const [open, setOpen] = useState(false);
   const [companyId, setCompanyId] = useState(defaultCompanyId || '');
+  const [role, setRole] = useState('origin');
   const [postcode, setPostcode] = useState('');
   const [display, setDisplay] = useState('');
   const [busy, setBusy] = useState(false);
@@ -178,7 +188,7 @@ function AddAddressForm({ companies, defaultCompanyId, onCreated }) {
     e.preventDefault();
     setBusy(true);
     try {
-      await api.platform.createLearnedAddress({ company_id: companyId, postcode, display });
+      await api.platform.createLearnedAddress({ company_id: companyId, role, postcode, display });
       notifySuccess('Adresă adăugată', display);
       setPostcode('');
       setDisplay('');
@@ -208,6 +218,10 @@ function AddAddressForm({ companies, defaultCompanyId, onCreated }) {
           <option value="">Alege firma</option>
           {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)} aria-label="Tip adresă">
+          <option value="origin">Expeditor</option>
+          <option value="delivery">Livrare</option>
+        </select>
         <input
           className={`${inputCls} w-28`}
           placeholder="Cod poștal"
@@ -218,7 +232,7 @@ function AddAddressForm({ companies, defaultCompanyId, onCreated }) {
         />
         <input
           className={`${inputCls} flex-1 min-w-[16rem]`}
-          placeholder="Str. Republicii nr. 1F, Bolintin-Deal"
+          placeholder={role === 'delivery' ? 'Calea Giulesti nr. 1-3, Bucuresti' : 'Str. Republicii nr. 1F, Bolintin-Deal'}
           value={display}
           onChange={(e) => setDisplay(e.target.value)}
           required
@@ -266,6 +280,7 @@ export default function PlatformLearned() {
   const tab = searchParams.get('tab') === 'rules' ? 'rules' : 'addresses';
   const [companies, setCompanies] = useState([]);
   const [companyId, setCompanyId] = useState(searchParams.get('company') || '');
+  const [role, setRole] = useState(searchParams.get('role') || '');
   const [state, setState] = useState('');
   const [q, setQ] = useState('');
   const [items, setItems] = useState([]);
@@ -288,6 +303,7 @@ export default function PlatformLearned() {
         ? await api.platform.routeRules({ companyId: companyId || undefined })
         : await api.platform.learnedAddresses({
           companyId: companyId || undefined,
+          role: role || undefined,
           state: state || undefined,
           q: q.trim() || undefined,
         });
@@ -302,7 +318,7 @@ export default function PlatformLearned() {
   useEffect(() => {
     const t = setTimeout(load, q ? 250 : 0);
     return () => clearTimeout(t);
-  }, [tab, companyId, state, q]);
+  }, [tab, companyId, role, state, q]);
 
   const setTab = (key) => {
     const next = new URLSearchParams(searchParams);
@@ -377,7 +393,7 @@ export default function PlatformLearned() {
         <h1 className="text-2xl font-bold text-[#0A2B4E]">Date învățate din avize</h1>
         <p className="text-sm text-slate-500">
           {tab === 'addresses'
-            ? 'Adresele de expeditor completate când strada nu se citește pe aviz. O adresă devine de încredere după 2 avize citite curat, o corectură din birou sau confirmarea ta.'
+            ? 'Adresele de expeditor și de livrare completate când strada nu se citește pe aviz. O adresă devine de încredere după 2 avize citite curat, o corectură din birou sau confirmarea ta.'
             : 'Rute întregi învățate din corecturile din Editează. O regulă greșită rescrie ruta pe toate avizele care se potrivesc — ștergerea ei e soluția.'}
         </p>
       </header>
@@ -404,6 +420,11 @@ export default function PlatformLearned() {
         </select>
         {tab === 'addresses' ? (
           <>
+            <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)} aria-label="Tip adresă">
+              <option value="">Expeditor și livrare</option>
+              <option value="origin">Expeditor</option>
+              <option value="delivery">Livrare</option>
+            </select>
             <select className={inputCls} value={state} onChange={(e) => setState(e.target.value)} aria-label="Stare">
               <option value="">Toate stările</option>
               <option value="trusted">De încredere</option>

@@ -551,6 +551,22 @@ export function isMemoryOrigin(row) {
     && !(Array.isArray(row?.corrected_fields) && row.corrected_fields.includes('ruta_transport'));
 }
 
+/** True when a delivery street was unreadable and came from the company's learned addresses. */
+export function isMemoryDelivery(row) {
+  return row?.extracted_data?.delivery_source === 'memory'
+    && !(Array.isArray(row?.corrected_fields) && row.corrected_fields.includes('ruta_transport'));
+}
+
+/** Which legs of the route came from learned addresses: `origine`, `livrare`, both, or null. */
+export function memoryRouteLabel(row) {
+  const origin = isMemoryOrigin(row);
+  const delivery = isMemoryDelivery(row);
+  if (origin && delivery) return 'origine și livrare';
+  if (origin) return 'origine';
+  if (delivery) return 'livrare';
+  return null;
+}
+
 /**
  * Re-extrage returns 202 and finishes in the background. Poll until the row leaves
  * `uploaded` (or we give up), so the list/form show the new fields instead of the

@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   addressMatchKey,
   addressTrustState,
+  applyAddressMemory,
   applyOriginMemory,
+  deliveryObservationsFromCorrection,
+  deliveryObservationsFromOcr,
   expeditorStreetHints,
+  fillDeliveryFromMemory,
   fillOriginFromMemory,
   isTrustedAddress,
   normalizePostcode,
@@ -178,6 +182,108 @@ describe('filling the route', () => {
     );
     expect(values.ruta_transport).toBe('ce a scris biroul');
     expect(address).toBeNull();
+  });
+});
+
+// Delivery block whose street the text layer lost (`Ca1ea Giu1esti`), postcode intact.
+const DELIVERY_HEAD = [
+  'Expeditor',
+  'Site: BOI Bolintin',
+  'Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU',
+  'Aviz de expeditie: PSL-0061401',
+  'Adresa de livrare\tClient',
+  'GIULESTI BUILD SRL\tC23900001 GIULESTI BUILD SRL',
+];
+const DELIVERY_TAIL = [
+  'Bucuresti Sector 6 RO 060251\tBucuresti Sector 6 RO 060251',
+  'ROU\tROU',
+  'Client factura:\tGIULESTI BUILD SRL',
+  'Comanda de transport TPO-0035402',
+];
+const DELIVERY_CLEAN = [...DELIVERY_HEAD, 'Calea Giulesti, nr. 1-3\tCalea Giulesti, nr. 1-3', ...DELIVERY_TAIL].join('\n');
+const DELIVERY_GARBLED = [...DELIVERY_HEAD, 'Ca1ea Giu1esti, nr. 1-3\tCa1ea Giu1esti, nr. 1-3', ...DELIVERY_TAIL].join('\n');
+
+const GIULESTI = {
+  id: 'd1',
+  role: 'delivery',
+  postcode: '060251',
+  locality: 'Bucuresti',
+  street_name: 'giulesti',
+  display: 'Calea Giulesti nr. 1-3, Bucuresti',
+  source: 'parsed',
+  seen_count: 2,
+  verified: false,
+  disabled: false,
+};
+
+describe('delivery addresses', () => {
+  it('learns a clean delivery stop, with its postcode', () => {
+    expect(deliveryObservationsFromOcr(DELIVERY_CLEAN)).toEqual([{
+      postcode: '060251',
+      locality: 'Bucuresti',
+      street_name: 'giulesti',
+      display: 'Calea Giulesti nr. 1-3, Bucuresti',
+      match_key: addressMatchKey('Calea Giulesti nr. 1-3, Bucuresti'),
+    }]);
+  });
+
+  it('learns nothing from a stop whose street did not read', () => {
+    expect(deliveryObservationsFromOcr(DELIVERY_GARBLED)).toEqual([]);
+  });
+
+  it('without memory the garbled stop is only the town', () => {
+    expect(parseBaumitAviz(DELIVERY_GARBLED).ruta_transport)
+      .toBe('Str. Republicii nr. 1F, Bolintin-Deal / Bucuresti');
+  });
+
+  it('fills the unreadable delivery street from a trusted address on that postcode', () => {
+    const { values, address, deliveryAddresses } = applyAddressMemory(
+      { ruta_transport: 'Str. Republicii nr. 1F, Bolintin-Deal / Bucuresti' },
+      DELIVERY_GARBLED,
+      [REPUBLICII, GIULESTI],
+    );
+    expect(values.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Calea Giulesti nr. 1-3, Bucuresti');
+    // The Expeditor street read fine: the origin memory stays out of it.
+    expect(address).toBeNull();
+    expect(deliveryAddresses).toEqual([GIULESTI]);
+  });
+
+  it('fills origin and delivery together when both lost their street', () => {
+    const both = DELIVERY_GARBLED.replace('Str. Republicii, nr. 1F', 'Str.-.epuolicii, nr. IF');
+    const { values, address, deliveryAddresses } = applyAddressMemory({}, both, [REPUBLICII, GIULESTI]);
+    expect(values.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Calea Giulesti nr. 1-3, Bucuresti');
+    expect(address).toBe(REPUBLICII);
+    expect(deliveryAddresses).toEqual([GIULESTI]);
+  });
+
+  it('does not use a candidate, a disabled address or an origin for a delivery stop', () => {
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [{ ...GIULESTI, seen_count: 1 }])).toBeNull();
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [{ ...GIULESTI, disabled: true }])).toBeNull();
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [{ ...GIULESTI, role: 'origin' }])).toBeNull();
+  });
+
+  it('never replaces a delivery street the page printed clearly', () => {
+    expect(fillDeliveryFromMemory(DELIVERY_CLEAN, [{ ...GIULESTI, display: 'Str. Alta nr. 9, Bucuresti' }])).toBeNull();
+  });
+
+  it('keeps origin-only callers away from delivery memory', () => {
+    const { values, address } = applyOriginMemory({ ruta_transport: 'x' }, DELIVERY_GARBLED, [GIULESTI]);
+    expect(values.ruta_transport).toBe('x');
+    expect(address).toBeNull();
+  });
+
+  it('learns the delivery legs an operator typed, tied to the printed postcode', () => {
+    const typed = 'Str. Republicii nr. 1F, Bolintin-Deal / Calea Giulesti nr. 1-3, Bucuresti';
+    expect(deliveryObservationsFromCorrection(DELIVERY_GARBLED, typed)).toEqual([{
+      postcode: '060251',
+      locality: 'Bucuresti',
+      street_name: 'giulesti',
+      display: 'Calea Giulesti nr. 1-3, Bucuresti',
+      match_key: addressMatchKey('Calea Giulesti nr. 1-3, Bucuresti'),
+    }]);
+    // Town that disagrees with the page, or more legs than printed stops: learn nothing.
+    expect(deliveryObservationsFromCorrection(DELIVERY_GARBLED, 'Str. Republicii nr. 1F, Bolintin-Deal / Calea Giulesti nr. 1-3, Ploiesti')).toEqual([]);
+    expect(deliveryObservationsFromCorrection(DELIVERY_GARBLED, `${typed} / Str. Alta nr. 2, Bucuresti`)).toEqual([]);
   });
 });
 

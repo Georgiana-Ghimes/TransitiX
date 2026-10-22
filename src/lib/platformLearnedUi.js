@@ -12,6 +12,16 @@ export const LEARNED_SOURCE_LABEL = {
   manual: 'introdusă manual',
 };
 
+/** Which side of the route an address fills. Rows from before roles existed are origins. */
+export const LEARNED_ROLE_LABEL = {
+  origin: 'expeditor',
+  delivery: 'livrare',
+};
+
+export function learnedRoleLabel(role) {
+  return LEARNED_ROLE_LABEL[role || 'origin'] || role;
+}
+
 /** The edit hit an address that already exists: what the merge dialog says. */
 export function mergePrompt(source, target) {
   const seen = Number(target?.seen_count) || 0;

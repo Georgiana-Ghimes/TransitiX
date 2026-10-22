@@ -3,7 +3,7 @@ import app from '../app.js';
 import { query } from '../db.js';
 import { signAccessToken } from '../middleware/auth.js';
 import { ensurePlatformCompany } from '../lib/platform/company.js';
-import { addressMatchKey, recordAddressSighting } from '../lib/ocr/addressMemory.js';
+import { addressMatchKey, listKnownAddresses, recordAddressSighting } from '../lib/ocr/addressMemory.js';
 import { auth, closePool, dropCompany, makeAviz, request, seedCompany } from '../test/harness.js';
 
 /**
@@ -296,5 +296,92 @@ describe('merging a variant that already has variants of its own', () => {
       },
     });
     expect(again.seen_count).toBe(4);
+  });
+});
+
+describe('delivery addresses', () => {
+  const GIULESTI = 'Calea Giulesti nr. 1-3, Bucuresti';
+  let deliveryDocs;
+
+  beforeAll(async () => {
+    deliveryDocs = [];
+    for (const name of ['l1.pdf', 'l2.pdf']) {
+      deliveryDocs.push(await makeAviz(tenant.company.id, { original_filename: name }));
+    }
+  });
+
+  const sighting = (doc) => recordAddressSighting(query, {
+    companyId: tenant.company.id,
+    documentId: doc.id,
+    role: 'delivery',
+    observation: {
+      postcode: '060251',
+      locality: 'Bucuresti',
+      street_name: 'giulesti',
+      display: GIULESTI,
+      match_key: addressMatchKey(GIULESTI),
+    },
+  });
+
+  it('keeps a delivery site apart from the depots and trusts it after two avize', async () => {
+    const first = await sighting(deliveryDocs[0]);
+    expect(first.role).toBe('delivery');
+    expect(first.seen_count).toBe(1);
+    const second = await sighting(deliveryDocs[1]);
+    expect(second.id).toBe(first.id);
+    expect(second.seen_count).toBe(2);
+
+    const all = await listKnownAddresses(query, tenant.company.id, { role: null });
+    expect(all.some((a) => a.id === first.id)).toBe(true);
+    const origins = await listKnownAddresses(query, tenant.company.id);
+    expect(origins.some((a) => a.id === first.id)).toBe(false);
+  });
+
+  it('filters the list by role', async () => {
+    const delivery = await api()
+      .get(`/api/platform/learned-addresses?company_id=${tenant.company.id}&role=delivery`)
+      .set(auth(godToken));
+    expect(delivery.status).toBe(200);
+    expect(delivery.body.items.map((i) => i.display)).toEqual([GIULESTI]);
+    expect(delivery.body.items[0].trust).toBe('trusted');
+
+    const origin = await api()
+      .get(`/api/platform/learned-addresses?company_id=${tenant.company.id}&role=origin`)
+      .set(auth(godToken));
+    expect(origin.body.items.every((i) => i.role === 'origin')).toBe(true);
+
+    const bad = await api()
+      .get('/api/platform/learned-addresses?role=client')
+      .set(auth(godToken));
+    expect(bad.status).toBe(400);
+  });
+
+  it('adds a delivery site by hand', async () => {
+    const res = await api()
+      .post('/api/platform/learned-addresses')
+      .set(auth(godToken))
+      .send({
+        company_id: tenant.company.id,
+        role: 'delivery',
+        postcode: '021901',
+        display: 'Bvd. Pierre De Coubertin nr. 3-5, Bucuresti',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.role).toBe('delivery');
+    expect(res.body.trust).toBe('trusted');
+    expect(res.body.street_name).toBe('pierre de coubertin');
+  });
+
+  it('will not merge a delivery site into a depot', async () => {
+    const site = (await query(
+      `SELECT id FROM aviz_known_addresses WHERE company_id = $1 AND role = 'delivery' AND postcode = '060251'`,
+      [tenant.company.id],
+    )).rows[0];
+    const res = await api()
+      .post(`/api/platform/learned-addresses/${site.id}/merge`)
+      .set(auth(godToken))
+      .send({ into: real.id });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('other_role');
   });
 });

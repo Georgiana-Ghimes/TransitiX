@@ -29,7 +29,10 @@ import {
   recordRouteRuleHit,
 } from '../lib/ocr/routeLearn.js';
 import {
-  applyOriginMemory,
+  ADDRESS_ROLE_DELIVERY,
+  applyAddressMemory,
+  deliveryObservationsFromCorrection,
+  deliveryObservationsFromOcr,
   isAddressMemoryProfile,
   listKnownAddresses,
   originObservationFromCorrection,
@@ -233,7 +236,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
   }
 
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
-  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId, { role: null }).catch(() => []);
 
   const results = [];
   for (const doc of docs) {
@@ -308,12 +311,14 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         })
         : extraction;
 
-      // Expeditor street unreadable on this page (#112): fill it from an address this company's
-      // avize have already shown clearly. Flagged for review — the street is not from this page.
+      // Expeditor or delivery street unreadable on this page (#112): fill it from an address this
+      // company's avize have already shown clearly. Flagged for review — the street is not from
+      // this page.
       const memory = isAddressMemoryProfile(merged.profile_id)
-        ? applyOriginMemory(merged.values, text.text, knownAddresses, { correctedFields: corrected })
-        : { values: merged.values, address: null };
-      if (memory.address) {
+        ? applyAddressMemory(merged.values, text.text, knownAddresses, { correctedFields: corrected })
+        : { values: merged.values, address: null, deliveryAddresses: [] };
+      const memoryFilled = Boolean(memory.address || memory.deliveryAddresses.length);
+      if (memoryFilled) {
         merged.values = memory.values;
         merged.fields = {
           ...(merged.fields || {}),
@@ -429,6 +434,10 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
               ...(learned.learned ? { route_source: 'learned' } : { route_source: null }),
               origin_source: memory.address && !learned.learned ? 'memory' : null,
               origin_address_id: memory.address && !learned.learned ? memory.address.id : null,
+              delivery_source: memory.deliveryAddresses.length && !learned.learned ? 'memory' : null,
+              delivery_address_ids: memory.deliveryAddresses.length && !learned.learned
+                ? memory.deliveryAddresses.map((a) => a.id)
+                : null,
               ...(Array.isArray(text.blocks) && text.blocks.length
                 ? { ocr_blocks: text.blocks }
                 : {}),
@@ -483,15 +492,22 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         continue;
       }
 
-      // Remember a clean Expeditor read; count a memory fill. Best-effort, never fails a document.
+      // Remember clean Expeditor and delivery reads; count memory fills. Best-effort, never fails
+      // a document.
       if (isAddressMemoryProfile(merged.profile_id)) {
         const observation = originObservationFromOcr(text.text);
         if (observation) {
           recordAddressSighting(query, { companyId, documentId: doc.id, observation })
             .catch((err) => console.error('[documents] address memory', err?.message || err));
         }
-        if (memory.address && !learned.learned) {
-          recordAddressUse(query, memory.address.id).catch(() => {});
+        for (const delivery of deliveryObservationsFromOcr(text.text)) {
+          recordAddressSighting(query, {
+            companyId, documentId: doc.id, observation: delivery, role: ADDRESS_ROLE_DELIVERY,
+          }).catch((err) => console.error('[documents] address memory', err?.message || err));
+        }
+        if (!learned.learned) {
+          if (memory.address) recordAddressUse(query, memory.address.id).catch(() => {});
+          for (const used of memory.deliveryAddresses) recordAddressUse(query, used.id).catch(() => {});
         }
       }
 
@@ -1080,7 +1096,7 @@ router.put('/:id/corrections', async (req, res) => {
       return row;
     });
 
-    // A route the operator typed teaches the company its origin address (#112).
+    // A route the operator typed teaches the company its origin and delivery addresses (#112).
     if (corrections.ruta_transport) {
       const observation = originObservationFromCorrection(
         doc.extracted_data?.raw_text, corrections.ruta_transport,
@@ -1090,6 +1106,18 @@ router.put('/:id/corrections', async (req, res) => {
           companyId: req.user.company_id,
           documentId: doc.id,
           observation,
+          source: 'corrected',
+          userId: req.user.id,
+        }).catch((err) => console.error('[documents] address memory', err?.message || err));
+      }
+      for (const delivery of deliveryObservationsFromCorrection(
+        doc.extracted_data?.raw_text, corrections.ruta_transport,
+      )) {
+        await recordAddressSighting(query, {
+          companyId: req.user.company_id,
+          documentId: doc.id,
+          observation: delivery,
+          role: ADDRESS_ROLE_DELIVERY,
           source: 'corrected',
           userId: req.user.id,
         }).catch((err) => console.error('[documents] address memory', err?.message || err));

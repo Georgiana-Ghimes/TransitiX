@@ -859,9 +859,10 @@ export const api = {
         body,
       });
     },
-    learnedAddresses({ companyId, state, q } = {}) {
+    learnedAddresses({ companyId, role, state, q } = {}) {
       const params = new URLSearchParams();
       if (companyId) params.set('company_id', companyId);
+      if (role) params.set('role', role);
       if (state) params.set('state', state);
       if (q) params.set('q', q);
       const qs = params.toString();

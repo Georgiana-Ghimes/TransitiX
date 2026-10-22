@@ -27,6 +27,8 @@ import {
 } from '../lib/users/invite.js';
 import { revokeAllForUser } from '../lib/sessions.js';
 import {
+  ADDRESS_ROLE_DELIVERY,
+  ADDRESS_ROLE_ORIGIN,
   AddressMergeError,
   addressMatchKey,
   addressTrustState,
@@ -941,6 +943,9 @@ router.post('/users/:userId/reset-password', async (req, res) => {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Expeditor depots and customer delivery sites. */
+const LEARNED_ROLES = new Set([ADDRESS_ROLE_ORIGIN, ADDRESS_ROLE_DELIVERY]);
+
 const LEARNED_ADDRESS_SELECT = `
   SELECT a.id, a.company_id, c.name AS company_name, a.role, a.postcode, a.locality,
          a.street_name, a.display, a.source, a.seen_count, a.used_count, a.verified,
@@ -988,6 +993,12 @@ router.get('/learned-addresses', async (req, res) => {
       params.push(companyId);
       where.push(`a.company_id = $${params.length}`);
     }
+    const role = String(req.query.role || '').trim();
+    if (role) {
+      if (!LEARNED_ROLES.has(role)) return res.status(400).json({ message: 'Tip de adresă invalid.' });
+      params.push(role);
+      where.push(`a.role = $${params.length}`);
+    }
     const state = String(req.query.state || '').trim();
     if (state === 'disabled') where.push('a.disabled = TRUE');
     if (state === 'trusted') {
@@ -1015,13 +1026,18 @@ router.get('/learned-addresses', async (req, res) => {
   }
 });
 
-/** Add one by hand — a depot the platform knows before two clean avize have shown it. */
+/**
+ * Add one by hand — a depot (or a customer site) the platform knows before two clean avize
+ * have shown it.
+ */
 router.post('/learned-addresses', async (req, res) => {
   try {
     const body = req.body || {};
     const companyId = String(body.company_id || '').trim();
     const postcode = normalizePostcode(body.postcode);
     const display = String(body.display || '').trim();
+    const role = String(body.role || ADDRESS_ROLE_ORIGIN).trim();
+    if (!LEARNED_ROLES.has(role)) return res.status(400).json({ message: 'Tip de adresă invalid.' });
     if (!UUID_RE.test(companyId)) return res.status(400).json({ message: 'Alege firma.' });
     if (!postcode) return res.status(400).json({ message: 'Codul poștal trebuie să aibă 6 cifre.' });
     if (!display || !looksLikeStreetLeg(display)) {
@@ -1032,11 +1048,11 @@ router.post('/learned-addresses', async (req, res) => {
       `INSERT INTO aviz_known_addresses (
          company_id, role, postcode, locality, street_name, display, match_key, source,
          verified, updated_by
-       ) VALUES ($1, 'origin', $2, $3, $4, $5, $6, 'manual', TRUE, $7)
+       ) VALUES ($1, $8, $2, $3, $4, $5, $6, 'manual', TRUE, $7)
        ON CONFLICT (company_id, role, postcode, match_key) DO NOTHING
        RETURNING id`,
       [companyId, postcode, String(body.locality || '').trim() || parts.locality,
-        parts.street_name, display, addressMatchKey(display), req.user.id],
+        parts.street_name, display, addressMatchKey(display), req.user.id, role],
     );
     if (!result.rows[0]) return res.status(409).json({ message: 'Adresa există deja pentru acest cod poștal.' });
     const row = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [result.rows[0].id])).rows[0];
