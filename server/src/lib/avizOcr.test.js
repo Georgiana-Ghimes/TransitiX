@@ -881,6 +881,33 @@ Placuta de inmatriculare B 330 SRS
     );
   });
 
+  // #112 — same aviz, scanned: the Client column is half a line lower, so its lines arrive
+  // interleaved with the delivery lines, each as a right-column-only row (leading tab).
+  it('ignores interleaved right-column Client rows under Adresa de livrare (#112)', () => {
+    const raw = [
+      'Expeditor',
+      'Site:\tBolintin',
+      'Str. Republicii nr. 1F Bolintin-Deal RO 087015 ROU',
+      '\tPagina\t1/2',
+      '\tClien',
+      'Adresa de livrare',
+      '\tC23980798 !AP-ARABESQUE-LOHN LIVR,',
+      'AP-ARABESQUE-LOHN LIVRA',
+      '\tStr. Timisului, Nr.',
+      'BULEVARDUL UNIRII NR 45, GAESTI, DAMBOVITA',
+      '\tGalati RO 80000',
+      'Gaesti RO 135200',
+      '\tROI',
+      'ROU',
+      'Client factura:\tC23940482 ARABESQUE SRL',
+      'Comanda de transport TPO-0035317\tNumar telefon delegat 0730559911',
+    ].join('\n');
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe(
+      'Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Unirii nr. 45, Gaesti',
+    );
+  });
+
   it('reads 11.08.2026 13:10 as 11 August, not 1 August', () => {
     const raw = `
 Data

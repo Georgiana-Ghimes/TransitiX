@@ -997,7 +997,7 @@ function scrubLeadingCompanyBeforeStreet(folded) {
  * One leg for the route column: street + number + locality.
  * Example: `Str. Republicii nr. 1F, Bolintin-Deal` — never site codes or glued tokens.
  */
-function formatAddressLine(block) {
+export function formatAddressLine(block) {
   if (!block) return null;
   const name = displayWords(block.streetName);
   // Type alone ("Șosea") or number alone ("nr. 52") is not an address leg.
@@ -1332,12 +1332,42 @@ export function parseDeliveryAddress(blob) {
  * `Str. Industriei nr. 7, Bolintin-Deal / Strada Gheorghe Doja nr. 51, Ploiesti / Bvd. Aviatorilor nr. 72, Bucuresti`.
  */
 function parseRoute(blob) {
-  const originBlock = parseExpeditorAddress(blob);
-  const destBlocks = parseDeliveryAddresses(blob);
-  const streetOrigin = originBlock?.streetName ? formatAddressLine(originBlock) : null;
-  const siteOrigin = streetOrigin ? null : originFromSiteDepozit(blob);
-  const origin = streetOrigin || siteOrigin;
-  const dests = destBlocks.map(formatAddressLine).filter(Boolean);
+  const { leg, status } = expeditorOrigin(blob);
+  // A town alone, with no delivery leg, is the old false route (`Bolintin-Deal`).
+  return buildRouteWithOrigin(blob, leg, { originNeedsDelivery: status === 'locality' });
+}
+
+/**
+ * What the Expeditor block gives the route, and how much of it could be read.
+ *
+ *   street   — `Str. Republicii nr. 1F, Bolintin-Deal`
+ *   site     — no street printed, Site/Depozit codes instead (`MIL-NEAMTIU`, `BOL`)
+ *   locality — the street is there but unreadable (scanner text layer: `Str.-.epuolicii`),
+ *              only the town before `RO 087015` survived (#112). Better a town than nothing,
+ *              and the route is flagged so somebody looks at it.
+ *   none     — nothing usable
+ *
+ * `block` is the parsed Expeditor address (postcode, locality, …) whatever the status, so
+ * the learned-address memory can look the street up by postcode.
+ */
+export function expeditorOrigin(blob) {
+  const block = parseExpeditorAddress(blob);
+  if (block?.streetName) return { status: 'street', leg: formatAddressLine(block), block };
+  const site = originFromSiteDepozit(blob);
+  if (site) return { status: 'site', leg: site, block };
+  const town = block?.locality ? displayWords(block.locality) : null;
+  if (town) return { status: 'locality', leg: town, block };
+  return { status: 'none', leg: null, block };
+}
+
+/**
+ * Route = origin leg + every delivery stop read from the page.
+ * The origin is passed in so a leg from somewhere else (the company's learned addresses)
+ * goes through exactly the same delivery parse and clipping as a read one.
+ */
+export function buildRouteWithOrigin(blob, originLeg, { originNeedsDelivery = false } = {}) {
+  const dests = parseDeliveryAddresses(blob).map(formatAddressLine).filter(Boolean);
+  const origin = originNeedsDelivery && !dests.length ? null : originLeg;
   const legs = [origin, ...dests].filter(Boolean);
   if (!legs.length) return null;
   return clipRouteGoodsTable(legs.join(' / '));
@@ -1622,8 +1652,11 @@ export function avizFieldConfidence(row) {
   const qtyLow = isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa)
     || quantityConflictsWithRaw(row?.cantitate_marfa, row?.tip_marfa, raw);
   // Multi-stop delivery: tax picks București/last — mark rută so the choice is visible (#96).
+  // Expeditor street unreadable (#112): the origin leg is a town or a learned address, not
+  // what the page says — always worth a look.
   const routeLow = isSuspiciousRoute(row?.ruta_transport, raw)
-    || (raw ? hasAmbiguousDeliveryChoice(raw) : false);
+    || (raw ? hasAmbiguousDeliveryChoice(raw) : false)
+    || (raw ? expeditorOrigin(raw).status === 'locality' : false);
   return {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',

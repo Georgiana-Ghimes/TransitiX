@@ -25,6 +25,7 @@ import { refuseAnnexIfUnackedLowTpo } from '../lib/annexOcrVerifyGate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
 import { avizOcrFieldChanges } from '../lib/ocr/feedback.js';
 import { learnRouteFromCorrection } from '../lib/ocr/routeLearn.js';
+import { originObservationFromCorrection, recordAddressSighting } from '../lib/ocr/addressMemory.js';
 import { logEvent as logDocumentEvent } from './documents.js';
 import { allocateInvoiceNumber, normalizeInvoiceSeries } from '../lib/invoiceNumber.js';
 import { normalizeUitCode } from '../lib/tripOps.js';
@@ -493,6 +494,17 @@ router.put('/:entity/:id', requireEntityAction('update'), async (req, res) => {
           });
         } catch (err) {
           console.error('[entities] route learn failed', err?.message || err);
+        }
+        // Its origin leg also teaches the company's address memory (#112).
+        const observation = originObservationFromCorrection(rawText, routeChange.new_value);
+        if (observation) {
+          await recordAddressSighting(query, {
+            companyId: req.user.company_id,
+            documentId: row.id,
+            observation,
+            source: 'corrected',
+            userId: req.user.id,
+          }).catch((err) => console.error('[entities] address memory failed', err?.message || err));
         }
       }
       row.duplicate_tpo = await duplicateConsignmentExists(query, {

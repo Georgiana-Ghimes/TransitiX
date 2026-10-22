@@ -81,6 +81,48 @@ describe('rowsFromTextItems', () => {
 });
 
 /**
+ * Scanned Baumit aviz PSL-0061424: the Client column prints half a line below Adresa de
+ * livrare, so its lines become rows of their own between the delivery lines. Without a
+ * marker `Str. Timisului` (Client seat, Galați) read as the unload street (#112).
+ */
+describe('right-column rows on a scanned two-column block', () => {
+  const text = rowsFromTextItems([
+    item('Expeditor', 60, 760),
+    item('Pagina 1/2', 420, 745),
+    item('Aviz de expeditie: PSL-0061424', 60, 735),
+    item('Adresa de livrare', 60, 720),
+    item('C23980798 AP-ARABESQUE-LOHN LIVR', 400, 714),
+    item('AP-ARABESQUE-LOHN LIVRA', 60, 706),
+    item('Str. Timisului, Nr.', 420, 700),
+    item('BULEVARDUL UNIRII NR 45, GAESTI', 60, 692),
+    item('Galati RO 80000', 420, 686),
+    item('Gaesti RO 135200', 60, 678),
+    item('Comanda de transport TPO-0035317', 60, 640),
+    item('Numar telefon delegat', 400, 640),
+    item('Baumit Romania Com SRL', 60, 600),
+  ]);
+  const lines = text.split('\n');
+
+  it('marks a row that starts in the right half with an empty left cell', () => {
+    expect(lines).toContain('\tStr. Timisului, Nr.');
+    expect(lines).toContain('\tGalati RO 80000');
+    expect(lines).toContain('\tC23980798 AP-ARABESQUE-LOHN LIVR');
+  });
+
+  it('leaves left-column rows and two-cell rows as they were', () => {
+    expect(lines).toContain('BULEVARDUL UNIRII NR 45, GAESTI');
+    expect(lines).toContain('Gaesti RO 135200');
+    expect(lines).toContain('Comanda de transport TPO-0035317\tNumar telefon delegat');
+  });
+
+  it('keeps the Client seat out of the delivery leg of the route', () => {
+    const { values } = extractDocument(text, { documentType: 'aviz' });
+    expect(values.ruta_transport).toMatch(/Unirii/i);
+    expect(values.ruta_transport).not.toMatch(/Timisului|Galati/i);
+  });
+});
+
+/**
  * The reason this module exists. pdf-parse's own renderer split these cells onto separate
  * lines, so the weight matchers saw a label with nothing after it and the gross figure had to
  * be guessed from the bag count beside it.

@@ -1,0 +1,348 @@
+/**
+ * Company-local memory of addresses its avize have shown us (#112).
+ *
+ * A scanner's text layer can mangle the Expeditor street (`Str.-.epuolicii, nr. IF`) while
+ * the town and postcode survive (`Bolintin-Deal RO 087015`). The depot is the same on
+ * hundreds of avize and on most of them the street reads cleanly, so the clean reads fill the
+ * bad ones: look the postcode up among addresses this company has already seen.
+ *
+ * Nothing is typed in by a developer and nothing is guessed across companies. An address
+ * becomes usable only once it is trusted (see `isTrustedAddress`), and a route that used one
+ * is flagged for review, because the street on it did not come from this page.
+ *
+ * Order on every path: structural parse → this memory (only when the street is unreadable)
+ * → routeLearn (whole-route rules from office corrections), which still has the last word.
+ */
+
+import {
+  buildRouteWithOrigin,
+  expeditorOrigin,
+} from '../avizOcr.js';
+
+export const ADDRESS_ROLE_ORIGIN = 'origin';
+
+/**
+ * Memory reads the Baumit Expeditor / Adresa de livrare layout. CMR and carnet routes are built
+ * differently and must not be rebuilt from it. A row with no profile (predates profiles) is a
+ * Baumit aviz in practice and goes through the same structural parse on read.
+ */
+export function isAddressMemoryProfile(profileId) {
+  if (profileId == null || profileId === '') return true;
+  return /^aviz_baumit/.test(String(profileId));
+}
+
+/** Two clean reads on different avize before a parsed address may fill another one. */
+export const TRUST_SEEN_COUNT = 2;
+
+/** Among several addresses on one postcode, the garbled street must look at least this alike. */
+export const MIN_STREET_SIMILARITY = 0.6;
+/** …and beat the runner-up by this much, or we do not pick. */
+const MIN_SIMILARITY_MARGIN = 0.15;
+
+function fold(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/ș|ş|Ș|Ş/g, 's')
+    .replace(/ț|ţ|Ț|Ţ/g, 't')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Dedupe key for one leg: folded, punctuation-insensitive. */
+export function addressMatchKey(display) {
+  return fold(display).replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/** Six digits, or null. `87015` (leading zero dropped by OCR) is padded like the parser does. */
+export function normalizePostcode(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 6) return digits;
+  if (digits.length === 5) return digits.padStart(6, '0');
+  return null;
+}
+
+/**
+ * Usable to fill a document: confirmed by a platform operator, entered or corrected by a
+ * person, or read cleanly on at least TRUST_SEEN_COUNT different avize. Disabled never.
+ */
+export function isTrustedAddress(address) {
+  if (!address || address.disabled) return false;
+  if (address.verified) return true;
+  if (address.source === 'corrected' || address.source === 'manual') return true;
+  return Number(address.seen_count || 0) >= TRUST_SEEN_COUNT;
+}
+
+/** Human status for lists: trusted / candidate / disabled. */
+export function addressTrustState(address) {
+  if (address?.disabled) return 'disabled';
+  return isTrustedAddress(address) ? 'trusted' : 'candidate';
+}
+
+function levenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i += 1) {
+    const cur = [i];
+    for (let j = 1; j <= n; j += 1) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/** 1 = identical, 0 = nothing alike. */
+export function similarity(a, b) {
+  const x = fold(a);
+  const y = fold(b);
+  if (!x || !y) return 0;
+  return 1 - levenshtein(x, y) / Math.max(x.length, y.length);
+}
+
+const HINT_NOISE = new Set([
+  'expeditor', 'site', 'depozit', 'depozite', 'pagina', 'romania', 'strada', 'sosea',
+  'soseaua', 'bulevardul', 'calea', 'aleea', 'numar', 'adresa', 'livrare', 'aviz',
+]);
+
+/**
+ * Word-ish leftovers of the street in the Expeditor block (`epuolicii` from `Str.-.epuolicii`).
+ * Town words are dropped, they would match every address on the postcode.
+ */
+export function expeditorStreetHints(rawText, locality) {
+  const folded = fold(rawText);
+  const start = folded.indexOf('expeditor');
+  if (start < 0) return [];
+  const rest = folded.slice(start + 'expeditor'.length);
+  const end = rest.search(/adres[aăe]\s+de\s+livrare|adrese\s+de\s+livrare|aviz\s+de\s+expeditie/);
+  const section = (end >= 0 ? rest.slice(0, end) : rest.slice(0, 300));
+  const townWords = new Set(fold(locality).split(/[\s-]+/).filter(Boolean));
+  return [...new Set(section.split(/[^a-z]+/).filter((w) => (
+    w.length >= 4 && !HINT_NOISE.has(w) && !townWords.has(w)
+  )))];
+}
+
+/** Best likeness of any hint word to the address's street name (longest word of it). */
+export function streetHintScore(address, hints) {
+  const words = fold(address?.street_name || '').split(/\s+/).filter((w) => w.length >= 3);
+  if (!words.length || !hints?.length) return 0;
+  let best = 0;
+  for (const w of words) {
+    for (const h of hints) best = Math.max(best, similarity(w, h));
+  }
+  return best;
+}
+
+/**
+ * Pick the stored address for this postcode (+ town when both are known).
+ *
+ *   one trusted candidate        → it (the postcode + town already say which depot)
+ *   several                      → the one the garbled street resembles, clearly; else none
+ *
+ * Human-confirmed addresses (verified / corrected / manual) are preferred over parsed ones.
+ */
+export function pickKnownAddress(addresses, { postcode, locality, hints = [] } = {}) {
+  const pc = normalizePostcode(postcode);
+  if (!pc) return null;
+  const town = fold(locality);
+  let pool = (addresses || []).filter((a) => (
+    a && normalizePostcode(a.postcode) === pc
+    && isTrustedAddress(a)
+    && (!town || !a.locality || fold(a.locality) === town)
+  ));
+  if (!pool.length) return null;
+  const human = pool.filter((a) => a.verified || a.source === 'corrected' || a.source === 'manual');
+  if (human.length) pool = human;
+  if (pool.length === 1) return pool[0];
+
+  const scored = pool
+    .map((a) => ({ a, score: streetHintScore(a, hints) }))
+    .sort((x, y) => y.score - x.score);
+  const [first, second] = scored;
+  if (first.score < MIN_STREET_SIMILARITY) return null;
+  if (second && first.score - second.score < MIN_SIMILARITY_MARGIN) return null;
+  return first.a;
+}
+
+/**
+ * Route with the origin filled from memory, when — and only when — the Expeditor street is
+ * unreadable on this page. A Site-Depozit pair (`MIL-NEAMTIU`) is a printed origin of its own
+ * and is left alone.
+ *
+ * @returns {{ route: string, address: object } | null}
+ */
+export function fillOriginFromMemory(rawText, addresses) {
+  if (!rawText || !addresses?.length) return null;
+  const origin = expeditorOrigin(rawText);
+  if (origin.status === 'street') return null;
+  if (origin.status === 'site' && /-/.test(origin.leg || '')) return null;
+  const postcode = origin.block?.postcode;
+  if (!normalizePostcode(postcode)) return null;
+  const locality = origin.block?.locality || null;
+  const address = pickKnownAddress(addresses, {
+    postcode,
+    locality,
+    hints: expeditorStreetHints(rawText, locality),
+  });
+  if (!address) return null;
+  const route = buildRouteWithOrigin(rawText, address.display, { originNeedsDelivery: true });
+  if (!route || !route.includes(' / ')) return null;
+  return { route, address };
+}
+
+/**
+ * Apply memory onto a values object (extract) or a row (list/export).
+ * Never touches a route the office pinned (`corrected_fields`).
+ */
+export function applyOriginMemory(values, rawText, addresses, { correctedFields = [] } = {}) {
+  const out = { ...(values || {}) };
+  if (correctedFields.includes('ruta_transport')) return { values: out, address: null };
+  const filled = fillOriginFromMemory(rawText, addresses);
+  if (!filled) return { values: out, address: null };
+  out.ruta_transport = filled.route;
+  return { values: out, address: filled.address };
+}
+
+/**
+ * A clean Expeditor read worth remembering: street, town and a six-digit postcode.
+ * @returns {null | { postcode, locality, street_name, display, match_key }}
+ */
+export function originObservationFromOcr(rawText) {
+  if (!rawText) return null;
+  const origin = expeditorOrigin(rawText);
+  if (origin.status !== 'street') return null;
+  const postcode = normalizePostcode(origin.block?.postcode);
+  const locality = origin.block?.locality || null;
+  if (!postcode || !locality || !origin.leg) return null;
+  return {
+    postcode,
+    locality,
+    street_name: origin.block.streetName || null,
+    display: origin.leg,
+    match_key: addressMatchKey(origin.leg),
+  };
+}
+
+const STREET_LEG_RE = /\b(?:str|strada|sos|sosea|soseaua|bvd|blvd|bd|bulevardul|b-dul|calea|aleea|al|intrarea|piata|nr)\b\.?/i;
+
+/** `Str. Republicii nr. 1F, Bolintin-Deal` → { street_name: 'republicii', locality: 'Bolintin-Deal' } */
+export function splitAddressLeg(leg) {
+  const text = String(leg || '').trim();
+  const comma = text.lastIndexOf(',');
+  const locality = comma >= 0 ? text.slice(comma + 1).trim() || null : null;
+  const streetPart = comma >= 0 ? text.slice(0, comma) : text;
+  const street_name = fold(streetPart)
+    .replace(/\bnr\.?\s*\S+.*$/, '')
+    .replace(new RegExp(`^${STREET_LEG_RE.source}\\s*`, 'i'), '')
+    .replace(/[.,]+$/g, '')
+    .trim() || null;
+  return { street_name, locality };
+}
+
+/** True when a leg reads like a street address (type or house number), not a code or a town. */
+export function looksLikeStreetLeg(leg) {
+  return STREET_LEG_RE.test(fold(leg));
+}
+
+/**
+ * The origin leg of a route the office typed, tied to the postcode on the page.
+ * Only a street leg is remembered (not `MIL-NEAMTIU`, not a lone town), and only when its
+ * town agrees with the town printed under Expeditor.
+ */
+export function originObservationFromCorrection(rawText, correctedRoute) {
+  const legs = String(correctedRoute || '').split(/\s+\/\s+/).map((l) => l.trim()).filter(Boolean);
+  if (legs.length < 2) return null;
+  const leg = legs[0];
+  if (!looksLikeStreetLeg(leg)) return null;
+  const { street_name: streetName, locality: legTown } = splitAddressLeg(leg);
+  const origin = expeditorOrigin(rawText || '');
+  const postcode = normalizePostcode(origin.block?.postcode);
+  if (!postcode) return null;
+  const pageTown = origin.block?.locality || null;
+  if (legTown && pageTown && fold(legTown) !== fold(pageTown)) return null;
+  return {
+    postcode,
+    locality: legTown || pageTown,
+    street_name: streetName,
+    display: leg,
+    match_key: addressMatchKey(leg),
+  };
+}
+
+// ── persistence ─────────────────────────────────────────────────────────────────────────
+
+const COLUMNS = `id, company_id, role, postcode, locality, street_name, display, match_key, source,
+  seen_count, used_count, verified, disabled, source_document_id, updated_by,
+  last_seen_at, last_used_at, created_at, updated_at`;
+
+export async function listKnownAddresses(queryFn, companyId, { role = ADDRESS_ROLE_ORIGIN } = {}) {
+  if (!companyId) return [];
+  const { rows } = await queryFn(
+    `SELECT ${COLUMNS} FROM aviz_known_addresses
+     WHERE company_id = $1 AND role = $2 AND disabled = FALSE
+     ORDER BY postcode, seen_count DESC`,
+    [companyId, role],
+  );
+  return rows;
+}
+
+/**
+ * Upsert the address and count this document once.
+ * A human source upgrades a parsed row; it never downgrades a corrected/manual one.
+ * @param {'parsed'|'corrected'|'manual'} source
+ */
+export async function recordAddressSighting(queryFn, {
+  companyId, documentId = null, observation, source = 'parsed', role = ADDRESS_ROLE_ORIGIN, userId = null,
+} = {}) {
+  if (!companyId || !observation?.postcode || !observation?.display) return null;
+  const { rows } = await queryFn(
+    `INSERT INTO aviz_known_addresses (
+       company_id, role, postcode, locality, street_name, display, match_key, source,
+       source_document_id, updated_by, last_seen_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+     ON CONFLICT (company_id, role, postcode, match_key) DO UPDATE SET
+       source = CASE WHEN aviz_known_addresses.source = 'parsed' THEN EXCLUDED.source
+                     ELSE aviz_known_addresses.source END,
+       updated_by = COALESCE(EXCLUDED.updated_by, aviz_known_addresses.updated_by),
+       last_seen_at = NOW(),
+       updated_at = NOW()
+     RETURNING ${COLUMNS}`,
+    [
+      companyId, role, observation.postcode, observation.locality || null,
+      observation.street_name || null, observation.display, observation.match_key,
+      source, documentId, userId,
+    ],
+  );
+  const row = rows[0];
+  if (!row || !documentId) return row || null;
+  const seen = await queryFn(
+    `INSERT INTO aviz_known_address_sightings (address_id, document_id)
+     VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING address_id`,
+    [row.id, documentId],
+  );
+  if (!seen.rowCount) return row;
+  const bumped = await queryFn(
+    `UPDATE aviz_known_addresses SET seen_count = seen_count + 1
+     WHERE id = $1 RETURNING ${COLUMNS}`,
+    [row.id],
+  );
+  return bumped.rows[0] || row;
+}
+
+/** Best-effort counter: how often an address filled a document. */
+export async function recordAddressUse(queryFn, addressId) {
+  if (!addressId) return;
+  await queryFn(
+    `UPDATE aviz_known_addresses SET used_count = used_count + 1, last_used_at = NOW()
+     WHERE id = $1`,
+    [addressId],
+  );
+}

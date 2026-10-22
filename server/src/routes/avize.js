@@ -17,6 +17,11 @@ import {
   primaryPlate,
 } from '../lib/fleet/plateRegistry.js';
 import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
+import {
+  applyOriginMemory,
+  isAddressMemoryProfile,
+  listKnownAddresses,
+} from '../lib/ocr/addressMemory.js';
 import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
@@ -196,19 +201,47 @@ const DEFAULT_OBS_CODES = [
  * office edit of a real route is never overwritten, and nothing is written back here: this
  * decorates a response, it does not change the document.
  */
-function decorateAviz(row, { routeRules = [], fleetByPlate = null } = {}) {
-  const serialized = repairAvizFromStored(serializeRow(row));
+/**
+ * Route as the list / export should show it: repaired from the stored OCR text, then the
+ * company's learned origin address when the Expeditor street is unreadable (#112), then a
+ * whole-route rule learned from an office correction. A route the office pinned is left alone.
+ */
+function routeWithCompanyMemory(serialized, { routeRules = [], knownAddresses = [] } = {}) {
   const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
   const raw = serialized.extracted_data?.raw_text;
   let ruta = serialized.ruta_transport;
   let extracted_data = serialized.extracted_data;
-  if (routeRules.length && raw && !corrected.includes('ruta_transport')) {
+  if (!raw || corrected.includes('ruta_transport')) return { ruta, extracted_data };
+  if (knownAddresses.length && isAddressMemoryProfile(serialized.ocr_profile_id)) {
+    const memory = applyOriginMemory({ ruta_transport: ruta }, raw, knownAddresses);
+    if (memory.address) {
+      ruta = memory.values.ruta_transport;
+      extracted_data = {
+        ...(extracted_data || {}),
+        origin_source: 'memory',
+        origin_address_id: memory.address.id,
+      };
+    }
+  }
+  if (routeRules.length) {
     const learned = preferLearnedRoute(ruta, raw, routeRules, { corrected: false });
     if (learned.rule) {
       ruta = learned.route;
-      extracted_data = { ...(extracted_data || {}), route_source: 'learned' };
+      extracted_data = {
+        ...(extracted_data || {}),
+        route_source: 'learned',
+        origin_source: null,
+        origin_address_id: null,
+      };
     }
   }
+  return { ruta, extracted_data };
+}
+
+function decorateAviz(row, { routeRules = [], fleetByPlate = null, knownAddresses = [] } = {}) {
+  const serialized = repairAvizFromStored(serializeRow(row));
+  const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
+  const { ruta, extracted_data } = routeWithCompanyMemory(serialized, { routeRules, knownAddresses });
   const withRoute = {
     ...serialized,
     ruta_transport: ruta,
@@ -224,6 +257,10 @@ function decorateAviz(row, { routeRules = [], fleetByPlate = null } = {}) {
     ? fleetByPlate.get(plateKey)
     : null;
   field_confidence = clearAutoLowWhenFleetVerified(field_confidence, fleetStatus);
+  // The origin street came from the company's address memory, not this page (#112).
+  if (extracted_data?.origin_source === 'memory' && !corrected.includes('ruta_transport')) {
+    field_confidence = { ...field_confidence, ruta_transport: 'low' };
+  }
   const heuristicReview = [
     'numar_tpo', 'numar_document_marfa', 'numar_auto', 'ruta_transport',
     'cantitate_marfa', 'data_efectuare_cursa',
@@ -247,8 +284,9 @@ function decorateAviz(row, { routeRules = [], fleetByPlate = null } = {}) {
 
 async function decorateAvizForCompany(row, companyId) {
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
   const fleetByPlate = await fleetStatusByPlates(query, companyId, [row?.numar_auto]).catch(() => null);
-  return decorateAviz(row, { routeRules, fleetByPlate });
+  return decorateAviz(row, { routeRules, fleetByPlate, knownAddresses });
 }
 
 async function decorateAvizRows(rows, companyId, routeRules = []) {
@@ -257,7 +295,8 @@ async function decorateAvizRows(rows, companyId, routeRules = []) {
     companyId,
     (rows || []).map((r) => r?.numar_auto),
   ).catch(() => new Map());
-  return (rows || []).map((row) => decorateAviz(row, { routeRules, fleetByPlate }));
+  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
+  return (rows || []).map((row) => decorateAviz(row, { routeRules, fleetByPlate, knownAddresses }));
 }
 
 /**
@@ -290,18 +329,11 @@ async function loadAvizeByIds(companyId, avizIds) {
     [companyId, avizIds]
   );
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
   return docs.rows.map((row) => {
     const repaired = repairAvizFromStored(serializeRow(row));
-    const corrected = Array.isArray(repaired.corrected_fields) ? repaired.corrected_fields : [];
-    const raw = repaired.extracted_data?.raw_text;
-    if (!routeRules.length || !raw || corrected.includes('ruta_transport')) return repaired;
-    const learned = preferLearnedRoute(repaired.ruta_transport, raw, routeRules);
-    if (!learned.rule) return repaired;
-    return {
-      ...repaired,
-      ruta_transport: learned.route,
-      extracted_data: { ...(repaired.extracted_data || {}), route_source: 'learned' },
-    };
+    const { ruta, extracted_data } = routeWithCompanyMemory(repaired, { routeRules, knownAddresses });
+    return { ...repaired, ruta_transport: ruta, extracted_data };
   });
 }
 
@@ -454,10 +486,11 @@ router.get('/', async (req, res) => {
       offset: req.query.offset,
     });
     const countQ = buildAvizCountQuery(filters);
-    const [result, countResult, routeRules] = await Promise.all([
+    const [result, countResult, routeRules, knownAddresses] = await Promise.all([
       query(sql, params),
       query(countQ.sql, countQ.params),
       listRouteRules(query, req.user.company_id).catch(() => []),
+      listKnownAddresses(query, req.user.company_id).catch(() => []),
     ]);
     // Fleet status for Auto highlight (#90): MTMA + verified clears OCR-low on numar_auto.
     const fleetByPlate = await fleetStatusByPlates(
@@ -465,7 +498,7 @@ router.get('/', async (req, res) => {
       req.user.company_id,
       result.rows.map((r) => r.numar_auto),
     ).catch(() => new Map());
-    const pageRows = result.rows.map((row) => decorateAviz(row, { routeRules, fleetByPlate }));
+    const pageRows = result.rows.map((row) => decorateAviz(row, { routeRules, fleetByPlate, knownAddresses }));
     // Duplicate flag must see siblings off-page: same PSL under the same TPO on page 2
     // still has to light up the badge on page 1.
     const tpos = [...new Set(
@@ -488,6 +521,7 @@ router.get('/', async (req, res) => {
       const byId = new Map(
         flagDuplicateTpos(siblings.rows.map((row) => decorateAviz(row, {
           routeRules,
+          knownAddresses,
           fleetByPlate: siblingFleet,
         })))
           .map((r) => [r.id, r.duplicate_tpo])

@@ -38,6 +38,7 @@ import {
   hasManualAvizEdits,
   inputCls,
   isLearnedRoute,
+  isMemoryOrigin,
   manualAvizEditLabels,
   isLockedRai,
   labelCls,
@@ -1542,6 +1543,8 @@ export default function AvizeReports() {
                           {displayRoute(row) || '-'}
                           {isLearnedRoute(row) ? (
                             <span className="ml-1 text-[10px] font-normal text-slate-400">· învățată</span>
+                          ) : isMemoryOrigin(row) ? (
+                            <span className="ml-1 text-[10px] font-normal text-amber-700">· origine învățată</span>
                           ) : null}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
@@ -1657,7 +1660,11 @@ export default function AvizeReports() {
                           </td>
                           <td
                             className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? LOW_FIELD_TEXT_CLS : ''}`}
-                            title={isLearnedRoute(row) ? `${displayRoute(row)} (regulă învățată)` : displayRoute(row)}
+                            title={isLearnedRoute(row)
+                              ? `${displayRoute(row)} (regulă învățată)`
+                              : isMemoryOrigin(row)
+                                ? `${displayRoute(row)} (origine din adresele învățate — de verificat)`
+                                : displayRoute(row)}
                           >
                             {displayRoute(row) || '-'}
                           </td>

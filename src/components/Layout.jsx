@@ -71,6 +71,7 @@ const PLATFORM_NAV = [
   { label: 'Companii', path: '/platform/companies', icon: Building2 },
   { label: 'Solicitări', path: '/platform/leads', icon: Inbox },
   { label: 'Utilizatori', path: '/platform/users', icon: UserCog },
+  { label: 'Date învățate', path: '/platform/learned', icon: MapPin },
 ];
 
 const COMPANION_OFFICE_NAV = [

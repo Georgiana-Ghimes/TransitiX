@@ -28,6 +28,15 @@ import {
   listRouteRules,
   recordRouteRuleHit,
 } from '../lib/ocr/routeLearn.js';
+import {
+  applyOriginMemory,
+  isAddressMemoryProfile,
+  listKnownAddresses,
+  originObservationFromCorrection,
+  originObservationFromOcr,
+  recordAddressSighting,
+  recordAddressUse,
+} from '../lib/ocr/addressMemory.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -224,6 +233,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
   }
 
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
+  const knownAddresses = await listKnownAddresses(query, companyId).catch(() => []);
 
   const results = [];
   for (const doc of docs) {
@@ -297,6 +307,25 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           blocks: text.blocks,
         })
         : extraction;
+
+      // Expeditor street unreadable on this page (#112): fill it from an address this company's
+      // avize have already shown clearly. Flagged for review — the street is not from this page.
+      const memory = isAddressMemoryProfile(merged.profile_id)
+        ? applyOriginMemory(merged.values, text.text, knownAddresses, { correctedFields: corrected })
+        : { values: merged.values, address: null };
+      if (memory.address) {
+        merged.values = memory.values;
+        merged.fields = {
+          ...(merged.fields || {}),
+          ruta_transport: {
+            ...(merged.fields?.ruta_transport || {}),
+            value: memory.values.ruta_transport,
+            confidence: 0.6,
+            status: 'review',
+            source: 'address_memory',
+          },
+        };
+      }
 
       // Company-learned route overrides (from prior Editează corrections). Never overwrites
       // fields the office pinned on this document via corrected_fields.
@@ -398,6 +427,8 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
               review_fields: merged.review_fields,
               validation,
               ...(learned.learned ? { route_source: 'learned' } : { route_source: null }),
+              origin_source: memory.address && !learned.learned ? 'memory' : null,
+              origin_address_id: memory.address && !learned.learned ? memory.address.id : null,
               ...(Array.isArray(text.blocks) && text.blocks.length
                 ? { ocr_blocks: text.blocks }
                 : {}),
@@ -450,6 +481,18 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           reason: 'already_settled',
         });
         continue;
+      }
+
+      // Remember a clean Expeditor read; count a memory fill. Best-effort, never fails a document.
+      if (isAddressMemoryProfile(merged.profile_id)) {
+        const observation = originObservationFromOcr(text.text);
+        if (observation) {
+          recordAddressSighting(query, { companyId, documentId: doc.id, observation })
+            .catch((err) => console.error('[documents] address memory', err?.message || err));
+        }
+        if (memory.address && !learned.learned) {
+          recordAddressUse(query, memory.address.id).catch(() => {});
+        }
       }
 
       results.push({
@@ -1036,6 +1079,22 @@ router.put('/:id/corrections', async (req, res) => {
       });
       return row;
     });
+
+    // A route the operator typed teaches the company its origin address (#112).
+    if (corrections.ruta_transport) {
+      const observation = originObservationFromCorrection(
+        doc.extracted_data?.raw_text, corrections.ruta_transport,
+      );
+      if (observation) {
+        await recordAddressSighting(query, {
+          companyId: req.user.company_id,
+          documentId: doc.id,
+          observation,
+          source: 'corrected',
+          userId: req.user.id,
+        }).catch((err) => console.error('[documents] address memory', err?.message || err));
+      }
+    }
 
     res.json({
       document: serializeRow(updated),

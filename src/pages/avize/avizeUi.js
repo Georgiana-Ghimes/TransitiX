@@ -545,6 +545,12 @@ export function isLearnedRoute(row) {
   return row?.extracted_data?.route_source === 'learned';
 }
 
+/** True when the Expeditor street was unreadable and came from the company's learned addresses (#112). */
+export function isMemoryOrigin(row) {
+  return row?.extracted_data?.origin_source === 'memory'
+    && !(Array.isArray(row?.corrected_fields) && row.corrected_fields.includes('ruta_transport'));
+}
+
 /**
  * Re-extrage returns 202 and finishes in the background. Poll until the row leaves
  * `uploaded` (or we give up), so the list/form show the new fields instead of the

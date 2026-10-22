@@ -588,3 +588,19 @@ describe('avizeUi', () => {
     expect(sleeps.length).toBe(2);
   });
 });
+
+describe('isMemoryOrigin (#112)', () => {
+  it('is true when the Expeditor street came from learned addresses', async () => {
+    const { isMemoryOrigin } = await import('./avizeUi.js');
+    expect(isMemoryOrigin({ extracted_data: { origin_source: 'memory' } })).toBe(true);
+    expect(isMemoryOrigin({ extracted_data: { origin_source: null } })).toBe(false);
+  });
+
+  it('is false once the office pinned the route', async () => {
+    const { isMemoryOrigin } = await import('./avizeUi.js');
+    expect(isMemoryOrigin({
+      extracted_data: { origin_source: 'memory' },
+      corrected_fields: ['ruta_transport'],
+    })).toBe(false);
+  });
+});
