@@ -62,7 +62,15 @@ export default function RoDateField({
         aria-label={ariaLabel || 'Dată (ZZ.LL.AAAA)'}
         className={className}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          setText(raw);
+          // Sync as soon as ZZ.LL.AAAA is complete — otherwise „Salvează și treci”
+          // can fire with the old empty value (blur's setState races the click).
+          const parsed = parseRoDateInput(raw);
+          if (parsed === null) return;
+          if (parsed !== iso) onChange?.(parsed);
+        }}
         onBlur={(e) => commitText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {

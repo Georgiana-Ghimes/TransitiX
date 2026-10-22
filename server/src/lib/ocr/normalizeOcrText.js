@@ -31,6 +31,17 @@ function normalizeCodeDigits(raw) {
 }
 
 function formatPrefixedCode(prefix, digits) {
+  const raw = String(digits || '').toUpperCase();
+  // Keep compound year TPOs (`2026-1088`) — collapsing to TPO-20261088 breaks annex keys.
+  if (prefix === 'TPO' && /\d{4}\s*-\s*\d{2,}/.test(raw)) {
+    const body = raw
+      .replace(/O/g, '0')
+      .replace(/I/g, '1')
+      .replace(/L/g, '1')
+      .replace(/[^\d-]/g, '')
+      .replace(/-+/g, '-');
+    if (/^\d{4}-\d{2,}$/.test(body)) return `TPO-${body}`;
+  }
   const clean = normalizeCodeDigits(digits);
   if (clean.length < 4) return null;
   return `${prefix}-${clean}`;
@@ -112,8 +123,8 @@ export function normalizeOcrText(text) {
   let out = sanitizeOcrText(text);
   if (!out.trim()) return out;
 
-  // Separate glued prefixes: expeditiePSL-… / transport_TPO-…
-  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._/:]*\d)/gi, '$1 $2');
+  // Separate glued prefixes: expeditiePSL-… / transport_TPO-… / expeditieTRO-OOI…
+  out = out.replace(/([a-zăâîșț])(PSL|TPO|TRO)(?=[\s\-._/:]*[\dOI])/gi, '$1 $2');
   out = out.replace(/_(TPO|PSL|TRO)(?=[\s\-._/:]*[\dOIl])/gi, ' $1');
 
   // Baumit goods-table lines are TRO/PSL; Mistral often writes TPO there (R→P). Leave the
@@ -153,9 +164,22 @@ export function normalizeOcrText(text) {
     '$1 Pipera',
   );
 
+  // Baumit pdf-parse often emits one token per line: `TRO-OOI` then `1300` (TPO-0035189 /
+  // 0035299). Join only when the next line is pure digits — not `11.` carnet slots.
+  out = out.replace(
+    /\b((?:TRO|PSL)[\s\-._/:]*[0-9OI]{2,8})\r?\n([0-9]{3,10})(?=\r?\n|$)/gi,
+    '$1 $2',
+  );
+
+  // Digit tails. PSL/TRO may have one same-line space/hyphen gap (`TRO-OOI 1300` →
+  // TRO-0011300). No `.` (dates). TPO stays continuous so `TPO 2026-1088` keeps the
+  // year hyphen (`TPO-2026` + leftover `-1088`), not a collapsed `TPO-20261088`.
+  const CODE_TAIL = '[0-9OIlQq&$SsBb]{3,14}';
+  const CODE_TAIL_GAP = '[0-9OIlQq&$SsBb]{3,14}(?:[ \\t\\-]+[0-9OIlQq&$SsBb]{2,10})?';
+
   // PSL: PS / PSI / PS1 / P5L + digit tail → PSL-######
   out = out.replace(
-    /(^|[^A-Za-z0-9])(P[\s]?[S5][\s]?[L1I]?)[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    new RegExp(`(^|[^A-Za-z0-9])(P[\\s]?[S5][\\s]?[L1I]?)[\\s\\-._/:]*(${CODE_TAIL_GAP})\\b`, 'gi'),
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('PSL', digits);
       return code ? `${lead}${code}` : full;
@@ -164,7 +188,7 @@ export function normalizeOcrText(text) {
 
   // TPO: TP0 / TPQ / TPO + digit tail (ampersands / O-as-zero / handwritten "TPO / 31027")
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?P[\s]?[O0Q])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    new RegExp(`(^|[^A-Za-z0-9])(T[\\s]?P[\\s]?[O0Q])[\\s\\-._/:]*(${CODE_TAIL})\\b`, 'gi'),
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TPO', digits);
       return code ? `${lead}${code}` : full;
@@ -173,7 +197,10 @@ export function normalizeOcrText(text) {
 
   // TRO codes (Baumit variant). Glare / low contrast also yields IRO / TRQ (#75).
   out = out.replace(
-    /(^|[^A-Za-z0-9])(T[\s]?R[\s]?[O0Q]|I[\s]?R[\s]?[O0])[\s\-._/:]*([0-9OIlQq&$SsBb]{4,14})\b/gi,
+    new RegExp(
+      `(^|[^A-Za-z0-9])(T[\\s]?R[\\s]?[O0Q]|I[\\s]?R[\\s]?[O0])[\\s\\-._/:]*(${CODE_TAIL_GAP})\\b`,
+      'gi',
+    ),
     (full, lead, _prefix, digits) => {
       const code = formatPrefixedCode('TRO', digits);
       return code ? `${lead}${code}` : full;

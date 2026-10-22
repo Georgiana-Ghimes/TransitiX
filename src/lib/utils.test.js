@@ -36,6 +36,10 @@ describe('toDateIso / parseRoDateInput', () => {
     expect(toDateIso('not-a-date')).toBe('');
   });
 
+  it('accepts Date instances via local Y/M/D (#110)', () => {
+    expect(toDateIso(new Date(2026, 9, 21))).toBe('2026-10-21');
+  });
+
   it('parses RO DD.MM.YYYY and DD/MM/YYYY as day-first', () => {
     expect(parseRoDateInput('25.09.2026')).toBe('2026-09-25');
     expect(parseRoDateInput('25/09/2026')).toBe('2026-09-25');

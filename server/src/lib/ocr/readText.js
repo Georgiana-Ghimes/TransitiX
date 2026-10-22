@@ -55,6 +55,19 @@ export function needsHandwritingPass(rawText) {
   return /comand[aă]\s+(?:de\s+)?transport/i.test(text);
 }
 
+/**
+ * PDF text layer can carry TPO/PSL while the date header is missing (font subset /
+ * vector outline). Skipping Mistral then leaves Data efectuare cursă empty even though
+ * the preview still shows the day (#110).
+ */
+export function needsDatePass(rawText) {
+  const text = String(rawText || '');
+  if (/\b\d{1,2}\s*[.\-/]\s*\d{1,2}\s*[.\-/]\s*\d{2,4}\b/.test(text)) return false;
+  if (/\b\d{4}-\d{2}-\d{2}\b/.test(text)) return false;
+  if (/\b\d{1,2}\s+[a-zăâîșț]{3,10}\.?\s+\d{4}\b/i.test(text)) return false;
+  return true;
+}
+
 export function backgroundOcrTimeoutMs(pages = 1) {
   const base = Number(process.env.OCR_TIMEOUT_MS) || 300_000;
   const count = Math.max(1, Number(pages) || 1);
@@ -175,9 +188,11 @@ export async function readDocumentText(fileUrl, { timeoutMs } = {}) {
     const layer = await readPdfText(buffer);
     const layerOk = !isTextPoor(layer.text);
     const wantInk = needsHandwritingPass(layer.text);
-    // Rich text layer is enough only when the order number is already there. Hybrid Baumit
-    // leaves "comandă de transport" blank in the layer and writes the TPO in coloured ink.
-    if (layerOk && !wantInk) {
+    const wantDate = needsDatePass(layer.text);
+    // Rich text layer is enough only when the order number *and* a trip date are already
+    // there. Hybrid Baumit leaves "comandă de transport" blank in the layer; some PDFs
+    // keep TPO but drop „Data avizului…” from the text layer (#110).
+    if (layerOk && !wantInk && !wantDate) {
       return { text: layer.text, source: 'pdf_text', pages: layer.pages };
     }
     const ocr = await readWithOcr(buffer, 'application/pdf', {

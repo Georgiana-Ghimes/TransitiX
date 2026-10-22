@@ -139,6 +139,15 @@ describe('normalizeOcrText', () => {
     expect(normalizeOcrText('TRQ-0010601')).toContain('TRO-0010601');
   });
 
+  it('repairs TRO-OOI 1300 spaced OCR body → TRO-0011300 (TPO-0035189 / 0035299)', () => {
+    expect(normalizeOcrText('Aviz de expeditie TRO-OOI 1300')).toContain('TRO-0011300');
+    expect(normalizeOcrText('Comanda de transfer TRO-OOI 1335')).toContain('TRO-0011335');
+    expect(normalizeOcrText('TRO-OOI1300')).toContain('TRO-0011300');
+    // pdf-parse word-per-line: TRO-OOI and digits on consecutive lines
+    expect(normalizeOcrText('Aviz de\nexpeditie\nTRO-OOI\n1300\nAmbalaj')).toContain('TRO-0011300');
+    expect(normalizeOcrText('TRO-OOI\n1335\nComanda')).toContain('TRO-0011335');
+  });
+
   it('repairs split sac under yellow / night wash (#76)', () => {
     expect(normalizeOcrText('210.00 s ac')).toContain('210.00 sac');
     expect(normalizeOcrText('140.00 sa c')).toContain('140.00 sac');

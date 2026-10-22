@@ -213,7 +213,9 @@ app.use('/api/avize', ...tenantModule('avize', avizeRoutes));
 app.use('/api/fleet', ...tenantModule('fleet', fleetRoutes));
 app.use('/api/geo', geoRoutes);
 app.use('/api/tpo', ...tenantModule('avize', tpoRoutes));
-app.use('/api/documents', ...tenantModule('documents_expiry', documentRoutes));
+// OCR batches / HITL / approve-review — companion Avize, NOT „Documente expirare” (fleet).
+// Gating this on documents_expiry 403'd RAI on Verifică / Salvează-în-carusel (#112).
+app.use('/api/documents', ...tenantModule('avize', documentRoutes));
 app.use('/api/reports', ...tenantModule('reports', reportRoutes));
 // Commercial router applies per-route module gates (zones → zone_map; overview → commercial).
 app.use('/api/commercial', authRequired, commercialRoutes);

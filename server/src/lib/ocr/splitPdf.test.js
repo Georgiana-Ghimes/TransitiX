@@ -4,9 +4,13 @@ import {
   MAX_SPLIT_PAGES,
   PdfSplitError,
   avizDocumentKeys,
+  avizSplitKeysForPage,
+  avizTpoKeys,
+  ocrIdDigits,
   countPdfPages,
   planAvizPdfSplits,
   readPdfPageTexts,
+  safeDownloadFilename,
   splitAvizFilename,
   splitPageFilename,
   splitPdfByGroups,
@@ -29,6 +33,21 @@ describe('avizDocumentKeys / planAvizPdfSplits', () => {
     expect([...avizDocumentKeys('Aviz TRO-0009884 and TRO 0009884')]).toEqual(['TRO-0009884']);
     expect([...avizDocumentKeys('PSL_12345 here')]).toEqual(['PSL-12345']);
     expect(avizDocumentKeys('only TPO-31027').size).toBe(0);
+  });
+
+  it('#108 reads TRO when OCR wrote O/I instead of 0/1 (Baumit text layer)', () => {
+    expect(ocrIdDigits('OOI 1300')).toBe('0011300');
+    expect([...avizDocumentKeys('Aviz de expeditie TRO-OOI 1300')]).toEqual(['TRO-0011300']);
+    expect([...avizDocumentKeys('TRO-OOI 1335 Comanda')]).toEqual(['TRO-0011335']);
+    expect([...avizDocumentKeys('TRO-OOI1300')]).toEqual(['TRO-0011300']);
+  });
+
+  it('#108 also uses TPO keys (TRO often mangled on Baumit text layer)', () => {
+    expect([...avizSplitKeysForPage('rezumat: TPO-0035189 only')]).toEqual(['TPO-0035189']);
+    expect([...avizTpoKeys('T PO-0035189')]).toEqual(['TPO-0035189']);
+    expect([...avizSplitKeysForPage('TRO-0011300 TPO-0035189')].sort()).toEqual([
+      'TPO-0035189', 'TRO-0011300',
+    ]);
   });
 
   it('keeps a multi-page single aviz together (one TRO, or TRO only on page 1)', () => {
@@ -57,6 +76,20 @@ describe('avizDocumentKeys / planAvizPdfSplits', () => {
       'product lines only',
       'TRO-0001002 next aviz',
     ])).toEqual([[0, 1], [2]]);
+  });
+
+  it('#108 splits Baumit pages that only have TRO-OOI… in the text layer', () => {
+    expect(planAvizPdfSplits([
+      'rezumat: TPO-0035189\nAviz de expeditie TRO-OOI 1300',
+      'rezumat: TPO-0035299\nAviz de expeditie TRO-OOI 1335',
+    ])).toEqual([[0], [1]]);
+  });
+
+  it('#108 keeps same-TPO continuation when TRO is only on page 1', () => {
+    expect(planAvizPdfSplits([
+      'TPO-0035189 TRO-0011300 header',
+      'TPO-0035189 greutate continuation',
+    ])).toBeNull();
   });
 });
 
@@ -112,6 +145,13 @@ describe('splitPdf', () => {
     expect(splitAvizFilename('lot.pdf', 0, 2)).toBe('lot.pdf · aviz 1/2');
     expect(splitAvizFilename('lot.pdf', 5, 28, { pageFrom: 6, pageTo: 7 }))
       .toBe('lot.pdf · aviz 6/28 · pag. 6–7');
+  });
+
+  it('#105 download / zip names put the extension last', () => {
+    expect(safeDownloadFilename('21.10.BAU.pdf · aviz 4/13 · pag. 6'))
+      .toBe('21.10.BAU-aviz-4-13-pag-6.pdf');
+    expect(safeDownloadFilename(splitAvizFilename('lot.pdf', 5, 28, { pageFrom: 6, pageTo: 7 })))
+      .toBe('lot-aviz-6-28-pag-6-7.pdf');
   });
 
   it('PdfSplitError carries an HTTP status', () => {

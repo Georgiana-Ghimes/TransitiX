@@ -17,6 +17,8 @@ import {
   CAROUSEL_EDIT_FIELDS,
   LOW_FIELD_TEXT_CLS,
   OCR_OWNED_FIELDS,
+  OCR_VERIFY_KEYS,
+  safeDownloadFilename,
   isGoodsDocOnly,
   missingRequiredCarouselFields,
   rowsNeedingOcrVerify,
@@ -242,6 +244,34 @@ describe('avizeUi', () => {
     expect(unackedLowOcrFields({ ...low, status: 'confirmed' })).toEqual([]);
     expect(rowsNeedingOcrVerify([low, ok, acked]).map((r) => r.id)).toEqual(['low']);
     expect(rowsNeedingCarouselEdit([low, ok]).map((r) => r.id)).toEqual(['low']);
+  });
+
+  it('carousel Salvează must clear OCR-nesigur on dată / TRO-PSL too (not only TPO/auto/rută)', () => {
+    const lowDate = {
+      id: 'date-low',
+      status: 'extracted',
+      numar_tpo: 'TPO-1',
+      data_efectuare_cursa: '2026-10-21',
+      numar_auto: 'B-42-RAI',
+      ruta_transport: 'A-B',
+      field_confidence: {
+        numar_tpo: 'ok',
+        numar_auto: 'ok',
+        ruta_transport: 'ok',
+        data_efectuare_cursa: 'low',
+        numar_document_marfa: 'low',
+      },
+    };
+    expect(unackedLowOcrFields(lowDate)).toEqual(
+      expect.arrayContaining(['data_efectuare_cursa', 'numar_document_marfa']),
+    );
+    // Same patch saveForceGateItem / approve-review apply after Salvează.
+    const afterSave = {
+      ...lowDate,
+      field_confidence: Object.fromEntries(OCR_VERIFY_KEYS.map((k) => [k, 'ok'])),
+      corrected_fields: [...OCR_VERIFY_KEYS],
+    };
+    expect(unackedLowOcrFields(afterSave)).toEqual([]);
   });
 
   it('#91 Verificare OCR / Confirmă carousel expose every OCR-owned field (not only TPO/auto/dată/cantitate)', () => {
@@ -517,6 +547,15 @@ describe('avizeUi', () => {
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: true })).toBe(true);
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: true, hasContent: true })).toBe(false);
     expect(shouldAutoDownloadEmailFallback({ alreadyDownloaded: false, hasContent: false })).toBe(false);
+  });
+
+  it('#105 download name keeps .pdf at the end for split aviz labels', () => {
+    expect(safeDownloadFilename('21.10.BAU.pdf · aviz 4/13 · pag. 6'))
+      .toBe('21.10.BAU-aviz-4-13-pag-6.pdf');
+    expect(safeDownloadFilename('lot.pdf · pag. 1/6')).toBe('lot-pag-1-6.pdf');
+    expect(safeDownloadFilename('simplu.pdf')).toBe('simplu.pdf');
+    expect(safeDownloadFilename('foto.jpg')).toBe('foto.jpg');
+    expect(safeDownloadFilename('')).toBe('document.pdf');
   });
 
   it('normalises the paginated avize list response', () => {

@@ -156,4 +156,23 @@ describe('requireModule', () => {
     await requireEntityModule(req, res, () => { next = true; });
     expect(next).toBe(true);
   });
+
+  // #112 — OCR HITL lives under /api/documents but is an Avize capability; RAI has
+  // documents_expiry off, so DocumentBatch must not require that flag.
+  it('requireEntityModule allows DocumentBatch when avize is on (RAI companion)', async () => {
+    query.mockResolvedValue({
+      rows: [{
+        feature_flags: {
+          app_profile: 'documents',
+          modules: { avize: true, documents_expiry: false },
+        },
+      }],
+    });
+    const req = { user: { company_id: 'c1', role: 'admin' }, params: { entity: 'DocumentBatch' } };
+    const res = mockRes();
+    let next = false;
+    await requireEntityModule(req, res, () => { next = true; });
+    expect(next).toBe(true);
+    expect(res.statusCode).toBe(200);
+  });
 });

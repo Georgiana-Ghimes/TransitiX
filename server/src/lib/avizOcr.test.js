@@ -804,6 +804,83 @@ TPO-0025803
     expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
   });
 
+  // #111 — OCR dumps Client seat (C######## + Aeroportului) above unload street in the
+  // same Adresa de livrare slice (no tabs). Must keep Viilor, not the billing street.
+  it('drops a leading Client seat when unload street follows in the delivery slice (#111)', () => {
+    const raw = `
+Expeditor
+Site: BOL Bolintin
+Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU
+Adresa de livrare
+C23901527 CONCELEX SRL
+Str. Aeroportului 120-130
+Bucuresti Sector 1 RO 013596
+CONCELEX SRL
+Sosea Viilor nr. 52
+Bucuresti Sector 5 RO 050151
+Comanda de transport TPO-0034932
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Viilor/i);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('keeps Viilor when Client and delivery streets share one flat OCR line (#111)', () => {
+    const raw = `
+Expeditor Site: BOL Bolintin Str. Republicii, nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare Client
+CONCELEX SRL C23901527 CONCELEX SRL
+Sosea Viilor nr. 52 Str. Aeroportului 120-130
+Bucuresti Sector 5 RO 050151 Bucuresti Sector 1 RO 013596
+Comanda de transport TPO-0034932
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toBe('Str. Republicii nr. 1F, Bolintin-Deal / Șosea Viilor nr. 52, Bucuresti');
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  it('uses Solicitare/Referință client when labelled column only has the Client seat (#111)', () => {
+    const raw = `
+Expeditor Site: BOL Str. Republicii nr. 1F Bolintin-Deal RO 087015
+Adresa de livrare Client
+C23901527 CONCELEX SRL
+Str. Aeroportului 120-130
+Bucuresti Sector 1 RO 013596 ROU
+Referinta client PO26027689 SOS. VIILOR NR 52 SECT 5
+Comanda de transport TPO-0034932
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Viilor/i);
+    expect(parsed.ruta_transport).not.toMatch(/Aeroportului/i);
+  });
+
+  // #111 galati.pdf — AP- under Adresa de livrare is the unload site, not a reason to
+  // replace Unirii/Găești with the Client seat (Timisului/Galați) printed below.
+  it('keeps Bulevardul Unirii / Găești when AP- site precedes Client Timisului (#111)', () => {
+    const raw = `
+Expeditor
+Site: Bolintin
+Str. Republicii nr. 1F Bolintin-Deal RO 087015 ROU
+Aviz de expeditie: PSL-0061424
+Adresa de livrare
+AP-ARABESQUE-LOHNLIVRA
+BULEVARDUL UNIRII NR 45, GAESTI, DAMBOVITA
+Gaesti RO 135200 ROU
+C23980798 AP-ARABESQUE-LOHN LIVR
+Str. Timisului, Nr. 45, Galati RO 800007
+Comanda de transport TPO-0035317
+Placuta de inmatriculare B 330 SRS
+`;
+    const parsed = parseBaumitAviz(raw);
+    expect(parsed.ruta_transport).toMatch(/Unirii/i);
+    expect(parsed.ruta_transport).toMatch(/Gaesti/i);
+    expect(parsed.ruta_transport).not.toMatch(/Timisului|Galati/i);
+    expect(parsed.ruta_transport).toBe(
+      'Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Unirii nr. 45, Gaesti',
+    );
+  });
+
   it('reads 11.08.2026 13:10 as 11 August, not 1 August', () => {
     const raw = `
 Data

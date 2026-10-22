@@ -6,7 +6,6 @@ import AvizPreviewZoomBar, { usePreviewZoom } from './AvizPreviewZoomBar';
 import AvizReextractBanner from './AvizReextractBanner';
 import {
   CAROUSEL_EDIT_FIELDS,
-  consecutiveSameTpoPeers,
   emptyForm,
   inputCls,
   isGoodsDocOnly,
@@ -14,7 +13,6 @@ import {
   labelCls,
   lowField,
   missingRequiredCarouselFields,
-  normalizeTpoKey,
   previewFileUrlsForPeers,
   reextractBlockedReason,
   shouldOfferReextract,
@@ -38,22 +36,20 @@ export default function AvizQueueCarousel({
   onSave,
   onReextract,
   onCompletenessChange,
-  /** Full selection (upload order) for adjacent same-TPO preview when merge is on. */
-  peerRows = null,
-  mergeTpoPreview = false,
+  /** @deprecated #109 — same-TPO peers are no longer stacked in preview; kept for call-site compat. */
+  peerRows: _peerRows = null,
+  /** @deprecated #109 — ignored; each aviz keeps its own preview. */
+  mergeTpoPreview: _mergeTpoPreview = false,
   /** When template „Unește celulele TPO” is on — empty TPO is a hard requirement. */
   mergeTpoRequired = false,
 }) {
+  void _peerRows;
+  void _mergeTpoPreview;
   const ordered = useMemo(() => {
     const list = Array.isArray(queue) ? [...queue] : [];
     list.sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
     return list;
   }, [queue]);
-
-  const peerSource = useMemo(() => {
-    if (Array.isArray(peerRows) && peerRows.length) return peerRows;
-    return ordered;
-  }, [peerRows, ordered]);
 
   const orderedIds = useMemo(() => ordered.map((r) => r.id).join('|'), [ordered]);
 
@@ -67,8 +63,16 @@ export default function AvizQueueCarousel({
   const current = ordered[index] || null;
   const [form, setForm] = useState(() => emptyForm(current));
   const [ocrBaseline, setOcrBaseline] = useState(() => emptyForm(current));
+  // Always the latest draft — Save must not use a stale closure after RoDateField blur.
+  const formRef = useRef(form);
+  formRef.current = form;
   // Reset position only when the queue id-set changes (new modal), not after field saves.
   const queueIdsRef = useRef(orderedIds);
+  const orderedLenRef = useRef(ordered.length);
+  orderedLenRef.current = ordered.length;
+  // While Salvează patches the current row (new updated_at), skip reseed on that id so we
+  // don't fight the advance to the next aviz (#106).
+  const saveInFlightIdRef = useRef(null);
 
   useEffect(() => {
     if (queueIdsRef.current !== orderedIds) {
@@ -79,13 +83,15 @@ export default function AvizQueueCarousel({
 
   useEffect(() => {
     setIndex((prev) => {
-      if (!ordered.length) return 0;
-      if (ordered[prev]) return prev;
-      return Math.min(Math.max(prev, 0), ordered.length - 1);
+      const len = orderedLenRef.current;
+      if (!len) return 0;
+      if (prev >= 0 && prev < len) return prev;
+      return Math.min(Math.max(prev, 0), Math.max(len - 1, 0));
     });
-  }, [ordered.length, ordered]);
+  }, [ordered.length]);
 
   useEffect(() => {
+    if (saveInFlightIdRef.current && current?.id === saveInFlightIdRef.current) return;
     const next = emptyForm(current);
     setForm(next);
     setOcrBaseline(next);
@@ -112,23 +118,14 @@ export default function AvizQueueCarousel({
   const allConfirmed = completeness.length > 0
     && completeness.every((item) => item.confirmed);
 
-  const gluedPeers = useMemo(() => {
-    if (!mergeTpoPreview || !current?.id) return current ? [current] : [];
-    return consecutiveSameTpoPeers(peerSource, current.id);
-  }, [mergeTpoPreview, peerSource, current]);
-
-  const gluedUrls = useMemo(
-    () => previewFileUrlsForPeers(gluedPeers),
-    [gluedPeers],
+  // #109 — same-TPO peers stay separate carousel steps (each with its own PSL/TRO).
+  // „Unește celulele TPO” only merges in the XLSX annex, never stacks previews here.
+  const previewUrls = useMemo(
+    () => previewFileUrlsForPeers(current ? [current] : []),
+    [current],
   );
 
-  const gluedLabel = useMemo(() => {
-    if (!mergeTpoPreview || gluedPeers.length < 2) return null;
-    const tpo = normalizeTpoKey(current?.numar_tpo) || 'TPO';
-    return `${tpo} · ${gluedPeers.length} curse adiacente · ${gluedUrls.length} fișier(e) lipite în preview`;
-  }, [mergeTpoPreview, gluedPeers, gluedUrls.length, current?.numar_tpo]);
-
-  const previewZoomKey = `${current?.id || ''}|${gluedUrls.join('|')}`;
+  const previewZoomKey = `${current?.id || ''}|${previewUrls.join('|')}`;
   const {
     zoom: previewZoom, zoomAtMin, zoomAtMax, zoomIn, zoomOut,
   } = usePreviewZoom(previewZoomKey);
@@ -155,9 +152,18 @@ export default function AvizQueueCarousel({
 
   const handleSave = async () => {
     if (!onSave || !current || saving) return;
-    await onSave(current, form);
-    if (index < ordered.length - 1) {
-      setIndex((i) => i + 1);
+    const savedId = current.id;
+    saveInFlightIdRef.current = savedId;
+    try {
+      await onSave(current, formRef.current);
+      setIndex((i) => (i < orderedLenRef.current - 1 ? i + 1 : i));
+    } catch {
+      // Parent shows notifyError; stay on this aviz so the operator can retry.
+    } finally {
+      // Clear after paint so the post-save updated_at effect on `savedId` still skips.
+      queueMicrotask(() => {
+        if (saveInFlightIdRef.current === savedId) saveInFlightIdRef.current = null;
+      });
     }
   };
 
@@ -242,9 +248,9 @@ export default function AvizQueueCarousel({
           <div className="min-h-0 h-[min(28vh,220px)] max-h-[min(28vh,220px)] lg:h-auto lg:max-h-none flex flex-col flex-1 overflow-hidden">
           <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-200 bg-slate-100 text-[11px] font-medium text-slate-600 uppercase tracking-wide">
             <span className="truncate min-w-0">
-              {gluedLabel || 'Document'}
+              Document
             </span>
-            {gluedUrls.length > 0 ? (
+            {previewUrls.length > 0 ? (
               <AvizPreviewZoomBar
                 zoom={previewZoom}
                 onZoomOut={zoomOut}
@@ -255,10 +261,10 @@ export default function AvizQueueCarousel({
             ) : null}
           </div>
           <div className="relative flex-1 min-h-0 overflow-hidden">
-            {gluedUrls.length > 0 ? (
+            {previewUrls.length > 0 ? (
               <AvizFilePreview
-                fileUrl={gluedUrls[0]}
-                fileUrls={gluedUrls.length > 1 ? gluedUrls : undefined}
+                fileUrl={previewUrls[0]}
+                fileUrls={previewUrls.length > 1 ? previewUrls : undefined}
                 fill
                 zoom={previewZoom}
               />

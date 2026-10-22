@@ -105,6 +105,7 @@ export function warningsFor(user, { adminCount } = {}) {
 export function actionsFor(user, { currentUserId, adminCount } = {}) {
   if (!user) {
     return {
+      canEditName: false,
       canChangeRole: false,
       canDeactivate: false,
       canActivate: false,
@@ -117,6 +118,8 @@ export function actionsFor(user, { currentUserId, adminCount } = {}) {
   const isLastAdmin = user.role === 'admin' && user.is_active && adminCount <= 1;
 
   return {
+    // Any role / self: display name is not a privilege boundary (#107).
+    canEditName: true,
     canChangeRole: !isSelf && !isLastAdmin,
     canDeactivate: user.is_active && !isSelf && !isLastAdmin,
     canActivate: !user.is_active,

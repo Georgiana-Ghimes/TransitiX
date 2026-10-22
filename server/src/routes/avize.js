@@ -26,7 +26,7 @@ import {
   ocrCapability,
   isOcrDown,
 } from '../lib/ocr/readText.js';
-import { materializePdfPageFiles, PdfSplitError } from '../lib/ocr/splitPdf.js';
+import { materializePdfPageFiles, PdfSplitError, safeDownloadFilename } from '../lib/ocr/splitPdf.js';
 import { renderReportWorkbook } from '../lib/avizExport.js';
 import { refuseAnnexIfMergeMissingTpo } from '../lib/annexMergeTpoGate.js';
 import { refuseAnnexIfUnackedLowTpo } from '../lib/annexOcrVerifyGate.js';
@@ -1071,18 +1071,21 @@ router.post('/bulk-confirm', async (req, res) => {
       [req.user.company_id, ids]
     )).rows.map((row) => serializeRow(row));
 
-    // Hard lock: force cannot Confirm past unacked low TPO (would clear annex OCR gate via status=confirmed).
-    try {
-      refuseAnnexIfUnackedLowTpo(docs);
-    } catch (gateErr) {
-      if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
-        return res.status(gateErr.status || 409).json({
-          code: gateErr.code,
-          message: gateErr.message,
-          blocked: gateErr.blocked || [],
-        });
+    // Without force: hard-lock unacked low TPO. With force + reason (Confirmă gate
+    // „Da, am verificat”), the operator already acknowledged — allow confirm (#112).
+    if (!force) {
+      try {
+        refuseAnnexIfUnackedLowTpo(docs);
+      } catch (gateErr) {
+        if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
+          return res.status(gateErr.status || 409).json({
+            code: gateErr.code,
+            message: gateErr.message,
+            blocked: gateErr.blocked || [],
+          });
+        }
+        throw gateErr;
       }
-      throw gateErr;
     }
 
     const blocked = docs.filter((d) => {
@@ -1110,13 +1113,32 @@ router.post('/bulk-confirm', async (req, res) => {
     }
 
     const result = await withTransaction(async (client) => {
-      const updated = await client.query(
-        `UPDATE aviz_documents
-         SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
-         WHERE company_id = $1 AND id = ANY($2::uuid[]) AND status <> 'confirmed'
-         RETURNING *`,
-        [req.user.company_id, ids]
-      );
+      // Force ack stamps OCR keys so a later Unește does not re-hit OCR_VERIFY on the same rows.
+      const updated = force
+        ? await client.query(
+          `UPDATE aviz_documents
+           SET status = 'confirmed',
+               needs_review = FALSE,
+               corrected_fields = (
+                 SELECT ARRAY(
+                   SELECT DISTINCT unnest(
+                     COALESCE(corrected_fields, '{}'::text[])
+                     || ARRAY['numar_tpo','numar_document_marfa','numar_auto','data_efectuare_cursa','ruta_transport']::text[]
+                   )
+                 )
+               ),
+               updated_at = NOW()
+           WHERE company_id = $1 AND id = ANY($2::uuid[]) AND status <> 'confirmed'
+           RETURNING *`,
+          [req.user.company_id, ids],
+        )
+        : await client.query(
+          `UPDATE aviz_documents
+           SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
+           WHERE company_id = $1 AND id = ANY($2::uuid[]) AND status <> 'confirmed'
+           RETURNING *`,
+          [req.user.company_id, ids],
+        );
       for (const row of updated.rows) {
         await logEvent(client, {
           companyId: req.user.company_id,
@@ -1151,18 +1173,19 @@ router.post('/doc/:id/confirm', async (req, res) => {
     if (!raw) return res.status(404).json({ message: 'Aviz inexistent' });
     const doc = serializeRow(raw);
 
-    // Hard lock: force cannot Confirm past unacked low TPO (would clear annex OCR gate via status=confirmed).
-    try {
-      refuseAnnexIfUnackedLowTpo([doc]);
-    } catch (gateErr) {
-      if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
-        return res.status(gateErr.status || 409).json({
-          code: gateErr.code,
-          message: gateErr.message,
-          blocked: gateErr.blocked || [],
-        });
+    if (!force) {
+      try {
+        refuseAnnexIfUnackedLowTpo([doc]);
+      } catch (gateErr) {
+        if (gateErr?.code === 'OCR_VERIFY_REQUIRED') {
+          return res.status(gateErr.status || 409).json({
+            code: gateErr.code,
+            message: gateErr.message,
+            blocked: gateErr.blocked || [],
+          });
+        }
+        throw gateErr;
       }
-      throw gateErr;
     }
 
     const routing = doc.extracted_data?.validation?.routing;
@@ -1185,10 +1208,25 @@ router.post('/doc/:id/confirm', async (req, res) => {
 
     const updated = await withTransaction(async (client) => {
       const row = (await client.query(
-        `UPDATE aviz_documents
-         SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
-         WHERE id = $1 AND company_id = $2
-         RETURNING *`,
+        force
+          ? `UPDATE aviz_documents
+             SET status = 'confirmed',
+                 needs_review = FALSE,
+                 corrected_fields = (
+                   SELECT ARRAY(
+                     SELECT DISTINCT unnest(
+                       COALESCE(corrected_fields, '{}'::text[])
+                       || ARRAY['numar_tpo','numar_document_marfa','numar_auto','data_efectuare_cursa','ruta_transport']::text[]
+                     )
+                   )
+                 ),
+                 updated_at = NOW()
+             WHERE id = $1 AND company_id = $2
+             RETURNING *`
+          : `UPDATE aviz_documents
+             SET status = 'confirmed', needs_review = FALSE, updated_at = NOW()
+             WHERE id = $1 AND company_id = $2
+             RETURNING *`,
         [doc.id, req.user.company_id]
       )).rows[0];
       await logEvent(client, {
@@ -1332,7 +1370,9 @@ router.post('/zip', async (req, res) => {
       }
       try {
         const data = await fs.readFile(localPath);
-        const orig = path.basename(aviz.original_filename || localPath);
+        const orig = safeDownloadFilename(
+          path.basename(aviz.original_filename || localPath),
+        );
         files.push({ name: uniqueZipEntry(`originale/${orig}`, used), data });
       } catch (err) {
         missing += 1;

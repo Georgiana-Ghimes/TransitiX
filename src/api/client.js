@@ -383,6 +383,12 @@ export const api = {
         body: { origin: window.location.origin },
       });
     },
+    setName(id, name) {
+      return request(`/users/${encodeURIComponent(id)}/name`, {
+        method: 'PUT',
+        body: { name },
+      });
+    },
     setRole(id, role) {
       return request(`/users/${encodeURIComponent(id)}/role`, {
         method: 'PUT',

@@ -887,8 +887,12 @@ router.post('/:id/approve-review', async (req, res) => {
         && !Array.isArray(doc.field_confidence))
         ? doc.field_confidence
         : {};
+      // Same set the companion carousel treats as „OCR nesigur” (incl. dată + TRO/PSL).
+      const ackKeys = [
+        'numar_tpo', 'numar_document_marfa', 'numar_auto', 'data_efectuare_cursa', 'ruta_transport',
+      ];
       const nextConf = { ...prevConf };
-      for (const key of ['numar_tpo', 'numar_auto', 'ruta_transport']) {
+      for (const key of ackKeys) {
         const cur = nextConf[key];
         if (cur && typeof cur === 'object' && !Array.isArray(cur)) {
           nextConf[key] = { ...cur, status: 'ok', confidence: Math.max(Number(cur.confidence) || 0, 0.9) };
@@ -897,7 +901,7 @@ router.post('/:id/approve-review', async (req, res) => {
         }
       }
       const already = Array.isArray(doc.corrected_fields) ? doc.corrected_fields : [];
-      const nextCorrected = [...new Set([...already, 'numar_tpo', 'numar_auto', 'ruta_transport'])];
+      const nextCorrected = [...new Set([...already, ...ackKeys])];
       const row = (await client.query(
         `UPDATE aviz_documents SET
            needs_review = FALSE,

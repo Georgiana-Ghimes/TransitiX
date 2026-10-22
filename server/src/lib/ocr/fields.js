@@ -183,42 +183,60 @@ function addDaysYmdLocal(ymd, days) {
   return utc.toISOString().slice(0, 10);
 }
 
-/** Years OCR often confuses by swapping 0↔6 (2026 → 2020 under blue/night wash) (#77). */
+/**
+ * Years OCR often confuses by a single-digit swap (#77 / #110):
+ * - 0↔6 (2026 → 2020 under blue/night wash)
+ * - 4↔6 (2026 → 2024 — closed 6 reads as 4 on scans)
+ */
 export function yearDigitSwapCandidates(year) {
   const y = Number(year);
   if (!Number.isFinite(y) || y < 1000 || y > 9999) return [y].filter(Number.isFinite);
   const s = String(Math.trunc(y));
   const out = new Set([y]);
+  const swaps = { 0: ['6'], 6: ['0', '4'], 4: ['6'] };
   for (let i = 0; i < s.length; i += 1) {
-    if (s[i] === '0') out.add(Number(`${s.slice(0, i)}6${s.slice(i + 1)}`));
-    if (s[i] === '6') out.add(Number(`${s.slice(0, i)}0${s.slice(i + 1)}`));
+    for (const rep of (swaps[s[i]] || [])) {
+      out.add(Number(`${s.slice(0, i)}${rep}${s.slice(i + 1)}`));
+    }
   }
   return [...out];
 }
 
 /**
- * Build ISO date; if the OCR year falls outside the trip window, try a single 0↔6 digit
- * swap that lands inside it (2020→2026) at low confidence (#77).
+ * Build ISO date; if the OCR year falls outside the trip window, try a single-digit
+ * swap that lands inside it (2020/2024→2026) at low confidence (#77 / #110).
  */
 export function resolveAvizDateParts(day, month, year, { asOf } = {}) {
   const d = Number(day);
   const m = Number(month);
   let y = Number(year);
   if (!Number.isFinite(d) || !Number.isFinite(m) || !Number.isFinite(y)) return null;
+  const today = asOf || bucharestTodayYmd();
+  const currentYear = Number(String(today).slice(0, 4));
+  let truncatedYear = false;
+  // Two-digit year: 26 → 2026.
   if (y < 100) y += 2000;
+  // Truncated OCR year `21.10.202` (last digit cut off) → complete with asOf's ones digit
+  // so 202 + 2026 → 2026 (#110 galati.pdf / pdf-parse).
+  else if (y >= 200 && y <= 209) {
+    y = y * 10 + (currentYear % 10);
+    truncatedYear = true;
+  }
   if (d < 1 || d > 31 || m < 1 || m > 12) return null;
   if (y < 1990 || y > 2100) return null;
 
-  const today = asOf || bucharestTodayYmd();
   const maxOk = addDaysYmdLocal(today, 1);
   const minOk = addDaysYmdLocal(today, -400);
-  const currentYear = Number(String(today).slice(0, 4));
   const pad = (n) => String(n).padStart(2, '0');
   const isoFor = (yr) => `${yr}-${pad(m)}-${pad(d)}`;
 
   const originalIso = isoFor(y);
   if (originalIso >= minOk && originalIso <= maxOk) {
-    return { iso: originalIso, confidence: 0.9, repaired: false };
+    return {
+      iso: originalIso,
+      confidence: truncatedYear ? 0.55 : 0.9,
+      repaired: truncatedYear,
+    };
   }
 
   const repaired = yearDigitSwapCandidates(y)
@@ -232,11 +250,14 @@ export function resolveAvizDateParts(day, month, year, { asOf } = {}) {
   }
 
   // Keep OCR year even if old — validation will flag it.
-  return { iso: originalIso, confidence: 0.9, repaired: false };
+  return { iso: originalIso, confidence: truncatedYear ? 0.5 : 0.9, repaired: truncatedYear };
 }
 
+/** Optional spaces around separators — Mistral / pdf-parse often emit `19. 10. 2026`. */
+const DMY_TOKEN = String.raw`(\d{1,2})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{2,4})`;
+
 function parseDmyToken(token, asOf) {
-  const m = String(token || '').match(/(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})/);
+  const m = String(token || '').match(new RegExp(DMY_TOKEN));
   if (!m) return null;
   return resolveAvizDateParts(m[1], m[2], m[3], { asOf });
 }
@@ -247,11 +268,17 @@ export function extractDate(text, { asOf } = {}) {
   const today = asOf || bucharestTodayYmd();
 
   // Prefer the printed aviz date label — first bare date on the page can be noise (#77).
+  // Allow up to ~120 chars between label and digits: OCR often mangles „expediție”
+  // (`expediVe`) or puts the day on the next line (#110).
   const labelled = blob.match(
-    /(?:data\s+(?:avizului(?:\s+de\s+expedi[tț]ie)?|aviz(?:ului)?(?:\s+de\s+expedi[tț]ie)?|efectu[aă]rii?\s+cursei|documentului)|data\s*aviz)\s*[:.\-]?\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4})/i,
+    new RegExp(
+      String.raw`(?:data\s+(?:aviz(?:ului)?|efectu[aă]rii?\s+cursei|documentului)|data\s*aviz)`
+      + String.raw`[\s\S]{0,120}?` + DMY_TOKEN,
+      'i',
+    ),
   );
   if (labelled) {
-    const parsed = parseDmyToken(labelled[1], today);
+    const parsed = resolveAvizDateParts(labelled[1], labelled[2], labelled[3], { asOf: today });
     if (parsed) return result(parsed.iso, parsed.confidence, labelled[0]);
   }
 
@@ -261,7 +288,7 @@ export function extractDate(text, { asOf } = {}) {
     if (parsed) return result(parsed.iso, Math.min(0.95, parsed.confidence + 0.05), iso[0]);
   }
 
-  const dmy = blob.match(/\b(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})\b/);
+  const dmy = blob.match(new RegExp(String.raw`\b${DMY_TOKEN}\b`));
   if (dmy) {
     const parsed = resolveAvizDateParts(dmy[1], dmy[2], dmy[3], { asOf: today });
     if (parsed) return result(parsed.iso, parsed.confidence, dmy[0]);

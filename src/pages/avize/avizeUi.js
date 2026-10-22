@@ -58,7 +58,7 @@ export const TEMPLATE_ACTION_LEGEND = [
   },
   {
     name: 'Șablon nou / Editează',
-    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Bifă „Unește celulele TPO” ca pe Baumit: grupează și sudează Număr TPO în Excel pe toate cursele aceluiași TPO; în preview lipește paginile adiacente. Un șablon nou pornește de la cele 14 coloane ale Anexei. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată.',
+    text: 'Definește coloanele XLSX: antetul din Excel, sursa (câmp din aviz) și Default dacă sursa e goală sau 0 (taxă, tarif, km). Bifă „Unește celulele TPO” ca pe Baumit: grupează și sudează Număr TPO în Excel pe toate cursele aceluiași TPO. În Confirmă / carusel fiecare aviz rămâne cu preview separat (PSL/TRO propriu) — sudura e doar în Anexă. Un șablon nou pornește de la cele 14 coloane ale Anexei. Numele e unic pe firmă (fără deosebire de majuscule): dacă „Șablon nou” e luat, se propune „Șablon nou (2)”; salvarea pe un nume existent e refuzată.',
   },
   {
     name: 'Șterge șablon',
@@ -418,7 +418,8 @@ export function normalizeTpoKey(value) {
 
 /**
  * Consecutive peers sharing the same TPO around `focusId` in upload order.
- * Used when „Unește celulele TPO” is on: glue adjacent same-TPO pages in preview.
+ * Kept for annex helpers / tests — Confirmă carousel no longer stacks their
+ * previews (#109); each aviz is reviewed alone (PSL/TRO own fields).
  *
  * @param {Array<{ id: string, numar_tpo?: string|null, file_url?: string|null }>} rows
  * @param {string|null|undefined} focusId
@@ -491,11 +492,39 @@ export function emptyForm(row = {}) {
   return form;
 }
 
+/**
+ * Split labels look like `lot.pdf · aviz 4/13 · pag. 6` — fine in the UI, fatal as a
+ * download name (extension is no longer at the end → Windows / Preview won't open as PDF).
+ * Rebuild: stem + safe suffix + real extension.
+ */
+export function safeDownloadFilename(name, { fallbackExt = 'pdf' } = {}) {
+  const raw = String(name || '').trim() || `document.${fallbackExt}`;
+  const parts = raw.split(/\s*·\s*/).map((p) => p.trim()).filter(Boolean);
+  const head = parts[0] || `document.${fallbackExt}`;
+  const extMatch = head.match(/^(.*?)(\.[A-Za-z0-9]{1,8})$/);
+  const stem = (extMatch ? extMatch[1] : head).trim() || 'document';
+  const ext = (extMatch ? extMatch[2].slice(1) : fallbackExt).toLowerCase() || fallbackExt;
+  const suffix = parts.slice(1)
+    .join('-')
+    .replace(/[–—]/g, '-')
+    .replace(/\//g, '-')
+    .replace(/\./g, '') // "pag. 6" → "pag-6", not "pag.-6"
+    .replace(/\s+/g, '-');
+  let out = suffix ? `${stem}-${suffix}.${ext}` : `${stem}.${ext}`;
+  out = out
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/-+/g, '-')
+    .replace(/^[-_.]+|[-_.]+$/g, '');
+  if (!out.toLowerCase().endsWith(`.${ext}`)) out = `${out || 'document'}.${ext}`;
+  return out;
+}
+
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = safeDownloadFilename(filename);
   a.click();
   URL.revokeObjectURL(url);
 }

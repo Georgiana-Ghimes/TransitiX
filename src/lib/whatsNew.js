@@ -23,6 +23,18 @@ export const WHATS_NEW_KEEP = 5;
 /** @type {WhatsNewRelease[]} */
 export const WHATS_NEW_RELEASES = [
   {
+    build: 130,
+    version: '1.30.1',
+    dateLabel: 'octombrie 2026',
+    title: 'Confirmă selectate, dată, adresă, TRO',
+    highlights: [
+      'Confirmă selectate: Verifică / Salvează nu mai e blocat; după „Da, am verificat” se confirmă și se descarcă Anexa.',
+      'Data cursă din OCR (inclusiv an trunchiat); adresa de livrare rămâne strada de descărcare, nu sediul Client.',
+      'La același TPO, fiecare aviz are preview separat în carusel; download PDF cu nume corect.',
+      'TRO-OOI pe transferuri Baumit umple Număr document marfă (ex. TRO-0011300) — re-extrage 5189 / 5299.',
+    ],
+  },
+  {
     build: 128,
     version: '1.29.0',
     dateLabel: 'octombrie 2026',
@@ -64,18 +76,6 @@ export const WHATS_NEW_RELEASES = [
       'Adresa de livrare și taxa de zonă: doar descărcarea (nu Expeditor / Client din dreapta); taxa se recalculează când editezi Rută.',
       'Re-extrage apare deasupra documentului când merită; #102 dată din alt an marcată; preview mai puțin întors greșit.',
       'În listă, Editează / Verifică / Re-extrage nu mai mută avizul din locul lui.',
-    ],
-  },
-  {
-    build: 120,
-    version: '1.26.14',
-    dateLabel: 'octombrie 2026',
-    title: 'Acțiuni compacte, zoom PDF, porți TPO/OCR strânse',
-    highlights: [
-      'În listă: un singur buton Acțiuni (Editează, Verifică, Confirmă, Re-extrage, Șterge) în loc de stivă de linkuri.',
-      'În Editează: zoom pe document (− / % / +) și Descarcă fișierul stocat.',
-      'Cu „Unește celulele TPO” pe șablon: fără Număr TPO nu poți nici Confirma, nici Uni (doar „Doar document marfă” sau oprești bifa).',
-      'Confirmă pe server nu mai trece peste OCR nesigur pe TPO, nici cu „oricum”: trebuie Verifică / Salvează pe document.',
     ],
   },
 ];

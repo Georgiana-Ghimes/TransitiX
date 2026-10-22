@@ -20,9 +20,13 @@ export function formatDate(value) {
 /**
  * Keep only a calendar day as YYYY-MM-DD (API/DB shape).
  * Accepts ISO datetimes from pg without shifting the day via UTC.
+ * Date instances use local Y/M/D (never String(date), which is not ISO).
  */
 export function toDateIso(value) {
   if (value == null || value === '') return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return localDateToIso(value);
+  }
   const raw = String(value).trim();
   const ymd = raw.length >= 10 ? raw.slice(0, 10) : raw;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '';
