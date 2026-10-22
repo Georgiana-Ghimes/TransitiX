@@ -280,14 +280,17 @@ export function originObservationFromCorrection(rawText, correctedRoute) {
 // ── persistence ─────────────────────────────────────────────────────────────────────────
 
 const COLUMNS = `id, company_id, role, postcode, locality, street_name, display, match_key, source,
-  seen_count, used_count, verified, disabled, source_document_id, updated_by,
+  seen_count, used_count, verified, disabled, merged_into, source_document_id, updated_by,
   last_seen_at, last_used_at, created_at, updated_at`;
+
+/** Longest alias chain followed; a merge re-points aliases, so real chains are length 1. */
+const MAX_MERGE_HOPS = 5;
 
 export async function listKnownAddresses(queryFn, companyId, { role = ADDRESS_ROLE_ORIGIN } = {}) {
   if (!companyId) return [];
   const { rows } = await queryFn(
     `SELECT ${COLUMNS} FROM aviz_known_addresses
-     WHERE company_id = $1 AND role = $2 AND disabled = FALSE
+     WHERE company_id = $1 AND role = $2 AND disabled = FALSE AND merged_into IS NULL
      ORDER BY postcode, seen_count DESC`,
     [companyId, role],
   );
@@ -321,8 +324,20 @@ export async function recordAddressSighting(queryFn, {
       source, documentId, userId,
     ],
   );
-  const row = rows[0];
-  if (!row || !documentId) return row || null;
+  let row = rows[0];
+  if (!row) return null;
+  // A known misread: the sighting belongs to the address it was merged into.
+  if (row.merged_into) {
+    const target = await resolveMergeTarget(queryFn, row);
+    if (target) {
+      row = target;
+      await queryFn(
+        `UPDATE aviz_known_addresses SET last_seen_at = NOW(), updated_at = NOW() WHERE id = $1`,
+        [row.id],
+      );
+    }
+  }
+  if (!documentId) return row;
   const seen = await queryFn(
     `INSERT INTO aviz_known_address_sightings (address_id, document_id)
      VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING address_id`,
@@ -335,6 +350,100 @@ export async function recordAddressSighting(queryFn, {
     [row.id],
   );
   return bumped.rows[0] || row;
+}
+
+/** The live address a merged alias points to (follows re-pointed chains defensively). */
+async function resolveMergeTarget(queryFn, row) {
+  let current = row;
+  for (let hop = 0; current?.merged_into && hop < MAX_MERGE_HOPS; hop += 1) {
+    const { rows } = await queryFn(
+      `SELECT ${COLUMNS} FROM aviz_known_addresses WHERE id = $1`,
+      [current.merged_into],
+    );
+    if (!rows[0]) return null;
+    current = rows[0];
+  }
+  return current?.merged_into ? null : current;
+}
+
+export class AddressMergeError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+}
+
+/**
+ * Fold `sourceId` (a misread, e.g. Kepublicii) into `targetId` (the real address).
+ * Run inside a transaction: `queryFn` must be the transaction client's query.
+ *
+ * - documents that showed the misread now count for the real address, each once;
+ * - the real address keeps its text and becomes confirmed (a person just vouched for it);
+ * - the misread stays, disabled, with `merged_into` set, so it is never learned again.
+ */
+export async function mergeKnownAddresses(queryFn, { sourceId, targetId, userId = null } = {}) {
+  if (!sourceId || !targetId || sourceId === targetId) {
+    throw new AddressMergeError('same', 'O adresă nu poate fi unită cu ea însăși.');
+  }
+  const { rows } = await queryFn(
+    `SELECT ${COLUMNS} FROM aviz_known_addresses WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+    [[sourceId, targetId]],
+  );
+  const source = rows.find((r) => r.id === sourceId);
+  const target = rows.find((r) => r.id === targetId);
+  if (!source || !target) throw new AddressMergeError('not_found', 'Adresa nu a fost găsită.');
+  if (source.company_id !== target.company_id || source.role !== target.role) {
+    throw new AddressMergeError('other_company', 'Adresele sunt la firme diferite.');
+  }
+  if (source.merged_into) throw new AddressMergeError('already_merged', 'Adresa e deja unită cu alta.');
+  if (target.merged_into) throw new AddressMergeError('target_merged', 'Adresa țintă e ea însăși o variantă unită.');
+  // A disabled target is never offered for filling: folding sightings into it would just
+  // switch the real address off along with the misread.
+  if (target.disabled) throw new AddressMergeError('target_disabled', 'Adresa țintă e dezactivată. Reactiveaz-o înainte de unire.');
+
+  // Earlier misreads of the misread now point straight at the real address.
+  await queryFn(
+    `UPDATE aviz_known_addresses SET merged_into = $1, updated_at = NOW() WHERE merged_into = $2`,
+    [targetId, sourceId],
+  );
+
+  const sourceSightings = await queryFn(
+    `SELECT count(*)::int AS n FROM aviz_known_address_sightings WHERE address_id = $1`,
+    [sourceId],
+  );
+  const moved = await queryFn(
+    `INSERT INTO aviz_known_address_sightings (address_id, document_id, created_at)
+     SELECT $1, document_id, created_at FROM aviz_known_address_sightings WHERE address_id = $2
+     ON CONFLICT DO NOTHING
+     RETURNING document_id`,
+    [targetId, sourceId],
+  );
+  await queryFn(`DELETE FROM aviz_known_address_sightings WHERE address_id = $1`, [sourceId]);
+  // A document that showed both forms is one sighting, not two.
+  const duplicates = Math.max(0, (sourceSightings.rows[0]?.n || 0) - moved.rowCount);
+  const addedSeen = Math.max(0, (source.seen_count || 0) - duplicates);
+
+  const merged = await queryFn(
+    `UPDATE aviz_known_addresses SET
+       seen_count = seen_count + $2,
+       used_count = used_count + $3,
+       last_seen_at = GREATEST(last_seen_at, $4::timestamptz),
+       last_used_at = GREATEST(last_used_at, $5::timestamptz),
+       verified = TRUE,
+       updated_by = COALESCE($6, updated_by),
+       updated_at = NOW()
+     WHERE id = $1
+     RETURNING ${COLUMNS}`,
+    [targetId, addedSeen, source.used_count || 0, source.last_seen_at, source.last_used_at, userId],
+  );
+  await queryFn(
+    `UPDATE aviz_known_addresses SET
+       merged_into = $2, disabled = TRUE, verified = FALSE,
+       updated_by = COALESCE($3, updated_by), updated_at = NOW()
+     WHERE id = $1`,
+    [sourceId, targetId, userId],
+  );
+  return { target: merged.rows[0], source, addedSeen, duplicates };
 }
 
 /** Best-effort counter: how often an address filled a document. */

@@ -876,6 +876,12 @@ export const api = {
         body,
       });
     },
+    mergeLearnedAddress(id, into) {
+      return request(`/platform/learned-addresses/${encodeURIComponent(id)}/merge`, {
+        method: 'POST',
+        body: { into },
+      });
+    },
     routeRules({ companyId } = {}) {
       const q = companyId ? `?company_id=${encodeURIComponent(companyId)}` : '';
       return request(`/platform/route-rules${q}`);

@@ -12,6 +12,27 @@ export const LEARNED_SOURCE_LABEL = {
   manual: 'introdusă manual',
 };
 
+/** The edit hit an address that already exists: what the merge dialog says. */
+export function mergePrompt(source, target) {
+  const seen = Number(target?.seen_count) || 0;
+  const trust = LEARNED_TRUST_LABEL[target?.trust] || target?.trust || '';
+  return {
+    title: 'Unești adresele?',
+    description:
+      `„${target?.display || ''}” există deja pe CP ${target?.postcode || ''}`
+      + ` (${trust}, citită pe ${seen} ${seen === 1 ? 'aviz' : 'avize'}).`
+      + ` „${source?.display || ''}” devine o variantă a ei: avizele citite așa se numără la adresa corectă,`
+      + ' iar aceeași greșeală nu mai apare ca adresă nouă.',
+  };
+}
+
+/** `Variante unite: Str. Kepublicii nr. 1F, Bolintin-Deal` — null when there are none. */
+export function mergedVariantsLabel(variants) {
+  const list = Array.isArray(variants) ? variants.filter((v) => v?.display) : [];
+  if (!list.length) return null;
+  return `${list.length === 1 ? 'Variantă unită' : 'Variante unite'}: ${list.map((v) => v.display).join(' · ')}`;
+}
+
 export function learnedTrustClass(trust) {
   if (trust === 'trusted') return 'bg-emerald-50 text-emerald-700';
   if (trust === 'disabled') return 'bg-red-50 text-red-700';

@@ -27,9 +27,11 @@ import {
 } from '../lib/users/invite.js';
 import { revokeAllForUser } from '../lib/sessions.js';
 import {
+  AddressMergeError,
   addressMatchKey,
   addressTrustState,
   looksLikeStreetLeg,
+  mergeKnownAddresses,
   normalizePostcode,
   splitAddressLeg,
 } from '../lib/ocr/addressMemory.js';
@@ -942,9 +944,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const LEARNED_ADDRESS_SELECT = `
   SELECT a.id, a.company_id, c.name AS company_name, a.role, a.postcode, a.locality,
          a.street_name, a.display, a.source, a.seen_count, a.used_count, a.verified,
-         a.disabled, a.source_document_id, d.original_filename AS source_document_name,
+         a.disabled, a.merged_into, a.source_document_id, d.original_filename AS source_document_name,
          a.updated_by, u.email AS updated_by_email,
-         a.last_seen_at, a.last_used_at, a.created_at, a.updated_at
+         a.last_seen_at, a.last_used_at, a.created_at, a.updated_at,
+         COALESCE((
+           SELECT json_agg(json_build_object('id', m.id, 'display', m.display, 'seen_count', m.seen_count)
+                           ORDER BY m.created_at)
+           FROM aviz_known_addresses m WHERE m.merged_into = a.id
+         ), '[]'::json) AS merged_variants
   FROM aviz_known_addresses a
   JOIN companies c ON c.id = a.company_id
   LEFT JOIN aviz_documents d ON d.id = a.source_document_id
@@ -973,7 +980,8 @@ async function auditLearned(req, { companyId, action, entity, entityId, label, d
 router.get('/learned-addresses', async (req, res) => {
   try {
     const params = [];
-    const where = [];
+    // Merged misreads are shown under the address they were folded into, not as rows.
+    const where = ['a.merged_into IS NULL'];
     const companyId = String(req.query.company_id || '').trim();
     if (companyId) {
       if (!UUID_RE.test(companyId)) return res.status(400).json({ message: 'Firmă invalidă.' });
@@ -1054,8 +1062,38 @@ router.patch('/learned-addresses/:id', async (req, res) => {
     if (!UUID_RE.test(id)) return res.status(404).json({ message: 'Adresa nu a fost găsită.' });
     const before = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [id])).rows[0];
     if (!before) return res.status(404).json({ message: 'Adresa nu a fost găsită.' });
+    if (before.merged_into) {
+      return res.status(409).json({ message: 'Adresa e unită cu alta și nu se mai editează.' });
+    }
 
     const body = req.body || {};
+    // Corrected into an address that already exists → offer a merge instead of failing.
+    if (body.display !== undefined || body.postcode !== undefined) {
+      const nextPostcode = body.postcode !== undefined ? normalizePostcode(body.postcode) : before.postcode;
+      const nextKey = addressMatchKey(
+        body.display !== undefined ? String(body.display || '').trim() : before.display,
+      );
+      if (nextPostcode && nextKey) {
+        const clash = (await query(
+          `SELECT id, merged_into FROM aviz_known_addresses
+           WHERE company_id = $1 AND role = $2 AND postcode = $3 AND match_key = $4 AND id <> $5
+           LIMIT 1`,
+          [before.company_id, before.role, nextPostcode, nextKey, id],
+        )).rows[0];
+        const existingId = clash ? (clash.merged_into || clash.id) : null;
+        if (existingId === id) {
+          return res.status(409).json({ message: 'Forma asta e deja o variantă unită a acestei adrese.' });
+        }
+        if (existingId) {
+          const existing = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [existingId])).rows[0];
+          return res.status(409).json({
+            code: 'ADDRESS_EXISTS',
+            message: 'Există deja aceeași adresă pe acest cod poștal.',
+            existing: learnedAddressOut(existing),
+          });
+        }
+      }
+    }
     const fields = [];
     const values = [];
     const set = (sql, value) => { values.push(value); fields.push(`${sql} = $${values.length}`); };
@@ -1108,6 +1146,45 @@ router.patch('/learned-addresses/:id', async (req, res) => {
     }
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to update learned address' });
+  }
+});
+
+/**
+ * Fold a misread (`:id`) into the real address (`into`). The misread is kept as a disabled
+ * alias, so the same OCR mistake later counts toward the real address (#112).
+ */
+router.post('/learned-addresses/:id/merge', async (req, res) => {
+  try {
+    const sourceId = String(req.params.id || '').trim();
+    const targetId = String(req.body?.into || '').trim();
+    if (!UUID_RE.test(sourceId) || !UUID_RE.test(targetId)) {
+      return res.status(400).json({ message: 'Alege adresa cu care se unește.' });
+    }
+    const result = await withTransaction((client) => mergeKnownAddresses(
+      (sql, params) => client.query(sql, params),
+      { sourceId, targetId, userId: req.user.id },
+    ));
+    const row = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [targetId])).rows[0];
+    await auditLearned(req, {
+      companyId: row.company_id,
+      action: 'merge',
+      entity: 'LearnedAddress',
+      entityId: targetId,
+      label: row.display,
+      detail: {
+        merged: { id: sourceId, display: result.source.display, postcode: result.source.postcode },
+        added_seen: result.addedSeen,
+        duplicates: result.duplicates,
+      },
+    });
+    res.json({ merged_id: sourceId, address: learnedAddressOut(row) });
+  } catch (err) {
+    if (err instanceof AddressMergeError) {
+      const status = err.code === 'not_found' ? 404 : 409;
+      return res.status(status).json({ code: err.code, message: err.message });
+    }
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to merge learned addresses' });
   }
 });
 

@@ -1464,7 +1464,7 @@ ALTER TABLE audit_events DROP CONSTRAINT IF EXISTS audit_events_action_check;
 ALTER TABLE audit_events ADD CONSTRAINT audit_events_action_check
   CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
                     'sessions_revoked', 'export', 'import', 'run',
-                    'impersonate_start', 'impersonate_end'));
+                    'impersonate_start', 'impersonate_end', 'merge'));
 
 -- Platform (GOD) admin — not a customer tenant admin.
 -- Customer "admin" stays company-scoped. Platform operators live on a dedicated
@@ -1619,6 +1619,14 @@ CREATE TABLE IF NOT EXISTS aviz_known_address_sightings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (address_id, document_id)
 );
+
+-- A misread merged into the real address (Kepublicii -> Republicii). The row stays, disabled,
+-- with its own match_key: the next aviz misread the same way counts toward the real address
+-- instead of coming back as a new candidate.
+ALTER TABLE aviz_known_addresses
+  ADD COLUMN IF NOT EXISTS merged_into UUID REFERENCES aviz_known_addresses(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_aviz_known_addresses_merged
+  ON aviz_known_addresses(merged_into) WHERE merged_into IS NOT NULL;
 
 `
 

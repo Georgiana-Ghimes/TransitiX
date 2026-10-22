@@ -8,6 +8,8 @@ import {
   LEARNED_SOURCE_LABEL,
   LEARNED_TRUST_LABEL,
   learnedTrustClass,
+  mergePrompt,
+  mergedVariantsLabel,
 } from '@/lib/platformLearnedUi';
 
 /**
@@ -91,6 +93,9 @@ function AddressRow({ item, onPatch, busy }) {
             {item.source_document_name ? ` · sursă: ${item.source_document_name}` : ''}
             {item.updated_by_email ? ` · modificată de ${item.updated_by_email}` : ''}
           </p>
+          {mergedVariantsLabel(item.merged_variants) ? (
+            <p className="text-[11px] text-slate-400 mt-1 break-words">{mergedVariantsLabel(item.merged_variants)}</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full ${learnedTrustClass(item.trust)}`}>
@@ -268,6 +273,8 @@ export default function PlatformLearned() {
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  // { source, target } when an edit lands on an address that already exists.
+  const [merging, setMerging] = useState(null);
 
   useEffect(() => {
     api.platform.companies().then((d) => setCompanies(d.items || [])).catch(() => {});
@@ -311,8 +318,33 @@ export default function PlatformLearned() {
       notifySuccess(message, updated.display);
       return true;
     } catch (err) {
+      if (err?.status === 409 && err?.data?.code === 'ADDRESS_EXISTS' && err.data.existing) {
+        setMerging({ source: item, target: err.data.existing });
+        return false;
+      }
       notifyError('Modificare eșuată', friendlyErrorMessage(err));
       return false;
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const mergeAddress = async () => {
+    if (!merging) return;
+    const { source, target } = merging;
+    setBusyId(source.id);
+    try {
+      const res = await api.platform.mergeLearnedAddress(source.id, target.id);
+      setItems((prev) => {
+        const rest = prev.filter((x) => x.id !== source.id);
+        return rest.some((x) => x.id === target.id)
+          ? rest.map((x) => (x.id === target.id ? res.address : x))
+          : [...rest, res.address];
+      });
+      notifySuccess('Adrese unite', res.address?.display || target.display);
+      setMerging(null);
+    } catch (err) {
+      notifyError('Unirea a eșuat', friendlyErrorMessage(err));
     } finally {
       setBusyId(null);
     }
@@ -432,6 +464,17 @@ export default function PlatformLearned() {
         title="Ștergi regula de rută?"
         description={`„${deleting?.ruta_transport || ''}” nu va mai fi aplicată pe avizele ${deleting?.company_name || ''}. Avizele deja confirmate nu se schimbă.`}
         confirmLabel="Șterge regula"
+      />
+
+      <ConfirmDialog
+        open={Boolean(merging)}
+        onClose={() => { if (!busyId) setMerging(null); }}
+        onConfirm={mergeAddress}
+        busy={Boolean(busyId)}
+        variant="warning"
+        title={merging ? mergePrompt(merging.source, merging.target).title : ''}
+        description={merging ? mergePrompt(merging.source, merging.target).description : ''}
+        confirmLabel="Unește"
       />
     </div>
   );
