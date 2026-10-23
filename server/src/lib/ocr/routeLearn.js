@@ -7,9 +7,11 @@
  */
 
 import {
+  formatAddressLine,
   originFromSiteDepozit,
   parseDeliveryAddress,
 } from '../avizOcr.js';
+import { isPlausibleAddressLeg } from './addressMemory.js';
 
 /** Tokens that appear on every Baumit page and must never become a match key. */
 const TOKEN_NOISE = new Set([
@@ -125,15 +127,35 @@ export function buildRouteRuleFromOcr(rawText) {
   return { tokens, matchRegex };
 }
 
+/** House number of the delivery leg of a route (`… / Calea Dorobantilor nr. 135A, Bucuresti` → `135a`). */
+function houseFromRoute(ruta) {
+  const parts = String(ruta || '').split(/\s+\/\s+/);
+  const leg = parts[parts.length - 1] || '';
+  return fold(leg.match(/\bnr\.?\s*([0-9][^\s,]*)/i)?.[1] || '') || null;
+}
+
 /**
- * True when a learned route would replace a different street the structural parser already
- * read clearly from Adresa de livrare (Viilor on the page vs learned Iancu).
+ * True when a learned route would replace something the structural parser already read clearly
+ * from Adresa de livrare:
+ *   - a different street (Viilor on the page vs learned Iancu);
+ *   - the same street with a different house number. A correction 135 → 135A on one aviz must
+ *     not rewrite the next aviz that prints nr. 135 clearly; that page is the better witness.
+ * A misread page (company name as street, `nr. 5OS`) is not clear, so the rule still repairs it.
  */
 export function learnedRouteConflictsWithOcr(rawText, learnedRuta) {
   const ocrStreet = primaryStreetTokenFromOcr(rawText);
   const learnedStreet = primaryStreetTokenFromRoute(learnedRuta);
   if (!ocrStreet || !learnedStreet) return false;
-  return ocrStreet !== learnedStreet;
+  if (ocrStreet !== learnedStreet) return true;
+  const delivery = parseDeliveryAddress(rawText);
+  const ocrHouse = fold(delivery?.houseNumber || '') || null;
+  const learnedHouse = houseFromRoute(learnedRuta);
+  if (!ocrHouse || !learnedHouse || ocrHouse === learnedHouse) return false;
+  // Only a number printed as `nr. 135` counts: with no number the parser can borrow the `1`
+  // of `Sector 1`, and that is no reason to refuse the office's route.
+  const escaped = ocrHouse.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&');
+  if (!new RegExp(`\\bnr\\.?\\s*${escaped}\\b`, 'i').test(fold(rawText))) return false;
+  return isPlausibleAddressLeg(formatAddressLine(delivery));
 }
 
 /** True when every token appears in folded OCR with word-ish boundaries. */
