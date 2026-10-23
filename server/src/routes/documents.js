@@ -8,7 +8,13 @@ import { uniqueUploadFilename } from '../lib/concurrency.js';
 import { hitRateLimit } from '../lib/rateLimit.js';
 import { backgroundOcrTimeoutMs, readDocumentText } from '../lib/ocr/readText.js';
 import { lookupOcrText, storeOcrText } from '../lib/ocr/textCache.js';
-import { applyCorrections, extractDocument, reExtract, summariseExtraction } from '../lib/ocr/extract.js';
+import {
+  applyCorrections,
+  canonicalFieldName,
+  extractDocument,
+  reExtract,
+  summariseExtraction,
+} from '../lib/ocr/extract.js';
 import { bucharestYmd, validateAvizExtraction } from '../lib/ocr/validateAviz.js';
 import { summariseFeedback } from '../lib/ocr/feedback.js';
 import { normalizeBlock } from '../lib/ocr/ocrBlocks.js';
@@ -138,6 +144,28 @@ function toColumns(values) {
     }
   } else if (tipUnit && isGenericCountUnit(tipUnit)) {
     out.tip_marfa = null;
+  }
+  return out;
+}
+
+/**
+ * What Re-extrage must keep for the fields a person corrected.
+ *
+ * Editează saves into the columns (`ruta_transport`, …) and adds the field to
+ * `corrected_fields`; `extracted_data.values` still holds the OCR read that correction replaced.
+ * Re-extracting from `values` alone put the old read back over the office's route.
+ */
+export function correctionsForReExtract(doc) {
+  const out = { ...(doc?.extracted_data?.values ?? {}) };
+  const fields = doc?.corrected_fields ?? [];
+  if (!fields.length) return out;
+  // Serialized like the row the office saw: a pg DATE as an object would land a day early.
+  const row = serializeRow(doc);
+  for (const field of fields) {
+    const column = field === 'quantity' ? 'cantitate_marfa' : field;
+    if (row[column] === undefined) continue;
+    out[field] = row[column];
+    out[canonicalFieldName(field)] = row[column];
   }
   return out;
 }
@@ -305,7 +333,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         ? reExtract(text.text, {
           documentType: doc.document_type,
           profileId,
-          corrections: doc.extracted_data?.values ?? {},
+          corrections: correctionsForReExtract(doc),
           correctedFields: corrected,
           blocks: text.blocks,
         })
@@ -500,7 +528,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
           recordAddressSighting(query, { companyId, documentId: doc.id, observation })
             .catch((err) => console.error('[documents] address memory', err?.message || err));
         }
-        for (const delivery of deliveryObservationsFromOcr(text.text)) {
+        for (const delivery of deliveryObservationsFromOcr(text.text, { known: knownAddresses })) {
           recordAddressSighting(query, {
             companyId, documentId: doc.id, observation: delivery, role: ADDRESS_ROLE_DELIVERY,
           }).catch((err) => console.error('[documents] address memory', err?.message || err));
