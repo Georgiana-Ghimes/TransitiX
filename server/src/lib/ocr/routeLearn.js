@@ -7,9 +7,11 @@
  */
 
 import {
+  formatAddressLine,
   originFromSiteDepozit,
   parseDeliveryAddress,
 } from '../avizOcr.js';
+import { isPlausibleAddressLeg } from './addressMemory.js';
 
 /** Tokens that appear on every Baumit page and must never become a match key. */
 const TOKEN_NOISE = new Set([
@@ -125,15 +127,43 @@ export function buildRouteRuleFromOcr(rawText) {
   return { tokens, matchRegex };
 }
 
+/** House number of the delivery leg of a route (`… / Calea Dorobantilor nr. 135A, Bucuresti` → `135a`). */
+function houseFromRoute(ruta) {
+  const parts = String(ruta || '').split(/\s+\/\s+/);
+  const leg = parts[parts.length - 1] || '';
+  return fold(leg.match(/\bnr\.?\s*([0-9][^\s,]*)/i)?.[1] || '') || null;
+}
+
 /**
- * True when a learned route would replace a different street the structural parser already
- * read clearly from Adresa de livrare (Viilor on the page vs learned Iancu).
+ * True when a learned route would replace something the structural parser already read clearly
+ * from Adresa de livrare:
+ *   - a different street (Viilor on the page vs learned Iancu);
+ *   - the same street with a different house number. A correction 135 → 135A on one aviz must
+ *     not rewrite the next aviz that prints nr. 135 clearly; that page is the better witness.
+ * A misread page (company name as street, `nr. 5OS`) is not clear, so the rule still repairs it.
  */
 export function learnedRouteConflictsWithOcr(rawText, learnedRuta) {
+  return learnedRouteConflictReason(rawText, learnedRuta) != null;
+}
+
+/**
+ * Why {@link learnedRouteConflictsWithOcr} refuses: `conflict_street`, `conflict_house`, or null
+ * when the learned route may be used. Route telemetry records it.
+ */
+export function learnedRouteConflictReason(rawText, learnedRuta) {
   const ocrStreet = primaryStreetTokenFromOcr(rawText);
   const learnedStreet = primaryStreetTokenFromRoute(learnedRuta);
-  if (!ocrStreet || !learnedStreet) return false;
-  return ocrStreet !== learnedStreet;
+  if (!ocrStreet || !learnedStreet) return null;
+  if (ocrStreet !== learnedStreet) return 'conflict_street';
+  const delivery = parseDeliveryAddress(rawText);
+  const ocrHouse = fold(delivery?.houseNumber || '') || null;
+  const learnedHouse = houseFromRoute(learnedRuta);
+  if (!ocrHouse || !learnedHouse || ocrHouse === learnedHouse) return null;
+  // Only a number printed as `nr. 135` counts: with no number the parser can borrow the `1`
+  // of `Sector 1`, and that is no reason to refuse the office's route.
+  const escaped = ocrHouse.replace(/[.*+?^${}()|[\]\\/-]/g, '\\$&');
+  if (!new RegExp(`\\bnr\\.?\\s*${escaped}\\b`, 'i').test(fold(rawText))) return null;
+  return isPlausibleAddressLeg(formatAddressLine(delivery)) ? 'conflict_house' : null;
 }
 
 /** True when every token appears in folded OCR with word-ish boundaries. */
@@ -194,19 +224,16 @@ export function matchRouteRule(rawText, rules = []) {
  * Skips when ruta_transport is in correctedFields (office pinned this document).
  * Skips when Adresa de livrare already names a different street than the learned route.
  */
-export function applyLearnedRoute(values, rawText, rules, { correctedFields = [] } = {}) {
+export function applyLearnedRoute(values, rawText, rules, { correctedFields = [], trace } = {}) {
   const out = { ...(values || {}) };
   if (correctedFields.includes('ruta_transport')) {
+    traceRule(trace, { result: 'skipped', reason: 'corrected_fields_skip' });
     return { values: out, learned: false, rule: null };
   }
-  const rule = matchRouteRule(rawText, rules);
-  if (!rule?.ruta_transport) {
-    return { values: out, learned: false, rule: null };
-  }
-  if (learnedRouteConflictsWithOcr(rawText, rule.ruta_transport)) {
-    return { values: out, learned: false, rule: null };
-  }
+  const rule = pickUsableRule(rawText, rules, trace);
+  if (!rule) return { values: out, learned: false, rule: null };
   out.ruta_transport = rule.ruta_transport;
+  traceRule(trace, { result: 'used', rule_id: rule.id ?? null });
   return { values: out, learned: true, rule };
 }
 
@@ -215,21 +242,50 @@ export function applyLearnedRoute(values, rawText, rules, { correctedFields = []
  * show the learned value (same address → same route). Never overrides corrected_fields.
  * Never replaces a clear OCR street with a different learned street.
  */
-export function preferLearnedRoute(storedRoute, rawText, rules, { corrected = false } = {}) {
-  if (corrected) return { route: storedRoute, learned: false, rule: null };
-  const rule = matchRouteRule(rawText, rules);
-  if (!rule?.ruta_transport) {
+export function preferLearnedRoute(storedRoute, rawText, rules, { corrected = false, trace } = {}) {
+  if (corrected) {
+    traceRule(trace, { result: 'skipped', reason: 'corrected_fields_skip' });
     return { route: storedRoute, learned: false, rule: null };
   }
-  if (learnedRouteConflictsWithOcr(rawText, rule.ruta_transport)) {
-    return { route: storedRoute, learned: false, rule: null };
-  }
+  const rule = pickUsableRule(rawText, rules, trace);
+  if (!rule) return { route: storedRoute, learned: false, rule: null };
   const same = String(storedRoute || '').trim() === String(rule.ruta_transport).trim();
+  traceRule(trace, { result: 'used', rule_id: rule.id ?? null, ...(same ? { same_as_stored: true } : {}) });
   return {
     route: rule.ruta_transport,
     learned: !same,
     rule,
   };
+}
+
+function traceRule(trace, entry) {
+  if (Array.isArray(trace)) trace.push({ step: 'route_rule', ...entry });
+}
+
+/**
+ * The matched rule when it may be used, else null. Refusals go to `trace`:
+ * `no_rules` / `no_match` (skipped), `rule_without_route`, `conflict_street`, `conflict_house`.
+ */
+function pickUsableRule(rawText, rules, trace) {
+  if (!rules?.length) {
+    traceRule(trace, { result: 'skipped', reason: 'no_rules' });
+    return null;
+  }
+  const rule = matchRouteRule(rawText, rules);
+  if (!rule) {
+    traceRule(trace, { result: 'skipped', reason: 'no_match', rules: rules.length });
+    return null;
+  }
+  if (!rule.ruta_transport) {
+    traceRule(trace, { result: 'refused', reason: 'rule_without_route', rule_id: rule.id ?? null });
+    return null;
+  }
+  const conflict = learnedRouteConflictReason(rawText, rule.ruta_transport);
+  if (conflict) {
+    traceRule(trace, { result: 'refused', reason: conflict, rule_id: rule.id ?? null });
+    return null;
+  }
+  return rule;
 }
 
 /** Load all route rules for a company (newest first for stable tie-break in SQL too). */

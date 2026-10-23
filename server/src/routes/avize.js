@@ -16,12 +16,9 @@ import {
   fleetStatusByPlates,
   primaryPlate,
 } from '../lib/fleet/plateRegistry.js';
-import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
-import {
-  applyAddressMemory,
-  isAddressMemoryProfile,
-  listKnownAddresses,
-} from '../lib/ocr/addressMemory.js';
+import { listRouteRules } from '../lib/ocr/routeLearn.js';
+import { listKnownAddresses } from '../lib/ocr/addressMemory.js';
+import { routeWithCompanyMemory, withCompanyRoute } from '../lib/ocr/routeDecorate.js';
 import { extractBatchDocuments, failStaleUploadedAvize, logEvent } from './documents.js';
 import {
   documentPageCount,
@@ -201,49 +198,9 @@ const DEFAULT_OBS_CODES = [
  * office edit of a real route is never overwritten, and nothing is written back here: this
  * decorates a response, it does not change the document.
  */
-/**
- * Route as the list / export should show it: repaired from the stored OCR text, then the
- * company's learned origin address when the Expeditor street is unreadable (#112), then a
- * whole-route rule learned from an office correction. A route the office pinned is left alone.
- */
-function routeWithCompanyMemory(serialized, { routeRules = [], knownAddresses = [] } = {}) {
-  const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
-  const raw = serialized.extracted_data?.raw_text;
-  let ruta = serialized.ruta_transport;
-  let extracted_data = serialized.extracted_data;
-  if (!raw || corrected.includes('ruta_transport')) return { ruta, extracted_data };
-  if (knownAddresses.length && isAddressMemoryProfile(serialized.ocr_profile_id)) {
-    const memory = applyAddressMemory({ ruta_transport: ruta }, raw, knownAddresses);
-    if (memory.address || memory.deliveryAddresses.length) {
-      ruta = memory.values.ruta_transport;
-      extracted_data = {
-        ...(extracted_data || {}),
-        ...(memory.address ? { origin_source: 'memory', origin_address_id: memory.address.id } : {}),
-        ...(memory.deliveryAddresses.length ? {
-          delivery_source: 'memory',
-          delivery_address_ids: memory.deliveryAddresses.map((a) => a.id),
-        } : {}),
-      };
-    }
-  }
-  if (routeRules.length) {
-    const learned = preferLearnedRoute(ruta, raw, routeRules, { corrected: false });
-    if (learned.rule) {
-      ruta = learned.route;
-      extracted_data = {
-        ...(extracted_data || {}),
-        route_source: 'learned',
-        origin_source: null,
-        origin_address_id: null,
-        delivery_source: null,
-        delivery_address_ids: null,
-      };
-    }
-  }
-  return { ruta, extracted_data };
-}
-
-function decorateAviz(row, { routeRules = [], fleetByPlate = null, knownAddresses = [] } = {}) {
+// Route as the list / export should show it: `routeWithCompanyMemory` (lib/ocr/routeDecorate.js),
+// shared with /reports so the same aviz shows the same route on every surface.
+export function decorateAviz(row, { routeRules = [], fleetByPlate = null, knownAddresses = [] } = {}) {
   const serialized = repairAvizFromStored(serializeRow(row));
   const corrected = Array.isArray(serialized.corrected_fields) ? serialized.corrected_fields : [];
   const { ruta, extracted_data } = routeWithCompanyMemory(serialized, { routeRules, knownAddresses });
@@ -327,7 +284,7 @@ async function logAvizExport(companyId, userId, { kind, templateId, avizIds, fil
   });
 }
 
-async function loadAvizeByIds(companyId, avizIds) {
+export async function loadAvizeByIds(companyId, avizIds) {
   const docs = await query(
     `SELECT * FROM aviz_documents
      WHERE company_id = $1 AND id = ANY($2::uuid[])
@@ -336,11 +293,10 @@ async function loadAvizeByIds(companyId, avizIds) {
   );
   const routeRules = await listRouteRules(query, companyId).catch(() => []);
   const knownAddresses = await listKnownAddresses(query, companyId, { role: null }).catch(() => []);
-  return docs.rows.map((row) => {
-    const repaired = repairAvizFromStored(serializeRow(row));
-    const { ruta, extracted_data } = routeWithCompanyMemory(repaired, { routeRules, knownAddresses });
-    return { ...repaired, ruta_transport: ruta, extracted_data };
-  });
+  return docs.rows.map((row) => withCompanyRoute(
+    repairAvizFromStored(serializeRow(row)),
+    { routeRules, knownAddresses },
+  ));
 }
 
 /**

@@ -161,3 +161,44 @@ Adresa de livrare București Sector 5 RO 050151
     expect(buildRouteRuleFromOcr('Placuta B 111 ABC TPO-1')).toBeNull();
   });
 });
+
+describe('a learned route against a house number the page prints clearly', () => {
+  const page = (street) => [
+    'Expeditor',
+    'Site: BOI Bolintin',
+    'Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU',
+    'Aviz de expeditie: PSL-0072722',
+    'Adresa de livrare\tClient',
+    'DOROBANTI RESIDENCE SRL\tC23902722 DOROBANTI RESIDENCE SRL',
+    `${street}\t${street}`,
+    'Bucuresti Sector 1 RO 010565\tBucuresti Sector 1 RO 010565',
+    'Client factura:\tDOROBANTI RESIDENCE SRL',
+    'Comanda de transport TPO-0037722',
+  ].join('\n');
+  const CLEAR = page('Calea Dorobantilor, nr. 135');
+  // Office corrected 135 → 135A on another aviz of the same client and street.
+  const rule = {
+    ...buildRouteRuleFromOcr(CLEAR),
+    match_tokens: buildRouteRuleFromOcr(CLEAR).tokens,
+    ruta_transport: 'Str. Republicii nr. 1F, Bolintin-Deal / Calea Dorobantilor nr. 135A, Bucuresti',
+  };
+
+  it('matches the page, but the clear nr. 135 wins over the learned 135A', () => {
+    expect(matchRouteRule(CLEAR, [rule])).toBe(rule);
+    expect(learnedRouteConflictsWithOcr(CLEAR, rule.ruta_transport)).toBe(true);
+    const structural = 'Str. Republicii nr. 1F, Bolintin-Deal / Calea Dorobantilor nr. 135, Bucuresti';
+    expect(applyLearnedRoute({ ruta_transport: structural }, CLEAR, [rule]).learned).toBe(false);
+    expect(preferLearnedRoute(structural, CLEAR, [rule]).route).toBe(structural);
+  });
+
+  it('still applies when the page has the same number, or no number', () => {
+    expect(learnedRouteConflictsWithOcr(page('Calea Dorobantilor, nr. 135A'), rule.ruta_transport)).toBe(false);
+    expect(learnedRouteConflictsWithOcr(page('Calea Dorobantilor'), rule.ruta_transport)).toBe(false);
+  });
+
+  it('still repairs a misread page (company name as street, nr. 5OS)', () => {
+    const misread = page('5os. Pante1imon, nr. 244').replace(/DOROBANTI RESIDENCE SRL/g, 'PANTELIMON CONSTRUCT SRL');
+    const fix = 'Str. Republicii nr. 1F, Bolintin-Deal / Șosea Pantelimon nr. 244, Bucuresti';
+    expect(learnedRouteConflictsWithOcr(misread, fix)).toBe(false);
+  });
+});

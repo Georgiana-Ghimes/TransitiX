@@ -22,7 +22,9 @@ import { renderReportWorkbook } from '../lib/avizExport.js';
 import { recordExport } from '../lib/reporting/exportLog.js';
 import { normalizeTemplateColumns, TEMPLATE_NAME_TAKEN } from '../lib/avizTemplate.js';
 import { repairAvizFromStored } from '../lib/avizOcr.js';
-import { listRouteRules, preferLearnedRoute } from '../lib/ocr/routeLearn.js';
+import { listRouteRules } from '../lib/ocr/routeLearn.js';
+import { listKnownAddresses } from '../lib/ocr/addressMemory.js';
+import { withCompanyRoute } from '../lib/ocr/routeDecorate.js';
 
 const router = Router();
 router.use(authRequired, officeRequired);
@@ -48,26 +50,24 @@ async function loadTemplate(companyId, templateId) {
   return serializeRow(found.rows[0]);
 }
 
-async function selectDocuments(companyId, filters) {
+/**
+ * The selected documents with the route /avize shows for them: same repair, same address
+ * memory, same learned rules (lib/ocr/routeDecorate.js). Reports used to apply the rules only,
+ * so an aviz whose street came from the address memory had one route in the list and annex and
+ * another in the report.
+ */
+export async function selectDocuments(companyId, filters) {
   const { sql, params, filters: used } = buildSelectionQuery(companyId, filters);
-  const [found, routeRules] = await Promise.all([
+  const [found, routeRules, knownAddresses] = await Promise.all([
     query(sql, params),
     listRouteRules(query, companyId).catch(() => []),
+    listKnownAddresses(query, companyId, { role: null }).catch(() => []),
   ]);
   return {
-    documents: found.rows.map((row) => {
-      const repaired = repairAvizFromStored(serializeRow(row));
-      const corrected = Array.isArray(repaired.corrected_fields) ? repaired.corrected_fields : [];
-      const raw = repaired.extracted_data?.raw_text;
-      if (!routeRules.length || !raw || corrected.includes('ruta_transport')) return repaired;
-      const learned = preferLearnedRoute(repaired.ruta_transport, raw, routeRules);
-      if (!learned.rule) return repaired;
-      return {
-        ...repaired,
-        ruta_transport: learned.route,
-        extracted_data: { ...(repaired.extracted_data || {}), route_source: 'learned' },
-      };
-    }),
+    documents: found.rows.map((row) => withCompanyRoute(
+      repairAvizFromStored(serializeRow(row)),
+      { routeRules, knownAddresses },
+    )),
     filters: used,
   };
 }
