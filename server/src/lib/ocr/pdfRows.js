@@ -24,6 +24,11 @@
 const COLUMN_GAP = 1.2;
 /** Word break. Below this the two items are pieces of one word (kerning, ligatures). */
 const WORD_GAP = 0.12;
+/**
+ * A row whose first cell starts past this fraction of the text span is right-column only.
+ * It gets a leading tab ("empty left cell") so column-aware parsers can tell it apart.
+ */
+const RIGHT_COLUMN_START = 0.4;
 
 function normalizeItems(items) {
   const cells = [];
@@ -99,7 +104,19 @@ export function rowsFromTextItems(items) {
     else rows.push({ anchorY: cell.y, cells: [cell] });
   }
 
-  const lines = rows.map((row) => joinRow(row.cells, fallbackHeight));
+  // Scanned Baumit avize: the Client column sits half a line lower than Adresa de livrare,
+  // so its lines land on rows of their own, interleaved with the delivery address
+  // (`Str. Timisului` between `AP-ARABESQUE…` and `BULEVARDUL UNIRII…`). Without a marker
+  // they read as left-column text and the Client seat became the destination (#112).
+  const left = Math.min(...cells.map((c) => c.x));
+  const right = Math.max(...cells.map((c) => c.x + c.width));
+  const rightColumnAt = left + (right - left) * RIGHT_COLUMN_START;
+
+  const lines = rows.map((row) => {
+    const line = joinRow(row.cells, fallbackHeight);
+    const firstX = Math.min(...row.cells.map((c) => c.x));
+    return right > left && firstX > rightColumnAt ? `\t${line}` : line;
+  });
   return [...lines, ...loose].join('\n');
 }
 

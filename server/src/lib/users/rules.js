@@ -54,12 +54,25 @@ const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * The email has to be real enough to receive a link: an invitation that cannot arrive creates an
  * account nobody can ever sign into, and the only sign of it is a row somebody has to clean up.
  */
+/** Display name on invite / rename — same bar, no email/role. */
+export function validateDisplayName(name) {
+  const cleanName = String(name || '').trim();
+  if (cleanName.length < 2) {
+    return { ok: false, errors: ['Numele este obligatoriu (minim 2 caractere).'], value: null };
+  }
+  if (cleanName.length > 120) {
+    return { ok: false, errors: ['Numele e prea lung (maxim 120 de caractere).'], value: null };
+  }
+  return { ok: true, errors: [], value: cleanName };
+}
+
 export function validateInvite({ name, email, role }) {
   const errors = [];
-  const cleanName = String(name || '').trim();
+  const nameCheck = validateDisplayName(name);
+  const cleanName = nameCheck.value || '';
   const cleanEmail = normaliseEmail(email);
 
-  if (cleanName.length < 2) errors.push('Numele este obligatoriu.');
+  if (!nameCheck.ok) errors.push(...nameCheck.errors);
   if (!EMAIL_SHAPE.test(cleanEmail)) errors.push('Adresa de email nu pare validă.');
   if (!isRole(role)) errors.push('Rol necunoscut.');
 

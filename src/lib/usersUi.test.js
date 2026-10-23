@@ -117,6 +117,7 @@ describe('actionsFor', () => {
     const actions = actionsFor(user({ id: 'u2' }), { currentUserId: 'u1', adminCount: 2 });
     expect(actions.canChangeRole).toBe(true);
     expect(actions.canDeactivate).toBe(true);
+    expect(actions.canEditName).toBe(true);
   });
 
   it('offers nothing dangerous on yourself', () => {
@@ -125,6 +126,15 @@ describe('actionsFor', () => {
     expect(actions.canChangeRole).toBe(false);
     expect(actions.canDeactivate).toBe(false);
     expect(actions.canDelete).toBe(false);
+    // #107 — rename is allowed even on yourself / any role.
+    expect(actions.canEditName).toBe(true);
+  });
+
+  it('#107 offers rename for every role in the list', () => {
+    for (const role of ['admin', 'dispatcher', 'finance', 'driver']) {
+      expect(actionsFor(user({ id: 'u2', role }), { currentUserId: 'u1', adminCount: 2 }).canEditName)
+        .toBe(true);
+    }
   });
 
   it('protects the last admin', () => {

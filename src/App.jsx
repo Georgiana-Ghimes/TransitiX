@@ -58,6 +58,7 @@ const PlatformCompanies = lazy(() => import('@/pages/PlatformCompanies'));
 const PlatformLeads = lazy(() => import('@/pages/PlatformLeads'));
 const PlatformUsers = lazy(() => import('@/pages/PlatformUsers'));
 const PlatformCompanyPage = lazy(() => import('@/pages/PlatformCompanyPage'));
+const PlatformLearned = lazy(() => import('@/pages/PlatformLearned'));
 const DriverApp = lazy(() => import('@/pages/DriverApp'));
 const DriverAppDocuments = lazy(() => import('@/pages/DriverAppDocuments'));
 const SharpnessCalibration = import.meta.env.DEV
@@ -94,6 +95,7 @@ function OfficeRoutes() {
       <Route path="/platform/leads" element={<PlatformLeads />} />
       <Route path="/platform/users" element={<PlatformUsers />} />
       <Route path="/platform/companies/:id" element={<PlatformCompanyPage />} />
+      <Route path="/platform/learned" element={<PlatformLearned />} />
       <Route path="/trips" element={<Trips />} />
       <Route path="/trips/:id" element={<TripDetail />} />
       <Route path="/vehicles" element={<Vehicles />} />

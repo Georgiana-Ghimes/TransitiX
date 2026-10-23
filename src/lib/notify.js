@@ -102,6 +102,12 @@ export function friendlyErrorMessage(errorOrMessage) {
     return 'Format invalid pentru unul din câmpuri. Verifică datele și numerele introduse.';
   }
 
+  // GOD module gate — prefer the server sentence over generic „Nu ai acces…”.
+  const code = isString ? undefined : errorOrMessage?.data?.code;
+  if (code === 'MODULE_DISABLED' && msg && !BOILERPLATE.test(msg)) {
+    return msg;
+  }
+
   // A message written for a reader beats generic status copy — including on 401/403.
   // Login returns 401 with „Email sau parolă greșite.”; swallowing that as „Sesiunea a
   // expirat” made every failed sign-in look like a dead session. English JWT boilerplate

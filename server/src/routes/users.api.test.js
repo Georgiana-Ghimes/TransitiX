@@ -201,6 +201,32 @@ describe('changing a role', () => {
   });
 });
 
+describe('renaming (#107)', () => {
+  it('lets an admin change the display name of any role', async () => {
+    const email = freshEmail();
+    const { body } = await invite({ name: 'Nume Vechi', email, role: 'dispatcher' });
+    const res = await api().put(`/api/users/${body.user.id}/name`)
+      .set(admin()).send({ name: '  Nume Nou  ' });
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Nume Nou');
+    expect(res.body.email).toBe(email);
+  });
+
+  it('refuses an empty name', async () => {
+    const { body } = await invite({ name: 'Valid', email: freshEmail(), role: 'finance' });
+    const res = await api().put(`/api/users/${body.user.id}/name`)
+      .set(admin()).send({ name: 'X' });
+    expect(res.status).toBe(422);
+  });
+
+  it('lets an admin rename themselves', async () => {
+    const res = await api().put(`/api/users/${ctx.admin.id}/name`)
+      .set(admin()).send({ name: 'Admin Redenumit' });
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Admin Redenumit');
+  });
+});
+
 describe('deactivating', () => {
   it('turns the account off and ends every session', async () => {
     const email = freshEmail();

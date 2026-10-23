@@ -51,9 +51,13 @@ function scoreMarkers(text, markers) {
  * `/` and `:` are handwriting separators ("TPO / 31027" in red on a printed Baumit).
  */
 const CODE_SEP = '[\\s\\-._/:]*';
-const TPO_CODE = new RegExp(`(TPO${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
-const PSL_CODE = new RegExp(`(PSL${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
-const TRO_CODE = new RegExp(`(TRO${CODE_SEP}\\d{3,}[\\d./-]*)`, 'i');
+/** Digit body. Doc-no (PSL/TRO) may same-line space/hyphen-gap for `OOI 1300`. */
+const CODE_BODY_GAP = '[0-9OI]{3,14}(?:[ \\t\\-]+[0-9OI]{2,10})?';
+/** TPO: continuous digits, optional year compound (`2026-1088`) — hyphen/slash only, no space. */
+const CODE_BODY_TPO = '[0-9OI]{3,14}(?:[-/][0-9]{1,6})?';
+const TPO_CODE = new RegExp(`(TPO${CODE_SEP}${CODE_BODY_TPO})`, 'i');
+const PSL_CODE = new RegExp(`(PSL${CODE_SEP}${CODE_BODY_GAP})`, 'i');
+const TRO_CODE = new RegExp(`(TRO${CODE_SEP}${CODE_BODY_GAP})`, 'i');
 
 /**
  * TPO / PSL / TRO codes are zero-padded to this many digits (`TPO-0032755`).
@@ -133,14 +137,24 @@ const hybridAvizTpoField = (text) => {
   return NO_MATCH;
 };
 
-/** Collapse `TRO / 0010203` / spaces into the stored prefix form; reject bare house numbers. */
+/** Digits after PSL/TRO/… — O→0 / I→1 only in the tail (never the O in „TRO”). */
+function docNoDigitsAfterKind(raw, kind) {
+  const rest = String(raw || '').slice(String(kind || '').length);
+  return rest
+    .replace(/O/g, '0')
+    .replace(/I/g, '1')
+    .replace(/[^\d]/g, '');
+}
+
+/** Collapse `TRO / 0010203` / `TRO-OOI 1300` into the stored prefix form; reject house numbers. */
 function canonicalDocNo(raw) {
   const upper = String(raw || '').toUpperCase().trim();
-  const prefixed = upper.match(/\b((?:PSL|TRO|TEST-AVZ)[\s\-._/:]*\d[\d./-]*)\b/i);
+  const prefixed = upper.match(/\b((?:PSL|TRO|TEST-AVZ)[\s\-._/:]*[0-9OI]{3,14}(?:[ \t\-]+[0-9OI]{2,10})?)\b/i);
   if (prefixed) {
     const kind = prefixed[1].match(/^(PSL|TRO|TEST-AVZ)/i)?.[1].toUpperCase() || 'PSL';
-    const digits = prefixed[1].replace(/^[A-Z-]+/i, '').replace(/[^\d]/g, '');
-    return digits ? `${kind}-${digits}` : null;
+    // Same O→0 / I→1 map as splitPdf `ocrIdDigits` (Baumit text layer TRO-OOI…).
+    const digits = docNoDigitsAfterKind(prefixed[1], kind);
+    return digits.length >= 4 ? `${kind}-${digits}` : null;
   }
   // `nr. 220` from "Bvd. Iuliu Maniu, nr. 220" is a house number, not an aviz (#54).
   const compact = upper.replace(/[\s_]+/g, '');
@@ -157,14 +171,15 @@ function canonicalDocNo(raw) {
 function recoverDocNearLabels(text) {
   const blob = String(text || '');
   const orderDigits = String(hybridAvizTpoField(blob)?.value || '').replace(/\D/g, '');
-  const re = /(?:aviz\s+de\s+expedi[tț]ie|comand[aă]\s+de\s+transfer)\s*[:.\-]?\s*((?:PSL|TRO|TR0|TPO|TP0|IRO|T[\s]?R[\s]?[O0])[\s\-._/:]*\d{3,}[\d./-]*)/gi;
+  const re = /(?:aviz\s+de\s+expedi[tț]ie|comand[aă]\s+de\s+transfer)\s*[:.\-]?\s*((?:PSL|TRO|TR0|TPO|TP0|IRO|T[\s]?R[\s]?[O0])[\s\-._/:]*[0-9OI]{3,14}(?:[ \t\-]+[0-9OI]{2,10})?)/gi;
   let m;
   while ((m = re.exec(blob)) !== null) {
     const raw = String(m[1] || '').toUpperCase();
-    const digits = raw.replace(/[^\d]/g, '');
+    const kind = /^PSL/.test(raw) ? 'PSL' : 'TRO';
+    // Do not O→0 inside the „TRO” letters — that turned TRO-0011300 into TRO-00011300.
+    const digits = docNoDigitsAfterKind(raw, kind);
     if (!digits || digits.length < 5) continue;
     if (orderDigits && digits === orderDigits) continue;
-    const kind = /^PSL/.test(raw) ? 'PSL' : 'TRO';
     return { value: `${kind}-${digits}`, confidence: 0.72, matched: m[0] };
   }
   return null;

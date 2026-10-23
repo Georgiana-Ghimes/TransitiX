@@ -12,6 +12,7 @@ import {
   isRole,
   normaliseEmail,
   unusablePasswordSeed,
+  validateDisplayName,
   validateInvite,
 } from './rules.js';
 
@@ -63,6 +64,15 @@ describe('validateInvite', () => {
   it('refuses an empty name and an unknown role', () => {
     expect(validateInvite({ name: 'A', email: 'a@b.ro', role: 'admin' }).ok).toBe(false);
     expect(validateInvite({ name: 'Ana', email: 'a@b.ro', role: 'owner' }).ok).toBe(false);
+  });
+
+  it('#107 validateDisplayName accepts a trimmed rename', async () => {
+    const { validateDisplayName } = await import('./rules.js');
+    expect(validateDisplayName('  Ana Pop  ')).toEqual({
+      ok: true, errors: [], value: 'Ana Pop',
+    });
+    expect(validateDisplayName('A').ok).toBe(false);
+    expect(validateDisplayName('').ok).toBe(false);
   });
 
   it('reports every problem at once', () => {

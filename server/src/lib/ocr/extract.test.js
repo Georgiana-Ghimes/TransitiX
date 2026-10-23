@@ -266,6 +266,28 @@ describe('extractDate', () => {
     // A recent-enough OCR year is kept (no inventing 2026 from 2025).
     expect(extractDate('Data: 02.10.2025', { asOf: '2026-10-08' }).value).toBe('2025-10-02');
   });
+
+  it('completes truncated OCR year 21.10.202 → 2026 (#110)', () => {
+    const hit = extractDate(
+      'Data\navizului\nde\nexpeditie\nComanda\nvanzare\n1/2\n21.10.202\nSOR-006366',
+      { asOf: '2026-10-22' },
+    );
+    expect(hit.value).toBe('2026-10-21');
+    expect(hit.confidence).toBeLessThan(0.8);
+  });
+
+  it('repairs OCR year 2024→2026 when 6 was read as 4 (#110)', () => {
+    const hit = extractDate('Data avizului de expeditie: 21.10.2024', { asOf: '2026-10-22' });
+    expect(hit.value).toBe('2026-10-21');
+    expect(hit.confidence).toBeLessThanOrEqual(0.55);
+  });
+
+  it('reads date on the next line after a mangled expeditie label (#110)', () => {
+    expect(extractDate('Data avizului de expediVe\n\n21.10.2026', { asOf: '2026-10-22' }).value)
+      .toBe('2026-10-21');
+    expect(extractDate('Data avizului de expeditie\n19. 10. 2026', { asOf: '2026-10-22' }).value)
+      .toBe('2026-10-19');
+  });
 });
 
 describe('gross weight, the field the report actually needs', () => {
@@ -1125,6 +1147,26 @@ TW
    * Printed Baumit TRO with blank "Num de comanda de transport"; the driver wrote
    * `TPO / 31027` in red. Hybrid print + handwriting must not leave numar_tpo empty.
    */
+  it('fills numar_document_marfa from TRO-OOI spaced text-layer ids (TPO-0035189 / 0035299)', () => {
+    const page5189 = `
+Aviz de expeditie rezumat: TPO-0035189
+Aviz de expeditie TRO-OOI 1300
+Comanda de transfer TRO-OOI 1300
+Placuta de inmatriculare B 330 SRS
+`;
+    const page5299 = `
+Aviz de expeditie rezumat: TPO-0035299
+Aviz de expeditie TRO-OOI 1335
+Comanda de transfer TRO-OOI 1335
+`;
+    const a = extractDocument(page5189, { documentType: 'aviz' });
+    expect(a.values.numar_tpo).toBe('TPO-0035189');
+    expect(a.values.numar_document_marfa).toBe('TRO-0011300');
+    const b = extractDocument(page5299, { documentType: 'aviz' });
+    expect(b.values.numar_tpo).toBe('TPO-0035299');
+    expect(b.values.numar_document_marfa).toBe('TRO-0011335');
+  });
+
   it('does not take house number 220 as document number when TRO is on the page (#54)', () => {
     // Rezumat: "Bvd. Iuliu Maniu, nr. 220" sat next to aviz/nr. patterns; generic profile
     // used to capture "220" before TRO-0010203.

@@ -38,11 +38,13 @@ import {
   hasManualAvizEdits,
   inputCls,
   isLearnedRoute,
+  memoryRouteLabel,
   manualAvizEditLabels,
   isLockedRai,
   labelCls,
   lowField,
   LOW_FIELD_TEXT_CLS,
+  OCR_VERIFY_KEYS,
   readAvizPageSize,
   requiresAnnexReviewGate,
   rowsMissingTpo,
@@ -503,93 +505,110 @@ export default function AvizeReports() {
 
   const saveForceGateItem = useCallback(async (row, form) => {
     if (!row?.id) return;
-    const goodsDocOnly = Boolean(form?.goods_doc_only);
-    const hadUnackedOcr = unackedLowOcrFields({
-      ...row,
-      goods_doc_only: goodsDocOnly,
-    }).length > 0;
-    const { goods_doc_only: _flag, ...formFields } = form || {};
-    const prevEd = (row.extracted_data && typeof row.extracted_data === 'object')
-      ? row.extracted_data
-      : {};
-    const payload = {
-      ...formFields,
-      status: nextAvizStatusOnSave(row.status),
-      extracted_data: {
-        ...prevEd,
-        goods_doc_only: goodsDocOnly,
-      },
-    };
-    if (goodsDocOnly) payload.numar_tpo = '';
-    if (!payload.trip_id) payload.trip_id = null;
-    let saved = null;
     try {
-      saved = await api.entities.AvizDocument.update(row.id, payload);
-    } catch (e) {
-      // No field delta: still allow Salvează to unlock OCR-nesigur via approve-review.
-      if (!hadUnackedOcr) throw e;
-      const msg = String(e?.message || e?.data?.message || '');
-      if (!/nu ai modificat|niciun câmp/i.test(msg) && e?.status !== 400) throw e;
-    }
-    if (hadUnackedOcr) {
-      const approved = await api.documents.approveReview(row.id);
-      saved = { ...(saved || {}), ...(approved?.document || {}), needs_review: false };
-    }
-    notifySuccess(
-      hadUnackedOcr ? 'Verificat pe document' : 'Aviz salvat',
-      row.numar_tpo || form?.numar_document_marfa || row.original_filename || 'Câmpuri actualizate.',
-    );
-    // Keep modal open and preserve queue order/ids so the carousel can advance without
-    // snapping back to the first item (do not rebuild queue from a filtered list here).
-    setForceGate((prev) => {
-      if (!prev) return prev;
-      const patch = {
-        ...payload,
-        ...(saved || {}),
-        file_url: row.file_url || saved?.file_url,
+      const goodsDocOnly = Boolean(form?.goods_doc_only);
+      const hadUnackedOcr = unackedLowOcrFields({
+        ...row,
         goods_doc_only: goodsDocOnly,
+      }).length > 0;
+      const { goods_doc_only: _flag, zone_tax_breakdown: _ztb, ...formFields } = form || {};
+      const prevEd = (row.extracted_data && typeof row.extracted_data === 'object')
+        ? row.extracted_data
+        : {};
+      const payload = {
+        ...formFields,
+        status: nextAvizStatusOnSave(row.status),
         extracted_data: {
           ...prevEd,
-          ...(saved?.extracted_data || {}),
           goods_doc_only: goodsDocOnly,
         },
-        // Clear local low flags so ocrBlocksForce drops without waiting for list reload.
-        field_confidence: {
-          ...(row.field_confidence || {}),
-          ...(saved?.field_confidence || {}),
-          numar_tpo: 'ok',
-          numar_auto: 'ok',
-          ruta_transport: 'ok',
-        },
-        corrected_fields: [
-          ...new Set([
-            ...(Array.isArray(row.corrected_fields) ? row.corrected_fields : []),
-            ...(Array.isArray(saved?.corrected_fields) ? saved.corrected_fields : []),
-            'numar_tpo', 'numar_auto', 'ruta_transport',
-          ]),
-        ],
-        needs_review: false,
       };
-      const nextQueue = (prev.queue || []).map((r) => (
-        r.id === row.id ? { ...r, ...patch } : r
-      ));
-      const nextPeers = Array.isArray(prev.peerRows)
-        ? prev.peerRows.map((r) => (r.id === row.id ? { ...r, ...patch } : r))
-        : prev.peerRows;
-      return { ...prev, queue: nextQueue, peerRows: nextPeers };
-    });
-    // Same row stays at the same index in the main list (no full reload / reshuffle).
-    setRows((prev) => prev.map((r) => {
-      if (r.id !== row.id) return r;
-      return {
-        ...r,
-        ...payload,
-        ...(saved || {}),
-        file_url: row.file_url || saved?.file_url,
-        goods_doc_only: goodsDocOnly,
-        needs_review: false,
-      };
-    }));
+      if (goodsDocOnly) payload.numar_tpo = '';
+      if (!payload.trip_id) payload.trip_id = null;
+      let saved = null;
+      try {
+        saved = await api.entities.AvizDocument.update(row.id, payload);
+      } catch (e) {
+        // No field delta: still OK — operator may only ack OCR or click „treci la următorul”.
+        const msg = String(e?.message || e?.data?.message || '');
+        const noChange = e?.status === 400 || /nu ai modificat|niciun câmp/i.test(msg);
+        if (!noChange) throw e;
+      }
+      if (hadUnackedOcr) {
+        const approved = await api.documents.approveReview(row.id);
+        saved = { ...(saved || {}), ...(approved?.document || {}), needs_review: false };
+      }
+      notifySuccess(
+        hadUnackedOcr ? 'Verificat pe document' : 'Aviz salvat',
+        row.numar_tpo || form?.numar_document_marfa || row.original_filename || 'Câmpuri actualizate.',
+      );
+      // Ack every OCR_VERIFY_KEYS field (dată + TRO/PSL too) — otherwise Salvează left
+      // „OCR nesigur” on and the carousel looked like it neither saved nor advanced.
+      const ocrAck = Object.fromEntries(OCR_VERIFY_KEYS.map((k) => [k, 'ok']));
+      // Keep modal open and preserve queue order/ids so the carousel can advance without
+      // snapping back to the first item (do not rebuild queue from a filtered list here).
+      setForceGate((prev) => {
+        if (!prev) return prev;
+        const patch = {
+          ...payload,
+          ...(saved || {}),
+          file_url: row.file_url || saved?.file_url,
+          goods_doc_only: goodsDocOnly,
+          extracted_data: {
+            ...prevEd,
+            ...(saved?.extracted_data || {}),
+            goods_doc_only: goodsDocOnly,
+          },
+          field_confidence: {
+            ...(row.field_confidence || {}),
+            ...(saved?.field_confidence || {}),
+            ...ocrAck,
+          },
+          corrected_fields: [
+            ...new Set([
+              ...(Array.isArray(row.corrected_fields) ? row.corrected_fields : []),
+              ...(Array.isArray(saved?.corrected_fields) ? saved.corrected_fields : []),
+              ...OCR_VERIFY_KEYS,
+            ]),
+          ],
+          needs_review: false,
+        };
+        const nextQueue = (prev.queue || []).map((r) => (
+          r.id === row.id ? { ...r, ...patch } : r
+        ));
+        const nextPeers = Array.isArray(prev.peerRows)
+          ? prev.peerRows.map((r) => (r.id === row.id ? { ...r, ...patch } : r))
+          : prev.peerRows;
+        return { ...prev, queue: nextQueue, peerRows: nextPeers };
+      });
+      // Same row stays at the same index in the main list (no full reload / reshuffle).
+      setRows((prev) => prev.map((r) => {
+        if (r.id !== row.id) return r;
+        return {
+          ...r,
+          ...payload,
+          ...(saved || {}),
+          file_url: row.file_url || saved?.file_url,
+          goods_doc_only: goodsDocOnly,
+          field_confidence: {
+            ...(r.field_confidence || {}),
+            ...(saved?.field_confidence || {}),
+            ...ocrAck,
+          },
+          corrected_fields: [
+            ...new Set([
+              ...(Array.isArray(r.corrected_fields) ? r.corrected_fields : []),
+              ...(Array.isArray(saved?.corrected_fields) ? saved.corrected_fields : []),
+              ...OCR_VERIFY_KEYS,
+            ]),
+          ],
+          needs_review: false,
+        };
+      }));
+    } catch (e) {
+      notifyError('Salvare eșuată', e);
+      throw e;
+    }
   }, []);
 
   const forceGatePeers = useCallback((ids) => {
@@ -597,7 +616,8 @@ export default function AvizeReports() {
     return sortAvizeByUploadAsc((rows || []).filter((r) => idSet.has(r.id)));
   }, [rows]);
 
-  const mergeTpoPreviewEnabled = Boolean(selectedTemplate?.options?.merge_tpo_cells);
+  // Annex-only: „Unește celulele TPO” still requires TPO on confirm; preview is never glued (#109).
+  const mergeTpoRequiredEnabled = Boolean(selectedTemplate?.options?.merge_tpo_cells);
 
   const confirmRow = (row) => {
     if (row.duplicate_tpo) {
@@ -613,8 +633,8 @@ export default function AvizeReports() {
         // Gaps + unacked OCR-low TPO/auto/rută.
         queue: editQueue,
         peerRows: forceGatePeers([row.id]),
-        mergeTpoPreview: mergeTpoPreviewEnabled,
-        mergeTpoRequired: mergeTpoPreviewEnabled,
+        mergeTpoPreview: false,
+        mergeTpoRequired: mergeTpoRequiredEnabled,
       });
       return;
     }
@@ -640,8 +660,8 @@ export default function AvizeReports() {
           row,
           queue: rowsNeedingCarouselEdit([row]),
           peerRows: forceGatePeers([row.id]),
-          mergeTpoPreview: mergeTpoPreviewEnabled,
-          mergeTpoRequired: mergeTpoPreviewEnabled,
+          mergeTpoPreview: false,
+          mergeTpoRequired: mergeTpoRequiredEnabled,
         });
       } else {
         notifyError('Confirmare eșuată', e);
@@ -672,30 +692,34 @@ export default function AvizeReports() {
         ids,
         queue: ocrQueue,
         peerRows: forceGatePeers(ids),
-        mergeTpoPreview: mergeTpoPreviewEnabled,
-        mergeTpoRequired: mergeTpoPreviewEnabled,
+        mergeTpoPreview: false,
+        mergeTpoRequired: mergeTpoRequiredEnabled,
       });
       return;
     }
     runBulkConfirm(ids);
   };
 
-  const runBulkConfirm = async (ids, { force = false } = {}) => {
-    if (bulkConfirmLock.current) return;
+  const runBulkConfirm = async (ids, { force = false, annexFollows = false } = {}) => {
+    if (bulkConfirmLock.current) return false;
     bulkConfirmLock.current = true;
     setBusy(true);
     try {
       const updated = await api.avize.bulkConfirm(ids, force
         ? { force: true, force_reason: 'operator_bulk_confirm_empty_fields' }
         : {});
+      const n = updated.length;
       notifySuccess(
         'Confirmate',
-        updated.length
-          ? `${updated.length} aviz(e) marcate ca confirmate.`
-          : 'Rândurile selectate erau deja confirmate.'
+        annexFollows
+          ? (n ? `${n} aviz(e) confirmate — urmează Anexa XLSX.` : 'Deja confirmate — urmează Anexa.')
+          : (n
+            ? `${n} aviz(e) marcate ca confirmate. Pentru Anexa XLSX folosește Unește (cu șablonul ales).`
+            : 'Rândurile selectate erau deja confirmate. Pentru Anexa XLSX folosește Unește.'),
       );
       setForceGate(null);
       await load();
+      return true;
     } catch (e) {
       const code = e?.data?.code;
       if (e?.status === 409 || code === 'NEEDS_REVIEW' || code === 'OCR_VERIFY_REQUIRED') {
@@ -709,12 +733,13 @@ export default function AvizeReports() {
           ids,
           queue: rowsNeedingCarouselEdit(blocked.length ? blocked : rows.filter((r) => fromIds.includes(r.id))),
           peerRows: forceGatePeers(ids),
-          mergeTpoPreview: mergeTpoPreviewEnabled,
-          mergeTpoRequired: mergeTpoPreviewEnabled,
+          mergeTpoPreview: false,
+          mergeTpoRequired: mergeTpoRequiredEnabled,
         });
       } else {
         notifyError('Confirmare eșuată', e);
       }
+      return false;
     } finally {
       setBusy(false);
       bulkConfirmLock.current = false;
@@ -733,7 +758,7 @@ export default function AvizeReports() {
       return;
     }
     const blocked = sortAvizeByUploadAsc(annexReviewBlockedRows(rows, ids));
-    const missingTpo = mergeTpoPreviewEnabled ? rowsMissingTpo(rows, ids) : [];
+    const missingTpo = mergeTpoRequiredEnabled ? rowsMissingTpo(rows, ids) : [];
     const ocrLow = rowsNeedingOcrVerify(rows, ids);
     if (blocked.length || missingTpo.length || ocrLow.length) {
       const byId = new Map();
@@ -745,8 +770,8 @@ export default function AvizeReports() {
         // Gaps, missing TPO (merge ON), and unacked OCR-low fields.
         queue: rowsNeedingCarouselEdit(combined),
         peerRows: forceGatePeers(ids),
-        mergeTpoPreview: mergeTpoPreviewEnabled,
-        mergeTpoRequired: mergeTpoPreviewEnabled,
+        mergeTpoPreview: false,
+        mergeTpoRequired: mergeTpoRequiredEnabled,
       });
       return;
     }
@@ -791,8 +816,8 @@ export default function AvizeReports() {
           ids,
           queue: rowsNeedingCarouselEdit(blocked),
           peerRows: forceGatePeers(ids),
-          mergeTpoPreview: mergeTpoPreviewEnabled,
-          mergeTpoRequired: mergeTpoPreviewEnabled,
+          mergeTpoPreview: false,
+          mergeTpoRequired: mergeTpoRequiredEnabled,
         });
       } else if (e?.data?.code === 'MERGE_TPO_REQUIRED') {
         const blockedIds = (e?.data?.blocked || []).map((b) => b.id);
@@ -802,7 +827,7 @@ export default function AvizeReports() {
           ids,
           queue: rowsNeedingCarouselEdit(missing.length ? missing : annexReviewBlockedRows(rows, ids)),
           peerRows: forceGatePeers(ids),
-          mergeTpoPreview: true,
+          mergeTpoPreview: false,
           mergeTpoRequired: true,
         });
         if (!missing.length) notifyError('Export eșuat', e);
@@ -814,8 +839,8 @@ export default function AvizeReports() {
           ids,
           queue: rowsNeedingCarouselEdit(ocrRows.length ? ocrRows : annexReviewBlockedRows(rows, ids)),
           peerRows: forceGatePeers(ids),
-          mergeTpoPreview: mergeTpoPreviewEnabled,
-          mergeTpoRequired: mergeTpoPreviewEnabled,
+          mergeTpoPreview: false,
+          mergeTpoRequired: mergeTpoRequiredEnabled,
         });
         if (!ocrRows.length) notifyError('Export eșuat', e);
       } else {
@@ -846,7 +871,7 @@ export default function AvizeReports() {
       return;
     }
     // Hard lock for Confirmă and Unește: merge-TPO ON cannot proceed with blank numar_tpo.
-    if (mergeTpoPreviewEnabled || forceGate.mergeTpoRequired) {
+    if (mergeTpoRequiredEnabled || forceGate.mergeTpoRequired) {
       const stillMissing = rowsMissingTpo(gateSource, forceGate.ids);
       if (stillMissing.length) {
         notifyError(
@@ -863,7 +888,18 @@ export default function AvizeReports() {
       return;
     }
     if (forceGate.mode === 'confirm-bulk') {
-      await runBulkConfirm(forceGate.ids, { force: true });
+      // After „Da, am verificat”, operators expect the Anexa when a template is selected (#112).
+      const ids = forceGate.ids;
+      const willAnnex = Boolean(templateId && ids?.length);
+      const ok = await runBulkConfirm(ids, { force: true, annexFollows: willAnnex });
+      if (ok && willAnnex) {
+        await runExportSelected(ids, { allowUnconfirmed: true });
+      } else if (ok && !templateId) {
+        notifyError(
+          'Fără șablon',
+          'Avizele sunt confirmate. Alege un șablon XLSX, selectează din nou și apasă Unește pentru Anexă.',
+        );
+      }
       return;
     }
     if (forceGate.mode === 'export') {
@@ -1507,6 +1543,8 @@ export default function AvizeReports() {
                           {displayRoute(row) || '-'}
                           {isLearnedRoute(row) ? (
                             <span className="ml-1 text-[10px] font-normal text-slate-400">· învățată</span>
+                          ) : memoryRouteLabel(row) ? (
+                            <span className="ml-1 text-[10px] font-normal text-amber-700">· {memoryRouteLabel(row)} învățată</span>
                           ) : null}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-1 truncate" title={formatIncarcareLabel(row, formatAvizIncarcare)}>
@@ -1622,7 +1660,11 @@ export default function AvizeReports() {
                           </td>
                           <td
                             className={`px-2 py-2.5 truncate max-w-[12rem] ${lowField(row, 'ruta_transport') ? LOW_FIELD_TEXT_CLS : ''}`}
-                            title={isLearnedRoute(row) ? `${displayRoute(row)} (regulă învățată)` : displayRoute(row)}
+                            title={isLearnedRoute(row)
+                              ? `${displayRoute(row)} (regulă învățată)`
+                              : memoryRouteLabel(row)
+                                ? `${displayRoute(row)} (${memoryRouteLabel(row)} din adresele învățate — de verificat)`
+                                : displayRoute(row)}
                           >
                             {displayRoute(row) || '-'}
                           </td>
@@ -1793,8 +1835,8 @@ export default function AvizeReports() {
               <span>
                 <span className="font-medium text-[#0A2B4E]">Unește celulele TPO</span>
                 <span className="block text-xs text-slate-500 mt-0.5">
-                  Grupează curse după TPO, sudează Număr TPO în XLSX (toate cursele aceluiași TPO)
-                  și lipește în preview paginile adiacente cu același TPO (ex. Baumit).
+                  Grupează curse după TPO și sudează Număr TPO în XLSX (toate cursele aceluiași TPO, ex. Baumit).
+                  În Confirmă fiecare aviz rămâne cu preview separat (PSL/TRO propriu).
                 </span>
               </span>
             </label>

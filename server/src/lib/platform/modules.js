@@ -19,7 +19,8 @@ export const API_MODULE_BY_MOUNT = {
   '/api/planning': 'planning',
   '/api/telematics': 'gps',
   '/api/invoices': 'finance',
-  '/api/documents': 'documents_expiry',
+  // Aviz OCR HITL (batches, corrections, approve-review) — not fleet „Documente expirare”.
+  '/api/documents': 'avize',
   // /api/commercial: per-route in commercial.js (zones → zone_map|avize|commercial)
   '/api/audit': 'audit',
   '/api/territories': 'territories',
@@ -59,8 +60,8 @@ export const ENTITY_MODULE = {
   DriverNotification: null,
   OptimizationSuggestion: 'planning',
   ObservationCode: ['avize', 'commercial'],
-  DocumentBatch: 'documents_expiry',
-  DocumentEvent: 'documents_expiry',
+  DocumentBatch: 'avize',
+  DocumentEvent: 'avize',
   ReportTemplate: 'reports',
   AvizDocument: 'avize',
 };

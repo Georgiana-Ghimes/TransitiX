@@ -14,7 +14,7 @@ import AvizPreviewZoomBar, { previewZoomBtnCls, usePreviewZoom } from './AvizPre
 import AvizReextractBanner from './AvizReextractBanner';
 import AvizZoneTaxPanel from './AvizZoneTaxPanel';
 import {
-  avizEditFindings, downloadBlob, emptyForm, findingsForField, inputCls, isLearnedRoute, labelCls, lowField,
+  avizEditFindings, downloadBlob, emptyForm, findingsForField, inputCls, isLearnedRoute, isMemoryDelivery, isMemoryOrigin, labelCls, lowField, memoryRouteLabel,
   reextractBlockedReason, shouldOfferReextract,
 } from './avizeUi';
 
@@ -204,6 +204,18 @@ export default function AvizEditModal({
                     )}
                     {f.key === 'ruta_transport' && isLearnedRoute(editRow) ? (
                       <p className="mt-1 text-[11px] text-slate-500">Completat din regulă învățată</p>
+                    ) : null}
+                    {f.key === 'ruta_transport' && !isLearnedRoute(editRow) && memoryRouteLabel(editRow) ? (
+                      <p className="mt-1 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                        <span className="font-semibold">
+                          {isMemoryOrigin(editRow) && isMemoryDelivery(editRow)
+                            ? 'Origine și livrare din adresele învățate'
+                            : isMemoryOrigin(editRow) ? 'Origine din adresele învățate' : 'Livrare din adresele învățate'}
+                        </span>
+                        {isMemoryOrigin(editRow) && !isMemoryDelivery(editRow)
+                          ? ' — strada expeditorului nu se citește pe document; verifică și salvează.'
+                          : ' — o stradă de pe rută nu se citește pe document; verifică și salvează.'}
+                      </p>
                     ) : null}
                     {fieldFindings.map((issue) => (
                       <p

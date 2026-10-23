@@ -80,6 +80,12 @@ export function refineFieldsWithBlocks(fields, blocks) {
       }
       touched = true;
     }
+    // Never erase a parsed critical value via a mismatched/low OCR block (#110 dates).
+    // Floor at REJECT so status stays `review` and the column is still pre-filled.
+    if (critical.has(name) && next < REJECT_CONFIDENCE) {
+      next = REJECT_CONFIDENCE;
+      touched = true;
+    }
     // PSL/TRO digits are glyph-critical: blend page mean even when the page is not
     // "weak" overall. Moiré often keeps pageMean ~0.80–0.89 while flipping one digit
     // (PSL-006… → PSL-001…); that still looks valid, so force below auto (#88 reopen).

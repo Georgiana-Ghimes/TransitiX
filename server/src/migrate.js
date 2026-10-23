@@ -1464,7 +1464,7 @@ ALTER TABLE audit_events DROP CONSTRAINT IF EXISTS audit_events_action_check;
 ALTER TABLE audit_events ADD CONSTRAINT audit_events_action_check
   CHECK (action IN ('create', 'update', 'delete', 'login', 'login_failed', 'logout',
                     'sessions_revoked', 'export', 'import', 'run',
-                    'impersonate_start', 'impersonate_end'));
+                    'impersonate_start', 'impersonate_end', 'merge'));
 
 -- Platform (GOD) admin — not a customer tenant admin.
 -- Customer "admin" stays company-scoped. Platform operators live on a dedicated
@@ -1574,6 +1574,59 @@ CREATE TABLE IF NOT EXISTS aviz_route_rules (
 );
 CREATE INDEX IF NOT EXISTS idx_aviz_route_rules_company
   ON aviz_route_rules(company_id, updated_at DESC);
+
+-- Addresses a company's avize have shown us, so an unreadable one can be looked up (#112).
+--
+-- A scanner's text layer sometimes mangles the Expeditor street ('Str.-.epuolicii') while
+-- the town and postcode survive ('Bolintin-Deal RO 087015'). The depot is the same on
+-- hundreds of avize, and on most of them the street reads fine: those clean reads are what
+-- fills the bad ones, keyed by company + postcode. Nothing here is typed in by a developer.
+--
+-- Trust: a clean read on two different avize, or one office correction, or a platform
+-- operator's confirmation. One read alone stays a candidate — a single bad parse must not
+-- become the truth for every future document.
+CREATE TABLE IF NOT EXISTS aviz_known_addresses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'origin' CHECK (role IN ('origin', 'delivery')),
+  postcode TEXT NOT NULL,
+  locality TEXT,
+  street_name TEXT,
+  -- the leg exactly as it goes into Rută: 'Str. Republicii nr. 1F, Bolintin-Deal'
+  display TEXT NOT NULL,
+  -- folded display, the dedupe key within one postcode
+  match_key TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'parsed' CHECK (source IN ('parsed', 'corrected', 'manual')),
+  seen_count INT NOT NULL DEFAULT 0,
+  used_count INT NOT NULL DEFAULT 0,
+  verified BOOLEAN NOT NULL DEFAULT FALSE,
+  disabled BOOLEAN NOT NULL DEFAULT FALSE,
+  source_document_id UUID REFERENCES aviz_documents(id) ON DELETE SET NULL,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  last_seen_at TIMESTAMPTZ,
+  last_used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (company_id, role, postcode, match_key)
+);
+CREATE INDEX IF NOT EXISTS idx_aviz_known_addresses_lookup
+  ON aviz_known_addresses(company_id, role, postcode);
+
+-- One row per (address, document): re-extracting the same aviz is not a second sighting.
+CREATE TABLE IF NOT EXISTS aviz_known_address_sightings (
+  address_id UUID NOT NULL REFERENCES aviz_known_addresses(id) ON DELETE CASCADE,
+  document_id UUID NOT NULL REFERENCES aviz_documents(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (address_id, document_id)
+);
+
+-- A misread merged into the real address (Kepublicii -> Republicii). The row stays, disabled,
+-- with its own match_key: the next aviz misread the same way counts toward the real address
+-- instead of coming back as a new candidate.
+ALTER TABLE aviz_known_addresses
+  ADD COLUMN IF NOT EXISTS merged_into UUID REFERENCES aviz_known_addresses(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_aviz_known_addresses_merged
+  ON aviz_known_addresses(merged_into) WHERE merged_into IS NOT NULL;
 
 `
 

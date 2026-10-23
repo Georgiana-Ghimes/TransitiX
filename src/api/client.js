@@ -383,6 +383,12 @@ export const api = {
         body: { origin: window.location.origin },
       });
     },
+    setName(id, name) {
+      return request(`/users/${encodeURIComponent(id)}/name`, {
+        method: 'PUT',
+        body: { name },
+      });
+    },
     setRole(id, role) {
       return request(`/users/${encodeURIComponent(id)}/role`, {
         method: 'PUT',
@@ -852,6 +858,37 @@ export const api = {
         method: 'PATCH',
         body,
       });
+    },
+    learnedAddresses({ companyId, role, state, q } = {}) {
+      const params = new URLSearchParams();
+      if (companyId) params.set('company_id', companyId);
+      if (role) params.set('role', role);
+      if (state) params.set('state', state);
+      if (q) params.set('q', q);
+      const qs = params.toString();
+      return request(`/platform/learned-addresses${qs ? `?${qs}` : ''}`);
+    },
+    createLearnedAddress(body) {
+      return request('/platform/learned-addresses', { method: 'POST', body });
+    },
+    patchLearnedAddress(id, body) {
+      return request(`/platform/learned-addresses/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body,
+      });
+    },
+    mergeLearnedAddress(id, into) {
+      return request(`/platform/learned-addresses/${encodeURIComponent(id)}/merge`, {
+        method: 'POST',
+        body: { into },
+      });
+    },
+    routeRules({ companyId } = {}) {
+      const q = companyId ? `?company_id=${encodeURIComponent(companyId)}` : '';
+      return request(`/platform/route-rules${q}`);
+    },
+    deleteRouteRule(id) {
+      return request(`/platform/route-rules/${encodeURIComponent(id)}`, { method: 'DELETE' });
     },
     /** Enter a customer company as its admin; stashes GOD tokens + return path for exit. */
     async impersonate(companyId, { returnTo } = {}) {

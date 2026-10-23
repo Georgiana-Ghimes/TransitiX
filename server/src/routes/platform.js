@@ -26,6 +26,17 @@ import {
   newInviteToken,
 } from '../lib/users/invite.js';
 import { revokeAllForUser } from '../lib/sessions.js';
+import {
+  ADDRESS_ROLE_DELIVERY,
+  ADDRESS_ROLE_ORIGIN,
+  AddressMergeError,
+  addressMatchKey,
+  addressTrustState,
+  looksLikeStreetLeg,
+  mergeKnownAddresses,
+  normalizePostcode,
+  splitAddressLeg,
+} from '../lib/ocr/addressMemory.js';
 
 const router = Router();
 
@@ -922,6 +933,330 @@ router.post('/users/:userId/reset-password', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Failed to reset password' });
+  }
+});
+
+// ── Learned data (avize): address memory (#112) + route rules ──────────────────────────
+//
+// Both are learned per company from avize and both can be wrong. The platform operator sees
+// them here and fixes or switches them off; tenants do not edit them (yet).
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Expeditor depots and customer delivery sites. */
+const LEARNED_ROLES = new Set([ADDRESS_ROLE_ORIGIN, ADDRESS_ROLE_DELIVERY]);
+
+const LEARNED_ADDRESS_SELECT = `
+  SELECT a.id, a.company_id, c.name AS company_name, a.role, a.postcode, a.locality,
+         a.street_name, a.display, a.source, a.seen_count, a.used_count, a.verified,
+         a.disabled, a.merged_into, a.source_document_id, d.original_filename AS source_document_name,
+         a.updated_by, u.email AS updated_by_email,
+         a.last_seen_at, a.last_used_at, a.created_at, a.updated_at,
+         COALESCE((
+           SELECT json_agg(json_build_object('id', m.id, 'display', m.display, 'seen_count', m.seen_count)
+                           ORDER BY m.created_at)
+           FROM aviz_known_addresses m WHERE m.merged_into = a.id
+         ), '[]'::json) AS merged_variants
+  FROM aviz_known_addresses a
+  JOIN companies c ON c.id = a.company_id
+  LEFT JOIN aviz_documents d ON d.id = a.source_document_id
+  LEFT JOIN users u ON u.id = a.updated_by
+`;
+
+function learnedAddressOut(row) {
+  return row ? { ...row, trust: addressTrustState(row) } : null;
+}
+
+async function auditLearned(req, { companyId, action, entity, entityId, label, detail }) {
+  await recordAudit(pool, {
+    company_id: companyId,
+    user_id: req.user.id,
+    user_name: null,
+    user_email: req.user.email,
+    user_role: 'platform_admin',
+    action,
+    entity,
+    entity_id: entityId,
+    label,
+    detail,
+  }).catch((err) => console.error('[platform] audit', err?.message || err));
+}
+
+router.get('/learned-addresses', async (req, res) => {
+  try {
+    const params = [];
+    // Merged misreads are shown under the address they were folded into, not as rows.
+    const where = ['a.merged_into IS NULL'];
+    const companyId = String(req.query.company_id || '').trim();
+    if (companyId) {
+      if (!UUID_RE.test(companyId)) return res.status(400).json({ message: 'Firmă invalidă.' });
+      params.push(companyId);
+      where.push(`a.company_id = $${params.length}`);
+    }
+    const role = String(req.query.role || '').trim();
+    if (role) {
+      if (!LEARNED_ROLES.has(role)) return res.status(400).json({ message: 'Tip de adresă invalid.' });
+      params.push(role);
+      where.push(`a.role = $${params.length}`);
+    }
+    const state = String(req.query.state || '').trim();
+    if (state === 'disabled') where.push('a.disabled = TRUE');
+    if (state === 'trusted') {
+      where.push(`a.disabled = FALSE AND (a.verified OR a.source IN ('corrected', 'manual') OR a.seen_count >= 2)`);
+    }
+    if (state === 'candidate') {
+      where.push(`a.disabled = FALSE AND NOT (a.verified OR a.source IN ('corrected', 'manual') OR a.seen_count >= 2)`);
+    }
+    const q = String(req.query.q || '').trim();
+    if (q) {
+      params.push(`%${q}%`);
+      where.push(`(a.display ILIKE $${params.length} OR a.postcode ILIKE $${params.length} OR a.locality ILIKE $${params.length})`);
+    }
+    const result = await query(
+      `${LEARNED_ADDRESS_SELECT}
+       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       ORDER BY c.name, a.postcode, a.seen_count DESC
+       LIMIT 500`,
+      params,
+    );
+    res.json({ items: result.rows.map(learnedAddressOut) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to list learned addresses' });
+  }
+});
+
+/**
+ * Add one by hand — a depot (or a customer site) the platform knows before two clean avize
+ * have shown it.
+ */
+router.post('/learned-addresses', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const companyId = String(body.company_id || '').trim();
+    const postcode = normalizePostcode(body.postcode);
+    const display = String(body.display || '').trim();
+    const role = String(body.role || ADDRESS_ROLE_ORIGIN).trim();
+    if (!LEARNED_ROLES.has(role)) return res.status(400).json({ message: 'Tip de adresă invalid.' });
+    if (!UUID_RE.test(companyId)) return res.status(400).json({ message: 'Alege firma.' });
+    if (!postcode) return res.status(400).json({ message: 'Codul poștal trebuie să aibă 6 cifre.' });
+    if (!display || !looksLikeStreetLeg(display)) {
+      return res.status(400).json({ message: 'Scrie adresa ca în Rută, ex. „Str. Republicii nr. 1F, Bolintin-Deal”.' });
+    }
+    const parts = splitAddressLeg(display);
+    const result = await query(
+      `INSERT INTO aviz_known_addresses (
+         company_id, role, postcode, locality, street_name, display, match_key, source,
+         verified, updated_by
+       ) VALUES ($1, $8, $2, $3, $4, $5, $6, 'manual', TRUE, $7)
+       ON CONFLICT (company_id, role, postcode, match_key) DO NOTHING
+       RETURNING id`,
+      [companyId, postcode, String(body.locality || '').trim() || parts.locality,
+        parts.street_name, display, addressMatchKey(display), req.user.id, role],
+    );
+    if (!result.rows[0]) return res.status(409).json({ message: 'Adresa există deja pentru acest cod poștal.' });
+    const row = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [result.rows[0].id])).rows[0];
+    await auditLearned(req, {
+      companyId, action: 'create', entity: 'LearnedAddress',
+      entityId: row.id, label: display, detail: { postcode },
+    });
+    res.status(201).json(learnedAddressOut(row));
+  } catch (err) {
+    if (err?.code === '23503') return res.status(400).json({ message: 'Firma nu există.' });
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to add learned address' });
+  }
+});
+
+/**
+ * Confirm, switch off, or correct one. Editing the text makes it a person's address
+ * (`manual`) — it no longer depends on how many avize happened to show it.
+ */
+router.patch('/learned-addresses/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!UUID_RE.test(id)) return res.status(404).json({ message: 'Adresa nu a fost găsită.' });
+    const before = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [id])).rows[0];
+    if (!before) return res.status(404).json({ message: 'Adresa nu a fost găsită.' });
+    if (before.merged_into) {
+      return res.status(409).json({ message: 'Adresa e unită cu alta și nu se mai editează.' });
+    }
+
+    const body = req.body || {};
+    // Corrected into an address that already exists → offer a merge instead of failing.
+    if (body.display !== undefined || body.postcode !== undefined) {
+      const nextPostcode = body.postcode !== undefined ? normalizePostcode(body.postcode) : before.postcode;
+      const nextKey = addressMatchKey(
+        body.display !== undefined ? String(body.display || '').trim() : before.display,
+      );
+      if (nextPostcode && nextKey) {
+        const clash = (await query(
+          `SELECT id, merged_into FROM aviz_known_addresses
+           WHERE company_id = $1 AND role = $2 AND postcode = $3 AND match_key = $4 AND id <> $5
+           LIMIT 1`,
+          [before.company_id, before.role, nextPostcode, nextKey, id],
+        )).rows[0];
+        const existingId = clash ? (clash.merged_into || clash.id) : null;
+        if (existingId === id) {
+          return res.status(409).json({ message: 'Forma asta e deja o variantă unită a acestei adrese.' });
+        }
+        if (existingId) {
+          const existing = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [existingId])).rows[0];
+          return res.status(409).json({
+            code: 'ADDRESS_EXISTS',
+            message: 'Există deja aceeași adresă pe acest cod poștal.',
+            existing: learnedAddressOut(existing),
+          });
+        }
+      }
+    }
+    const fields = [];
+    const values = [];
+    const set = (sql, value) => { values.push(value); fields.push(`${sql} = $${values.length}`); };
+
+    if (body.verified !== undefined) set('verified', Boolean(body.verified));
+    if (body.disabled !== undefined) set('disabled', Boolean(body.disabled));
+    if (body.postcode !== undefined) {
+      const postcode = normalizePostcode(body.postcode);
+      if (!postcode) return res.status(400).json({ message: 'Codul poștal trebuie să aibă 6 cifre.' });
+      set('postcode', postcode);
+    }
+    if (body.display !== undefined) {
+      const display = String(body.display || '').trim();
+      if (!display || !looksLikeStreetLeg(display)) {
+        return res.status(400).json({ message: 'Scrie adresa ca în Rută, ex. „Str. Republicii nr. 1F, Bolintin-Deal”.' });
+      }
+      const parts = splitAddressLeg(display);
+      set('display', display);
+      set('match_key', addressMatchKey(display));
+      set('street_name', parts.street_name);
+      if (body.locality === undefined && parts.locality) set('locality', parts.locality);
+      set('source', 'manual');
+    }
+    if (body.locality !== undefined) set('locality', String(body.locality || '').trim() || null);
+    if (!fields.length) return res.status(400).json({ message: 'Nimic de modificat.' });
+    set('updated_by', req.user.id);
+    fields.push('updated_at = NOW()');
+    values.push(id);
+
+    await query(
+      `UPDATE aviz_known_addresses SET ${fields.join(', ')} WHERE id = $${values.length}`,
+      values,
+    );
+    const row = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [id])).rows[0];
+    await auditLearned(req, {
+      companyId: row.company_id,
+      action: 'update',
+      entity: 'LearnedAddress',
+      entityId: id,
+      label: row.display,
+      detail: {
+        before: { display: before.display, postcode: before.postcode, verified: before.verified, disabled: before.disabled },
+        after: { display: row.display, postcode: row.postcode, verified: row.verified, disabled: row.disabled },
+      },
+    });
+    res.json(learnedAddressOut(row));
+  } catch (err) {
+    if (err?.code === '23505') {
+      return res.status(409).json({ message: 'Există deja aceeași adresă pe acest cod poștal.' });
+    }
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to update learned address' });
+  }
+});
+
+/**
+ * Fold a misread (`:id`) into the real address (`into`). The misread is kept as a disabled
+ * alias, so the same OCR mistake later counts toward the real address (#112).
+ */
+router.post('/learned-addresses/:id/merge', async (req, res) => {
+  try {
+    const sourceId = String(req.params.id || '').trim();
+    const targetId = String(req.body?.into || '').trim();
+    if (!UUID_RE.test(sourceId) || !UUID_RE.test(targetId)) {
+      return res.status(400).json({ message: 'Alege adresa cu care se unește.' });
+    }
+    const result = await withTransaction((client) => mergeKnownAddresses(
+      (sql, params) => client.query(sql, params),
+      { sourceId, targetId, userId: req.user.id },
+    ));
+    const row = (await query(`${LEARNED_ADDRESS_SELECT} WHERE a.id = $1`, [targetId])).rows[0];
+    await auditLearned(req, {
+      companyId: row.company_id,
+      action: 'merge',
+      entity: 'LearnedAddress',
+      entityId: targetId,
+      label: row.display,
+      detail: {
+        merged: { id: sourceId, display: result.source.display, postcode: result.source.postcode },
+        added_seen: result.addedSeen,
+        duplicates: result.duplicates,
+      },
+    });
+    res.json({ merged_id: sourceId, address: learnedAddressOut(row) });
+  } catch (err) {
+    if (err instanceof AddressMergeError) {
+      const status = err.code === 'not_found' ? 404 : 409;
+      return res.status(status).json({ code: err.code, message: err.message });
+    }
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to merge learned addresses' });
+  }
+});
+
+router.get('/route-rules', async (req, res) => {
+  try {
+    const params = [];
+    let where = '';
+    const companyId = String(req.query.company_id || '').trim();
+    if (companyId) {
+      if (!UUID_RE.test(companyId)) return res.status(400).json({ message: 'Firmă invalidă.' });
+      params.push(companyId);
+      where = 'WHERE r.company_id = $1';
+    }
+    const result = await query(
+      `SELECT r.id, r.company_id, c.name AS company_name, r.match_tokens, r.ruta_transport,
+              r.hits, r.source_document_id, d.original_filename AS source_document_name,
+              r.created_at, r.updated_at
+       FROM aviz_route_rules r
+       JOIN companies c ON c.id = r.company_id
+       LEFT JOIN aviz_documents d ON d.id = r.source_document_id
+       ${where}
+       ORDER BY c.name, r.updated_at DESC
+       LIMIT 500`,
+      params,
+    );
+    res.json({ items: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to list route rules' });
+  }
+});
+
+/** A wrong rule rewrites every matching aviz's route — removing it is the fix. */
+router.delete('/route-rules/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!UUID_RE.test(id)) return res.status(404).json({ message: 'Regula nu a fost găsită.' });
+    const result = await query(
+      `DELETE FROM aviz_route_rules WHERE id = $1
+       RETURNING id, company_id, ruta_transport, match_tokens`,
+      [id],
+    );
+    const row = result.rows[0];
+    if (!row) return res.status(404).json({ message: 'Regula nu a fost găsită.' });
+    await auditLearned(req, {
+      companyId: row.company_id,
+      action: 'delete',
+      entity: 'RouteRule',
+      entityId: row.id,
+      label: row.ruta_transport,
+      detail: { match_tokens: row.match_tokens },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message || 'Failed to delete route rule' });
   }
 });
 

@@ -576,3 +576,163 @@ describe('GET /api/avize/reports · data încărcării', () => {
     expect(row).toMatchObject({ plate, count: 1, km: 10 });
   });
 });
+
+describe('Confirmă selectate / HITL (#112)', () => {
+  it('allows approve-review on documents-profile company with documents_expiry off', async () => {
+    const rai = await seedCompany('rai-112');
+    try {
+      await query(
+        `UPDATE companies SET feature_flags = $1::jsonb WHERE id = $2`,
+        [JSON.stringify({
+          app_profile: 'documents',
+          app_key: 'rai_documents',
+          modules: {
+            avize: true,
+            reports: true,
+            zone_map: true,
+            driver_upload: true,
+            fleet: true,
+            users_admin: true,
+            documents_expiry: false,
+          },
+        }), rai.company.id],
+      );
+      const aviz = await makeAviz(rai.company.id, {
+        status: 'extracted',
+        needs_review: true,
+        numar_tpo: 'TPO-0112001',
+      });
+      const res = await api().post(`/api/documents/${aviz.id}/approve-review`)
+        .set(auth(rai.adminToken));
+      expect(res.status).toBe(200);
+      expect(res.body.needs_review).toBe(false);
+    } finally {
+      await dropCompany(rai.company.id);
+    }
+  });
+
+  it('force bulk-confirm succeeds past unacked low TPO when operator sends force+reason', async () => {
+    const aviz = await makeAviz(ctx.company.id, {
+      status: 'extracted',
+      needs_review: true,
+      numar_tpo: 'TPO-0112002',
+    });
+    await query(
+      `UPDATE aviz_documents
+       SET field_confidence = $1::jsonb,
+           corrected_fields = '{}'::text[],
+           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $2::jsonb
+       WHERE id = $3`,
+      [
+        JSON.stringify({ numar_tpo: { status: 'review', confidence: 0.4 } }),
+        JSON.stringify({ validation: { routing: 'hitl_required', needs_review: true } }),
+        aviz.id,
+      ],
+    );
+
+    const refused = await api().post('/api/avize/bulk-confirm').set(auth(ctx.adminToken))
+      .send({ ids: [aviz.id] });
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe('OCR_VERIFY_REQUIRED');
+
+    const forced = await api().post('/api/avize/bulk-confirm').set(auth(ctx.adminToken))
+      .send({
+        ids: [aviz.id],
+        force: true,
+        force_reason: 'operator_bulk_confirm_empty_fields',
+      });
+    expect(forced.status).toBe(200);
+    expect(forced.body.some((r) => r.id === aviz.id && r.status === 'confirmed')).toBe(true);
+  });
+});
+
+describe('POST /api/avize/bulk-confirm + /api/documents HITL (#112)', () => {
+  it('refuses confirm without force when Număr TPO is OCR-nesigur', async () => {
+    const aviz = await makeAviz(ctx.company.id, {
+      status: 'extracted',
+      needs_review: false,
+      numar_tpo: 'TPO-0312112',
+    });
+    await query(
+      `UPDATE aviz_documents
+       SET field_confidence = $1::jsonb, corrected_fields = '{}'::text[]
+       WHERE id = $2`,
+      [JSON.stringify({ numar_tpo: 'low' }), aviz.id],
+    );
+    const refused = await api().post('/api/avize/bulk-confirm').set(auth(ctx.adminToken))
+      .send({ ids: [aviz.id] });
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe('OCR_VERIFY_REQUIRED');
+  });
+
+  it('force confirm with reason succeeds past OCR-nesigur and stamps corrected_fields', async () => {
+    const aviz = await makeAviz(ctx.company.id, {
+      status: 'extracted',
+      needs_review: true,
+      numar_tpo: 'TPO-0312113',
+    });
+    await query(
+      `UPDATE aviz_documents
+       SET field_confidence = $1::jsonb,
+           corrected_fields = '{}'::text[],
+           extracted_data = COALESCE(extracted_data, '{}'::jsonb) || $2::jsonb
+       WHERE id = $3`,
+      [
+        JSON.stringify({ numar_tpo: 'low' }),
+        JSON.stringify({ validation: { routing: 'hitl_required', needs_review: true } }),
+        aviz.id,
+      ],
+    );
+    const res = await api().post('/api/avize/bulk-confirm').set(auth(ctx.adminToken))
+      .send({
+        ids: [aviz.id],
+        force: true,
+        force_reason: 'operator_bulk_confirm_empty_fields',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.some((r) => r.id === aviz.id && r.status === 'confirmed')).toBe(true);
+    const row = (await query(
+      'SELECT status, needs_review, corrected_fields FROM aviz_documents WHERE id = $1',
+      [aviz.id],
+    )).rows[0];
+    expect(row.status).toBe('confirmed');
+    expect(row.needs_review).toBe(false);
+    expect(row.corrected_fields).toEqual(expect.arrayContaining(['numar_tpo', 'ruta_transport']));
+  });
+
+  it('approve-review works for documents profile with documents_expiry off', async () => {
+    const rai = await seedCompany('rai-docs-112');
+    try {
+      await query(
+        `UPDATE companies SET feature_flags = $1::jsonb WHERE id = $2`,
+        [
+          JSON.stringify({
+            app_profile: 'documents',
+            app_key: 'rai_documents',
+            modules: {
+              avize: true,
+              reports: true,
+              zone_map: true,
+              driver_upload: true,
+              fleet: true,
+              users_admin: true,
+              documents_expiry: false,
+            },
+          }),
+          rai.company.id,
+        ],
+      );
+      const aviz = await makeAviz(rai.company.id, {
+        status: 'extracted',
+        needs_review: true,
+        numar_tpo: 'TPO-0312114',
+      });
+      const res = await api().post(`/api/documents/${aviz.id}/approve-review`)
+        .set(auth(rai.adminToken));
+      expect(res.status).toBe(200);
+      expect(res.body.needs_review).toBe(false);
+    } finally {
+      await dropCompany(rai.company.id);
+    }
+  });
+});

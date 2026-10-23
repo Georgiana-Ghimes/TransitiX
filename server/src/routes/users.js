@@ -29,6 +29,7 @@ import {
   driverReady,
   inviteState,
   unusablePasswordSeed,
+  validateDisplayName,
   validateInvite,
 } from '../lib/users/rules.js';
 
@@ -312,6 +313,38 @@ router.post('/:id/resend-invite', async (req, res) => {
     res.json({ email_sent: sent, invite_link: sent ? undefined : invite_link });
   } catch (err) {
     fail(res, err, 'Invitația nu a putut fi retrimisă.');
+  }
+});
+
+/**
+ * Renames an account (any role). Email stays the login identity; only the display name changes.
+ * Allowed on yourself too — fixing a typo should not require a second admin.
+ */
+router.put('/:id/name', async (req, res) => {
+  try {
+    const target = await loadUser(req.user.company_id, req.params.id);
+    if (!target) return res.status(404).json({ message: 'Utilizator inexistent.' });
+
+    const check = validateDisplayName(req.body?.name);
+    if (!check.ok) return res.status(422).json({ message: check.errors[0] });
+    if (check.value === target.name) {
+      return res.json(serializeUser(target));
+    }
+
+    await query(
+      `UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2 AND company_id = $3`,
+      [check.value, target.id, req.user.company_id],
+    );
+
+    await auditUser(req, {
+      action: 'update',
+      target,
+      changes: { name: { from: target.name, to: check.value } },
+    });
+
+    res.json(serializeUser({ ...target, name: check.value }));
+  } catch (err) {
+    fail(res, err, 'Numele nu a putut fi actualizat.');
   }
 });
 

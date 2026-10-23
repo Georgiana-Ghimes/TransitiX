@@ -197,14 +197,13 @@ if [[ "$DO_START" -eq 1 ]]; then
 fi
 
 if [[ "$DO_TUNNEL" -eq 1 ]]; then
-  if ! command -v cloudflared >/dev/null; then
-    echo "LipseÈ™te cloudflared. Exemplu instalare:" >&2
-    echo "  curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared && chmod +x /tmp/cloudflared && sudo mv /tmp/cloudflared /usr/local/bin/" >&2
-    exit 1
-  fi
-  log "cloudflared tunnel â†’ http://127.0.0.1:5174"
-  echo "CopiazÄƒ URL-ul trycloudflare Ã®n server/.env.companion ca CLIENT_ORIGIN=â€¦ apoi reporneÈ™te API."
-  echo "OpreÈ™ti cu Ctrl+C."
+  log "Asigur cloudflared (install/repair)"
+  bash "$ROOT/scripts/install-cloudflared.sh"
+  hash -r 2>/dev/null || true
+  log "cloudflared tunnel → http://127.0.0.1:5174"
+  echo "Copiază URL-ul trycloudflare în server/.env.companion ca CLIENT_ORIGIN=… apoi repornește API."
+  echo "Sau: bash scripts/start-companion-tunnel.sh (scrie CLIENT_ORIGIN automat)."
+  echo "Oprești cu Ctrl+C."
   exec cloudflared tunnel --url http://127.0.0.1:5174
 fi
 

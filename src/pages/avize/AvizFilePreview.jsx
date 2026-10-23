@@ -92,7 +92,8 @@ const PREVIEW_FRAME_FILL =
  * @param {object} props
  * @param {string} [props.fileUrl]
  * @param {string[]} [props.fileUrls]  When set (and length > 1), pages from each file are
- *   stacked in one scroll — used for „Unește TPO” adjacent peers.
+ *   stacked in one scroll (multi-page / multi-file of the *same* aviz). Same-TPO peers
+ *   are no longer glued here (#109).
  * @param {boolean} [props.fill]
  * @param {number} [props.zoom]  Fit-width multiplier (1 = fit). PDFs re-render; images use CSS scale.
  * @param {boolean} [props.uprightPreview=true]  Auto EXIF + portrait score for display (#103).

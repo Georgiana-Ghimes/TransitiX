@@ -19,6 +19,7 @@ export const ACTIONS = {
   export: { label: 'Export', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
   import: { label: 'Import', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
   run: { label: 'Rulare', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
+  merge: { label: 'Unit', badge: 'bg-violet-50 text-violet-700 border-violet-200' },
 };
 
 export function actionMeta(action) {

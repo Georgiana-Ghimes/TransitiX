@@ -12,7 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  AlertTriangle, Check, Copy, KeyRound, Loader2, Mail, RefreshCw, Search, ShieldCheck, UserPlus, Users as UsersIcon,
+  AlertTriangle, Check, Copy, KeyRound, Loader2, Mail, Pencil, RefreshCw, Search, ShieldCheck, UserPlus, Users as UsersIcon, X,
 } from 'lucide-react';
 import { api } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
@@ -365,11 +365,17 @@ function AddPersonForm({ roles, adminEmail, emailConfigured, unlinkedDrivers = [
   );
 }
 
-function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, onLink }) {
+function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, onLink, onSelfRenamed }) {
   const [busy, setBusy] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(user.name || '');
   const actions = actionsFor(user, { currentUserId, adminCount });
   const warnings = warningsFor(user, { adminCount });
+
+  useEffect(() => {
+    if (!editingName) setNameDraft(user.name || '');
+  }, [user.name, editingName]);
 
   const run = async (key, fn, done) => {
     setBusy(key);
@@ -384,14 +390,83 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
     }
   };
 
+  const saveName = () => run('name', () => api.users.setName(user.id, nameDraft), (res) => {
+    setEditingName(false);
+    notifySuccess('Nume actualizat', res?.name || nameDraft);
+    if (user.id === currentUserId) onSelfRenamed?.();
+  });
+
   return (
     <li className={`border-t border-slate-100 px-4 py-3 ${user.is_active ? '' : 'bg-slate-50/60'}`}>
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`text-sm font-medium ${user.is_active ? 'text-[#0A2B4E]' : 'text-slate-400'}`}>
-              {user.name}
-            </span>
+            {editingName ? (
+              <form
+                className="flex flex-wrap items-center gap-1.5 min-w-0"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (busy === 'name') return;
+                  saveName();
+                }}
+              >
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  disabled={busy === 'name'}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setEditingName(false);
+                      setNameDraft(user.name || '');
+                    }
+                  }}
+                  aria-label="Nume afișat"
+                  className="text-sm font-medium text-[#0A2B4E] px-2 py-1 rounded-lg border border-slate-200 min-w-[10rem] max-w-full"
+                />
+                <button
+                  type="submit"
+                  disabled={busy === 'name' || String(nameDraft || '').trim().length < 2}
+                  className="text-[12px] px-2 py-1.5 rounded-lg border border-emerald-200 text-emerald-800 hover:bg-emerald-50 disabled:opacity-40 inline-flex items-center gap-1"
+                >
+                  {busy === 'name' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Salvează
+                </button>
+                <button
+                  type="button"
+                  disabled={busy === 'name'}
+                  onClick={() => {
+                    setEditingName(false);
+                    setNameDraft(user.name || '');
+                  }}
+                  className="text-[12px] px-2 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  aria-label="Anulează editarea numelui"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            ) : (
+              <>
+                <span className={`text-sm font-medium ${user.is_active ? 'text-[#0A2B4E]' : 'text-slate-400'}`}>
+                  {user.name}
+                </span>
+                {actions.canEditName ? (
+                  <button
+                    type="button"
+                    disabled={busy != null}
+                    onClick={() => {
+                      setNameDraft(user.name || '');
+                      setEditingName(true);
+                    }}
+                    className="p-1 rounded-md text-slate-400 hover:text-[#1D4E89] hover:bg-slate-100 disabled:opacity-40"
+                    title="Editează numele"
+                    aria-label={`Editează numele pentru ${user.name || user.email}`}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                ) : null}
+              </>
+            )}
             <StateBadge state={user.is_active ? user.state : 'expired'} />
             {!user.is_active && (
               <span className="text-[11px] px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">
@@ -517,7 +592,7 @@ function UserRow({ user, roles, drivers, adminCount, currentUserId, onChanged, o
  * `embedded` drops the page chrome when the parent already provides a title.
  */
 export function UsersPanel({ embedded = false } = {}) {
-  const { user: me } = useAuth();
+  const { user: me, checkUserAuth } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [term, setTerm] = useState('');
@@ -644,6 +719,7 @@ export function UsersPanel({ embedded = false } = {}) {
               currentUserId={me?.id}
               onChanged={load}
               onLink={setLink}
+              onSelfRenamed={checkUserAuth}
             />
           ))}
         </ul>

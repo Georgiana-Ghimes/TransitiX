@@ -57,23 +57,77 @@ export async function readPdfPageTexts(buffer) {
 }
 
 /**
- * Document-number keys that identify a distinct aviz (TRO / PSL — not TPO).
+ * Baumit text layers confuse digits with letters (`0→O`, `1→I`).
+ * `TRO-OOI 1300` → `0011300`. Only uppercase O/I — lowercase would eat words like "only".
+ */
+export function ocrIdDigits(raw) {
+  return String(raw || '')
+    .replace(/O/g, '0')
+    .replace(/I/g, '1')
+    .replace(/\|/g, '1')
+    .replace(/\D/g, '');
+}
+
+/** Digit / OCR-glyph run after a doc prefix (no /i — lowercase must not extend the id). */
+const OCR_ID_BODY = '[0-9OI][0-9OI\\s\\-._]*';
+
+/**
+ * Document-number keys that identify a distinct aviz (TRO / PSL).
  * @param {string} text
  * @returns {Set<string>}
  */
 export function avizDocumentKeys(text) {
   const keys = new Set();
-  const re = /\b(TRO|PSL)[\s\-._]*(\d{4,})\b/gi;
+  const re = new RegExp(`\\b(TRO|PSL|tro|psl)[\\s\\-._]*(${OCR_ID_BODY})`, 'g');
   let m;
   while ((m = re.exec(String(text || '')))) {
-    keys.add(`${m[1].toUpperCase()}-${m[2]}`);
+    const digits = ocrIdDigits(m[2]);
+    if (digits.length >= 4) keys.add(`${m[1].toUpperCase()}-${digits}`);
   }
   return keys;
 }
 
 /**
- * How to cut pages into avize. Only when ≥2 distinct TRO/PSL numbers appear.
+ * TPO keys — same OCR normalisation. Same TPO on a continuation page overlaps
+ * the previous group and stays glued.
+ * @param {string} text
+ * @returns {Set<string>}
+ */
+export function avizTpoKeys(text) {
+  const keys = new Set();
+  // Text layer sometimes splits the label: "T PO-0035189".
+  const re = new RegExp(`\\b(?:T\\s*PO|t\\s*po)[\\s\\-._]*(${OCR_ID_BODY})`, 'g');
+  let m;
+  while ((m = re.exec(String(text || '')))) {
+    const digits = ocrIdDigits(m[1]);
+    if (digits.length >= 4) keys.add(`TPO-${digits}`);
+  }
+  return keys;
+}
+
+/**
+ * Keys used to decide cuts: TRO/PSL plus TPO.
+ * TPO alone used to be avoided, but Baumit often mangles TRO while leaving TPO intact (#108).
+ * Same TPO on a continuation page still overlaps and stays with the previous aviz.
+ */
+export function avizSplitKeysForPage(text) {
+  const keys = avizDocumentKeys(text);
+  for (const k of avizTpoKeys(text)) keys.add(k);
+  return keys;
+}
+
+/** TRO / PSL keys only (not TPO) out of a page's split keys. */
+function documentKeysOf(keys) {
+  return [...keys].filter((k) => !k.startsWith('TPO-'));
+}
+
+/**
+ * How to cut pages into avize. Only when ≥2 distinct document keys appear.
  * Continuation pages (no key, or the same key reprinted) stay with the previous aviz.
+ *
+ * A different TRO/PSL always starts a new aviz, even under the same TPO: one transport
+ * order carries several avize (goods PSL + returnable-pallet PSL on the same truck).
+ * TPO glues a page only when it shows no TRO/PSL of its own (mangled text layer, #108).
  *
  * @param {string[]} pageTexts
  * @returns {null | number[][]} page-index groups, or null = keep as one file
@@ -82,7 +136,7 @@ export function planAvizPdfSplits(pageTexts) {
   const pages = Array.isArray(pageTexts) ? pageTexts : [];
   if (pages.length <= 1) return null;
 
-  const keysPerPage = pages.map((t) => avizDocumentKeys(t));
+  const keysPerPage = pages.map((t) => avizSplitKeysForPage(t));
   const all = new Set();
   for (const set of keysPerPage) {
     for (const k of set) all.add(k);
@@ -104,12 +158,14 @@ export function planAvizPdfSplits(pageTexts) {
       current.pages.push(i);
       continue;
     }
-    let overlap = false;
-    for (const k of keys) {
-      if (current.keys.has(k)) {
-        overlap = true;
-        break;
-      }
+    const pageDocs = documentKeysOf(keys);
+    const groupDocs = documentKeysOf(current.keys);
+    let overlap;
+    if (pageDocs.length && groupDocs.length) {
+      // Both sides name their aviz: same document only when a TRO/PSL matches.
+      overlap = pageDocs.some((k) => current.keys.has(k));
+    } else {
+      overlap = [...keys].some((k) => current.keys.has(k));
     }
     if (overlap) {
       current.pages.push(i);
@@ -176,6 +232,33 @@ export async function splitPdfToPages(buffer) {
   }
   const groups = Array.from({ length: total }, (_, i) => [i]);
   return splitPdfByGroups(buffer, groups);
+}
+
+/**
+ * Download / ZIP entry name from a split display label.
+ * `lot.pdf · aviz 4/13 · pag. 6` → `lot-aviz-4-13-pag-6.pdf` (extension stays last).
+ */
+export function safeDownloadFilename(name, { fallbackExt = 'pdf' } = {}) {
+  const raw = String(name || '').trim() || `document.${fallbackExt}`;
+  const parts = raw.split(/\s*·\s*/).map((p) => p.trim()).filter(Boolean);
+  const head = parts[0] || `document.${fallbackExt}`;
+  const extMatch = head.match(/^(.*?)(\.[A-Za-z0-9]{1,8})$/);
+  const stem = (extMatch ? extMatch[1] : head).trim() || 'document';
+  const ext = (extMatch ? extMatch[2].slice(1) : fallbackExt).toLowerCase() || fallbackExt;
+  const suffix = parts.slice(1)
+    .join('-')
+    .replace(/[–—]/g, '-')
+    .replace(/\//g, '-')
+    .replace(/\./g, '') // "pag. 6" → "pag-6", not "pag.-6"
+    .replace(/\s+/g, '-');
+  let out = suffix ? `${stem}-${suffix}.${ext}` : `${stem}.${ext}`;
+  out = out
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/-+/g, '-')
+    .replace(/^[-_.]+|[-_.]+$/g, '');
+  if (!out.toLowerCase().endsWith(`.${ext}`)) out = `${out || 'document'}.${ext}`;
+  return out;
 }
 
 /** Display name when each part is a single page of a page-per-aviz bulk. */

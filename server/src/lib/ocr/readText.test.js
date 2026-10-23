@@ -6,6 +6,7 @@ import {
   interactiveOcrTimeoutMs,
   isOcrDown,
   mimeTypeFor,
+  needsDatePass,
   needsHandwritingPass,
   ocrConcurrency,
   ocrProvider,
@@ -75,6 +76,17 @@ describe('needsHandwritingPass', () => {
 
   it('asks when the transport-order label is present without a TPO', () => {
     expect(needsHandwritingPass('Num de comanda de transport:\nAuto B 112 VFM')).toBe(true);
+  });
+});
+
+describe('needsDatePass', () => {
+  it('asks for OCR when the text layer has TPO but no trip date (#110)', () => {
+    expect(needsDatePass('Aviz de expeditie: PSL-0061279\nComanda de transport TPO-0035236')).toBe(true);
+  });
+
+  it('skips when a DMY date is already in the layer', () => {
+    expect(needsDatePass('Data avizului de expeditie: 21.10.2026\nTPO-0035236')).toBe(false);
+    expect(needsDatePass('Livrare 19. 10. 2026')).toBe(false);
   });
 });
 
