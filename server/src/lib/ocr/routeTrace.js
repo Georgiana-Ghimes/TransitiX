@@ -20,12 +20,29 @@ export const ROUTE_TRACE_VERSION = 1;
  *   memory     a learned origin / delivery address filled an unreadable street
  *   parser     the structural parse of this page (or the stored value, repaired)
  *   none       no route at all
+ *
+ * `readRoute` (extract only): the route the read surfaces will show for this page when the
+ * profile left `ruta_transport` empty — `repairAvizFromStored` parses the stored raw text on
+ * every list / export / report. Passing it keeps the extract trace from saying `none` while the
+ * same row displays a parser route. Telemetry only: nothing is stored from it.
  */
-export function routeSourceOf({ corrected = false, ruleUsed = false, memoryUsed = false, route = null } = {}) {
+export function routeSourceOf({
+  corrected = false, ruleUsed = false, memoryUsed = false, route = null, readRoute = null,
+} = {}) {
   if (corrected) return 'corrected';
   if (ruleUsed) return 'rule';
   if (memoryUsed) return 'memory';
-  return String(route ?? '').trim() ? 'parser' : 'none';
+  if (String(route ?? '').trim()) return 'parser';
+  return String(readRoute ?? '').trim() ? 'parser' : 'none';
+}
+
+/**
+ * The attempt entry that says the parser route comes from the read-time repair, not from the
+ * profile at extract (e.g. a profile without a route field for this layout). Null otherwise.
+ */
+export function readRepairAttempt(route, readRoute) {
+  if (String(route ?? '').trim() || !String(readRoute ?? '').trim()) return null;
+  return { step: 'read_repair', result: 'used', reason: 'profile_route_empty' };
 }
 
 /**

@@ -46,7 +46,13 @@ import {
   recordAddressSighting,
   recordAddressUse,
 } from '../lib/ocr/addressMemory.js';
-import { buildRouteTrace, routeSourceOf, routeTraceEventDetail } from '../lib/ocr/routeTrace.js';
+import {
+  buildRouteTrace,
+  readRepairAttempt,
+  routeSourceOf,
+  routeTraceEventDetail,
+} from '../lib/ocr/routeTrace.js';
+import { repairAvizFromStored } from '../lib/avizOcr.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -390,14 +396,27 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         };
       }
       merged.values = valuesAfterLearn;
+      // The profile left the route empty (e.g. a layout its route field does not read): every
+      // read surface still shows the structural parse of the stored text (repairAvizFromStored).
+      // Say so in the trace instead of `none`. Telemetry only — nothing below stores it.
+      const routeCorrected = corrected.includes('ruta_transport');
+      const readRoute = !routeCorrected && !memoryFilled && !learned.learned
+        && !String(valuesAfterLearn.ruta_transport ?? '').trim()
+        ? repairAvizFromStored({
+          ruta_transport: null, corrected_fields: corrected, extracted_data: { raw_text: text.text },
+        }).ruta_transport
+        : null;
+      const readRepair = readRepairAttempt(valuesAfterLearn.ruta_transport, readRoute);
+      if (readRepair) routeAttempts.push(readRepair);
       const routeTrace = buildRouteTrace({
         context: 'extract',
         attempts: routeAttempts,
         source: routeSourceOf({
-          corrected: corrected.includes('ruta_transport'),
+          corrected: routeCorrected,
           ruleUsed: learned.learned,
           memoryUsed: memoryFilled,
           route: valuesAfterLearn.ruta_transport,
+          readRoute,
         }),
         originAddress: memory.address,
         deliveryAddresses: memory.deliveryAddresses,

@@ -583,16 +583,26 @@ const docFromBareLine = (line) => {
   return null;
 };
 
+// Pallet footer printed on every Baumit PSL aviz: "Paleti la locul de livrare: predare … /
+// preluare …" (OCR also reads "ia", "Paleți"). It is not the CMR "Locul de livrare" box (BUG 4).
+const AVIZ_PALLET_FOOTER = /pale[tțţ]\S*\s+\S{0,3}\s*locul\s+de\s+livrare/g;
+// The aviz title with its logistics code: "Aviz de expediție: PSL-0062011", "…rezumat: TPO-…".
+const AVIZ_EXPEDITIE_HEADER = /aviz\s+de\s+expedi\S*(?:\s+rezumat)?\s*[:#]?\s*(?:psl|tro|tpo)[\s\-._/:]*\d{3,}/;
+
 /** True when the page is a CMR / scrisoare de trăsură (not a Baumit aviz). */
 export function looksLikeCmrDocument(text) {
   const blob = String(text || '').toLowerCase();
   if (/\bcmr\b/.test(blob)) return true;
   if (/scrisoare\s+de\s+tr[aă]sur/.test(blob)) return true;
   if (/letter\s+of\s+consignment/.test(blob)) return true;
-  // Numbered CMR boxes with logistics labels (not the driver cheat-sheet alone).
+  // Numbered CMR boxes with logistics labels (not the driver cheat-sheet alone). Weak signal:
+  // a page titled "Aviz de expediție: PSL-/TRO-…" is an aviz, and its pallet footer
+  // ("Paleti la locul de livrare") + "Greutate brută" must not read as CMR boxes (BUG 4).
+  if (AVIZ_EXPEDITIE_HEADER.test(blob)) return false;
+  const boxes = blob.replace(AVIZ_PALLET_FOOTER, ' ');
   if (
-    /locul\s+de\s+(?:incarcare|descarcare|preluare|livrare)/i.test(blob)
-    && /(?:greutate\s*(?:bruta|brută)|gross\s*weight|(?:^|\n)\s*11[.)\-])/i.test(blob)
+    /locul\s+de\s+(?:incarcare|descarcare|preluare|livrare)/i.test(boxes)
+    && /(?:greutate\s*(?:bruta|brută)|gross\s*weight|(?:^|\n)\s*11[.)\-])/i.test(boxes)
   ) {
     return true;
   }
