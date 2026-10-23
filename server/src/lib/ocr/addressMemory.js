@@ -199,28 +199,76 @@ export function streetHintScore(address, hints) {
  *
  * Human-confirmed addresses (verified / corrected / manual) are preferred over parsed ones.
  */
-export function pickKnownAddress(addresses, { postcode, locality, hints = [] } = {}) {
+export function pickKnownAddress(addresses, opts = {}) {
+  return explainKnownAddressPick(addresses, opts).address;
+}
+
+function roundScore(value) {
+  return Math.round(Number(value || 0) * 100) / 100;
+}
+
+/**
+ * {@link pickKnownAddress} with the reason it picked nothing (route telemetry). The filters are
+ * the same predicates, applied one at a time so the first one that empties the pool names the
+ * refusal:
+ *
+ *   no_postcode        the page kept no six-digit postcode
+ *   unknown_postcode   nothing learned on this postcode yet
+ *   no_trusted         only candidates (seen once, never confirmed)
+ *   locality_mismatch  trusted rows exist on the postcode, but for another town
+ *   junk_filtered      the trusted rows look like misreads (isPlausibleAddressLeg)
+ *   below_threshold    several left, the garbled street resembles none of them enough
+ *   ambiguous          several left, the best does not beat the runner-up clearly
+ *
+ * Only ids, counts and scores come back, never the address text.
+ *
+ * @returns {{ address: object|null, reason: string|null, candidates: number,
+ *   best?: number, runner_up?: number }}
+ */
+export function explainKnownAddressPick(addresses, { postcode, locality, hints = [] } = {}) {
   const pc = normalizePostcode(postcode);
-  if (!pc) return null;
+  if (!pc) return { address: null, reason: 'no_postcode', candidates: 0 };
   const town = fold(locality);
-  let pool = (addresses || []).filter((a) => (
-    a && normalizePostcode(a.postcode) === pc
-    && isTrustedAddress(a)
-    && usableKnownAddress(a)
-    && (!town || !a.locality || fold(a.locality) === town)
-  ));
-  if (!pool.length) return null;
+  const onPostcode = (addresses || []).filter((a) => a && normalizePostcode(a.postcode) === pc);
+  if (!onPostcode.length) return { address: null, reason: 'unknown_postcode', candidates: 0 };
+  const trusted = onPostcode.filter((a) => isTrustedAddress(a));
+  if (!trusted.length) return { address: null, reason: 'no_trusted', candidates: onPostcode.length };
+  const sameTown = trusted.filter((a) => !town || !a.locality || fold(a.locality) === town);
+  if (!sameTown.length) {
+    return { address: null, reason: 'locality_mismatch', candidates: onPostcode.length };
+  }
+  let pool = sameTown.filter((a) => usableKnownAddress(a));
+  if (!pool.length) return { address: null, reason: 'junk_filtered', candidates: onPostcode.length };
   const human = pool.filter((a) => a.verified || a.source === 'corrected' || a.source === 'manual');
   if (human.length) pool = human;
-  if (pool.length === 1) return pool[0];
+  if (pool.length === 1) return { address: pool[0], reason: null, candidates: 1 };
 
   const scored = pool
     .map((a) => ({ a, score: streetHintScore(a, hints) }))
     .sort((x, y) => y.score - x.score);
   const [first, second] = scored;
-  if (first.score < MIN_STREET_SIMILARITY) return null;
-  if (second && first.score - second.score < MIN_SIMILARITY_MARGIN) return null;
-  return first.a;
+  const scores = {
+    candidates: pool.length,
+    best: roundScore(first.score),
+    ...(second ? { runner_up: roundScore(second.score) } : {}),
+  };
+  if (first.score < MIN_STREET_SIMILARITY) return { address: null, reason: 'below_threshold', ...scores };
+  if (second && first.score - second.score < MIN_SIMILARITY_MARGIN) {
+    return { address: null, reason: 'ambiguous', ...scores };
+  }
+  return { address: first.a, reason: null, ...scores };
+}
+
+/** One telemetry entry: what memory did for one leg and why. No address text. */
+function traceAttempt(trace, entry) {
+  if (Array.isArray(trace)) trace.push(entry);
+}
+
+function tracePick(trace, step, pick, extra = {}) {
+  const { address, reason, ...counts } = pick;
+  traceAttempt(trace, address
+    ? { step, ...extra, result: 'used', address_id: address.id ?? null, ...counts }
+    : { step, ...extra, result: 'refused', reason, ...counts });
 }
 
 /**
@@ -238,21 +286,43 @@ export function fillOriginFromMemory(rawText, addresses) {
   return { route, address };
 }
 
-/** The learned depot for this page when its Expeditor street is unreadable, else null. */
-function pickOriginFromMemory(rawText, addresses) {
+/**
+ * The learned depot for this page when its Expeditor street is unreadable, else null.
+ * @param {object[]} [trace]  telemetry sink: one entry is pushed saying what happened and why
+ */
+function pickOriginFromMemory(rawText, addresses, trace) {
+  const step = 'origin_memory';
   const origins = (addresses || []).filter((a) => hasRole(a, ADDRESS_ROLE_ORIGIN));
-  if (!rawText || !origins.length) return null;
+  if (!rawText) {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'no_raw_text' });
+    return null;
+  }
+  if (!origins.length) {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'no_memory' });
+    return null;
+  }
   const origin = expeditorOrigin(rawText);
-  if (origin.status === 'street') return null;
-  if (origin.status === 'site' && /-/.test(origin.leg || '')) return null;
+  if (origin.status === 'street') {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'street_read' });
+    return null;
+  }
+  if (origin.status === 'site' && /-/.test(origin.leg || '')) {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'site_pair' });
+    return null;
+  }
   const postcode = origin.block?.postcode;
-  if (!normalizePostcode(postcode)) return null;
+  if (!normalizePostcode(postcode)) {
+    traceAttempt(trace, { step, result: 'refused', reason: 'no_postcode', origin_status: origin.status });
+    return null;
+  }
   const locality = origin.block?.locality || null;
-  return pickKnownAddress(origins, {
+  const pick = explainKnownAddressPick(origins, {
     postcode,
     locality,
     hints: expeditorStreetHints(rawText, locality),
   });
+  tracePick(trace, step, pick, { origin_status: origin.status });
+  return pick.address;
 }
 
 const DELIVERY_HINT_NOISE = new Set([
@@ -280,25 +350,44 @@ export function deliveryStreetHints(rawText, locality) {
  *
  * @returns {{ legs: string[], addresses: object[] } | null}  null when nothing was filled
  */
-export function fillDeliveryFromMemory(rawText, addresses) {
+export function fillDeliveryFromMemory(rawText, addresses, trace) {
+  const step = 'delivery_memory';
   const depots = originKeys(addresses);
   const known = (addresses || []).filter((a) => (
     hasRole(a, ADDRESS_ROLE_DELIVERY)
     && !depots.has(`${normalizePostcode(a.postcode)}|${a.match_key || addressMatchKey(a.display)}`)
   ));
-  if (!rawText || !known.length) return null;
+  if (!rawText) {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'no_raw_text' });
+    return null;
+  }
+  if (!known.length) {
+    traceAttempt(trace, { step, result: 'skipped', reason: 'no_memory' });
+    return null;
+  }
   const blocks = parseDeliveryAddresses(rawText);
-  if (!blocks.length) return null;
+  if (!blocks.length) {
+    traceAttempt(trace, { step, result: 'refused', reason: 'no_delivery_block' });
+    return null;
+  }
   const used = [];
-  const legs = blocks.map((block) => {
-    if (block.streetName) return formatAddressLine(block);
+  const legs = blocks.map((block, stop) => {
+    if (block.streetName) {
+      traceAttempt(trace, { step, stop, result: 'skipped', reason: 'street_read' });
+      return formatAddressLine(block);
+    }
     const postcode = normalizePostcode(block.postcode);
-    if (!postcode) return formatAddressLine(block);
-    const address = pickKnownAddress(known, {
+    if (!postcode) {
+      traceAttempt(trace, { step, stop, result: 'refused', reason: 'no_postcode' });
+      return formatAddressLine(block);
+    }
+    const pick = explainKnownAddressPick(known, {
       postcode,
       locality: block.locality,
       hints: deliveryStreetHints(rawText, block.locality),
     });
+    tracePick(trace, step, pick, { stop });
+    const address = pick.address;
     if (!address) return formatAddressLine(block);
     used.push(address);
     return address.display;
@@ -315,13 +404,16 @@ export function fillDeliveryFromMemory(rawText, addresses) {
  * @returns {{ values: object, address: object|null, deliveryAddresses: object[] }}
  *   `address` is the origin used, `deliveryAddresses` the delivery ones.
  */
-export function applyAddressMemory(values, rawText, addresses, { correctedFields = [] } = {}) {
+export function applyAddressMemory(values, rawText, addresses, { correctedFields = [], trace } = {}) {
   const out = { ...(values || {}) };
   const none = { values: out, address: null, deliveryAddresses: [] };
-  if (correctedFields.includes('ruta_transport')) return none;
+  if (correctedFields.includes('ruta_transport')) {
+    traceAttempt(trace, { step: 'address_memory', result: 'skipped', reason: 'corrected_fields_skip' });
+    return none;
+  }
 
-  const originAddress = pickOriginFromMemory(rawText, addresses);
-  const delivery = fillDeliveryFromMemory(rawText, addresses);
+  const originAddress = pickOriginFromMemory(rawText, addresses, trace);
+  const delivery = fillDeliveryFromMemory(rawText, addresses, trace);
   if (!originAddress && !delivery) return none;
 
   let route;
@@ -337,7 +429,11 @@ export function applyAddressMemory(values, rawText, addresses, { correctedFields
       destLegs: delivery.legs,
     });
   }
-  if (!route || !route.includes(' / ')) return none;
+  if (!route || !route.includes(' / ')) {
+    // A pick that still could not make a two-leg route: nothing from memory reaches the page.
+    traceAttempt(trace, { step: 'address_memory', result: 'refused', reason: 'route_unbuildable' });
+    return none;
+  }
   out.ruta_transport = route;
   return { values: out, address: originAddress, deliveryAddresses: delivery?.addresses || [] };
 }

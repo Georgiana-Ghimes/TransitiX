@@ -455,7 +455,9 @@ function parseStreetParts(folded, localityFolded = '') {
   if (!typeMatch) {
     const loose = folded.match(
       new RegExp(
-        String.raw`\b(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3}?)\s+${HOUSE_NUM_RE.source}`,
+        // No street type to anchor on: a number running into `.09.2026` / `/10` is the start
+        // of a date (OCR-mangled ones survive the date scrub), never a house number.
+        String.raw`\b(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3}?)\s+${HOUSE_NUM_RE.source}(?!\s*[.\/]\s*\d)`,
         'i'
       )
     );
@@ -883,6 +885,27 @@ function scrubLeadingClientSeatFromDelivery(folded) {
 }
 
 /**
+ * Document title (`Aviz de expediție`, `Data aviz de expediție`, OCR `expedi!ie`) and calendar
+ * dates / clock times are never part of an address.
+ *
+ * Context-bound on purpose: only the phrase `aviz de expedi…` goes, so a real street
+ * `Str. Expediției nr. 4` keeps its name. Dates must look like dates (dd.mm.yyyy, a real day
+ * and month, 4-digit year) — a house range `nr. 17-21` or wing `1/VII` is not touched.
+ */
+const DOC_TITLE_RE = /\b(?:data\s+)?aviz(?:ul)?\s+de\s+expedi[^\s]*(?:\s+rezumat\b:?)?/g;
+const DATE_RE = /(?<![0-9])(?:0?[1-9]|[12][0-9]|3[01])\s*[.\/\-]\s*(?:0?[1-9]|1[0-2])\s*[.\/\-]\s*(?:19|20)\d{2}(?![0-9])(?:\s+(?:[01]?[0-9]|2[0-3])[:.][0-5][0-9](?::[0-5][0-9])?(?![0-9]))?/g;
+const CLOCK_RE = /(?<![0-9:.])(?:[01]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?(?![0-9])/g;
+
+function scrubDocumentTitleAndDates(folded) {
+  return String(folded || '')
+    .replace(DOC_TITLE_RE, ' ')
+    .replace(DATE_RE, ' ')
+    .replace(CLOCK_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Street + locality inside one labelled block (Expeditor or Adresa de livrare).
  * Structure only: `Str. …` + place — no hard-coded town list.
  */
@@ -906,6 +929,10 @@ function parseDestBlock(section, { interleaved = false } = {}) {
     .replace(/\bpagina\b(?:\s*\d+(?:\s*[\/.\-]\s*\d+)?)?/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+  // TRO "rezumat" avize print the title and the date right under Expeditor:
+  // `Aviz de expediție … Data aviz de expediție 20.10.2026 15:19`. Read as a street that
+  // became `Str. Expeditie nr. 20` and hid the Site/Depozit origin from memory too.
+  folded = scrubDocumentTitleAndDates(folded);
 
   if (interleaved) {
     // OCR sometimes dumps the Client seat (C######## + billing street + CP) *above* the

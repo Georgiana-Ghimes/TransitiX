@@ -46,6 +46,7 @@ import {
   recordAddressSighting,
   recordAddressUse,
 } from '../lib/ocr/addressMemory.js';
+import { buildRouteTrace, routeSourceOf, routeTraceEventDetail } from '../lib/ocr/routeTrace.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -342,8 +343,17 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       // Expeditor or delivery street unreadable on this page (#112): fill it from an address this
       // company's avize have already shown clearly. Flagged for review — the street is not from
       // this page.
-      const memory = isAddressMemoryProfile(merged.profile_id)
-        ? applyAddressMemory(merged.values, text.text, knownAddresses, { correctedFields: corrected })
+      // Telemetry only (route_trace): what each learned shortcut did for this page and why.
+      const routeAttempts = [];
+      const memoryProfile = isAddressMemoryProfile(merged.profile_id);
+      if (!memoryProfile) {
+        routeAttempts.push({ step: 'address_memory', result: 'skipped', reason: 'profile_not_supported' });
+      }
+      const memory = memoryProfile
+        ? applyAddressMemory(merged.values, text.text, knownAddresses, {
+          correctedFields: corrected,
+          trace: routeAttempts,
+        })
         : { values: merged.values, address: null, deliveryAddresses: [] };
       const memoryFilled = Boolean(memory.address || memory.deliveryAddresses.length);
       if (memoryFilled) {
@@ -364,6 +374,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
       // fields the office pinned on this document via corrected_fields.
       const learned = applyLearnedRoute(merged.values, text.text, routeRules, {
         correctedFields: corrected,
+        trace: routeAttempts,
       });
       const valuesAfterLearn = learned.values;
       if (learned.learned && learned.rule?.id) {
@@ -379,6 +390,19 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         };
       }
       merged.values = valuesAfterLearn;
+      const routeTrace = buildRouteTrace({
+        context: 'extract',
+        attempts: routeAttempts,
+        source: routeSourceOf({
+          corrected: corrected.includes('ruta_transport'),
+          ruleUsed: learned.learned,
+          memoryUsed: memoryFilled,
+          route: valuesAfterLearn.ruta_transport,
+        }),
+        originAddress: memory.address,
+        deliveryAddresses: memory.deliveryAddresses,
+        rule: learned.rule,
+      });
 
       // Route is structural only: Expeditor + Adresa de livrare slices (no LLM), unless learned.
       const columns = toColumns(merged.values);
@@ -466,6 +490,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
               delivery_address_ids: memory.deliveryAddresses.length && !learned.learned
                 ? memory.deliveryAddresses.map((a) => a.id)
                 : null,
+              route_trace: routeTrace,
               ...(Array.isArray(text.blocks) && text.blocks.length
                 ? { ocr_blocks: text.blocks }
                 : {}),
@@ -504,6 +529,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
             text_cached: Boolean(text.cached),
             pages: text.pages ?? null,
             pages_truncated: Boolean(text.truncated),
+            route: routeTraceEventDetail(routeTrace),
             ...(registeredPlate ? { vehicle_registered: registeredPlate } : {}),
           },
         });
