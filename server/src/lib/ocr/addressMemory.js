@@ -47,6 +47,43 @@ export function isAddressMemoryProfile(profileId) {
 /** Two clean reads on different avize before a parsed address may fill another one. */
 export const TRUST_SEEN_COUNT = 2;
 
+const COMPANY_FORM_WORD = /(?:^| )(?:srl|s r l|sa|snc|scs|ltd|gmbh|pfa)(?: |$)/;
+const HOUSE_IN_LEG = /\bnr\.?\s*([^\s,]+)/i;
+const PLAUSIBLE_HOUSE = /^\d{1,4}[a-z]{0,2}(?:[-/][0-9a-z]{1,6})?$/i;
+const PLAUSIBLE_TOWN = /^\p{L}[\p{L} .-]*$/u;
+
+/**
+ * A leg worth learning from a parse. Misreads that came back from real avize:
+ *   `Str. Pantelimon Construct Srl nr. 5OS`  the client's company name taken for the street
+ *   `Șosea Curtea Domneasca, Nr.z5-Aleo`     a house number that is not one
+ *   `Calea Bucuresti nr. 2A, Balote,ti`      a town with OCR punctuation in it
+ * A person's correction is never second-guessed here, only what the parser produced.
+ */
+export function isPlausibleAddressLeg(display) {
+  const text = String(display || '').trim();
+  if (!text) return false;
+  if (COMPANY_FORM_WORD.test(fold(text).replace(/[^a-z0-9]+/g, ' ').trim())) return false;
+  const house = text.match(HOUSE_IN_LEG)?.[1];
+  if (house && !PLAUSIBLE_HOUSE.test(house)) return false;
+  const comma = text.indexOf(', ');
+  const town = comma >= 0 ? text.slice(comma + 2).trim() : '';
+  if (town && !PLAUSIBLE_TOWN.test(town)) return false;
+  return true;
+}
+
+/** Parsed rows must also look like an address to be used; people's rows always may. */
+function usableKnownAddress(address) {
+  if (address.verified || address.source === 'corrected' || address.source === 'manual') return true;
+  return isPlausibleAddressLeg(address.display);
+}
+
+/** `postcode|match_key` of every origin, so a depot read under Adresa de livrare is not a customer. */
+function originKeys(addresses) {
+  return new Set((addresses || [])
+    .filter((a) => hasRole(a, ADDRESS_ROLE_ORIGIN))
+    .map((a) => `${normalizePostcode(a.postcode)}|${a.match_key || addressMatchKey(a.display)}`));
+}
+
 /** Among several addresses on one postcode, the garbled street must look at least this alike. */
 export const MIN_STREET_SIMILARITY = 0.6;
 /** …and beat the runner-up by this much, or we do not pick. */
@@ -169,6 +206,7 @@ export function pickKnownAddress(addresses, { postcode, locality, hints = [] } =
   let pool = (addresses || []).filter((a) => (
     a && normalizePostcode(a.postcode) === pc
     && isTrustedAddress(a)
+    && usableKnownAddress(a)
     && (!town || !a.locality || fold(a.locality) === town)
   ));
   if (!pool.length) return null;
@@ -243,7 +281,11 @@ export function deliveryStreetHints(rawText, locality) {
  * @returns {{ legs: string[], addresses: object[] } | null}  null when nothing was filled
  */
 export function fillDeliveryFromMemory(rawText, addresses) {
-  const known = (addresses || []).filter((a) => hasRole(a, ADDRESS_ROLE_DELIVERY));
+  const depots = originKeys(addresses);
+  const known = (addresses || []).filter((a) => (
+    hasRole(a, ADDRESS_ROLE_DELIVERY)
+    && !depots.has(`${normalizePostcode(a.postcode)}|${a.match_key || addressMatchKey(a.display)}`)
+  ));
   if (!rawText || !known.length) return null;
   const blocks = parseDeliveryAddresses(rawText);
   if (!blocks.length) return null;
@@ -318,6 +360,7 @@ export function originObservationFromOcr(rawText) {
   const postcode = normalizePostcode(origin.block?.postcode);
   const locality = origin.block?.locality || null;
   if (!postcode || !locality || !origin.leg) return null;
+  if (!isPlausibleAddressLeg(origin.leg)) return null;
   return {
     postcode,
     locality,
@@ -330,10 +373,19 @@ export function originObservationFromOcr(rawText) {
 /**
  * Clean Adresa de livrare reads worth remembering: every stop with a street, a town and a
  * six-digit postcode. One per (postcode, address), so a stop printed twice counts once.
+ *
+ * Not learned: a leg that does not look like an address ({@link isPlausibleAddressLeg}), and the
+ * depot itself — the page's own Expeditor or any origin the company already knows. TRO avize
+ * with the columns swapped read `Str. Republicii nr. 1F, Bolintin-Deal` as the delivery.
+ *
+ * @param {{ known?: object[] }} [opts]  the company's learned addresses (origins are used)
  * @returns {{ postcode, locality, street_name, display, match_key }[]}
  */
-export function deliveryObservationsFromOcr(rawText) {
+export function deliveryObservationsFromOcr(rawText, { known = [] } = {}) {
   if (!rawText) return [];
+  const depots = originKeys(known);
+  const pageOrigin = originObservationFromOcr(rawText);
+  if (pageOrigin) depots.add(`${pageOrigin.postcode}|${pageOrigin.match_key}`);
   const seen = new Set();
   const out = [];
   for (const block of parseDeliveryAddresses(rawText)) {
@@ -341,8 +393,9 @@ export function deliveryObservationsFromOcr(rawText) {
     const locality = block?.locality || null;
     if (!block?.streetName || !postcode || !locality) continue;
     const display = formatAddressLine(block);
-    if (!display) continue;
+    if (!display || !isPlausibleAddressLeg(display)) continue;
     const matchKey = addressMatchKey(display);
+    if (depots.has(`${postcode}|${matchKey}`)) continue;
     if (seen.has(`${postcode}|${matchKey}`)) continue;
     seen.add(`${postcode}|${matchKey}`);
     out.push({ postcode, locality, street_name: block.streetName, display, match_key: matchKey });

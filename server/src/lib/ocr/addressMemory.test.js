@@ -9,6 +9,7 @@ import {
   expeditorStreetHints,
   fillDeliveryFromMemory,
   fillOriginFromMemory,
+  isPlausibleAddressLeg,
   isTrustedAddress,
   normalizePostcode,
   originObservationFromCorrection,
@@ -284,6 +285,61 @@ describe('delivery addresses', () => {
     // Town that disagrees with the page, or more legs than printed stops: learn nothing.
     expect(deliveryObservationsFromCorrection(DELIVERY_GARBLED, 'Str. Republicii nr. 1F, Bolintin-Deal / Calea Giulesti nr. 1-3, Ploiesti')).toEqual([]);
     expect(deliveryObservationsFromCorrection(DELIVERY_GARBLED, `${typed} / Str. Alta nr. 2, Bucuresti`)).toEqual([]);
+  });
+});
+
+describe('junk the parser produced on real avize', () => {
+  it('rejects a company name read as the street, a fake house number and a broken town', () => {
+    expect(isPlausibleAddressLeg('Str. Pantelimon Construct Srl nr. 5OS, Bucuresti')).toBe(false);
+    expect(isPlausibleAddressLeg('Șosea Curtea Domneasca, Nr.z5-Aleo')).toBe(false);
+    expect(isPlausibleAddressLeg('Calea Bucuresti nr. 2A, Balote,ti')).toBe(false);
+  });
+
+  it('keeps real addresses, ranges, wings and composed names', () => {
+    for (const leg of [
+      'Str. Republicii nr. 1F, Bolintin-Deal',
+      'Str. Hornbach nr. 17-21, Domnesti',
+      'Bvd. Pipera nr. 1/VII, Voluntari',
+      'Bvd. Pierre De Coubertin nr. 3-5, Bucuresti',
+      'Șosea Stefan Cel Mare nr. 34, Bucuresti',
+      'Str. Ciresului, Dobroesti',
+      'Str. Constructorilor nr. 4, Bucuresti',
+    ]) expect(isPlausibleAddressLeg(leg), leg).toBe(true);
+  });
+
+  it('does not learn a misread delivery leg', () => {
+    const raw = DELIVERY_CLEAN
+      .replace(/GIULESTI BUILD SRL/g, 'PANTELIMON CONSTRUCT SRL')
+      .replace(/Calea Giulesti, nr\. 1-3/g, '5os. Pante1imon, nr. 244');
+    expect(deliveryObservationsFromOcr(raw)).toEqual([]);
+  });
+
+  it('does not learn the depot as a delivery address (TRO with columns swapped)', () => {
+    const swapped = [
+      'Expeditor',
+      'Site: BOI Bolintin',
+      'Str. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU',
+      'Aviz de expeditie: TRO-0011296',
+      'Adresa de livrare',
+      'Str. Republicii, nr. 1F',
+      'Bolintin-Deal RO 087015 ROU',
+      'Comanda de transport TPO-0035186',
+    ].join('\n');
+    expect(deliveryObservationsFromOcr(swapped)).toEqual([]);
+    // Known depot, even when the page's own Expeditor did not read.
+    const garbledOrigin = swapped.replace('Str. Republicii, nr. 1F Bolintin-Deal', 'Str.-.epuolicii, nr. IF Bolintin-Deal');
+    expect(deliveryObservationsFromOcr(garbledOrigin, { known: [REPUBLICII] })).toEqual([]);
+  });
+
+  it('never fills from junk already learned, nor from a depot stored as a delivery', () => {
+    const junk = { ...GIULESTI, id: 'j1', display: 'Str. Giulesti Build Srl nr. 5OS, Bucuresti', seen_count: 5 };
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [junk])).toBeNull();
+    const depotAsDelivery = { ...REPUBLICII, id: 'd9', role: 'delivery', postcode: '060251', match_key: 'x' };
+    const depot = { ...REPUBLICII, postcode: '060251', match_key: 'x' };
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [depot, depotAsDelivery])).toBeNull();
+    // A person's address is used even if it would not pass the parse filter.
+    const typed = { ...junk, source: 'corrected' };
+    expect(fillDeliveryFromMemory(DELIVERY_GARBLED, [typed]).addresses).toEqual([typed]);
   });
 });
 
