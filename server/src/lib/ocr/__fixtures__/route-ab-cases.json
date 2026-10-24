@@ -1,0 +1,358 @@
+[
+ {
+  "slug": "b-client-name-reabilitare-lohn",
+  "category": "B",
+  "note": "site name CS-PROIECT REABILITARE LOHN 60 above \"Bulevard Camil Ressu 8\"",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Reabilitare Lohn nr. 60, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Camil Ressu nr. 8, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Camil Ressu nr. 8, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t30U\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\nAviz de expeditie: PSL-0058468\tData avizului de expeditie\t07.10.2026\n\tComanda vanzare\tSOR-0059749\nAdresä de livrare\tClient\nCS-PROIECT REABILITARE LOHN 60\tC23942153 PROIECT REABILITARE SRL\nBulevard Camil Ressu\t8, Bl:l, Sc:D, Et:5, Ap:138\tB-dul CAMIL RESSU, nr. 8, Bl. 1,\tD, Et. 5, Ap. 138\nnr.\tsc.\nBucuresti Sector 3 RO 031748\tBucure;ti Sector 3 RO 31748\nROU\tROU\nClient facturä:\tC23942153 PROIECT REABILITARE SRL\nReferintä client 759-Badicului 108-116/0700000000\tTransportator\nSolicitare client\tPlacuta de inmatriculare B 00 TST / B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033658\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\nMicoTherm MT wool Premium\t- adeziv vata 25\n1\t11001460\t768.00 sac\t16.00 pal\nkg (48/pal)\nCod marfä: 38245090\n2\t1 1000001\tPalet Euro returnabil\t16.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 19,200.16 kg\tGreutate brutä: 19,676.80 kg\nla locul de livrare:\t/ preluare\t.\nPaleti\tpredare .....\t......\tpce\t.....\tpce\nSemnäturä\nPale!ii inclu$ in livrare sunt ambalaje aferente produselor\tnu fac obiectul unei opera!iuni co\tiale de vånzare,\nrespectiv sunt destina!i returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nSediuk aucuresti.\tIuliu Maniu nr. 600A, Sector 6, 061129 1 Tel.: 44 021350 0103 1 e-mail: office@baumit.ro I baumit.ro\nNr. Reg. Com.: J1995006207407 1 CUI: R07568475"
+ },
+ {
+  "slug": "b-client-name-brico-militari",
+  "category": "B",
+  "note": "branch BRICO MILITARI 2 above typeless \"IULIU MANIU 536-560\"",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Brico Militari nr. 2, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Iuliu Maniu nr. 536-560, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Iuliu Maniu nr. 536-560, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t30U\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t1/2\nAviz de expeditie: PSL-0058226\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0059902\nAdresä de livrare\tClient\nBRICO MILITARI 2\tC23908171 BRICO MILITARI 2\nIULIU MANIU 536-560\tIULIU MANIIJ 536-560\nBucure$i Sector 6 RO 077190\tBucure;ti Sector 6 RO 077190\nROU\tROU\nClient facturä:\tC23942368 ALTEX ROMANIA SRL\nSucursalä:\tC23908171 BRICO MILITARI 2\nReferintä client PO-007970431\tTransportator\nSolicitare client\tPO-007970431\tPlacuta de inmatriculare B 00 TST / B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033543\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000027\tBaumit Beton 25 kg(54/pal)\t216.00 sac\nGTIN: 5945752003280 / cod marfä: 38245090\n2\t11000030\tClassico Special 2.5 K 25 kg (54/pal)\t54.00 sac\nGTIN: 5945752002900 / Cod marfä: 38245090\n3\t11000834\tClassico 2.5 R 25 kg (54/pal)\t54.00 sac\nGTIN: 5945752005666 / cod marfä: 38245090\n4\t1 1000075\tNivello Duo 25 kg (54/pal)\t54.00 sac\nGTIN: 5945752002344 / Cod marfä: 38245090\n5\t1 1000001\tPalet Euro returnabil\t7.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 9,450.07 kg\tGreutate brutä: 9,662.80 kg\nPaleti la locul de livrare: predare .....\t......\t/ preluare\t.....\t......\npce\tpce\nSemnäturä\tSemnäturä\nBaumit Romania Com SRL\nSediul: Bucuresti, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 1 Tel.; +4 021350 0103 1 e-mail: offic\tchit.\tbaumit.ro\nNr. Reg. Com.: J1995006207407 1 CUI: R07568475\n\n\tGLfrS9GLOU uno I LOVLOZ900G66tr •.'tuoo\n€0 to ogc\tV+\t'910100S 'V009\n\te!uetuou utuneg\n\twoo\n•auelnd!ueu.l öE1eqwe ap awmsoo el efinqwwcn\tE)eunpeJ eaueme/\\\n\tel\tfieugsep uns\nyunåeuado\tlopsnpo]d\tereleqwe\tLil !énptl!\n'auezueA ap applöl.uoo\tpun\tDeJ nu\tawuage\tuns\nymmaqoed eaJeuwe)\n9€L6SSOEL0 Je6app\tJewnN\tEVGEEOO-OdL\tuodsuel) ep ppueu-10)\nause/\\ P!Aea )e8app awnN\tLin PO)\n\tJ!UöAUD 11001 e)\tap wacuuaL\n-LYA 88 L g / WAA L 16 g aueVD!neu-1Ll! ap\tLEVOL6LOO-Od\tJuan) anuonos\numeuodsuell\tLEVOL6LOO-Od\n\tZ IHVLIIIW\tLLL806€ZD\t:klesunons\n\tuS VINVWOH )GLIV\t:EJnpeJ Juan)\nn08\tnou\n06 LLLO 08 9 uopas !$ærnng\t06 LLLO 08 9 -lopes nSaun3ng\n09g-9€g niNVW runni\t09S-9ES nmvw nnnl\n\tep pseupv\nZ066goo-uos\tepuewo)\n9ZOCOWLO\tafi!padxa ep !mnzyxe Qea\n\t9ZZ8SOO-ISd :agpedxe ep zyxv\nava\tpufed\n\tn08 SLOL80 OH leaa-ununog\tuu 'gonqndau\n\tununog\t•.aus\n\tuoupa"
+ },
+ {
+  "slug": "b-client-name-rockwool",
+  "category": "B",
+  "note": "ROCKWOOL ROMANIA SRL LIV 0-100 above \"Alee Privighetorilor 1A\"",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Rockwool Srl Liv nr. 0-100, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Aleea Privighetorilor nr. 1A, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Aleea Privighetorilor nr. 1A, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "Expeditor\n\nSite: BOL Bolintin\n\nStr. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU\n\nPagină\n\n1/1\n\n# Aviz de expeditie: PSL-0060726\n\nData avizului de expediție\n\nComanda vanzare\n\n19.10.2026\n\nSOR-0062519\n\nClient\n\nAdresă de livrare\n\nROCKWOOL ROMANIA SRL LIV 0-100\n\nAlee Privighetorilor nr.1A\n\nBucurești Sector 1 RO 014031\n\nROU\n\nC23941290 ROCKWOOL ROMANIA SRL - LOHN\n\nȘos. BUCUREȘTI-PLOIEȘTI 1A Et. 4 CLADIREA A,\n\nBUCHAREST BUSINESS PARK\n\nBucurești Sector 1 RO 13682\n\nROU\n\nClient factură: C23941290 ROCKWOOL ROMANIA SRL - LOHN\n\nReferință client 4505505127-Aleea Privighetorilor\n\n1A/0700000000\n\nSolicitare client\n\nTermeni de livrare livrat la locul convenit\n\nCod UIT\n\nComandă de transport TPO-0034912\n\nTransportator\n\nPlacuta de inmatriculare B 00 TST / B 00 TST\n\nEKAER\n\nNume delegat Ion Test\n\nNumar telefon delegat\n\nNr Descriere Cantitatea Cantitatea pachetului\n\n1 11001459 ROCKWOOL Adeziv REDArt 25 kg (54/pal) 918.00 sac 17.00 pal\n\nCod marfă: 38245090\n\nGreutate netă: 22,950.00 kg\n\nGreutate brută: 23,041.80 kg\n\nPaleți la locul de livrare: predare ... pce / preluare ... pce\n\nSemnătură\n\nSemnătură\n\nPaleții incluși în livrare sunt ambalaje aferente produselor și nu fac obiectul unei operațiuni comerciale de vânzare, respectiv sunt destinați returnării la vânzător.\n\nValoarea facturată reprezintă contribuția la costurile de ambalare și manipulare.\n\n# Baumit Romania Com SRL\n\nSediul: București, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 Tel.: +4 021 350-0\nNr. Reg. Com.: J1995006207407 CUI: R07568475\n\n![img-0.jpeg](img-0.jpeg)"
+ },
+ {
+  "slug": "b-client-name-arabesque-galati",
+  "category": "B",
+  "note": "ARABESQUE- GALATI above \"Str. Salcamilor 1A\"",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Galati Salcamilor nr. 1A, Ciulnita",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Salcamilor nr. 1A, Ciulnita",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Salcamilor nr. 1A, Ciulnita",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "Expeditor\n\nSite: BOL Bolintin\n\nStr. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU\n\nPagină\n\n1/1\n\n# Aviz de expeditie: PSL-0058440\n\nData avizului de expediție\n\nComanda vanzare\n\n07.10.2026\n\nSOR-0060634\n\nAdresă de livrare\n\nARABESQUE- GALATI\n\nSalcamilor 1A\n\nCiulnița RO 927080\n\nROU\n\nClient\n\nC23940730 ARABESQUE- GALATI\n\nStr. Drumul de Centura, Nr. 39\n\nGalati RO 800248\n\nROU\n\nClient factură: C23940482 ARABESQUE SRL\n\nSucursală: C23940730 ARABESQUE- GALATI\n\nReferință client\n\n4504097819 bis-Ciulnita,Salcamilor\n\n1A, 0700000000\n\nSolicitare client\n\nTermeni de livrare\n\nCod UIT\n\nComandă de transport\n\nlivrat la locul convenit\n\nTPO-0033600\n\nTransportator\n\nPlacuta de inmatriculare B 00 TST / B 00 TST\n\nEKAER\n\nNume delegat Ion Test\n\nNumar telefon delegat 0700000000\n\nNr Descriere Cantitatea Cantitatea pachetului\n\n1 11000034 DuoControt 25 kg (12/pat) 108.00 sac 2.00 pal\nGTIN: 5945752000845 / Cod marfă: 38245000\n2 11000001 Palet Euro returnabil 2.00 pce\nGTIN: 4023330099977 / Cod marfă: 44152020\n\nGreutate netă: 2,700.02 kg\n\nGreutate brută: 2,760.80 kg\n\nPaleti la locul de livrare: predare ... pce / preluare ... pce\n\nSemnătură\n\nSemnătură\n\nPaleții incluși în livrare sunt ambalaje aferente produselor și nu fac obiectul unei operațiuni comerciale de vânzare, respectiv sunt destinați returnării la vânzător.\n\nValoarea facturată reprezintă contribuția la costurile de ambalare și manipulare.\n\nMAGU SAGI\n\n# Baumit Romania Com SRL\n\nSediul: București, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 Tel.: +4 021 350 01 03 e-mail: office@baumit.ro baumit.ro\nNr. Reg. Com.: J1995006207407 CUI: RO7568475"
+ },
+ {
+  "slug": "b-1-decembrie",
+  "category": "B",
+  "note": "street name starts with a day: 1 Decembrie",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Decembrie nr. 119, Tunari",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. 1 Decembrie nr. 119, Tunari",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. 1 Decembrie nr. 119, Tunari",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t3QU\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t1/1\nAviz de expeditie: PSL-0058323\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0059168\nAdresä de livrare\tClient\nAP-ARABESQUE-LOHN LIVRA\tC23980798 !AP-ARABESQUE-LOHN LIVRA\n1 Decembrie nr. 119\tStr. Timisului, Nr. 1\nTunari RO 077180\tGala!i RO 800001\nROU\tROU\nClient facturä:\tC23940482 ARABESQUE SRL\nSucursalä:\tC23940978 ARABESQUE\t- LOHN\nReferintä client\t4504078738-Tunari/0700000000\tTransportator\nSolicitare client\tde inmatriculare B 00 TST / B 00 TST\n\tPlacuta\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033599\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11001433\tTermofix poren adeziv BCA 25 kg (48/pal)\t912.00 sac\t19.00 pal\nGTIN: 5945762021427 / cod marfä: 38245090\n2\t11000001\tPalet Euro returnabil\t19.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 22,800.19 kg\tGreutate brutä: 23,366.20 kg\nPaleti la locul de livrare: predare\t.\t/ preluare\t...........\npce\tpce\nSemnäturä\tSemnäturä\nPale!ii inclusi in livrare sunt ambalaje aferente produselor 9i nu fac obiectul unei opera!iuni comerciale de vånzare,\nrespectiv sunt destinaw returnärii la vänzätor.\nValoarea facturatä reprezintä contribuCia la costurile de ambalare si manipulare.\nid SiH/Dé.Q•\nBaumit Romania Com SRL\nSediul: gucuresti. a-dul Iuliu Maniu nr. 600A. Sector 6, 061129 1 Tel.: 44 021350 0103 I e-mail: of\tmit.ro\nNr. Reg. Cont.: 11995006207407\tCUI: R07568475\nS.C. BAUMIT ROMANIA COM S.R.L.\nCONTROLPOARTA\nIE IRE I"
+ },
+ {
+  "slug": "b-bulevard-marasti",
+  "category": "B",
+  "note": "\"Bulevard\" printed: Bvd., not Str.; town Bucuresti",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Marasti nr. 57",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Marasti nr. 57, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Marasti nr. 57, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "Expeditor\n\nSite: BOL Bolintin\n\nStr. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU\n\n# Aviz de expeditie: PSL-0060308\n\nAdresă de livrare\n\nGREEN SWAN SRL\n\nBulevard Mărăști nr. 57\n\nBucurești Sector 1 RO 011463\nROU\n\nClient factură: C23934309 GREEN SWAN SRL\n\nReferință client str Marasti 57/0700000000\nSolicitare client\n\nTermeni de livrare livrat la locul convenit\nCod UIT\n\nComandă de transport TPO-0034671\n\nNr Descriere\n\n1 11001532 Sockelputz 25 kg (54/pal)\n\nGTIN: 5945752000852 / Cod marfă: 38245090\n2 11000037 Pre Special 40 kg (35/pal)\nCod marfă: 38245090\n3 11001911 Taxa acces zona\nCod marfă: 00000000\n\nGreutate netă: 9,550.00 kg\n\nPaleti la locul de livrare: predare ... pce / preluare ... pce\n\nSemnătură\n\nPaleții incluși în livrare sunt ambalaje aferente produselor și nu fac obiectul unei operațiuni comerciale de vânzare, respectiv sunt destinați returnării la vânzător.\nValoarea facturată reprezintă contribuția la costurile de ambalare și manipulare.\n\nTAXĂ MĂCARA\n\nBaumit Romania Com SRL\n\nBlu: București, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 Tel.: +4 021 350 01 03 e-mail: office@baumit.ro baumit.ro\nReg. Com.: J1995006207407 CUI: R07568475\n\nPagină\nData avizului de expediție\nComanda vanzare\n\n1/1\n\n15.10.2026\nSOR-0062412\n\nC23934309 GREEN SWAN SRL\nSTR. ALEEA CU MAGNOLII NR. 23\nCORBEANCA RO 077065\nROU\n\nTransportator\nPlacuta de inmatriculare B 00 TST\nEKAER\n\nNume delegat Ion Test\nNumar telefon delegat 0700000000\n\nCantitatea Cantitatea pachetului\n\n270.00 sac 5.00 pal\n70.00 sac 2.00 pal\n1.00 pce\n\nGreutate brută: 9,584.00 kg\n\nSemnătură\n\nBAUMIT ROMANIA COM SRL\nBlu: București, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 Tel.: +4 021 350 01 03 e-mail: office@baumit.ro baumit.ro\nDAM C"
+ },
+ {
+  "slug": "b-bulevard-iancu-de-hunedoara",
+  "category": "B",
+  "note": "\"Bulevard Iancu de Hunedoara\", not \"Str. Hunedoara\"",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Hunedoara nr. 30-32, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Iancu De Hunedoara nr. 30-32, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Bvd. Iancu De Hunedoara nr. 30-32, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "Expeditor\n\nSite: BOL Bolintin\n\nStr. Republicii, nr. 1F Bolintin-Deal RO 087015 ROU\n\nPagină\n\n1/1\n\n# Aviz de expeditie: PSL-0060702\n\nData avizului de expediție\n\n19.10.2026\n\nComanda vanzare\n\nSOR-0062463\n\nAdresă de livrare\n\nCS-CONCELEX- OBI LOHN\n\nBulevard Iancu de Hunedoara nr. 30-32\n\nBucurești Sector 1 RO 011743\n\nROU\n\nClient\n\nC23000014 AP-CONCELEX- OBI LOHN\n\nStradă Aeroportului nr. 120-T\n\nBucurești Sector 1 RO 013596\n\nROU\n\nClient factură: C23901527 CONCELEX SRL\n\nReferință client Grigore Alexandrescu/0700000000\n\nSolicitare client\n\nTermeni de livrare livrat la locul convenit\n\nCod UIT\n\nComandă de transport TPO-0034888\n\nTransportator\n\nPlacuta de inmatriculare B 00 TST\n\nEKAER\n\nNume delegat Ion Test\n\nNumar telefon delegat 0700000000\n\nNr Descriere Cantitatea Cantitatea pachetului\n\n1 11001454 Adeziv ADCELEX 25 kg (54/pal) 378.00 sac 7.00 pal\nCod marfă: 38245090\n\nGreutate netă: 9,450.00 kg\n\nGreutate brută: 9,487.80 kg\n\nPaleti la locul de livrare: predare ... pce / preluare ... pce\n\n![img-0.jpeg](img-0.jpeg)\n\nSemnătură\n\nPaleții incluși în livrare sunt ambalaje aferente produselor și nu fac obiectul unei operațiuni comerciale de vânzare, respectiv sunt destinați returnării la vânzător.\n\nValoarea facturată reprezintă contribuția la costurile de ambalare și manipulare.\n\n# Baumit Romania Com SRL\n\nSediul: București, B-dul Iuliu Maniu nr. 600A, Sector 6, 061129 Tel.: +4 021 350 01 03 e-mail: office@baumit.ro baumit.ro\n\nNr. Reg. Com.: J1995006207407 CUI: R07568475\n\nS.C. BAUMIT ROMANIA COM S.R.L.\n\nCONTROL POARTA\n\nIEȘIRE INTRARE NR. DATA"
+ },
+ {
+  "slug": "b-junk-house-nr-z5-aleo",
+  "category": "B",
+  "note": "town printed first, house unreadable \"nr.Z5-ALeo\" (was the town)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Bolintin-Deal / Șosea Curtea Domneasca, Nr.z5-Aleo",
+  "confidence_before": "low",
+  "expect_extract_route": "Bolintin-Deal / Șosea Curtea Domneasca, Domnesti",
+  "expect_display_route": "Bolintin-Deal / Șosea Curtea Domneasca, Domnesti",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "unknown_house"
+  ],
+  "raw_text": "\n\nExpeditor\nSte: BOL Bolintin\nRepublicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t11\nAviz de expeditie: PSL-0058298\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0060336\nAdresä de livrare\tClient\nPRESTO CONSTRUCT SRL\tC23940010 PRESTO CONSTRUCT SRL\nDomnesti, Soseaua Curtea Domneasca, nr.Z5-ALeo\tCalea Ferentari nr. 159\nRO 077090\tBucure;ti Sector 5 RO 051851\nDornnesti\nROU\tROU\nClient facturä:\tC23940010 PRESTO CONSTRUCT SRL\ncda\tCurtea\nReferintä client\tTransportator\nDomneasca, nr.25A Domnesti\nSolicitare client\tPlacuta de inmatriculare B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033586\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000149\tMPl 25 40 kg (35/pal)\t175.00 sac\t5.00 pal\nGTIN: 5945752000371 / Cod marfä: 38245090\n2\t11001674\tServicii Paletizare-lnfoliere\t5.00 pce\ncod marfä: 00000000\n3\t11001400\tTa-xa-descar-cace-macara,\t5.00 pce\ncod marfä: 00000000\nGreutate netä: 7,000.00 kg\tGreutate brutä: 7,117.25 kg\nPaleti la locul de livrare:\t....\t/ preluare\t......\npredare\t...\tpce\tpce\nSemnäturä\tSemnäturä\nPale!ii\tin livrare sunt ambalaje aferente produselor ii nu fac obiectul unei opera!iuni comerciale de vånzare,\nincluii\nrespectiv sunt\treturnärii la vånzätor.\nValoarea facturatä reprezintä contributia la costurile de ambalare\tmanipulare.\nBaumit Romania Com SRL\nIuliu\t6,\tTel.: 44\t1 e-mail: office@baumit.ro I baumit.ro\nSediul: aucurcsti.\tMamu nn. 600A. Sector\t061129\t021350 0103\nNr. Reg. Cont.: 11995006207407\tcul: R07568475"
+ },
+ {
+  "slug": "b-calea-13-septembrie-build-srl",
+  "category": "B",
+  "note": "client CALEA 13 BUILD SRL above \"Calea 13 Septembrie nr. 127\" (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Calea Build Srl nr. 13, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Calea 13 Septembrie nr. 127, Bucuresti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Calea 13 Septembrie nr. 127, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\n\tBaumit\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071104\tData avizului de expediție 28.10.2026\n\tComanda vanzare SOR-0072104\nAdresă de livrare\tClient\nCALEA 13 BUILD SRL\tC23918104 CALEA 13 BUILD SRL\nCalea 13 Septembrie nr. 127\tCalea 13 Septembrie nr. 127\nBucurești Sector 5 RO 050712\tBucurești Sector 5 RO 050712\nROU\tROU\nClient factură: C23928104 CALEA 13 BUILD SRL\tTransportator\nReferință client 4517071104\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039107\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000079\tNivela Quattro 25 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000029\tBeton Montaro 25 kg (54/pal)\t162.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nBaumit Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "b-str-13-septembrie",
+  "category": "B",
+  "note": "\"Str. 13 Septembrie nr. 90\" (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Str. 13 Septembrie nr. 90, Bucuresti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Str. 13 Septembrie nr. 90, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\n\tBaumit\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071103\tData avizului de expediție 28.10.2026\n\tComanda vanzare SOR-0072103\nAdresă de livrare\tClient\nTREISPREZECE CONSTRUCT SRL\tC23918103 TREISPREZECE CONSTRUCT SRL\nStr. 13 Septembrie nr. 90\tStr. 13 Septembrie nr. 90\nBucurești Sector 5 RO 050726\tBucurești Sector 5 RO 050726\nROU\tROU\nClient factură: C23928103 TREISPREZECE CONSTRUCT SRL\tTransportator\nReferință client 4517071103\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039105\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000079\tNivela Quattro 25 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000151\tTencuiala TM 40 kg (35/pal)\t105.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nBaumit Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "b-bolintin-deal-no-hyphen",
+  "category": "B",
+  "note": "\"Bolintin Deal\" without hyphen (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Str. Principala nr. 58, Deal",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Str. Principala nr. 58, Bolintin-Deal",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Str. Principala nr. 58, Bolintin-Deal",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\n\tMONTARO\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071106\tData avizului de expediție 27.10.2026\n\tComanda vanzare SOR-0072106\nAdresă de livrare\tClient\nDEPOZIT DEAL CONSTRUCT\tC23918106 DEPOZIT DEAL CONSTRUCT\nStr. Principală nr. 58\tStr. Principală nr. 58\nBolintin Deal RO 087015\tBolintin Deal RO 087015\nROU\tROU\nClient factură: C23928106 DEPOZIT DEAL CONSTRUCT\tTransportator\nReferință client 4517071106\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039111\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000151\tTencuiala TM 40 kg (35/pal)\t70.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000151\tTencuiala TM 40 kg (35/pal)\t105.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nMontaro Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00 | e-mail: office@montaro.example\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "b-junk-origin-5tr",
+  "category": "B",
+  "note": "illegible origin \"5tr. ~~~\" under the Baumit logo (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Baumit nr. 5TR, Bolintin-Deal / Șosea Berceni nr. 104, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "BOL / Șosea Berceni nr. 104, Bucuresti",
+  "expect_display_route": "BOL / Șosea Berceni nr. 104, Bucuresti",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "incomplete_leg"
+  ],
+  "raw_text": "\n\nExpeditor\n\tBaumit\nSite: BOL Bolintin\n5tr. ~~~~~~~~, nr. ~ Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071118\tData avizului de expediție 27.10.2026\n\tComanda vanzare SOR-0072118\nAdresă de livrare\tClient\nBERCENI RENOVARI SRL\tC23918118 BERCENI RENOVARI SRL\nȘoseaua Berceni nr. 104\tȘoseaua Berceni nr. 104\nBucurești Sector 4 RO 041912\tBucurești Sector 4 RO 041912\nROU\tROU\nClient factură: C23928118 BERCENI RENOVARI SRL\tTransportator\nReferință client 4517071118\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039126\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11001457\tAdeziv FlexBond 25 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000146\tMPX 35 40 kg (35/pal)\t105.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nBaumit Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "b-splaiul",
+  "category": "B",
+  "note": "\"Splaiul Independentei\" after a client firm (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Str. Renovari Srl Splaiul Independentei nr. 313, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Splaiul Independentei nr. 313, Bucuresti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Splaiul Independentei nr. 313, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\n\tMONTARO\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071102\tData avizului de expediție 29.10.2026\n\tComanda vanzare SOR-0072102\nAdresă de livrare\tClient\nSPLAI RENOVARI SRL\tC23918102 SPLAI RENOVARI SRL\nSplaiul Independenței nr. 313\tSplaiul Independenței nr. 313\nBucurești Sector 6 RO 060042\tBucurești Sector 6 RO 060042\nROU\tROU\nClient factură: C23928102 SPLAI RENOVARI SRL\tTransportator\nReferință client 4517071102\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039103\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000436\tBetonKontakt Plus 20 kg (24/pal)\t48.00 buc\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000151\tTencuiala TM 40 kg (35/pal)\t105.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nMontaro Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00 | e-mail: office@montaro.example\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "b-intrarea",
+  "category": "B",
+  "note": "\"Intrare Navigatorilor\" after a client firm (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Str. Navigatorilor nr. 15, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Intrarea Navigatorilor nr. 15, Bucuresti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Intrarea Navigatorilor nr. 15, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\n\tMONTARO\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071101\tData avizului de expediție 27.10.2026\n\tComanda vanzare SOR-0072101\nAdresă de livrare\tClient\nCS-NAVIGATOR DEPOZIT\tC23918101 CS-NAVIGATOR DEPOZIT\nIntrarea Navigatorilor nr. 15\tIntrarea Navigatorilor nr. 15\nBucurești Sector 1 RO 014482\tBucurești Sector 1 RO 014482\nROU\tROU\nClient factură: C23928101 CS-NAVIGATOR DEPOZIT\tTransportator\nReferință client 4517071101\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039102\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000029\tBeton Montaro 25 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000079\tNivela Quattro 25 kg (54/pal)\t162.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nMontaro Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00 | e-mail: office@montaro.example\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "a-delivery-town-only",
+  "category": "A",
+  "note": "delivery read only as the town Ciulnita",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Ciulnita",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Ciulnita",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Ciulnita",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "incomplete_leg"
+  ],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t30U\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\nAviz de expeditie: PSL-0058441\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0059835\nAdresä de livrare\tClient\nARABESQUE- GALATI\tC23940730 ARABESQUE- GALATI\nSalcamilor IA\tStr. Drumul de Centura, Nr. 39\nCiulnita RO 927080\tGalati RO 800248\nROU\tROU\nClient facturä:\tC23940482 ARABESQUE SRL\nSucursalä:\tC23940730 ARABESQUE- GALATI\n4504097819-Ciulnita,Salcamilor IA,\nReferin!ä client\tTransportator\n0700000000\nSolicitare client\t4504097819\tPlacuta de inmatriculare B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033642\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000078\tNivoFix 25 kg (54/ pal)\t324.00 sac\t6.00 pal\nCod marfä: 38245090\n2\t11000001\tPalet Euro returnabil\t6.00 pce\nGTIN: 4023330099977 / cod marfä: 44152020\nGreutate netä: 8, 100.06 kg\tGreutate brutä: 8,282.40 kg\nPaleti la locul de livrare: predare .....\t......\t/ preluare\t.....\t......\npce\tpce\n\tSemnäturä\nPale!ii inclu#i in livrare su\tam al\troduselor 5i nu fac obiectul unei opera!iuni comerciale de vänzare,\nrespectiv sunt destina!i ret\tanzätor.\nValoarea facturatä reprezinta contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nSediui:\ta-dul Iuliu Manju\t600A, Sector 6, 061129 1 Tel,: 44 021350 0103 1 e-mail: office@baumit.ro I baumit.ro\nnr.\nmr.Reg. Cont.: J1995006207407\tCUI: R07568475"
+ },
+ {
+  "slug": "a-delivery-street-unreadable",
+  "category": "A",
+  "note": "delivery street printed but unreadable: only Pantelimon",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Pantelimon",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Pantelimon",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Pantelimon",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "unknown_street"
+  ],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t3QU\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\nAviz de expeditie: PSL-0058332\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0060176\nAdresä de livrare\tClient\nPRESTO CONSTRUCT SRL\tC23940010 PRESTO CONSTRUCT SRL\nstr SF Gheorghe nr 97\tCalea Ferentari nr. 159\nPantelimon RO 077145\tBucure;ti Sector 5 RO 051851\nROU\tROU\nClient facturä:\tC23940010 PRESTO CONSTRUCT SRL\nReferintä client\t147-Pantelimon/0700000000\tTransportator\nSolicitare client\tde inmatriculare B 00 TST / B 00 TST\n\tPlacuta\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033600\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t1 1000027\tBaumit Beton 25 kg(54/pal)\t54.00 sac\t1.00 pal\nGTIN: 5945752003280 / cod marfä: 38245090\n2\t11000013\tFinoGrande 20 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752001637 / cod marfä: 38245090\n3\t11000001\tPalet Euro returnabil\t3.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 3,510.03 kg\tGreutate brutä: 3,601.20 kg\nPaleti la locul de livrare:\t/ preluare\npredare .....\t......\tpce\t.....\t......\tpce\nSemnäturä\tSemn u\n\tA\nPalewi inclu$ in livrare sunt ambalaje aferente produselor 9i nu fac obiectul unei opera!iuni co\t•gle dg v\tare,\n\t100\nrespectiv sunt destina!i returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nSediuk Bucuresti. B-dul Iuliu Maniu nr. 600A. Sector 6, 061129 1 Tel.: 44 021350 0103 1 e-mail: office@baumit.ro I baumit.ro\nNr. Reg. Com.: J1995006207407 1 CIJI: R07568475"
+ },
+ {
+  "slug": "a-delivery-street-unreadable-synthetic",
+  "category": "A",
+  "note": "delivery street illegible, only Balotesti (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Balotesti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Balotesti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Balotesti",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "unknown_street"
+  ],
+  "raw_text": "\n\nExpeditor\n\tBaumit\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071122\tData avizului de expediție 29.10.2026\n\tComanda vanzare SOR-0072122\nAdresă de livrare\tClient\nBALOTESTI NUCI SRL\tC23918122 BALOTESTI NUCI SRL\nStr. ~~~~~~ nr. ~\tStr. ~~~~~~ nr. ~\nBalotești RO 077015\tBalotești RO 077015\nROU\tROU\nClient factură: C23928122 BALOTESTI NUCI SRL\tTransportator\nReferință client 4517071122\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039132\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000436\tBetonKontakt Plus 20 kg (24/pal)\t48.00 buc\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000029\tBeton Montaro 25 kg (54/pal)\t162.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nBaumit Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "a-origin-site-code-only",
+  "category": "A",
+  "note": "origin illegible, only the site code BOL (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "BOL / Bvd. Timisoara nr. 26, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "BOL / Bvd. Timisoara nr. 26, Bucuresti",
+  "expect_display_route": "BOL / Bvd. Timisoara nr. 26, Bucuresti",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "incomplete_leg"
+  ],
+  "raw_text": "\n\nExpeditor\n\tMONTARO\nSite: BOL Bolintin\nBolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071119\tData avizului de expediție 30.10.2026\n\tComanda vanzare SOR-0072119\nAdresă de livrare\tClient\nTIMISOARA MATERIALE SRL\tC23918119 TIMISOARA MATERIALE SRL\nBulevardul Timișoara nr. 26\tBulevardul Timișoara nr. 26\nBucurești Sector 6 RO 061344\tBucurești Sector 6 RO 061344\nROU\tROU\nClient factură: C23928119 TIMISOARA MATERIALE SRL\tTransportator\nReferință client 4517071119\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039127\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000146\tMPX 35 40 kg (35/pal)\t70.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000151\tTencuiala TM 40 kg (35/pal)\t105.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nMontaro Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00 | e-mail: office@montaro.example\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "a-one-leg-cut-header",
+  "category": "A",
+  "note": "TRO photo with cut header: one leg only (synthetic)",
+  "expect_profile": "aviz_baumit_tro",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "incomplete_leg"
+  ],
+  "raw_text": "Aviz de expediție rezumat: TPO-0039203\n\nData aviz de expediție 27.10.2026 08:41\n\nAdresa de livrare\n\nBOL MBMARFA Bolintin\n\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\n\nTermeni de livrare DAP\n\nNum de comandă de transport TPO-0039203\n\nTransportator RAI-SPEDITION SRL\n\nPlacuta de inmatriculare B 00 TST / B 00 TST\n\nNume sofer Ion Test\n\nNumar telefon sofer 0700000000\n\nNr Descriere\n\nAmbalaj\n\nCantitate\n\nAviz de expediție TRO-0011111 Cod UIT Comanda de transfer TRO-0011111 EKAER Referinta client\n\n1 11000436 BetonKontakt Plus 20 kg (24/pal) _ MIL-0019 480.00 buc\n2 11000455 Glet FinoLux Superior/20KG (24/pal) _ MIL-0019 96.00 buc\n3 11000001 Palet Euro returnabil 24.00 pce\n\nGreutate neta, kg 11,520.00\n\nGreutate bruta, kg 12,093.45\n\nNumărul de găleți 576.00\n\nPaleti la locul livrarii: predare ... pce / preluare ... pce\n\nSemnatura\n\nS.C. MONTARO ROMANIA COM S.R.L.\n\nCONTROL POARTA\n\nIESIRE INTRARE NR... DATA...\n\nSemnatura\n\nMontaro Romania Com SRL\n\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000\n\nNr. Reg. Com.: J00/0000/2000 CUI: RO00000000\n\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "a-house-unreadable",
+  "category": "A",
+  "note": "\"Bulevardul Iuliu Maniu nr. ~~\" (synthetic)",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Industriei nr. 7, Bolintin-Deal / Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Industriei nr. 7, Bolintin-Deal / Bvd. Iuliu Maniu, Bucuresti",
+  "expect_display_route": "Str. Industriei nr. 7, Bolintin-Deal / Bvd. Iuliu Maniu, Bucuresti",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "unknown_house"
+  ],
+  "raw_text": "\n\nExpeditor\n\tMONTARO\nSite: BOL Bolintin\nStr. Industriei, nr. 7 Bolintin-Deal RO 087015 ROU\tPagină 1/1\nAviz de expediție: PSL-0071123\tData avizului de expediție 27.10.2026\n\tComanda vanzare SOR-0072123\nAdresă de livrare\tClient\nMILITARI CONSTRUCT SRL\tC23918123 MILITARI CONSTRUCT SRL\nBulevardul Iuliu Maniu nr. ~~\tBulevardul Iuliu Maniu nr. ~~\nBucurești Sector 6 RO 061129\tBucurești Sector 6 RO 061129\nROU\tROU\nClient factură: C23928123 MILITARI CONSTRUCT SRL\tTransportator\nReferință client 4517071123\tPlacuta de inmatriculare B 00 TST / B 00 TST\nSolicitare client\tEKAER\nTermeni de livrare livrat la locul convenit\tNume delegat Ion Test\nCod UIT\tNumar telefon delegat 0700000000\nComandă de transport TPO-0039133\nNr\tCod\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11001457\tAdeziv FlexBond 25 kg (54/pal)\t108.00 sac\t2.00 pal\nGTIN: 5945752010000 / Cod marfă: 38245090\n2\t11000079\tNivela Quattro 25 kg (54/pal)\t162.00 sac\t3.00 pal\nGTIN: 5945752010777 / Cod marfă: 38245090\nGreutate netă: 9,700.00 kg\tGreutate brută: 9,882.60 kg\nPaleti la locul de livrare: predare ........... pce / preluare ........... pce\nSemnătură\tSemnătură\nMontaro Romania Com SRL\nSediul: București, Str. Exemplului nr. 10, Sector 6, 060000 | Tel.: +40 21 000 00 00 | e-mail: office@montaro.example\nNr. Reg. Com.: J00/0000/2000 | CUI: RO00000000\nDOCUMENT DE TEST - DATE FICTIVE"
+ },
+ {
+  "slug": "a-cmr-form-labels",
+  "category": "A",
+  "note": "handwritten CMR: route made of printed form labels",
+  "expect_profile": "aviz_cmr",
+  "display_before": "marft Ort und Tag der Übernahme des Gutes / Empfănger",
+  "confidence_before": "ok",
+  "expect_extract_route": "marft Ort und Tag der Übernahme des Gutes / Empfănger",
+  "expect_display_route": "marft Ort und Tag der Übernahme des Gutes / Empfănger",
+  "expect_confidence": "low",
+  "expect_reasons": [
+   "form_label"
+  ],
+  "raw_text": "Rücksle in ordrate zu ind grobe betue complesse de cette transportation\nDie mit het gedruckten Linter eingereichten Ruznisen müssen vom Frachtführer ausgefüllt werden\n\n19+21+22\n\nreclavi a\nstrechbildlich\n\nDie completez ze restumferes expeditonul\nAussoldien unter den Verteilverhang des Absenders\n\nExemplar 1 (alt) Control tarifar\n\n1. Blatt (weiß) Tarifkontrolle\n\nExemplar 2 (rosu) Expeditor\n\n2. Blatt (rot) Absender\n\nExemplar 3 (verde) Destinatar\n\n3. Blatt (grün) Empfănger\n\n1 Expeditor (nurne, adresa, tara) Absender (Name, Anschrift, Land) SCRISOARE DE TRANSPORT INTERNATIONAL INTERNATIONALER FRACHTBRIEF CMR\n\nAcesst transport e supus indifferent de croce clausta contrara, conventas relatives la contractul de transport international de marfurt pe aceste (C.M.R.)\nIn Transportator S.C. RAI-SPEDITION SRL Frachtführer Reg.com.:J40/143349/2003; C.U.I.: RO 15849587\n2 Destinatar (nurne, adresa, tara) Empfănger (Name, Anschrift, Land) Adresa / Anschrift Bd-ul Preciziei nr 26, Clădirea A, Biroul 11, Sector 6, Loc. Bucureşti\nTara / Land România / Punct de lucru: Ciorogaria / IF / Tarta 20/3/1\nSOUTH EAST EUROPE SRL RO30897146 J23/2907/2013 Telefon fix-fax: 021 433 01 12; Mobil: 0700000000\nE-mail: raisped@gmail.com\n3 Locul prevăzut pentru livrarea marft Auslieferungsort des Gutes Autoschool marca Das auto MAH\nNurse de circulate Das nummerschte BIR RSP\nLocalitatea / Ort CARTOJAHI Eclopej 1 Crew SIKESIU COSTEL\nTara / Land RO 2\nData / Datum 13.10.26 Transportatori succesul (nurne, adresa, tara) Nachfolgende Frachtfürer (Name, Anschrift, Land)\n4 Locul si data incarcam marft Ort und Tag der Übernahme des Gutes 16 Reserve si observati ale transportator Verbetulle und Bemerkungen der Frachtführer\nLocalitatea / Ort SIETAHESTI JEJOS TRANSPORTM, DESCARCAT\nTara / Land RO\nData / Datum 13.10.26\n5 Dokumente anexato Biergefügte Dokumente 18 Reserve si observati ale transportator Verbetulle und Bemerkungen der Frachtführer\nTRANSPORTM, DESCARCAT\n\n6 Marco si numere 7 Nr. de colete 8 Mod de ambalare 9 Natura marft 10 No. statoic 11 Insulate brute, kg 12 Cuitas, m2 Ramosechan und Nummern Art der Verpackung Boubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht 9 Natura marft 10 No. statoic 11 Insulate brute, kg 12 Cuitas, m2 13 Insulate brute, kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht in kg Brubogewicht\n1 PALET FILTRE 5000 d1\n1 ALTERNATOR\n\n• In case of the following: 1.000000000000000000000000000000000000000000000000000000000000000000000000000000\n\nSOUTH EAST EUROPE SRL\n\nR030997146 J23/2907/2013\n\nSemnatura si stampila expeditorului\n\nUnterschrift und Stempel des Absenders"
+ },
+ {
+  "slug": "g-correct-titulescu",
+  "category": "guard",
+  "note": "correct route stays ok",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Șosea Nicolae Titulescu nr. 4-8, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Șosea Nicolae Titulescu nr. 4-8, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Șosea Nicolae Titulescu nr. 4-8, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t30U\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t1/1\nAviz de expeditie: PSL-0058455\tData avizului de expediCie\t07.10.2026\n\tComanda vanzare\tSOR-0060340\nAdresä de livrare\tClient\nCS-CRISTIMAR-OBI TITULESCU\tSC.\tC23902014 CRISTIMAR ELLA IMPORT EXPORT SRC\nSoseaua Nicolae Titulescu nr. 4-8\tSOS.PANTELIMON NR.146 BL. 101 PARTER\nBucuresti Sector 1 RO 011141\tBucure;ti Sector 2 RO 021645\nROU\tROU\nClient facturä:\tC23902014 CRISTIMAR ELLA IMPORT EXPORT SRL\nReferin!ä client\t964-Nicolae Titulescu/0700000000\tTransportator\nSolicitare client\tPlacuta de inmatriculare B 00 TST / B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033649\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000149\tMPl 25 40 kg (35/pal)\t70.00 sac\t2.00 pal\nGTIN: 5945752000371 / Cod marfä: 38245090\n2\t11001674\tServicii Paletizare-lnfoliere\t2.00 pce\nCod marfä: 00000000\nGreutate netä: 2,800.00 kg\tGreutate brutä: 2,846.90 kg\nPaleti la locul de livrare: predare .....\t......\tpce / preluare\t.\t.\n\tpce\nSemnäturä\tSemnäturä\nPale!ii inclu$ in livrare sunt ambalaje aferente produselor\tnu fac obiectul unei opera!iuni comerciale de vånzare,\nrespectiv sunt destinaw returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nBucuresti. B.dul Iuliu Maniu\t600A. Sector 6, 061129 1 Tel.: 44 021350 01 03 1 e-mail: office@baumit.ro I baumit.ro\nSediul:\tnr.\nNr. Reg. Com.: 11995006207407 1 CUI: R07568475"
+ },
+ {
+  "slug": "g-correct-dridu",
+  "category": "guard",
+  "note": "correct rural route stays ok",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Lacului nr. 12, Dridu",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Lacului nr. 12, Dridu",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Lacului nr. 12, Dridu",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\n>€peditor\nSite: BOL Bolintin\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t11\nAviz de expeditie: PSL-0058462\tData avizului de expediVe\t07.10.2026\n\tComanda vanzare\tSOR-0055830\nAdresä de livrare\tClient\nPOS-INTERMED DECOR.COM DRIDU\tC23940530 INTERMED DECOR SRL\nS.C. BAUMIT ROMANIA COM S.U.\nStr Lacului nr 12\tStr. DEPOZITELOR, Nr. 19\nRO\tCONTROL POARTA\tRO 230120\nDridu\t927105\tSlatina\nROU\tIESIRE INTRARE NR.\tDATA\tROU\nClient facturä:\tC23940530 INTERMED DECOR SRL\nReferintä client com dridu 0700000000\tTransportator\nSolicitare client\tPlacuta de inmatriculare B 00 TST / B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033657\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000751\tStarTex 50 m2\t3.00 rol\nGTIN: 9004329262010 / Cod marfä: 70196600\n2\t11001376\tStarContact White Gel 25 kg (54/pal)\t54.00 sac\t1.00 pal\nGTIN: 5945752000364 / Cod marfä: 38245090\n3\t11001109\tOpen Reflect 10 cm\t120.00 m2\nGTIN: 9007000000007 / cod marfä: 39211100\n4\t1 1000001\tPalet Euro returnabil\t1.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 1,564.51 kg\tGreutate brutä: 1,594.90 kg\nPaleti la locul de livrare:\t.\t/ preluare\npredare\tpce\t.....\t......\tpce\nSemnäturä\tSemnV rä\nPale!ii inclu$ in livrare sunt ambalaje aferente produselor 9i nu fac obiectul unei opera!iuni comerciale de vånzare,\nrespectiv sunt destina!i returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\na-dul Iuliu Mamu nr- 600A. Sector 6, 061129 1 Tel.: 44 021350\t1 e-mail: office@baumit.ro I baumit.ro\n\t0103\nNr. Reu. Com.: J1995006207407\tCUI: R07568475"
+ },
+ {
+  "slug": "g-correct-miercani",
+  "category": "guard",
+  "note": "correct route stays ok",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Miercani nr. 110, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Miercani nr. 110, Bucuresti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Str. Miercani nr. 110, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: BOL Bolintin\t3QU\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\t1/1\nAviz de expeditie: PSL-0058459\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0060666\nAdresä de livrare\tClient\nCS-CRISTIMAR-OBI MIERCANI\tC23902014 CRISTIMAR ELLA IMPORT EXPORT SRL\nStrada Miercani nr. 110\tSOS.PANTELIMON NR. 146 BL. 101 PARTER\nBucuresti Sector 1 RO 012926\tBucure;ti Sector 2 RO 021645\nROU\tROU\nClient facturä:\tC23902014 CRISTIMAR ELLA IMPORT EXPORT SRL\nReferintä client 978-str Miercani 110/0700000000\tTransportator\nSolicitare client\tPlacuta de inmatriculare B 00 TST\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033656\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000123\tRatioGlatt 30 kg (35/pal)\t210.00 sac\t6.00 pal\nGTIN: 5945752001583 / Cod marfä: 38245090\n2\t1 1000149\tMPl 25 40 kg (35/pa1)\t70.00 sac\t2.00 pal\nGTIN: 5945752000371 / Cod marfä: 38245090\n3\t11001674\tServicii Paletizare-lnfoliere\t2.00 pce\nCod marfä: 00000000\n4\t11000001\tPalet Euro returnabil\t6.00 pce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 9,100.06 kg\tGreutate brutä: 9,317.90 kg\nPaleti la locul de livrare: predare\t.\t/ preluare\t.....\npce\tpce\nSemnäturä\tSemnätutä\nPale!ii inclu$ in livrare sunt ambalaje aferente produselor 9i nu fac obiectul unei opera!iuni comerciale de vänzare,\nrespectiv sunt destinaV returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nSediul:\ta-dul Iuliu Maniu nr. 600A. Sector 6. 061129 1 Tel.: 44 021350\t1 e-mail: office@baumit.ro I baumit.ro\nOucuresti.\t0103\nmr.Reg. Cont.: J1995006207407 1 CUI: R07568475\n\tS.C. BAUMITROMANIA\n\tCOM S.R.L.\n\tCONTROLPOARTA\n\tIES!RE INTRARE NR"
+ },
+ {
+  "slug": "g-correct-mihailesti",
+  "category": "guard",
+  "note": "correct \"Calea Bucuresti 300\" stays ok",
+  "expect_profile": "aviz_baumit_psl",
+  "display_before": "Str. Republicii nr. 1F, Bolintin-Deal / Calea Bucuresti nr. 300, Mihailesti",
+  "confidence_before": "ok",
+  "expect_extract_route": "Str. Republicii nr. 1F, Bolintin-Deal / Calea Bucuresti nr. 300, Mihailesti",
+  "expect_display_route": "Str. Republicii nr. 1F, Bolintin-Deal / Calea Bucuresti nr. 300, Mihailesti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\nExpeditor\nSite: POL Bolintin\nStr. Republicii, nr. IF Bolintin-Deal RO 087015 ROU\n\tPaginä\nAviz de expeditie: PSL-0058225\tData avizului de expedi!ie\t07.10.2026\n\tComanda vanzare\tSOR-0060411\nAdresä de livrare\tClient\nCRISLAND 4 CO SRL\tC23940304 CRISLAND 4 CO SRL\nMihailesti, Calea Bucuresti nr 300, jud Giurgiu\tMihailesti, Calea Bucuresti nr 300, jud Giurgiu\nMihäilesti RO 085200\tMihäile;ti RO 085200\nROU\tROU\nClient facturä:\tC23940304 CRISLAND 4 CO SRL\n0700000000>CALEABUCURESTI NR\nReferin!ä client\tTransportator\n300, MIHAILESTI\nSolicitare client\tPlacuta de inmatriculare B 00 TST / B 138\n\tVRT\nTermeni de livrare livrat la locul convenit\tEKAER\nCod UIT\tNume delegat Ion Test\nComandä de transport TPO-0033543\tNumar telefon delegat 0700000000\nNr\tDescriere\tCantitatea\tCantitatea pachetului\n1\t11000013\tFinoGrande 20 kg (54/pal)\t378.00 sac\t7.00 pal\nGTIN: 5945752001637\t/ Cod marfä:\n38245090\n2\t11000001\tPalet Euro returnabil\t7.00\n\tpce\nGTIN: 4023330099977 / Cod marfä: 44152020\nGreutate netä: 7,560.07 kg\tGreutate brutä: 7,772.80 kg\nPaleti la locul de livrare:\t.....\t......\t/ preluare\t.....\t......\npredare\tpce\tpce\nSemnäturä\tSemnäturä\nPale!ii inclu>i in livrare sunt ambalaje aferente produselor ii nu fac obiectul unei opera!iuni comerciale de vänzare,\nrespectiv sunt destina!i returnärii la vånzätor.\nValoarea facturatä reprezintä contribu!ia la costurile de ambalare 9i manipulare.\nBaumit Romania Com SRL\nScdiul:\tIuliu\t600A, Sector 6,\t1\t.\tI\tI baumit.ro\nManiu nr.\t061129\tTel.. 44 021350 0103\te-mail; o ce@\nNr. Reg. Conor. J1995006207407 cur. R07568475\n\t'\n\tE2..H"
+ },
+ {
+  "slug": "g-correct-tro-mil-depot",
+  "category": "guard",
+  "note": "TRO with MIL-<depot> stays ok",
+  "expect_profile": "aviz_baumit_tro",
+  "display_before": "MIL-MMMARFA / Bvd. Iuliu Maniu nr. 600A, Bucuresti",
+  "confidence_before": "ok",
+  "expect_extract_route": "MIL-MMARFA / Bvd. Iuliu Maniu nr. 600A, Bucuresti",
+  "expect_display_route": "MIL-MMMARFA / Bvd. Iuliu Maniu nr. 600A, Bucuresti",
+  "expect_confidence": "ok",
+  "expect_reasons": [],
+  "raw_text": "\n\n\t3QU\nExpeditor\nSite\tMIL\nDepozit\tMMMARFA\tPagina\nAviz de expedi!ie\tData aviz de expeditie\t07.10.2026 10:46\nrezumat: TPO-0033560\nAdresa de livrare\nMIL NEAMTIU Militari\nBvd. Iuliu Maniu, nr. 600A Bucuresti Sector 6 RO 061129 ROU\n\tTransportator RAI-SPEDITION SRL\nTermeni de livrare DAP\tPlacuta de inmatriculare B 00 TST / B 112\n\tSYT\nNum de comandä de transport TPO-0033560\tNume sofer Ion Test\n\tNumar telefon sofer 0700000000\nNr\tDescriere\tAmbalaj\tCantitate\nAviz de expeditie TRO-0010744\tComanda de transfer TRO-0010744\tReferinta client\nCod UIT\tEKAER\n11000315\tSilikonColor 14 1 (32/pal) 0019\t256.00 buc\nWOP-EU\n2\t1 1000444\tSuperPrimer 20 kg (24/pal)\tbuc\n_\t576.00\nMIL-RO\nGreutate neta, kg 17,254.40\tGreutate bruta, kg 17,670.40\tNumärul de gäleü 832.00\nPaleti la locul livrarii: predare .....\t..\t.\n\tpce\nCS seluare\nO\t00\nSemn\tSemnatura\nBaumit Romania Com SRL\nSediul:\tB.dul Iuliu\t600A, Sector 6.\t1 Tel.: +4 021350 01 03 1 e-mail: office@baumit.ro I baumit.ro\nBucuresti.\tManiu nr.\t061129\nNr. Reg. Com.: J1995006207407\t1 CUI: R07568475\n?S•..\nBAUME\nCONTROL\nPOARTÄ"
+ }
+]

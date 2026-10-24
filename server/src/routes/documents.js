@@ -52,7 +52,7 @@ import {
   routeSourceOf,
   routeTraceEventDetail,
 } from '../lib/ocr/routeTrace.js';
-import { repairAvizFromStored } from '../lib/avizOcr.js';
+import { applyRouteConfidenceToField, repairAvizFromStored } from '../lib/avizOcr.js';
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadRoot),
   filename: (req, file, cb) => cb(null, uniqueUploadFilename(file.originalname, { companyId: req.user?.company_id })),
@@ -408,6 +408,17 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         : null;
       const readRepair = readRepairAttempt(valuesAfterLearn.ruta_transport, readRoute);
       if (readRepair) routeAttempts.push(readRepair);
+      // A route with a missing / unreadable / noisy leg goes to review (stored field + needs_review),
+      // with the reason codes on route_trace. The route text is not changed.
+      const routeConfidenceResult = applyRouteConfidenceToField(merged.fields, {
+        route: valuesAfterLearn.ruta_transport || readRoute,
+        rawText: text.text,
+        profileId: merged.profile_id,
+        learned: learned.learned,
+        corrected: routeCorrected,
+      });
+      if (memoryFilled && !learned.learned && !routeCorrected) routeConfidenceResult.reasons.push('memory_fill');
+      if (routeConfidenceResult.reasons.length) routeConfidenceResult.status = 'low';
       const routeTrace = buildRouteTrace({
         context: 'extract',
         attempts: routeAttempts,
@@ -421,6 +432,7 @@ export async function extractBatchDocuments(companyId, batchId, userId, {
         originAddress: memory.address,
         deliveryAddresses: memory.deliveryAddresses,
         rule: learned.rule,
+        confidence: routeConfidenceResult,
       });
 
       // Route is structural only: Expeditor + Adresa de livrare slices (no LLM), unless learned.

@@ -110,7 +110,11 @@ async function routesEverywhere() {
 
 describe('/avize and /reports show the same route', () => {
   beforeEach(() => {
-    const built = buildRouteRuleFromOcr(RULE_PAGE);
+    // The rule was taught on a readable page of the same client; it repairs the misread one.
+    // (The misread page itself no longer yields a street — `PANTELIMON CONSTRUCT SRL` is the
+    // client, not `Str. Pantelimon Construct Srl nr. 5OS` — so no rule can be built from it.)
+    expect(buildRouteRuleFromOcr(RULE_PAGE)).toBeNull();
+    const built = buildRouteRuleFromOcr(RULE_PAGE.replace(/5os\. Pante1imon/g, 'Sos. Pantelimon'));
     db.rules = [{
       id: 'r1',
       match_regex: built.matchRegex,

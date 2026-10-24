@@ -53,6 +53,8 @@ export function readRepairAttempt(route, readRoute) {
  * @param {object|null} [p.originAddress]
  * @param {object[]} [p.deliveryAddresses]
  * @param {object|null} [p.rule]
+ * @param {{ status: 'ok'|'low', reasons: string[] }|null} [p.confidence]
+ *   route confidence (avizOcr `routeConfidenceReasons`): reason codes only, no address text
  */
 export function buildRouteTrace({
   context,
@@ -61,6 +63,7 @@ export function buildRouteTrace({
   originAddress = null,
   deliveryAddresses = [],
   rule = null,
+  confidence = null,
 } = {}) {
   const refused = {};
   for (const a of attempts) {
@@ -80,6 +83,7 @@ export function buildRouteTrace({
     ...(overridden ? { memory_overridden_by_rule: true } : {}),
     refused,
     attempts: attempts.map((a) => ({ ...a })),
+    ...(confidence ? { confidence: { status: confidence.status, reasons: [...(confidence.reasons || [])] } } : {}),
   };
 }
 
@@ -89,6 +93,7 @@ export function routeTraceEventDetail(trace) {
   return {
     source: trace.source,
     refused: trace.refused,
+    ...(trace.confidence?.reasons?.length ? { confidence_reasons: trace.confidence.reasons } : {}),
     ...(trace.rule_id ? { rule_id: trace.rule_id } : {}),
     ...(trace.origin_address_id ? { origin_address_id: trace.origin_address_id } : {}),
     ...(trace.delivery_address_ids?.length ? { delivery_address_ids: trace.delivery_address_ids } : {}),

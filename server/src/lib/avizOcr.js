@@ -368,10 +368,50 @@ const GOODS_TABLE_STOPS = [
  * used to become the type and leave `Ibutie Srl` / `Uct Srl` as the street name (#53).
  * Lookarounds (not `\b`) so `str.` still matches before a space (`.` is non-word).
  */
-const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|al\.|piata|pta\.?|calea|intrarea|intrare|intr\.?)(?![a-z]))/;
+// `Bulevard` (no article) and `Alee` are how Baumit prints them on many sales sheets
+// (`Bulevard Camil Ressu`, `Alee Privighetorilor`); without them the parse fell back to the
+// type-less matcher and took the client's site name above (`Reabilitare Lohn 60`) for the street.
+const STREET_TYPE_RE = /(?<type>(?<![a-z0-9])(?:strada|str\.?|soseaua|sosea|sos\.?|bulevardul|bulevard|bul\.|blvd\.?|bld\.?|bvd\.?|b-dul|bdul|bd\.?|aleea|alee|al\.|piata|pta\.?|calea|intrarea|intrare|intr\.?|splaiul|splai)(?![a-z]))/;
 
 /** Company form before the real street type (`DEMOS INTERMED SRL Intrare Navigatorilor`). */
 const COMPANY_FORM_RE = /\b(?:s\.?\s*r\.?\s*l\.?|s\.?\s*a\.?|scs|sra|gmbh|ltd|com)\b/i;
+
+/**
+ * Words that make a type-less "name + number" a company / branch / logo, never a street
+ * (`BRICO MILITARI 2`, `ROCKWOOL ROMANIA SRL LIV 0-100`, the `Baumit` logo above Expeditor).
+ * Used only where the street has no printed type: a printed `Str. Hornbach, nr. 17-21` or
+ * `Str. Fabricii` / `Calea Depozitelor` is a street whatever the word (exact tokens only, so
+ * `constructorilor` is not `construct`).
+ */
+const COMPANY_TOKENS = new Set([
+  'srl', 'sa', 'snc', 'scs', 'sca', 'pfa', 'gmbh', 'ltd', 'liv', 'client', 'magazin', 'depozit',
+  'logistic', 'logistics', 'construct', 'build', 'distributie', 'distribution', 'intermed',
+  'renovari', 'baumit', 'montaro', 'brico', 'bricostore', 'dedeman', 'hornbach', 'rockwool',
+  'arabesque', 'altex', 'praktiker', 'mathaus', 'leroy', 'merlin', 'obi', 'adeplast', 'romstal',
+]);
+/** Legal forms: a name next to one is a company even after a street-type word (`CALEA 13 BUILD SRL`). */
+const LEGAL_FORM_TOKENS = new Set(['srl', 'sa', 'snc', 'scs', 'sca', 'pfa', 'gmbh', 'ltd']);
+
+function wordTokens(text) {
+  return fold(text).replace(/s\.\s*r\.\s*l\.?/g, ' srl ').replace(/s\.\s*a\./g, ' sa ')
+    .split(/[^a-z0-9]+/).filter(Boolean);
+}
+function hasLegalForm(text) {
+  return wordTokens(text).some((t) => LEGAL_FORM_TOKENS.has(t));
+}
+function hasCompanyToken(text) {
+  return wordTokens(text).some((t) => COMPANY_TOKENS.has(t));
+}
+
+/**
+ * Street names that start with a day of a month (`1 Decembrie 1918`, `Calea 13 Septembrie`,
+ * `1 Mai`): the number belongs to the name, it is not the house number. Grammar (month names),
+ * not a street list.
+ */
+const MONTH_NAME = String.raw`(?:ianuarie|februarie|martie|aprilie|mai|iunie|iulie|august|septembrie|octombrie|noiembrie|decembrie)`;
+const DAY_MONTH_NAME = String.raw`(?:[0-9]{1,2}\s+${MONTH_NAME}(?:\s+(?:18|19|20)[0-9]{2}(?![0-9]))?)`;
+const DAY_MONTH_RE = new RegExp(String.raw`(?<![0-9])${DAY_MONTH_NAME}(?![a-z])`, 'g');
+const MONTH_TOKEN_RE = new RegExp(`^${MONTH_NAME}$`);
 
 /**
  * House number shape: `31B`, `1F`, OCR `IF`/`LF`, building wing `1/VII` (#89), range `17-21`.
@@ -387,7 +427,8 @@ const HOUSE_CORE = String.raw`[0-9]{1,4}[a-z]{0,2}(?:/[0-9ivxlcdm]{1,6}|-[0-9]{1
  * real words: on their own they are noise, which is what the 3-letter minimum keeps out.
  */
 const STREET_NAME_LINK = String.raw`(?:de|la|lui|din)`;
-const STREET_NAME_WORDS = String.raw`[a-z]{3,}(?:\s+(?:${STREET_NAME_LINK}\s+)?[a-z]{3,}){0,3}`;
+const STREET_NAME_WORD = String.raw`(?:${DAY_MONTH_NAME}|[a-z]{3,})`;
+const STREET_NAME_WORDS = String.raw`${STREET_NAME_WORD}(?:\s+(?:${STREET_NAME_LINK}\s+)?${STREET_NAME_WORD}){0,3}`;
 const HOUSE_NUM_BODY = String.raw`\b(?:nr\.?\s*)?(?:${HOUSE_CORE})\b`;
 const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>${HOUSE_CORE})\b`, 'i');
 
@@ -401,7 +442,8 @@ const HOUSE_NUM_RE = new RegExp(String.raw`\b(?:nr\.?\s*)?(?<house>${HOUSE_CORE}
 // between the two digits) and was why only the number survived as a leg.
 const STREET_AFTER_TYPE_NAME_FIRST = new RegExp(
   String.raw`^\s*,?\s*(?<name>${STREET_NAME_WORDS})` +
-  String.raw`(?=\s*(?:,|${HOUSE_NUM_BODY}|\bro\b|\bsector\b|\d{5}|$))` +
+  // `nr. ~~` (number unreadable) still ends the name: the street is read, its number is not.
+  String.raw`(?=\s*(?:,|${HOUSE_NUM_BODY}|\bnr\b|\bro\b|\bsector\b|\d{5}|$))` +
   String.raw`(?:\s*,)?(?:\s*${HOUSE_NUM_RE.source})?`,
   'i'
 );
@@ -437,6 +479,9 @@ const STREET_NAME_LINK_RE = new RegExp(`^${STREET_NAME_LINK}$`);
 function cleanStreetName(rawName, localityFolded = '') {
   const tokens = fold(rawName).split(/\s+/).filter(Boolean);
   const parts = tokens.filter((tok, i) => {
+    // `13 Septembrie`, `1 Decembrie 1918`: the day (and the year) are part of the name.
+    if (/^[0-9]{1,2}$/.test(tok)) return MONTH_TOKEN_RE.test(tokens[i + 1] || '');
+    if (/^(?:18|19|20)[0-9]{2}$/.test(tok)) return MONTH_TOKEN_RE.test(tokens[i - 1] || '');
     if (STREET_NAME_LINK_RE.test(tok)) {
       return i > 0 && i < tokens.length - 1
         && isUsableStreetToken(tokens[i - 1], localityFolded)
@@ -450,26 +495,49 @@ function cleanStreetName(rawName, localityFolded = '') {
 /**
  * Type + name + house from a folded address block. Regex shape only — never a street list.
  */
-function parseStreetParts(folded, localityFolded = '') {
-  const typeMatch = folded.match(new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags));
-  if (!typeMatch) {
-    const loose = folded.match(
-      new RegExp(
-        // No street type to anchor on: a number running into `.09.2026` / `/10` is the start
-        // of a date (OCR-mangled ones survive the date scrub), never a house number.
-        String.raw`\b(?<name>[a-z]{3,}(?:\s+[a-z]{3,}){0,3}?)\s+${HOUSE_NUM_RE.source}(?!\s*[.\/]\s*\d)`,
-        'i'
-      )
-    );
-    if (!loose) return { streetType: null, streetName: null, houseNumber: null };
-    const streetName = cleanStreetName(loose.groups?.name, localityFolded);
-    const house = loose.groups?.house || null;
-    return {
-      streetType: null,
-      streetName,
-      houseNumber: house && streetName ? fold(house) : null,
-    };
+/**
+ * No street type printed: the first `name + number` that is not a company / branch / logo
+ * (`BRICO MILITARI 2`, `Baumit` above Expeditor) and whose number is a house number.
+ */
+function parseLooseStreet(folded, localityFolded) {
+  const none = { streetType: null, streetName: null, houseNumber: null };
+  const loose = new RegExp(
+    // A number running into `.09.2026` / `/10` is the start of a date (OCR-mangled ones survive
+    // the date scrub), never a house number. A number with letters glued to a dot (`5tr.`) is a
+    // misread `Str.`, not `nr. 5TR`.
+    String.raw`\b(?<name>${STREET_NAME_WORD}(?:\s+${STREET_NAME_WORD}){0,3}?)\s+${HOUSE_NUM_RE.source}(?!\s*[.\/]\s*\d)`,
+    'gi'
+  );
+  for (const m of folded.matchAll(loose)) {
+    const rawName = m.groups?.name || '';
+    const house = m.groups?.house || null;
+    if (house && /[a-z]/.test(house) && folded.charAt(m.index + m[0].length) === '.') continue;
+    if (hasCompanyToken(rawName)) continue;
+    const streetName = cleanStreetName(rawName, localityFolded);
+    if (!streetName) continue;
+    return { streetType: null, streetName, houseNumber: house ? fold(house) : null };
   }
+  return none;
+}
+
+/** A typed street whose name is the client firm (`CALEA 13 BUILD SRL`) is not the street. */
+function nameAfterTypeIsCompany(afterType) {
+  const name = afterType.split(/\bnr\b|,|\bro\b|\d{5,6}/)[0];
+  return hasLegalForm(name.trim().split(/\s+/).slice(0, 4).join(' '));
+}
+
+function parseStreetParts(folded, localityFolded = '') {
+  const typeRe = new RegExp(STREET_TYPE_RE.source, `${STREET_TYPE_RE.flags}g`);
+  const typeMatches = [...folded.matchAll(typeRe)];
+  // Skip a type word that only introduces the client firm (`Calea 13 Build SRL` above the real
+  // `Calea 13 Septembrie nr. 127`), as long as another type follows.
+  let typeMatch = typeMatches[0] || null;
+  for (let i = 0; i < typeMatches.length - 1; i += 1) {
+    const after = folded.slice(typeMatches[i].index + typeMatches[i][0].length);
+    if (!nameAfterTypeIsCompany(after)) break;
+    typeMatch = typeMatches[i + 1];
+  }
+  if (!typeMatch) return parseLooseStreet(folded, localityFolded);
 
   const streetType = typeMatch.groups?.type?.replace(/\.$/, '') || null;
   const afterType = folded.slice(typeMatch.index + typeMatch[0].length);
@@ -499,10 +567,28 @@ function parseStreetParts(folded, localityFolded = '') {
       if (prev?.groups?.name) streetName = cleanStreetName(prev.groups.name, localityFolded);
     }
   }
-  if (!houseRaw && streetName) {
+  if (!streetName) {
+    // Scanned sheets put the type word on a line of its own after the street (`Metalurgiei 84-`
+    // … `Bulevard nr.`): the one name+number in the block is the street, the type is the one
+    // printed. Before `Bulevard` was a type the type-less matcher found it; keep finding it.
+    const loose = parseLooseStreet(folded.slice(Math.max(0, typeMatch.index - 60), typeMatch.index), localityFolded);
+    if (loose.streetName) return { ...loose, streetType };
+  }
+  // `nr. ~~` / `nr.Z5-ALeo`: the number is printed but unreadable (symbols, or digits mixed with
+  // letters in no house-number shape). Do not borrow another number from nearby (`Sector 6`
+  // became `nr. 6`); say so, the route confidence uses it.
+  const nrToken = afterType.slice(0, 64).match(/\bnr\b\.?\s*([^\s,.][^\s,]*)/)?.[1] || '';
+  const houseUnreadable = Boolean(!houseRaw && streetName && nrToken && (
+    /^[^a-z0-9]/.test(nrToken)
+    || (/\d/.test(nrToken) && !new RegExp(`^${HOUSE_CORE}\\.?$`).test(nrToken))
+  ));
+  if (!houseRaw && streetName && !houseUnreadable) {
     // Prefer a house next to the street name / type; never scan past RO/postcode.
     const typeAt = typeMatch.index;
-    const nearStreet = folded.slice(Math.max(0, typeAt - 48), Math.min(folded.length, typeAt + typeMatch[0].length + 48));
+    const nearStreet = folded.slice(Math.max(0, typeAt - 48), Math.min(folded.length, typeAt + typeMatch[0].length + 48))
+      // `13 Septembrie` is the name, its 13 is not a house number; nor is the 6 of `Sector 6`.
+      .replace(DAY_MONTH_RE, ' ')
+      .replace(/\bsector(?:ul)?\s*\d{1,2}\b/g, ' ');
     const beforePost = nearStreet.replace(/\bro\s*\d{5,6}\b[\s\S]*$/i, '').replace(/\b\d{5,6}\b[\s\S]*$/i, '');
     const nrNear = beforePost.match(new RegExp(HOUSE_NUM_RE.source, 'i'));
     if (nrNear?.groups?.house) houseRaw = nrNear.groups.house;
@@ -512,6 +598,7 @@ function parseStreetParts(folded, localityFolded = '') {
     streetType,
     streetName,
     houseNumber: houseRaw ? fold(houseRaw) : null,
+    ...(houseUnreadable ? { houseUnreadable: true } : {}),
   };
 }
 
@@ -569,24 +656,69 @@ function lastPlausibleLocality(phrase) {
   for (let i = words.length - 1; i >= 0; i -= 1) {
     const tok = words[i].replace(/^[(\[]+|[),\]]+$/g, '');
     // Hyphenated towns: bolintin-deal
-    if (isPlausibleLocalityToken(tok)) return tok;
+    if (isPlausibleLocalityToken(tok)) return withLocalityQualifier(words, i, tok);
   }
   return null;
+}
+
+/**
+ * Romanian village qualifiers (`Bolintin Deal`, `Bolintin Vale`, `Stefanesti de Jos`) are the
+ * second half of a town printed without the hyphen; alone (`Deal`) they are not the town.
+ */
+const LOCALITY_QUALIFIER = /^(deal|vale|mare|mic|mica|noi|nou|noua|vechi|jos|sus)$/;
+function withLocalityQualifier(words, i, tok) {
+  if (!LOCALITY_QUALIFIER.test(tok) || i < 1) return tok;
+  let j = i - 1;
+  let link = '';
+  if (/^(jos|sus)$/.test(tok)) {
+    if (words[j] !== 'de' || j < 1) return tok;
+    link = 'de ';
+    j -= 1;
+  }
+  const prevRaw = words[j];
+  // `Principala nr. 58, Deal`: a comma ends the street, the qualifier stands alone.
+  if (/[,;]$/.test(prevRaw)) return tok;
+  const prev = prevRaw.replace(/^[(\[]+|[),\]]+$/g, '');
+  if (!isPlausibleLocalityToken(prev) || /\d/.test(prev)) return tok;
+  // `Bolintin-Deal` / `Bolintin-Vale` are written hyphenated (as sanitizeOcrText already does at
+  // extract), so the list shows the same town as the stored route.
+  if (/^(deal|vale)$/.test(tok)) return `${prev}-${tok}`;
+  return `${prev} ${link}${tok}`;
+}
+
+/**
+ * `Domnesti, Soseaua Curtea Domneasca, nr.Z5-ALeo RO 077090`: the town is printed first and the
+ * chunk before RO is only the (unreadable) house number — read from the end it became the town
+ * (`Nr.z5-Aleo`). Only this comma shape: town, then a chunk opening with a street type, then a
+ * lone `nr.` chunk.
+ */
+function localityPrintedBeforeStreet(before) {
+  const chunks = String(before || '').split(',').map((c) => c.trim()).filter(Boolean);
+  if (chunks.length < 3 || !/^nr\b\.?\s*\S+$/.test(chunks[chunks.length - 1])) return null;
+  const typeRe = new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags);
+  const typeAtStart = chunks[chunks.length - 2].match(typeRe);
+  const townChunk = chunks[chunks.length - 3];
+  if (!typeAtStart || typeAtStart.index !== 0 || typeRe.test(townChunk)) return null;
+  return lastPlausibleLocality(townChunk);
 }
 
 /**
  * Locality from an address block: place before `RO #####`, or `Place ######` when the
  * two-column PDF drops the "RO" onto the Client column.
  */
-function localityFromSection(folded) {
-  const roAt = folded.search(/\bro\s*\d{5,6}\b/);
+function localityFromSection(sectionFolded) {
+  // `Bolintin- Deal` (OCR space after the hyphen) is one town, not `Deal`.
+  const folded = String(sectionFolded || '').replace(/([a-z])-\s+([a-z])/g, '$1-$2');
+  let roAt = folded.search(/\bro\s*\d{5,6}\b/);
+  // A postcode cut by the scan (`RO 0870`) still marks where the town ends.
+  if (roAt < 0) roAt = folded.search(/\bro\s*\d{3,4}\b/);
   if (roAt > 0) {
     // Printed forms use commas: "nr. 7, Bolintin-Deal, RO 087015" / "…, Bucuresti Sector 1, RO …".
     let before = folded.slice(0, roAt).replace(/[,.\s]+$/g, '').trim();
     // Bare "Bucuresti Sector" (tab OCR drops the digit) still names the city.
     before = before.replace(/\bsector(?:ul)?\s*[0-9]*\s*$/i, '').replace(/[,.\s]+$/g, '').trim();
     // Skip trailing county plate (`IF`) / OCR stub (`I`) — TPO-0033547 Balotești.
-    const fromRo = lastPlausibleLocality(before);
+    const fromRo = localityPrintedBeforeStreet(before) || lastPlausibleLocality(before);
     if (fromRo) return fromRo;
   }
 
@@ -595,7 +727,9 @@ function localityFromSection(folded) {
   const digitHits = [...folded.matchAll(/\b([a-z][a-z]*(?:-[a-z]+)?)\s+(?:sector(?:ul)?\s*[0-9]*\s+)?(\d{5,6})\b/g)];
   for (let i = digitHits.length - 1; i >= 0; i -= 1) {
     const name = digitHits[i][1];
-    if (isPlausibleLocalityToken(name)) return name;
+    if (isPlausibleLocalityToken(name)) {
+      return lastPlausibleLocality(folded.slice(0, digitHits[i].index + name.length)) || name;
+    }
   }
 
   // Comma after house number is common on sales sheets (#61).
@@ -607,6 +741,8 @@ function localityFromSection(folded) {
     const fromNr = lastPlausibleLocality(afterNrChunks[i][1]);
     if (fromNr) return fromNr;
   }
+  // Postcode unreadable (`RO Ol 1743`) but the city line survived: `Bucuresti Sector 1`.
+  if (/\bbucuresti\s+sector(?:ul)?\s*[1-6]\b/.test(folded)) return 'bucuresti';
   return null;
 }
 
@@ -654,7 +790,18 @@ function leftColumnFromInterleaved(section) {
   // unload site label; restarting would replace Unirii/Găești with the Client seat
   // (Timisului/Galați) printed below (#111 galati.pdf).
   let skippedLeadingClientNumericId = false;
+  // Which input line each kept cell came from: the branch / site name prints on its own line
+  // above the street and is dropped at the end (dropLeadingSiteLabelLines).
+  const lineOf = [];
+  let lineNo = -1;
+  const push = (...kept) => {
+    for (const cell of kept) {
+      left.push(cell);
+      lineOf.push(lineNo);
+    }
+  };
   for (const line of String(section || '').split(/\r?\n/)) {
+    lineNo += 1;
     if (!line.trim() && !/^\t/.test(line)) continue;
     // Leading tab ⇒ empty left cell: the whole row is the Client column.
     const rawCells = line.split(/\t+/);
@@ -670,7 +817,7 @@ function leftColumnFromInterleaved(section) {
     // — unless we already skipped a leading C######## and this is a new street (#111).
     if (leftHasDeliveryPostcode(left)) {
       if (/^(rou|ro)$/i.test(firstFold)) {
-        left.push(cells[0]);
+        push(cells[0]);
         continue;
       }
       if (
@@ -678,7 +825,8 @@ function leftColumnFromInterleaved(section) {
         && new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags).test(firstFold)
       ) {
         left.length = 0;
-        left.push(cells[0]);
+        lineOf.length = 0;
+        push(cells[0]);
         skippedLeadingClientNumericId = false;
         continue;
       }
@@ -693,13 +841,13 @@ function leftColumnFromInterleaved(section) {
         if (!left.length && /^c\d{8}\b/.test(firstFold)) skippedLeadingClientNumericId = true;
         continue;
       }
-      left.push(cells[0]);
+      push(cells[0]);
       continue;
     }
     // locality\tpostcode — both belong to the delivery column.
     const secondCompact = cells[1].replace(/\s+/g, '');
     if (cells.length === 2 && /^\d{5,6}$/.test(secondCompact)) {
-      left.push(cells[0], `RO ${secondCompact}`);
+      push(cells[0], `RO ${secondCompact}`);
       continue;
     }
     // `Sosea\tViilor nr. 52` / `Șosea\tnr.` — type alone left; name/nr still delivery-side.
@@ -708,10 +856,10 @@ function leftColumnFromInterleaved(section) {
       && isStreetTypeOnlyCell(cells[0])
       && isAddressContinuationCell(cells[1])
     ) {
-      left.push(cells[0], cells[1]);
+      push(cells[0], cells[1]);
       // type\thouse\t… — keep a bare house in cell 3 only when cell 2 was the name.
       if (cells.length >= 3 && new RegExp(`^${HOUSE_NUM_RE.source}$`, 'i').test(fold(cells[2]).trim())) {
-        left.push(cells[2]);
+        push(cells[2]);
       }
       continue;
     }
@@ -728,7 +876,7 @@ function leftColumnFromInterleaved(section) {
       && rightStartsHouse
       && !looksLikeClientIdCell(cells[1])
     ) {
-      left.push(cells[0], cells[1]);
+      push(cells[0], cells[1]);
       continue;
     }
     // `Viilor\t52` / `Viilor\t52\tStradă Aeroportului…` — name+house left, client street right.
@@ -741,7 +889,7 @@ function leftColumnFromInterleaved(section) {
       && cells.length >= 2
       && new RegExp(`^${HOUSE_NUM_RE.source}$`, 'i').test(houseCell)
     ) {
-      left.push(cells[0], cells[1]);
+      push(cells[0], cells[1]);
       continue;
     }
     // Skip cells that are clearly the Client id column (C######## / AP-…).
@@ -751,13 +899,76 @@ function leftColumnFromInterleaved(section) {
     }
     // Sector fragment left of the Client town (`5 RO\tBucurești Sector 1…`) — not a street.
     if (/^\d{1,2}\s*ro$/i.test(firstFold)) continue;
-    left.push(cells[0]);
+    push(cells[0]);
     // type\thouse\tclientStreet — middle cell is delivery house number.
     if (cells.length >= 3 && /^(nr\.?\s*)?[a-z0-9\-]+$/i.test(secondCompact)) {
-      left.push(cells[1]);
+      push(cells[1]);
     }
   }
-  return left.join(' ');
+  return dropLeadingSiteLabelLines(left, lineOf).join(' ');
+}
+
+const POSTCODE_IN_LINE_RE = /\bro\s*\d{5,6}\b|\b\d{5,6}\b/;
+/** `Bl. 4` / `Etaj 2` / `Ap 12` under the street: building detail, not another street. */
+const BUILDING_WORD_RE = /^(?:bl|bloc|sc|scara|et|etaj|ap|apartament|cam|camera|corp|hala|lot|tronson|parter|cladirea|cladire|sector)$/;
+
+/** One delivery line that reads as a street on its own: a type word, or a name with a house number. */
+function isStreetLikeLine(lineFolded) {
+  const f = String(lineFolded || '').trim();
+  if (!f || hasLegalForm(f) || /^(?:cs-|ap-|c\d{8}\b)/.test(f)) return false;
+  if (new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags).test(f)) return true;
+  if (BUILDING_WORD_RE.test(f.split(/[^a-z0-9]+/)[0] || '')) return false;
+  const withoutPost = f.replace(POSTCODE_IN_LINE_RE, ' ').replace(/\bsector(?:ul)?\s*\d\b/g, ' ');
+  return new RegExp(String.raw`\b${STREET_NAME_WORD}\b[^0-9]{0,12}${HOUSE_NUM_RE.source}`, 'i').test(withoutPost);
+}
+
+/**
+ * Baumit prints the delivery block as: branch / site name (`BRICO MILITARI 2`,
+ * `ARABESQUE- GALATI`, `CALEA 13 BUILD SRL`, `CS-NAVIGATOR DEPOZIT`), then the street, then
+ * town + `RO #####`. Read flat, the name line was taken for the street (`Str. Brico Militari
+ * nr. 2`, `Str. Galati Salcamilor`). Structural rule: the lines above the last street-like line
+ * before the postcode are the name, provided none of them is itself a typed street (a street split
+ * over two lines, `Str. Drumul` / `de Centura nr. 39`, stays whole). A firm with a legal form is a
+ * name even when it starts with a type word (`CALEA 13 BUILD SRL`).
+ */
+function dropLeadingSiteLabelLines(cells, lineOf) {
+  const order = [];
+  const byLine = new Map();
+  cells.forEach((cell, i) => {
+    const key = lineOf[i];
+    if (!byLine.has(key)) {
+      byLine.set(key, []);
+      order.push(key);
+    }
+    byLine.get(key).push(cell);
+  });
+  if (order.length < 2) return cells;
+  const lines = order.map((key) => fold(byLine.get(key).join(' ')));
+  let postAt = lines.findIndex((f) => POSTCODE_IN_LINE_RE.test(f));
+  if (postAt < 0) postAt = lines.length;
+  let streetAt = -1;
+  for (let i = postAt - 1; i >= 0; i -= 1) {
+    if (isStreetLikeLine(lines[i])) {
+      streetAt = i;
+      break;
+    }
+  }
+  if (streetAt < 0 && postAt < lines.length) {
+    const beforePost = lines[postAt].split(POSTCODE_IN_LINE_RE)[0];
+    if (new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags).test(beforePost)) streetAt = postAt;
+  }
+  if (streetAt <= 0 || streetAt > 2) return cells;
+  const typeRe = new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags);
+  for (let i = 0; i < streetAt; i += 1) {
+    const companyLine = hasLegalForm(lines[i]) || hasCompanyToken(lines[i]) || /^(?:cs-|ap-)/.test(lines[i]);
+    if (typeRe.test(lines[i]) && !hasLegalForm(lines[i])) return cells;
+    // Scanned sheets scatter one street over lines (`Titulescu 4-8` / `Soseaua Nicolae nr.`):
+    // a street-like line above another is part of it, unless it names a firm / branch.
+    if (isStreetLikeLine(lines[i]) && !companyLine) return cells;
+    if (!/[a-z]{3,}/.test(lines[i])) return cells;
+  }
+  const dropped = new Set(order.slice(0, streetAt));
+  return cells.filter((_, i) => !dropped.has(lineOf[i]));
 }
 
 /**
@@ -975,7 +1186,9 @@ function parseDestBlock(section, { interleaved = false } = {}) {
   const localityRaw = resolveLocalityWithPostcode(localityFromSection(folded), postcode);
   const localityFolded = localityRaw ? fold(localityRaw) : '';
 
-  const { streetType, streetName, houseNumber: houseRaw } = parseStreetParts(folded, localityFolded);
+  const {
+    streetType, streetName, houseNumber: houseRaw, houseUnreadable,
+  } = parseStreetParts(folded, localityFolded);
   // Without a street name, a lone house number is not an address leg ("nr. 52" alone).
   const rawHouse = streetName && houseRaw && !LOCALITY_NOISE.test(houseRaw) && !/^pagina/i.test(houseRaw)
     ? houseRaw
@@ -991,6 +1204,11 @@ function parseDestBlock(section, { interleaved = false } = {}) {
     streetType,
     houseNumber: rawHouse ? formatHouseNumber(rawHouse) : null,
     postcode,
+    ...(houseUnreadable ? { houseUnreadable: true } : {}),
+    // A street is printed (type word / `nr.`) but none could be read: the leg is the town only
+    // although the page names a street (`Str. 13 Septembrie` → `Bucuresti` before the fix).
+    ...(!streetName && (new RegExp(STREET_TYPE_RE.source, STREET_TYPE_RE.flags).test(folded) || /\bnr\b/.test(folded))
+      ? { streetUnreadable: true } : {}),
   };
 }
 
@@ -1009,11 +1227,12 @@ function streetTypeLabel(type) {
   if (!t) return null;
   if (/^str/.test(t)) return 'Str.';
   if (/^sos|^sosea/.test(t)) return 'Șosea';
-  if (/^(bvd|blvd|bld|bd|bulevard|b-dul|bdul)/.test(t)) return 'Bvd.';
+  if (/^(bvd|blvd|bld|bd|bul|b-dul|bdul)/.test(t)) return 'Bvd.';
   if (t === 'al' || /^alee/.test(t)) return 'Aleea';
   if (/^pta|^piata/.test(t)) return 'Piața';
   if (/^cale/.test(t)) return 'Calea';
   if (/^intr/.test(t)) return 'Intrarea';
+  if (/^splai/.test(t)) return 'Splaiul';
   return null;
 }
 
@@ -1693,16 +1912,147 @@ export function repairAvizFromStored(row) {
   };
 }
 
+/*
+ * Route completeness (route confidence). A route is `ok` only when every leg is a full address
+ * — street + town — or, for the origin, a printed Site-Depozit pair (`MIL-NEAMTIU`), and nothing
+ * on the page says the read is noisy. Anything else is `low` (needs review) with a reason code,
+ * so a partial route (`… / Bucuresti`), a bare site code (`BOL / …`) or a street made of the
+ * client's name can no longer pass as a confident one. The route text itself is not touched.
+ *
+ * Reason codes (also on route_trace.confidence.reasons, no address text):
+ *   incomplete_leg     a leg is missing, or is only a town / only a street / a bare site code
+ *   unknown_street     the page prints a street for that leg but none could be read
+ *   unknown_house      the street's number is printed but unreadable (`nr. ~~`)
+ *   junk_street        the street is a firm / branch / logo word, or number / town are not plausible
+ *   duplicate_leg      the same delivery stop twice (two columns of one photo)
+ *   form_label         CMR: the leg is a printed form label, not a place (handwritten CMR)
+ *   ambiguous_delivery several stops, the tax picks one (#96)
+ *   origin_locality    Expeditor street unreadable, only the town survived (#112)
+ *   suspicious_route   isSuspiciousRoute (glued codes, site code as delivery…)
+ */
+const ROUTE_LEG_TYPE_RE = /^(?:str\.?|strada|sos\.?|sosea|soseaua|bvd\.?|blvd\.?|bd\.?|b-dul|bdul|bulevard(?:ul)?|aleea|alee|piata|calea|intrarea|splaiul|drumul)(?![a-z])/;
+const PLAUSIBLE_HOUSE_RE = /^\d{1,4}[a-z]{0,2}(?:[-/][0-9a-z]{1,6})?$/i;
+const PLAUSIBLE_TOWN_RE = /^\p{L}[\p{L} .-]*$/u;
+/** Printed CMR box labels (DE / EN / RO) that a handwritten CMR route picked up instead of places. */
+const CMR_FORM_LABEL_RE = /\b(?:ort|ubernahme|gutes|empfanger|absender|frachtfuhrer|nachfolgende|anschrift|ablieferung|bestimmungsort|taking\s+over|place\s+of|consignee|carrier|successive|locul|destinatar|expeditor|transportator|preluare)\b/;
+
+function splitRouteLeg(leg) {
+  const text = String(leg || '').trim();
+  const comma = text.lastIndexOf(',');
+  const head = comma >= 0 ? text.slice(0, comma).trim() : text;
+  const town = comma >= 0 ? text.slice(comma + 1).trim() : '';
+  const headFold = fold(head);
+  const hasStreet = ROUTE_LEG_TYPE_RE.test(headFold) || /\bnr\.?\s*\S/.test(headFold);
+  return {
+    street: hasStreet ? head : null,
+    town: hasStreet ? (town || null) : (town ? `${head}, ${town}` : head),
+  };
+}
+
+function legHouse(street) {
+  return fold(street).match(/\bnr\.?\s*([^\s,]+)/)?.[1] || null;
+}
+
+function routeLegIssues(leg, block, { origin = false } = {}) {
+  const issues = [];
+  if (looksLikeSiteCodeLeg(leg)) {
+    // `MIL-NEAMTIU` / `BOL-MBMARFA`: a printed origin. A bare `BOL` says only which site.
+    if (!(origin && /-/.test(leg))) issues.push('incomplete_leg');
+    return issues;
+  }
+  const { street, town } = splitRouteLeg(leg);
+  if (!street) {
+    issues.push(block?.streetUnreadable ? 'unknown_street' : 'incomplete_leg');
+    return issues;
+  }
+  if (!town) issues.push('incomplete_leg');
+  const house = legHouse(street);
+  if (house && !PLAUSIBLE_HOUSE_RE.test(house)) issues.push('junk_street');
+  if (town && !PLAUSIBLE_TOWN_RE.test(town)) issues.push('junk_street');
+  const name = fold(street).replace(ROUTE_LEG_TYPE_RE, ' ').replace(/\bnr\b[\s\S]*$/, ' ');
+  // A legal form in the street is a firm. A chain / logo word is one only when no type was
+  // printed (`Str. Hornbach, nr. 17-21` is printed as a street and stays one).
+  if (hasLegalForm(name) || (block && !block.streetType && hasCompanyToken(name))) issues.push('junk_street');
+  if (block?.houseUnreadable) issues.push('unknown_house');
+  return issues;
+}
+
+/**
+ * Why this route is not a confident one (empty list = ok). See the block comment above.
+ * @param {string|null} route
+ * @param {string|null} rawText
+ * @param {{ profileId?: string|null, learned?: boolean, corrected?: boolean }} [opts]
+ *   learned / corrected: a rule from an office correction or a pinned route is the office's
+ *   word — only the old heuristics apply, not the completeness check.
+ */
+export function routeConfidenceReasons(route, rawText, { profileId = null, learned = false, corrected = false } = {}) {
+  if (corrected) return [];
+  const reasons = [];
+  const add = (code) => { if (!reasons.includes(code)) reasons.push(code); };
+  const raw = rawText || null;
+  if (isSuspiciousRoute(route, raw)) add('suspicious_route');
+  if (raw && hasAmbiguousDeliveryChoice(raw)) add('ambiguous_delivery');
+  if (raw && expeditorOrigin(raw).status === 'locality') add('origin_locality');
+  if (learned) return reasons;
+
+  const value = String(route || '').trim();
+  const profile = String(profileId || '');
+  const legs = value ? value.split(/\s\/\s/).map((l) => l.trim()).filter(Boolean) : [];
+  if (/^aviz_cmr/.test(profile)) {
+    if (legs.length < 2) add('incomplete_leg');
+    if (legs.some((leg) => CMR_FORM_LABEL_RE.test(fold(leg)))) add('form_label');
+    return reasons;
+  }
+  if (!/^aviz_baumit/.test(profile)) return reasons;
+
+  if (legs.length < 2) add('incomplete_leg');
+  const originBlock = raw ? expeditorOrigin(raw).block : null;
+  const deliveryBlocks = raw ? parseDeliveryAddresses(raw) : [];
+  const blockFor = (leg, blocks) => blocks.find((b) => formatAddressLine(b) === leg) || null;
+  legs.forEach((leg, i) => {
+    const block = i === 0 ? (originBlock && formatAddressLine(originBlock) === leg ? originBlock : null) : blockFor(leg, deliveryBlocks);
+    // One leg only: it is the delivery when the page has no origin left (cut header).
+    const asOrigin = i === 0 && legs.length >= 2;
+    for (const code of routeLegIssues(leg, block, { origin: asOrigin })) add(code);
+  });
+  const stops = legs.slice(1).map((l) => fold(l).replace(/[^a-z0-9]+/g, ' ').trim());
+  if (new Set(stops).size < stops.length) add('duplicate_leg');
+  return reasons;
+}
+
+/**
+ * Extract time: the stored `ruta_transport` field object goes to review when the route is not a
+ * confident one, so `needs_review` / routing agree with the list's amber flag. Mutates and
+ * returns `{ status, reasons }` for route_trace. Memory fills are already `review` (0.6).
+ */
+export function applyRouteConfidenceToField(fields, {
+  route, rawText, profileId = null, learned = false, corrected = false,
+} = {}) {
+  const reasons = routeConfidenceReasons(route, rawText, { profileId, learned, corrected });
+  const status = reasons.length ? 'low' : 'ok';
+  const field = fields?.ruta_transport;
+  if (status === 'low' && field && String(route ?? '').trim()) {
+    fields.ruta_transport = {
+      ...field,
+      confidence: Math.min(Number(field.confidence) || 0, 0.6),
+      status: 'review',
+      route_confidence_reasons: reasons,
+    };
+  }
+  return { status, reasons };
+}
+
 export function avizFieldConfidence(row) {
   const raw = row?.extracted_data?.raw_text;
   const qtyLow = isGarbageQuantity(row?.cantitate_marfa, row?.tip_marfa)
     || quantityConflictsWithRaw(row?.cantitate_marfa, row?.tip_marfa, raw);
   // Multi-stop delivery: tax picks București/last — mark rută so the choice is visible (#96).
   // Expeditor street unreadable (#112): the origin leg is a town or a learned address, not
-  // what the page says — always worth a look.
-  const routeLow = isSuspiciousRoute(row?.ruta_transport, raw)
-    || (raw ? hasAmbiguousDeliveryChoice(raw) : false)
-    || (raw ? expeditorOrigin(raw).status === 'locality' : false);
+  // what the page says — always worth a look. Incomplete / noisy legs: routeConfidenceReasons.
+  const routeLow = routeConfidenceReasons(row?.ruta_transport, raw, {
+    profileId: row?.ocr_profile_id,
+    learned: row?.extracted_data?.route_source === 'learned',
+  }).length > 0;
   return {
     numar_tpo: isExtractedGarbageTpo(row?.numar_tpo) ? 'low' : 'ok',
     numar_auto: isGarbageAuto(row?.numar_auto) ? 'low' : 'ok',

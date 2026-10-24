@@ -14,6 +14,20 @@
 import { preferLearnedRoute } from './routeLearn.js';
 import { applyAddressMemory, isAddressMemoryProfile } from './addressMemory.js';
 import { buildRouteTrace, routeSourceOf } from './routeTrace.js';
+import { routeConfidenceReasons } from '../avizOcr.js';
+
+/**
+ * Route confidence for the trace: why the list shows this route amber (`low`), as reason codes.
+ * A street filled from the company's memory is never this page's own read (`memory_fill`).
+ */
+export function routeConfidence(route, rawText, {
+  profileId = null, learned = false, corrected = false, memory = false,
+} = {}) {
+  if (corrected) return { status: 'ok', reasons: [] };
+  const reasons = routeConfidenceReasons(route, rawText, { profileId, learned });
+  if (memory && !reasons.includes('memory_fill')) reasons.push('memory_fill');
+  return { status: reasons.length ? 'low' : 'ok', reasons };
+}
 
 /**
  * @param {object} serialized  a serialized row, already through `repairAvizFromStored`
@@ -82,6 +96,13 @@ export function routeWithCompanyMemory(serialized, { routeRules = [], knownAddre
     originAddress: memoryUsed?.address || null,
     deliveryAddresses: memoryUsed?.deliveryAddresses || [],
     rule,
+    confidence: routeConfidence(ruta, raw, {
+      profileId: serialized.ocr_profile_id,
+      learned: Boolean(rule) || extracted_data?.route_source === 'learned',
+      corrected: pinned,
+      memory: !rule && (Boolean(memoryUsed)
+        || extracted_data?.origin_source === 'memory' || extracted_data?.delivery_source === 'memory'),
+    }),
   });
   // A row typed in by hand has no extracted_data; it stays null rather than growing one.
   if (extracted_data) extracted_data = { ...extracted_data, route_trace_view: trace };
