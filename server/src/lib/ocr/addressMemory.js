@@ -456,6 +456,8 @@ export function originObservationFromOcr(rawText) {
   const postcode = normalizePostcode(origin.block?.postcode);
   const locality = origin.block?.locality || null;
   if (!postcode || !locality || !origin.leg) return null;
+  // `nr. ~~`: the street was read, its number was not — not an address worth remembering.
+  if (origin.block?.houseUnreadable) return null;
   if (!isPlausibleAddressLeg(origin.leg)) return null;
   return {
     postcode,
@@ -488,6 +490,7 @@ export function deliveryObservationsFromOcr(rawText, { known = [] } = {}) {
     const postcode = normalizePostcode(block?.postcode);
     const locality = block?.locality || null;
     if (!block?.streetName || !postcode || !locality) continue;
+    if (block.houseUnreadable) continue;
     const display = formatAddressLine(block);
     if (!display || !isPlausibleAddressLeg(display)) continue;
     const matchKey = addressMatchKey(display);
